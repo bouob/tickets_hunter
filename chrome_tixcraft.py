@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.09.24)"
+CONST_APP_VERSION = u"MaxBot (2019.10.23)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -190,7 +190,10 @@ if not config_dict is None:
 
     Root_Dir = ""
     if browser == "chrome":
-        chrome_options = None
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
+        #chrome_options.add_argument("--disable-popup-blocking");
+
         # default os is linux/mac
         chromedriver_path =Root_Dir+ "webdriver/chromedriver"
         if platform.system()=="windows":
@@ -199,14 +202,10 @@ if not config_dict is None:
         extension_path = Root_Dir + "webdriver/AdBlock.crx"
         extension_file_exist = os.path.isfile(extension_path)
 
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-        #chrome_options.add_argument("--disable-popup-blocking");
         if extension_file_exist:
             chrome_options.add_extension(extension_path)
         else:
             print("extention not exist")
-
 
         extension_path = Root_Dir + "webdriver/BlockYourselfFromAnalytics.crx"
         extension_file_exist = os.path.isfile(extension_path)
@@ -233,6 +232,15 @@ if not config_dict is None:
         if platform.system()=="windows":
             chromedriver_path =Root_Dir+ "webdriver/geckodriver.exe"
         driver = webdriver.Firefox(executable_path=chromedriver_path)
+
+    try:
+        window_handles_count = len(driver.window_handles)
+        if window_handles_count >= 1:
+            driver.switch_to.window(driver.window_handles[1])
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+    except Exception as excSwithFail:
+        pass
 
     driver.get(homepage)
 else:
