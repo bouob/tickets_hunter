@@ -1010,6 +1010,9 @@ def tixcraft_verify(url):
     #print("html_text", html_text)
     answer_list, my_answer_delimitor = get_answer_list_by_question(html_text)
 
+    if u'請輸入"YES"，代表您已詳閱且瞭解並同意' in html_text and u'實名制規則' in html_text:
+        captcha_password_string = 'YES'
+
     if not captcha_password_string is None:
         form_input = None
         try:
@@ -1052,6 +1055,13 @@ def tixcraft_verify(url):
             if len(answer_list) > 1:
                 is_auto_focus_enable = True
 
+        if u'請輸入玉山銀行信用卡' in html_text:
+            is_auto_focus_enable = True
+
+        if u'請輸入"YES"' in html_text:
+            is_auto_focus_enable = True
+
+        print("is_auto_focus_enable", is_auto_focus_enable)
         if is_auto_focus_enable:
             form_input = None
             try:
@@ -2840,6 +2850,10 @@ def main():
             if url != last_url:
                 print(url)
             last_url = url
+
+        # for Max's test.
+        if '/Downloads/varify.html' in url:
+            tixcraft_verify(url)
 
         if 'tixcraft.com' in url:
             if 'https://tixcraft.com/ticket/order' in url:
