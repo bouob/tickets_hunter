@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2019.10.23)"
+CONST_APP_VERSION = u"MaxBot (2019.10.26)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -77,7 +77,8 @@ def btn_save_act(slience_mode=False):
         global chk_state_date_auto_select
         global txt_date_keyword
         global chk_state_area_auto_select
-        global txt_area_keyword
+        global txt_area_keyword_1
+        global txt_area_keyword_2
 
         global combo_date_auto_select_mode
         global combo_area_auto_select_mode
@@ -118,7 +119,8 @@ def btn_save_act(slience_mode=False):
             config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
 
             config_dict["tixcraft"]["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
-            config_dict["tixcraft"]["area_auto_select"]["area_keyword"] = txt_area_keyword.get().strip()
+            config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = txt_area_keyword_1.get().strip()
+            config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
 
             config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
             config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
@@ -250,16 +252,19 @@ def showHideTixcraftBlocks():
     global lbl_area_auto_select_mode
     global combo_area_auto_select_mode
 
-    global area_keyword_index
-    global lbl_area_keyword
-    global txt_area_keyword
+    global area_keyword_1_index
+    global area_keyword_2_index
+    global lbl_area_keyword_1
+    global lbl_area_keyword_2
+    global txt_area_keyword_1
+    global txt_area_keyword_2
 
-    new_date_enable = bool(chk_state_date_auto_select.get())
-    new_area_enable = bool(chk_state_area_auto_select.get())
-    #print("new new_date_enable value:", new_date_enable)
-    #print("new new_area_enable value:", new_area_enable)
+    is_date_set_to_enable = bool(chk_state_date_auto_select.get())
+    is_area_set_to_enable = bool(chk_state_area_auto_select.get())
+    #print("now is_date_set_to_enable value:", is_date_set_to_enable)
+    #print("now is_area_set_to_enable value:", is_area_set_to_enable)
 
-    if new_date_enable:
+    if is_date_set_to_enable:
         # show
         lbl_date_auto_select_mode.grid(column=0, row=date_auto_select_mode_index, sticky = E)
         combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
@@ -274,20 +279,26 @@ def showHideTixcraftBlocks():
         lbl_date_keyword.grid_forget()
         txt_date_keyword.grid_forget()
 
-    if new_area_enable:
+    if is_area_set_to_enable:
         # show
         lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_index, sticky = E)
         combo_area_auto_select_mode.grid(column=1, row=area_auto_select_index, sticky = W)
 
-        lbl_area_keyword.grid(column=0, row=area_keyword_index, sticky = E)
-        txt_area_keyword.grid(column=1, row=area_keyword_index, sticky = W)
+        lbl_area_keyword_1.grid(column=0, row=area_keyword_1_index, sticky = E)
+        txt_area_keyword_1.grid(column=1, row=area_keyword_1_index, sticky = W)
+
+        lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
+        txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
     else:
         # hide
         lbl_area_auto_select_mode.grid_forget()
         combo_area_auto_select_mode.grid_forget()
 
-        lbl_area_keyword.grid_forget()
-        txt_area_keyword.grid_forget()
+        lbl_area_keyword_1.grid_forget()
+        txt_area_keyword_1.grid_forget()
+
+        lbl_area_keyword_2.grid_forget()
+        txt_area_keyword_2.grid_forget()
 
 
 def MainMenu(root):
@@ -319,7 +330,8 @@ def MainMenu(root):
 
     area_auto_select_enable = None
     area_auto_select_mode = ""
-    area_keyword = ""
+    area_keyword_1 = ""
+    area_keyword_2 = ""
 
     global config_dict
     if not config_dict is None:
@@ -381,9 +393,13 @@ def MainMenu(root):
             if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
                 area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
-            if 'area_keyword' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword = config_dict["tixcraft"]["area_auto_select"]["area_keyword"]
-                area_keyword = area_keyword.strip()
+            if 'area_keyword_1' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"]
+                area_keyword_1 = area_keyword_1.strip()
+
+            if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
+                area_keyword_2 = area_keyword_2.strip()
 
         # output config:
         print("homepage", homepage)
@@ -407,7 +423,8 @@ def MainMenu(root):
         
         print("area_auto_select_enable", area_auto_select_enable)
         print("area_auto_select_mode", area_auto_select_mode)
-        print("area_keyword", area_keyword)
+        print("area_keyword_1", area_keyword_1)
+        print("area_keyword_2", area_keyword_2)
     else:
         print('config is none')
 
@@ -638,18 +655,33 @@ def MainMenu(root):
 
     group_row_count+=1
 
-    global area_keyword_index
-    area_keyword_index = group_row_count
+    global area_keyword_1_index
+    area_keyword_1_index = group_row_count
 
-    global lbl_area_keyword
-    lbl_area_keyword = Label(frame_group_tixcraft, text="Area Keyword")
-    lbl_area_keyword.grid(column=0, row=area_keyword_index, sticky = E)
+    global lbl_area_keyword_1
+    lbl_area_keyword_1 = Label(frame_group_tixcraft, text="Area Keyword #1")
+    lbl_area_keyword_1.grid(column=0, row=area_keyword_1_index, sticky = E)
 
-    global txt_area_keyword
-    global txt_ares_keyword_value
-    txt_ares_keyword_value = StringVar(frame_group_tixcraft, value=area_keyword)
-    txt_area_keyword = Entry(frame_group_tixcraft, width=20, textvariable = txt_ares_keyword_value)
-    txt_area_keyword.grid(column=1, row=area_keyword_index, sticky = W)
+    global txt_area_keyword_1
+    global txt_area_keyword_1_value
+    txt_area_keyword_1_value = StringVar(frame_group_tixcraft, value=area_keyword_1)
+    txt_area_keyword_1 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_1_value)
+    txt_area_keyword_1.grid(column=1, row=area_keyword_1_index, sticky = W)
+
+    group_row_count+=1
+
+    global area_keyword_2_index
+    area_keyword_2_index = group_row_count
+
+    global lbl_area_keyword_2
+    lbl_area_keyword_2 = Label(frame_group_tixcraft, text="Area Keyword #2")
+    lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
+
+    global txt_area_keyword_2
+    global txt_area_keyword_2_value
+    txt_area_keyword_2_value = StringVar(frame_group_tixcraft, value=area_keyword_2)
+    txt_area_keyword_2 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_2_value)
+    txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
 
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
@@ -697,7 +729,7 @@ def main():
     GUI = MainMenu(root)
 
     GUI_SIZE_WIDTH = 420
-    GUI_SIZE_HEIGHT = 340
+    GUI_SIZE_HEIGHT = 370
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-20)
 

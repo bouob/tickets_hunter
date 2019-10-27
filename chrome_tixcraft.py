@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.10.23)"
+CONST_APP_VERSION = u"MaxBot (2019.10.26)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -82,6 +82,9 @@ date_keyword = None
 area_auto_select_enable = None
 area_auto_select_mode = None
 area_keyword = None
+
+area_keyword_1 = None
+area_keyword_2 = None
 
 
 kktix_area_auto_select_mode = None
@@ -153,9 +156,13 @@ if not config_dict is None:
         if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
             area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
-        if 'area_keyword' in config_dict["tixcraft"]["area_auto_select"]:
-            area_keyword = config_dict["tixcraft"]["area_auto_select"]["area_keyword"]
-            area_keyword = area_keyword.strip()
+        if 'area_keyword_1' in config_dict["tixcraft"]["area_auto_select"]:
+            area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"]
+            area_keyword_1 = area_keyword_1.strip()
+
+        if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
+            area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
+            area_keyword_2 = area_keyword_2.strip()
 
     # output config:
     print("version", CONST_APP_VERSION)
@@ -179,7 +186,8 @@ if not config_dict is None:
     
     print("area_auto_select_enable", area_auto_select_enable)
     print("area_auto_select_mode", area_auto_select_mode)
-    print("area_keyword", area_keyword)
+    print("area_keyword_1", area_keyword_1)
+    print("area_keyword_2", area_keyword_2)
 
     # entry point
     # 說明：自動開啟第一個的網頁
@@ -691,6 +699,72 @@ def date_auto_select(url):
             pass
             #print("find .btn-next fail:", exc)
 
+# PURPOSE: get target area list.
+def get_tixcraft_target_area(el, area_keyword):
+    areas = None
+    is_need_refresh = False
+
+    if el is not None:
+        if len(area_keyword) == 0:
+            try:
+                areas = el.find_elements(By.TAG_NAME, "a")
+            except Exception as exc:
+                pass
+
+            if areas is not None:
+                if len(areas) == 0:
+                    print("list is empty, do refresh!")
+                    is_need_refresh = True
+            else:
+                print("list is None, do refresh!")
+                is_need_refresh = True
+        else:
+            # match keyword.
+            area_list = None
+            try:
+                area_list = el.find_elements(By.TAG_NAME, 'a')
+            except Exception as exc:
+                #print("find area list a tag fail")
+                pass
+
+            if area_list is not None:
+                if len(area_list) == 0:
+                    print("(with keyword) list is empty, do refresh!")
+                    is_need_refresh = True
+            else:
+                print("(with keyword) list is None, do refresh!")
+                is_need_refresh = True
+
+            if area_list is not None:
+                areas = []
+                for row in area_list:
+                    row_is_enabled=False
+                    try:
+                        row_is_enabled = row.is_enabled()
+                    except Exception as exc:
+                        pass
+
+                    row_text = ""
+                    if row_is_enabled:
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                    if len(row_text) > 0:
+                        if area_keyword in row_text:
+                            areas.append(row)
+
+                            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                print("only need first item, break area list loop.")
+                                break
+                            #print("row_text:" + row_text)
+                            #print("match:" + area_keyword)
+                if len(areas) == 0:
+                    areas = None
+
+    return is_need_refresh, areas
 
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
@@ -705,66 +779,11 @@ def area_auto_select(url):
             print("find .zone fail, do nothing.")
 
         if el is not None:
-            areas = None
-
-            is_need_refresh = False
-
-            if len(area_keyword) == 0:
-                try:
-                    areas = el.find_elements(By.TAG_NAME, "a")
-                except Exception as exc:
-                    pass
-
-                if areas is not None:
-                    if len(areas) == 0:
-                        print("list is empty, do refresh!")
-                        is_need_refresh = True
-                else:
-                    print("list is None, do refresh!")
-                    is_need_refresh = True
-            else:
-                # match keyword.
-                area_list = None
-                try:
-                    area_list = el.find_elements(By.TAG_NAME, 'a')
-                except Exception as exc:
-                    #print("find area list a tag fail")
-                    pass
-
-                if area_list is not None:
-                    if len(area_list) == 0:
-                        print("(with keyword) list is empty, do refresh!")
-                        is_need_refresh = True
-                else:
-                    print("(with keyword) list is None, do refresh!")
-                    is_need_refresh = True
-
-                if area_list is not None:
-                    areas = []
-                    for row in area_list:
-                        row_is_enabled=False
-                        try:
-                            row_is_enabled = row.is_enabled()
-                        except Exception as exc:
-                            pass
-
-                        row_text = ""
-                        if row_is_enabled:
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
-
-                        if len(row_text) > 0:
-                            if area_keyword in row_text:
-                                areas.append(row)
-
-                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                    print("only need first item, break area list loop.")
-                                    break
-                                #print("row_text:" + row_text)
-                                #print("match:" + area_keyword)
+            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_1)
+            if not is_need_refresh:
+                if areas is None:
+                    print("use area keyword #2", area_keyword_2)
+                    is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2)
 
             area_target = None
             if areas is not None:
@@ -798,7 +817,6 @@ def area_auto_select(url):
                         print("click area a link fail, after reftry still fail.")
                         print(exc)
                         pass
-
 
             # auto refresh for area list page.
             if is_need_refresh:
@@ -996,22 +1014,45 @@ def tixcraft_verify(url):
             print("find verify fail")
             pass
 
-    if ret:
-        # retry
-        for i in range(5):
+        if ret:
+            # retry
+            for i in range(3):
+                form_input = None
+                try:
+                    form_input = driver.find_element(By.CSS_SELECTOR, '#submitButton')
+                    if form_input is not None:
+                        if form_input.is_enabled():
+                            form_input.click()
+                            break
+                    else:
+                        print("find submit button none")
+
+                except Exception as exc:
+                    print("find submit button fail")
+                    print(exc)
+                    pass
+    else:
+        is_auto_focus_enable = False
+        if is_auto_focus_enable:
             form_input = None
             try:
-                form_input = driver.find_element(By.CSS_SELECTOR, '#submitButton')
+                form_input = driver.find_element(By.CSS_SELECTOR, '#checkCode')
                 if form_input is not None:
-                    if form_input.is_enabled():
-                        form_input.click()
-                        break
+                    default_value = form_input.get_attribute('value')
+                    is_need_focus = False
+                    if default_value is None:
+                        is_need_focus = True
+                    else:
+                        if len(default_value) == 0:
+                            is_need_focus = True
+                    if is_need_focus:
+                        if form_input.is_enabled():
+                            form_input.click()
+                            time.sleep(0.2)
                 else:
-                    print("find submit button none")
-
+                    print("find captcha input field fail")
             except Exception as exc:
-                print("find submit button fail")
-                print(exc)
+                print("find verify fail")
                 pass
 
     return ret
@@ -1810,13 +1851,9 @@ def fami_date_auto_select(url):
                     if match_keyword_row:
                         break
 
-# purpose: area auto select
-# return:
-#   True: area block appear.
-#   False: area block not appear.
-# ps: return value for date auto select.
-def fami_area_auto_select(url):
-    ret = False
+
+# PURPOSE: get target area list.
+def get_fami_target_area(area_keyword):
     areas = None
 
     area_list = None
@@ -1856,10 +1893,28 @@ def fami_area_auto_select(url):
                                 #print("area row_text:", row_index, row_text)
                                 if area_keyword in row_text:
                                     areas.append(row)
+                    if len(areas)==0:
+                        areas = None
 
     except Exception as exc:
         print("find #game_page date list fail")
         #print(exc)
+
+    return areas
+
+# purpose: area auto select
+# return:
+#   True: area block appear.
+#   False: area block not appear.
+# ps: return value for date auto select.
+def fami_area_auto_select(url):
+    ret = False
+
+    areas = get_fami_target_area(area_keyword_1)
+    if areas is None:
+        print("use area keyword #2", area_keyword_2)
+        areas = get_fami_target_area(area_keyword_2)
+
 
     area = None
     if areas is not None:
