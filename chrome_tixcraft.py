@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.10.26)"
+CONST_APP_VERSION = u"MaxBot (2019.10.27)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -961,6 +961,7 @@ def tixcraft_verify(url):
     captcha_password_string = None
 
     form_select = None
+    question_text = ""
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '.zone-verify')
 
@@ -968,7 +969,8 @@ def tixcraft_verify(url):
         if form_select is not None:
             html_text = ""
             try:
-                html_text = form_select.text
+                question_text = form_select.text
+                html_text = question_text
 
                 html_text = html_text.replace(u'「',u'【')
                 html_text = html_text.replace(u'〔',u'【')
@@ -988,13 +990,26 @@ def tixcraft_verify(url):
                     pass
             except Exception as exc:
                 print("get text fail")
-
-
     except Exception as exc:
         print("find verify fail")
         pass
 
-    
+
+    is_options_in_question = False
+    html_text = question_text
+    html_text = html_text.replace(u'「',u'(')
+    html_text = html_text.replace(u'〔',u'(')
+    html_text = html_text.replace(u'［',u'(')
+    html_text = html_text.replace(u'〖',u'(')
+    html_text = html_text.replace(u'[',u'(')
+    html_text = html_text.replace(u'」',u')')
+    html_text = html_text.replace(u'〕',u')')
+    html_text = html_text.replace(u'］',u')')
+    html_text = html_text.replace(u'〗',u')')
+    html_text = html_text.replace(u']',u')')
+    #print("html_text", html_text)
+    answer_list, my_answer_delimitor = get_answer_list_by_question(html_text)
+
     if not captcha_password_string is None:
         form_input = None
         try:
@@ -1033,6 +1048,10 @@ def tixcraft_verify(url):
                     pass
     else:
         is_auto_focus_enable = False
+        if not answer_list is None:
+            if len(answer_list) > 1:
+                is_auto_focus_enable = True
+
         if is_auto_focus_enable:
             form_input = None
             try:
