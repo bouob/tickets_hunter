@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.10.27)"
+CONST_APP_VERSION = u"MaxBot (2019.11.10)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -241,6 +241,7 @@ if not config_dict is None:
             chromedriver_path =Root_Dir+ "webdriver/geckodriver.exe"
         driver = webdriver.Firefox(executable_path=chromedriver_path)
 
+    time.sleep(1.0)
     try:
         window_handles_count = len(driver.window_handles)
         if window_handles_count >= 1:
@@ -249,7 +250,6 @@ if not config_dict is None:
             driver.switch_to.window(driver.window_handles[0])
     except Exception as excSwithFail:
         pass
-
     driver.get(homepage)
 else:
     print("Config error!")
@@ -1361,12 +1361,15 @@ def kktix_reg_new(url, answer_index):
     registrationsNewApp_div = None
     el_list = None
     try:
-        registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp > div')
+        registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
         if registrationsNewApp_div is not None:
+            #print("found registrationsNewApp")
             el_list = registrationsNewApp_div.find_elements(By.TAG_NAME, "input")
             if el_list is None:
+                #print("not found input")
                 is_need_refresh = True
             else:
+                #print("found input")
                 if len(el_list) == 0:
                     is_need_refresh = True
                 else:
@@ -1375,9 +1378,16 @@ def kktix_reg_new(url, answer_index):
                     for el in el_list:
                         idx += 1
                         if el.is_enabled():
-                            is_all_input_hidden = False
+                            # check type
+                            input_type = el.get_attribute('type')
+                            if input_type == "text":
+                                is_all_input_hidden = False
                     if is_all_input_hidden:
+                        #print("found all input hidden")
                         is_need_refresh = True
+        else:
+            pass
+            #print("not found registrationsNewApp")
     except Exception as exc:
         pass
         print("find input fail:", exc)
@@ -2844,7 +2854,6 @@ def main():
 
         '''
 
-
         # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
         if len(url) > 0 :
             if url != last_url:
@@ -2925,10 +2934,7 @@ def main():
                     except Exception as excCloseFail:
                         pass
 
-
             if '/performance.do' in url:
                 cityline_performance(url)
-
-
 
 main()
