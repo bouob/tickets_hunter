@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.11.22)"
+CONST_APP_VERSION = u"MaxBot (2019.12.04)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1355,70 +1355,81 @@ def kktix_reg_new(url, answer_index):
         pass
     '''
 
-    # check is able to buy.
     # auto refresh for area list page.
     is_need_refresh = False
-    registrationsNewApp_div = None
-    el_list = None
-    try:
-        registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-        if registrationsNewApp_div is not None:
-            #print("found registrationsNewApp")
-            el_list = registrationsNewApp_div.find_elements(By.TAG_NAME, "input")
-            if el_list is None:
-                #print("not found input")
-                is_need_refresh = True
-            else:
-                #print("found input")
-                if len(el_list) == 0:
-                    is_need_refresh = True
-                else:
-                    is_all_input_hidden = True
-                    idx = 0
-                    for el in el_list:
-                        idx += 1
-                        if el.is_enabled():
-                            # check type
-                            input_type = el.get_attribute('type')
-                            if input_type == "text":
-                                is_all_input_hidden = False
-                    if is_all_input_hidden:
-                        #print("found all input hidden")
-                        is_need_refresh = True
-        else:
-            pass
-            #print("not found registrationsNewApp")
-    except Exception as exc:
-        pass
-        print("find input fail:", exc)
 
-    if is_need_refresh:
-        try:
-            # this may cause fail!
-            driver.refresh()
-        except Exception as exc:
-            #print("refresh fail")
-            pass
-
-        return -1
-
-    # method #2
     person_agree_terms_checkbox = None
     try:
         person_agree_terms_checkbox = driver.find_element(By.ID, 'person_agree_terms')
         if person_agree_terms_checkbox is not None:
-            #print("find person_agree_terms checkbox")
-            if not person_agree_terms_checkbox.is_selected():
-                #print('send check to checkbox')
-                person_agree_terms_checkbox.click()
+            if person_agree_terms_checkbox.is_enabled():
+                #print("find person_agree_terms checkbox")
+                if not person_agree_terms_checkbox.is_selected():
+                    #print('send check to checkbox')
+                    person_agree_terms_checkbox.click()
+                else:
+                    #print('checked')
+                    pass
             else:
-                #print('checked')
-                pass
+                is_need_refresh = True
         else:
+            is_need_refresh = True
             print("find person_agree_terms checkbox fail")
     except Exception as exc:
         print("find person_agree_terms checkbox Exception")
         pass
+    print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
+
+    # check is able to buy.
+    registrationsNewApp_div = None
+    el_list = None
+    if not is_need_refresh:
+        try:
+            registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
+            if registrationsNewApp_div is not None:
+                #print("found registrationsNewApp")
+                el_list = registrationsNewApp_div.find_elements(By.CSS_SELECTOR, "input[type='text']")
+                if el_list is None:
+                    #print("query input[type='text'] return None")
+                    is_need_refresh = True
+                else:
+                    #print("found input")
+                    if len(el_list) == 0:
+                        #print("query input[type='text'] length zero")
+                        is_need_refresh = True
+                    else:
+                        is_all_input_disable = True
+                        idx = 0
+                        for el in el_list:
+                            idx += 1
+                            if el.is_enabled():
+                                is_all_input_disable = False
+                            else:
+                                # check value
+                                input_value = str(el.get_attribute('value'))
+                                #print("ticker(%d) number value is:'%s'" % (idx,input_value))
+                                if input_value.strip() != '0':
+                                    #print("found not zero value, do not refresh!")
+                                    is_all_input_disable = False
+                                    
+                        if is_all_input_disable:
+                            #print("found all input hidden")
+                            is_need_refresh = True
+            else:
+                pass
+                #print("not found registrationsNewApp")
+        except Exception as exc:
+            pass
+            print("find input fail:", exc)
+
+    if is_need_refresh:
+        try:
+            print("try to refresh page...")
+            driver.refresh()
+        except Exception as exc:
+            #print("refresh fail")
+            pass
+        return -1
 
 
     #---------------------------
