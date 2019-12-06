@@ -39,7 +39,7 @@ logger = logging.getLogger('logger')
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.12.04)"
+CONST_APP_VERSION = u"MaxBot (2019.12.06)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1337,6 +1337,75 @@ def kktix_assign_ticket_number():
 
     return ret
 
+def kktix_get_web_datetime(url, registrationsNewApp_div):
+    web_datetime = None
+
+    el_web_datetime = None
+    is_found_web_datetime = False
+    try:
+        if not registrationsNewApp_div is None:
+            el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
+            if el_web_datetime_list is not None:
+                el_web_datetime_list_count = len(el_web_datetime_list)
+                if el_web_datetime_list_count > 0:
+                    for el_web_datetime in el_web_datetime_list:
+                        try:
+                            el_web_datetime_text = el_web_datetime.text
+                            #print("el_web_datetime_text:", el_web_datetime_text)
+                            
+                            now = datetime.now()
+                            #print("now:", now)
+                            for guess_year in range(now.year,now.year+3):
+                                current_year = str(guess_year)            
+                                if current_year in el_web_datetime_text:
+                                    if u'/' in el_web_datetime_text:
+                                        web_datetime = el_web_datetime_text
+                                        is_found_web_datetime = True
+                                        break
+
+                            if is_found_web_datetime:
+                                break
+                        except Exception as exc:
+                            #print(exc)
+                            pass
+            else:
+                print("find td.ng-binding fail")
+    except Exception as exc:
+        #print("find td.ng-binding Exception")
+        pass
+    #print("is_found_web_datetime", is_found_web_datetime)
+
+    return web_datetime
+
+def kktix_check_agree_checkbox():
+    is_need_refresh = False
+    is_finish_checkbox_click = False
+
+    person_agree_terms_checkbox = None
+    try:
+        person_agree_terms_checkbox = driver.find_element(By.ID, 'person_agree_terms')
+        if person_agree_terms_checkbox is not None:
+            if person_agree_terms_checkbox.is_enabled():
+                #print("find person_agree_terms checkbox")
+                if not person_agree_terms_checkbox.is_selected():
+                    #print('send check to checkbox')
+                    person_agree_terms_checkbox.click()
+                    is_finish_checkbox_click = True
+                else:
+                    #print('checked')
+                    is_finish_checkbox_click = True
+                    pass
+            else:
+                is_need_refresh = True
+        else:
+            is_need_refresh = True
+            print("find person_agree_terms checkbox fail")
+    except Exception as exc:
+        print("find person_agree_terms checkbox Exception")
+        pass
+
+    return is_need_refresh, is_finish_checkbox_click
+
 def kktix_reg_new(url, answer_index):
     #---------------------------
     # part 1: checkbox.
@@ -1358,27 +1427,12 @@ def kktix_reg_new(url, answer_index):
     # auto refresh for area list page.
     is_need_refresh = False
 
-    person_agree_terms_checkbox = None
-    try:
-        person_agree_terms_checkbox = driver.find_element(By.ID, 'person_agree_terms')
-        if person_agree_terms_checkbox is not None:
-            if person_agree_terms_checkbox.is_enabled():
-                #print("find person_agree_terms checkbox")
-                if not person_agree_terms_checkbox.is_selected():
-                    #print('send check to checkbox')
-                    person_agree_terms_checkbox.click()
-                else:
-                    #print('checked')
-                    pass
-            else:
-                is_need_refresh = True
-        else:
-            is_need_refresh = True
-            print("find person_agree_terms checkbox fail")
-    except Exception as exc:
-        print("find person_agree_terms checkbox Exception")
-        pass
-    print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
+    is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+
+    if not is_finish_checkbox_click:
+        # retry again.
+        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+    #print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
 
     # check is able to buy.
     registrationsNewApp_div = None
@@ -1431,7 +1485,6 @@ def kktix_reg_new(url, answer_index):
             pass
         return -1
 
-
     #---------------------------
     # part 2: ticket number
     #---------------------------
@@ -1441,7 +1494,6 @@ def kktix_reg_new(url, answer_index):
             is_assign_ticket_number = kktix_assign_ticket_number()
             if is_assign_ticket_number:
                 break
-
 
     #---------------------------
     # part 3: captcha
@@ -1586,45 +1638,8 @@ def kktix_reg_new(url, answer_index):
 
             #print("is_need_parse_web_datetime:", is_need_parse_web_datetime)
             if is_need_parse_web_datetime:
-                # get web datetime.
-                # ...
-                el_web_datetime = None
-                is_found_web_datetime = False
-                web_datetime = None
-                try:
-                    if not registrationsNewApp_div is None:
-                        el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
-                        if el_web_datetime_list is not None:
-                            el_web_datetime_list_count = len(el_web_datetime_list)
-                            if el_web_datetime_list_count > 0:
-                                for el_web_datetime in el_web_datetime_list:
-                                    try:
-                                        el_web_datetime_text = el_web_datetime.text
-                                        #print("el_web_datetime_text:", el_web_datetime_text)
-                                        
-                                        now = datetime.now()
-                                        #print("now:", now)
-                                        for guess_year in range(now.year,now.year+3):
-                                            current_year = str(guess_year)            
-                                            if current_year in el_web_datetime_text:
-                                                if u'/' in el_web_datetime_text:
-                                                    web_datetime = el_web_datetime_text
-                                                    is_found_web_datetime = True
-                                                    break
-
-                                        if is_found_web_datetime:
-                                            break
-                                    except Exception as exc:
-                                        #print(exc)
-                                        pass
-                        else:
-                            print("find td.ng-binding fail")
-                except Exception as exc:
-                    #print("find td.ng-binding Exception")
-                    pass
-                #print("is_found_web_datetime", is_found_web_datetime)
-
                 captcha_password_string = None
+                web_datetime = kktix_get_web_datetime(url, registrationsNewApp_div)
                 if not web_datetime is None:
                     tmp_text = captcha_text_div_text
                     # replace ex.
@@ -1697,6 +1712,96 @@ def kktix_reg_new(url, answer_index):
                         captcha_password_string = ans
                         #print(u"my_anwser:", ans)
 
+            # parse '演出時間'
+            is_need_parse_web_time = False
+            if u'半形' in captcha_text_div_text:
+                if u'演出時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'表演時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'開始時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'演唱會時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'展覽時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'音樂會時間' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+                if u'the time of the show you purchased' in captcha_text_div_text:
+                    is_need_parse_web_time = True
+
+            #print("is_need_parse_web_time", is_need_parse_web_time)
+            if is_need_parse_web_time:
+                captcha_password_string = None
+                web_datetime = kktix_get_web_datetime(url, registrationsNewApp_div)
+                if not web_datetime is None:
+                    tmp_text = captcha_text_div_text
+                    # replace ex.
+                    tmp_text = tmp_text.replace(u'例如',u'範例')
+                    tmp_text = tmp_text.replace(u'如:',u'範例:')
+                    tmp_text = tmp_text.replace(u'舉例',u'範例')
+                    if not u'範例' in tmp_text:
+                        tmp_text = tmp_text.replace(u'例',u'範例')
+                    # important, maybe 例 & ex occurs at same time.
+                    tmp_text = tmp_text.replace(u'ex:',u'範例:')
+
+                    tmp_text = tmp_text.replace(u'輸入：',u'範例')
+                    tmp_text = tmp_text.replace(u'輸入',u'範例')
+                    #print("tmp_text", tmp_text)
+
+                    my_datetime_foramted = None
+
+                    if my_datetime_foramted is None:
+                        my_hint_anwser = tmp_text
+
+                        my_delimitor_symbol = u'範例'
+                        if my_delimitor_symbol in my_hint_anwser:
+                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
+                            my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
+                        #print("my_hint_anwser:", my_hint_anwser)
+                        # get before.
+                        my_delimitor_symbol = u'，'
+                        if my_delimitor_symbol in my_hint_anwser:
+                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
+                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
+                        my_delimitor_symbol = u'。'
+                        if my_delimitor_symbol in my_hint_anwser:
+                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
+                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
+                        # PS: space may not is delimitor...
+                        my_delimitor_symbol = u' '
+                        if my_delimitor_symbol in my_hint_anwser:
+                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
+                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
+                        my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
+                        #print("my_hint_anwser:", my_hint_anwser)
+                        #print(u"my_anwser_formated:", my_anwser_formated)
+                        if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
+                            my_datetime_foramted = "%H%M"
+                            if u'12小時制' in tmp_text:
+                                my_datetime_foramted = "%I%M"
+
+                        if my_anwser_formated == u"[\\d][\\d]:[\\d][\\d]":
+                            my_datetime_foramted = "%H:%M"
+                            if u'12小時制' in tmp_text:
+                                my_datetime_foramted = "%I:%M"
+
+                    if not my_datetime_foramted is None:
+                        date_delimitor_symbol = u'('
+                        if date_delimitor_symbol in web_datetime:
+                            date_delimitor_symbol_index = web_datetime.find(date_delimitor_symbol)
+                            if date_delimitor_symbol_index > 8:
+                                web_datetime = web_datetime[:date_delimitor_symbol_index-1]
+                        date_time = datetime.strptime(web_datetime,u"%Y/%m/%d %H:%M")
+                        #print("date_time:", date_time)
+                        ans = None
+                        try:
+                            ans = date_time.strftime(my_datetime_foramted)
+                        except Exception as exc:
+                            pass
+                        captcha_password_string = ans
+                        #print(u"my_anwser:", ans)
+
             # name of event.
             if captcha_password_string is None:
                 if u"name of event" in tmp_text:
@@ -1709,7 +1814,6 @@ def kktix_reg_new(url, answer_index):
                         end_index = tmp_text.find(target_symbol, star_index)
                         captcha_password_string = tmp_text[star_index+1:end_index]
                         #print("captcha_password_string:", captcha_password_string)
-
 
             #print("captcha_password_string:", captcha_password_string)
             # ask question.
@@ -1730,6 +1834,15 @@ def kktix_reg_new(url, answer_index):
             # must input the ticket number correct.
             #print("is_captcha_appear:", is_captcha_appear)
             #print("is_captcha_appear_and_filled_password:", is_captcha_appear_and_filled_password)
+
+            # must ensure checkbox has been checked.
+            if not is_finish_checkbox_click:
+                # retry again.
+                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+
+            if not is_finish_checkbox_click:
+                # retry again.
+                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
 
             if not is_captcha_appear:
                 # without captcha.
