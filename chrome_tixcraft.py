@@ -34,12 +34,14 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger('logger')
 
+# for check reg_info
+import requests
 
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.12.06)"
+CONST_APP_VERSION = u"MaxBot (2019.12.10)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -198,32 +200,92 @@ if not config_dict is None:
 
     Root_Dir = ""
     if browser == "chrome":
+
+        DEFAULT_ARGS = [
+            '--disable-audio-output',
+            '--disable-background-networking',
+            '--disable-background-timer-throttling',
+            '--disable-breakpad',
+            '--disable-browser-side-navigation',
+            '--disable-checker-imaging', 
+            '--disable-client-side-phishing-detection',
+            '--disable-default-apps',
+            '--disable-demo-mode', 
+            '--disable-dev-shm-usage',
+            #'--disable-extensions',
+            '--disable-features=site-per-process',
+            '--disable-hang-monitor',
+            '--disable-in-process-stack-traces', 
+            '--disable-javascript-harmony-shipping', 
+            '--disable-logging', 
+            '--disable-notifications', 
+            '--disable-popup-blocking',
+            '--disable-prompt-on-repost',
+            '--disable-perfetto',
+            '--disable-permissions-api', 
+            '--disable-plugins',
+            '--disable-presentation-api',
+            '--disable-reading-from-canvas', 
+            '--disable-renderer-accessibility', 
+            '--disable-renderer-backgrounding', 
+            '--disable-shader-name-hashing', 
+            '--disable-smooth-scrolling',
+            '--disable-speech-api',
+            '--disable-speech-synthesis-api',
+            '--disable-sync',
+            '--disable-translate',
+
+            '--metrics-recording-only',
+            '--no-first-run',
+            '--no-experiments',
+            '--safebrowsing-disable-auto-update',
+            #'--enable-automation',
+            '--password-store=basic',
+            '--use-mock-keychain',
+            '--lang=zh-TW',
+            '--stable-release-mode',
+            '--use-mobile-user-agent', 
+            '--webview-disable-safebrowsing-support', 
+            #'--no-sandbox',
+            #'--incognito',
+        ]
+
         chrome_options = webdriver.ChromeOptions()
+
+        # for navigator.webdriver
         chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-        #chrome_options.add_argument("--disable-popup-blocking");
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+        chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
+
+        if 'kktix.c' in homepage:
+            #chrome_options.add_argument('blink-settings=imagesEnabled=false')
+            pass
 
         # default os is linux/mac
         chromedriver_path =Root_Dir+ "webdriver/chromedriver"
         if platform.system()=="windows":
             chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
-        extension_path = Root_Dir + "webdriver/AdBlock.crx"
-        extension_file_exist = os.path.isfile(extension_path)
+        if not 'kktix.c' in homepage:
+            extension_path = Root_Dir + "webdriver/AdBlock.crx"
+            extension_file_exist = os.path.isfile(extension_path)
 
-        if extension_file_exist:
-            chrome_options.add_extension(extension_path)
-        else:
-            print("extention not exist")
+            if extension_file_exist:
+                chrome_options.add_extension(extension_path)
+            else:
+                print("extention not exist")
 
-        extension_path = Root_Dir + "webdriver/BlockYourselfFromAnalytics.crx"
-        extension_file_exist = os.path.isfile(extension_path)
+            extension_path = Root_Dir + "webdriver/BlockYourselfFromAnalytics.crx"
+            extension_file_exist = os.path.isfile(extension_path)
 
-        if extension_file_exist:
-            chrome_options.add_extension(extension_path)
-        else:
-            print("extention not exist")
+            if extension_file_exist:
+                chrome_options.add_extension(extension_path)
+            else:
+                print("extention not exist")
 
-        caps = DesiredCapabilities().CHROME
+        #caps = DesiredCapabilities().CHROME
+        caps = chrome_options.to_capabilities()
+
         #caps["pageLoadStrategy"] = u"normal"  #  complete
         caps["pageLoadStrategy"] = u"eager"  #  interactive
         #caps["pageLoadStrategy"] = u"none"
@@ -232,7 +294,20 @@ if not config_dict is None:
         caps["unhandledPromptBehavior"] = u"ignore"
         #caps["unhandledPromptBehavior"] = u"dismiss"
 
-        driver = webdriver.Chrome(options=chrome_options, executable_path=chromedriver_path, desired_capabilities=caps)
+        #print("caps:", caps)
+
+        # method 1:
+        #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options, desired_capabilities=caps)
+        #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
+        
+        # method 2:
+        #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', desired_capabilities=caps)
+        #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', options=chrome_options)
+
+        # method 3:
+        driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
+
+
 
     if browser == "firefox":
         # default os is linux/mac
@@ -1138,7 +1213,10 @@ def kktix_press_next_button():
         #form_actions_div = driver.find_element(By.ID, 'registrationsNewApp')
         #next_step_button = form_actions_div.find_element(By.CSS_SELECTOR, 'div.form-actions button.btn-primary')
 
-        # method #2 wait
+        # method #2
+        # next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
+
+        # method #3 wait
         wait = WebDriverWait(driver, 1)
         next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')))
         if not next_step_button is None:
@@ -1154,8 +1232,15 @@ def kktix_press_next_button():
         # retry once
         # method #1
         try:        
-            next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
+            #next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
             #next_step_button = form_actions_div.find_element(By.CSS_SELECTOR, 'div.form-actions button.btn-primary')
+    
+            # method #2        
+            #next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
+    
+            # method #3 wait
+            wait = WebDriverWait(driver, 1)
+            next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')))
             if not next_step_button is None:
                 if next_step_button.is_enabled():
                     next_step_button.click()
@@ -1231,40 +1316,40 @@ def kktix_assign_ticket_number():
                 for row in ticket_price_list:
                     row_index += 1
 
-                    row_is_enabled=False
+                    row_text = ""
                     try:
-                        row_is_enabled = row.is_enabled()
+                        row_text = row.text
+                        #print("get text:", row_text)
                     except Exception as exc:
-                        pass
+                        print("get text fail")
+                        break
 
-                    if row_is_enabled:
-                        row_text = ""
+                    if len(row_text) > 0:
+                        # check ticket input textbox.
+                        ticket_price_input = None
                         try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
+                            ticket_price_input = row.find_element(By.CSS_SELECTOR, "input[type='text']")
+                            if ticket_price_input is not None:
+                                current_ticket_number = str(ticket_price_input.get_attribute('value'))
+                                if ticket_price_input.is_enabled():
+                                    if len(current_ticket_number) > 0:
+                                        if current_ticket_number != "0":
+                                            is_ticket_number_assigened = True
 
-                        if len(row_text) > 0:
-                            # check ticket input textbox.
-                            ticket_price_input = None
-                            try:
-                                ticket_price_input = row.find_element(By.TAG_NAME, 'input')
-                                if ticket_price_input is not None:
-                                    if ticket_price_input.is_enabled():
-                                        current_ticket_number = str(ticket_price_input.get_attribute('value'))
-                                        if len(current_ticket_number) > 0:
-                                            if current_ticket_number != "0":
-                                                is_ticket_number_assigened = True
-
-                                        if len(kktix_area_keyword) == 0:
+                                    if len(kktix_area_keyword) == 0:
+                                        areas.append(row)
+                                    else:
+                                        # match keyword.
+                                        if kktix_area_keyword in row_text:
                                             areas.append(row)
-                                        else:
-                                            # match keyword.
-                                            if kktix_area_keyword in row_text:
-                                                areas.append(row)
-                            except Exception as exc:
-                                pass
+                                else:
+                                    #disabled.
+                                    if len(current_ticket_number) > 0:
+                                        if current_ticket_number != "0":
+                                            is_ticket_number_assigened = True
+
+                        except Exception as exc:
+                            pass
         else:
             print("find ticket-price span fail")
 
@@ -1298,15 +1383,20 @@ def kktix_assign_ticket_number():
                 #print("area text", area.text)
                 ticket_price_input = None
                 try:
-                    ticket_price_input = area.find_element(By.TAG_NAME, 'input')
+                    wait = WebDriverWait(area, 1)
+                    ticket_price_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text']")))
                     if ticket_price_input is not None:
                         if ticket_price_input.is_enabled():
                             current_ticket_number = str(ticket_price_input.get_attribute('value'))
                             if current_ticket_number == "0":
                                 try:
-                                    #print("asssign ticket number:" + str(ticket_number))
+                                    print("asssign ticket number:%s" % str(ticket_number))
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys(ticket_number)
+                                    
+                                    # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
+                                    #time.sleep(0.4)
+                                    
                                     ret = True
 
                                 except Exception as exc:
@@ -1314,6 +1404,10 @@ def kktix_assign_ticket_number():
                                     print(exc)
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys("1")
+
+                                    # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
+                                    #time.sleep(0.4)
+                                    
                                     ret = True
                                     pass
                             else:
@@ -1406,85 +1500,46 @@ def kktix_check_agree_checkbox():
 
     return is_need_refresh, is_finish_checkbox_click
 
-def kktix_reg_new(url, answer_index):
-    #---------------------------
-    # part 1: checkbox.
-    #---------------------------
-    # check i agree (javascript)
+def kktix_check_register_status(url):
+    prefix = 'com/events/'
+    postfix = '/registrations/new'
+    event_code = find_between(url,prefix,postfix)
+    #print('event_code:',event_code)
+    html_result = None
+    if len(event_code) > 0:
+        url = 'https://kktix.com/g/events/%s/register_info' % event_code
 
-    # method #1
-    # use this method cuase "next button not able to enable"
-    '''
-    try:
-        #driver.execute_script("document.getElementById(\"person_agree_terms\").checked;")
-        driver.execute_script("$(\"#person_agree_terms\").prop('checked', true);")
-    except Exception as exc:
-        print("javascript check person_agree_terms fail")
-        print(exc)
-        pass
-    '''
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
 
-    # auto refresh for area list page.
-    is_need_refresh = False
-
-    is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
-
-    if not is_finish_checkbox_click:
-        # retry again.
-        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
-    #print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
-
-    # check is able to buy.
-    registrationsNewApp_div = None
-    el_list = None
-    if not is_need_refresh:
         try:
-            registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-            if registrationsNewApp_div is not None:
-                #print("found registrationsNewApp")
-                el_list = registrationsNewApp_div.find_elements(By.CSS_SELECTOR, "input[type='text']")
-                if el_list is None:
-                    #print("query input[type='text'] return None")
-                    is_need_refresh = True
-                else:
-                    #print("found input")
-                    if len(el_list) == 0:
-                        #print("query input[type='text'] length zero")
-                        is_need_refresh = True
-                    else:
-                        is_all_input_disable = True
-                        idx = 0
-                        for el in el_list:
-                            idx += 1
-                            if el.is_enabled():
-                                is_all_input_disable = False
-                            else:
-                                # check value
-                                input_value = str(el.get_attribute('value'))
-                                #print("ticker(%d) number value is:'%s'" % (idx,input_value))
-                                if input_value.strip() != '0':
-                                    #print("found not zero value, do not refresh!")
-                                    is_all_input_disable = False
-                                    
-                        if is_all_input_disable:
-                            #print("found all input hidden")
-                            is_need_refresh = True
-            else:
+            html_result = requests.get(url , headers=headers)
+        except Exception as exc:
+            print("send reg_info request fail:")
+            print(exc)
+            pass
+
+    registerStatus = None
+    if not html_result is None:
+        status_code = html_result.status_code
+
+        if status_code == 200:
+            html_text = html_result.text
+            #print("html_text:", html_text)
+
+            try:
+                jsLoads = json.loads(html_text)
+                if 'inventory' in jsLoads:
+                    if 'registerStatus' in jsLoads['inventory']:
+                        registerStatus = jsLoads['inventory']['registerStatus']
+            except Exception as exc:
+                print("load reg_info json fail:")
+                print(exc)
                 pass
-                #print("not found registrationsNewApp")
-        except Exception as exc:
-            pass
-            print("find input fail:", exc)
 
-    if is_need_refresh:
-        try:
-            print("try to refresh page...")
-            driver.refresh()
-        except Exception as exc:
-            #print("refresh fail")
-            pass
-        return -1
+    return registerStatus
 
+def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click):
     #---------------------------
     # part 2: ticket number
     #---------------------------
@@ -1494,6 +1549,7 @@ def kktix_reg_new(url, answer_index):
             is_assign_ticket_number = kktix_assign_ticket_number()
             if is_assign_ticket_number:
                 break
+    print('is_assign_ticket_number:', is_assign_ticket_number)
 
     #---------------------------
     # part 3: captcha
@@ -1897,6 +1953,110 @@ def kktix_reg_new(url, answer_index):
 
 
     return answer_index
+
+def kktix_reg_new(url, answer_index, kktix_register_status_last):
+    registerStatus = kktix_register_status_last
+
+    #---------------------------
+    # part 1: checkbox.
+    #---------------------------
+    # check i agree (javascript)
+
+    # method #1
+    # use this method cuase "next button not able to enable"
+    '''
+    try:
+        #driver.execute_script("document.getElementById(\"person_agree_terms\").checked;")
+        driver.execute_script("$(\"#person_agree_terms\").prop('checked', true);")
+    except Exception as exc:
+        print("javascript check person_agree_terms fail")
+        print(exc)
+        pass
+    '''
+
+    # auto refresh for area list page.
+    is_need_refresh = False
+    is_finish_checkbox_click = False
+    
+    if not is_need_refresh:
+        if registerStatus is None:
+            registerStatus = kktix_check_register_status(url)
+            if not registerStatus is None:
+                print("registerStatus:", registerStatus)
+                # OUT_OF_STOCK
+                if registerStatus != 'IN_STOCK':
+                    is_need_refresh = True
+
+    if not is_need_refresh:
+        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+
+        if not is_finish_checkbox_click:
+            # retry again.
+            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+        #print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
+
+    # check is able to buy.
+    registrationsNewApp_div = None
+    el_list = None
+    if not is_need_refresh:
+        try:
+            registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
+            
+            # old method, disable this block.
+            '''
+            if registrationsNewApp_div is not None:
+                #print("found registrationsNewApp")
+                el_list = registrationsNewApp_div.find_elements(By.CSS_SELECTOR, "input[type='text']")
+                if el_list is None:
+                    #print("query input[type='text'] return None")
+                    is_need_refresh = True
+                else:
+                    #print("found input")
+                    if len(el_list) == 0:
+                        #print("query input[type='text'] length zero")
+                        is_need_refresh = True
+                    else:
+                        is_all_input_disable = True
+                        idx = 0
+                        for el in el_list:
+                            idx += 1
+                            if el.is_enabled():
+                                is_all_input_disable = False
+                            else:
+                                # check value
+                                input_value = str(el.get_attribute('value'))
+                                #print("ticker(%d) number value is:'%s'" % (idx,input_value))
+                                if input_value.strip() != '0':
+                                    #print("found not zero value, do not refresh!")
+                                    is_all_input_disable = False
+                                    
+                        if is_all_input_disable:
+                            #print("found all input hidden")
+                            is_need_refresh = True
+            else:
+                pass
+                #print("not found registrationsNewApp")
+            '''
+        except Exception as exc:
+            pass
+            print("find input fail:", exc)
+
+    if is_need_refresh:
+        try:
+            print("try to refresh page...")
+            driver.refresh()
+        except Exception as exc:
+            #print("refresh fail")
+            pass
+        
+        # reset answer_index
+        answer_index = -1
+        registerStatus = None
+    else:
+        answer_index = kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click)
+
+
+    return answer_index, registerStatus
 
 def fami_date_auto_select(url):
     date_list = None
@@ -2795,8 +2955,10 @@ def main():
     last_url = ""
     # for tixcraft
     is_verifyCode_editing = False
+    
     # for kktix
     answer_index = -1
+    kktix_register_status_last = None
 
     while True:
         time.sleep(0.1)
@@ -2921,22 +3083,22 @@ def main():
             if len(str_exc)==0:
                 str_exc = repr(exc)
             
-            str_chrome_not_reachable = u'chrome not reachable'
-            
-            # for python2
-            try:
-                basestring
-                if isinstance(str_chrome_not_reachable, unicode):
-                    str_chrome_not_reachable = str(str_chrome_not_reachable)
-            except NameError:  # Python 3.x
-                basestring = str
+            exit_bot_error_strings = [u'Max retries exceeded with url', u'chrome not reachable']
+            for str_chrome_not_reachable in exit_bot_error_strings:
+                # for python2
+                try:
+                    basestring
+                    if isinstance(str_chrome_not_reachable, unicode):
+                        str_chrome_not_reachable = str(str_chrome_not_reachable)
+                except NameError:  # Python 3.x
+                    basestring = str
 
-            if isinstance(str_exc, str):
-                if str_chrome_not_reachable in str_exc:
-                    print(u'quit bot')
-                    driver.quit()
-                    import sys
-                    sys.exit()
+                if isinstance(str_exc, str):
+                    if str_chrome_not_reachable in str_exc:
+                        print(u'quit bot')
+                        driver.quit()
+                        import sys
+                        sys.exit()
 
             print("exc", str_exc)
             pass
@@ -3020,9 +3182,10 @@ def main():
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
             if '/registrations/new' in url:
-                answer_index = kktix_reg_new(url, answer_index)
+                answer_index, kktix_register_status_last = kktix_reg_new(url, answer_index, kktix_register_status_last)
             else:
                 answer_index = -1
+                kktix_register_status_last = None
 
         # for famiticket
         if 'famiticket.com' in url:
