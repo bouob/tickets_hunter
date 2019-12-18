@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2019.12.10)"
+CONST_APP_VERSION = u"MaxBot (2019.12.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -72,6 +72,7 @@ def btn_save_act(slience_mode=False):
         global chk_state_auto_press_next_step_button
         global chk_state_auto_fill_ticket_number
         global txt_kktix_area_keyword
+        # disable password brute force attack
         global txt_kktix_answer_dictionary
 
         global chk_state_date_auto_select
@@ -113,7 +114,8 @@ def btn_save_act(slience_mode=False):
             config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
             config_dict["kktix"]["area_mode"] = combo_kktix_area_mode.get().strip()
             config_dict["kktix"]["area_keyword"] = txt_kktix_area_keyword.get().strip()
-            config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
+            # disable password brute force attack
+            #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
 
             config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
             config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
@@ -171,10 +173,12 @@ def showHideBlocks(all_layout_visible=False):
 
     # for kktix only.
     global lbl_kktix_area_mode
-    global lbl_kktix_answer_dictionary
 
-    global txt_kktix_answer_dictionary
-    global txt_kktix_answer_dictionary_index
+    # disable password brute force attack
+    #global lbl_kktix_answer_dictionary
+
+    #global txt_kktix_answer_dictionary
+    #global txt_kktix_answer_dictionary_index
 
     global combo_kktix_area_mode
     global combo_kktix_area_mode_index
@@ -200,7 +204,8 @@ def showHideBlocks(all_layout_visible=False):
                 pass
             else:
                 combo_kktix_area_mode.grid_forget()
-                txt_kktix_answer_dictionary.grid_forget()
+                # disable password brute force attack
+                #txt_kktix_answer_dictionary.grid_forget()
 
         else:
             frame_group_kktix.grid_forget()
@@ -211,23 +216,27 @@ def showHideBlocks(all_layout_visible=False):
 
             if u'kktix' in new_homepage:
                 combo_kktix_area_mode.grid(column=1, row=combo_kktix_area_mode_index, sticky = W)
-                txt_kktix_answer_dictionary.grid(column=1, row=txt_kktix_answer_dictionary_index, sticky = W)
+                # disable password brute force attack
+                #txt_kktix_answer_dictionary.grid(column=1, row=txt_kktix_answer_dictionary_index, sticky = W)
             else:
                 combo_kktix_area_mode.grid_forget()
-                txt_kktix_answer_dictionary.grid_forget()
+                # disable password brute force attack
+                #txt_kktix_answer_dictionary.grid_forget()
 
         else:
             frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
             frame_group_kktix.grid_forget()
 
     lbl_kktix_area_mode_default = 'Area select order'
-    lbl_kktix_answer_default = 'Answer Dictionary'
+    #lbl_kktix_answer_default = 'Answer Dictionary'
     if u'kktix' in new_homepage:
         lbl_kktix_area_mode['text'] = lbl_kktix_area_mode_default
-        lbl_kktix_answer_dictionary['text'] = lbl_kktix_answer_default
+        # disable password brute force attack
+        #lbl_kktix_answer_dictionary['text'] = lbl_kktix_answer_default
     else:
         lbl_kktix_area_mode['text'] = ''
-        lbl_kktix_answer_dictionary['text'] = ''
+        # disable password brute force attack
+        #lbl_kktix_answer_dictionary['text'] = ''
 
     showHideTixcraftBlocks()
 
@@ -322,7 +331,8 @@ def MainMenu(root):
 
     kktix_area_mode = ""
     kktix_area_keyword = ""
-    kktix_answer_dictionary = ""
+    # disable password brute force attack
+    #kktix_answer_dictionary = ""
 
     date_auto_select_enable = None
     date_auto_select_mode = ""
@@ -369,6 +379,7 @@ def MainMenu(root):
                     kktix_area_keyword = ""
                 kktix_area_keyword = kktix_area_keyword.strip()
 
+            # disable password brute force attack
             if 'answer_dictionary' in config_dict["kktix"]:
                 kktix_answer_dictionary = config_dict["kktix"]["answer_dictionary"]
                 if kktix_answer_dictionary is None:
@@ -413,7 +424,8 @@ def MainMenu(root):
         print("auto_fill_ticket_number", auto_fill_ticket_number)
         print("kktix_area_mode", kktix_area_mode)
         print("kktix_area_keyword", kktix_area_keyword)
-        print("kktix_answer_dictionary", kktix_answer_dictionary)
+        # disable password brute force attack
+        #print("kktix_answer_dictionary", kktix_answer_dictionary)
 
         # for tixcraft
         print("==[tixcraft]==")
@@ -552,19 +564,20 @@ def MainMenu(root):
 
     group_row_count+=1
 
+    # disable password brute force attack
     global lbl_kktix_answer_dictionary
-    lbl_kktix_answer_dictionary = Label(frame_group_kktix, text="Answer Dictionary")
-    lbl_kktix_answer_dictionary.grid(column=0, row=group_row_count, sticky = E)
+    #lbl_kktix_answer_dictionary = Label(frame_group_kktix, text="Answer Dictionary")
+    #lbl_kktix_answer_dictionary.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_answer_dictionary
     global txt_kktix_answer_dictionary_index
     txt_kktix_answer_dictionary_index = group_row_count
     global txt_kktix_answer_dictionary_value
-    txt_kktix_answer_dictionary_value = StringVar(frame_group_kktix, value=kktix_answer_dictionary)
-    txt_kktix_answer_dictionary = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_answer_dictionary_value)
-    txt_kktix_answer_dictionary.grid(column=1, row=group_row_count, sticky = W)
+    #txt_kktix_answer_dictionary_value = StringVar(frame_group_kktix, value=kktix_answer_dictionary)
+    #txt_kktix_answer_dictionary = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_answer_dictionary_value)
+    #txt_kktix_answer_dictionary.grid(column=1, row=group_row_count, sticky = W)
 
-    group_row_count+=1
+    #group_row_count+=1
 
     lbl_hr = Label(frame_group_kktix, text="")
     lbl_hr.grid(column=0, row=group_row_count)

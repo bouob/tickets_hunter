@@ -36,12 +36,15 @@ logger = logging.getLogger('logger')
 
 # for check reg_info
 import requests
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+warnings.simplefilter('ignore',InsecureRequestWarning)
 
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.12.10)"
+CONST_APP_VERSION = u"MaxBot (2019.12.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -130,6 +133,7 @@ if not config_dict is None:
                 kktix_area_keyword = ""
             kktix_area_keyword = kktix_area_keyword.strip()
 
+        # disable password brute force attack
         if 'answer_dictionary' in config_dict["kktix"]:
             kktix_answer_dictionary = config_dict["kktix"]["answer_dictionary"]
             if kktix_answer_dictionary is None:
@@ -1390,7 +1394,7 @@ def kktix_assign_ticket_number():
                             current_ticket_number = str(ticket_price_input.get_attribute('value'))
                             if current_ticket_number == "0":
                                 try:
-                                    print("asssign ticket number:%s" % str(ticket_number))
+                                    #print("asssign ticket number:%s" % str(ticket_number))
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys(ticket_number)
                                     
@@ -1549,7 +1553,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
             is_assign_ticket_number = kktix_assign_ticket_number()
             if is_assign_ticket_number:
                 break
-    print('is_assign_ticket_number:', is_assign_ticket_number)
+    #print('is_assign_ticket_number:', is_assign_ticket_number)
 
     #---------------------------
     # part 3: captcha
@@ -1584,6 +1588,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
         if captcha_text_div is not None:
             is_captcha_appear = True
 
+            captcha_text_div_text = ""
             try:
                 captcha_text_div_text = captcha_text_div.text
             except Exception as exc:
@@ -1873,8 +1878,9 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
             #print("captcha_password_string:", captcha_password_string)
             # ask question.
-            if captcha_password_string is None:
-                answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
+            # disable password brute force attack
+            #if captcha_password_string is None:
+                # answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
 
             # final run.
             if captcha_password_string is not None:
@@ -3051,6 +3057,7 @@ def main():
                     driver.switch_to.window(driver.window_handles[0])
             except Exception as excSwithFail:
                 pass
+
         except UnexpectedAlertPresentException as exc1:
             #print('UnexpectedAlertPresentException at this url:', url )
             #print("last_url:", last_url)
@@ -3070,7 +3077,9 @@ def main():
                 except NoAlertPresentException:
                     pass
                     #print('*crickets*')
+
         except Exception as exc:
+            logger.error('Exception')
             logger.error(exc, exc_info=True)
 
             #UnicodeEncodeError: 'ascii' codec can't encode characters in position 63-72: ordinal not in range(128)
