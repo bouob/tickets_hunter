@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2019.12.17)"
+CONST_APP_VERSION = u"MaxBot (2020.01.12)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -76,8 +76,8 @@ browser = None
 ticket_number = None
 facebook_account = None
 
-auto_press_next_step_button = None
-auto_fill_ticket_number = None
+auto_press_next_step_button = False
+auto_fill_ticket_number = False
 auto_fill_ticket_price = None
 
 date_auto_select_enable = None
@@ -91,12 +91,13 @@ area_keyword = None
 area_keyword_1 = None
 area_keyword_2 = None
 
-
 kktix_area_auto_select_mode = None
 kktix_area_keyword = None
 
 kktix_answer_dictionary = None
 kktix_answer_dictionary_list = None
+
+auto_guess_options = False
 
 if not config_dict is None:
     # read config.
@@ -143,6 +144,8 @@ if not config_dict is None:
             if len(kktix_answer_dictionary) > 0:
                 kktix_answer_dictionary_list = kktix_answer_dictionary.split(',')
 
+        if 'auto_guess_options' in config_dict["kktix"]:
+            auto_guess_options = config_dict["kktix"]["auto_guess_options"]
 
     # for ["tixcraft"]
     if 'tixcraft' in config_dict:
@@ -183,6 +186,7 @@ if not config_dict is None:
     print("auto_fill_ticket_number", auto_fill_ticket_number)
     print("kktix_area_keyword", kktix_area_keyword)
     print("kktix_answer_dictionary", kktix_answer_dictionary)
+    print("auto_guess_options", auto_guess_options)
 
     # for tixcraft
     print("==[tixcraft]==")
@@ -239,6 +243,8 @@ if not config_dict is None:
             '--disable-sync',
             '--disable-translate',
 
+            '--ignore-certificate-errors',
+
             '--metrics-recording-only',
             '--no-first-run',
             '--no-experiments',
@@ -249,7 +255,7 @@ if not config_dict is None:
             '--lang=zh-TW',
             '--stable-release-mode',
             '--use-mobile-user-agent', 
-            '--webview-disable-safebrowsing-support', 
+            '--webview-disable-safebrowsing-support',
             #'--no-sandbox',
             #'--incognito',
         ]
@@ -1878,9 +1884,9 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
             #print("captcha_password_string:", captcha_password_string)
             # ask question.
-            # disable password brute force attack
-            #if captcha_password_string is None:
-                # answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
+            if auto_guess_options:
+                if captcha_password_string is None:
+                    answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
 
             # final run.
             if captcha_password_string is not None:

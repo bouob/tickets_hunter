@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2019.12.17)"
+CONST_APP_VERSION = u"MaxBot (2020.01.12)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -74,6 +74,8 @@ def btn_save_act(slience_mode=False):
         global txt_kktix_area_keyword
         # disable password brute force attack
         global txt_kktix_answer_dictionary
+        
+        global chk_state_auto_guess_options
 
         global chk_state_date_auto_select
         global txt_date_keyword
@@ -116,6 +118,7 @@ def btn_save_act(slience_mode=False):
             config_dict["kktix"]["area_keyword"] = txt_kktix_area_keyword.get().strip()
             # disable password brute force attack
             #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
+            config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
             config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
             config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
@@ -326,13 +329,14 @@ def MainMenu(root):
     browser = None
     ticket_number = 1
 
-    auto_press_next_step_button = None
-    auto_fill_ticket_number = None
+    auto_press_next_step_button = False     # default not checked.
+    auto_fill_ticket_number = False         # default not checked.
 
     kktix_area_mode = ""
     kktix_area_keyword = ""
     # disable password brute force attack
     #kktix_answer_dictionary = ""
+    auto_guess_options = False              # default not checked.
 
     date_auto_select_enable = None
     date_auto_select_mode = ""
@@ -378,6 +382,9 @@ def MainMenu(root):
                 if kktix_area_keyword is None:
                     kktix_area_keyword = ""
                 kktix_area_keyword = kktix_area_keyword.strip()
+
+            if 'auto_guess_options' in config_dict["kktix"]:
+                auto_guess_options = config_dict["kktix"]["auto_guess_options"]
 
             # disable password brute force attack
             if 'answer_dictionary' in config_dict["kktix"]:
@@ -426,6 +433,7 @@ def MainMenu(root):
         print("kktix_area_keyword", kktix_area_keyword)
         # disable password brute force attack
         #print("kktix_answer_dictionary", kktix_answer_dictionary)
+        print("auto_guess_options", auto_guess_options)
 
         # for tixcraft
         print("==[tixcraft]==")
@@ -562,7 +570,7 @@ def MainMenu(root):
     txt_kktix_area_keyword = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_value)
     txt_kktix_area_keyword.grid(column=1, row=group_row_count, sticky = W)
 
-    group_row_count+=1
+    #group_row_count+=1
 
     # disable password brute force attack
     global lbl_kktix_answer_dictionary
@@ -577,7 +585,19 @@ def MainMenu(root):
     #txt_kktix_answer_dictionary = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_answer_dictionary_value)
     #txt_kktix_answer_dictionary.grid(column=1, row=group_row_count, sticky = W)
 
-    #group_row_count+=1
+    group_row_count+=1
+
+    lbl_auto_guess_options = Label(frame_group_kktix, text="Guess Options in Question")
+    lbl_auto_guess_options.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_guess_options
+    chk_state_auto_guess_options = BooleanVar()
+    chk_state_auto_guess_options.set(auto_guess_options)
+
+    chk_auto_guess_options = Checkbutton(frame_group_kktix, text='Enable', variable=chk_state_auto_guess_options)
+    chk_auto_guess_options.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
 
     lbl_hr = Label(frame_group_kktix, text="")
     lbl_hr.grid(column=0, row=group_row_count)
