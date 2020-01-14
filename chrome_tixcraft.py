@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.01.12)"
+CONST_APP_VERSION = u"MaxBot (2020.01.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1905,23 +1905,29 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
             # must ensure checkbox has been checked.
             if not is_finish_checkbox_click:
-                # retry again.
-                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
-
-            if not is_finish_checkbox_click:
-                # retry again.
-                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+                for retry_i in range(10):
+                    # retry again.
+                    is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox()
+                    time.sleep(0.1)
+                    if is_finish_checkbox_click:
+                        break
 
             if not is_captcha_appear:
                 # without captcha.
                 # normal mode.
                 #print("# normal mode.")
-                kktix_press_next_button()
+                if is_finish_checkbox_click:
+                    kktix_press_next_button()
+                else:
+                    print("unable to assign checkbox value")
             else:
                 if is_captcha_appear_and_filled_password:
                     # for easy guest mode, we can fill the password correct.
                     #print("for easy guest mode, we can fill the password correct.")
-                    kktix_press_next_button()
+                    if is_finish_checkbox_click:
+                        kktix_press_next_button()
+                    else:
+                        print("unable to assign checkbox value")
                 else:
                     # not is easy guest mode.
                     #print("# not is easy guest mode.")
