@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.01.13)"
+CONST_APP_VERSION = u"MaxBot (2020.01.20)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1882,11 +1882,39 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                         captcha_password_string = tmp_text[star_index+1:end_index]
                         #print("captcha_password_string:", captcha_password_string)
 
+            # 二題式，組合問題。
+            is_combine_two_question = False
+            if u"第一題" in tmp_text and u"第二題" in tmp_text:
+                is_combine_two_question = True
+            if u"Q1." in tmp_text and u"Q2." in tmp_text:
+                if u"二題" in tmp_text:
+                    is_combine_two_question = True
+                if u"2題" in tmp_text:
+                    is_combine_two_question = True
+            if u"Q1:" in tmp_text and u"Q2:" in tmp_text:
+                if u"二題" in tmp_text:
+                    is_combine_two_question = True
+                if u"2題" in tmp_text:
+                    is_combine_two_question = True
+            if u"Q1 " in tmp_text and u"Q2 " in tmp_text:
+                if u"二題" in tmp_text:
+                    is_combine_two_question = True
+                if u"2題" in tmp_text:
+                    is_combine_two_question = True
+            if is_combine_two_question:
+                captcha_password_string = None
+            #print("is_combine_two_question:", is_combine_two_question)
+
             #print("captcha_password_string:", captcha_password_string)
             # ask question.
             if auto_guess_options:
-                if captcha_password_string is None:
-                    answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
+                if not is_combine_two_question:
+                    if captcha_password_string is None:
+                        answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
+                else:
+                    # no need guess options.
+                    pass
+
 
             # final run.
             if captcha_password_string is not None:
