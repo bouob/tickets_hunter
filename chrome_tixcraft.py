@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.01.20)"
+CONST_APP_VERSION = u"MaxBot (2020.02.02)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -688,25 +688,27 @@ def tixcraft_redirect(url):
     game_name = ""
 
     # get game_name from url
-    if "https://tixcraft.com/activity/detail/" in url:
+    if "tixcraft.com/activity/detail/" in url:
         url_split = url.split("/")
         if len(url_split) >= 6:
             game_name = url_split[5]
 
-    if url == "https://tixcraft.com/activity/detail/%s" % (game_name,):
-        entry_url = "https://tixcraft.com/activity/game/%s" % (game_name,)
+    if "tixcraft.com/activity/detail/%s" % (game_name,) in url:
+        # to support teamear
+        entry_url = url.replace("tixcraft.com/activity/detail/","tixcraft.com/activity/game/")
+        #entry_url = "tixcraft.com/activity/game/%s" % (game_name,)
         driver.get(entry_url)
 
 def date_auto_select(url):
     game_name = ""
 
-    if "https://tixcraft.com/activity/game/" in url:
+    if "tixcraft.com/activity/game/" in url:
         url_split = url.split("/")
         if len(url_split) >= 6:
             game_name = url_split[5]
 
     # choose date
-    if url == "https://tixcraft.com/activity/game/%s" % (game_name,):
+    if "tixcraft.com/activity/game/%s" % (game_name,) in url:
         if len(date_keyword) == 0:
             el = None
 
@@ -3200,11 +3202,11 @@ def main():
             tixcraft_verify(url)
 
         if 'tixcraft.com' in url:
-            if 'https://tixcraft.com/ticket/order' in url:
+            if 'tixcraft.com/ticket/order' in url:
                 # do nothing.
                 continue
 
-            if 'https://tixcraft.com/ticket/payment' in url:
+            if 'tixcraft.com/ticket/payment' in url:
                 # do nothing.
                 continue
 
