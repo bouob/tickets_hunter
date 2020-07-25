@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.02.17)"
+CONST_APP_VERSION = u"MaxBot (2020.07.26)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -283,7 +283,7 @@ if not config_dict is None:
             if extension_file_exist:
                 chrome_options.add_extension(extension_path)
             else:
-                print("extention not exist")
+                print("extention not exist:", extension_path)
 
             extension_path = Root_Dir + "webdriver/BlockYourselfFromAnalytics.crx"
             extension_file_exist = os.path.isfile(extension_path)
@@ -291,7 +291,7 @@ if not config_dict is None:
             if extension_file_exist:
                 chrome_options.add_extension(extension_path)
             else:
-                print("extention not exist")
+                print("extention not exist:", extension_path)
 
         #caps = DesiredCapabilities().CHROME
         caps = chrome_options.to_capabilities()
@@ -688,27 +688,27 @@ def tixcraft_redirect(url):
     game_name = ""
 
     # get game_name from url
-    if "tixcraft.com/activity/detail/" in url:
+    if "/activity/detail/" in url:
         url_split = url.split("/")
         if len(url_split) >= 6:
             game_name = url_split[5]
 
-    if "tixcraft.com/activity/detail/%s" % (game_name,) in url:
+    if "/activity/detail/%s" % (game_name,) in url:
         # to support teamear
-        entry_url = url.replace("tixcraft.com/activity/detail/","tixcraft.com/activity/game/")
+        entry_url = url.replace("/activity/detail/","/activity/game/")
         #entry_url = "tixcraft.com/activity/game/%s" % (game_name,)
         driver.get(entry_url)
 
 def date_auto_select(url):
     game_name = ""
 
-    if "tixcraft.com/activity/game/" in url:
+    if "/activity/game/" in url:
         url_split = url.split("/")
         if len(url_split) >= 6:
             game_name = url_split[5]
 
     # choose date
-    if "tixcraft.com/activity/game/%s" % (game_name,) in url:
+    if "/activity/game/%s" % (game_name,) in url:
         if len(date_keyword) == 0:
             el = None
 
@@ -856,7 +856,7 @@ def get_tixcraft_target_area(el, area_keyword):
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
 def area_auto_select(url):
-    if 'tixcraft.com/ticket/area/' in url:
+    if '/ticket/area/' in url:
         #driver.switch_to.default_content()
 
         el = None
@@ -3201,12 +3201,19 @@ def main():
         if '/Downloads/varify.html' in url:
             tixcraft_verify(url)
 
+        tixcraft_family = False
         if 'tixcraft.com' in url:
-            if 'tixcraft.com/ticket/order' in url:
+            tixcraft_family = True
+
+        if 'indievox.com' in url:
+            tixcraft_family = True
+
+        if tixcraft_family:
+            if '/ticket/order' in url:
                 # do nothing.
                 continue
 
-            if 'tixcraft.com/ticket/payment' in url:
+            if '/ticket/payment' in url:
                 # do nothing.
                 continue
 
@@ -3224,7 +3231,7 @@ def main():
                 tixcraft_verify(url)
 
             # main app, to select ticket number.
-            if 'tixcraft.com/ticket/ticket/' in url:
+            if '/ticket/ticket/' in url:
                 is_verifyCode_editing = tixcraft_ticket_main(url, is_verifyCode_editing)
             else:
                 # not is input verify code, reset flag.
