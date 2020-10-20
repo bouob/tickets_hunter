@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.07.26)"
+CONST_APP_VERSION = u"MaxBot (2020.10.20)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1213,6 +1213,46 @@ def tixcraft_ticket_main(url, is_verifyCode_editing):
 
     return is_verifyCode_editing
 
+# PS: There are two "Next" button in kktix.
+#   : 1: /events/xxx
+#   : 2: /events/xxx/registrations/new
+#   : This is for case-1.
+def kktix_events_press_next_button():
+    ret = False
+
+    # let javascript to enable button.
+    time.sleep(0.2)
+
+    try:
+        # method #3 wait
+        wait = WebDriverWait(driver, 1)
+        next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.tickets a.btn-point')))
+        if not next_step_button is None:
+            if next_step_button.is_enabled():
+                next_step_button.click()
+                ret = True
+
+    except Exception as exc:
+        print("wait form-actions div wait to be clickable Exception:")
+        print(exc)
+        pass
+
+        # retry once
+        # method #1
+        try:        
+            # method #3 wait
+            wait = WebDriverWait(driver, 1)
+            next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.tickets a.btn-point')))
+            if not next_step_button is None:
+                if next_step_button.is_enabled():
+                    next_step_button.click()
+                    ret = True
+        except Exception as exc:
+            print("wait form-actions div retry clickable Exception:")
+            print(exc)
+    return ret
+
+#   : This is for case-2 next button.
 def kktix_press_next_button():
     ret = False
 
@@ -1513,12 +1553,20 @@ def kktix_check_agree_checkbox():
     return is_need_refresh, is_finish_checkbox_click
 
 def kktix_check_register_status(url):
-    prefix = 'com/events/'
+    #ex: https://xxx.kktix.cc/events/xxx
+    prefix_list = ['.com/events/','.cc/events/']
     postfix = '/registrations/new'
-    event_code = find_between(url,prefix,postfix)
-    #print('event_code:',event_code)
+
+    is_match_event_code = False
+    event_code = ""
+    for prefix in prefix_list:
+        event_code = find_between(url,prefix,postfix)
+        if len(event_code) > 0:
+            is_match_event_code = True
+            #print('event_code:',event_code)
+    
     html_result = None
-    if len(event_code) > 0:
+    if is_match_event_code:
         url = 'https://kktix.com/g/events/%s/register_info' % event_code
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
@@ -3242,6 +3290,18 @@ def main():
             if '/registrations/new' in url:
                 answer_index, kktix_register_status_last = kktix_reg_new(url, answer_index, kktix_register_status_last)
             else:
+                is_event_page = False
+                if '/events/' in url:
+                    # ex: https://xxx.kktix.cc/events/xxx-copy-1
+                    if len(url.split('/'))<=5:
+                        is_event_page = True
+                if is_event_page:
+                    if auto_press_next_step_button:
+                        # pass switch check.
+                        #print("should press next here.")
+                        kktix_events_press_next_button()
+
+
                 answer_index = -1
                 kktix_register_status_last = None
 
