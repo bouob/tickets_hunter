@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.10.20)"
+CONST_APP_VERSION = u"MaxBot (2020.10.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1564,10 +1564,13 @@ def kktix_check_register_status(url):
         if len(event_code) > 0:
             is_match_event_code = True
             #print('event_code:',event_code)
+            break
     
     html_result = None
     if is_match_event_code:
-        url = 'https://kktix.com/g/events/%s/register_info' % event_code
+        url = "https://kktix.com/g/events/%s/register_info" % (event_code)
+        #print('event_code:',event_code)
+        #print("url:", url)
 
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
@@ -1582,7 +1585,8 @@ def kktix_check_register_status(url):
     registerStatus = None
     if not html_result is None:
         status_code = html_result.status_code
-
+        #print("status_code:",status_code)
+        
         if status_code == 200:
             html_text = html_result.text
             #print("html_text:", html_text)
@@ -1597,6 +1601,7 @@ def kktix_check_register_status(url):
                 print(exc)
                 pass
 
+    #print("registerStatus:", registerStatus)
     return registerStatus
 
 def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click):
