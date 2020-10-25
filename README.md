@@ -9,6 +9,8 @@ https://youtu.be/U6xGBofx-O8
 
 # How to use (如何使用)
 https://max-everyday.com/2018/03/tixcraft-bot/
+or
+https://max-everyday.com/2018/12/kktix-bot/
 
 # How to execute source code (執行方法)
 1: download chromedrive to "webdriver" folder:
