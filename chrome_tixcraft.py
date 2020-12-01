@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.10.24)"
+CONST_APP_VERSION = u"MaxBot (2020.12.01)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
