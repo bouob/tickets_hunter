@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2020.12.01)"
+CONST_APP_VERSION = u"MaxBot (2020.12.08)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -465,7 +465,7 @@ def MainMenu(root):
 
     global combo_homepage
     combo_homepage = ttk.Combobox(frame_group_header, state="readonly")
-    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com","https://www.famiticket.com.tw","http://www.urbtix.hk/","https://www.cityline.com/")
+    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com","https://www.indievox.com/","https://www.famiticket.com.tw","http://www.urbtix.hk/","https://www.cityline.com/")
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)
@@ -797,7 +797,7 @@ def main():
         #root.call('wm', 'iconphoto', root._w, logo)
         pass
     if platform.system() == 'Linux':
-        #logo = PhotoImage(file=icon_filepath)
+        logo = PhotoImage(file=icon_filepath)
         root.call('wm', 'iconphoto', root._w, logo)
     os.remove(icon_filepath)
 
