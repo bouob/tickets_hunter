@@ -24,8 +24,7 @@ the default path is the script path + "webdriver/chromedriver", my suggestion is
 
 3: <code>python settings.py</code> or <code>python3 settings.py</code>
 
-PS: this script able to run in python2 or python3.
-PS: 原始碼可以在python2 或 python3 下執行，請先確定你的python 執行環境下已安裝 selenium 或相關的套件，參考 pip-reg.txt。還需要手動下載新版的 chromedrive 或 firefox drive(geckodriver), 建議在 source code 下建立一個 webdrive 的目錄，並把 chromedirve 的執行檔放進去，或是手動地修改 chrome_tixcraft.py 裡的 chromedriver_path 為你環境下能存取到 chromedrive 的路徑。最後透過 python 或 python3 執行 settings.py 就可以有 GUI 的設定界面。
+PS: this script able to run in python2 or python3. (原始碼可以在python2 或 python3 下執行，請先確定你的python 執行環境下已安裝 selenium 或相關的套件，請參考 pip-reg.txt 檔案內容。還需要手動下載新版的 chromedrive 或 firefox drive(geckodriver), 建議在 source code 下建立一個 webdrive 的目錄，並把 chromedirve 的執行檔放進去，或是手動地修改 chrome_tixcraft.py 裡的 chromedriver_path 為你環境下能存取到 chromedrive 的路徑。最後透過 python 或 python3 執行 settings.py 就可以有 GUI 的設定界面。)
 
 # Introduce the implement (實作方法)
 https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
