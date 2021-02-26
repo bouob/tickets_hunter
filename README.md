@@ -18,7 +18,7 @@ http://chromedriver.chromium.org/downloads
 
 change the chromedrive in chrome_tixcraft.py, source code:
 <code>chromedriver_path =Root_Dir+ "webdriver/chromedriver"</code>
-the default path is the script path + "webdriver/chromedriver", my suggestion is make a new directory then move the chromedrive under new folder.
+the default path is the script path + "webdriver/chromedriver", My suggestion is to create a new directory, then move the chromedrive under new folder.
 
 2: <code>pip install selenium</code> or <code>pip3 install selenium</code>
 
