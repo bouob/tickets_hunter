@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2020.12.08)"
+CONST_APP_VERSION = u"MaxBot (2021.03.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -86,6 +86,8 @@ def btn_save_act(slience_mode=False):
         global combo_date_auto_select_mode
         global combo_area_auto_select_mode
 
+        global chk_state_pass_1_seat_remaining
+
         if is_all_data_correct:
             if combo_homepage.get().strip()=="":
                 is_all_data_correct = False
@@ -129,6 +131,8 @@ def btn_save_act(slience_mode=False):
 
             config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
             config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
+
+            config_dict["tixcraft"]["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
 
         # save config.
         if is_all_data_correct:
@@ -245,7 +249,7 @@ def showHideBlocks(all_layout_visible=False):
 
     showHideTixcraftBlocks()
 
-
+# purpose: show detail blocks if master field is enable.
 def showHideTixcraftBlocks():
     # for tixcraft show/hide enable.
     # field 1
@@ -349,6 +353,8 @@ def MainMenu(root):
     area_keyword_1 = ""
     area_keyword_2 = ""
 
+    pass_1_seat_remaining_enable = False    # default not checked.
+
     global config_dict
     if not config_dict is None:
         # read config.
@@ -397,8 +403,12 @@ def MainMenu(root):
 
         # for ["tixcraft"]
         if 'tixcraft' in config_dict:
-            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-            date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+            date_auto_select_enable = False
+            date_auto_select_mode = None
+
+            if 'date_auto_select' in config_dict["tixcraft"]:
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
 
             if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
                 date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
@@ -407,8 +417,12 @@ def MainMenu(root):
                 date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"]
                 date_keyword = date_keyword.strip()
 
-            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-            area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+            area_auto_select_enable = False
+            area_auto_select_mode = None
+
+            if 'area_auto_select' in config_dict["tixcraft"]:
+                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+                area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
 
             if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
                 area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
@@ -420,6 +434,10 @@ def MainMenu(root):
             if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
                 area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
                 area_keyword_2 = area_keyword_2.strip()
+
+            pass_1_seat_remaining_enable = False
+            if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
+                pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
         # output config:
         print("homepage", homepage)
@@ -447,6 +465,8 @@ def MainMenu(root):
         print("area_auto_select_mode", area_auto_select_mode)
         print("area_keyword_1", area_keyword_1)
         print("area_keyword_2", area_keyword_2)
+
+        print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
     else:
         print('config is none')
 
@@ -543,9 +563,8 @@ def MainMenu(root):
     chk_state_auto_fill_ticket_number = BooleanVar()
     chk_state_auto_fill_ticket_number.set(auto_fill_ticket_number)
 
-    chk_auto_auto_fill_ticket_number = Checkbutton(frame_group_kktix, text='Enable', variable=chk_state_auto_fill_ticket_number)
-    chk_auto_auto_fill_ticket_number.grid(column=1, row=group_row_count, sticky = W)
-
+    chk_auto_fill_ticket_number = Checkbutton(frame_group_kktix, text='Enable', variable=chk_state_auto_fill_ticket_number)
+    chk_auto_fill_ticket_number.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -718,6 +737,22 @@ def MainMenu(root):
     txt_area_keyword_2 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_2_value)
     txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
 
+    group_row_count+=1
+
+    lbl_pass_1_seat_remaining = Label(frame_group_tixcraft, text="Pass 1 seat remaining")
+    lbl_pass_1_seat_remaining.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_pass_1_seat_remaining
+    chk_state_pass_1_seat_remaining = BooleanVar()
+    chk_state_pass_1_seat_remaining.set(pass_1_seat_remaining_enable)
+
+    global chk_pass_1_seat_remaining
+    chk_pass_1_seat_remaining = Checkbutton(frame_group_tixcraft, text='Enable', variable=chk_state_pass_1_seat_remaining)
+    chk_pass_1_seat_remaining.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
     frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
@@ -765,7 +800,7 @@ def main():
     GUI = MainMenu(root)
 
     GUI_SIZE_WIDTH = 420
-    GUI_SIZE_HEIGHT = 370
+    GUI_SIZE_HEIGHT = 395
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-20)
 

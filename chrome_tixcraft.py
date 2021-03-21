@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2020.12.08)"
+CONST_APP_VERSION = u"MaxBot (2021.03.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -52,6 +52,8 @@ CONST_RANDOM = u"random"
 CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM)
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
+
+CONT_STRING_1_SEATS_REMAINING = [u'1 seat(s) remaining',u'剩餘 1',u'1 席残り']
 
 # initial webdriver
 # 說明：初始化 webdriver
@@ -80,16 +82,18 @@ auto_press_next_step_button = False
 auto_fill_ticket_number = False
 auto_fill_ticket_price = None
 
-date_auto_select_enable = None
+date_auto_select_enable = False
 date_auto_select_mode = None
 date_keyword = None
 
-area_auto_select_enable = None
+area_auto_select_enable = False
 area_auto_select_mode = None
 area_keyword = None
 
 area_keyword_1 = None
 area_keyword_2 = None
+
+pass_1_seat_remaining_enable = False    # default not checked.
 
 kktix_area_auto_select_mode = None
 kktix_area_keyword = None
@@ -149,8 +153,12 @@ if not config_dict is None:
 
     # for ["tixcraft"]
     if 'tixcraft' in config_dict:
-        date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-        date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+        date_auto_select_enable = False
+        date_auto_select_mode = None
+
+        if 'date_auto_select' in config_dict["tixcraft"]:
+            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+            date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
 
         if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
             date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
@@ -159,8 +167,12 @@ if not config_dict is None:
             date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"]
             date_keyword = date_keyword.strip()
 
-        area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+        area_auto_select_enable = False
+        area_auto_select_mode = None
+
+        if 'area_auto_select' in config_dict["tixcraft"]:
+            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+            area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
 
         if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
             area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
@@ -172,6 +184,10 @@ if not config_dict is None:
         if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
             area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
             area_keyword_2 = area_keyword_2.strip()
+
+        pass_1_seat_remaining_enable = False
+        if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
+            pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
     # output config:
     print("version", CONST_APP_VERSION)
@@ -198,6 +214,8 @@ if not config_dict is None:
     print("area_auto_select_mode", area_auto_select_mode)
     print("area_keyword_1", area_keyword_1)
     print("area_keyword_2", area_keyword_2)
+
+    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
 
     # entry point
     # 說明：自動開啟第一個的網頁
@@ -792,64 +810,79 @@ def get_tixcraft_target_area(el, area_keyword):
     is_need_refresh = False
 
     if el is not None:
-        if len(area_keyword) == 0:
-            try:
-                areas = el.find_elements(By.TAG_NAME, "a")
-            except Exception as exc:
-                pass
+        area_list = None
+        try:
+            area_list = el.find_elements(By.TAG_NAME, 'a')
+        except Exception as exc:
+            #print("find area list a tag fail")
+            pass
 
-            if areas is not None:
-                if len(areas) == 0:
-                    print("list is empty, do refresh!")
-                    is_need_refresh = True
-            else:
-                print("list is None, do refresh!")
+        if area_list is not None:
+            if len(area_list) == 0:
+                print("(with keyword) list is empty, do refresh!")
                 is_need_refresh = True
         else:
-            # match keyword.
-            area_list = None
-            try:
-                area_list = el.find_elements(By.TAG_NAME, 'a')
-            except Exception as exc:
-                #print("find area list a tag fail")
-                pass
+            print("(with keyword) list is None, do refresh!")
+            is_need_refresh = True
 
-            if area_list is not None:
-                if len(area_list) == 0:
-                    print("(with keyword) list is empty, do refresh!")
-                    is_need_refresh = True
-            else:
-                print("(with keyword) list is None, do refresh!")
-                is_need_refresh = True
+        if area_list is not None:
+            areas = []
+            for row in area_list:
+                row_is_enabled=False
+                try:
+                    row_is_enabled = row.is_enabled()
+                except Exception as exc:
+                    pass
 
-            if area_list is not None:
-                areas = []
-                for row in area_list:
-                    row_is_enabled=False
+                row_text = ""
+                if row_is_enabled:
                     try:
-                        row_is_enabled = row.is_enabled()
+                        row_text = row.text
                     except Exception as exc:
-                        pass
+                        print("get text fail")
+                        break
 
-                    row_text = ""
-                    if row_is_enabled:
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
+                if len(row_text) > 0:
+                    is_append_this_row = False
 
-                    if len(row_text) > 0:
+                    if len(area_keyword) > 0:
+                        # must match keyword.
                         if area_keyword in row_text:
-                            areas.append(row)
+                            is_append_this_row = True
+                    else:
+                        # without keyword.
+                        is_append_this_row = True
 
-                            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                print("only need first item, break area list loop.")
-                                break
-                            #print("row_text:" + row_text)
-                            #print("match:" + area_keyword)
-                if len(areas) == 0:
-                    areas = None
+                    if is_append_this_row:
+                        if pass_1_seat_remaining_enable:
+                            area_item_font_el = None
+                            try:
+                                #print('try to find font tag at row:', row_text)
+                                area_item_font_el = row.find_element(By.TAG_NAME, 'font')
+                                if not area_item_font_el is None:
+                                    font_el_text = area_item_font_el.text
+                                    #print('font tag text:', font_el_text)
+                                    if font_el_text in CONT_STRING_1_SEATS_REMAINING:
+                                        #print("match pass 1 seats remaining 1 full text:", row_text)
+                                        #print("match pass 1 seats remaining 2 font text:", font_el_text)
+                                        is_append_this_row = False
+                                else:
+                                    #print("row withou font tag.")
+                                    pass
+                            except Exception as exc:
+                                #print("find font text in a tag fail:", exc)
+                                pass
+
+                    if is_append_this_row:
+                        areas.append(row)
+
+                        if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                            print("only need first item, break area list loop.")
+                            break
+                        #print("row_text:" + row_text)
+                        #print("match:" + area_keyword)
+            if len(areas) == 0:
+                areas = None
 
     return is_need_refresh, areas
 
