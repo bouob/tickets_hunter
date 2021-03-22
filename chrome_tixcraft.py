@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.03.21)"
+CONST_APP_VERSION = u"MaxBot (2021.03.22)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -805,12 +805,16 @@ def date_auto_select(url):
             #print("find .btn-next fail:", exc)
 
 # PURPOSE: get target area list.
+# RETURN: 
+#   is_need_refresh
+#   areas
 def get_tixcraft_target_area(el, area_keyword):
-    areas = None
     is_need_refresh = False
+    areas = None
 
+    area_list = None
+    area_list_count = 0
     if el is not None:
-        area_list = None
         try:
             area_list = el.find_elements(By.TAG_NAME, 'a')
         except Exception as exc:
@@ -818,71 +822,74 @@ def get_tixcraft_target_area(el, area_keyword):
             pass
 
         if area_list is not None:
-            if len(area_list) == 0:
+            area_list_count = len(area_list)
+            if area_list_count == 0:
                 print("(with keyword) list is empty, do refresh!")
                 is_need_refresh = True
         else:
             print("(with keyword) list is None, do refresh!")
             is_need_refresh = True
 
-        if area_list is not None:
-            areas = []
-            for row in area_list:
-                row_is_enabled=False
+    if area_list_count > 0:
+        areas = []
+        for row in area_list:
+            row_is_enabled=False
+            try:
+                row_is_enabled = row.is_enabled()
+            except Exception as exc:
+                pass
+
+            row_text = ""
+            if row_is_enabled:
                 try:
-                    row_is_enabled = row.is_enabled()
+                    row_text = row.text
                 except Exception as exc:
-                    pass
+                    print("get text fail")
+                    break
 
-                row_text = ""
-                if row_is_enabled:
-                    try:
-                        row_text = row.text
-                    except Exception as exc:
-                        print("get text fail")
-                        break
+            if len(row_text) > 0:
+                is_append_this_row = False
 
-                if len(row_text) > 0:
-                    is_append_this_row = False
-
-                    if len(area_keyword) > 0:
-                        # must match keyword.
-                        if area_keyword in row_text:
-                            is_append_this_row = True
-                    else:
-                        # without keyword.
+                if len(area_keyword) > 0:
+                    # must match keyword.
+                    if area_keyword in row_text:
                         is_append_this_row = True
+                else:
+                    # without keyword.
+                    is_append_this_row = True
 
-                    if is_append_this_row:
-                        if pass_1_seat_remaining_enable:
-                            area_item_font_el = None
-                            try:
-                                #print('try to find font tag at row:', row_text)
-                                area_item_font_el = row.find_element(By.TAG_NAME, 'font')
-                                if not area_item_font_el is None:
-                                    font_el_text = area_item_font_el.text
-                                    #print('font tag text:', font_el_text)
-                                    if font_el_text in CONT_STRING_1_SEATS_REMAINING:
-                                        #print("match pass 1 seats remaining 1 full text:", row_text)
-                                        #print("match pass 1 seats remaining 2 font text:", font_el_text)
-                                        is_append_this_row = False
-                                else:
-                                    #print("row withou font tag.")
-                                    pass
-                            except Exception as exc:
-                                #print("find font text in a tag fail:", exc)
+                if is_append_this_row:
+                    if pass_1_seat_remaining_enable:
+                        area_item_font_el = None
+                        try:
+                            #print('try to find font tag at row:', row_text)
+                            area_item_font_el = row.find_element(By.TAG_NAME, 'font')
+                            if not area_item_font_el is None:
+                                font_el_text = area_item_font_el.text
+                                #print('font tag text:', font_el_text)
+                                if font_el_text in CONT_STRING_1_SEATS_REMAINING:
+                                    #print("match pass 1 seats remaining 1 full text:", row_text)
+                                    #print("match pass 1 seats remaining 2 font text:", font_el_text)
+                                    is_append_this_row = False
+                            else:
+                                #print("row withou font tag.")
                                 pass
+                        except Exception as exc:
+                            #print("find font text in a tag fail:", exc)
+                            pass
 
-                    if is_append_this_row:
-                        areas.append(row)
+                if is_append_this_row:
+                    areas.append(row)
 
-                        if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                            print("only need first item, break area list loop.")
-                            break
-                        #print("row_text:" + row_text)
-                        #print("match:" + area_keyword)
-            if len(areas) == 0:
-                areas = None
+                    if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        print("only need first item, break area list loop.")
+                        break
+                    #print("row_text:" + row_text)
+                    #print("match:" + area_keyword)
+        
+        if len(areas) == 0:
+            areas = None
+            is_need_refresh = True
 
     return is_need_refresh, areas
 
