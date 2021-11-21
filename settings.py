@@ -16,7 +16,7 @@ import os
 import sys
 import json
 
-CONST_APP_VERSION = u"MaxBot (2021.03.22)"
+CONST_APP_VERSION = u"MaxBot (2021.11.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -355,6 +355,9 @@ def MainMenu(root):
 
     pass_1_seat_remaining_enable = False    # default not checked.
 
+    debugMode = False
+
+
     global config_dict
     if not config_dict is None:
         # read config.
@@ -363,6 +366,9 @@ def MainMenu(root):
 
         if u'browser' in config_dict:
             browser = config_dict["browser"]
+
+        if u'debug' in config_dict:
+            debugMode = config_dict["debug"]
 
         # default ticket number
         # 說明：自動選擇的票數
@@ -440,6 +446,7 @@ def MainMenu(root):
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
         # output config:
+        print("version", CONST_APP_VERSION)
         print("homepage", homepage)
         print("browser", browser)
         print("ticket_number", ticket_number)
@@ -467,6 +474,8 @@ def MainMenu(root):
         print("area_keyword_2", area_keyword_2)
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+
+        print("debug Mode", debugMode)
     else:
         print('config is none')
 

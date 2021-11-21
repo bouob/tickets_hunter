@@ -44,7 +44,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.03.22)"
+CONST_APP_VERSION = u"MaxBot (2021.11.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -103,12 +103,18 @@ kktix_answer_dictionary_list = None
 
 auto_guess_options = False
 
+debugMode = False
+
 if not config_dict is None:
     # read config.
     if 'homepage' in config_dict:
         homepage = config_dict["homepage"]
     if 'browser' in config_dict:
         browser = config_dict["browser"]
+    
+    # output debug message in client side.
+    if 'debug' in config_dict:
+        debugMode = config_dict["debug"]
 
     # default ticket number
     # 說明：自動選擇的票數
@@ -216,6 +222,7 @@ if not config_dict is None:
     print("area_keyword_2", area_keyword_2)
 
     print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+    print("debug Mode", debugMode)
 
     # entry point
     # 說明：自動開啟第一個的網頁
@@ -3101,6 +3108,9 @@ def main():
     answer_index = -1
     kktix_register_status_last = None
 
+    if debugMode:
+        print("Start to looping, detect browser url...")
+
     while True:
         time.sleep(0.1)
 
@@ -3285,6 +3295,8 @@ def main():
         '''
 
         # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
+        if debugMode:
+            print("url:", url)
         if len(url) > 0 :
             if url != last_url:
                 print(url)
