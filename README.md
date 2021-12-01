@@ -20,15 +20,15 @@ change the chromedrive in chrome_tixcraft.py, source code:
 <code>chromedriver_path =Root_Dir+ "webdriver/chromedriver"</code>
 the default path is the script path + "webdriver/chromedriver", My suggestion is to create a new directory, then move the chromedrive under new folder.
 
-2: <code>pip install selenium</code> or <code>pip3 install selenium</code>
+2: <code>python3 -m pip install selenium</code>
 
-3: <code>python settings.py</code> or <code>python3 settings.py</code>
+3: <code>python3 settings.py</code>
 
-PS1: this script able to run in python2 or python3. (原始碼可以在python2 或 python3 下執行。）
-
-PS2: 請先確定你的python 執行環境下已安裝 selenium 或相關的套件，請參考 pip-reg.txt 檔案內容。
-
-PS3: 請手動下載新版的 chromedrive, 建議在 source code 下建立一個 webdrive 的目錄，並把 chromedirve 的執行檔放進去。最後透過 python 或 python3 執行 settings.py 就可以有 GUI 的設定界面。)
+PS:
+* this script only running in python3. (原始碼只可以在 python3 下執行。）
+* 請先確定你的python 執行環境下已安裝 selenium及undetected_chromedriver 或相關的套件，請參考 pip-reg.txt 檔案內容。
+* 請手動下載新版的 chromedrive, 建議在 source code 下建立一個 webdrive 的目錄，並把 chromedirve 的執行檔放進去。最後透過 python 或 python3 執行 settings.py 就可以有 GUI 的設定界面。)
+* 如果你是使用 macOS 並且執行環境沒有 python3，請使用 https://brew.sh/ 安裝 python3
 
 # Introduce the implement (實作方法)
 https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/

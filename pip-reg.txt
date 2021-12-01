@@ -1,3 +1,5 @@
 certifi
 chardet
 idna
+selenium
+undetected_chromedriver
