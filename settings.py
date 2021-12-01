@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #encoding=utf-8
 
 try:
@@ -14,9 +14,10 @@ except ImportError:
 
 import os
 import sys
+import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2021.11.21)"
+CONST_APP_VERSION = u"MaxBot (2021.12.01)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -146,22 +147,37 @@ def btn_save_act(slience_mode=False):
     return is_all_data_correct
 
 def btn_run_clicked():
+    Root_Dir = ""
     if btn_save_act(slience_mode=True):
         import subprocess
         if hasattr(sys, 'frozen'):
+            print("execute in frozen mode")
             import platform
 
             # check platform here.
-            # for windows.
             if platform.system() == 'Darwin':
-                 subprocess.Popen("./chrome_tixcraft", shell=True)
+                print("execute MacOS python script")
+                subprocess.Popen("./chrome_tixcraft", shell=True)
             if platform.system() == 'Linux':
-                 subprocess.Popen("./chrome_tixcraft", shell=True)
+                print("execute linux binary")
+                subprocess.Popen("./chrome_tixcraft", shell=True)
             if platform.system() == 'Windows':
+                print("execute .exe binary.")
                 subprocess.Popen("chrome_tixcraft.exe", shell=True)
         else:
-            subprocess.Popen("python chrome_tixcraft.py", shell=True)
-
+            #print("execute in shell mode")
+            working_dir = os.path.dirname(os.path.realpath(__file__))
+            #print("script path:", working_dir)
+            #messagebox.showinfo(title="Debug0", message=working_dir)
+            try:
+                s=subprocess.Popen(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
+                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+                #messagebox.showinfo(title="Debug1", message=str(s))
+            except Exception as exc:
+                #msg=str(exc)
+                #messagebox.showinfo(title="Debug2", message=msg)
+                pass
 
 def btn_exit_clicked():
     root.destroy()
@@ -446,7 +462,8 @@ def MainMenu(root):
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
         # output config:
-        print("version", CONST_APP_VERSION)
+        print("setting app version", CONST_APP_VERSION)
+        print("python version", platform.python_version())
         print("homepage", homepage)
         print("browser", browser)
         print("ticket_number", ticket_number)

@@ -1,5 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #encoding=utf-8
+import os
+import sys
+import platform
+import json
+import random
+#print("python version", platform.python_version())
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -17,14 +24,14 @@ from selenium.common.exceptions import TimeoutException
 # for ["pageLoadStrategy"] = "eager"
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
+# for selenium 4
+from selenium.webdriver.chrome.service import Service
+
+# for uc
+import undetected_chromedriver.v2 as uc
+
 # for wait #1
 import time
-
-import os
-import sys
-import platform
-import json
-import random
 
 import re
 from datetime import datetime
@@ -40,11 +47,15 @@ import warnings
 from urllib3.exceptions import InsecureRequestWarning
 warnings.simplefilter('ignore',InsecureRequestWarning)
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.11.21)"
+CONST_APP_VERSION = u"MaxBot (2021.12.01)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -196,7 +207,8 @@ if not config_dict is None:
             pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
     # output config:
-    print("version", CONST_APP_VERSION)
+    print("maxbot app version", CONST_APP_VERSION)
+    print("python version", platform.python_version())
     print("homepage", homepage)
     print("browser", browser)
     print("ticket_number", ticket_number)
@@ -233,7 +245,6 @@ if not config_dict is None:
 
     Root_Dir = ""
     if browser == "chrome":
-
         DEFAULT_ARGS = [
             '--disable-audio-output',
             '--disable-background-networking',
@@ -301,23 +312,6 @@ if not config_dict is None:
         if platform.system()=="windows":
             chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
-        if not 'kktix.c' in homepage:
-            extension_path = Root_Dir + "webdriver/AdBlock.crx"
-            extension_file_exist = os.path.isfile(extension_path)
-
-            if extension_file_exist:
-                chrome_options.add_extension(extension_path)
-            else:
-                print("extention not exist:", extension_path)
-
-            extension_path = Root_Dir + "webdriver/BlockYourselfFromAnalytics.crx"
-            extension_file_exist = os.path.isfile(extension_path)
-
-            if extension_file_exist:
-                chrome_options.add_extension(extension_path)
-            else:
-                print("extention not exist:", extension_path)
-
         #caps = DesiredCapabilities().CHROME
         caps = chrome_options.to_capabilities()
 
@@ -340,8 +334,18 @@ if not config_dict is None:
         #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', options=chrome_options)
 
         # method 3:
-        driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
+        #driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
 
+        # method 4:
+        #chrome_service = Service(chromedriver_path)
+        #driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
+        
+        # method 5:
+        options = uc.ChromeOptions()
+        options.add_argument("--no-sandbox --no-first-run --no-service-autorun --password-store=basic")
+        options.page_load_strategy="eager"
+        #print("strategy", options.page_load_strategy)
+        driver = uc.Chrome(options=options)
 
 
     if browser == "firefox":
@@ -2734,7 +2738,7 @@ def urbtix_next_button_press(url):
         el = driver.find_element(By.CSS_SELECTOR, '#express-purchase-btn > div > span')
         if el is not None:
             ret = True
-            print("bingo, found next button")
+            #print("bingo, found next button")
 
             if el.is_enabled():
                 el.click()
@@ -2746,7 +2750,7 @@ def urbtix_next_button_press(url):
     return ret
 
 def urbtix_performance(url):
-    #print("urbtix bingo")
+    #print("urbtix performance bingo")
 
     if auto_fill_ticket_number:
         area_div_exist = False
@@ -3358,7 +3362,6 @@ def main():
                         #print("should press next here.")
                         kktix_events_press_next_button()
 
-
                 answer_index = -1
                 kktix_register_status_last = None
 
@@ -3370,16 +3373,19 @@ def main():
         # for urbtix
         # https://ticket.urbtix.hk/internet/secure/event/37348/performanceDetail
         if 'urbtix.hk' in url:
+        #if False:
             # http://msg.urbtix.hk
             if 'msg.urbtix.hk' in url:
                 # delay to avoid ip block.
-                time.sleep(1.1)
-                driver.get('http://www.urbtix.hk/')
+                time.sleep(1.0)
+                driver.get('https://www.urbtix.hk/')
+                pass
             # http://busy.urbtix.hk
             if 'busy.urbtix.hk' in url:
                 # delay to avoid ip block.
-                time.sleep(1.1)
-                driver.get('http://www.urbtix.hk/')
+                time.sleep(1.0)
+                driver.get('https://www.urbtix.hk/')
+                pass
 
             if '/performanceDetail/' in url:
                 urbtix_performance(url)
