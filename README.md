@@ -27,7 +27,7 @@ the default path is the script path + "webdriver/chromedriver", My suggestion is
 PS:
 * this script only running in python3. (原始碼只可以在 python3 下執行。）
 * 請先確定你的python 執行環境下已安裝 selenium及undetected_chromedriver 或相關的套件，請參考 pip-reg.txt 檔案內容。
-* 請手動下載新版的 chromedrive, 建議在 source code 下建立一個 webdrive 的目錄，並把 chromedirve 的執行檔放進去。最後透過 python 或 python3 執行 settings.py 就可以有 GUI 的設定界面。)
+* 請手動下載新版的 ChromeDriver, 建議放在搶票程式同一個目錄下，在執行搶票程式前，前請先手動點 ChromeDriver 的執行檔。最後透過 python3 執行 settings.py 就可以有 GUI 的設定界面。)
 * 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站(https://www.python.org/downloads/)來安裝 python3, 如果在 macOS 裡會使用終端機(Terminal)，建議使用 https://brew.sh/ 安裝 python3.
 
 

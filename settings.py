@@ -175,9 +175,12 @@ def btn_run_clicked():
                 #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
                 #messagebox.showinfo(title="Debug1", message=str(s))
             except Exception as exc:
-                #msg=str(exc)
-                #messagebox.showinfo(title="Debug2", message=msg)
-                pass
+                try:
+                    s=subprocess.Popen(['python', 'chrome_tixcraft.py'], cwd=working_dir)
+                except Exception as exc:
+                    msg=str(exc)
+                    messagebox.showinfo(title="Debug2", message=msg)
+                    pass
 
 def btn_exit_clicked():
     root.destroy()
