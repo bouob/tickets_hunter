@@ -28,7 +28,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.service import Service
 
 # for uc
-import undetected_chromedriver.v2 as uc
+import undetected_chromedriver as uc
 
 # for wait #1
 import time
@@ -55,7 +55,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.12.01)"
+CONST_APP_VERSION = u"MaxBot (2021.12.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -337,16 +337,36 @@ if not config_dict is None:
         #driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
 
         # method 4:
-        #chrome_service = Service(chromedriver_path)
+        chrome_service = Service(chromedriver_path)
         #driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
         
-        # method 5:
+        # method 5: uc
+        '''
         options = uc.ChromeOptions()
-        options.add_argument("--no-sandbox --no-first-run --no-service-autorun --password-store=basic")
+        options.add_argument("--no-first-run --no-service-autorun --password-store=basic")
         options.page_load_strategy="eager"
         #print("strategy", options.page_load_strategy)
-        driver = uc.Chrome(options=options)
+        if os.path.exists(chromedriver_path):
+            print("Use user driver path:", chromedriver_path)
+            driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
+        else:
+            print("Not assign driver path...")
+            driver = uc.Chrome(options=options, suppress_welcome=False)
+        '''
 
+        # method 6: Selenium Stealth
+        from selenium_stealth import stealth
+        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
+        # Selenium Stealth settings
+        stealth(driver,
+              languages=["zh-TW", "zh"],
+              vendor="Google Inc.",
+              platform="Win32",
+              webgl_vendor="Intel Inc.",
+              renderer="Intel Iris OpenGL Engine",
+              fix_hairline=True,
+          )
 
     if browser == "firefox":
         # default os is linux/mac
@@ -2210,137 +2230,24 @@ def kktix_reg_new(url, answer_index, kktix_register_status_last):
 
     return answer_index, registerStatus
 
-def fami_date_auto_select(url):
-    date_list = None
-    try:
-        date_list = driver.find_elements(By.CSS_SELECTOR, '#game_page > table > tbody > tr:nth-child(4) > td > table > tbody > tr')
-    except Exception as exc:
-        #print("find #game_page date list fail")
-        pass
-
-    if date_list is not None:
-        if len(date_keyword) == 0:
-            el = None
-
-            if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-
-                row_index = 0
-                for row in date_list:
-                    row_index += 1
-
-                    row_is_enabled=False
-                    try:
-                        row_is_enabled = row.is_enabled()
-                    except Exception as exc:
-                        pass
-
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            #print("get text fail")
-                            break
-
-                        #print("date row_text:", row_index, row_text)
-                        if len(row_text) > 0 and "/" in row_text:
-                            try:
-                                el = row.find_element(By.TAG_NAME, 'img')
-                                if el is not None:
-                                    #print("bingo, found first date button")
-                                    break
-                            except Exception as exc:
-                                print("find date image button fail")
-            else:
-                # from bottom to top
-                print("not implement!")
-
-                row_index = 0
-                for row in date_list:
-                    row_index += 1
-
-                    row_is_enabled=False
-                    try:
-                        row_is_enabled = row.is_enabled()
-                    except Exception as exc:
-                        pass
-
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
-
-                        #print("date row_text:", row_index, row_text)
-                        if len(row_text) > 0 and "/" in row_text:
-                            try:
-                                el = row.find_element(By.TAG_NAME, 'img')
-                                if el is not None:
-                                    print("bingo, found first date button")
-                                    break
-                            except Exception as exc:
-                                print("find date image button fail")
-
-            if el is not None:
-                # first date.
-                try:
-                    el.click()
-                except Exception as exc:
-                    #print("try to click date image button fail")
-                    pass
-
-        else:
-        # match keyword.
-            match_keyword_row = False
-
-            row_index = 0
-            for row in date_list:
-                row_index += 1
-
-                row_text = ""
-                try:
-                    row_text = row.text
-                except Exception as exc:
-                    print("get text fail")
-                    break
-
-                if len(row_text) > 0:
-                    if date_keyword in row_text:
-                        match_keyword_row = True
-
-                        el = None
-                        try:
-                            el = row.find_element(By.TAG_NAME, 'img')
-                        except Exception as exc:
-                            print("find date image button fail")
-
-                        if el is not None:
-                            # first date.
-                            try:
-                                el.click()
-                            except Exception as exc:
-                                print("try to click date image button fail")
-
-                    if match_keyword_row:
-                        break
 
 
 # PURPOSE: get target area list.
-def get_fami_target_area(area_keyword):
+def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2):
     areas = None
 
     area_list = None
     try:
         #print("try to find area block")
-        my_css_selector = "#game_page > table > tbody > tr:nth-child(4) > td > table:nth-child(5) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(2) > td:nth-child(2) > table > tbody > tr:nth-child(2) > td > table > tbody > tr"
+        my_css_selector = "table.session__list > tbody > tr"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
         if area_list is not None:
+            #print("lenth of row:", len(area_list))
             if len(area_list) > 0:
                 ret = True
 
-                if len(area_keyword) == 0:
+                if len(date_keyword)==0 and len(area_keyword_1)==0 and len(area_keyword_2) == 0:
+                    # select all.
                     areas = area_list
                 else:
                     # match keyword.
@@ -2349,49 +2256,180 @@ def get_fami_target_area(area_keyword):
                     row_index = 0
                     for row in area_list:
                         row_index += 1
+                        #print("row index:", row_index)
 
-                        row_is_enabled=False
+                        date_html_text = ""
+                        area_html_text = ""
+
+                        my_css_selector = "td:nth-child(1)"
+                        td_date = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                        if td_date is not None:
+                            #print("date:", td_date.text)
+                            date_html_text = td_date.text
+
+                        my_css_selector = "td:nth-child(2)"
+                        td_area = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                        if td_area is not None:
+                            #print("area:", td_area.text)
+                            area_html_text = td_area.text
+
+
+                        is_enabled = False
+                        my_css_selector = "button"
+                        td_button = row.find_element(By.TAG_NAME , my_css_selector)
+                        if td_button is not None:
+                            is_enabled = td_button.is_enabled()
+
+                        if not is_enabled:
+                            # must skip this row.
+                            continue
+
+                        row_text = ""
                         try:
-                            row_is_enabled = row.is_enabled()
+                            row_text = row.text
                         except Exception as exc:
-                            pass
+                            print("get text fail")
+                            break
 
-                        if row_is_enabled:
-                            row_text = ""
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
+                        if len(row_text) > 0:
+                            # check date.
+                            is_match_date = False
+                            if len(date_keyword) > 0:
+                                if date_keyword in date_html_text:
+                                    #print("is_match_date")
+                                    is_match_date = True
+                            else:
+                                is_match_date = True
 
-                            if len(row_text) > 0:
-                                #print("area row_text:", row_index, row_text)
-                                if area_keyword in row_text:
-                                    areas.append(row)
-                    if len(areas)==0:
+                            # check area.
+                            is_match_area = False
+                            if len(area_keyword_1) > 0:
+                                if area_keyword_1 in area_html_text:
+                                    #print("is_match_area area_keyword_1")
+                                    is_match_area = True
+                                # check keyword 2
+                                if len(area_keyword_2) > 0:
+                                    if area_keyword_2 in area_html_text:
+                                        #print("is_match_area area_keyword_2")
+                                        is_match_area = True
+                            else:
+                                is_match_area = True
+                            
+                            if is_match_date and is_match_area:
+                                #print("bingo, row text:", row_text)
+                                #areas.append(row)
+                                # add button instead of row.
+                                areas.append(td_button)
+                                
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    print("only need first item, break area list loop.")
+                                    break
+
+                    return_row_count = len(areas)
+                    #print("return_row_count:", return_row_count)
+                    if return_row_count==0:
                         areas = None
 
     except Exception as exc:
-        print("find #game_page date list fail")
-        #print(exc)
+        print("find #session date list fail")
+        print(exc)
 
     return areas
 
-# purpose: area auto select
-# return:
-#   True: area block appear.
-#   False: area block not appear.
-# ps: return value for date auto select.
-def fami_area_auto_select(url):
-    ret = False
 
-    areas = get_fami_target_area(area_keyword_1)
-    if areas is None:
-        print("use area keyword #2", area_keyword_2)
-        areas = get_fami_target_area(area_keyword_2)
+def fami_activity(url):
+    #print("fami_activity bingo")
+
+    #---------------------------
+    # part 1: press "buy" button.
+    #---------------------------
+    fami_start_to_buy_button = None
+    try:
+        fami_start_to_buy_button = driver.find_element(By.ID, 'buyWaiting')
+        if fami_start_to_buy_button is not None:
+            if fami_start_to_buy_button.is_enabled():
+                fami_start_to_buy_button.click()
+                time.sleep(0.5)
+    except Exception as exc:
+        print("click buyWaiting button fail")
+        print(exc)
 
 
-    area = None
+def fami_home(url):
+    print("fami_home bingo")
+
+    is_select_box_visible = False
+    
+    #---------------------------
+    # part 3: fill ticket number.
+    #---------------------------
+    ticket_el = None
+    is_assign_ticket_number = False
+    try:
+        my_css_selector = "tr.ticket > td > select"
+        ticket_el = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if ticket_el is not None:
+            if ticket_el.is_enabled():
+                is_select_box_visible = True
+
+            ticket_number_select = Select(ticket_el)
+            if ticket_number_select is not None:
+                try:
+                    #print("get select ticket value:" + Select(ticket_number_select).first_selected_option.text)
+                    if ticket_number_select.first_selected_option.text=="0" or ticket_number_select.first_selected_option.text=="選擇張數":
+                        # target ticket number
+                        ticket_number_select.select_by_visible_text(ticket_number)
+                        is_assign_ticket_number = True
+                except Exception as exc:
+                    print("select_by_visible_text ticket_number fail")
+                    print(exc)
+
+                    try:
+                        # try target ticket number twice
+                        ticket_number_select.select_by_visible_text(ticket_number)
+                        is_assign_ticket_number = True
+                    except Exception as exc:
+                        print("select_by_visible_text ticket_number fail...2")
+                        print(exc)
+
+                        # try buy one ticket
+                        try:
+                            ticket_number_select.select_by_visible_text("1")
+                            is_assign_ticket_number = True
+                        except Exception as exc:
+                            print("select_by_visible_text 1 fail")
+                            pass
+    except Exception as exc:
+        print("click buyWaiting button fail")
+        print(exc)
+
+    #---------------------------
+    # part 4: press "next" button.
+    #---------------------------
+    if is_assign_ticket_number:
+        fami_assign_site_button = None
+        try:
+            my_css_selector = "div.col > a.btn"
+            fami_assign_site_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if fami_assign_site_button is not None:
+                if fami_assign_site_button.is_enabled():
+                    fami_assign_site_button.click()
+                    time.sleep(0.5)
+        except Exception as exc:
+            print("click buyWaiting button fail")
+            print(exc)
+
+
+
+    areas = None
+    if not is_select_box_visible:
+        #---------------------------
+        # part 2: select keywords
+        #---------------------------
+        areas = get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2)
+
+    area_target = None
     if areas is not None:
         #print("area_auto_select_mode", area_auto_select_mode)
         #print("len(areas)", len(areas))
@@ -2408,194 +2446,21 @@ def fami_area_auto_select(url):
                 target_row_index = random.randint(0,len(areas)-1)
 
             #print("target_row_index", target_row_index)
-            area = areas[target_row_index]
+            area_target = areas[target_row_index]
 
-    if area is not None:
+    if area_target is not None:
         try:
-            #print("area text", area.text)
-            area.click()
+            #print("area text", area_target.text)
+            area_target.click()
         except Exception as exc:
-            print("click area a link fail")
-            print(exc)
-            pass
-
-    return ret
-
-# purpose: ticket number auto select
-# return:
-#   True: ticket number block appear.
-#   False: ticket number block not appear.
-# ps: return value for area auto select.
-def fami_ticket_number_auto_select(url):
-    ret = False
-    is_assign_ticket_number = False
-
-    ticket_number_div = None
-    try:
-        ticket_number_div = driver.find_element(By.CSS_SELECTOR, '#Form_price > table > tbody > tr:nth-child(4) > td > table:nth-child(5) > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(3) > td:nth-child(4) > span')
-        if ticket_number_div is not None:
-            el = None
+            print("click buy button fail, start to retry...")
+            time.sleep(0.2)
             try:
-                el = ticket_number_div.find_element(By.TAG_NAME, "select")
-                if el is not None:
-                    ret = True
-                    #print("bingo, found ticket_number select")
-
-                    ticket_number_select = Select(el)
-                    if ticket_number_select is not None:
-                        try:
-                            #print("get select ticket value:" + Select(ticket_number_select).first_selected_option.text)
-                            if ticket_number_select.first_selected_option.text=="0":
-                                # target ticket number
-                                ticket_number_select.select_by_visible_text(ticket_number)
-                                is_assign_ticket_number = True
-                        except Exception as exc:
-                            #print("select_by_visible_text ticket_number fail")
-                            #print(exc)
-                            pass
-
-                            try:
-                                # try target ticket number twice
-                                ticket_number_select.select_by_visible_text(ticket_number)
-                                is_assign_ticket_number = True
-                            except Exception as exc:
-                                #print("select_by_visible_text ticket_number fail...2")
-                                #print(exc)
-                                pass
-
-                                # try buy one ticket
-                                try:
-                                    ticket_number_select.select_by_visible_text("1")
-                                    is_assign_ticket_number = True
-                                except Exception as exc:
-                                    print("select_by_visible_text 1 fail")
-                                    pass
-
+                area_target.click()
             except Exception as exc:
-                #print("find ticket_number select fail")
-                #print(exc)
+                print("click buy button fail, after reftry still fail.")
+                print(exc)
                 pass
-    except Exception as exc:
-        #print("find #Form_price ticket_number div fail")
-        #print(exc)
-        pass
-
-    #print("is_assign_ticket_number", is_assign_ticket_number)
-    time.sleep(0.3)
-
-    wait = WebDriverWait(driver, 5)
-
-    if is_assign_ticket_number:
-        btn_auto_hyperlink_div = None
-        try:
-            btn_auto_hyperlink_div = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#chose_seat_btn_auto > a')))
-            #btn_auto_hyperlink_div = driver.find_element(By.CSS_SELECTOR, '#chose_seat_btn_auto > a')
-            if btn_auto_hyperlink_div is not None:
-                btn_auto_hyperlink_div.click()
-        except Exception as exc:
-            print("find #chose_seat_btn_auto fail")
-            print(exc)
-
-    return ret
-
-def fami_activity(url):
-    #print("bingo")
-
-    # Python 2 and 3
-    try:
-        # python3 urllib.parse:
-        from urllib.parse import urlparse, parse_qs
-    except ImportError:
-        from urlparse import urlparse, parse_qs
-
-    parsed_url = urlparse(url)
-    qstr=parse_qs(parsed_url.query)
-    code = None
-    if 'code' in qstr:
-        codes = qstr['code']
-        if len(codes) > 0:
-            code = codes[0]
-        #print("qstr:", code)
-
-    #---------------------------
-    # part 1: press "buy" button.
-    #---------------------------
-
-    fami_start_to_buy_button = None
-    try:
-        fami_start_to_buy_button = driver.find_element(By.ID, 'under_img_order_buy')
-        if fami_start_to_buy_button is not None:
-            if True:
-            #if fami_start_to_buy_button.is_displayed():
-                if fami_start_to_buy_button.is_enabled():
-                    #print('send click to buy button')
-
-
-                    js = u'function testajax2(section_id,game_id,activitycode){ \
-    $.ajax({ \
-       type: "POST", \
-       url: "FWT/FWT0000.aspx", \
-       data: { \
-            activitycode: activitycode, \
-            game_id: game_id \
-       }, \
-       success: function(msg){ \
-           var index=msg.indexOf("$(\'#img_order_buy\').click(function() {alert("); \
-           if(index==-1) \
-            $(\'#img_order_buy\').click(); \
-           else \
-            location.reload(); \
-       } \
-     }); \
-} \
-testajax2("","","' + code +'"); \
-                    '
-                    #print("execute js", js)
-
-                    try:
-                        driver.execute_script(js)
-                        pass
-                    except Exception as exc:
-                        print("javascript Exception:")
-                        print(exc)
-                        pass
-
-                    
-                    #fami_start_to_buy_button.click()
-                    pass
-            else:
-                print('unable to find buy button')
-                pass
-        else:
-            #print("find under_img_order_buy button fail")
-            pass
-    except Exception as exc:
-        #print("find under_img_order_buy button Exception")
-        pass
-
-    #---------------------------
-    # part 4: auto fill ticket number
-    #---------------------------
-
-    ticket_number_div_exist = fami_ticket_number_auto_select(url)
-    if ticket_number_div_exist:
-        #print("ticket_number_div_exist appear")
-        pass
-    else:
-        #---------------------------
-        # part 3: auto press area
-        #---------------------------
-        if area_auto_select_enable:
-            area_div_exist = fami_area_auto_select(url)
-            if area_div_exist:
-                #print("area appear")
-                pass
-            else:
-                #---------------------------
-                # part 2: auto press date
-                #---------------------------
-                if date_auto_select_enable:
-                    fami_date_auto_select(url)
 
 
 def urbtix_ticket_number_auto_select(url):
@@ -3367,8 +3232,11 @@ def main():
 
         # for famiticket
         if 'famiticket.com' in url:
-            if 'activity_info.aspx' in url:
+            if '/Home/Activity/Info/' in url:
                 fami_activity(url)
+            if '/Sales/Home/Index/' in url:
+                fami_home(url)
+
 
         # for urbtix
         # https://ticket.urbtix.hk/internet/secure/event/37348/performanceDetail
@@ -3405,4 +3273,5 @@ def main():
             if '/performance.do' in url:
                 cityline_performance(url)
 
-main()
+if __name__ == "__main__":
+    main()

@@ -17,7 +17,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2021.12.01)"
+CONST_APP_VERSION = u"MaxBot (2021.12.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -868,6 +868,5 @@ def main():
     root.mainloop()
 
     
-
 if __name__ == "__main__":
     main()
