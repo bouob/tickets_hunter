@@ -27,8 +27,12 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 # for selenium 4
 from selenium.webdriver.chrome.service import Service
 
-# for uc
-import undetected_chromedriver as uc
+# method 5: uc
+#import undetected_chromedriver as uc
+
+# method 6: Selenium Stealth
+from selenium_stealth import stealth
+
 
 # for wait #1
 import time
@@ -55,7 +59,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.12.24)"
+CONST_APP_VERSION = u"MaxBot (2021.12.28)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -355,7 +359,6 @@ if not config_dict is None:
         '''
 
         # method 6: Selenium Stealth
-        from selenium_stealth import stealth
         driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
         # Selenium Stealth settings
