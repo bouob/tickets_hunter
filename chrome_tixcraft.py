@@ -59,7 +59,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2021.12.28)"
+CONST_APP_VERSION = u"MaxBot (2022.01.10)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -376,7 +376,8 @@ if not config_dict is None:
         chromedriver_path =Root_Dir+ "webdriver/geckodriver"
         if platform.system()=="windows":
             chromedriver_path =Root_Dir+ "webdriver/geckodriver.exe"
-        driver = webdriver.Firefox(executable_path=chromedriver_path)
+        firefox_service = Service(chromedriver_path)
+        driver = webdriver.Firefox(service=firefox_service)
 
     time.sleep(1.0)
     try:
