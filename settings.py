@@ -17,7 +17,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.01.12)"
+CONST_APP_VERSION = u"MaxBot (2022.01.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -67,7 +67,7 @@ def btn_save_act(slience_mode=False):
 
         global combo_homepage
         global combo_browser
-        global txt_ticket_number
+        global combo_ticket_number
         #global txt_facebook_account
     
         global chk_state_auto_press_next_step_button
@@ -104,11 +104,11 @@ def btn_save_act(slience_mode=False):
                 config_dict["browser"] = combo_browser.get().strip()
 
         if is_all_data_correct:
-            if txt_ticket_number.get().strip()=="":
+            if combo_ticket_number.get().strip()=="":
                 is_all_data_correct = False
-                messagebox.showerror("Error", "Please enter text")
+                messagebox.showerror("Error", "Please select a value")
             else:
-                config_dict["ticket_number"] = int(txt_ticket_number.get().strip())
+                config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
 
         if is_all_data_correct:
             #config_dict["facebook_account"] = txt_facebook_account.get().strip()
@@ -352,7 +352,7 @@ def MainMenu(root):
 
     homepage = None
     browser = None
-    ticket_number = 1
+    ticket_number = "2"
 
     auto_press_next_step_button = False     # default not checked.
     auto_fill_ticket_number = False         # default not checked.
@@ -391,7 +391,6 @@ def MainMenu(root):
 
         # default ticket number
         # 說明：自動選擇的票數
-        ticket_number = "2"
         if u'ticket_number' in config_dict:
             ticket_number = str(config_dict["ticket_number"])
 
@@ -540,11 +539,19 @@ def MainMenu(root):
     lbl_ticket_number = Label(frame_group_header, text="Ticket Number")
     lbl_ticket_number.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_ticket_number
-    global txt_ticket_number_value
-    txt_ticket_number_value = StringVar(frame_group_header, value=ticket_number)
-    txt_ticket_number = Entry(frame_group_header, width=20, textvariable = txt_ticket_number_value)
-    txt_ticket_number.grid(column=1, row=group_row_count, sticky = W)
+    global combo_ticket_number
+    # for text format.
+    '''
+    global combo_ticket_number_value
+    combo_ticket_number_value = StringVar(frame_group_header, value=ticket_number)
+    combo_ticket_number = Entry(frame_group_header, width=20, textvariable = combo_ticket_number_value)
+    combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
+    '''
+    combo_ticket_number = ttk.Combobox(frame_group_header, state="readonly")
+    combo_ticket_number['values']= ("1","2","3","4","5","6","7","8","9","10")
+    #combo_ticket_number.current(0)
+    combo_ticket_number.set(ticket_number)
+    combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
