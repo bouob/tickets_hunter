@@ -5,7 +5,7 @@ maxbot(Max搶票機器人) help you quickly buy your tickets
 https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
-https://youtu.be/U6xGBofx-O8
+https://youtu.be/ZV-G91FHVik
 
 # How to use (如何使用)
 https://max-everyday.com/2018/03/tixcraft-bot/
