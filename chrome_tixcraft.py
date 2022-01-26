@@ -51,7 +51,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.01.13)"
+CONST_APP_VERSION = u"MaxBot (2022.01.26)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -2297,26 +2297,64 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
 
 
 # PURPOSE: get target area list.
-def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2):
+# PS: this is main block, use keyword to get rows.
+# PS: it seems use date_auto_select_mode instead of area_auto_select_mode
+def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto_select_mode):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
     areas = None
 
     area_list = None
     try:
-        #print("try to find area block")
+        if show_debug_message:
+            print("try to find area block by keywords...")
+
         my_css_selector = "table.session__list > tbody > tr"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
         if area_list is not None:
-            #print("lenth of row:", len(area_list))
-            if len(area_list) > 0:
+            area_list_length = len(area_list)
+            if show_debug_message:
+                print("lenth of area rows:", area_list_length)
+
+            if area_list_length > 0:
                 ret = True
+
+                areas = []
 
                 if len(date_keyword)==0 and len(area_keyword_1)==0 and len(area_keyword_2) == 0:
                     # select all.
-                    areas = area_list
+                    # PS: must travel to row buttons.
+                    #areas = area_list
+
+                    row_index = 0
+                    for row in area_list:
+                        row_index += 1
+                        #print("row index:", row_index)
+
+                        is_enabled = False
+                        my_css_selector = "button"
+                        td_button = row.find_element(By.TAG_NAME , my_css_selector)
+                        if td_button is not None:
+                            is_enabled = td_button.is_enabled()
+
+                        if not is_enabled:
+                            # must skip this row.
+                            continue
+                        else:
+                            if show_debug_message:
+                                print("row button is disabled!")
+
+                        if is_enabled:
+                            areas.append(td_button)
+
+                            # PS: it seems use date_auto_select_mode instead of area_auto_select_mode
+                            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                print("only need first item, break area list loop.")
+                                break
+
                 else:
                     # match keyword.
-                    areas = []
-
                     row_index = 0
                     for row in area_list:
                         row_index += 1
@@ -2347,12 +2385,15 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2):
                         if not is_enabled:
                             # must skip this row.
                             continue
+                        else:
+                            if show_debug_message:
+                                print("row button is disabled!")
 
                         row_text = ""
                         try:
                             row_text = row.text
                         except Exception as exc:
-                            print("get text fail")
+                            print("get row text fail")
                             break
 
                         if len(row_text) > 0:
@@ -2384,20 +2425,22 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2):
                                 #areas.append(row)
                                 # add button instead of row.
                                 areas.append(td_button)
-                                
 
                                 if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     print("only need first item, break area list loop.")
                                     break
 
-                    return_row_count = len(areas)
-                    #print("return_row_count:", return_row_count)
-                    if return_row_count==0:
-                        areas = None
+                return_row_count = len(areas)
+                if show_debug_message:
+                    print("return_row_count:", return_row_count)
+                if return_row_count==0:
+                    areas = None
 
     except Exception as exc:
+        pass
         print("find #session date list fail")
-        print(exc)
+        if show_debug_message:
+            print(exc)
 
     return areas
 
@@ -2475,8 +2518,9 @@ def fami_home(driver, url):
                             print("select_by_visible_text 1 fail")
                             pass
     except Exception as exc:
+        pass
         print("click buyWaiting button fail")
-        print(exc)
+        #print(exc)
 
     #---------------------------
     # part 4: press "next" button.
@@ -2501,40 +2545,40 @@ def fami_home(driver, url):
         #---------------------------
         # part 2: select keywords
         #---------------------------
-        areas = get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2)
+        areas = get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto_select_mode)
 
-    area_target = None
-    if areas is not None:
-        #print("area_auto_select_mode", area_auto_select_mode)
-        #print("len(areas)", len(areas))
-        if len(areas) > 0:
-            target_row_index = 0
+        area_target = None
+        if areas is not None:
+            #print("area_auto_select_mode", area_auto_select_mode)
+            #print("len(areas)", len(areas))
+            if len(areas) > 0:
+                target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                pass
+                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                    pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(areas)-1
+                if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                    target_row_index = len(areas)-1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(areas)-1)
+                if area_auto_select_mode == CONST_RANDOM:
+                    target_row_index = random.randint(0,len(areas)-1)
 
-            #print("target_row_index", target_row_index)
-            area_target = areas[target_row_index]
+                #print("target_row_index", target_row_index)
+                area_target = areas[target_row_index]
 
-    if area_target is not None:
-        try:
-            #print("area text", area_target.text)
-            area_target.click()
-        except Exception as exc:
-            print("click buy button fail, start to retry...")
-            time.sleep(0.2)
+        if area_target is not None:
             try:
+                #print("area text", area_target.text)
                 area_target.click()
             except Exception as exc:
-                print("click buy button fail, after reftry still fail.")
-                print(exc)
-                pass
+                print("click buy button fail, start to retry...")
+                time.sleep(0.2)
+                try:
+                    area_target.click()
+                except Exception as exc:
+                    print("click buy button fail, after reftry still fail.")
+                    print(exc)
+                    pass
 
 
 def urbtix_ticket_number_auto_select(driver, url, ticket_number):
