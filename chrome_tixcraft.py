@@ -51,7 +51,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.01.26)"
+CONST_APP_VERSION = u"MaxBot (2022.02.19)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -60,7 +60,7 @@ CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM)
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 
-CONT_STRING_1_SEATS_REMAINING = [u'1 seat(s) remaining',u'剩餘 1',u'1 席残り']
+CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
 
 # initial webdriver
 # 說明：初始化 webdriver
@@ -900,7 +900,13 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
 # RETURN: 
 #   is_need_refresh
 #   areas
-def get_tixcraft_target_area(el, area_keyword):
+def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_seat_remaining_enable):
+    debugMode = True
+    debugMode = False       # for online
+
+    if debugMode:
+        print("testing keyword:", area_keyword)
+
     is_need_refresh = False
     areas = None
 
@@ -951,6 +957,8 @@ def get_tixcraft_target_area(el, area_keyword):
                     is_append_this_row = True
 
                 if is_append_this_row:
+                    if debugMode:
+                        print("pass_1_seat_remaining_enable:", pass_1_seat_remaining_enable)
                     if pass_1_seat_remaining_enable:
                         area_item_font_el = None
                         try:
@@ -958,11 +966,16 @@ def get_tixcraft_target_area(el, area_keyword):
                             area_item_font_el = row.find_element(By.TAG_NAME, 'font')
                             if not area_item_font_el is None:
                                 font_el_text = area_item_font_el.text
-                                #print('font tag text:', font_el_text)
-                                if font_el_text in CONT_STRING_1_SEATS_REMAINING:
-                                    #print("match pass 1 seats remaining 1 full text:", row_text)
-                                    #print("match pass 1 seats remaining 2 font text:", font_el_text)
-                                    is_append_this_row = False
+                                font_el_text = "@%s@" % (font_el_text)
+                                if debugMode:
+                                    print('font tag text:', font_el_text)
+                                    pass
+                                for check_item in CONT_STRING_1_SEATS_REMAINING:
+                                    if check_item in font_el_text:
+                                        if debugMode:
+                                            print("match pass 1 seats remaining 1 full text:", row_text)
+                                            print("match pass 1 seats remaining 2 font text:", font_el_text)
+                                        is_append_this_row = False
                             else:
                                 #print("row withou font tag.")
                                 pass
@@ -970,14 +983,18 @@ def get_tixcraft_target_area(el, area_keyword):
                             #print("find font text in a tag fail:", exc)
                             pass
 
+                if debugMode:
+                    print("is_append_this_row:", is_append_this_row)
+
                 if is_append_this_row:
                     areas.append(row)
 
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         print("only need first item, break area list loop.")
                         break
-                    #print("row_text:" + row_text)
-                    #print("match:" + area_keyword)
+                    if debugMode:
+                        print("row_text:" + row_text)
+                        print("match:" + area_keyword)
         
         if len(areas) == 0:
             areas = None
@@ -987,7 +1004,13 @@ def get_tixcraft_target_area(el, area_keyword):
 
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
-def area_auto_select(driver, url, area_keyword_1, area_keyword_2):
+def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable):
+    debugMode = True
+    debugMode = False       # for online
+
+    if debugMode:
+        print("area_keyword_1, area_keyword_2:", area_keyword_1, area_keyword_2)
+
     if '/ticket/area/' in url:
         #driver.switch_to.default_content()
 
@@ -998,11 +1021,19 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2):
             print("find .zone fail, do nothing.")
 
         if el is not None:
-            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_1)
-            if not is_need_refresh:
+            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_1, area_auto_select_mode, pass_1_seat_remaining_enable)
+            if debugMode:
+                print("is_need_refresh for keyword1:", is_need_refresh)
+
+            if is_need_refresh:
                 if areas is None:
-                    print("use area keyword #2", area_keyword_2)
-                    is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2)
+                    if debugMode:
+                        print("use area keyword #2", area_keyword_2)
+                    # only when keyword#2 filled to query.
+                    if len(area_keyword_2) > 0 :
+                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
+                        if debugMode:
+                            print("is_need_refresh for keyword2:", is_need_refresh)
 
             area_target = None
             if areas is not None:
@@ -1025,11 +1056,11 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2):
 
             if area_target is not None:
                 try:
-                    print("area text", area_target.text)
+                    print("area text:", area_target.text)
                     area_target.click()
                 except Exception as exc:
                     print("click area a link fail, start to retry...")
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     try:
                         area_target.click()
                     except Exception as exc:
@@ -3115,6 +3146,11 @@ def main():
         time.sleep(0.1)
 
         is_alert_popup = False
+
+        # pass if driver not loaded.
+        if driver is None:
+            continue
+
         '''
         try:
             if not driver is None:
@@ -3297,6 +3333,7 @@ def main():
         # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
         if debugMode:
             print("url:", url)
+
         if len(url) > 0 :
             if url != last_url:
                 print(url)
@@ -3334,11 +3371,13 @@ def main():
 
             # choose area
             global area_auto_select_enable
+            global pass_1_seat_remaining_enable
+
             global area_keyword_1
             global area_keyword_2
 
             if area_auto_select_enable:
-                area_auto_select(driver, url, area_keyword_1, area_keyword_2)
+                area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
 
             if '/ticket/verify/' in url:
                 tixcraft_verify(driver, url)
