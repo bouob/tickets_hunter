@@ -51,7 +51,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.02.19)"
+CONST_APP_VERSION = u"MaxBot (2022.03.16)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -795,6 +795,11 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
     debug_date_select = True    # debug.
     debug_date_select = False   # online
 
+    # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
+    is_pass_sold_out = True
+    is_pass_sold_out = False
+    sold_out_text = ["選購一空","No tickets available","空席なし"]
+    
     game_name = ""
 
     if "/activity/game/" in url:
@@ -807,9 +812,12 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
         print("date_auto_select_mode:", date_auto_select_mode)
         print("date_keyword:", date_keyword)
 
-
     # choose date
     if "/activity/game/%s" % (game_name,) in url:
+        
+        # one or more row is matched.
+        match_keyword_row = False
+
         if len(date_keyword) == 0:
             if debug_date_select:
                 print("date keyword is empty.")
@@ -823,6 +831,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
                     print("find .btn-next fail")
             else:
                 # from down to top
+                # [TODO]: Random selection mode is not implemented..
                 days = None
                 try:
                     days = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
@@ -839,6 +848,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
                 # first date.
                 try:
                     el.click()
+                    match_keyword_row = True
                 except Exception as exc:
                     print("try to click .btn-next fail")
         else:
@@ -853,8 +863,6 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
                 print("find #gameList fail")
 
             if date_list is not None:
-                match_keyword_row = False
-
                 for row in date_list:
                     row_text = ""
                     try:
@@ -883,18 +891,19 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
                         if match_keyword_row:
                             break
 
-        # auto refresh for date list page.
-        el_list = None
-        try:
-            el_list = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
-            if el_list is None:
-                driver.refresh()
-            else:
-                if len(el_list) == 0:
+        if not match_keyword_row:
+            # auto refresh for date list page.
+            el_list = None
+            try:
+                el_list = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
+                if el_list is None:
                     driver.refresh()
-        except Exception as exc:
-            pass
-            #print("find .btn-next fail:", exc)
+                else:
+                    if len(el_list) == 0:
+                        driver.refresh()
+            except Exception as exc:
+                pass
+                #print("find .btn-next fail:", exc)
 
 # PURPOSE: get target area list.
 # RETURN: 
