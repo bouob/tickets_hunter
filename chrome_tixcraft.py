@@ -51,7 +51,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.03.16)"
+CONST_APP_VERSION = u"MaxBot (2022.03.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -86,7 +86,9 @@ area_keyword = None
 area_keyword_1 = None
 area_keyword_2 = None
 
-pass_1_seat_remaining_enable = False    # default not checked.
+pass_1_seat_remaining_enable = False        # default not checked.
+pass_date_is_sold_out_enable = False        # default not checked.
+auto_reload_coming_soon_page_enable = True  # default checked.
 
 kktix_area_auto_select_mode = None
 kktix_area_keyword = None
@@ -136,6 +138,9 @@ def load_config_from_local(driver):
     
     global auto_guess_options
     global pass_1_seat_remaining_enable
+    global pass_date_is_sold_out_enable
+    global auto_reload_coming_soon_page_enable
+
     global area_keyword_1
     global area_keyword_2
 
@@ -239,6 +244,14 @@ def load_config_from_local(driver):
             if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
+            pass_date_is_sold_out_enable = False
+            if 'pass_date_is_sold_out' in config_dict["tixcraft"]:
+                pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+
+            auto_reload_coming_soon_page_enable = True
+            if 'auto_reload_coming_soon_page' in config_dict["tixcraft"]:
+                auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
         # output config:
         print("maxbot app version", CONST_APP_VERSION)
         print("python version", platform.python_version())
@@ -267,6 +280,10 @@ def load_config_from_local(driver):
         print("area_keyword_2", area_keyword_2)
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+        print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
+
+        print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
+
         print("debug Mode", debugMode)
 
         # entry point
@@ -777,6 +794,8 @@ def get_answer_list_by_question(captcha_text_div_text):
 
 # from detail to game
 def tixcraft_redirect(driver, url):
+    ret = False
+
     game_name = ""
 
     # get game_name from url
@@ -790,15 +809,18 @@ def tixcraft_redirect(driver, url):
         entry_url = url.replace("/activity/detail/","/activity/game/")
         #entry_url = "tixcraft.com/activity/game/%s" % (game_name,)
         driver.get(entry_url)
+        ret = True
 
-def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
+    return ret
+
+def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date_is_sold_out_enable, auto_reload_coming_soon_page_enable):
+    is_date_selected = False
+
     debug_date_select = True    # debug.
     debug_date_select = False   # online
 
     # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
-    is_pass_sold_out = True
-    is_pass_sold_out = False
-    sold_out_text = ["選購一空","No tickets available","空席なし"]
+    sold_out_text_list = ["選購一空","No tickets available","空席なし"]
     
     game_name = ""
 
@@ -812,86 +834,108 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
         print("date_auto_select_mode:", date_auto_select_mode)
         print("date_keyword:", date_keyword)
 
+    check_game_detail = False
     # choose date
     if "/activity/game/%s" % (game_name,) in url:
-        
-        # one or more row is matched.
-        match_keyword_row = False
-
-        if len(date_keyword) == 0:
-            if debug_date_select:
+        if debug_date_select:
+            if len(date_keyword) == 0:
                 print("date keyword is empty.")
-
-            el = None
-
-            if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                try:
-                    el = driver.find_element(By.CSS_SELECTOR, '.btn-next')
-                except Exception as exc:
-                    print("find .btn-next fail")
             else:
-                # from down to top
-                # [TODO]: Random selection mode is not implemented..
-                days = None
-                try:
-                    days = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
-                    if len(days) > 0:
-                        el = days[len(days)-1]
-                except Exception as exc:
-                    pass
-                    #print("find a tag fail")
-
-            if debug_date_select:
-                print("date keyword is empty.")
-
-            if el is not None:
-                # first date.
-                try:
-                    el.click()
-                    match_keyword_row = True
-                except Exception as exc:
-                    print("try to click .btn-next fail")
-        else:
-            if debug_date_select:
                 print("date keyword:", date_keyword)
+        check_game_detail = True
 
-            # match keyword.
-            date_list = None
-            try:
-                date_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
-            except Exception as exc:
-                print("find #gameList fail")
+    if check_game_detail:
+        date_list = None
+        try:
+            date_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
+        except Exception as exc:
+            print("find #gameList fail")
 
-            if date_list is not None:
-                for row in date_list:
-                    row_text = ""
-                    try:
-                        row_text = row.text
-                    except Exception as exc:
-                        print("get text fail")
-                        break
+        button_list = []
+        if date_list is not None:
+            for row in date_list:
+                # step 1: check keyword.
+                is_match_keyword_row = False
 
-                    if len(row_text) > 0:
+                row_text = ""
+                try:
+                    row_text = row.text
+                except Exception as exc:
+                    print("get text fail")
+                    # should use continue or break?
+                    break
+
+                if len(row_text) > 0:
+                    if len(date_keyword) == 0:
+                        # no keyword, match all.
+                        is_match_keyword_row = True
+                    else:
+                        # check keyword.
                         if date_keyword in row_text:
-                            match_keyword_row = True
+                            is_match_keyword_row = True
 
-                            el = None
-                            try:
-                                el = row.find_element(By.CSS_SELECTOR, '.btn-next')
-                            except Exception as exc:
-                                print("find .btn-next fail")
 
-                            if el is not None:
-                                # first date.
-                                try:
-                                    el.click()
-                                except Exception as exc:
-                                    print("try to click .btn-next fail")
+                # step 2: check sold out.
+                if is_match_keyword_row:
+                    if pass_date_is_sold_out_enable:
+                        for sold_out_item in sold_out_text_list:
+                            row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
+                            if debug_date_select:
+                                print("check right part text:", row_text_right_part)
+                            if sold_out_item in row_text_right_part:
+                                is_match_keyword_row = False
 
-                        if match_keyword_row:
+                                if debug_date_select:
+                                    print("match sold out text: %s, skip this row." % (sold_out_item))
+
+                                # no need check next language item.
+                                break
+
+                # step 3: add to list.
+                if is_match_keyword_row:
+                    el = None
+                    try:
+                        el = row.find_element(By.CSS_SELECTOR, '.btn-next')
+                    except Exception as exc:
+                        if debug_date_select:
+                            print("find .btn-next fail")
+                        pass
+
+                    if el is not None:
+                        button_list.append(el)
+                        if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                            # only need one row.
+                            if debug_date_select:
+                                print("match date row, only need first row, start to break")
                             break
 
-        if not match_keyword_row:
+
+        if len(button_list) > 0:
+            # default first row.
+            target_row_index = 0
+
+            if date_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(button_list) - 1
+
+            if date_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(button_list)-1)
+
+            try:
+                if debug_date_select:
+                    print("clicking row number:", target_row_index)
+                
+                el = button_list[target_row_index]
+                is_date_selected = True
+                el.click()
+            except Exception as exc:
+                print("try to click .btn-next fail")
+
+        # PS: Is this case need to reload page? 
+        #   (A)user input keywords, with matched text, but no hyperlink to click.
+        #   (B)user input keywords, but not no matched text with hyperlink to click.
+
+        # [PS]: current reload condition only when No hyperlink button.
+        if auto_reload_coming_soon_page_enable and not is_date_selected:
             # auto refresh for date list page.
             el_list = None
             try:
@@ -904,6 +948,8 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword):
             except Exception as exc:
                 pass
                 #print("find .btn-next fail:", exc)
+
+    return is_date_selected
 
 # PURPOSE: get target area list.
 # RETURN: 
@@ -3369,14 +3415,25 @@ def main():
                 # do nothing.
                 continue
 
-            tixcraft_redirect(driver, url)
+            is_redirected = tixcraft_redirect(driver, url)
+            if is_redirected:
+                # start to redirecting.
+                continue
 
             global date_auto_select_enable
             global date_auto_select_mode
             global date_keyword
 
+            global pass_date_is_sold_out_enable
+            global auto_reload_coming_soon_page_enable
+
+            is_date_selected = False
             if date_auto_select_enable:
-                date_auto_select(driver, url, date_auto_select_mode, date_keyword)
+                is_date_selected = date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date_is_sold_out_enable, auto_reload_coming_soon_page_enable)
+            
+            if is_date_selected:
+                # start to redirecting.
+                continue
 
             # choose area
             global area_auto_select_enable

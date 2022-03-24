@@ -17,7 +17,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.03.16)"
+CONST_APP_VERSION = u"MaxBot (2022.03.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -89,6 +89,10 @@ def btn_save_act(slience_mode=False):
 
         global chk_state_pass_1_seat_remaining
 
+        global chk_state_pass_date_is_sold_out
+
+        global chk_state_auto_reload_coming_soon_page
+
         if is_all_data_correct:
             if combo_homepage.get().strip()=="":
                 is_all_data_correct = False
@@ -134,6 +138,8 @@ def btn_save_act(slience_mode=False):
             config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
 
             config_dict["tixcraft"]["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
+            config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
+            config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
 
         # save config.
         if is_all_data_correct:
@@ -372,7 +378,9 @@ def MainMenu(root):
     area_keyword_1 = ""
     area_keyword_2 = ""
 
-    pass_1_seat_remaining_enable = False    # default not checked.
+    pass_1_seat_remaining_enable = False        # default not checked.
+    pass_date_is_sold_out_enable = False        # default not checked.
+    auto_reload_coming_soon_page_enable = True  # default checked.
 
     debugMode = False
 
@@ -463,6 +471,14 @@ def MainMenu(root):
             if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
 
+            pass_date_is_sold_out_enable = False
+            if 'pass_date_is_sold_out' in config_dict["tixcraft"]:
+                pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+
+            auto_reload_coming_soon_page_enable = True
+            if 'auto_reload_coming_soon_page' in config_dict["tixcraft"]:
+                auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
         # output config:
         print("setting app version", CONST_APP_VERSION)
         print("python version", platform.python_version())
@@ -493,6 +509,9 @@ def MainMenu(root):
         print("area_keyword_2", area_keyword_2)
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+        print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
+
+        print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
 
         print("debug Mode", debugMode)
     else:
@@ -788,6 +807,32 @@ def MainMenu(root):
 
     group_row_count+=1
 
+    lbl_pass_date_is_sold_out = Label(frame_group_tixcraft, text="Pass date is sold out")
+    lbl_pass_date_is_sold_out.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_pass_date_is_sold_out
+    chk_state_pass_date_is_sold_out = BooleanVar()
+    chk_state_pass_date_is_sold_out.set(pass_date_is_sold_out_enable)
+
+    global chk_pass_date_is_sold_out
+    chk_pass_date_is_sold_out = Checkbutton(frame_group_tixcraft, text='Enable', variable=chk_state_pass_date_is_sold_out)
+    chk_pass_date_is_sold_out.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    lbl_auto_reload_coming_soon_page = Label(frame_group_tixcraft, text="Reload coming soon page")
+    lbl_auto_reload_coming_soon_page.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_reload_coming_soon_page
+    chk_state_auto_reload_coming_soon_page = BooleanVar()
+    chk_state_auto_reload_coming_soon_page.set(auto_reload_coming_soon_page_enable)
+
+    global chk_auto_reload_coming_soon_page
+    chk_auto_reload_coming_soon_page = Checkbutton(frame_group_tixcraft, text='Enable', variable=chk_state_auto_reload_coming_soon_page)
+    chk_auto_reload_coming_soon_page.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
 
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
@@ -836,7 +881,7 @@ def main():
     GUI = MainMenu(root)
 
     GUI_SIZE_WIDTH = 420
-    GUI_SIZE_HEIGHT = 395
+    GUI_SIZE_HEIGHT = 455
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-20)
 
