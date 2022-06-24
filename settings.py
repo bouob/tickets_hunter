@@ -17,7 +17,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.03.24)"
+CONST_APP_VERSION = u"MaxBot (2022.06.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"

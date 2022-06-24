@@ -51,7 +51,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.03.24)"
+CONST_APP_VERSION = u"MaxBot (2022.06.24)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -441,7 +441,11 @@ def load_config_from_local(driver):
                 driver.switch_to.window(driver.window_handles[0])
         except Exception as excSwithFail:
             pass
-        driver.get(homepage)
+
+        try:
+            driver.get(homepage)
+        except Exception as exec1:
+            pass
         
     else:
         print("Config error!")
@@ -808,7 +812,11 @@ def tixcraft_redirect(driver, url):
         # to support teamear
         entry_url = url.replace("/activity/detail/","/activity/game/")
         #entry_url = "tixcraft.com/activity/game/%s" % (game_name,)
-        driver.get(entry_url)
+        print("redirec to new url:", entry_url)
+        try:
+            driver.get(entry_url)
+        except Exception as exec1:
+            pass
         ret = True
 
     return ret
@@ -3492,13 +3500,21 @@ def main():
             if 'msg.urbtix.hk' in url:
                 # delay to avoid ip block.
                 time.sleep(1.0)
-                driver.get('https://www.urbtix.hk/')
+
+                try:
+                    driver.get('https://www.urbtix.hk/')
+                except Exception as exec1:
+                    pass
+
                 pass
             # http://busy.urbtix.hk
             if 'busy.urbtix.hk' in url:
                 # delay to avoid ip block.
                 time.sleep(1.0)
-                driver.get('https://www.urbtix.hk/')
+                try:
+                    driver.get('https://www.urbtix.hk/')
+                except Exception as exec1:
+                    pass
                 pass
 
             if '/performanceDetail/' in url:
