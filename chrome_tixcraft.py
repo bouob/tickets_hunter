@@ -7,8 +7,14 @@ import json
 import random
 #print("python version", platform.python_version())
 
-#from selenium import webdriver
-from seleniumwire import webdriver
+driver_type = 'stealth'
+#driver_type = 'undetected_chromedriver'
+
+if driver_type=="undetected_chromedriver":
+    from seleniumwire import webdriver
+else:
+    from selenium import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
@@ -296,9 +302,6 @@ def load_config_from_local(driver):
         if len(homepage) == 0:
             homepage = "https://tixcraft.com/activity/"
 
-        #driver_type = 'stealth'
-        driver_type = 'undetected_chromedriver'
-
         Root_Dir = ""
         if browser == "chrome":
             DEFAULT_ARGS = [
@@ -354,7 +357,8 @@ def load_config_from_local(driver):
 
             # default os is linux/mac
             chromedriver_path =Root_Dir+ "webdriver/chromedriver"
-            if platform.system()=="windows":
+            print("platform.system().lower():", platform.system().lower())
+            if platform.system().lower()=="windows":
                 chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
             # method 5: uc
@@ -435,7 +439,7 @@ def load_config_from_local(driver):
                     #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
                     driver = uc.Chrome(executable_path=chromedriver_path, options=options)
                 else:
-                    print("Oops! web driver not on path...")
+                    print("Oops! web driver not on path:",chromedriver_path )
                     driver = uc.Chrome(options=options, suppress_welcome=False)
 
                 download_dir_path="."
@@ -449,7 +453,7 @@ def load_config_from_local(driver):
         if browser == "firefox":
             # default os is linux/mac
             chromedriver_path =Root_Dir+ "webdriver/geckodriver"
-            if platform.system()=="windows":
+            if platform.system().lower()=="windows":
                 chromedriver_path =Root_Dir+ "webdriver/geckodriver.exe"
 
             firefox_service = Service(chromedriver_path)
