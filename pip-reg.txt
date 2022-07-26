@@ -3,3 +3,5 @@ chardet
 idna
 selenium
 selenium-stealth
+selenium-wire
+undetected-chromedriver

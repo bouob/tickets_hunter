@@ -7,7 +7,8 @@ import json
 import random
 #print("python version", platform.python_version())
 
-from selenium import webdriver
+#from selenium import webdriver
+from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
@@ -20,6 +21,8 @@ from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+# for chrome 103
+from selenium.common.exceptions import WebDriverException
 
 # for ["pageLoadStrategy"] = "eager"
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -51,7 +54,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.06.24)"
+CONST_APP_VERSION = u"MaxBot (2022.07.27)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -293,14 +296,11 @@ def load_config_from_local(driver):
         if len(homepage) == 0:
             homepage = "https://tixcraft.com/activity/"
 
+        #driver_type = 'stealth'
+        driver_type = 'undetected_chromedriver'
+
         Root_Dir = ""
         if browser == "chrome":
-            # method 5: uc
-            #import undetected_chromedriver as uc
-
-            # method 6: Selenium Stealth
-            from selenium_stealth import stealth
-
             DEFAULT_ARGS = [
                 '--disable-audio-output',
                 '--disable-background-networking',
@@ -352,32 +352,57 @@ def load_config_from_local(driver):
                 #'--incognito',
             ]
 
-            chrome_options = webdriver.ChromeOptions()
-
-            # for navigator.webdriver
-            chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-            chrome_options.add_experimental_option('useAutomationExtension', False)
-            chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
-
-            if 'kktix.c' in homepage:
-                #chrome_options.add_argument('blink-settings=imagesEnabled=false')
-                pass
-
             # default os is linux/mac
             chromedriver_path =Root_Dir+ "webdriver/chromedriver"
             if platform.system()=="windows":
                 chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
-            #caps = DesiredCapabilities().CHROME
-            caps = chrome_options.to_capabilities()
+            # method 5: uc
+            if driver_type=="undetected_chromedriver":
+                #import undetected_chromedriver as uc
+                import seleniumwire.undetected_chromedriver as uc
 
-            #caps["pageLoadStrategy"] = u"normal"  #  complete
-            caps["pageLoadStrategy"] = u"eager"  #  interactive
-            #caps["pageLoadStrategy"] = u"none"
-            
-            #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
-            caps["unhandledPromptBehavior"] = u"ignore"
-            #caps["unhandledPromptBehavior"] = u"dismiss"
+            # method 6: Selenium Stealth
+            if driver_type=="stealth":
+                from selenium_stealth import stealth
+
+                chrome_options = webdriver.ChromeOptions()
+
+                # for navigator.webdriver
+                chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
+
+                if 'kktix.c' in homepage:
+                    #chrome_options.add_argument('blink-settings=imagesEnabled=false')
+                    pass
+
+                #caps = DesiredCapabilities().CHROME
+                caps = chrome_options.to_capabilities()
+
+                #caps["pageLoadStrategy"] = u"normal"  #  complete
+                caps["pageLoadStrategy"] = u"eager"  #  interactive
+                #caps["pageLoadStrategy"] = u"none"
+                
+                #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
+                caps["unhandledPromptBehavior"] = u"ignore"
+                #caps["unhandledPromptBehavior"] = u"dismiss"
+
+                chrome_service = Service(chromedriver_path)
+
+                # method 6: Selenium Stealth
+                driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
+                # Selenium Stealth settings
+                stealth(driver,
+                      languages=["zh-TW", "zh"],
+                      vendor="Google Inc.",
+                      platform="Win32",
+                      webgl_vendor="Intel Inc.",
+                      renderer="Intel Iris OpenGL Engine",
+                      fix_hairline=True,
+                  )
+
 
             #print("caps:", caps)
 
@@ -393,35 +418,33 @@ def load_config_from_local(driver):
             #driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
 
             # method 4:
-            chrome_service = Service(chromedriver_path)
+            #chrome_service = Service(chromedriver_path)
             #driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
+
             
             # method 5: uc
-            '''
-            options = uc.ChromeOptions()
-            options.add_argument("--no-first-run --no-service-autorun --password-store=basic")
-            options.page_load_strategy="eager"
-            #print("strategy", options.page_load_strategy)
-            if os.path.exists(chromedriver_path):
-                print("Use user driver path:", chromedriver_path)
-                driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
-            else:
-                print("Not assign driver path...")
-                driver = uc.Chrome(options=options, suppress_welcome=False)
-            '''
+            #options = webdriver.ChromeOptions()
+            if driver_type=="undetected_chromedriver":
+                options = uc.ChromeOptions()
+                options.add_argument("--password-store=basic")
+                options.page_load_strategy="eager"
+                #print("strategy", options.page_load_strategy)
 
-            # method 6: Selenium Stealth
-            driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+                if os.path.exists(chromedriver_path):
+                    print("Use user driver path:", chromedriver_path)
+                    #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
+                    driver = uc.Chrome(executable_path=chromedriver_path, options=options)
+                else:
+                    print("Oops! web driver not on path...")
+                    driver = uc.Chrome(options=options, suppress_welcome=False)
 
-            # Selenium Stealth settings
-            stealth(driver,
-                  languages=["zh-TW", "zh"],
-                  vendor="Google Inc.",
-                  platform="Win32",
-                  webgl_vendor="Intel Inc.",
-                  renderer="Intel Iris OpenGL Engine",
-                  fix_hairline=True,
-              )
+                download_dir_path="."
+                params = {
+                    "behavior": "allow",
+                    "downloadPath": os.path.realpath(download_dir_path)
+                }
+                driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
+
 
         if browser == "firefox":
             # default os is linux/mac
@@ -443,8 +466,12 @@ def load_config_from_local(driver):
             pass
 
         try:
+            print("goto url:", homepage)
             driver.get(homepage)
+        except WebDriverException:
+            print('oh no not again !')
         except Exception as exec1:
+            print('get() raise Exception:', exec1)
             pass
         
     else:
@@ -2714,8 +2741,10 @@ def urbtix_ticket_number_auto_select(driver, url, ticket_number):
                             pass
 
     except Exception as exc:
-        print("find ticket_number select fail")
-        print(exc)
+        print("find ticket_number select fail...")
+        time.sleep(0.1)
+        #print(exc)
+        pass
 
     return ret, is_assign_ticket_number
 
@@ -2812,14 +2841,16 @@ def urbtix_area_auto_select(driver, url, kktix_area_keyword):
 def urbtix_next_button_press(driver, url):
     ret = False
     try:
-        el = driver.find_element(By.CSS_SELECTOR, '#express-purchase-btn > div > span')
+        el = driver.find_element(By.CSS_SELECTOR, '#free-seat-purchase-btn')
         if el is not None:
-            ret = True
-            #print("bingo, found next button")
+            el_span = el.find_element(By.TAG_NAME, 'span')
+            if el_span is not None:
+                #ret = True
+                #print("bingo, found next button")
 
-            if el.is_enabled():
-                el.click()
-                ret = True
+                if el_span.is_enabled():
+                    el_span.click()
+                    ret = True
     except Exception as exc:
         print("find next button fail")
         print(exc)
