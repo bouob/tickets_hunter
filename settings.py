@@ -17,7 +17,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.07.27)"
+CONST_APP_VERSION = u"MaxBot (2022.09.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -153,8 +153,11 @@ def btn_save_act(slience_mode=False):
     return is_all_data_correct
 
 def btn_run_clicked():
+    print('run button pressed.')
     Root_Dir = ""
-    if btn_save_act(slience_mode=True):
+    save_ret = btn_save_act(slience_mode=True)
+    print("save config result:", save_ret)
+    if save_ret:
         import subprocess
         if hasattr(sys, 'frozen'):
             print("execute in frozen mode")
@@ -171,18 +174,25 @@ def btn_run_clicked():
                 print("execute .exe binary.")
                 subprocess.Popen("chrome_tixcraft.exe", shell=True)
         else:
-            #print("execute in shell mode")
+            interpreter_binary = 'python'
+            interpreter_binary_alt = 'python3'
+            
+            print("execute in shell mode.")
             working_dir = os.path.dirname(os.path.realpath(__file__))
             #print("script path:", working_dir)
             #messagebox.showinfo(title="Debug0", message=working_dir)
+            
+            # some python3 binary, running in 'python' command.
             try:
-                s=subprocess.Popen(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+                print('try', interpreter_binary)
+                s=subprocess.Popen([interpreter_binary, 'chrome_tixcraft.py'], cwd=working_dir)
                 #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
                 #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
                 #messagebox.showinfo(title="Debug1", message=str(s))
             except Exception as exc:
+                print('try', interpreter_binary_alt)
                 try:
-                    s=subprocess.Popen(['python', 'chrome_tixcraft.py'], cwd=working_dir)
+                    s=subprocess.Popen([interpreter_binary_alt, 'chrome_tixcraft.py'], cwd=working_dir)
                 except Exception as exc:
                     msg=str(exc)
                     messagebox.showinfo(title="Debug2", message=msg)

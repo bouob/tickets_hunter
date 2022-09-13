@@ -8,7 +8,7 @@ import random
 #print("python version", platform.python_version())
 
 driver_type = 'stealth'
-#driver_type = 'undetected_chromedriver'
+driver_type = 'undetected_chromedriver'
 
 if driver_type=="undetected_chromedriver":
     from seleniumwire import webdriver
@@ -60,7 +60,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.07.27)"
+CONST_APP_VERSION = u"MaxBot (2022.09.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -429,6 +429,12 @@ def load_config_from_local(driver):
             # method 5: uc
             #options = webdriver.ChromeOptions()
             if driver_type=="undetected_chromedriver":
+                # multiprocessing not work bug.
+                if platform.system().lower()=="windows":
+                    if hasattr(sys, 'frozen'):
+                        from multiprocessing import freeze_support
+                        freeze_support()
+
                 options = uc.ChromeOptions()
                 options.add_argument("--password-store=basic")
                 options.page_load_strategy="eager"
@@ -440,13 +446,19 @@ def load_config_from_local(driver):
                     driver = uc.Chrome(executable_path=chromedriver_path, options=options)
                 else:
                     print("Oops! web driver not on path:",chromedriver_path )
-                    driver = uc.Chrome(options=options, suppress_welcome=False)
+                    print('let uc automatically download chromedriver.')
+                    #driver = uc.Chrome(options=options, suppress_welcome=False)
+                    driver = uc.Chrome(options=options)
+
+                if driver is None:
+                    print("create web drive object fail!")
 
                 download_dir_path="."
                 params = {
                     "behavior": "allow",
                     "downloadPath": os.path.realpath(download_dir_path)
                 }
+                #print("assign setDownloadBehavior.")
                 driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
 
 
@@ -459,7 +471,9 @@ def load_config_from_local(driver):
             firefox_service = Service(chromedriver_path)
             driver = webdriver.Firefox(service=firefox_service)
 
+        
         time.sleep(1.0)
+        #print("try to close opened tabs.")
         try:
             window_handles_count = len(driver.window_handles)
             if window_handles_count >= 1:
