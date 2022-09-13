@@ -153,15 +153,15 @@ def btn_save_act(slience_mode=False):
     return is_all_data_correct
 
 def btn_run_clicked():
+    import subprocess
+
     print('run button pressed.')
     Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
-        import subprocess
         if hasattr(sys, 'frozen'):
             print("execute in frozen mode")
-            import platform
 
             # check platform here.
             if platform.system() == 'Darwin':
@@ -176,6 +176,11 @@ def btn_run_clicked():
         else:
             interpreter_binary = 'python'
             interpreter_binary_alt = 'python3'
+
+            if platform.system() == 'Darwin':
+                # try python3 before python.
+                interpreter_binary = 'python3'
+                interpreter_binary_alt = 'python'
             
             print("execute in shell mode.")
             working_dir = os.path.dirname(os.path.realpath(__file__))

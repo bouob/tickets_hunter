@@ -7,6 +7,9 @@ import json
 import random
 #print("python version", platform.python_version())
 
+# seleniumwire not support python 2.x.
+# if you want running under python 2.x, you need to assign driver_type = 'stealth'
+#driver_type = 'selenium'
 driver_type = 'stealth'
 driver_type = 'undetected_chromedriver'
 
