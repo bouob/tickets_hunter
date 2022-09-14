@@ -10,7 +10,7 @@ import random
 # seleniumwire not support python 2.x.
 # if you want running under python 2.x, you need to assign driver_type = 'stealth'
 #driver_type = 'selenium'
-driver_type = 'stealth'
+#driver_type = 'stealth'
 driver_type = 'undetected_chromedriver'
 
 if driver_type=="undetected_chromedriver":
@@ -63,7 +63,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.09.13)"
+CONST_APP_VERSION = u"MaxBot (2022.09.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -446,7 +446,7 @@ def load_config_from_local(driver):
                 if os.path.exists(chromedriver_path):
                     print("Use user driver path:", chromedriver_path)
                     #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
-                    driver = uc.Chrome(executable_path=chromedriver_path, options=options)
+                    driver = uc.Chrome(executable_path=chromedriver_path, options=options, suppress_welcome=False)
                 else:
                     print("Oops! web driver not on path:",chromedriver_path )
                     print('let uc automatically download chromedriver.')
