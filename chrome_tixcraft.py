@@ -14,7 +14,10 @@ import random
 driver_type = 'undetected_chromedriver'
 
 if driver_type=="undetected_chromedriver":
-    from seleniumwire import webdriver
+    # TODO: fix image re-download issue.
+    #from seleniumwire import webdriver
+
+    from selenium import webdriver
 else:
     from selenium import webdriver
 
@@ -63,7 +66,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.09.15)"
+CONST_APP_VERSION = u"MaxBot (2022.09.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -366,8 +369,8 @@ def load_config_from_local(driver):
 
             # method 5: uc
             if driver_type=="undetected_chromedriver":
-                #import undetected_chromedriver as uc
-                import seleniumwire.undetected_chromedriver as uc
+                import undetected_chromedriver as uc
+                #import seleniumwire.undetected_chromedriver as uc
 
             # method 6: Selenium Stealth
             if driver_type=="stealth":
