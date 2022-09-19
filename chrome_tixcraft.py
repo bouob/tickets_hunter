@@ -66,7 +66,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.09.17)"
+CONST_APP_VERSION = u"MaxBot (2022.09.19)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -983,10 +983,15 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
                     print("clicking row number:", target_row_index)
                 
                 el = button_list[target_row_index]
-                is_date_selected = True
                 el.click()
+                is_date_selected = True
             except Exception as exc:
                 print("try to click .btn-next fail")
+                
+                try:
+                    driver.execute_script("arguments[0].click();", el)
+                except Exception as exc:
+                    pass
 
         # PS: Is this case need to reload page? 
         #   (A)user input keywords, with matched text, but no hyperlink to click.
@@ -1173,9 +1178,8 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_sele
                     area_target.click()
                 except Exception as exc:
                     print("click area a link fail, start to retry...")
-                    time.sleep(0.1)
                     try:
-                        area_target.click()
+                        driver.execute_script("arguments[0].click();", area_target)
                     except Exception as exc:
                         print("click area a link fail, after reftry still fail.")
                         print(exc)
@@ -1396,22 +1400,34 @@ def tixcraft_verify(driver, url):
             pass
 
         if ret:
-            # retry
-            for i in range(3):
-                form_input = None
-                try:
-                    form_input = driver.find_element(By.CSS_SELECTOR, '#submitButton')
-                    if form_input is not None:
-                        if form_input.is_enabled():
-                            form_input.click()
-                            break
-                    else:
-                        print("find submit button none")
+            form_input = None
+            try:
+                form_input = driver.find_element(By.CSS_SELECTOR, '#submitButton')
+            except Exception as exc:
+                print("find submit button fail")
+                print(exc)
+                pass
 
-                except Exception as exc:
-                    print("find submit button fail")
-                    print(exc)
-                    pass
+            # retry
+            is_submited = False
+            for i in range(3):
+                if form_input is not None:
+                    if form_input.is_enabled():
+                        try:
+                            form_input.click()
+                            is_submited = True
+                        except Exception as exc:
+                            try:
+                                driver.execute_script("arguments[0].click();", el)
+                                is_submited = True
+                            except Exception as exc:
+                                pass
+                else:
+                    print("find submit button none")
+
+                if is_submited:
+                    break
+
     else:
         is_auto_focus_enable = False
         if not answer_list is None:
@@ -1499,9 +1515,10 @@ def kktix_events_press_next_button(driver):
     # let javascript to enable button.
     time.sleep(0.2)
 
+    wait = WebDriverWait(driver, 1)
+    next_step_button = None
     try:
         # method #3 wait
-        wait = WebDriverWait(driver, 1)
         next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.tickets a.btn-point')))
         if not next_step_button is None:
             if next_step_button.is_enabled():
@@ -1513,19 +1530,14 @@ def kktix_events_press_next_button(driver):
         #print(exc)
         pass
 
-        # retry once
-        # method #1
-        try:        
-            # method #3 wait
-            wait = WebDriverWait(driver, 1)
-            next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.tickets a.btn-point')))
-            if not next_step_button is None:
-                if next_step_button.is_enabled():
-                    next_step_button.click()
+        if not next_step_button is None:
+            if next_step_button.is_enabled():
+                try:
+                    driver.execute_script("arguments[0].click();", next_step_button)
                     ret = True
-        except Exception as exc:
-            print("wait form-actions div retry clickable Exception:")
-            print(exc)
+                except Exception as exc:
+                    pass
+                
     return ret
 
 #   : This is for case-2 next button.
@@ -1535,6 +1547,8 @@ def kktix_press_next_button(driver):
     # let javascript to enable button.
     time.sleep(0.2)
 
+    wait = WebDriverWait(driver, 1)
+    next_step_button = None
     try:
         # method #1
         #form_actions_div = None
@@ -1545,7 +1559,6 @@ def kktix_press_next_button(driver):
         # next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
 
         # method #3 wait
-        wait = WebDriverWait(driver, 1)
         next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')))
         if not next_step_button is None:
             if next_step_button.is_enabled():
@@ -1555,27 +1568,17 @@ def kktix_press_next_button(driver):
     except Exception as exc:
         print("wait form-actions div wait to be clickable Exception:")
         print(exc)
-        pass
+        #pass
 
-        # retry once
-        # method #1
-        try:        
-            #next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
-            #next_step_button = form_actions_div.find_element(By.CSS_SELECTOR, 'div.form-actions button.btn-primary')
-    
-            # method #2        
-            #next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
-    
-            # method #3 wait
-            wait = WebDriverWait(driver, 1)
-            next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')))
-            if not next_step_button is None:
-                if next_step_button.is_enabled():
-                    next_step_button.click()
+        if not next_step_button is None:
+            if next_step_button.is_enabled():
+                try:
+                    driver.execute_script("arguments[0].click();", next_step_button)
                     ret = True
-        except Exception as exc:
-            print("wait form-actions div retry clickable Exception:")
-            print(exc)
+                except Exception as exc:
+                    pass
+
+
     return ret
 
 def kktix_captcha_text_value(captcha_inner_div):
@@ -2596,16 +2599,19 @@ def fami_activity(driver, url):
     # part 1: press "buy" button.
     #---------------------------
     fami_start_to_buy_button = None
-    try:
-        fami_start_to_buy_button = driver.find_element(By.ID, 'buyWaiting')
-        if fami_start_to_buy_button is not None:
-            if fami_start_to_buy_button.is_enabled():
+    fami_start_to_buy_button = driver.find_element(By.ID, 'buyWaiting')
+    if fami_start_to_buy_button is not None:
+        if fami_start_to_buy_button.is_enabled():
+            try:
                 fami_start_to_buy_button.click()
-                time.sleep(0.5)
-    except Exception as exc:
-        pass
-        print("click buyWaiting button fail...")
-        #print(exc)
+            except Exception as exc:
+                print("click buyWaiting button fail...")
+                #print(exc)
+                #pass
+                try:
+                    driver.execute_script("arguments[0].click();", fami_start_to_buy_button)
+                except Exception as exc:
+                    pass
 
 
 def fami_home(driver, url):
@@ -2670,19 +2676,19 @@ def fami_home(driver, url):
     # part 4: press "next" button.
     #---------------------------
     if is_assign_ticket_number:
-        fami_assign_site_button = None
-        try:
-            my_css_selector = "div.col > a.btn"
-            fami_assign_site_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-            if fami_assign_site_button is not None:
-                if fami_assign_site_button.is_enabled():
+        my_css_selector = "div.col > a.btn"
+        fami_assign_site_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if fami_assign_site_button is not None:
+            if fami_assign_site_button.is_enabled():
+                try:
                     fami_assign_site_button.click()
-                    time.sleep(0.5)
-        except Exception as exc:
-            print("click buyWaiting button fail")
-            print(exc)
-
-
+                except Exception as exc:
+                    print("click buyWaiting button fail")
+                    #print(exc)
+                    try:
+                        driver.execute_script("arguments[0].click();", fami_assign_site_button)
+                    except Exception as exc:
+                        pass
 
     areas = None
     if not is_select_box_visible:
@@ -2711,19 +2717,16 @@ def fami_home(driver, url):
                 area_target = areas[target_row_index]
 
         if area_target is not None:
-            try:
-                #print("area text", area_target.text)
-                area_target.click()
-            except Exception as exc:
-                print("click buy button fail, start to retry...")
-                time.sleep(0.2)
+            #print("area text", area_target.text)
+            if area_target.is_enabled():
                 try:
                     area_target.click()
                 except Exception as exc:
-                    print("click buy button fail, after reftry still fail.")
-                    print(exc)
-                    pass
-
+                    print("click buy button fail, start to retry...")
+                    try:
+                        driver.execute_script("arguments[0].click();", area_target)
+                    except Exception as exc:
+                        pass
 
 def urbtix_ticket_number_auto_select(driver, url, ticket_number):
     ret = False
