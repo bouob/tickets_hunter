@@ -66,7 +66,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.09.19)"
+CONST_APP_VERSION = u"MaxBot (2022.10.19)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -150,7 +150,7 @@ def load_config_from_local(driver):
 
     global kktix_answer_dictionary
     global kktix_answer_dictionary_list
-    
+
     global auto_guess_options
     global pass_1_seat_remaining_enable
     global pass_date_is_sold_out_enable
@@ -175,7 +175,7 @@ def load_config_from_local(driver):
             homepage = config_dict["homepage"]
         if 'browser' in config_dict:
             browser = config_dict["browser"]
-        
+
         # output debug message in client side.
         if 'debug' in config_dict:
             debugMode = config_dict["debug"]
@@ -288,7 +288,7 @@ def load_config_from_local(driver):
         print("date_auto_select_enable", date_auto_select_enable)
         print("date_auto_select_mode", date_auto_select_mode)
         print("date_keyword", date_keyword)
-        
+
         print("area_auto_select_enable", area_auto_select_enable)
         print("area_auto_select_mode", area_auto_select_mode)
         print("area_keyword_1", area_keyword_1)
@@ -316,28 +316,28 @@ def load_config_from_local(driver):
                 '--disable-background-timer-throttling',
                 '--disable-breakpad',
                 '--disable-browser-side-navigation',
-                '--disable-checker-imaging', 
+                '--disable-checker-imaging',
                 '--disable-client-side-phishing-detection',
                 '--disable-default-apps',
-                '--disable-demo-mode', 
+                '--disable-demo-mode',
                 '--disable-dev-shm-usage',
                 #'--disable-extensions',
                 '--disable-features=site-per-process',
                 '--disable-hang-monitor',
-                '--disable-in-process-stack-traces', 
-                '--disable-javascript-harmony-shipping', 
-                '--disable-logging', 
-                '--disable-notifications', 
+                '--disable-in-process-stack-traces',
+                '--disable-javascript-harmony-shipping',
+                '--disable-logging',
+                '--disable-notifications',
                 '--disable-popup-blocking',
                 '--disable-prompt-on-repost',
                 '--disable-perfetto',
-                '--disable-permissions-api', 
+                '--disable-permissions-api',
                 '--disable-plugins',
                 '--disable-presentation-api',
-                '--disable-reading-from-canvas', 
-                '--disable-renderer-accessibility', 
-                '--disable-renderer-backgrounding', 
-                '--disable-shader-name-hashing', 
+                '--disable-reading-from-canvas',
+                '--disable-renderer-accessibility',
+                '--disable-renderer-backgrounding',
+                '--disable-shader-name-hashing',
                 '--disable-smooth-scrolling',
                 '--disable-speech-api',
                 '--disable-speech-synthesis-api',
@@ -355,7 +355,7 @@ def load_config_from_local(driver):
                 '--use-mock-keychain',
                 '--lang=zh-TW',
                 '--stable-release-mode',
-                '--use-mobile-user-agent', 
+                '--use-mobile-user-agent',
                 '--webview-disable-safebrowsing-support',
                 #'--no-sandbox',
                 #'--incognito',
@@ -368,12 +368,12 @@ def load_config_from_local(driver):
                 chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
             # method 5: uc
-            if driver_type=="undetected_chromedriver":
+            if driver_type == "undetected_chromedriver":
                 import undetected_chromedriver as uc
                 #import seleniumwire.undetected_chromedriver as uc
 
             # method 6: Selenium Stealth
-            if driver_type=="stealth":
+            if driver_type != "undetected_chromedriver":
                 from selenium_stealth import stealth
 
                 chrome_options = webdriver.ChromeOptions()
@@ -393,7 +393,7 @@ def load_config_from_local(driver):
                 #caps["pageLoadStrategy"] = u"normal"  #  complete
                 caps["pageLoadStrategy"] = u"eager"  #  interactive
                 #caps["pageLoadStrategy"] = u"none"
-                
+
                 #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
                 caps["unhandledPromptBehavior"] = u"ignore"
                 #caps["unhandledPromptBehavior"] = u"dismiss"
@@ -403,15 +403,18 @@ def load_config_from_local(driver):
                 # method 6: Selenium Stealth
                 driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
-                # Selenium Stealth settings
-                stealth(driver,
-                      languages=["zh-TW", "zh"],
-                      vendor="Google Inc.",
-                      platform="Win32",
-                      webgl_vendor="Intel Inc.",
-                      renderer="Intel Iris OpenGL Engine",
-                      fix_hairline=True,
-                  )
+                if driver_type=="stealth":
+                    from selenium_stealth import stealth
+
+                    # Selenium Stealth settings
+                    stealth(driver,
+                          languages=["zh-TW", "zh"],
+                          vendor="Google Inc.",
+                          platform="Win32",
+                          webgl_vendor="Intel Inc.",
+                          renderer="Intel Iris OpenGL Engine",
+                          fix_hairline=True,
+                      )
 
 
             #print("caps:", caps)
@@ -419,7 +422,7 @@ def load_config_from_local(driver):
             # method 1:
             #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options, desired_capabilities=caps)
             #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
-            
+
             # method 2:
             #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', desired_capabilities=caps)
             #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', options=chrome_options)
@@ -431,7 +434,7 @@ def load_config_from_local(driver):
             #chrome_service = Service(chromedriver_path)
             #driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
 
-            
+
             # method 5: uc
             #options = webdriver.ChromeOptions()
             if driver_type=="undetected_chromedriver":
@@ -476,7 +479,7 @@ def load_config_from_local(driver):
             firefox_service = Service(chromedriver_path)
             driver = webdriver.Firefox(service=firefox_service)
 
-        
+
         time.sleep(1.0)
         #print("try to close opened tabs.")
         try:
@@ -488,15 +491,18 @@ def load_config_from_local(driver):
         except Exception as excSwithFail:
             pass
 
-        try:
-            print("goto url:", homepage)
-            driver.get(homepage)
-        except WebDriverException:
-            print('oh no not again !')
-        except Exception as exec1:
-            print('get() raise Exception:', exec1)
-            pass
-        
+        if driver is None:
+            print("create web driver object fail @_@;")
+        else:
+            try:
+                print("goto url:", homepage)
+                driver.get(homepage)
+            except WebDriverException:
+                print('oh no not again !')
+            except Exception as exec1:
+                print('get() raise Exception:', exec1)
+                pass
+
     else:
         print("Config error!")
 
@@ -612,14 +618,14 @@ def get_answer_list_by_question(captcha_text_div_text):
             #print("text:" , re.findall('\([\w]+\)', tmp_text))
             hint_list = re.findall(u'\(.*?\)', tmp_text)
             #print("hint_list:", hint_list)
-        
+
         # try rule2:
         if hint_list is None:
             if u'【' in tmp_text and u'】' in tmp_text and u'範例' in tmp_text:
                 #import re
                 #print("text:" , re.findall('\([\w]+\)', tmp_text))
                 hint_list = re.findall(u'【.*?】', tmp_text)
-        
+
         # try rule3:
         if not hint_list is None:
             for hint in hint_list:
@@ -667,11 +673,11 @@ def get_answer_list_by_question(captcha_text_div_text):
                 space_index = tmp_text.find(u" ", next_block_index)
                 next_block = tmp_text[next_block_index: space_index]
                 if u'範例' in next_block:
-                    my_hint += u' ' + next_block 
+                    my_hint += u' ' + next_block
 
         if len(my_hint) > 0:
             my_hint_anwser = my_hint[my_hint.find(u"範例")+2:].strip()
-            
+
             if u'答案' in my_hint_anwser and u'填入' in my_hint_anwser:
                 # 答案為B需填入Bb)
                 fill_index = my_hint_anwser.find(u"填入")
@@ -840,7 +846,7 @@ def get_answer_list_by_question(captcha_text_div_text):
                                     #print("my_anwser:",my_anwser)
                                     if len(my_anwser) > 0:
                                         return_list.append(my_anwser)
-                
+
                 if not return_list is None:
                     break
     #print("return_list:", return_list)
@@ -879,7 +885,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
 
     # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
     sold_out_text_list = ["選購一空","No tickets available","空席なし"]
-    
+
     game_name = ""
 
     if "/activity/game/" in url:
@@ -981,19 +987,19 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
             try:
                 if debug_date_select:
                     print("clicking row number:", target_row_index)
-                
+
                 el = button_list[target_row_index]
                 el.click()
                 is_date_selected = True
             except Exception as exc:
                 print("try to click .btn-next fail")
-                
+
                 try:
                     driver.execute_script("arguments[0].click();", el)
                 except Exception as exc:
                     pass
 
-        # PS: Is this case need to reload page? 
+        # PS: Is this case need to reload page?
         #   (A)user input keywords, with matched text, but no hyperlink to click.
         #   (B)user input keywords, but not no matched text with hyperlink to click.
 
@@ -1015,7 +1021,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
     return is_date_selected
 
 # PURPOSE: get target area list.
-# RETURN: 
+# RETURN:
 #   is_need_refresh
 #   areas
 def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_seat_remaining_enable):
@@ -1113,7 +1119,7 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                     if debugMode:
                         print("row_text:" + row_text)
                         print("match:" + area_keyword)
-        
+
         if len(areas) == 0:
             areas = None
             is_need_refresh = True
@@ -1202,7 +1208,7 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_sele
 
         if el_selectSeat_iframe is not None:
             driver.switch_to.frame(el_selectSeat_iframe)
-            
+
             # click one seat
             el_seat = None
             try:
@@ -1524,7 +1530,6 @@ def kktix_events_press_next_button(driver):
             if next_step_button.is_enabled():
                 next_step_button.click()
                 ret = True
-
     except Exception as exc:
         print("wait form-actions div wait to be clickable Exception:")
         #print(exc)
@@ -1537,7 +1542,7 @@ def kktix_events_press_next_button(driver):
                     ret = True
                 except Exception as exc:
                     pass
-                
+
     return ret
 
 #   : This is for case-2 next button.
@@ -1595,36 +1600,40 @@ def kktix_captcha_text_value(captcha_inner_div):
             print("find captcha_inner_div Exception:")
             #print(exc)
             pass
-                
+
     return ret
 
 def kktix_input_captcha_text(captcha_inner_div, captcha_password_string, force_overwrite = False):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
     ret = False
 
-    try:
-        if captcha_inner_div is not None:
-            #print("found captcha div")
-            if captcha_password_string is not None:
-                captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
-                if not captcha_password_text is None:
-                    #print("found input field")
-                    inputed_captcha_text = captcha_password_text.get_attribute('value')
-                    if force_overwrite:
+    if captcha_inner_div is not None and captcha_password_string is not None:
+        try:
+            if show_debug_message:
+                print("found captcha div")
+            captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
+            if not captcha_password_text is None:
+                if show_debug_message:
+                    print("found input field")
+
+                inputed_captcha_text = captcha_password_text.get_attribute('value')
+                if force_overwrite:
+                    captcha_password_text.send_keys(captcha_password_string)
+                    print("send captcha keys:" + captcha_password_string)
+                    ret = True
+                else:
+                    # not force overwrite:
+                    if len(inputed_captcha_text) == 0:
                         captcha_password_text.send_keys(captcha_password_string)
                         print("send captcha keys:" + captcha_password_string)
                         ret = True
-                    else:
-                        # not force overwrite:
-                        if len(inputed_captcha_text) == 0:
-                            captcha_password_text.send_keys(captcha_password_string)
-                            print("send captcha keys:" + captcha_password_string)
-                            ret = True
-
-                else:
-                    print("find captcha input field fail")
-    except Exception as exc:
-        print("find kktix_input_captcha_text Exception:")
-        #print(exc)
+        except Exception as exc:
+            if show_debug_message:
+                print("find kktix_input_captcha_text Exception:")
+                print(exc)
+            pass
 
     return ret
 
@@ -1724,10 +1733,10 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword):
                                     #print("asssign ticket number:%s" % str(ticket_number))
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys(ticket_number)
-                                    
+
                                     # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
                                     #time.sleep(0.4)
-                                    
+
                                     ret = True
 
                                 except Exception as exc:
@@ -1738,7 +1747,7 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword):
 
                                     # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
                                     #time.sleep(0.4)
-                                    
+
                                     ret = True
                                     pass
                             else:
@@ -1754,7 +1763,7 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword):
                     print("find input tag for price Exception")
                     #print(exc)
                     pass
-            
+
             except Exception as exc:
                 print("auto fill ticket number fail")
                 print(exc)
@@ -1763,42 +1772,53 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword):
     return ret
 
 def kktix_get_web_datetime(url, registrationsNewApp_div):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
     web_datetime = None
 
-    el_web_datetime = None
     is_found_web_datetime = False
-    try:
-        if not registrationsNewApp_div is None:
-            el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
-            if el_web_datetime_list is not None:
-                el_web_datetime_list_count = len(el_web_datetime_list)
-                if el_web_datetime_list_count > 0:
-                    for el_web_datetime in el_web_datetime_list:
-                        try:
-                            el_web_datetime_text = el_web_datetime.text
-                            #print("el_web_datetime_text:", el_web_datetime_text)
-                            
-                            now = datetime.now()
-                            #print("now:", now)
-                            for guess_year in range(now.year,now.year+3):
-                                current_year = str(guess_year)            
-                                if current_year in el_web_datetime_text:
-                                    if u'/' in el_web_datetime_text:
-                                        web_datetime = el_web_datetime_text
-                                        is_found_web_datetime = True
-                                        break
 
-                            if is_found_web_datetime:
+    el_web_datetime_list = None
+    if not registrationsNewApp_div is None:
+        try:
+            el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
+        except Exception as exc:
+            if show_debug_message:
+                print("find td.ng-binding Exception")
+                print(exc)
+            pass
+        #print("is_found_web_datetime", is_found_web_datetime)
+
+    if el_web_datetime_list is not None:
+        el_web_datetime_list_count = len(el_web_datetime_list)
+        if el_web_datetime_list_count > 0:
+            el_web_datetime = None
+            for el_web_datetime in el_web_datetime_list:
+                try:
+                    el_web_datetime_text = el_web_datetime.text
+                    if show_debug_message:
+                        print("el_web_datetime_text:", el_web_datetime_text)
+
+                    now = datetime.now()
+                    #print("now:", now)
+                    for guess_year in range(now.year,now.year+3):
+                        current_year = str(guess_year)
+                        if current_year in el_web_datetime_text:
+                            if u'/' in el_web_datetime_text:
+                                web_datetime = el_web_datetime_text
+                                is_found_web_datetime = True
                                 break
-                        except Exception as exc:
-                            #print(exc)
-                            pass
-            else:
-                print("find td.ng-binding fail")
-    except Exception as exc:
-        #print("find td.ng-binding Exception")
-        pass
-    #print("is_found_web_datetime", is_found_web_datetime)
+
+                    if is_found_web_datetime:
+                        break
+                except Exception as exc:
+                    if show_debug_message:
+                        print('parse web datetime fail:')
+                        print(exc)
+                    pass
+    else:
+        print("find td.ng-binding fail")
 
     return web_datetime
 
@@ -1844,7 +1864,7 @@ def kktix_check_register_status(url):
             is_match_event_code = True
             #print('event_code:',event_code)
             break
-    
+
     html_result = None
     if is_match_event_code:
         url = "https://kktix.com/g/events/%s/register_info" % (event_code)
@@ -1865,7 +1885,7 @@ def kktix_check_register_status(url):
     if not html_result is None:
         status_code = html_result.status_code
         #print("status_code:",status_code)
-        
+
         if status_code == 200:
             html_text = html_result.text
             #print("html_text:", html_text)
@@ -1884,6 +1904,9 @@ def kktix_check_register_status(url):
     return registerStatus
 
 def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
     #---------------------------
     # part 2: ticket number
     #---------------------------
@@ -1916,6 +1939,9 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
         pass
 
     if captcha_inner_div is not None:
+        if show_debug_message:
+            print("found captcha_inner_div layor.")
+
         captcha_text_div = None
         try:
             captcha_text_div = captcha_inner_div.find_element(By.TAG_NAME, "p")
@@ -1933,7 +1959,10 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                 captcha_text_div_text = captcha_text_div.text
             except Exception as exc:
                 pass
-            
+
+            if show_debug_message:
+                print("captcha_text_div_text:", captcha_text_div_text)
+
             #captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
             #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
             #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
@@ -2019,7 +2048,8 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
             # parse '演出日期'
             is_need_parse_web_datetime = False
-            if u'半形數字' in captcha_text_div_text:
+            # '半形阿拉伯數字' & '半形數字'
+            if u'半形' in captcha_text_div_text and u'字' in captcha_text_div_text:
                 if u'演出日期' in captcha_text_div_text:
                     is_need_parse_web_datetime = True
                 if u'活動日期' in captcha_text_div_text:
@@ -2034,41 +2064,48 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                     is_need_parse_web_datetime = True
                 if u'音樂會日期' in captcha_text_div_text:
                     is_need_parse_web_datetime = True
-                if u'the date of the show you purchased' in captcha_text_div_text:
-                    is_need_parse_web_datetime = True
+            if u'the date of the show you purchased' in captcha_text_div_text:
+                is_need_parse_web_datetime = True
 
-            #print("is_need_parse_web_datetime:", is_need_parse_web_datetime)
+            if show_debug_message:
+                print("is_need_parse_web_datetime:", is_need_parse_web_datetime)
+
             if is_need_parse_web_datetime:
                 captcha_password_string = None
                 web_datetime = kktix_get_web_datetime(url, registrationsNewApp_div)
                 if not web_datetime is None:
-                    tmp_text = captcha_text_div_text
-                    # replace ex.
-                    tmp_text = tmp_text.replace(u'例如',u'範例')
-                    tmp_text = tmp_text.replace(u'如:',u'範例:')
-                    tmp_text = tmp_text.replace(u'舉例',u'範例')
-                    if not u'範例' in tmp_text:
-                        tmp_text = tmp_text.replace(u'例',u'範例')
-                    # important, maybe 例 & ex occurs at same time.
-                    tmp_text = tmp_text.replace(u'ex:',u'範例:')
+                    if show_debug_message:
+                        print("web_datetime:", web_datetime)
 
-                    tmp_text = tmp_text.replace(u'輸入：',u'範例')
-                    tmp_text = tmp_text.replace(u'輸入',u'範例')
-                    #print("tmp_text", tmp_text)
+                    captcha_text_formatted = captcha_text_div_text
+                    # replace ex.
+                    captcha_text_formatted = captcha_text_formatted.replace(u'例如',u'範例')
+                    captcha_text_formatted = captcha_text_formatted.replace(u'如:',u'範例:')
+                    captcha_text_formatted = captcha_text_formatted.replace(u'舉例',u'範例')
+                    if not u'範例' in captcha_text_formatted:
+                        captcha_text_formatted = captcha_text_formatted.replace(u'例',u'範例')
+                    # important, maybe 例 & ex occurs at same time.
+                    captcha_text_formatted = captcha_text_formatted.replace(u'ex:',u'範例:')
+
+                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入：',u'範例')
+                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入',u'範例')
+
+                    if show_debug_message:
+                        print("captcha_text_formatted", captcha_text_formatted)
 
                     my_datetime_foramted = None
 
                     if my_datetime_foramted is None:
-                        if u'4位半形數字' in tmp_text:
+                        if u'4位半形' in captcha_text_formatted:
                             my_datetime_foramted = "%m%d"
 
                     if my_datetime_foramted is None:
                         now = datetime.now()
-                        for guess_year in range(now.year-1,now.year+3):
-                            current_year = str(guess_year)            
-                            if current_year in tmp_text:
-                                my_hint_index = tmp_text.find(current_year)
-                                my_hint_anwser = tmp_text[my_hint_index:]
+                        for guess_year in range(now.year-4,now.year+2):
+                            current_year = str(guess_year)
+                            if current_year in captcha_text_formatted:
+                                my_hint_index = captcha_text_formatted.find(current_year)
+                                my_hint_anwser = captcha_text_formatted[my_hint_index:]
                                 #print("my_hint_anwser:", my_hint_anwser)
                                 # get after.
                                 my_delimitor_symbol = u'範例'
@@ -2090,13 +2127,22 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                                 if my_delimitor_symbol in my_hint_anwser:
                                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                                     my_hint_anwser = my_hint_anwser[:my_delimitor_index]
+                                #remove last char.
+                                remove_last_char_list = [')','(','.','。','）','（','[',']']
+                                for check_char in remove_last_char_list:
+                                    if my_hint_anwser[-1:]==check_char:
+                                        my_hint_anwser = my_hint_anwser[:-1]
+
                                 my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
-                                #print("my_hint_anwser:", my_hint_anwser)
-                                #print(u"my_anwser_formated:", my_anwser_formated)
                                 if my_anwser_formated == u"[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
                                     my_datetime_foramted = "%Y%m%d"
                                 if my_anwser_formated == u"[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
                                     my_datetime_foramted = "%Y/%m/%d"
+
+                                if show_debug_message:
+                                    print("my_hint_anwser:", my_hint_anwser)
+                                    print("my_anwser_formated:", my_anwser_formated)
+                                    print("my_datetime_foramted:", my_datetime_foramted)
                                 break
 
                     if not my_datetime_foramted is None:
@@ -2104,14 +2150,16 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                         if my_delimitor_symbol in web_datetime:
                             web_datetime = web_datetime[:web_datetime.find(my_delimitor_symbol)]
                         date_time = datetime.strptime(web_datetime,u"%Y/%m/%d")
-                        #print("date_time:", date_time)
+                        if show_debug_message:
+                            print("date_time:", date_time)
                         ans = None
                         try:
                             ans = date_time.strftime(my_datetime_foramted)
                         except Exception as exc:
                             pass
                         captcha_password_string = ans
-                        #print(u"my_anwser:", ans)
+                        if show_debug_message:
+                            print("my_anwser:", ans)
 
             # parse '演出時間'
             is_need_parse_web_time = False
@@ -2179,12 +2227,12 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                         #print(u"my_anwser_formated:", my_anwser_formated)
                         if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
                             my_datetime_foramted = "%H%M"
-                            if u'12小時制' in tmp_text:
+                            if u'12小時' in tmp_text:
                                 my_datetime_foramted = "%I%M"
 
                         if my_anwser_formated == u"[\\d][\\d]:[\\d][\\d]":
                             my_datetime_foramted = "%H:%M"
-                            if u'12小時制' in tmp_text:
+                            if u'12小時' in tmp_text:
                                 my_datetime_foramted = "%I:%M"
 
                     if not my_datetime_foramted is None:
@@ -2239,7 +2287,9 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                 captcha_password_string = None
             #print("is_combine_two_question:", is_combine_two_question)
 
-            #print("captcha_password_string:", captcha_password_string)
+            if show_debug_message:
+                print("captcha_password_string:", captcha_password_string)
+
             # ask question.
             if auto_guess_options:
                 if not is_combine_two_question:
@@ -2258,7 +2308,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
     if auto_press_next_step_button:
         # pass switch check.
-        
+
         #print("is_assign_ticket_number", is_assign_ticket_number)
         if is_assign_ticket_number:
             # must input the ticket number correct.
@@ -2305,7 +2355,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                         if len(answer_list) > 1:
                             unique = [x for i, x in enumerate(answer_list) if answer_list.index(x) == i]
                             answer_list = unique
-                    
+
                     # start to try
                     if not answer_list is None:
                         # for popular event
@@ -2329,7 +2379,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                                 pass
                     else:
                         # captcha appear but we do no have answer list.
-                        pass      
+                        pass
 
 
     return answer_index
@@ -2357,7 +2407,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
     # auto refresh for area list page.
     is_need_refresh = False
     is_finish_checkbox_click = False
-    
+
     if not is_need_refresh:
         if registerStatus is None:
             registerStatus = kktix_check_register_status(url)
@@ -2381,7 +2431,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
     if not is_need_refresh:
         try:
             registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-            
+
             # old method, disable this block.
             '''
             if registrationsNewApp_div is not None:
@@ -2409,7 +2459,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
                                 if input_value.strip() != '0':
                                     #print("found not zero value, do not refresh!")
                                     is_all_input_disable = False
-                                    
+
                         if is_all_input_disable:
                             #print("found all input hidden")
                             is_need_refresh = True
@@ -2428,7 +2478,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
         except Exception as exc:
             #print("refresh fail")
             pass
-        
+
         # reset answer_index
         answer_index = -1
         registerStatus = None
@@ -2448,7 +2498,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
 # PS: it seems use date_auto_select_mode instead of area_auto_select_mode
 def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto_select_mode):
     show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    #show_debug_message = False      # online
 
     areas = None
 
@@ -2566,7 +2616,7 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto
                                         is_match_area = True
                             else:
                                 is_match_area = True
-                            
+
                             if is_match_date and is_match_area:
                                 #print("bingo, row text:", row_text)
                                 #areas.append(row)
@@ -2627,7 +2677,7 @@ def fami_home(driver, url):
     global area_auto_select_mode
 
     is_select_box_visible = False
-    
+
     #---------------------------
     # part 3: fill ticket number.
     #---------------------------
@@ -2847,7 +2897,7 @@ def urbtix_area_auto_select(driver, url, kktix_area_keyword):
         el = None
         try:
             #print("area text", area.text)
-            
+
             my_css_selector = "input.pricezone-radio-input"
             el = area.find_element(By.CSS_SELECTOR, my_css_selector)
             if el is not None:
@@ -2989,7 +3039,7 @@ def cityline_area_auto_select(url):
         el = None
         try:
             #print("area text", area.text)
-            
+
             my_css_selector = "input[type=radio]"
             el = area.find_element(By.CSS_SELECTOR, my_css_selector)
             if el is not None:
@@ -3253,7 +3303,7 @@ def main():
     last_url = ""
     # for tixcraft
     is_verifyCode_editing = False
-    
+
     # for kktix
     answer_index = -1
     kktix_register_status_last = None
@@ -3392,7 +3442,7 @@ def main():
 
             if len(str_exc)==0:
                 str_exc = repr(exc)
-            
+
             exit_bot_error_strings = [u'Max retries exceeded with url', u'chrome not reachable', u'without establishing a connection']
             for str_chrome_not_reachable in exit_bot_error_strings:
                 # for python2
@@ -3495,7 +3545,7 @@ def main():
             is_date_selected = False
             if date_auto_select_enable:
                 is_date_selected = date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date_is_sold_out_enable, auto_reload_coming_soon_page_enable)
-            
+
             if is_date_selected:
                 # start to redirecting.
                 continue
