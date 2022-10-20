@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 #encoding=utf-8
+# 'seleniumwire' and 'selenium 4' raise error when running python 2.x 
+# PS: python 2.x will be removed in future. 
 
 try:
     # for Python2
@@ -17,7 +19,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.10.19)"
+CONST_APP_VERSION = u"MaxBot (2022.10.20)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
