@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.10.20)"
+CONST_APP_VERSION = u"MaxBot (2022.10.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -108,6 +108,7 @@ auto_reload_coming_soon_page_enable = True  # default checked.
 
 kktix_area_auto_select_mode = None
 kktix_area_keyword = None
+kktix_date_keyword = None
 
 kktix_answer_dictionary = None
 kktix_answer_dictionary_list = None
@@ -148,6 +149,7 @@ def load_config_from_local(driver):
     global auto_fill_ticket_number
     global kktix_area_auto_select_mode
     global kktix_area_keyword
+    global kktix_date_keyword
 
     global kktix_answer_dictionary
     global kktix_answer_dictionary_list
@@ -208,6 +210,12 @@ def load_config_from_local(driver):
                 if kktix_area_keyword is None:
                     kktix_area_keyword = ""
                 kktix_area_keyword = kktix_area_keyword.strip()
+
+            if 'date_keyword' in config_dict["kktix"]:
+                kktix_date_keyword = config_dict["kktix"]["date_keyword"]
+                if kktix_date_keyword is None:
+                    kktix_date_keyword = ""
+                kktix_date_keyword = kktix_date_keyword.strip()
 
             # disable password brute force attack
             if 'answer_dictionary' in config_dict["kktix"]:
@@ -281,6 +289,7 @@ def load_config_from_local(driver):
         print("auto_press_next_step_button", auto_press_next_step_button)
         print("auto_fill_ticket_number", auto_fill_ticket_number)
         print("kktix_area_keyword", kktix_area_keyword)
+        print("kktix_date_keyword", kktix_date_keyword)
         print("kktix_answer_dictionary", kktix_answer_dictionary)
         print("auto_guess_options", auto_guess_options)
 
@@ -1638,66 +1647,69 @@ def kktix_input_captcha_text(captcha_inner_div, captcha_password_string, force_o
 
     return ret
 
-def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword):
+def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_date_keyword):
     ret = False
 
     areas = None
-
-    ticket_price_list = None
-
     is_ticket_number_assigened = False
 
+    ticket_price_list = None
     try:
         ticket_price_list = driver.find_elements(By.CSS_SELECTOR, '.display-table-row')
-        if ticket_price_list is not None:
-            if len(ticket_price_list) > 0:
-                areas = []
-
-                row_index = 0
-                for row in ticket_price_list:
-                    row_index += 1
-
-                    row_text = ""
-                    try:
-                        row_text = row.text
-                        #print("get text:", row_text)
-                    except Exception as exc:
-                        print("get text fail")
-                        break
-
-                    if len(row_text) > 0:
-                        # check ticket input textbox.
-                        ticket_price_input = None
-                        try:
-                            ticket_price_input = row.find_element(By.CSS_SELECTOR, "input[type='text']")
-                            if ticket_price_input is not None:
-                                current_ticket_number = str(ticket_price_input.get_attribute('value'))
-                                if ticket_price_input.is_enabled():
-                                    if len(current_ticket_number) > 0:
-                                        if current_ticket_number != "0":
-                                            is_ticket_number_assigened = True
-
-                                    if len(kktix_area_keyword) == 0:
-                                        areas.append(row)
-                                    else:
-                                        # match keyword.
-                                        if kktix_area_keyword in row_text:
-                                            areas.append(row)
-                                else:
-                                    #disabled.
-                                    if len(current_ticket_number) > 0:
-                                        if current_ticket_number != "0":
-                                            is_ticket_number_assigened = True
-
-                        except Exception as exc:
-                            pass
-        else:
-            print("find ticket-price span fail")
-
     except Exception as exc:
         print("find ticket-price span Exception:")
         print(exc)
         pass
+
+    if ticket_price_list is not None:
+        if len(ticket_price_list) > 0:
+            areas = []
+
+            row_index = 0
+            for row in ticket_price_list:
+                row_index += 1
+
+                row_text = ""
+                try:
+                    row_text = row.text
+                    #print("get text:", row_text)
+                except Exception as exc:
+                    print("get text fail")
+                    break
+
+                if len(row_text) > 0:
+                    # check ticket input textbox.
+                    ticket_price_input = None
+                    try:
+                        ticket_price_input = row.find_element(By.CSS_SELECTOR, "input[type='text']")
+                        if ticket_price_input is not None:
+                            current_ticket_number = str(ticket_price_input.get_attribute('value'))
+                            if ticket_price_input.is_enabled():
+                                if len(current_ticket_number) > 0:
+                                    if current_ticket_number != "0":
+                                        is_ticket_number_assigened = True
+
+                                if len(kktix_area_keyword) == 0:
+                                    areas.append(row)
+                                else:
+                                    # match keyword.
+                                    if kktix_area_keyword in row_text:
+                                        if len(kktix_date_keyword) == 0:
+                                            areas.append(row)
+                                        else:
+                                            if kktix_date_keyword in row_text:
+                                                areas.append(row)
+                            else:
+                                #disabled.
+                                if len(current_ticket_number) > 0:
+                                    if current_ticket_number != "0":
+                                        is_ticket_number_assigened = True
+
+                    except Exception as exc:
+                        pass
+    else:
+        print("find ticket-price span fail")
+
 
     if is_ticket_number_assigened:
         ret = True
@@ -1904,7 +1916,7 @@ def kktix_check_register_status(url):
     #print("registerStatus:", registerStatus)
     return registerStatus
 
-def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword):
+def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword, kktix_date_keyword):
     show_debug_message = True       # debug.
     #show_debug_message = False      # online
 
@@ -1914,7 +1926,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
     is_assign_ticket_number = False
     if auto_fill_ticket_number:
         for retry_index in range(10):
-            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword)
+            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_date_keyword)
             if is_assign_ticket_number:
                 break
     #print('is_assign_ticket_number:', is_assign_ticket_number)
@@ -2432,42 +2444,6 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
     if not is_need_refresh:
         try:
             registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-
-            # old method, disable this block.
-            '''
-            if registrationsNewApp_div is not None:
-                #print("found registrationsNewApp")
-                el_list = registrationsNewApp_div.find_elements(By.CSS_SELECTOR, "input[type='text']")
-                if el_list is None:
-                    #print("query input[type='text'] return None")
-                    is_need_refresh = True
-                else:
-                    #print("found input")
-                    if len(el_list) == 0:
-                        #print("query input[type='text'] length zero")
-                        is_need_refresh = True
-                    else:
-                        is_all_input_disable = True
-                        idx = 0
-                        for el in el_list:
-                            idx += 1
-                            if el.is_enabled():
-                                is_all_input_disable = False
-                            else:
-                                # check value
-                                input_value = str(el.get_attribute('value'))
-                                #print("ticker(%d) number value is:'%s'" % (idx,input_value))
-                                if input_value.strip() != '0':
-                                    #print("found not zero value, do not refresh!")
-                                    is_all_input_disable = False
-
-                        if is_all_input_disable:
-                            #print("found all input hidden")
-                            is_need_refresh = True
-            else:
-                pass
-                #print("not found registrationsNewApp")
-            '''
         except Exception as exc:
             pass
             #print("find input fail:", exc)
@@ -2487,7 +2463,8 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
         global auto_fill_ticket_number
         global ticket_number
         global kktix_area_keyword
-        answer_index = kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword)
+        global kktix_date_keyword
+        answer_index = kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword, kktix_date_keyword)
 
 
     return answer_index, registerStatus
@@ -2830,7 +2807,7 @@ def urbtix_ticket_number_auto_select(driver, url, ticket_number):
 #   True: area block appear.
 #   False: area block not appear.
 # ps: return value for date auto select.
-def urbtix_area_auto_select(driver, url, kktix_area_keyword):
+def urbtix_area_auto_select(driver, url, kktix_area_keyword, kktix_date_keyword):
     ret = False
     areas = None
 
@@ -2941,10 +2918,11 @@ def urbtix_performance(driver, url):
     global ticket_number
 
     global kktix_area_keyword
+    global kktix_date_keyword
     global auto_press_next_step_button
 
     if auto_fill_ticket_number:
-        area_div_exist = urbtix_area_auto_select(driver, url, kktix_area_keyword)
+        area_div_exist = urbtix_area_auto_select(driver, url, kktix_area_keyword, kktix_date_keyword)
 
     ticket_number_select_exist, is_assign_ticket_number = urbtix_ticket_number_auto_select(driver, url, ticket_number)
 
@@ -2958,7 +2936,7 @@ def urbtix_performance(driver, url):
 #   True: area block appear.
 #   False: area block not appear.
 # ps: return value for date auto select.
-def cityline_area_auto_select(url):
+def cityline_area_auto_select(url, kktix_area_keyword):
     ret = False
     areas = None
 
@@ -3259,7 +3237,7 @@ def cityline_performance(driver, url):
         if auto_fill_ticket_number:
             area_div_exist = False
             if len(kktix_area_keyword) > 0:
-                area_div_exist = cityline_area_auto_select(url)
+                area_div_exist = cityline_area_auto_select(url, kktix_area_keyword)
 
         ticket_number_select_exist, is_assign_ticket_number = cityline_ticket_number_auto_select(url)
 
