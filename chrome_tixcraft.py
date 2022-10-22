@@ -10,7 +10,7 @@ import random
 # 'seleniumwire' and 'selenium 4' raise error when running python 2.x 
 # PS: python 2.x will be removed in future. 
 
-#driver_type = 'selenium'
+driver_type = 'selenium'
 #driver_type = 'stealth'
 driver_type = 'undetected_chromedriver'
 
@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.10.21)"
+CONST_APP_VERSION = u"MaxBot (2022.10.22)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -377,6 +377,9 @@ def load_config_from_local(driver):
             if platform.system().lower()=="windows":
                 chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
 
+            no_google_analytics_path = Root_Dir+ "webdriver/no_google_analytics_1.1.0.0.crx"
+            no_ad_path = Root_Dir+ "webdriver/Adblock_3.14.2.0.crx"
+
             # method 5: uc
             if driver_type == "undetected_chromedriver":
                 import undetected_chromedriver as uc
@@ -387,6 +390,15 @@ def load_config_from_local(driver):
                 from selenium_stealth import stealth
 
                 chrome_options = webdriver.ChromeOptions()
+
+                if os.path.exists(no_google_analytics_path):
+                    chrome_options.add_extension(no_google_analytics_path)
+                if os.path.exists(no_ad_path):
+                    chrome_options.add_extension(no_ad_path)
+
+                chrome_options.add_argument('--disable-features=TranslateUI')
+                chrome_options.add_argument('--disable-translate')
+                chrome_options.add_argument('--lang=zh-TW')
 
                 # for navigator.webdriver
                 chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -459,6 +471,20 @@ def load_config_from_local(driver):
                 options.page_load_strategy="eager"
                 #print("strategy", options.page_load_strategy)
 
+                no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
+                no_ad_folder_path = no_ad_path.replace('.crx','')
+                load_extension_path = ""
+                if os.path.exists(no_google_analytics_folder_path):
+                    load_extension_path += "," + no_google_analytics_folder_path
+                if os.path.exists(no_ad_folder_path):
+                    load_extension_path += "," + no_ad_folder_path
+                if len(load_extension_path) > 0:
+                    options.add_argument('--load-extension=' + load_extension_path[1:])
+
+                options.add_argument('--disable-features=TranslateUI')
+                options.add_argument('--disable-translate')
+                options.add_argument('--lang=zh-TW')
+
                 if os.path.exists(chromedriver_path):
                     print("Use user driver path:", chromedriver_path)
                     #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
@@ -512,6 +538,19 @@ def load_config_from_local(driver):
             except Exception as exec1:
                 print('get() raise Exception:', exec1)
                 pass
+
+        if driver is None:
+            time.sleep(1.0)
+            #print("try to close opened tabs.")
+            try:
+                window_handles_count = len(driver.window_handles)
+                if window_handles_count >= 1:
+                    driver.switch_to.window(driver.window_handles[1])
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[0])
+            except Exception as excSwithFail:
+                pass
+
 
     else:
         print("Config error!")
@@ -1080,9 +1119,15 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                     break
 
             if len(row_text) > 0:
+                # clean stop word.
+                row_text = row_text.replace(',','')
+
                 is_append_this_row = False
 
                 if len(area_keyword) > 0:
+                    # clean stop word.
+                    area_keyword = area_keyword.replace(',','')
+
                     # must match keyword.
                     if area_keyword in row_text:
                         is_append_this_row = True
@@ -1559,9 +1604,6 @@ def kktix_events_press_next_button(driver):
 def kktix_press_next_button(driver):
     ret = False
 
-    # let javascript to enable button.
-    time.sleep(0.2)
-
     wait = WebDriverWait(driver, 1)
     next_step_button = None
     try:
@@ -1678,6 +1720,9 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                     break
 
                 if len(row_text) > 0:
+                    # clean stop word.
+                    row_text = row_text.replace(',','')
+
                     # check ticket input textbox.
                     ticket_price_input = None
                     try:
@@ -1693,10 +1738,14 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                                     areas.append(row)
                                 else:
                                     # match keyword.
+                                    # clean stop word.
+                                    kktix_area_keyword = kktix_area_keyword.replace(',','')
+
                                     if kktix_area_keyword in row_text:
                                         if len(kktix_date_keyword) == 0:
                                             areas.append(row)
                                         else:
+                                            kktix_date_keyword = kktix_date_keyword.replace(',','')
                                             if kktix_date_keyword in row_text:
                                                 areas.append(row)
                             else:
@@ -1747,19 +1796,12 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys(ticket_number)
 
-                                    # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
-                                    #time.sleep(0.4)
-
                                     ret = True
-
                                 except Exception as exc:
                                     print("asssign ticket number to ticket-price field Exception:")
                                     print(exc)
                                     ticket_price_input.clear()
                                     ticket_price_input.send_keys("1")
-
-                                    # for //www.google.com/recaptcha/api.js?hl=en&amp;render=explicit check
-                                    #time.sleep(0.4)
 
                                     ret = True
                                     pass
@@ -2330,7 +2372,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
             # must ensure checkbox has been checked.
             if not is_finish_checkbox_click:
-                for retry_i in range(10):
+                for retry_i in range(5):
                     # retry again.
                     is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
                     time.sleep(0.1)
@@ -2342,7 +2384,13 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                 # normal mode.
                 #print("# normal mode.")
                 if is_finish_checkbox_click:
-                    kktix_press_next_button(driver)
+                    click_ret = kktix_press_next_button(driver)
+                    if not click_ret:
+                        print("press next button fail, retry again.")
+                        click_ret = kktix_press_next_button(driver)
+                    else:
+                        #print("press next button successfully.")
+                        pass
                 else:
                     print("unable to assign checkbox value")
             else:
@@ -2350,7 +2398,13 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                     # for easy guest mode, we can fill the password correct.
                     #print("for easy guest mode, we can fill the password correct.")
                     if is_finish_checkbox_click:
-                        kktix_press_next_button(driver)
+                        click_ret = kktix_press_next_button(driver)
+                        if not click_ret:
+                            print("press next button fail, retry again.")
+                            click_ret = kktix_press_next_button(driver)
+                        else:
+                            #print("press next button successfully.")
+                            pass
                     else:
                         print("unable to assign checkbox value")
                 else:
