@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.10.22)"
+CONST_APP_VERSION = u"MaxBot (2022.10.25)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -136,6 +136,129 @@ def get_config_dict():
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
     return config_dict
+
+def get_favoriate_extension_path(webdriver_path):
+    no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
+    no_ad_path = os.path.join(webdriver_path,"Adblock_3.14.2.0.crx")
+    return no_google_analytics_path, no_ad_path
+
+def get_chromedriver_path(webdriver_path):
+    chromedriver_path = os.path.join(webdriver_path,"chromedriver")
+    if platform.system().lower()=="windows":
+        chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
+    return chromedriver_path
+
+def load_chromdriver_normal(webdriver_path, driver_type):
+    from selenium_stealth import stealth
+    chrome_options = webdriver.ChromeOptions()
+
+    chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+
+    if os.path.exists(no_google_analytics_path):
+        chrome_options.add_extension(no_google_analytics_path)
+    if os.path.exists(no_ad_path):
+        chrome_options.add_extension(no_ad_path)
+
+    chrome_options.add_argument('--disable-features=TranslateUI')
+    chrome_options.add_argument('--disable-translate')
+    chrome_options.add_argument('--lang=zh-TW')
+
+    # for navigator.webdriver
+    chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
+
+    #caps = DesiredCapabilities().CHROME
+    caps = chrome_options.to_capabilities()
+
+    #caps["pageLoadStrategy"] = u"normal"  #  complete
+    caps["pageLoadStrategy"] = u"eager"  #  interactive
+    #caps["pageLoadStrategy"] = u"none"
+
+    #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
+    caps["unhandledPromptBehavior"] = u"ignore"
+    #caps["unhandledPromptBehavior"] = u"dismiss"
+
+    chrome_service = Service(chromedriver_path)
+
+    # method 6: Selenium Stealth
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
+    if driver_type=="stealth":
+        from selenium_stealth import stealth
+
+        # Selenium Stealth settings
+        stealth(driver,
+              languages=["zh-TW", "zh"],
+              vendor="Google Inc.",
+              platform="Win32",
+              webgl_vendor="Intel Inc.",
+              renderer="Intel Iris OpenGL Engine",
+              fix_hairline=True,
+          )
+
+    return driver
+
+def load_chromdriver_uc(webdriver_path):
+    import undetected_chromedriver as uc
+
+    chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    options = uc.ChromeOptions()
+    options.page_load_strategy="eager"
+    #print("strategy", options.page_load_strategy)
+
+    no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+    no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
+    no_ad_folder_path = no_ad_path.replace('.crx','')
+    load_extension_path = ""
+    if os.path.exists(no_google_analytics_folder_path):
+        load_extension_path += "," + no_google_analytics_folder_path
+    if os.path.exists(no_ad_folder_path):
+        load_extension_path += "," + no_ad_folder_path
+    if len(load_extension_path) > 0:
+        options.add_argument('--load-extension=' + load_extension_path[1:])
+
+    options.add_argument('--disable-features=TranslateUI')
+    options.add_argument('--disable-translate')
+    options.add_argument('--lang=zh-TW')
+
+    if os.path.exists(chromedriver_path):
+        print("Use user driver path:", chromedriver_path)
+        #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
+        is_local_chrome_browser_lower = False
+        try:
+            driver = uc.Chrome(executable_path=chromedriver_path, options=options, suppress_welcome=False)
+        except Exception as exc:
+            if "cannot connect to chrome" in str(exc):
+                if "This version of ChromeDriver only supports Chrome version" in str(exc):
+                    is_local_chrome_browser_lower = True
+            print(exc)
+            pass
+
+        if is_local_chrome_browser_lower:
+            print("Use local user downloaded chromedriver to lunch chrome browser.")
+            driver_type = "selenium"
+            driver = load_chromdriver_normal(webdriver_path, driver_type)
+    else:
+        print("Oops! web driver not on path:",chromedriver_path )
+        print('let uc automatically download chromedriver.')
+        driver = uc.Chrome(options=options, suppress_welcome=False)
+
+    if driver is None:
+        print("create web drive object fail!")
+    else:
+        download_dir_path="."
+        params = {
+            "behavior": "allow",
+            "downloadPath": os.path.realpath(download_dir_path)
+        }
+        #print("assign setDownloadBehavior.")
+        driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
+
+    return driver
 
 def load_config_from_local(driver):
     config_dict = get_config_dict()
@@ -318,7 +441,10 @@ def load_config_from_local(driver):
         if len(homepage) == 0:
             homepage = "https://tixcraft.com/activity/"
 
-        Root_Dir = ""
+        Root_Dir = get_app_root()
+        webdriver_path = os.path.join(Root_Dir, "webdriver")
+        print("platform.system().lower():", platform.system().lower())
+
         if browser == "chrome":
             DEFAULT_ARGS = [
                 '--disable-audio-output',
@@ -371,91 +497,9 @@ def load_config_from_local(driver):
                 #'--incognito',
             ]
 
-            # default os is linux/mac
-            chromedriver_path =Root_Dir+ "webdriver/chromedriver"
-            print("platform.system().lower():", platform.system().lower())
-            if platform.system().lower()=="windows":
-                chromedriver_path =Root_Dir+ "webdriver/chromedriver.exe"
-
-            no_google_analytics_path = Root_Dir+ "webdriver/no_google_analytics_1.1.0.0.crx"
-            no_ad_path = Root_Dir+ "webdriver/Adblock_3.14.2.0.crx"
-
-            # method 5: uc
-            if driver_type == "undetected_chromedriver":
-                import undetected_chromedriver as uc
-                #import seleniumwire.undetected_chromedriver as uc
-
             # method 6: Selenium Stealth
             if driver_type != "undetected_chromedriver":
-                from selenium_stealth import stealth
-
-                chrome_options = webdriver.ChromeOptions()
-
-                if os.path.exists(no_google_analytics_path):
-                    chrome_options.add_extension(no_google_analytics_path)
-                if os.path.exists(no_ad_path):
-                    chrome_options.add_extension(no_ad_path)
-
-                chrome_options.add_argument('--disable-features=TranslateUI')
-                chrome_options.add_argument('--disable-translate')
-                chrome_options.add_argument('--lang=zh-TW')
-
-                # for navigator.webdriver
-                chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-                chrome_options.add_experimental_option('useAutomationExtension', False)
-                chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
-
-                if 'kktix.c' in homepage:
-                    #chrome_options.add_argument('blink-settings=imagesEnabled=false')
-                    pass
-
-                #caps = DesiredCapabilities().CHROME
-                caps = chrome_options.to_capabilities()
-
-                #caps["pageLoadStrategy"] = u"normal"  #  complete
-                caps["pageLoadStrategy"] = u"eager"  #  interactive
-                #caps["pageLoadStrategy"] = u"none"
-
-                #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
-                caps["unhandledPromptBehavior"] = u"ignore"
-                #caps["unhandledPromptBehavior"] = u"dismiss"
-
-                chrome_service = Service(chromedriver_path)
-
-                # method 6: Selenium Stealth
-                driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-
-                if driver_type=="stealth":
-                    from selenium_stealth import stealth
-
-                    # Selenium Stealth settings
-                    stealth(driver,
-                          languages=["zh-TW", "zh"],
-                          vendor="Google Inc.",
-                          platform="Win32",
-                          webgl_vendor="Intel Inc.",
-                          renderer="Intel Iris OpenGL Engine",
-                          fix_hairline=True,
-                      )
-
-
-            #print("caps:", caps)
-
-            # method 1:
-            #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options, desired_capabilities=caps)
-            #driver = webdriver.Chrome(executable_path=chromedriver_path, options=chrome_options)
-
-            # method 2:
-            #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', desired_capabilities=caps)
-            #driver = webdriver.Remote(command_executor='http://127.0.0.1:9515', options=chrome_options)
-
-            # method 3:
-            #driver = webdriver.Chrome(desired_capabilities=caps, executable_path=chromedriver_path)
-
-            # method 4:
-            #chrome_service = Service(chromedriver_path)
-            #driver = webdriver.Chrome(options=chrome_options, service=chrome_service)
-
+                driver = load_chromdriver_normal(webdriver_path, driver_type)
 
             # method 5: uc
             #options = webdriver.ChromeOptions()
@@ -466,57 +510,19 @@ def load_config_from_local(driver):
                         from multiprocessing import freeze_support
                         freeze_support()
 
-                options = uc.ChromeOptions()
-                options.add_argument("--password-store=basic")
-                options.page_load_strategy="eager"
-                #print("strategy", options.page_load_strategy)
-
-                no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
-                no_ad_folder_path = no_ad_path.replace('.crx','')
-                load_extension_path = ""
-                if os.path.exists(no_google_analytics_folder_path):
-                    load_extension_path += "," + no_google_analytics_folder_path
-                if os.path.exists(no_ad_folder_path):
-                    load_extension_path += "," + no_ad_folder_path
-                if len(load_extension_path) > 0:
-                    options.add_argument('--load-extension=' + load_extension_path[1:])
-
-                options.add_argument('--disable-features=TranslateUI')
-                options.add_argument('--disable-translate')
-                options.add_argument('--lang=zh-TW')
-
-                if os.path.exists(chromedriver_path):
-                    print("Use user driver path:", chromedriver_path)
-                    #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
-                    driver = uc.Chrome(executable_path=chromedriver_path, options=options, suppress_welcome=False)
-                else:
-                    print("Oops! web driver not on path:",chromedriver_path )
-                    print('let uc automatically download chromedriver.')
-                    driver = uc.Chrome(options=options, suppress_welcome=False)
-
-                if driver is None:
-                    print("create web drive object fail!")
-
-                download_dir_path="."
-                params = {
-                    "behavior": "allow",
-                    "downloadPath": os.path.realpath(download_dir_path)
-                }
-                #print("assign setDownloadBehavior.")
-                driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
-
+                driver = load_chromdriver_uc(webdriver_path)
 
         if browser == "firefox":
             # default os is linux/mac
-            chromedriver_path =Root_Dir+ "webdriver/geckodriver"
+            chromedriver_path = os.path.join(webdriver_path,"geckodriver")
             if platform.system().lower()=="windows":
-                chromedriver_path =Root_Dir+ "webdriver/geckodriver.exe"
+                chromedriver_path = os.path.join(webdriver_path,"geckodriver.exe")
 
             firefox_service = Service(chromedriver_path)
             driver = webdriver.Firefox(service=firefox_service)
 
 
-        time.sleep(1.0)
+        time.sleep(3.0)
         #print("try to close opened tabs.")
         try:
             window_handles_count = len(driver.window_handles)
