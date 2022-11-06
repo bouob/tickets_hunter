@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.10.25)"
+CONST_APP_VERSION = u"MaxBot (2022.11.05)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -136,6 +136,31 @@ def get_config_dict():
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
     return config_dict
+
+def format_keyword_string(keyword):
+    if not keyword is None:
+        if len(keyword) > 0:
+            keyword = keyword.replace(',','')
+            keyword = keyword.replace('／','/')
+            keyword = keyword.replace(' ','').lower()
+    return keyword
+
+def find_continuous_number(text):
+    ret = ""
+    is_number_start = False
+    number_char = "0123456789"
+    for char in text:
+        #print("char:", char)
+        if char in number_char:
+            if len(ret)==0 and not is_number_start:
+                is_number_start = True
+            if is_number_start:
+                ret += char
+        else:
+            # make not continuous
+            is_number_start = False
+
+    return ret
 
 def get_favoriate_extension_path(webdriver_path):
     no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
@@ -500,10 +525,10 @@ def load_config_from_local(driver):
             # method 6: Selenium Stealth
             if driver_type != "undetected_chromedriver":
                 driver = load_chromdriver_normal(webdriver_path, driver_type)
+            else:
+                # method 5: uc
+                #options = webdriver.ChromeOptions()
 
-            # method 5: uc
-            #options = webdriver.ChromeOptions()
-            if driver_type=="undetected_chromedriver":
                 # multiprocessing not work bug.
                 if platform.system().lower()=="windows":
                     if hasattr(sys, 'frozen'):
@@ -1126,13 +1151,13 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
 
             if len(row_text) > 0:
                 # clean stop word.
-                row_text = row_text.replace(',','')
+                row_text = format_keyword_string(row_text)
 
                 is_append_this_row = False
 
                 if len(area_keyword) > 0:
                     # clean stop word.
-                    area_keyword = area_keyword.replace(',','')
+                    area_keyword = format_keyword_string(area_keyword)
 
                     # must match keyword.
                     if area_keyword in row_text:
@@ -1727,7 +1752,7 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
 
                 if len(row_text) > 0:
                     # clean stop word.
-                    row_text = row_text.replace(',','')
+                    row_text = format_keyword_string(row_text)
 
                     # check ticket input textbox.
                     ticket_price_input = None
@@ -1745,12 +1770,12 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                                 else:
                                     # match keyword.
                                     # clean stop word.
-                                    kktix_area_keyword = kktix_area_keyword.replace(',','')
+                                    kktix_area_keyword = format_keyword_string(kktix_area_keyword)
 
-                                    if kktix_area_keyword in row_text:
-                                        if len(kktix_date_keyword) == 0:
-                                            areas.append(row)
-                                        else:
+                                    if len(kktix_date_keyword) == 0:
+                                        areas.append(row)
+                                    else:
+                                        if kktix_area_keyword in row_text:
                                             kktix_date_keyword = kktix_date_keyword.replace(',','')
                                             if kktix_date_keyword in row_text:
                                                 areas.append(row)
@@ -1966,7 +1991,7 @@ def kktix_check_register_status(url):
 
 def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_checkbox_click, auto_fill_ticket_number, ticket_number, kktix_area_keyword, kktix_date_keyword):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
     #---------------------------
     # part 2: ticket number
@@ -2140,25 +2165,39 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
 
                     captcha_text_formatted = captcha_text_div_text
                     # replace ex.
-                    captcha_text_formatted = captcha_text_formatted.replace(u'例如',u'範例')
-                    captcha_text_formatted = captcha_text_formatted.replace(u'如:',u'範例:')
-                    captcha_text_formatted = captcha_text_formatted.replace(u'舉例',u'範例')
-                    if not u'範例' in captcha_text_formatted:
-                        captcha_text_formatted = captcha_text_formatted.replace(u'例',u'範例')
-                    # important, maybe 例 & ex occurs at same time.
-                    captcha_text_formatted = captcha_text_formatted.replace(u'ex:',u'範例:')
+                    ex_delimiter=u'範例'
+                    captcha_text_formatted = captcha_text_formatted.replace(u'例如', ex_delimiter)
+                    captcha_text_formatted = captcha_text_formatted.replace(u'如:', ex_delimiter)
+                    captcha_text_formatted = captcha_text_formatted.replace(u'舉例', ex_delimiter)
 
-                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入：',u'範例')
-                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入',u'範例')
+                    # important, maybe 例 & ex occurs at same time.
+                    captcha_text_formatted = captcha_text_formatted.replace(u'ex:', ex_delimiter)
+
+                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入：', ex_delimiter)
+                    captcha_text_formatted = captcha_text_formatted.replace(u'輸入', ex_delimiter)
 
                     if show_debug_message:
                         print("captcha_text_formatted", captcha_text_formatted)
 
                     my_datetime_foramted = None
 
+                    # MMDD
                     if my_datetime_foramted is None:
                         if u'4位半形' in captcha_text_formatted:
                             my_datetime_foramted = "%m%d"
+
+                    # for "如為2月30日，請輸入0230"
+                    if my_datetime_foramted is None:
+                        if ex_delimiter in captcha_text_formatted:
+                            right_part = captcha_text_formatted.split(ex_delimiter)[1]
+                            number_text = find_continuous_number(right_part)
+
+                            my_anwser_formated = convert_string_to_pattern(number_text, dynamic_length=False)
+                            if my_anwser_formated == u"[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
+                                my_datetime_foramted = "%Y%m%d"
+                            if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
+                                my_datetime_foramted = "%m%d"
+                            #print("my_datetime_foramted:", my_datetime_foramted)
 
                     if my_datetime_foramted is None:
                         now = datetime.now()
@@ -2169,7 +2208,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                                 my_hint_anwser = captcha_text_formatted[my_hint_index:]
                                 #print("my_hint_anwser:", my_hint_anwser)
                                 # get after.
-                                my_delimitor_symbol = u'範例'
+                                my_delimitor_symbol = ex_delimiter
                                 if my_delimitor_symbol in my_hint_anwser:
                                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                                     my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
@@ -3358,77 +3397,47 @@ def main():
 
         # pass if driver not loaded.
         if driver is None:
-            continue
+            print("web driver not accessible!")
+            break
 
-        '''
-        try:
-            if not driver is None:
-                WebDriverWait(driver, 0.2).until(EC.alert_is_present(),
-                                               'Timed out waiting for PA creation ' +
-                                               'confirmation popup to appear.')
-            is_pass_alert = False
-            if last_url == "":
-                #is_pass_alert = True
-                # no need to pass alert.
-                pass
-
-            # for tixcraft verify
-            if u'tixcraft' in last_url and u'/verify/' in last_url:
-                is_pass_alert = True
-
-            #print("is_pass_alert:", is_pass_alert)
-            if is_pass_alert:
+        # https://stackoverflow.com/questions/57481723/is-there-a-change-in-the-handling-of-unhandled-alert-in-chromedriver-and-chrome
+        default_close_alert_text = []
+        if len(default_close_alert_text) > 0:
+            try:
                 alert = None
                 if not driver is None:
                     alert = driver.switch_to.alert
                 if not alert is None:
-                    alert.accept()
-                    print("alert accepted")
-            else:
-                is_alert_popup = True
-        except TimeoutException:
-            #print("no alert")
-            pass
-        '''
+                    if not alert.text is None:
+                        is_match_auto_close_text = False
+                        for txt in default_close_alert_text:
+                            if len(txt) > 0:
+                                if txt in alert.text:
+                                    is_match_auto_close_text = True
+                        #print("alert3 text:", alert.text)
 
-        # https://stackoverflow.com/questions/57481723/is-there-a-change-in-the-handling-of-unhandled-alert-in-chromedriver-and-chrome
-        default_close_alert_text = [
-        ]
-        try:
-            alert = None
-            if not driver is None:
-                alert = driver.switch_to.alert
-            if not alert is None:
-                if not alert.text is None:
-                    is_match_auto_close_text = False
-                    for txt in default_close_alert_text:
-                        if len(txt) > 0:
-                            if txt in alert.text:
-                                is_match_auto_close_text = True
-                    #print("alert3 text:", alert.text)
+                        if is_match_auto_close_text:
+                            alert.accept()
+                            print("alert3 accepted")
 
-                    if is_match_auto_close_text:
-                        alert.accept()
-                        print("alert3 accepted")
-
-                    is_alert_popup = True
-            else:
-                print("alert3 not detected")
-        except NoAlertPresentException as exc1:
-            #logger.error('NoAlertPresentException for alert')
-            pass
-        except NoSuchWindowException:
-            #print('NoSuchWindowException2 at this url:', url )
-            #print("last_url:", last_url)
-            try:
-                window_handles_count = len(driver.window_handles)
-                if window_handles_count >= 1:
-                    driver.switch_to.window(driver.window_handles[0])
-            except Exception as excSwithFail:
+                        is_alert_popup = True
+                else:
+                    print("alert3 not detected")
+            except NoAlertPresentException as exc1:
+                #logger.error('NoAlertPresentException for alert')
                 pass
-        except Exception as exc:
-            logger.error('Exception2 for alert')
-            logger.error(exc, exc_info=True)
+            except NoSuchWindowException:
+                #print('NoSuchWindowException2 at this url:', url )
+                #print("last_url:", last_url)
+                try:
+                    window_handles_count = len(driver.window_handles)
+                    if window_handles_count >= 1:
+                        driver.switch_to.window(driver.window_handles[0])
+                except Exception as excSwithFail:
+                    pass
+            except Exception as exc:
+                logger.error('Exception2 for alert')
+                logger.error(exc, exc_info=True)
 
         #MUST "do nothing: if alert popup.
         #print("is_alert_popup:", is_alert_popup)
@@ -3464,7 +3473,7 @@ def main():
                 try:
                     driver.switch_to.alert.accept()
                     #print('Alarm! ALARM!')
-                except NoAlertPresentException:
+                except Exception as exc:
                     pass
                     #print('*crickets*')
 
@@ -3482,8 +3491,9 @@ def main():
             if len(str_exc)==0:
                 str_exc = repr(exc)
 
-            exit_bot_error_strings = [u'Max retries exceeded with url', u'chrome not reachable', u'without establishing a connection']
+            exit_bot_error_strings = [u'Max retries exceeded with', u'chrome not reachable', u'without establishing a connection']
             for str_chrome_not_reachable in exit_bot_error_strings:
+                
                 # for python2
                 try:
                     basestring
@@ -3496,8 +3506,8 @@ def main():
                     if str_chrome_not_reachable in str_exc:
                         print(u'quit bot')
                         driver.quit()
-                        import sys
                         sys.exit()
+                        break
 
             print("exc", str_exc)
             pass
@@ -3507,37 +3517,6 @@ def main():
         else:
             if len(url) == 0:
                 continue
-
-        #print("url", url)
-
-        '''
-        if 'kktix.com/users/sign_in' in url:
-            if len(driver.window_handles) > 1:
-                try:
-                    # delay to swith to popup window
-                    time.sleep(1)
-
-                    driver.switch_to_window(driver.window_handles[-1])
-                    #print("title", driver.title)
-
-                    url = ""
-                    try:
-                        url = driver.current_url
-                    except Exception as exc:
-                        pass
-
-                    if 'facebook.com/login' in url:
-                        if len(facebook_account) > 0:
-                            login_ret = False
-                            login_ret = facebook_login(url)
-                            if login_ret:
-                                print("back to main, after send key")
-                                driver.switch_to_default_content()
-                except Exception as exc:
-                    print(exc)
-                    pass
-
-        '''
 
         # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
         if debugMode:
@@ -3613,6 +3592,10 @@ def main():
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
+            # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
+            if '/users/sign_in' in url:
+                continue
+
             if '/registrations/new' in url:
                 answer_index, kktix_register_status_last = kktix_reg_new(driver, url, answer_index, kktix_register_status_last)
             else:
@@ -3680,6 +3663,7 @@ def main():
 
             if '/performance.do' in url:
                 cityline_performance(driver, url)
+
 
 if __name__ == "__main__":
     main()
