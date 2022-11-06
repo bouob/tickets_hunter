@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.05)"
+CONST_APP_VERSION = u"MaxBot (2022.11.06)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1957,15 +1957,15 @@ def kktix_check_register_status(url):
         #print('event_code:',event_code)
         #print("url:", url)
 
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
 
         try:
-            html_result = requests.get(url , headers=headers)
+            html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
         except Exception as exc:
+            html_result = None
             print("send reg_info request fail:")
             print(exc)
-            pass
 
     registerStatus = None
     if not html_result is None:
@@ -1998,7 +1998,7 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
     #---------------------------
     is_assign_ticket_number = False
     if auto_fill_ticket_number:
-        for retry_index in range(10):
+        for retry_index in range(8):
             is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_date_keyword)
             if is_assign_ticket_number:
                 break
@@ -3491,16 +3491,24 @@ def main():
             if len(str_exc)==0:
                 str_exc = repr(exc)
 
-            exit_bot_error_strings = [u'Max retries exceeded with', u'chrome not reachable', u'without establishing a connection']
+            exit_bot_error_strings = [u'Max retries exceeded'
+            , u'chrome not reachable'
+            , u'unable to connect to renderer'
+            , u'failed to check if window was closed'
+            , u'Failed to establish a new connection'
+            , u'Connection refused'
+            , u'without establishing a connection']
             for str_chrome_not_reachable in exit_bot_error_strings:
-                
                 # for python2
+                # say goodbye to python2
+                '''
                 try:
                     basestring
                     if isinstance(str_chrome_not_reachable, unicode):
                         str_chrome_not_reachable = str(str_chrome_not_reachable)
                 except NameError:  # Python 3.x
                     basestring = str
+                '''
 
                 if isinstance(str_exc, str):
                     if str_chrome_not_reachable in str_exc:
@@ -3509,7 +3517,7 @@ def main():
                         sys.exit()
                         break
 
-            print("exc", str_exc)
+            print("Exception:", str_exc)
             pass
 
         if url is None:
