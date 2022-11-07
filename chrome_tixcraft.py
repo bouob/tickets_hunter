@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.06)"
+CONST_APP_VERSION = u"MaxBot (2022.11.07)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1600,7 +1600,7 @@ def tixcraft_ticket_main(driver, url, is_verifyCode_editing):
 # PS: There are two "Next" button in kktix.
 #   : 1: /events/xxx
 #   : 2: /events/xxx/registrations/new
-#   : This is for case-1.
+#   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
     ret = False
 
@@ -3447,6 +3447,7 @@ def main():
         url = ""
         try:
             url = driver.current_url
+        
         except NoSuchWindowException:
             #print('NoSuchWindowException at this url:', url )
             #print("last_url:", last_url)
@@ -3458,27 +3459,22 @@ def main():
                 pass
 
         except UnexpectedAlertPresentException as exc1:
-            #print('UnexpectedAlertPresentException at this url:', url )
-            #print("last_url:", last_url)
+            print('UnexpectedAlertPresentException at this url:', url )
+            time.sleep(3.5)
 
+            # PS: do nothing...
+            # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
+            # raise exception at selenium/webdriver/remote/errorhandler.py 
+            # after dialog disappear new excpetion: unhandled inspector error: Not attached to an active page
             is_pass_alert = False
-            if last_url == "":
-                is_pass_alert = True
-
-            # for tixcraft verify
-            if u'tixcraft' in last_url and u'/verify/' in last_url:
-                is_pass_alert = True
-
             if is_pass_alert:
                 try:
                     driver.switch_to.alert.accept()
-                    #print('Alarm! ALARM!')
                 except Exception as exc:
                     pass
-                    #print('*crickets*')
 
         except Exception as exc:
-            logger.error('Exception')
+            logger.error('Maxbot URL Exception')
             logger.error(exc, exc_info=True)
 
             #UnicodeEncodeError: 'ascii' codec can't encode characters in position 63-72: ordinal not in range(128)
@@ -3498,20 +3494,20 @@ def main():
             , u'Failed to establish a new connection'
             , u'Connection refused'
             , u'without establishing a connection']
-            for str_chrome_not_reachable in exit_bot_error_strings:
+            for each_error_string in exit_bot_error_strings:
                 # for python2
                 # say goodbye to python2
                 '''
                 try:
                     basestring
-                    if isinstance(str_chrome_not_reachable, unicode):
-                        str_chrome_not_reachable = str(str_chrome_not_reachable)
+                    if isinstance(each_error_string, unicode):
+                        each_error_string = str(each_error_string)
                 except NameError:  # Python 3.x
                     basestring = str
                 '''
 
                 if isinstance(str_exc, str):
-                    if str_chrome_not_reachable in str_exc:
+                    if each_error_string in str_exc:
                         print(u'quit bot')
                         driver.quit()
                         sys.exit()
@@ -3612,6 +3608,7 @@ def main():
                     # ex: https://xxx.kktix.cc/events/xxx-copy-1
                     if len(url.split('/'))<=5:
                         is_event_page = True
+
                 if is_event_page:
                     if auto_press_next_step_button:
                         # pass switch check.
