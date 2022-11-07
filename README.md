@@ -6,6 +6,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2022-11-06)：優化kktix/拓元的關鍵字比對，修改為不區分逗號、空格與大小寫。
+
+https://youtu.be/v9mI02kVaNw
+
 Max搶票機器人 (2022-10-22)：優化kktix/拓元的價格的關鍵字比對。
 
 https://youtu.be/NZzQcDQkrNI
