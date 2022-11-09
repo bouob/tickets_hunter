@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.09)"
+CONST_APP_VERSION = u"MaxBot (2022.11.10)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -142,8 +142,11 @@ def get_config_dict():
 def format_keyword_string(keyword):
     if not keyword is None:
         if len(keyword) > 0:
-            keyword = keyword.replace(',','')
             keyword = keyword.replace('／','/')
+            keyword = keyword.replace('　','')
+            keyword = keyword.replace(',','')
+            keyword = keyword.replace('，','')
+            keyword = keyword.replace('$','')
             keyword = keyword.replace(' ','').lower()
     return keyword
 
@@ -181,12 +184,15 @@ def load_chromdriver_normal(webdriver_path, driver_type):
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
+    # some windows cause: timed out receiving message from renderer
+    '''
     no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
 
     if os.path.exists(no_google_analytics_path):
         chrome_options.add_extension(no_google_analytics_path)
     if os.path.exists(no_ad_path):
         chrome_options.add_extension(no_ad_path)
+    '''
 
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
@@ -237,6 +243,7 @@ def load_chromdriver_uc(webdriver_path):
     options.page_load_strategy="eager"
     #print("strategy", options.page_load_strategy)
 
+    '''
     no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
     no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
     no_ad_folder_path = no_ad_path.replace('.crx','')
@@ -247,6 +254,7 @@ def load_chromdriver_uc(webdriver_path):
         load_extension_path += "," + no_ad_folder_path
     if len(load_extension_path) > 0:
         options.add_argument('--load-extension=' + load_extension_path[1:])
+    '''
 
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
@@ -572,10 +580,12 @@ def load_config_from_local(driver):
             driver = webdriver.Firefox(service=firefox_service)
 
 
-        time.sleep(15.0)
+        time.sleep(1.0)
         #print("try to close opened tabs.")
-        for i in range(2):
+        '''
+        for i in range(1):
             close_browser_tabs(driver)
+        '''
 
         if driver is None:
             print("create web driver object fail @_@;")
@@ -590,8 +600,10 @@ def load_config_from_local(driver):
                 print('get URL Exception:', exec1)
                 pass
 
-        for i in range(2):
+        '''
+        for i in range(1):
             close_browser_tabs(driver)
+        '''
 
 
     else:
