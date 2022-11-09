@@ -19,7 +19,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.11.08)"
+CONST_APP_VERSION = u"MaxBot (2022.11.09)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -86,6 +86,8 @@ def btn_save_act(slience_mode=False):
         global chk_state_area_auto_select
         global txt_area_keyword_1
         global txt_area_keyword_2
+        global txt_area_keyword_3
+        global txt_area_keyword_4
 
         global combo_date_auto_select_mode
         global combo_area_auto_select_mode
@@ -137,6 +139,8 @@ def btn_save_act(slience_mode=False):
             config_dict["tixcraft"]["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
             config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = txt_area_keyword_1.get().strip()
             config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
+            config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
+            config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
 
             config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
             config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
@@ -316,10 +320,18 @@ def showHideTixcraftBlocks():
 
     global area_keyword_1_index
     global area_keyword_2_index
+    global area_keyword_3_index
+    global area_keyword_4_index
+
     global lbl_area_keyword_1
     global lbl_area_keyword_2
+    global lbl_area_keyword_3
+    global lbl_area_keyword_4
+
     global txt_area_keyword_1
     global txt_area_keyword_2
+    global txt_area_keyword_3
+    global txt_area_keyword_4
 
     is_date_set_to_enable = bool(chk_state_date_auto_select.get())
     is_area_set_to_enable = bool(chk_state_area_auto_select.get())
@@ -351,6 +363,12 @@ def showHideTixcraftBlocks():
 
         lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
         txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
+
+        lbl_area_keyword_3.grid(column=0, row=area_keyword_3_index, sticky = E)
+        txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
+
+        lbl_area_keyword_4.grid(column=0, row=area_keyword_4_index, sticky = E)
+        txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
     else:
         # hide
         lbl_area_auto_select_mode.grid_forget()
@@ -361,6 +379,12 @@ def showHideTixcraftBlocks():
 
         lbl_area_keyword_2.grid_forget()
         txt_area_keyword_2.grid_forget()
+
+        lbl_area_keyword_3.grid_forget()
+        txt_area_keyword_3.grid_forget()
+
+        lbl_area_keyword_4.grid_forget()
+        txt_area_keyword_4.grid_forget()
 
 
 def MainMenu(root):
@@ -397,6 +421,8 @@ def MainMenu(root):
     area_auto_select_mode = ""
     area_keyword_1 = ""
     area_keyword_2 = ""
+    area_keyword_3 = ""
+    area_keyword_4 = ""
 
     pass_1_seat_remaining_enable = False        # default not checked.
     pass_date_is_sold_out_enable = False        # default not checked.
@@ -493,6 +519,15 @@ def MainMenu(root):
                 area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
                 area_keyword_2 = area_keyword_2.strip()
 
+
+            if 'area_keyword_3' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"]
+                area_keyword_3 = area_keyword_3.strip()
+
+            if 'area_keyword_4' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"]
+                area_keyword_4 = area_keyword_4.strip()
+
             pass_1_seat_remaining_enable = False
             if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
@@ -534,6 +569,8 @@ def MainMenu(root):
         print("area_auto_select_mode", area_auto_select_mode)
         print("area_keyword_1", area_keyword_1)
         print("area_keyword_2", area_keyword_2)
+        print("area_keyword_3", area_keyword_3)
+        print("area_keyword_4", area_keyword_4)
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
         print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
@@ -840,6 +877,36 @@ def MainMenu(root):
 
     group_row_count+=1
 
+    global area_keyword_3_index
+    area_keyword_3_index = group_row_count
+
+    global lbl_area_keyword_3
+    lbl_area_keyword_3 = Label(frame_group_tixcraft, text="Area Keyword #3")
+    lbl_area_keyword_3.grid(column=0, row=area_keyword_3_index, sticky = E)
+
+    global txt_area_keyword_3
+    global txt_area_keyword_3_value
+    txt_area_keyword_3_value = StringVar(frame_group_tixcraft, value=area_keyword_3)
+    txt_area_keyword_3 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_3_value)
+    txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
+
+    group_row_count+=1
+
+    global area_keyword_4_index
+    area_keyword_4_index = group_row_count
+
+    global lbl_area_keyword_4
+    lbl_area_keyword_4 = Label(frame_group_tixcraft, text="Area Keyword #4")
+    lbl_area_keyword_4.grid(column=0, row=area_keyword_4_index, sticky = E)
+
+    global txt_area_keyword_4
+    global txt_area_keyword_4_value
+    txt_area_keyword_4_value = StringVar(frame_group_tixcraft, value=area_keyword_4)
+    txt_area_keyword_4 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_4_value)
+    txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
+
+    group_row_count+=1
+
     lbl_pass_1_seat_remaining = Label(frame_group_tixcraft, text="Pass 1 seat remaining")
     lbl_pass_1_seat_remaining.grid(column=0, row=group_row_count, sticky = E)
 
@@ -927,7 +994,7 @@ def main():
     GUI = MainMenu(root)
 
     GUI_SIZE_WIDTH = 420
-    GUI_SIZE_HEIGHT = 455
+    GUI_SIZE_HEIGHT = 495
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-20)
 

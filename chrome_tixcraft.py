@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.08)"
+CONST_APP_VERSION = u"MaxBot (2022.11.09)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -101,6 +101,8 @@ area_keyword = None
 
 area_keyword_1 = None
 area_keyword_2 = None
+area_keyword_3 = None
+area_keyword_4 = None
 
 pass_1_seat_remaining_enable = False        # default not checked.
 pass_date_is_sold_out_enable = False        # default not checked.
@@ -320,6 +322,8 @@ def load_config_from_local(driver):
 
     global area_keyword_1
     global area_keyword_2
+    global area_keyword_3
+    global area_keyword_4
 
     global date_auto_select_enable
     global date_auto_select_mode
@@ -423,6 +427,14 @@ def load_config_from_local(driver):
                 area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
                 area_keyword_2 = area_keyword_2.strip()
 
+            if 'area_keyword_3' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"]
+                area_keyword_3 = area_keyword_3.strip()
+
+            if 'area_keyword_4' in config_dict["tixcraft"]["area_auto_select"]:
+                area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"]
+                area_keyword_4 = area_keyword_4.strip()
+
             pass_1_seat_remaining_enable = False
             if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
                 pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
@@ -462,6 +474,8 @@ def load_config_from_local(driver):
         print("area_auto_select_mode", area_auto_select_mode)
         print("area_keyword_1", area_keyword_1)
         print("area_keyword_2", area_keyword_2)
+        print("area_keyword_3", area_keyword_3)
+        print("area_keyword_4", area_keyword_4)
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
         print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
@@ -1140,6 +1154,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
 # RETURN:
 #   is_need_refresh
 #   areas
+# PS: areas will be None, if length equals zero.
 def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_seat_remaining_enable):
     debugMode = True
     debugMode = False       # for online
@@ -1195,6 +1210,9 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                     # clean stop word.
                     area_keyword = format_keyword_string(area_keyword)
 
+                # allow only input stop word in keyword fields.
+                # for keyword#2 to select all.
+                if len(area_keyword) > 0:
                     # must match keyword.
                     if area_keyword in row_text:
                         is_append_this_row = True
@@ -1250,12 +1268,13 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
 
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
-def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable):
+def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable):
     debugMode = True
     debugMode = False       # for online
 
     if debugMode:
         print("area_keyword_1, area_keyword_2:", area_keyword_1, area_keyword_2)
+        print("area_keyword_3, area_keyword_4:", area_keyword_3, area_keyword_4)
 
     if '/ticket/area/' in url:
         #driver.switch_to.default_content()
@@ -1275,11 +1294,34 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_sele
                 if areas is None:
                     if debugMode:
                         print("use area keyword #2", area_keyword_2)
+                    
                     # only when keyword#2 filled to query.
                     if len(area_keyword_2) > 0 :
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
                         if debugMode:
                             print("is_need_refresh for keyword2:", is_need_refresh)
+
+            if is_need_refresh:
+                if areas is None:
+                    if debugMode:
+                        print("use area keyword #3", area_keyword_3)
+                    
+                    # only when keyword#3 filled to query.
+                    if len(area_keyword_3) > 0 :
+                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable)
+                        if debugMode:
+                            print("is_need_refresh for keyword3:", is_need_refresh)
+
+            if is_need_refresh:
+                if areas is None:
+                    if debugMode:
+                        print("use area keyword #4", area_keyword_4)
+                    
+                    # only when keyword#4 filled to query.
+                    if len(area_keyword_4) > 0 :
+                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
+                        if debugMode:
+                            print("is_need_refresh for keyword4:", is_need_refresh)
 
             area_target = None
             if areas is not None:
@@ -2609,7 +2651,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last):
 # PURPOSE: get target area list.
 # PS: this is main block, use keyword to get rows.
 # PS: it seems use date_auto_select_mode instead of area_auto_select_mode
-def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto_select_mode):
+def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode):
     show_debug_message = True       # debug.
     #show_debug_message = False      # online
 
@@ -2722,10 +2764,23 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto
                                 if area_keyword_1 in area_html_text:
                                     #print("is_match_area area_keyword_1")
                                     is_match_area = True
+                                
                                 # check keyword 2
                                 if len(area_keyword_2) > 0:
                                     if area_keyword_2 in area_html_text:
                                         #print("is_match_area area_keyword_2")
+                                        is_match_area = True
+
+                                # check keyword 3
+                                if len(area_keyword_3) > 0:
+                                    if area_keyword_3 in area_html_text:
+                                        #print("is_match_area area_keyword_3")
+                                        is_match_area = True
+
+                                # check keyword 4
+                                if len(area_keyword_4) > 0:
+                                    if area_keyword_4 in area_html_text:
+                                        #print("is_match_area area_keyword_4")
                                         is_match_area = True
                             else:
                                 is_match_area = True
@@ -2786,6 +2841,8 @@ def fami_home(driver, url):
     global date_keyword
     global area_keyword_1
     global area_keyword_2
+    global area_keyword_3
+    global area_keyword_4
 
     global area_auto_select_mode
 
@@ -2858,7 +2915,7 @@ def fami_home(driver, url):
         #---------------------------
         # part 2: select keywords
         #---------------------------
-        areas = get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_auto_select_mode)
+        areas = get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode)
 
         area_target = None
         if areas is not None:
@@ -3529,6 +3586,7 @@ def main():
             , u'failed to check if window was closed'
             , u'Failed to establish a new connection'
             , u'Connection refused'
+            , u'disconnected'
             , u'without establishing a connection']
             for each_error_string in exit_bot_error_strings:
                 # for python2
@@ -3622,9 +3680,11 @@ def main():
 
             global area_keyword_1
             global area_keyword_2
+            global area_keyword_3
+            global area_keyword_4
 
             if area_auto_select_enable:
-                area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
+                area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
 
             if '/ticket/verify/' in url:
                 tixcraft_verify(driver, url)
