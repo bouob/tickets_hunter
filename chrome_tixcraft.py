@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.07)"
+CONST_APP_VERSION = u"MaxBot (2022.11.08)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -284,6 +284,17 @@ def load_chromdriver_uc(webdriver_path):
         driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
 
     return driver
+
+def close_browser_tabs(driver):        
+    if not driver is None:
+        try:
+            window_handles_count = len(driver.window_handles)
+            if window_handles_count >= 1:
+                driver.switch_to.window(driver.window_handles[1])
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+        except Exception as excSwithFail:
+            pass
 
 def load_config_from_local(driver):
     config_dict = get_config_dict()
@@ -547,16 +558,10 @@ def load_config_from_local(driver):
             driver = webdriver.Firefox(service=firefox_service)
 
 
-        time.sleep(3.0)
+        time.sleep(15.0)
         #print("try to close opened tabs.")
-        try:
-            window_handles_count = len(driver.window_handles)
-            if window_handles_count >= 1:
-                driver.switch_to.window(driver.window_handles[1])
-                driver.close()
-                driver.switch_to.window(driver.window_handles[0])
-        except Exception as excSwithFail:
-            pass
+        for i in range(2):
+            close_browser_tabs(driver)
 
         if driver is None:
             print("create web driver object fail @_@;")
@@ -564,23 +569,15 @@ def load_config_from_local(driver):
             try:
                 print("goto url:", homepage)
                 driver.get(homepage)
-            except WebDriverException:
-                print('oh no not again !')
-            except Exception as exec1:
-                print('get() raise Exception:', exec1)
+            except WebDriverException as exce2:
+                print('oh no not again, WebDriverException')
+                print('WebDriverException:', exce2)
+            except Exception as exce1:
+                print('get URL Exception:', exec1)
                 pass
 
-        if driver is None:
-            time.sleep(1.0)
-            #print("try to close opened tabs.")
-            try:
-                window_handles_count = len(driver.window_handles)
-                if window_handles_count >= 1:
-                    driver.switch_to.window(driver.window_handles[1])
-                    driver.close()
-                    driver.switch_to.window(driver.window_handles[0])
-            except Exception as excSwithFail:
-                pass
+        for i in range(2):
+            close_browser_tabs(driver)
 
 
     else:
@@ -931,6 +928,45 @@ def get_answer_list_by_question(captcha_text_div_text):
                     break
     #print("return_list:", return_list)
     return return_list, my_answer_delimitor
+
+# close some div on home url.
+def tixcraft_home(driver):
+    accept_all_cookies_btn = None
+    try:
+        accept_all_cookies_btn = driver.find_element(By.ID, 'onetrust-accept-btn-handler')
+    except Exception as exc:
+        #print("find accept_all_cookies_btn fail")
+        pass
+
+    if accept_all_cookies_btn is not None:
+        if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
+            try:
+                accept_all_cookies_btn.click()
+            except Exception as exc:
+                print("try to click accept_all_cookies_btn fail")
+                try:
+                    driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
+                except Exception as exc:
+                    pass
+
+    close_all_alert_btns = None
+    try:
+        close_all_alert_btns = driver.find_elements(By.CSS_SELECTOR, "[class='close-alert']")
+    except Exception as exc:
+        print("find close_all_alert_btns fail")
+
+    if close_all_alert_btns is not None:
+        #print('alert count:', len(close_all_alert_btns))
+        for alert_btn in close_all_alert_btns:
+            if alert_btn.is_enabled() and alert_btn.is_displayed():
+                try:
+                    alert_btn.click()
+                except Exception as exc:
+                    print("try to click alert_btn fail")
+                    try:
+                        driver.execute_script("arguments[0].click();", alert_btn)
+                    except Exception as exc:
+                        pass
 
 # from detail to game
 def tixcraft_redirect(driver, url):
@@ -3543,6 +3579,14 @@ def main():
             tixcraft_family = True
 
         if tixcraft_family:
+            if url == 'https://tixcraft.com/':
+                tixcraft_home(driver)
+                continue
+
+            if url == 'https://indievox.com/':
+                tixcraft_home(driver)
+                continue
+
             #print("tixcraft_family entry.")
             if '/ticket/order' in url:
                 # do nothing.
