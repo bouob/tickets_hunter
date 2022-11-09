@@ -953,7 +953,14 @@ def tixcraft_home(driver):
         pass
 
     if accept_all_cookies_btn is not None:
-        if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
+        is_visible = False
+        try:
+            if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
@@ -972,7 +979,15 @@ def tixcraft_home(driver):
     if close_all_alert_btns is not None:
         #print('alert count:', len(close_all_alert_btns))
         for alert_btn in close_all_alert_btns:
-            if alert_btn.is_enabled() and alert_btn.is_displayed():
+            # fix bug: Message: stale element reference: element is not attached to the page document
+            is_visible = False
+            try:
+                if alert_btn.is_enabled() and alert_btn.is_displayed():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
                 try:
                     alert_btn.click()
                 except Exception as exc:
@@ -1582,7 +1597,14 @@ def tixcraft_verify(driver, url):
             is_submited = False
             for i in range(3):
                 if form_input is not None:
-                    if form_input.is_enabled():
+                    is_visible = False
+                    try:
+                        if form_input.is_enabled():
+                            is_visible = True
+                    except Exception as exc:
+                        pass
+
+                    if is_visible:
                         try:
                             form_input.click()
                             is_submited = True
@@ -1700,7 +1722,14 @@ def kktix_events_press_next_button(driver):
         pass
 
         if not next_step_button is None:
-            if next_step_button.is_enabled():
+            is_visible = False
+            try:
+                if next_step_button.is_enabled():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
                 try:
                     driver.execute_script("arguments[0].click();", next_step_button)
                     ret = True
@@ -1737,7 +1766,14 @@ def kktix_press_next_button(driver):
         #pass
 
         if not next_step_button is None:
-            if next_step_button.is_enabled():
+            is_visible = False
+            try:
+                if next_step_button.is_enabled():
+                    is_visible = True
+            except Exception as exc:
+                pass
+            
+            if is_visible:
                 try:
                     driver.execute_script("arguments[0].click();", next_step_button)
                     ret = True
@@ -1890,47 +1926,41 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                 area = areas[target_row_index]
 
         if area is not None:
+            #print("area text", area.text)
+            ticket_price_input = None
             try:
-                #print("area text", area.text)
-                ticket_price_input = None
-                try:
-                    wait = WebDriverWait(area, 1)
-                    ticket_price_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text']")))
-                    if ticket_price_input is not None:
-                        if ticket_price_input.is_enabled():
-                            current_ticket_number = str(ticket_price_input.get_attribute('value'))
-                            if current_ticket_number == "0":
-                                try:
-                                    #print("asssign ticket number:%s" % str(ticket_number))
-                                    ticket_price_input.clear()
-                                    ticket_price_input.send_keys(ticket_number)
+                wait = WebDriverWait(area, 1)
+                ticket_price_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text']")))
+                if ticket_price_input is not None:
+                    if ticket_price_input.is_enabled():
+                        current_ticket_number = str(ticket_price_input.get_attribute('value'))
+                        if current_ticket_number == "0":
+                            try:
+                                #print("asssign ticket number:%s" % str(ticket_number))
+                                ticket_price_input.clear()
+                                ticket_price_input.send_keys(ticket_number)
 
-                                    ret = True
-                                except Exception as exc:
-                                    print("asssign ticket number to ticket-price field Exception:")
-                                    print(exc)
-                                    ticket_price_input.clear()
-                                    ticket_price_input.send_keys("1")
+                                ret = True
+                            except Exception as exc:
+                                print("asssign ticket number to ticket-price field Exception:")
+                                print(exc)
+                                ticket_price_input.clear()
+                                ticket_price_input.send_keys("1")
 
-                                    ret = True
-                                    pass
-                            else:
-                                # assigned
-                                if str(ticket_number) == current_ticket_number:
-                                    ret = True
+                                ret = True
+                                pass
                         else:
-                            print("find input, but not is enabled!")
+                            # assigned
+                            if str(ticket_number) == current_ticket_number:
+                                ret = True
                     else:
-                        print("find input div fail!")
-
-                except Exception as exc:
-                    print("find input tag for price Exception")
-                    #print(exc)
-                    pass
+                        print("find input, but not is enabled!")
+                else:
+                    print("find input div fail!")
 
             except Exception as exc:
-                print("auto fill ticket number fail")
-                print(exc)
+                print("find input tag for price Exception")
+                #print(exc)
                 pass
 
     return ret
@@ -2819,6 +2849,13 @@ def fami_activity(driver, url):
     fami_start_to_buy_button = None
     fami_start_to_buy_button = driver.find_element(By.ID, 'buyWaiting')
     if fami_start_to_buy_button is not None:
+        is_visible = False
+        try:
+            if fami_start_to_buy_button.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
         if fami_start_to_buy_button.is_enabled():
             try:
                 fami_start_to_buy_button.click()
@@ -2899,7 +2936,14 @@ def fami_home(driver, url):
         my_css_selector = "div.col > a.btn"
         fami_assign_site_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         if fami_assign_site_button is not None:
-            if fami_assign_site_button.is_enabled():
+            is_visible = False
+            try:
+                if fami_assign_site_button.is_enabled():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
                 try:
                     fami_assign_site_button.click()
                 except Exception as exc:
@@ -2938,7 +2982,14 @@ def fami_home(driver, url):
 
         if area_target is not None:
             #print("area text", area_target.text)
-            if area_target.is_enabled():
+            is_visible = False
+            try:
+                if area_target.is_enabled():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
                 try:
                     area_target.click()
                 except Exception as exc:
