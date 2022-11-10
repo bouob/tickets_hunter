@@ -19,7 +19,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.11.11)"
+CONST_APP_VERSION = u"MaxBot (2022.11.11.VER2)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -976,14 +976,14 @@ def MainMenu(root):
     btn_save = ttk.Button(frame_action, text="Save", command=btn_save_clicked, width=5)
     btn_save.grid(column=1, row=0)
 
-    btn_exit = ttk.Button(frame_action, text="Exit", command=btn_exit_clicked, width=5)
-    btn_exit.grid(column=2, row=0)
-
     btn_donate = ttk.Button(frame_action, text="Donate", command=btn_donate_clicked, width=5)
-    btn_donate.grid(column=3, row=0)
+    btn_donate.grid(column=2, row=0)
 
     btn_help = ttk.Button(frame_action, text="?", command=btn_help_clicked, width=4)
-    btn_help.grid(column=4, row=0)
+    btn_help.grid(column=3, row=0)
+
+    btn_exit = ttk.Button(frame_action, text="Exit", command=btn_exit_clicked, width=5)
+    btn_exit.grid(column=4, row=0)
 
     frame_action.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 

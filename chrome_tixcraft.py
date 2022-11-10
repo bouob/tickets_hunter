@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.11)"
+CONST_APP_VERSION = u"MaxBot (2022.11.11.VER2)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1845,8 +1845,9 @@ def kktix_input_captcha_text(captcha_inner_div, captcha_password_string, force_o
 
     return ret
 
-def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_date_keyword):
-    ret = False
+def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
 
     areas = None
     is_ticket_number_assigened = False
@@ -1855,71 +1856,137 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
     try:
         ticket_price_list = driver.find_elements(By.CSS_SELECTOR, '.display-table-row')
     except Exception as exc:
+        ticket_price_list = None
         print("find ticket-price span Exception:")
         print(exc)
         pass
 
+    price_list_count = 0
     if ticket_price_list is not None:
-        if len(ticket_price_list) > 0:
-            areas = []
-
-            row_index = 0
-            for row in ticket_price_list:
-                row_index += 1
-
-                row_text = ""
-                try:
-                    row_text = row.text
-                    #print("get text:", row_text)
-                except Exception as exc:
-                    print("get text fail")
-                    break
-
-                if len(row_text) > 0:
-                    # clean stop word.
-                    row_text = format_keyword_string(row_text)
-
-                    # check ticket input textbox.
-                    ticket_price_input = None
-                    try:
-                        ticket_price_input = row.find_element(By.CSS_SELECTOR, "input[type='text']")
-                        if ticket_price_input is not None:
-                            current_ticket_number = str(ticket_price_input.get_attribute('value'))
-                            if ticket_price_input.is_enabled():
-                                if len(current_ticket_number) > 0:
-                                    if current_ticket_number != "0":
-                                        is_ticket_number_assigened = True
-
-                                if len(kktix_area_keyword) == 0:
-                                    areas.append(row)
-                                else:
-                                    # match keyword.
-                                    # clean stop word.
-                                    kktix_area_keyword = format_keyword_string(kktix_area_keyword)
-
-                                    if len(kktix_date_keyword) == 0:
-                                        areas.append(row)
-                                    else:
-                                        if kktix_area_keyword in row_text:
-                                            kktix_date_keyword = kktix_date_keyword.replace(',','')
-                                            if kktix_date_keyword in row_text:
-                                                areas.append(row)
-                            else:
-                                #disabled.
-                                if len(current_ticket_number) > 0:
-                                    if current_ticket_number != "0":
-                                        is_ticket_number_assigened = True
-
-                    except Exception as exc:
-                        pass
+        price_list_count = len(ticket_price_list)
+        if show_debug_message:
+            print("found price count:", price_list_count)
+            print("start to travel rows..........")
     else:
         print("find ticket-price span fail")
 
+    
+    is_travel_interrupted = False
 
-    if is_ticket_number_assigened:
-        ret = True
+    if price_list_count > 0:
+        areas = []
+
+        # clean stop word.
+        kktix_area_keyword = format_keyword_string(kktix_area_keyword)
+        kktix_date_keyword = format_keyword_string(kktix_date_keyword)
+
+        if show_debug_message:
+            print('kktix_area_keyword:', kktix_area_keyword)
+            print('kktix_date_keyword:', kktix_date_keyword)
+
+        row_index = 0
+        for row in ticket_price_list:
+            row_index += 1
+
+            row_text = ""
+            try:
+                row_text = row.text
+                if show_debug_message:
+                    print("get text:", row_text, ",at row:", row_index)
+            except Exception as exc:
+                row_text = ""
+                is_travel_interrupted = True
+                print("get text fail.")
+
+            if len(row_text) > 0:
+                # clean stop word.
+                row_text = format_keyword_string(row_text)
+
+                # check ticket input textbox.
+                ticket_price_input = None
+                try:
+                    ticket_price_input = row.find_element(By.CSS_SELECTOR, "input[type='text']")
+                except Exception as exc:
+                    pass
+
+                if ticket_price_input is not None:
+                    current_ticket_number = ""
+                    is_visible = False
+
+                    try:
+                        current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
+                        is_visible = ticket_price_input.is_enabled()
+                    except Exception as exc:
+                        pass
+                    
+                    if len(current_ticket_number) > 0:
+                        if current_ticket_number != "0":
+                            is_ticket_number_assigened = True
+
+                    if is_ticket_number_assigened:
+                        # no need to travel
+                        break
+
+                    if is_visible:
+                        is_match_area = False
+                        match_area_code = 0
+
+                        if len(kktix_area_keyword) == 0:
+                            # keyword #1, empty, direct add to list.
+                            is_match_area = True
+                            match_area_code = 1
+                        else:
+                            # MUST match keyword #1.
+                            if kktix_area_keyword in row_text:
+                                #print('match keyword#1')
+                                
+                                # because of logic between keywords is AND!
+                                if len(kktix_date_keyword) == 0:
+                                    #print('keyword#2 is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if kktix_date_keyword in row_text:
+                                        #print('match keyword#2')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        #print('not match keyword#2')
+                                        pass
+                            else:
+                                #print('not match keyword#1')
+                                pass
+
+                        if show_debug_message:
+                            print("is_match_area:", is_match_area)
+                            print("match_area_code:", match_area_code)
+
+                        if is_match_area:
+                            areas.append(row)
+
+            if is_travel_interrupted:
+                # not sure to break or continue..., maybe break better.
+                break
     else:
-        area = None
+        if show_debug_message:
+            print("no any price list found.")
+        pass
+
+    # unknow issue...
+    if is_travel_interrupted:
+        pass
+
+    return is_ticket_number_assigened, areas
+
+def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_date_keyword):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword)
+
+    target_area = None
+    if not is_ticket_number_assigened:
         if areas is not None:
             if len(areas) > 0:
                 target_row_index = 0
@@ -1933,48 +2000,55 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
                 if kktix_area_auto_select_mode == CONST_RANDOM:
                     target_row_index = random.randint(0,len(areas)-1)
 
-                #print("target_row_index", target_row_index)
-                area = areas[target_row_index]
+                if show_debug_message:
+                    print("target_row_index", target_row_index)
+                target_area = areas[target_row_index]
 
-        if area is not None:
-            #print("area text", area.text)
-            ticket_price_input = None
+    ticket_price_input = None
+    if target_area is not None:
+        if show_debug_message:
+            print('try to get input box element.')
+        #print("target_area text", target_area.text)
+        try:
+            ticket_price_input = target_area.find_element(By.CSS_SELECTOR, "input[type='text']")
+        except Exception as exc:
+            pass
+
+    current_ticket_number = ""
+    is_visible = False
+    if ticket_price_input is not None:
+        if show_debug_message:
+            print("try to get input box value.")
+        try:
+            current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
+            is_visible = ticket_price_input.is_enabled()
+        except Exception as exc:
+            pass
+
+    if is_visible and len(current_ticket_number) > 0:
+        if current_ticket_number == "0":
             try:
-                wait = WebDriverWait(area, 1)
-                ticket_price_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='text']")))
-                if ticket_price_input is not None:
-                    if ticket_price_input.is_enabled():
-                        current_ticket_number = str(ticket_price_input.get_attribute('value'))
-                        if current_ticket_number == "0":
-                            try:
-                                #print("asssign ticket number:%s" % str(ticket_number))
-                                ticket_price_input.clear()
-                                ticket_price_input.send_keys(ticket_number)
+                print("asssign ticket number:%s" % str(ticket_number))
+                ticket_price_input.clear()
+                ticket_price_input.send_keys(ticket_number)
 
-                                ret = True
-                            except Exception as exc:
-                                print("asssign ticket number to ticket-price field Exception:")
-                                print(exc)
-                                ticket_price_input.clear()
-                                ticket_price_input.send_keys("1")
-
-                                ret = True
-                                pass
-                        else:
-                            # assigned
-                            if str(ticket_number) == current_ticket_number:
-                                ret = True
-                    else:
-                        print("find input, but not is enabled!")
-                else:
-                    print("find input div fail!")
-
+                is_ticket_number_assigened = True
             except Exception as exc:
-                print("find input tag for price Exception")
-                #print(exc)
-                pass
+                print("asssign ticket number to ticket-price field Exception:")
+                print(exc)
+                try:
+                    ticket_price_input.clear()
+                    ticket_price_input.send_keys("1")
+                    is_ticket_number_assigened = True
+                except Exception as exc2:
+                    pass
+        else:
+            if show_debug_message:
+                print("value already assigned.")
+            # already assigned.
+            is_ticket_number_assigened = True
 
-    return ret
+    return is_ticket_number_assigened
 
 def kktix_get_web_datetime(url, registrationsNewApp_div):
     show_debug_message = True       # debug.
