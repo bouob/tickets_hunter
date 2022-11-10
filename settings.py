@@ -19,7 +19,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.11.10)"
+CONST_APP_VERSION = u"MaxBot (2022.11.11)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -213,6 +213,16 @@ def btn_run_clicked():
 
 def btn_exit_clicked():
     root.destroy()
+
+def btn_donate_clicked():
+    import webbrowser
+    donate_url = 'https://max-everyday.com/about/#donate'
+    webbrowser.open(donate_url)
+
+def btn_help_clicked():
+    import webbrowser
+    help_url = 'https://max-everyday.com/2018/03/tixcraft-bot/'
+    webbrowser.open(help_url)
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -960,14 +970,20 @@ def MainMenu(root):
 
     frame_action = Frame(root)
 
-    btn_run = ttk.Button(frame_action, text="Run", command=btn_run_clicked)
+    btn_run = ttk.Button(frame_action, text="Run", command=btn_run_clicked, width=5)
     btn_run.grid(column=0, row=0)
 
-    btn_save = ttk.Button(frame_action, text="Save", command=btn_save_clicked)
+    btn_save = ttk.Button(frame_action, text="Save", command=btn_save_clicked, width=5)
     btn_save.grid(column=1, row=0)
 
-    btn_exit = ttk.Button(frame_action, text="Exit", command=btn_exit_clicked)
+    btn_exit = ttk.Button(frame_action, text="Exit", command=btn_exit_clicked, width=5)
     btn_exit.grid(column=2, row=0)
+
+    btn_donate = ttk.Button(frame_action, text="Donate", command=btn_donate_clicked, width=5)
+    btn_donate.grid(column=3, row=0)
+
+    btn_help = ttk.Button(frame_action, text="?", command=btn_help_clicked, width=4)
+    btn_help.grid(column=4, row=0)
 
     frame_action.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
@@ -995,13 +1011,15 @@ def main():
 
     GUI_SIZE_WIDTH = 420
     GUI_SIZE_HEIGHT = 498
+    
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-20)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-40)
 
     GUI_SIZE =GUI_SIZE_MACOS
     import platform
     if platform.system() == 'Windows':
-        GUI_SIZE =GUI_SIZE_WINDOWS
+        GUI_SIZE = GUI_SIZE_WINDOWS
+
     root.geometry(GUI_SIZE)
     
 

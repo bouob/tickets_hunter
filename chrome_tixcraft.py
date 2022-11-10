@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.10)"
+CONST_APP_VERSION = u"MaxBot (2022.11.11)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -579,10 +579,9 @@ def load_config_from_local(driver):
             firefox_service = Service(chromedriver_path)
             driver = webdriver.Firefox(service=firefox_service)
 
-
-        time.sleep(1.0)
         #print("try to close opened tabs.")
         '''
+        time.sleep(1.0)
         for i in range(1):
             close_browser_tabs(driver)
         '''
