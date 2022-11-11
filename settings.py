@@ -154,7 +154,7 @@ def load_translate():
     ja_jp["area_keyword_2"] = 'エリアキーワード #2'
     ja_jp["area_keyword_3"] = 'エリアキーワード #3'
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
-    ja_jp["pass_1_seat_remaining"] = '「残り1」エリアは避ける'
+    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
 
