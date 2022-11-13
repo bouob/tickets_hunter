@@ -1391,7 +1391,7 @@ def main():
     AboutTab(tab2, language_code)
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-30) + 'x' + str(GUI_SIZE_HEIGHT-40)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-60)
 
     GUI_SIZE =GUI_SIZE_MACOS
     import platform
