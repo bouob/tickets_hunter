@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.13)"
+CONST_APP_VERSION = u"MaxBot (2022.11.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -2051,7 +2051,7 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
 
 def kktix_get_web_datetime(url, registrationsNewApp_div):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
     web_datetime = None
 
@@ -2231,18 +2231,17 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
             print(exc)
 
         captcha_password_string = None
+        captcha_text_div_text = None
+
         if captcha_text_div is not None:
             is_captcha_appear = True
 
-            captcha_text_div_text = ""
             try:
                 captcha_text_div_text = captcha_text_div.text
             except Exception as exc:
                 pass
 
-            if captcha_text_div_text is None:
-                captcha_text_div_text = ""
-
+        if not captcha_text_div_text is None:
             if show_debug_message:
                 print("captcha_text_div_text:", captcha_text_div_text)
 

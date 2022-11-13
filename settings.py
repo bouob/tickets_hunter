@@ -18,8 +18,9 @@ import os
 import sys
 import platform
 import json
+import webbrowser
 
-CONST_APP_VERSION = u"MaxBot (2022.11.13)"
+CONST_APP_VERSION = u"MaxBot (2022.11.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -38,7 +39,13 @@ btn_exit = None
 
 translate={}
 
+URL_DONATE = 'https://max-everyday.com/about/#donate'
+URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
+URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
+
+
 def load_translate():
+    translate = {}
     en_us={}
     en_us["homepage"] = 'Homepage'
     en_us["browser"] = 'Browser'
@@ -49,7 +56,7 @@ def load_translate():
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
-    en_us["and"] = 'And'
+    en_us["and"] = 'And with'
     en_us["auto_guess_options"] = 'Guess Options in Question'
 
     en_us["date_auto_select"] = 'Date Auto Select'
@@ -68,7 +75,12 @@ def load_translate():
     en_us["run"] = 'Run'
     en_us["save"] = 'Save'
     en_us["donate"] = 'Donate'
-    en_us["exit"] = 'Exit'
+    en_us["help"] = 'Help'
+    en_us["preference"] = 'Preference'
+    en_us["release"] = 'Release'
+    en_us["exit"] = 'Close'
+    en_us["about"] = 'About'
+    en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.'
 
     zh_tw={}
     zh_tw["homepage"] = '售票網站'
@@ -80,7 +92,7 @@ def load_translate():
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
-    zh_tw["and"] = '且'
+    zh_tw["and"] = '而且（同列）'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
 
     zh_tw["date_auto_select"] = '日期自動點選'
@@ -99,7 +111,12 @@ def load_translate():
     zh_tw["run"] = '搶票'
     zh_tw["save"] = '存檔'
     zh_tw["donate"] = '打賞'
+    zh_tw["help"] = '使用教學'
+    zh_tw["preference"] = '偏好設定'
+    zh_tw["release"] = '所有可用版本'
     zh_tw["exit"] = '關閉'
+    zh_tw["about"] = '關於'
+    zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝你好運，買得到預期中的票。'
 
     zh_cn={}
     zh_cn["homepage"] = '售票网站'
@@ -111,7 +128,7 @@ def load_translate():
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
-    zh_cn["and"] = '且'
+    zh_cn["and"] = '而且（同列）'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
 
     zh_cn["date_auto_select"] = '日期自动点选'
@@ -126,11 +143,16 @@ def load_translate():
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的场次'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的活动页面'
+    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝你好运，买得到预期中的票。'
 
     zh_cn["run"] = '抢票'
     zh_cn["save"] = '存档'
     zh_cn["donate"] = '打赏'
+    zh_cn["help"] = '使用教学'
+    zh_cn["preference"] = '偏好设定'
+    zh_cn["release"] = '所有可用版本'
     zh_cn["exit"] = '关闭'
+    zh_cn["about"] = '关于'
 
     ja_jp={}
     ja_jp["homepage"] = 'ホームページ'
@@ -142,7 +164,7 @@ def load_translate():
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
-    ja_jp["and"] = 'と'
+    ja_jp["and"] = 'そして（同列）'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
 
     ja_jp["date_auto_select"] = '日付自動選択'
@@ -161,12 +183,18 @@ def load_translate():
     ja_jp["run"] = 'チケットを取る'
     ja_jp["save"] = '保存'
     ja_jp["donate"] = '寄付'
+    ja_jp["help"] = '利用方法'
+    ja_jp["preference"] = '設定'
+    ja_jp["release"] = 'リリース'
     ja_jp["exit"] = '閉じる'
+    ja_jp["about"] = '情報'
+    ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。 頑張って予定のチケットを手に入れてください。'
 
     translate['en_us']=en_us
     translate['zh_tw']=zh_tw
     translate['zh_cn']=zh_cn
     translate['ja_jp']=ja_jp
+    return translate
 
 def load_json():
     # 讀取檔案裡的參數值
@@ -177,14 +205,14 @@ def load_json():
         basis = sys.argv[0]
     app_root = os.path.dirname(basis)
 
-    global config_filepath
+    # overwrite config path.
     config_filepath = os.path.join(app_root, 'settings.json')
 
-    global config_dict
     config_dict = None
     if os.path.isfile(config_filepath):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
+    return config_filepath, config_dict
 
 def btn_save_clicked():
     btn_save_act()
@@ -351,29 +379,28 @@ def btn_run_clicked():
                     messagebox.showinfo(title="Debug2", message=msg)
                     pass
 
+def open_url(url):
+    webbrowser.open_new(url)
+
 def btn_exit_clicked():
     root.destroy()
 
 def btn_donate_clicked():
-    import webbrowser
-    donate_url = 'https://max-everyday.com/about/#donate'
-    webbrowser.open(donate_url)
+    open_url.open(URL_DONATE)
 
 def btn_help_clicked():
-    import webbrowser
-    help_url = 'https://max-everyday.com/2018/03/tixcraft-bot/'
-    webbrowser.open(help_url)
+    open_url.open(URL_HELP)
 
 def callbackLanguageOnChange(event):
     applyNewLanguage()
 
 def get_language_code_by_name(new_language):
     language_code = "en_us"
-    if '繁體中文' in new_language:
+    if u'繁體中文' in new_language:
         language_code = 'zh_tw'
-    if '簡体中文' in new_language:
+    if u'簡体中文' in new_language:
         language_code = 'zh_cn'
-    if '日本語' in new_language:
+    if u'日本語' in new_language:
         language_code = 'ja_jp'
     #print("new language code:", language_code)
 
@@ -423,6 +450,13 @@ def applyNewLanguage():
     global chk_pass_date_is_sold_out
     global chk_auto_reload_coming_soon_page
 
+    global tabControl
+
+    global lbl_slogan
+    global lbl_help
+    global lbl_donate
+    global lbl_release
+
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
     lbl_language.config(text=translate[language_code]["language"])
@@ -455,6 +489,14 @@ def applyNewLanguage():
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_pass_date_is_sold_out.config(text=translate[language_code]["enable"])
     chk_auto_reload_coming_soon_page.config(text=translate[language_code]["enable"])
+
+    tabControl.tab(0, text=translate[language_code]["preference"])
+    tabControl.tab(1, text=translate[language_code]["about"])
+   
+    lbl_slogan.config(text=translate[language_code]["maxbot_slogan"])
+    lbl_help.config(text=translate[language_code]["help"])
+    lbl_donate.config(text=translate[language_code]["donate"])
+    lbl_release.config(text=translate[language_code]["release"])
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -620,12 +662,7 @@ def showHideTixcraftBlocks():
         txt_area_keyword_4.grid_forget()
 
 
-def MainMenu(root):
-    global UI_PADDING_X
-    UI_PADDING_X = 15
-    global UI_PADDING_Y
-    UI_PADDING_Y = 10
-
+def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global lbl_homepage
     global lbl_browser
     global lbl_language
@@ -673,8 +710,6 @@ def MainMenu(root):
 
     debugMode = False
 
-
-    global config_dict
     if not config_dict is None:
         # read config.
         if u'homepage' in config_dict:
@@ -828,14 +863,13 @@ def MainMenu(root):
     else:
         print('config is none')
 
-    language_code = get_language_code_by_name(language)
     row_count = 0
 
     frame_group_header = Frame(root)
     group_row_count = 0
 
     # first row need padding Y
-    lbl_homepage = Label(frame_group_header, text=translate[language_code]['homepage'], pady = UI_PADDING_Y)
+    lbl_homepage = Label(frame_group_header, text=translate[language_code]['homepage'])
     lbl_homepage.grid(column=0, row=group_row_count, sticky = E)
 
     #global txt_homepage
@@ -918,14 +952,12 @@ def MainMenu(root):
 
     row_count+=1
 
+    # for sub group KKTix.
     global frame_group_kktix
     frame_group_kktix = Frame(root)
     group_row_count = 0
 
-    #lbl_kktix = Label(frame_group_kktix, text="[ KKTIX / URBTIX / Cityline]")
-    lbl_kktix = Label(frame_group_kktix, text="")
-    lbl_kktix.grid(column=0, row=group_row_count)
-
+    # start sub group...
     group_row_count+=1
 
     global lbl_auto_press_next_step_button
@@ -1040,14 +1072,12 @@ def MainMenu(root):
 
     row_count+=1
 
+    # for sub group tixcraft.
     global frame_group_tixcraft
     frame_group_tixcraft = Frame(root)
     group_row_count = 0
 
-    #lbl_tixcraft = Label(frame_group_tixcraft, text="[ tixCraft / FamiTicket]")
-    lbl_tixcraft = Label(frame_group_tixcraft, text="")
-    lbl_tixcraft.grid(column=0, row=group_row_count)
-
+    # start sub group.
     group_row_count+=1
 
     global lbl_date_auto_select
@@ -1225,7 +1255,6 @@ def MainMenu(root):
 
     group_row_count+=1
 
-
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
     frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
@@ -1235,33 +1264,71 @@ def MainMenu(root):
     lbl_hr = Label(root, text="")
     lbl_hr.grid(column=0, row=row_count)
 
-    row_count+=1
-
-    frame_action = Frame(root)
-
-    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command=btn_run_clicked)
-    btn_run.grid(column=0, row=0)
-
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command=btn_save_clicked)
-    btn_save.grid(column=1, row=0)
-
-    #btn_donate = ttk.Button(frame_action, text=translate[language_code]['donate'], command=btn_donate_clicked, width=5)
-    #btn_donate.grid(column=2, row=0)
-
-    btn_help = ttk.Button(frame_action, text="?", command=btn_help_clicked)
-    btn_help.grid(column=2, row=0)
-
-    btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
-    btn_exit.grid(column=3, row=0)
-
-    frame_action.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
-
     showHideBlocks(all_layout_visible=True)
 
 
+def AboutTab(root, language_code):
+    from PIL import Image, ImageTk
+
+    row_count = 0
+
+    frame_group_header = Frame(root)
+    group_row_count = 0
+
+    image = Image.open("maxbot_logo2_single.png")
+    photo = ImageTk.PhotoImage(image)
+    #logo_offset_x = ((GUI_SIZE_WIDTH - image.size[0]) / 2) - 20
+    
+    lbl_logo = Label(frame_group_header, image=photo)
+    lbl_logo.image = photo
+    lbl_logo.grid(column=0, row=group_row_count, columnspan=2)
+
+    group_row_count +=1
+
+    global lbl_slogan
+    global lbl_help
+    global lbl_donate
+    global lbl_release
+
+    lbl_slogan = Label(frame_group_header, text=translate[language_code]['maxbot_slogan'], wraplength=400, justify="center")
+    lbl_slogan.grid(column=0, row=group_row_count, columnspan=2)
+
+    group_row_count +=1
+
+    lbl_help = Label(frame_group_header, text=translate[language_code]['help'])
+    lbl_help.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_help_url = Label(frame_group_header, text=URL_HELP, fg="blue", cursor="hand2")
+    lbl_help_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_help_url.bind("<Button-1>", lambda e: open_url(URL_HELP))
+
+    group_row_count +=1
+
+    lbl_donate = Label(frame_group_header, text=translate[language_code]['donate'])
+    lbl_donate.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_donate_url = Label(frame_group_header, text=URL_DONATE, fg="blue", cursor="hand2")
+    lbl_donate_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_donate_url.bind("<Button-1>", lambda e: open_url(URL_DONATE))
+
+    group_row_count +=1
+
+    lbl_release = Label(frame_group_header, text=translate[language_code]['release'])
+    lbl_release.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_release_url = Label(frame_group_header, text=URL_RELEASE, fg="blue", cursor="hand2")
+    lbl_release_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_release_url.bind("<Button-1>", lambda e: open_url(URL_RELEASE))
+
+    frame_group_header.grid(column=0, row=row_count)
+
 def main():
-    load_translate()
-    load_json()
+    global translate
+    translate = load_translate()
+
+    global config_filepath
+    global config_dict
+    config_filepath, config_dict = load_json()
 
     global root
     root = Tk()
@@ -1277,10 +1344,51 @@ def main():
     #style.configure('TLabel', background='lightgray', foreground='black')
     #style.configure('TFrame', background='lightgray')
 
-    GUI = MainMenu(root)
+    language_code="en_us"
+    if not config_dict is None:
+        if u'language' in config_dict:
+            language_code = get_language_code_by_name(config_dict["language"])
 
-    GUI_SIZE_WIDTH = 420
-    GUI_SIZE_HEIGHT = 522
+    row_count = 0
+
+    global tabControl
+    tabControl = ttk.Notebook(root)
+    tab1 = Frame(tabControl)
+    tabControl.add(tab1, text=translate[language_code]['preference'])
+    tab2 = Frame(tabControl)
+    tabControl.add(tab2, text=translate[language_code]['about'])
+    tabControl.grid(column=0, row=row_count)
+    tabControl.select(tab1)
+
+    row_count+=1
+
+    frame_action = Frame(root)
+
+    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command=btn_run_clicked)
+    btn_run.grid(column=0, row=0)
+
+    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command=btn_save_clicked)
+    btn_save.grid(column=1, row=0)
+
+    #btn_donate = ttk.Button(frame_action, text=translate[language_code]['donate'], command=btn_donate_clicked, width=5)
+    #btn_donate.grid(column=2, row=0)
+
+    #btn_help = ttk.Button(frame_action, text=translate[language_code]['help'], command=btn_help_clicked)
+    #btn_help.grid(column=2, row=0)
+
+    btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
+    btn_exit.grid(column=3, row=0)
+
+    frame_action.grid(column=0, row=row_count)
+
+    global UI_PADDING_X
+    UI_PADDING_X = 15
+
+    GUI_SIZE_WIDTH = 460
+    GUI_SIZE_HEIGHT = 550
+
+    PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab2, language_code)
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-30) + 'x' + str(GUI_SIZE_HEIGHT-40)
@@ -1291,7 +1399,6 @@ def main():
         GUI_SIZE = GUI_SIZE_WINDOWS
 
     root.geometry(GUI_SIZE)
-
 
     # for icon.
     icon_filepath = 'tmp.ico'
