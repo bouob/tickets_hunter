@@ -19,7 +19,7 @@ import sys
 import platform
 import json
 
-CONST_APP_VERSION = u"MaxBot (2022.11.12)"
+CONST_APP_VERSION = u"MaxBot (2022.11.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1283,7 +1283,7 @@ def main():
     GUI_SIZE_HEIGHT = 522
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-40)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-30) + 'x' + str(GUI_SIZE_HEIGHT-40)
 
     GUI_SIZE =GUI_SIZE_MACOS
     import platform

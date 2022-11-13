@@ -67,7 +67,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.12)"
+CONST_APP_VERSION = u"MaxBot (2022.11.13)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1085,6 +1085,9 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
                     # should use continue or break?
                     break
 
+                if row_text is None
+                    row_text = ""
+
                 if len(row_text) > 0:
                     if len(date_keyword) == 0:
                         # no keyword, match all.
@@ -1226,6 +1229,9 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                     print("get text fail")
                     break
 
+            if row_text is None:
+                row_text = ""
+
             if len(row_text) > 0:
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
@@ -1256,6 +1262,8 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                             area_item_font_el = row.find_element(By.TAG_NAME, 'font')
                             if not area_item_font_el is None:
                                 font_el_text = area_item_font_el.text
+                                if font_el_text is None:
+                                    font_el_text = ""
                                 font_el_text = "@%s@" % (font_el_text)
                                 if debugMode:
                                     print('font tag text:', font_el_text)
@@ -1370,7 +1378,7 @@ def area_auto_select(driver, url, area_keyword_1, area_keyword_2, area_keyword_3
 
             if area_target is not None:
                 try:
-                    print("area text:", area_target.text)
+                    #print("area text:", area_target.text)
                     area_target.click()
                 except Exception as exc:
                     print("click area a link fail, start to retry...")
@@ -1524,53 +1532,42 @@ def tixcraft_verify(driver, url):
     captcha_password_string = None
 
     form_select = None
-    question_text = ""
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '.zone-verify')
-
-
-        if form_select is not None:
-            html_text = ""
-            try:
-                question_text = form_select.text
-                html_text = question_text
-
-                html_text = html_text.replace(u'「',u'【')
-                html_text = html_text.replace(u'〔',u'【')
-                html_text = html_text.replace(u'［',u'【')
-                html_text = html_text.replace(u'〖',u'【')
-                html_text = html_text.replace(u'[',u'【')
-
-                html_text = html_text.replace(u'」',u'】')
-                html_text = html_text.replace(u'〕',u'】')
-                html_text = html_text.replace(u'］',u'】')
-                html_text = html_text.replace(u'〗',u'】')
-                html_text = html_text.replace(u']',u'】')
-
-                #print("html_text:", html_text)
-                if u'【' in html_text and u'】' in html_text:
-                    #captcha_password_string = find_between(html_text, u"【", u"】")
-                    pass
-            except Exception as exc:
-                print("get text fail")
     except Exception as exc:
         print("find verify fail")
         pass
 
+    question_text = None
+    if form_select is not None:
+        try:
+            question_text = form_select.text
+        except Exception as exc:
+            print("get text fail")
+
+    html_text = ""
+    if question_text is not None:
+        if len(question_text) > 0:
+            html_text = question_text
+            html_text = html_text.replace(u'「',u'【')
+            html_text = html_text.replace(u'〔',u'【')
+            html_text = html_text.replace(u'［',u'【')
+            html_text = html_text.replace(u'〖',u'【')
+            html_text = html_text.replace(u'[',u'【')
+
+            html_text = html_text.replace(u'」',u'】')
+            html_text = html_text.replace(u'〕',u'】')
+            html_text = html_text.replace(u'］',u'】')
+            html_text = html_text.replace(u'〗',u'】')
+            html_text = html_text.replace(u']',u'】')
+
+            #print("html_text:", html_text)
+            if u'【' in html_text and u'】' in html_text:
+                # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
+                #captcha_password_string = find_between(html_text, u"【", u"】")
+                pass
 
     is_options_in_question = False
-    html_text = question_text
-    html_text = html_text.replace(u'「',u'(')
-    html_text = html_text.replace(u'〔',u'(')
-    html_text = html_text.replace(u'［',u'(')
-    html_text = html_text.replace(u'〖',u'(')
-    html_text = html_text.replace(u'[',u'(')
-    html_text = html_text.replace(u'」',u')')
-    html_text = html_text.replace(u'〕',u')')
-    html_text = html_text.replace(u'］',u')')
-    html_text = html_text.replace(u'〗',u')')
-    html_text = html_text.replace(u']',u')')
-    #print("html_text", html_text)
     answer_list, my_answer_delimitor = get_answer_list_by_question(html_text)
 
     if u'請輸入"YES"，代表您已詳閱且瞭解並同意' in html_text and u'實名制規則' in html_text:
@@ -1673,38 +1670,37 @@ def tixcraft_ticket_main(driver, url, is_verifyCode_editing):
     try:
         #form_select = driver.find_element(By.TAG_NAME, 'select')
         form_select = driver.find_element(By.CSS_SELECTOR, '.mobile-select')
-
-        if form_select is not None:
-            try:
-                #print("get select ticket value:" + Select(form_select).first_selected_option.text)
-                if Select(form_select).first_selected_option.text=="0":
-                    is_verifyCode_editing = False
-            except Exception as exc:
-                print("query selected option fail")
-                print(exc)
-                pass
-
-            if is_verifyCode_editing == False:
-                ticket_number_auto_fill(url, form_select)
-
-                # start to input verify code.
-                try:
-                    #driver.execute_script("$('#TicketForm_verifyCode').focus();")
-                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
-
-                    is_verifyCode_editing = True
-                    print("goto is_verifyCode_editing== True")
-                except Exception as exc:
-                    print(exc)
-                    pass
-            else:
-                #print("is_verifyCode_editing")
-                # do nothing here.
-                pass
-
     except Exception as exc:
         print("find select fail")
         pass
+
+    if form_select is not None:
+        try:
+            #print("get select ticket value:" + Select(form_select).first_selected_option.text)
+            if Select(form_select).first_selected_option.text=="0":
+                is_verifyCode_editing = False
+        except Exception as exc:
+            print("query selected option fail")
+            print(exc)
+            pass
+
+        if is_verifyCode_editing == False:
+            ticket_number_auto_fill(url, form_select)
+
+            # start to input verify code.
+            try:
+                #driver.execute_script("$('#TicketForm_verifyCode').focus();")
+                driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
+
+                is_verifyCode_editing = True
+                print("goto is_verifyCode_editing== True")
+            except Exception as exc:
+                print(exc)
+                pass
+        else:
+            #print("is_verifyCode_editing")
+            # do nothing here.
+            pass
 
     return is_verifyCode_editing
 
@@ -1898,6 +1894,9 @@ def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
                 is_travel_interrupted = True
                 print("get text fail.")
 
+            if row_text is None:
+                row_text = ""
+
             if len(row_text) > 0:
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
@@ -2008,8 +2007,8 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_keyword, kktix_
     if target_area is not None:
         if show_debug_message:
             print('try to get input box element.')
-        #print("target_area text", target_area.text)
         try:
+            #print("target_area text", target_area.text)
             ticket_price_input = target_area.find_element(By.CSS_SELECTOR, "input[type='text']")
         except Exception as exc:
             pass
@@ -2074,28 +2073,30 @@ def kktix_get_web_datetime(url, registrationsNewApp_div):
         if el_web_datetime_list_count > 0:
             el_web_datetime = None
             for el_web_datetime in el_web_datetime_list:
+                el_web_datetime_text = None
                 try:
                     el_web_datetime_text = el_web_datetime.text
                     if show_debug_message:
                         print("el_web_datetime_text:", el_web_datetime_text)
-
-                    now = datetime.now()
-                    #print("now:", now)
-                    for guess_year in range(now.year,now.year+3):
-                        current_year = str(guess_year)
-                        if current_year in el_web_datetime_text:
-                            if u'/' in el_web_datetime_text:
-                                web_datetime = el_web_datetime_text
-                                is_found_web_datetime = True
-                                break
-
-                    if is_found_web_datetime:
-                        break
                 except Exception as exc:
                     if show_debug_message:
                         print('parse web datetime fail:')
                         print(exc)
                     pass
+
+                if el_web_datetime_text is not None:
+                    if len(el_web_datetime_text) > 0:
+                        now = datetime.now()
+                        #print("now:", now)
+                        for guess_year in range(now.year,now.year+3):
+                            current_year = str(guess_year)
+                            if current_year in el_web_datetime_text:
+                                if u'/' in el_web_datetime_text:
+                                    web_datetime = el_web_datetime_text
+                                    is_found_web_datetime = True
+                                    break
+                        if is_found_web_datetime:
+                            break
     else:
         print("find td.ng-binding fail")
 
@@ -2238,6 +2239,9 @@ def kktix_reg_new_main(url, answer_index, registrationsNewApp_div, is_finish_che
                 captcha_text_div_text = captcha_text_div.text
             except Exception as exc:
                 pass
+
+            if captcha_text_div_text is None:
+                captcha_text_div_text = ""
 
             if show_debug_message:
                 print("captcha_text_div_text:", captcha_text_div_text)
@@ -2819,7 +2823,6 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_keyw
                             if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                 print("only need first item, break area list loop.")
                                 break
-
                 else:
                     # match keyword.
                     row_index = 0
@@ -2862,6 +2865,9 @@ def get_fami_target_area(date_keyword, area_keyword_1, area_keyword_2, area_keyw
                         except Exception as exc:
                             print("get row text fail")
                             break
+                        
+                        if row_text is None:
+                            row_text = ""
 
                         if len(row_text) > 0:
                             # check date.
@@ -3171,6 +3177,9 @@ def urbtix_area_auto_select(driver, url, kktix_area_keyword, kktix_date_keyword)
                                 print("get text fail")
                                 break
 
+                            if row_text is None:
+                                row_text = ""
+
                             if len(row_text) > 0:
                                 #print("area row_text:", row_index, row_text)
                                 if kktix_area_keyword in row_text:
@@ -3305,6 +3314,9 @@ def cityline_area_auto_select(url, kktix_area_keyword):
                                 print("get text fail")
                                 break
 
+                            if row_text is None:
+                                row_text = ""
+
                             if len(row_text) > 0:
                                 # for debug.
                                 #print("area row_text:", row_index, row_text)
@@ -3390,6 +3402,9 @@ def cityline_area_selected_text(url):
                             print("get text fail")
                             break
 
+                        if row_text is None:
+                            row_text = ""
+
                         if len(row_text) > 0:
                             el = None
                             try:
@@ -3423,6 +3438,9 @@ def cityline_ticket_number_auto_select(url):
 
                 selected_value = el.text
                 #print("selected_value:", selected_value)
+
+                if selected_value is None:
+                    selected_value = ""
 
                 if selected_value == "0":
                     el.click()
