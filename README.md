@@ -1,5 +1,7 @@
 # tixcraft_bot
-maxbot(Max搶票機器人) help you quickly buy your tickets
+MaxBot是一個免費、開放原始碼的搶票機器人。祝你好運，買得到預期中的票。
+
+MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.
 
 # Download (搶票程式下載)
 https://github.com/max32002/tixcraft_bot/releases
