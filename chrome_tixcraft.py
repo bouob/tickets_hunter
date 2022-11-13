@@ -1085,7 +1085,7 @@ def date_auto_select(driver, url, date_auto_select_mode, date_keyword, pass_date
                     # should use continue or break?
                     break
 
-                if row_text is None
+                if row_text is None:
                     row_text = ""
 
                 if len(row_text) > 0:
