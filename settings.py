@@ -20,7 +20,7 @@ import platform
 import json
 import webbrowser
 
-CONST_APP_VERSION = u"MaxBot (2022.11.14)"
+CONST_APP_VERSION = u"MaxBot (2022.11.14) ver.2"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
