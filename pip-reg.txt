@@ -1,7 +1,8 @@
 certifi
 chardet
+cryptography
 idna
 selenium
 selenium-stealth
-selenium-wire
 undetected-chromedriver
+Pillow
