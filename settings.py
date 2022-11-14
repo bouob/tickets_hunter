@@ -20,7 +20,7 @@ import platform
 import json
 import webbrowser
 
-CONST_APP_VERSION = u"MaxBot (2022.11.14) ver.2"
+CONST_APP_VERSION = u"MaxBot (2022.11.14) ver.5"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -492,7 +492,7 @@ def applyNewLanguage():
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["about"])
-   
+
     lbl_slogan.config(text=translate[language_code]["maxbot_slogan"])
     lbl_help.config(text=translate[language_code]["help"])
     lbl_donate.config(text=translate[language_code]["donate"])
@@ -1268,19 +1268,16 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
 
 def AboutTab(root, language_code):
-    from PIL import Image, ImageTk
-
     row_count = 0
 
     frame_group_header = Frame(root)
     group_row_count = 0
 
-    image = Image.open("maxbot_logo2_single.png")
-    photo = ImageTk.PhotoImage(image)
-    #logo_offset_x = ((GUI_SIZE_WIDTH - image.size[0]) / 2) - 20
-    
-    lbl_logo = Label(frame_group_header, image=photo)
-    lbl_logo.image = photo
+    logo_filename = "maxbot_logo2_single.ppm"
+    logo_img = PhotoImage(file=logo_filename)
+
+    lbl_logo = Label(frame_group_header, image=logo_img)
+    lbl_logo.image = logo_img
     lbl_logo.grid(column=0, row=group_row_count, columnspan=2)
 
     group_row_count +=1
@@ -1391,7 +1388,7 @@ def main():
     AboutTab(tab2, language_code)
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-60)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-90)
 
     GUI_SIZE =GUI_SIZE_MACOS
     import platform
