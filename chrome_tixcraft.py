@@ -57,7 +57,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 #附註1：沒有寫的很好，很多地方應該可以模組化。
 #附註2：
 
-CONST_APP_VERSION = u"MaxBot (2022.11.16)"
+CONST_APP_VERSION = u"MaxBot (2022.11.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1433,7 +1433,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 '''
 
 def tixcraft_ticket_agree(driver):
-    click_plan = "B"
+    click_plan = "A"
     #click_plan = "B"
 
     # check agree
@@ -1458,6 +1458,7 @@ def tixcraft_ticket_agree(driver):
     if not is_finish_checkbox_click:
         # 使用 plan B.
         try:
+            print("use plan_b to check TicketForm_agree.")
             driver.execute_script("$(\"input[type='checkbox']\").prop('checked', true);")
             #driver.execute_script("document.getElementById(\"TicketForm_agree\").checked;")
             is_finish_checkbox_click = True
@@ -1655,9 +1656,8 @@ def tixcraft_verify(driver, url):
 
     return ret
 
-def tixcraft_ticket_main(driver, config_dict, is_finish_checkbox_click):
-    if not is_finish_checkbox_click:
-        is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+def tixcraft_ticket_main(driver, config_dict):
+    is_finish_checkbox_click = tixcraft_ticket_agree(driver)
 
     # allow agree not enable to assign ticket number.
     form_select = None
@@ -1747,7 +1747,7 @@ def tixcraft_ticket_main(driver, config_dict, is_finish_checkbox_click):
     if is_verifyCode_editing:
         print("goto is_verifyCode_editing == True")
 
-    return is_verifyCode_editing, is_finish_checkbox_click
+    return is_verifyCode_editing
 
 # PS: There are two "Next" button in kktix.
 #   : 1: /events/xxx
@@ -3798,7 +3798,6 @@ def main():
 
     # for tixcraft
     is_verifyCode_editing = False
-    is_finish_checkbox_click = False
 
     # for kktix
     answer_index = -1
@@ -3840,6 +3839,7 @@ def main():
                 pass
 
         except UnexpectedAlertPresentException as exc1:
+            is_verifyCode_editing = False
             print('UnexpectedAlertPresentException at this url:', url )
             time.sleep(3.5)
 
@@ -3968,10 +3968,9 @@ def main():
             # main app, to select ticket number.
             if '/ticket/ticket/' in url:
                 if not is_verifyCode_editing:
-                    is_verifyCode_editing, is_finish_checkbox_click = tixcraft_ticket_main(driver, config_dict, is_finish_checkbox_click)
+                    is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict)
             else:
                 is_verifyCode_editing = False
-                is_finish_checkbox_click = False
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:

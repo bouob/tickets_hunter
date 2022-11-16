@@ -20,7 +20,7 @@ import platform
 import json
 import webbrowser
 
-CONST_APP_VERSION = u"MaxBot (2022.11.16)"
+CONST_APP_VERSION = u"MaxBot (2022.11.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1372,7 +1372,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_icon_play.grid(column=3, row=group_row_count)
     lbl_icon_play.bind("<Button-1>", lambda e: btn_preview_sound_clicked())
 
-    frame_group_header.grid(column=0, row=row_count)
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
 
 def AboutTab(root, language_code):
