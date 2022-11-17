@@ -2,7 +2,6 @@
 #encoding=utf-8
 # 'seleniumwire' and 'selenium 4' raise error when running python 2.x
 # PS: python 2.x will be removed in future.
-
 try:
     # for Python2
     from Tkinter import *
@@ -13,14 +12,14 @@ except ImportError:
     from tkinter import *
     from tkinter import ttk
     from tkinter import messagebox
-
 import os
 import sys
 import platform
 import json
 import webbrowser
+import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.11.17)"
+CONST_APP_VERSION = u"MaxBot (2022.11.18)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -28,7 +27,13 @@ CONST_RANDOM = u"random"
 CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM)
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
-
+CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT = '''tixcraft.com###topAlert
+tixcraft.com##.col-md-7.col-xs-12.mg-top
+tixcraft.com##.topBar.alert-box.emergency
+tixcraft.com##.footer.clearfix
+tixcraft.com##.row.process-wizard.process-wizard-info
+tixcraft.com##.nav-line
+tixcraft.com##.page-info.row.line-btm.mg-0'''
 config_filepath = None
 config_dict = None
 
@@ -80,10 +85,14 @@ def load_translate():
     en_us["run"] = 'Run'
     en_us["save"] = 'Save'
     en_us["exit"] = 'Close'
+    en_us["copy"] = 'Copy'
 
+    en_us["facebook_account"] = 'Facebook account'
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
-    en_us["facebook_account"] = 'Facebook account'
+    en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
+    en_us["adblock_plus_memo"] = 'Default adblock is disable'
+    en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
 
     en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.'
     en_us["donate"] = 'Donate'
@@ -123,10 +132,14 @@ def load_translate():
     zh_tw["run"] = '搶票'
     zh_tw["save"] = '存檔'
     zh_tw["exit"] = '關閉'
+    zh_tw["copy"] = '複製'
 
+    zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
-    zh_tw["facebook_account"] = 'Facebook 帳號'
+    zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
+    zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
+    zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
 
     zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝你好運，買得到預期中的票。'
     zh_tw["donate"] = '打賞'
@@ -162,14 +175,18 @@ def load_translate():
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
     zh_cn["about"] = '关于'
+    zh_cn["copy"] = '复制'
 
     zh_cn["run"] = '抢票'
     zh_cn["save"] = '存档'
     zh_cn["exit"] = '关闭'
 
-    zh_cn["play_captcha_sound"] = '輸入驗證碼時播放音效'
-    zh_cn["captcha_sound_filename"] = '驗證碼用音效檔'
-    zh_cn["facebook_account"] = 'Facebook 帳號'
+    zh_cn["facebook_account"] = 'Facebook 帐号'
+    zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
+    zh_cn["captcha_sound_filename"] = '验证码用音效档'
+    zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
+    zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
+    zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
 
     zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝你好运，买得到预期中的票。'
     zh_cn["donate"] = '打赏'
@@ -209,10 +226,15 @@ def load_translate():
     ja_jp["run"] = 'チケットを取る'
     ja_jp["save"] = '保存'
     ja_jp["exit"] = '閉じる'
+    ja_jp["copy"] = 'コピー'
 
+    ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
-    ja_jp["facebook_account"] = 'Facebookのアカウント'
+
+    ja_jp["adblock_plus_enable"] = 'Adblock 拡張機能'
+    ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
+    ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
 
     ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。 頑張って予定のチケットを手に入れてください。'
     ja_jp["donate"] = '寄付'
@@ -292,7 +314,7 @@ def btn_save_act(slience_mode=False):
         global txt_facebook_account
         global chk_state_play_captcha_sound
         global txt_captcha_sound_filename
-
+        global chk_state_adblock_plus
 
         if is_all_data_correct:
             if combo_homepage.get().strip()=="":
@@ -364,6 +386,8 @@ def btn_save_act(slience_mode=False):
             config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
 
             config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
+            config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
+
 
         # save config.
         if is_all_data_correct:
@@ -434,17 +458,25 @@ def btn_preview_sound_clicked():
     #print("new_sound_filename:", new_sound_filename)
     app_root = get_app_root()
     new_sound_filename = os.path.join(app_root, new_sound_filename)
-    play_mp3(new_sound_filename)
+    play_mp3_async(new_sound_filename)
+
+def play_mp3_async(sound_filename):
+    import threading
+    threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
 
 def play_mp3(sound_filename):
-    import threading
     from playsound import playsound
     try:
-        threading.Thread(target=playsound, args=(sound_filename,), daemon=True).start()
-        #playsound(sound_filename)
+        playsound(sound_filename)
     except Exception as exc:
         msg=str(exc)
         print("play sound exeption:", msg)
+        if platform.system() == 'Windows':
+            import winsound
+            try:
+                winsound.PlaySound(sound_filename, winsound.SND_FILENAME)
+            except Exception as exc2:
+                pass
 
 def open_url(url):
     webbrowser.open_new(url)
@@ -457,6 +489,9 @@ def btn_donate_clicked():
 
 def btn_help_clicked():
     open_url.open(URL_HELP)
+
+def btn_copy_clicked():
+    pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
 def callbackLanguageOnChange(event):
     applyNewLanguage()
@@ -517,6 +552,7 @@ def applyNewLanguage():
     global chk_pass_date_is_sold_out
     global chk_auto_reload_coming_soon_page
     global chk_play_captcha_sound
+    global chk_adblock_plus
 
     global tabControl
 
@@ -524,6 +560,10 @@ def applyNewLanguage():
     global lbl_help
     global lbl_donate
     global lbl_release
+
+    global lbl_adblock_plus
+    global lbl_adblock_plus_memo
+    global lbl_adblock_plus_settings
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -558,6 +598,7 @@ def applyNewLanguage():
     chk_pass_date_is_sold_out.config(text=translate[language_code]["enable"])
     chk_auto_reload_coming_soon_page.config(text=translate[language_code]["enable"])
     chk_play_captcha_sound.config(text=translate[language_code]["enable"])
+    chk_adblock_plus.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -574,6 +615,10 @@ def applyNewLanguage():
     lbl_help.config(text=translate[language_code]["help"])
     lbl_donate.config(text=translate[language_code]["donate"])
     lbl_release.config(text=translate[language_code]["release"])
+
+    lbl_adblock_plus.config(text=translate[language_code]["adblock_plus_enable"])
+    lbl_adblock_plus_memo.config(text=translate[language_code]["adblock_plus_memo"])
+    lbl_adblock_plus_settings.config(text=translate[language_code]["adblock_plus_settings"])
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -1303,8 +1348,9 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     facebook_account = ""
     play_captcha_sound = False
-    captcha_sound_filename_default = "ding-dong.mp3"
+    captcha_sound_filename_default = "ding-dong.wav"
     captcha_sound_filename = ""
+    adblock_plus_enable = False
 
     if 'advanced' in config_dict:
         if 'facebook_account' in config_dict["advanced"]:
@@ -1314,13 +1360,15 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
                 play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
             if 'filename' in config_dict["advanced"]["play_captcha_sound"]:
                 captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
+        if 'adblock_plus_enable' in config_dict["advanced"]:
+            adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
 
     # for kktix
     print("==[advanced]==")
     print("facebook_account", facebook_account)
     print("play_captcha_sound", play_captcha_sound)
     print("captcha_sound_filename", captcha_sound_filename)
-
+    print("adblock_plus_enable", adblock_plus_enable)
 
     # assign default value.
     if captcha_sound_filename is None:
@@ -1364,13 +1412,55 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_captcha_sound_filename = Entry(frame_group_header, width=20, textvariable = txt_captcha_sound_filename_value)
     txt_captcha_sound_filename.grid(column=1, row=group_row_count, sticky = W)
 
-    icon_play_filename = "icon_play_3.gif"
+    icon_play_filename = "icon_play_1.gif"
     icon_play_img = PhotoImage(file=icon_play_filename)
 
     lbl_icon_play = Label(frame_group_header, image=icon_play_img, cursor="hand2")
     lbl_icon_play.image = icon_play_img
     lbl_icon_play.grid(column=3, row=group_row_count)
     lbl_icon_play.bind("<Button-1>", lambda e: btn_preview_sound_clicked())
+
+    group_row_count +=1
+
+    global lbl_adblock_plus
+    lbl_adblock_plus = Label(frame_group_header, text=translate[language_code]['adblock_plus_enable'])
+    lbl_adblock_plus.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_adblock_plus
+    chk_state_adblock_plus = BooleanVar()
+    chk_state_adblock_plus.set(adblock_plus_enable)
+
+    global chk_adblock_plus
+    chk_adblock_plus = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_adblock_plus)
+    chk_adblock_plus.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    lbl_adblock_plus_ps = Label(frame_group_header, text='')
+    lbl_adblock_plus_ps.grid(column=0, row=group_row_count, sticky = E)
+
+    global lbl_adblock_plus_memo
+    lbl_adblock_plus_memo = Label(frame_group_header, text=translate[language_code]['adblock_plus_memo'])
+    lbl_adblock_plus_memo.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_adblock_plus_settings
+    lbl_adblock_plus_settings = Label(frame_group_header, text=translate[language_code]['adblock_plus_settings'])
+    lbl_adblock_plus_settings.grid(column=0, row=group_row_count, sticky = E+N)
+
+    txt_adblock_plus_settings = Text(frame_group_header, width=20, height=5)
+    txt_adblock_plus_settings.grid(column=1, row=group_row_count, sticky = W)
+    txt_adblock_plus_settings.insert("1.0", CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
+
+    icon_copy_filename = "icon_copy_2.gif"
+    icon_copy_img = PhotoImage(file=icon_copy_filename)
+
+    lbl_icon_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy.image = icon_copy_img
+    lbl_icon_copy.grid(column=3, row=group_row_count, sticky = W+N)
+    lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
+    
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
@@ -1444,12 +1534,6 @@ def get_action_bar(root,language_code):
 
     btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command=btn_save_clicked)
     btn_save.grid(column=1, row=0)
-
-    #btn_donate = ttk.Button(frame_action, text=translate[language_code]['donate'], command=btn_donate_clicked, width=5)
-    #btn_donate.grid(column=2, row=0)
-
-    #btn_help = ttk.Button(frame_action, text=translate[language_code]['help'], command=btn_help_clicked)
-    #btn_help.grid(column=2, row=0)
 
     btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
     btn_exit.grid(column=3, row=0)
@@ -1546,7 +1630,6 @@ def main():
     os.remove(icon_filepath)
 
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()

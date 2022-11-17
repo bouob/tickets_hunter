@@ -6,3 +6,4 @@ selenium
 selenium-stealth
 undetected-chromedriver
 playsound
+pyperclip

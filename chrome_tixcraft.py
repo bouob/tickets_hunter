@@ -1,49 +1,35 @@
 #!/usr/bin/env python3
 #encoding=utf-8
+# 'seleniumwire' and 'selenium 4' raise error when running python 2.x 
+# PS: python 2.x will be removed in future. 
+#執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 import os
 import sys
 import platform
 import json
 import random
-#print("python version", platform.python_version())
-
-# 'seleniumwire' and 'selenium 4' raise error when running python 2.x 
-# PS: python 2.x will be removed in future. 
 
 from selenium import webdriver
-
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-
 # for close tab.
 from selenium.common.exceptions import NoSuchWindowException
-# for alert
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import WebDriverException
 # for alert 2
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-# for chrome 103
-from selenium.common.exceptions import WebDriverException
-
-# for ["pageLoadStrategy"] = "eager"
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 # for selenium 4
 from selenium.webdriver.chrome.service import Service
-
 # for wait #1
 import time
-
 import re
 from datetime import datetime
-
 # for error output
 import logging
 logging.basicConfig()
 logger = logging.getLogger('logger')
-
 # for check reg_info
 import requests
 import warnings
@@ -53,11 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-#執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
-#附註1：沒有寫的很好，很多地方應該可以模組化。
-#附註2：
-
-CONST_APP_VERSION = u"MaxBot (2022.11.17)"
+CONST_APP_VERSION = u"MaxBot (2022.11.18)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -68,8 +50,6 @@ CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP
 
 CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
 
-# initial webdriver
-# 說明：初始化 webdriver
 driver = None
 
 homepage = None
@@ -167,20 +147,20 @@ def get_chromedriver_path(webdriver_path):
         chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
     return chromedriver_path
 
-def load_chromdriver_normal(webdriver_path, driver_type):
+def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
     chrome_options = webdriver.ChromeOptions()
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
     # some windows cause: timed out receiving message from renderer
-    '''
-    no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+    if adblock_plus_enable:
+        # PS: this is ocx version.
+        no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
 
-    if os.path.exists(no_google_analytics_path):
-        chrome_options.add_extension(no_google_analytics_path)
-    if os.path.exists(no_ad_path):
-        chrome_options.add_extension(no_ad_path)
-    '''
+        if os.path.exists(no_google_analytics_path):
+            chrome_options.add_extension(no_google_analytics_path)
+        if os.path.exists(no_ad_path):
+            chrome_options.add_extension(no_ad_path)
 
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
@@ -221,7 +201,7 @@ def load_chromdriver_normal(webdriver_path, driver_type):
 
     return driver
 
-def load_chromdriver_uc(webdriver_path):
+def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
     import undetected_chromedriver as uc
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
@@ -230,18 +210,17 @@ def load_chromdriver_uc(webdriver_path):
     options.page_load_strategy="eager"
     #print("strategy", options.page_load_strategy)
 
-    '''
-    no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
-    no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
-    no_ad_folder_path = no_ad_path.replace('.crx','')
-    load_extension_path = ""
-    if os.path.exists(no_google_analytics_folder_path):
-        load_extension_path += "," + no_google_analytics_folder_path
-    if os.path.exists(no_ad_folder_path):
-        load_extension_path += "," + no_ad_folder_path
-    if len(load_extension_path) > 0:
-        options.add_argument('--load-extension=' + load_extension_path[1:])
-    '''
+    if adblock_plus_enable:
+        no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+        no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
+        no_ad_folder_path = no_ad_path.replace('.crx','')
+        load_extension_path = ""
+        if os.path.exists(no_google_analytics_folder_path):
+            load_extension_path += "," + no_google_analytics_folder_path
+        if os.path.exists(no_ad_folder_path):
+            load_extension_path += "," + no_ad_folder_path
+        if len(load_extension_path) > 0:
+            options.add_argument('--load-extension=' + load_extension_path[1:])
 
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
@@ -264,7 +243,7 @@ def load_chromdriver_uc(webdriver_path):
         if is_local_chrome_browser_lower:
             print("Use local user downloaded chromedriver to lunch chrome browser.")
             driver_type = "selenium"
-            driver = load_chromdriver_normal(webdriver_path, driver_type)
+            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
@@ -484,6 +463,8 @@ def get_driver_by_config(config_dict, driver_type):
         webdriver_path = os.path.join(Root_Dir, "webdriver")
         print("platform.system().lower():", platform.system().lower())
 
+        adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+
         if browser == "chrome":
             DEFAULT_ARGS = [
                 '--disable-audio-output',
@@ -538,7 +519,7 @@ def get_driver_by_config(config_dict, driver_type):
 
             # method 6: Selenium Stealth
             if driver_type != "undetected_chromedriver":
-                driver = load_chromdriver_normal(webdriver_path, driver_type)
+                driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
             else:
                 # method 5: uc
                 #options = webdriver.ChromeOptions()
@@ -549,7 +530,7 @@ def get_driver_by_config(config_dict, driver_type):
                         from multiprocessing import freeze_support
                         freeze_support()
 
-                driver = load_chromdriver_uc(webdriver_path)
+                driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable)
 
         if browser == "firefox":
             # default os is linux/mac
@@ -1698,19 +1679,20 @@ def tixcraft_ticket_main(driver, config_dict):
 
         # must wait select object ready to assign ticket number.
         if not is_assign_ticket_number:
+            # only this case:"ticket number changed by bot" to play sound!
+            # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
+            play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
+            captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
+            if play_captcha_sound:
+                app_root = get_app_root()
+                captcha_sound_filename = os.path.join(app_root, captcha_sound_filename)
+                play_mp3_async(captcha_sound_filename)
+
             ticket_number = str(config_dict["ticket_number"])
             is_assign_ticket_number = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
 
             # must wait ticket number assign to focus captcha.
             if is_assign_ticket_number:
-                # only this case:"ticket number change by bot" to play sound!
-                play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
-                captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-                if play_captcha_sound:
-                    app_root = get_app_root()
-                    captcha_sound_filename = os.path.join(app_root, captcha_sound_filename)
-                    play_mp3(captcha_sound_filename)
-
                 # only this case to focus()
                 # start to input verify code.
                 form_verifyCode = None
@@ -3727,15 +3709,23 @@ def facebook_login(driver, facebook_account):
 
     return ret
 
-def play_mp3(sound_filename):
+def play_mp3_async(sound_filename):
     import threading
+    threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
+
+def play_mp3(sound_filename):
     from playsound import playsound
     try:
-        threading.Thread(target=playsound, args=(sound_filename,), daemon=True).start()
-        #playsound(sound_filename)
+        playsound(sound_filename)
     except Exception as exc:
         msg=str(exc)
         print("play sound exeption:", msg)
+        if platform.system() == 'Windows':
+            import winsound
+            try:
+                winsound.PlaySound(sound_filename, winsound.SND_FILENAME)
+            except Exception as exc2:
+                pass
 
 # purpose: check alert poped.
 # PS: current version not enable...
@@ -3839,7 +3829,9 @@ def main():
                 pass
 
         except UnexpectedAlertPresentException as exc1:
+            # PS: DON'T remove this line.
             is_verifyCode_editing = False
+
             print('UnexpectedAlertPresentException at this url:', url )
             time.sleep(3.5)
 
