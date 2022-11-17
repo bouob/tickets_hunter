@@ -8,7 +8,7 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
-Max搶票機器人 (2022-11-18)：增加 adblock plus 的功能。
+Max搶票機器人 (2022-11-18)：增加 adblock plus 的功能。輸入驗證碼時，會播放音效，在清票時很有幫功，不需要一直緊盯著螢幕。
 
 https://youtu.be/Atujl8MPHQI
 
