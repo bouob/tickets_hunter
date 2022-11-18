@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.11.18)"
+CONST_APP_VERSION = u"MaxBot (2022.11.19)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -797,6 +797,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     kktix_area_keyword = ""
     kktix_date_keyword = ""
     # disable password brute force attack
+    # PS: because of the question is always variable.
     #kktix_answer_dictionary = ""
     auto_guess_options = False              # default not checked.
 
@@ -875,8 +876,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
                 date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
             if 'date_keyword' in config_dict["tixcraft"]["date_auto_select"]:
-                date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"]
-                date_keyword = date_keyword.strip()
+                date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
 
             area_auto_select_enable = False
             area_auto_select_mode = None
