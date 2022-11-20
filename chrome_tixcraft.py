@@ -39,7 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.11.19)"
+CONST_APP_VERSION = u"MaxBot (2022.11.20)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -160,7 +160,7 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
     chrome_options.add_experimental_option('useAutomationExtension', False)
-    chrome_options.add_experimental_option("prefs", {"profile.password_manager_enabled": False, "credentials_enable_service": False,'profile.default_content_setting_values':{'notifications':2}})
+    chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
 
     #caps = DesiredCapabilities().CHROME
     caps = chrome_options.to_capabilities()
@@ -170,13 +170,14 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
     #caps["pageLoadStrategy"] = u"none"
 
     #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
-    caps["unhandledPromptBehavior"] = u"ignore"
+    #caps["unhandledPromptBehavior"] = u"ignore"
     #caps["unhandledPromptBehavior"] = u"dismiss"
+    caps["unhandledPromptBehavior"] = u"accept"
 
     chrome_service = Service(chromedriver_path)
 
     # method 6: Selenium Stealth
-    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
@@ -189,6 +190,7 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
               renderer="Intel Iris OpenGL Engine",
               fix_hairline=True,
           )
+    #print("driver capabilities", driver.capabilities)
 
     return driver
 
@@ -199,6 +201,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
 
     options = uc.ChromeOptions()
     options.page_load_strategy="eager"
+
     #print("strategy", options.page_load_strategy)
 
     if adblock_plus_enable:
@@ -217,13 +220,19 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
 
+    options.add_argument("--password-store=basic")
+    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
+
+    caps = options.to_capabilities()
+    caps["unhandledPromptBehavior"] = u"accept"
+
     driver = None
     if os.path.exists(chromedriver_path):
         print("Use user driver path:", chromedriver_path)
         #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
         is_local_chrome_browser_lower = False
         try:
-            driver = uc.Chrome(executable_path=chromedriver_path, options=options, suppress_welcome=False)
+            driver = uc.Chrome(executable_path=chromedriver_path, desired_capabilities=caps, suppress_welcome=False)
         except Exception as exc:
             if "cannot connect to chrome" in str(exc):
                 if "This version of ChromeDriver only supports Chrome version" in str(exc):
@@ -238,7 +247,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
-        driver = uc.Chrome(options=options, suppress_welcome=False)
+        driver = uc.Chrome(desired_capabilities=caps, suppress_welcome=False)
 
     if driver is None:
         print("create web drive object fail!")
@@ -250,6 +259,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
         }
         #print("assign setDownloadBehavior.")
         driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
+    #print("driver capabilities", driver.capabilities)
 
     return driver
 
@@ -1475,7 +1485,10 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
 
     return is_assign_ticket_number
 
-def tixcraft_verify(driver, url):
+def tixcraft_verify(driver):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
     ret = False
 
     captcha_password_string = None
@@ -1510,106 +1523,93 @@ def tixcraft_verify(driver, url):
             html_text = html_text.replace(u'〗',u'】')
             html_text = html_text.replace(u']',u'】')
 
-            #print("html_text:", html_text)
             if u'【' in html_text and u'】' in html_text:
                 # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
                 #captcha_password_string = find_between(html_text, u"【", u"】")
                 pass
 
+    if show_debug_message:
+        print("html_text:", html_text)
+
     is_options_in_question = False
-    answer_list, my_answer_delimitor = get_answer_list_by_question(html_text)
 
-    if u'請輸入"YES"，代表您已詳閱且瞭解並同意' in html_text and u'實名制規則' in html_text:
-        captcha_password_string = 'YES'
+    # 請輸入"YES"，代表您已詳閱且瞭解並同意。
+    if u'請輸入"YES"' in html_text:
+        if u'已詳閱' in html_text:
+            if u'並同意' in html_text:
+                captcha_password_string = 'YES'
 
-    if not captcha_password_string is None:
-        form_input = None
+    if show_debug_message:
+        print("captcha_password_string:", captcha_password_string)
+
+
+    form_input = None
+    try:
+        form_input = driver.find_element(By.CSS_SELECTOR, '#checkCode')
+    except Exception as exc:
+        print("find verify code fail")
+        pass
+
+    default_value = None
+    if form_input is not None:
         try:
-            form_input = driver.find_element(By.CSS_SELECTOR, '#checkCode')
-            if form_input is not None:
-                default_value = form_input.get_attribute('value')
-                if not default_value is None:
-                    if len(default_value) == 0:
-                        form_input.send_keys(captcha_password_string)
-                        print("send captcha keys:" + captcha_password_string)
-                        time.sleep(0.2)
-                        ret = True
-            else:
-                print("find captcha input field fail")
-
+            default_value = form_input.get_attribute('value')
         except Exception as exc:
-            print("find verify fail")
+            print("find verify code fail")
             pass
 
-        if ret:
-            form_input = None
+    if default_value is None:
+        default_value = ""
+
+    if not captcha_password_string is None:
+        is_password_sent = False
+        if len(default_value)==0:
             try:
-                form_input = driver.find_element(By.CSS_SELECTOR, '#submitButton')
+                # PS: sometime may send key twice...
+                form_input.clear()
+
+                form_input.send_keys(captcha_password_string)
+                is_password_sent = True
+                if show_debug_message:
+                    print("sent password by bot.")
             except Exception as exc:
-                print("find submit button fail")
-                print(exc)
                 pass
 
-            # retry
+        if default_value == captcha_password_string:
+            if show_debug_message:
+                print("sent password by previous time.")
+            is_password_sent = True
+
+        if is_password_sent:
+            submit_btn = None
+            try:
+                submit_btn = driver.find_element(By.ID, 'submitButton')
+            except Exception as exc:
+                if show_debug_message:
+                    print("find submit button fail")
+                    print(exc)
+                pass
+
             is_submited = False
-            for i in range(3):
-                if form_input is not None:
-                    is_visible = False
+            if not submit_btn is None:
+                for i in range(3):
                     try:
-                        if form_input.is_enabled():
-                            is_visible = True
+                        if submit_btn.is_enabled():
+                            submit_btn.click()
+                            is_submited = True
+                            if show_debug_message:
+                                print("press submit button when time #", i+1)
                     except Exception as exc:
                         pass
 
-                    if is_visible:
-                        try:
-                            form_input.click()
-                            is_submited = True
-                        except Exception as exc:
-                            try:
-                                driver.execute_script("arguments[0].click();", el)
-                                is_submited = True
-                            except Exception as exc:
-                                pass
-                else:
-                    print("find submit button none")
-
-                if is_submited:
-                    break
-
+                    if is_submited:
+                        break
     else:
-        is_auto_focus_enable = False
-        if not answer_list is None:
-            if len(answer_list) > 1:
-                is_auto_focus_enable = True
-
-        if u'請輸入玉山銀行信用卡' in html_text:
-            is_auto_focus_enable = True
-
-        if u'請輸入"YES"' in html_text:
-            is_auto_focus_enable = True
-
-        print("is_auto_focus_enable", is_auto_focus_enable)
-        if is_auto_focus_enable:
-            form_input = None
+        if len(default_value)==0:
             try:
-                form_input = driver.find_element(By.CSS_SELECTOR, '#checkCode')
-                if form_input is not None:
-                    default_value = form_input.get_attribute('value')
-                    is_need_focus = False
-                    if default_value is None:
-                        is_need_focus = True
-                    else:
-                        if len(default_value) == 0:
-                            is_need_focus = True
-                    if is_need_focus:
-                        if form_input.is_enabled():
-                            form_input.click()
-                            time.sleep(0.2)
-                else:
-                    print("find captcha input field fail")
+                form_input.click()
+                time.sleep(0.5)
             except Exception as exc:
-                print("find verify fail")
                 pass
 
     return ret
@@ -1658,12 +1658,7 @@ def tixcraft_ticket_main(driver, config_dict):
         if not is_assign_ticket_number:
             # only this case:"ticket number changed by bot" to play sound!
             # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
-            play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
-            captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-            if play_captcha_sound:
-                app_root = get_app_root()
-                captcha_sound_filename = os.path.join(app_root, captcha_sound_filename)
-                play_mp3_async(captcha_sound_filename)
+            check_and_play_sound_for_captcha(config_dict)
 
             ticket_number = str(config_dict["ticket_number"])
             is_assign_ticket_number = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
@@ -1809,58 +1804,41 @@ def kktix_captcha_text_value(captcha_inner_div):
 
     return ret
 
-def kktix_input_captcha_text(captcha_inner_div, captcha_password_string, force_overwrite = False):
+def kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string, force_overwrite = False):
     show_debug_message = True       # debug.
     #show_debug_message = False      # online
 
-    ret = False
+    is_cpatcha_sent = False
+    inputed_captcha_text = ""
 
-    captcha_password_text = None
-    try:
-        captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
-        if show_debug_message:
-            print("found input field")
-    except Exception as exc:
-        pass
-
-    if not captcha_password_text is None:
-        inputed_captcha_text = ""
-        try:
-            inputed_captcha_text = captcha_password_text.get_attribute('value')
-        except Exception as exc:
-            pass
-        if inputed_captcha_text is None:
-            inputed_captcha_text = ""
-
-        if captcha_password_string is not None:
+    if not captcha_password_input_tag is None:
+        if force_overwrite:
             try:
-                if force_overwrite:
-                    captcha_password_text.send_keys(captcha_password_string)
-                    print("send captcha keys:" + captcha_password_string)
-                    ret = True
-                else:
-                    # not force overwrite:
-                    if len(inputed_captcha_text) == 0:
-                        captcha_password_text.send_keys(captcha_password_string)
-                        print("send captcha keys:" + captcha_password_string)
-                        ret = True
+                captcha_password_input_tag.send_keys(captcha_password_string)
+                print("send captcha keys:" + captcha_password_string)
+                is_cpatcha_sent = True
+                inputed_captcha_text = captcha_password_string
             except Exception as exc:
-                if show_debug_message:
-                    print("kktix_input_captcha_text Exception:")
-                    print(exc)
                 pass
         else:
-            # do focus()
+            # not force overwrite:
+            inputed_captcha_text = None
+            try:
+                inputed_captcha_text = captcha_password_input_tag.get_attribute('value')
+            except Exception as exc:
+                pass
+            if inputed_captcha_text is None:
+                inputed_captcha_text = ""
+
             if len(inputed_captcha_text) == 0:
                 try:
-                    print("focus() captcha to input.")
-                    captcha_password_text.click()
-                    time.sleep(1)
-                    # let user to input answer, bot sleep 1 second.
+                    captcha_password_input_tag.send_keys(captcha_password_string)
+                    print("send captcha keys:" + captcha_password_string)
+                    is_cpatcha_sent = True
                 except Exception as exc:
                     pass
     
-    return ret
+    return is_cpatcha_sent
 
 def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
     show_debug_message = True       # debug.
@@ -2069,7 +2047,7 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mod
 
     return is_ticket_number_assigened
 
-def kktix_get_web_datetime(url, registrationsNewApp_div):
+def kktix_get_web_datetime(registrationsNewApp_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2221,7 +2199,7 @@ def kktix_check_register_status(url):
     #print("registerStatus:", registerStatus)
     return registerStatus
 
-def kktix_reg_new_captcha(driver, captcha_inner_div, auto_guess_options):
+def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess_options):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2349,7 +2327,7 @@ def kktix_reg_new_captcha(driver, captcha_inner_div, auto_guess_options):
 
         if is_need_parse_web_datetime:
             captcha_password_string = None
-            web_datetime = kktix_get_web_datetime(url, registrationsNewApp_div)
+            web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
             if not web_datetime is None:
                 if show_debug_message:
                     print("web_datetime:", web_datetime)
@@ -2473,7 +2451,7 @@ def kktix_reg_new_captcha(driver, captcha_inner_div, auto_guess_options):
         #print("is_need_parse_web_time", is_need_parse_web_time)
         if is_need_parse_web_time:
             captcha_password_string = None
-            web_datetime = kktix_get_web_datetime(url, registrationsNewApp_div)
+            web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
             if not web_datetime is None:
                 tmp_text = captcha_text_div_text
                 # replace ex.
@@ -2581,14 +2559,11 @@ def kktix_reg_new_captcha(driver, captcha_inner_div, auto_guess_options):
         if show_debug_message:
             print("captcha_password_string:", captcha_password_string)
 
-        # ask question.
-        if auto_guess_options:
-            if not is_combine_two_question:
-                if captcha_password_string is None:
+        # still no answer.
+        if captcha_password_string is None:
+            if auto_guess_options:
+                if not is_combine_two_question:
                     answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
-            else:
-                # no need guess options.
-                pass
 
     return captcha_password_string, answer_list, my_answer_delimitor
 
@@ -2659,14 +2634,25 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
     is_captcha_appear_and_filled_password = False
     answer_list = None
 
+    # TODO: in guess options mode, no need to travel div again.
+    captcha_inner_div = None
+
     if is_assign_ticket_number:
-        # TODO: in guess options mode, no need to travel div again.
-        captcha_inner_div = None
         try:
             captcha_inner_div = driver.find_element(By.CSS_SELECTOR, '.custom-captcha-inner')
         except Exception as exc:
             pass
 
+    captcha_password_input_tag = None
+    if not captcha_inner_div is None:
+        try:
+            captcha_password_input_tag = captcha_inner_div.find_element(By.TAG_NAME, "input")
+            if show_debug_message:
+                print("found captcha input field")
+        except Exception as exc:
+            pass
+
+    if not captcha_password_input_tag is None:
         captcha_password_string = None
         if captcha_inner_div is not None:
             is_captcha_appear = True
@@ -2674,13 +2660,40 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                 print("found captcha_inner_div layor.")
             
             auto_guess_options = config_dict["kktix"]["auto_guess_options"]
-            captcha_password_string, answer_list, my_answer_delimitor = kktix_reg_new_captcha(driver, captcha_inner_div, auto_guess_options)
+            captcha_password_string, answer_list, my_answer_delimitor = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess_options)
         
-            # password is not None, try to send.
-            # password is None, focus to input.
-            if kktix_input_captcha_text(captcha_inner_div, captcha_password_string):
-                is_captcha_appear_and_filled_password = True
-        
+            if captcha_password_string is not None:
+                # password is not None, try to send.
+                is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string)
+                if is_cpatcha_sent:
+                    is_captcha_appear_and_filled_password = True
+            else:
+                is_try_to_focus = False
+                if answer_list is None:
+                    is_try_to_focus = True
+                else:
+                    if len(answer_list)==0:
+                        is_try_to_focus = True
+
+                if is_try_to_focus:
+                    # password is None, focus to input, and play sound.
+                    inputed_captcha_text = None
+                    try:
+                        inputed_captcha_text = captcha_password_input_tag.get_attribute('value')
+                    except Exception as exc:
+                        pass
+                    if inputed_captcha_text is None:
+                        inputed_captcha_text = ""
+                    if len(inputed_captcha_text) == 0:
+                        try:
+                            print("focus() captcha to input.")
+                            check_and_play_sound_for_captcha(config_dict)
+                            captcha_password_input_tag.click()
+                            time.sleep(1)
+                            # let user to input answer, bot sleep 1 second.
+                        except Exception as exc:
+                            pass
+            
         if show_debug_message:
             print("is_captcha_appear:", is_captcha_appear)
             print("is_captcha_appear_and_filled_password:", is_captcha_appear_and_filled_password)
@@ -2720,7 +2733,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                         unique = [x for i, x in enumerate(answer_list) if answer_list.index(x) == i]
                         answer_list = unique
 
-                # start to try answer.
+                # start to try answers.
                 if not answer_list is None:
                     # for popular event
                     if len(answer_list) > 0:
@@ -2734,9 +2747,10 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                                         answer = answer[:-1]
 
                                 if len(answer) > 0:
-                                    print("send ans:" + answer)
-                                    captcha_password_string = answer
-                                    if kktix_input_captcha_text(captcha_inner_div, captcha_password_string):
+                                    print("send answer:" + answer)
+                                    each_password_string = answer
+                                    is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_tag, each_password_string)
+                                    if is_cpatcha_sent:
                                         kktix_press_next_button(driver)
                         else:
                             # exceed index, do nothing.
@@ -3334,7 +3348,7 @@ def urbtix_performance(driver, config_dict):
 #   True: area block appear.
 #   False: area block not appear.
 # ps: return value for date auto select.
-def cityline_area_auto_select(driver, kktix_area_keyword):
+def cityline_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword):
     ret = False
     areas = None
 
@@ -3487,91 +3501,59 @@ def cityline_area_selected_text(driver):
 
 
 def cityline_ticket_number_auto_select(driver, ticket_number):
-    ret = False
-    is_assign_ticket_number = False
-    selected_value = ""
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
 
-    el = None
+    form_select = None
     try:
-        el = driver.find_element(By.CSS_SELECTOR, 'td.tix_type_select > div.chzn-container > a > span')
+        form_select = driver.find_element(By.CSS_SELECTOR, 'select.select-num')
     except Exception as exc:
-        #print("find ticket_number select fail")
-        #print(exc)
+        if show_debug_message:
+            print("find ticket_number select fail")
+            print(exc)
         pass
 
-    is_visible = False
-    if el is not None:
+    select_obj = None
+    if form_select is not None:
+        is_visible = False
         try:
-            if el.is_enabled():
-                is_visible = True
+            is_visible = form_select.is_enabled()
         except Exception as exc:
             pass
-
-    selected_value = None
-    if is_visible:
-        ret = True
-        selected_value = ""
-
-        try:
-            selected_value = el.text
-        except Exception as exc:
-            pass
-        if selected_value is None:
-            selected_value = ""
-
-        #print("selected_value:", selected_value)
-        if selected_value == "0":
+        if is_visible:
             try:
-                el.click()
-                time.sleep(0.3)
+                select_obj = Select(form_select)
             except Exception as exc:
                 pass
 
-        is_options_enabled = False
-        el_options = None
+    is_assign_ticket_number = False
+    if not select_obj is None:
+        row_text = None
         try:
-            el_options = driver.find_element(By.CSS_SELECTOR, 'td.tix_type_select > div.chzn-container > div.chzn-drop')
-            if el_options is not None:
-                if el_options.is_enabled():
-                    is_options_enabled = True
+            row_text = select_obj.first_selected_option.text
         except Exception as exc:
             pass
-        #print("is_options_enabled:", is_options_enabled)
+        if not row_text is None:
+            if len(row_text) > 0:
+                if row_text != "0":
+                    # ticket assign.
+                    is_assign_ticket_number = True
 
-        el_options_li = None
-        if is_options_enabled:
-            try:
-                el_options_li = driver.find_elements(By.CSS_SELECTOR, 'td.tix_type_select > div.chzn-container > div.chzn-drop > ul > li')
-            except Exception as exc:
-                pass
-        if el_options_li is not None:
-            if len(el_options_li) > 0:
-                for row in el_options_li:
-                    if row is not None:
-                        try:
-                            if row.is_enabled():
-                                row_text = row.text
-                                if not row_text is None:
-                                    if row_text == ticket_number:
-                                        print("row_text clicked:", row_text)
-                                        row.click()
-                                        is_assign_ticket_number = True
-                                        break
-                        except Exception as exc:
-                                pass
+        if not is_assign_ticket_number:
+            is_assign_ticket_number = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+        else:
+            if show_debug_message:
+                print("ticket_number assigned by previous action.")
 
-    return ret, is_assign_ticket_number
+    return is_assign_ticket_number
 
 
 def cityline_next_button_press(driver):
     ret = False
     try:
-        time.sleep(0.2)
         el = driver.find_element(By.CSS_SELECTOR, '#expressPurchaseButton')
         if el is not None:
-            ret = True
             print("bingo, found next button")
-
             if el.is_enabled():
                 el.click()
                 ret = True
@@ -3581,103 +3563,37 @@ def cityline_next_button_press(driver):
 
     return ret
 
-def cityline_event(driver):
-    ret = False
 
-    is_non_member_displayed = False
-
-    try:
-        el_non_member = driver.find_element(By.ID, 'buyBtWalkIn')
-        if el_non_member is not None:
-            if el_non_member.is_enabled():
-                #if el_non_member.is_displayed():
-                is_non_member_displayed = True
-    except Exception as exc:
-        #print(exc)
-        pass
-
-    try:
-        el = driver.find_element(By.ID, 'buyBt')
-        if el is not None:
-            if el.is_enabled():
-                #if el.is_displayed():
-                    # for non-member
-                    #javascript:selectPerformance(1);
-                    # for member
-                    #javascript:selectPerformance(0);
-
-                if not is_non_member_displayed:
-                    # when two buttons appear, do nothing.
-                    el.click()
-    except Exception as exc:
-        #print("find next button fail")
-        #print(exc)
-        pass
-
-    return ret
-
-def cityline_captcha_auto_focus(driver):
-    ret = False
-    try:
-        el = driver.find_element(By.CSS_SELECTOR, 'input[name=verify]')
-        if el is not None:
-            if el.is_enabled():
-                inputed_text = el.get_attribute('value')
-                if not inputed_text is None:
-                    if len(inputed_text) == 0:
-                        #print("click the input text")
-                        el.click()
-                        ret = True
-            else:
-                #print("element is not enable")
-                pass
-        else:
-            print("element is None")
-    except Exception as exc:
-        print("find verify text fail")
-        print(exc)
-        pass
-
-    # make captcha image bigger/
-    if ret:
-        try:
-            el = driver.find_element(By.CSS_SELECTOR, '#captchaImage')
-            if el is not None:
-                if el.is_enabled():
-                    image_width = el.get_attribute('width')
-                    #print("image_width:", image_width)
-                    if image_width != 200:
-                        driver.execute_script("document.getElementById(\"captchaImage\").width=200;")
-        except Exception as exc:
-            print("excute script resize fail")
-            print(exc)
+def cityline_performance(driver, config_dict):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+    
+    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    if auto_fill_ticket_number:
+        # click price row.
+        area_div_exist = False
+        kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
+        kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+        if len(kktix_area_keyword) > 0:
+            #area_div_exist = cityline_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword)
             pass
 
-    return ret
+        if show_debug_message:
+            print("kktix_area_keyword:", kktix_area_keyword)
+            print("kktix_date_keyword:", kktix_date_keyword)
 
-
-def cityline_performance(driver, url, config_dict):
-    is_assign_ticket_number = False
-
-    if "performance.do;" in url:
-        cityline_captcha_auto_focus(driver)
-
-    kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
-
-    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
-    if "?cid=" in url:
-        if auto_fill_ticket_number:
-            area_div_exist = False
-            if len(kktix_area_keyword) > 0:
-                area_div_exist = cityline_area_auto_select(driver, kktix_area_keyword)
-
+        # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
-        ticket_number_select_exist, is_assign_ticket_number = cityline_ticket_number_auto_select(driver, ticket_number)
+        is_assign_ticket_number = cityline_ticket_number_auto_select(driver, ticket_number)
 
-        # todo.
-        auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-        if auto_press_next_step_button:
-            if is_assign_ticket_number:
+        if show_debug_message:
+            print("ticket_number:", ticket_number)
+            print("is_assign_ticket_number:", is_assign_ticket_number)
+
+        is_assign_ticket_number = False
+        if is_assign_ticket_number:
+            auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+            if auto_press_next_step_button:
                 selected_text = cityline_area_selected_text(driver)
                 if not selected_text is None:
                     if kktix_area_keyword in selected_text:
@@ -3751,6 +3667,14 @@ def facebook_login(driver, facebook_account):
 
     return ret
 
+def check_and_play_sound_for_captcha(config_dict):
+    play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
+    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
+    if play_captcha_sound:
+        app_root = get_app_root()
+        captcha_sound_filename = os.path.join(app_root, captcha_sound_filename)
+        play_mp3_async(captcha_sound_filename)
+
 def play_mp3_async(sound_filename):
     import threading
     threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
@@ -3815,6 +3739,13 @@ def check_pop_alert(driver):
 
     return is_alert_popup
 
+def list_all_cookies(driver):
+    all_cookies=driver.get_cookies();
+    cookies_dict = {}
+    for cookie in all_cookies:
+        cookies_dict[cookie['name']] = cookie['value']
+    print(cookies_dict)
+
 def main():
     config_dict = get_config_dict()
 
@@ -3875,13 +3806,14 @@ def main():
             is_verifyCode_editing = False
 
             print('UnexpectedAlertPresentException at this url:', url )
-            time.sleep(3.5)
+            #time.sleep(3.5)
 
             # PS: do nothing...
             # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
             # raise exception at selenium/webdriver/remote/errorhandler.py 
             # after dialog disappear new excpetion: unhandled inspector error: Not attached to an active page
             is_pass_alert = False
+            is_pass_alert = True
             if is_pass_alert:
                 try:
                     driver.switch_to.alert.accept()
@@ -3950,7 +3882,7 @@ def main():
 
         # for Max's manuall test.
         if '/Downloads/varify.html' in url:
-            tixcraft_verify(driver, url)
+            tixcraft_verify(driver)
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -3997,7 +3929,7 @@ def main():
                 tixcraft_area_auto_select(driver, url, config_dict)
 
             if '/ticket/verify/' in url:
-                tixcraft_verify(driver, url)
+                tixcraft_verify(driver)
 
             # main app, to select ticket number.
             if '/ticket/ticket/' in url:
@@ -4068,19 +4000,13 @@ def main():
                 urbtix_performance(driver, config_dict)
 
         if 'cityline.com' in url:
-            if '/event.do' in url:
-                cityline_event(driver)
-                #pass
+            # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
+            # ignore url redirect
+            if '/Login.html' in url:
+                continue
 
-            if '/Events.do' in url:
-                if len(driver.window_handles) == 2:
-                    try:
-                        driver.close()
-                    except Exception as excCloseFail:
-                        pass
-
-            if '/performance.do' in url:
-                cityline_performance(driver, url, config_dict)
+            if '/internet/performance?' in url:
+                cityline_performance(driver, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
