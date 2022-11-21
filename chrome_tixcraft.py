@@ -39,7 +39,8 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.11.20)"
+CONST_APP_VERSION = u"MaxBot (2022.11.21)"
+CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -50,34 +51,6 @@ CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP
 
 CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
 
-driver = None
-
-ticket_number = None
-
-auto_press_next_step_button = False
-auto_fill_ticket_number = False
-auto_fill_ticket_price = None
-
-date_auto_select_enable = False
-date_auto_select_mode = None
-date_keyword = None
-
-area_auto_select_enable = False
-area_auto_select_mode = None
-area_keyword = None
-
-area_keyword_1 = None
-area_keyword_2 = None
-area_keyword_3 = None
-area_keyword_4 = None
-
-pass_1_seat_remaining_enable = False        # default not checked.
-pass_date_is_sold_out_enable = False        # default not checked.
-auto_reload_coming_soon_page_enable = True  # default checked.
-
-kktix_area_auto_select_mode = None
-kktix_area_keyword = None
-kktix_date_keyword = None
 
 def get_app_root():
     # 讀取檔案裡的參數值
@@ -439,17 +412,14 @@ def get_driver_by_config(config_dict, driver_type):
 
         print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
         print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
-
         print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
-
         print("debug Mode", debugMode)
 
         # entry point
-        # 說明：自動開啟第一個的網頁
         if homepage is None:
             homepage = ""
         if len(homepage) == 0:
-            homepage = "https://tixcraft.com"
+            homepage = CONST_HOMEPAGE_DEFAULT
 
         Root_Dir = get_app_root()
         webdriver_path = os.path.join(Root_Dir, "webdriver")
@@ -458,70 +428,16 @@ def get_driver_by_config(config_dict, driver_type):
         adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
 
         if browser == "chrome":
-            DEFAULT_ARGS = [
-                '--disable-audio-output',
-                '--disable-background-networking',
-                '--disable-background-timer-throttling',
-                '--disable-breakpad',
-                '--disable-browser-side-navigation',
-                '--disable-checker-imaging',
-                '--disable-client-side-phishing-detection',
-                '--disable-default-apps',
-                '--disable-demo-mode',
-                '--disable-dev-shm-usage',
-                #'--disable-extensions',
-                '--disable-features=site-per-process',
-                '--disable-hang-monitor',
-                '--disable-in-process-stack-traces',
-                '--disable-javascript-harmony-shipping',
-                '--disable-logging',
-                '--disable-notifications',
-                '--disable-popup-blocking',
-                '--disable-prompt-on-repost',
-                '--disable-perfetto',
-                '--disable-permissions-api',
-                '--disable-plugins',
-                '--disable-presentation-api',
-                '--disable-reading-from-canvas',
-                '--disable-renderer-accessibility',
-                '--disable-renderer-backgrounding',
-                '--disable-shader-name-hashing',
-                '--disable-smooth-scrolling',
-                '--disable-speech-api',
-                '--disable-speech-synthesis-api',
-                '--disable-sync',
-                '--disable-translate',
-
-                '--ignore-certificate-errors',
-
-                '--metrics-recording-only',
-                '--no-first-run',
-                '--no-experiments',
-                '--safebrowsing-disable-auto-update',
-                #'--enable-automation',
-                '--password-store=basic',
-                '--use-mock-keychain',
-                '--lang=zh-TW',
-                '--stable-release-mode',
-                '--use-mobile-user-agent',
-                '--webview-disable-safebrowsing-support',
-                #'--no-sandbox',
-                #'--incognito',
-            ]
-
             # method 6: Selenium Stealth
             if driver_type != "undetected_chromedriver":
                 driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
             else:
                 # method 5: uc
-                #options = webdriver.ChromeOptions()
-
                 # multiprocessing not work bug.
                 if platform.system().lower()=="windows":
                     if hasattr(sys, 'frozen'):
                         from multiprocessing import freeze_support
                         freeze_support()
-
                 driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable)
 
         if browser == "firefox":
@@ -554,13 +470,6 @@ def get_driver_by_config(config_dict, driver_type):
             except Exception as exce1:
                 print('get URL Exception:', exec1)
                 pass
-
-        '''
-        for i in range(1):
-            close_browser_tabs(driver)
-        '''
-
-
     else:
         print("Config error!")
 
@@ -3766,7 +3675,9 @@ def main():
     answer_index = -1
     kktix_register_status_last = None
 
-    debugMode = config_dict["debug"]
+    debugMode = False
+    if 'debug' in config_dict:
+        debugMode = config_dict["debug"]
     if debugMode:
         print("Start to looping, detect browser url...")
 
@@ -3821,6 +3732,8 @@ def main():
                     pass
 
         except Exception as exc:
+            is_verifyCode_editing = False
+
             logger.error('Maxbot URL Exception')
             logger.error(exc, exc_info=True)
 
@@ -3841,7 +3754,9 @@ def main():
             , u'Failed to establish a new connection'
             , u'Connection refused'
             , u'disconnected'
-            , u'without establishing a connection']
+            , u'without establishing a connection'
+            , u'web view not found'
+            ]
             for each_error_string in exit_bot_error_strings:
                 # for python2
                 # say goodbye to python2

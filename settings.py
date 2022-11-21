@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.11.20)"
+CONST_APP_VERSION = u"MaxBot (2022.11.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -34,13 +34,8 @@ tixcraft.com##.footer.clearfix
 tixcraft.com##.row.process-wizard.process-wizard-info
 tixcraft.com##.nav-line
 tixcraft.com##.page-info.row.line-btm.mg-0'''
-config_filepath = None
-config_dict = None
-
-window = None
-
-btn_save = None
-btn_exit = None
+CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
+CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
 translate={}
 
@@ -48,7 +43,6 @@ URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
 URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
 URL_FB = 'https://www.facebook.com/maxbot.ticket'
-
 
 def load_translate():
     translate = {}
@@ -94,7 +88,7 @@ def load_translate():
     en_us["adblock_plus_memo"] = 'Default adblock is disable'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
 
-    en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.'
+    en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Wish you good luck.'
     en_us["donate"] = 'Donate'
     en_us["help"] = 'Help'
     en_us["release"] = 'Release'
@@ -141,7 +135,7 @@ def load_translate():
     zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
 
-    zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝你好運，買得到預期中的票。'
+    zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝您搶票成功。'
     zh_tw["donate"] = '打賞'
     zh_tw["release"] = '所有可用版本'
     zh_tw["help"] = '使用教學'
@@ -188,7 +182,7 @@ def load_translate():
     zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
 
-    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝你好运，买得到预期中的票。'
+    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
     zh_cn["donate"] = '打赏'
     zh_cn["help"] = '使用教学'
     zh_cn["release"] = '所有可用版本'
@@ -235,8 +229,7 @@ def load_translate():
     ja_jp["adblock_plus_enable"] = 'Adblock 拡張機能'
     ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
-
-    ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。 頑張って予定のチケットを手に入れてください。'
+    ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
     ja_jp["donate"] = '寄付'
     ja_jp["help"] = '利用方法'
     ja_jp["release"] = 'リリース'
@@ -257,6 +250,53 @@ def get_app_root():
     app_root = os.path.dirname(basis)
     return app_root
 
+def get_default_config():
+    config_dict={}
+
+    config_dict["homepage"] = CONST_HOMEPAGE_DEFAULT
+    config_dict["browser"] = "chrome"
+    config_dict["language"] = "English"
+    config_dict["ticket_number"] = 2
+
+    config_dict['kktix']={}
+    config_dict["kktix"]["auto_press_next_step_button"] = True
+    config_dict["kktix"]["auto_fill_ticket_number"] = True
+    config_dict["kktix"]["area_mode"] = CONST_SELECT_ORDER_DEFAULT
+    config_dict["kktix"]["area_keyword"] = ""
+    config_dict["kktix"]["date_keyword"] = ""
+    config_dict["kktix"]["auto_guess_options"] = True
+
+    config_dict['tixcraft']={}
+    config_dict["tixcraft"]["date_auto_select"] = {}
+    config_dict["tixcraft"]["date_auto_select"]["enable"] = True
+    config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = ""
+    config_dict["tixcraft"]["area_auto_select"] = {}
+    config_dict["tixcraft"]["area_auto_select"]["enable"] = True
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = ""
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = ""
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = ""
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = ""
+
+    config_dict["tixcraft"]["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
+    config_dict["tixcraft"]["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
+
+    config_dict["tixcraft"]["pass_1_seat_remaining"] = True
+    config_dict["tixcraft"]["pass_date_is_sold_out"] = False
+    config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
+
+    config_dict['advanced']={}
+
+    config_dict['advanced']['play_captcha_sound']={}
+    config_dict["advanced"]["play_captcha_sound"]["enable"] = True
+    config_dict["advanced"]["play_captcha_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
+
+    config_dict["advanced"]["facebook_account"] = ""
+    config_dict["advanced"]["adblock_plus_enable"] = False
+
+    config_dict['debug']=False
+
+    return config_dict
+
 def load_json():
     app_root = get_app_root()
 
@@ -267,136 +307,137 @@ def load_json():
     if os.path.isfile(config_filepath):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
+    else:
+        config_dict = get_default_config()
     return config_filepath, config_dict
 
 def btn_save_clicked():
     btn_save_act()
 
 def btn_save_act(slience_mode=False):
+    app_root = get_app_root()
+    config_filepath = os.path.join(app_root, 'settings.json')
+
+    config_dict = get_default_config()
+
+    # read user input
+    global combo_homepage
+    global combo_browser
+    global combo_language
+    global combo_ticket_number
+
+    global chk_state_auto_press_next_step_button
+    global chk_state_auto_fill_ticket_number
+    global txt_kktix_area_keyword
+    global txt_kktix_date_keyword
+    # disable password brute force attack
+    global txt_kktix_answer_dictionary
+
+    global chk_state_auto_guess_options
+
+    global chk_state_date_auto_select
+    global txt_date_keyword
+    global chk_state_area_auto_select
+    global txt_area_keyword_1
+    global txt_area_keyword_2
+    global txt_area_keyword_3
+    global txt_area_keyword_4
+
+    global combo_date_auto_select_mode
+    global combo_area_auto_select_mode
+
+    global chk_state_pass_1_seat_remaining
+    global chk_state_pass_date_is_sold_out
+    global chk_state_auto_reload_coming_soon_page
+
+    global txt_facebook_account
+    global chk_state_play_captcha_sound
+    global txt_captcha_sound_filename
+    global chk_state_adblock_plus
 
     is_all_data_correct = True
 
-    global config_filepath
+    if is_all_data_correct:
+        if combo_homepage.get().strip()=="":
+            is_all_data_correct = False
+            messagebox.showerror("Error", "Please enter homepage")
+        else:
+            config_dict["homepage"] = combo_homepage.get().strip()
 
-    global config_dict
-    if not config_dict is None:
-        # read user input
+    if is_all_data_correct:
+        if combo_browser.get().strip()=="":
+            is_all_data_correct = False
+            messagebox.showerror("Error", "Please select a browser: chrome or firefox")
+        else:
+            config_dict["browser"] = combo_browser.get().strip()
 
-        global combo_homepage
-        global combo_browser
-        global combo_language
-        global combo_ticket_number
+    if is_all_data_correct:
+        if combo_language.get().strip()=="":
+            is_all_data_correct = False
+            messagebox.showerror("Error", "Please select a language")
+        else:
+            config_dict["language"] = combo_language.get().strip()
 
-        global chk_state_auto_press_next_step_button
-        global chk_state_auto_fill_ticket_number
-        global txt_kktix_area_keyword
-        global txt_kktix_date_keyword
+    if is_all_data_correct:
+        if combo_ticket_number.get().strip()=="":
+            is_all_data_correct = False
+            messagebox.showerror("Error", "Please select a value")
+        else:
+            config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
+
+    if is_all_data_correct:
+        if not 'kktix' in config_dict:
+            config_dict['kktix']={}
+
+        config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
+        config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
+        config_dict["kktix"]["area_mode"] = combo_kktix_area_mode.get().strip()
+        config_dict["kktix"]["area_keyword"] = txt_kktix_area_keyword.get().strip()
+        config_dict["kktix"]["date_keyword"] = txt_kktix_date_keyword.get().strip()
         # disable password brute force attack
-        global txt_kktix_answer_dictionary
+        #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
+        config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
-        global chk_state_auto_guess_options
+        if not 'tixcraft' in config_dict:
+            config_dict['tixcraft']={}
 
-        global chk_state_date_auto_select
-        global txt_date_keyword
-        global chk_state_area_auto_select
-        global txt_area_keyword_1
-        global txt_area_keyword_2
-        global txt_area_keyword_3
-        global txt_area_keyword_4
+        config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
+        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
 
-        global combo_date_auto_select_mode
-        global combo_area_auto_select_mode
+        config_dict["tixcraft"]["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = txt_area_keyword_1.get().strip()
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
 
-        global chk_state_pass_1_seat_remaining
-        global chk_state_pass_date_is_sold_out
-        global chk_state_auto_reload_coming_soon_page
+        config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
+        config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
 
-        global txt_facebook_account
-        global chk_state_play_captcha_sound
-        global txt_captcha_sound_filename
-        global chk_state_adblock_plus
+        config_dict["tixcraft"]["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
+        config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
+        config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
 
-        if is_all_data_correct:
-            if combo_homepage.get().strip()=="":
-                is_all_data_correct = False
-                messagebox.showerror("Error", "Please enter homepage")
-            else:
-                config_dict["homepage"] = combo_homepage.get().strip()
+        if not 'advanced' in config_dict:
+            config_dict['advanced']={}
 
-        if is_all_data_correct:
-            if combo_browser.get().strip()=="":
-                is_all_data_correct = False
-                messagebox.showerror("Error", "Please select a browser: chrome or firefox")
-            else:
-                config_dict["browser"] = combo_browser.get().strip()
+            if not 'play_captcha_sound' in config_dict['advanced']:
+                config_dict['advanced']['play_captcha_sound']={}
 
-        if is_all_data_correct:
-            if combo_language.get().strip()=="":
-                is_all_data_correct = False
-                messagebox.showerror("Error", "Please select a language")
-            else:
-                config_dict["language"] = combo_language.get().strip()
+        config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
+        config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
 
-        if is_all_data_correct:
-            if combo_ticket_number.get().strip()=="":
-                is_all_data_correct = False
-                messagebox.showerror("Error", "Please select a value")
-            else:
-                config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
-
-        if is_all_data_correct:
-            if not 'kktix' in config_dict:
-                config_dict['kktix']={}
-
-            config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
-            config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
-            config_dict["kktix"]["area_mode"] = combo_kktix_area_mode.get().strip()
-            config_dict["kktix"]["area_keyword"] = txt_kktix_area_keyword.get().strip()
-            config_dict["kktix"]["date_keyword"] = txt_kktix_date_keyword.get().strip()
-            # disable password brute force attack
-            #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
-            config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
-
-            if not 'tixcraft' in config_dict:
-                config_dict['tixcraft']={}
-
-            config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
-            config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
-
-            config_dict["tixcraft"]["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
-            config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = txt_area_keyword_1.get().strip()
-            config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
-            config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
-            config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
-
-            config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
-            config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
-
-            config_dict["tixcraft"]["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
-            config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
-            config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
-
-            if not 'advanced' in config_dict:
-                config_dict['advanced']={}
-
-                if not 'play_captcha_sound' in config_dict['advanced']:
-                    config_dict['advanced']['play_captcha_sound']={}
-
-            config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
-            config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
-
-            config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
-            config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
+        config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
+        config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
 
 
-        # save config.
-        if is_all_data_correct:
-            import json
-            with open(config_filepath, 'w') as outfile:
-                json.dump(config_dict, outfile)
+    # save config.
+    if is_all_data_correct:
+        import json
+        with open(config_filepath, 'w') as outfile:
+            json.dump(config_dict, outfile)
 
-            if slience_mode==False:
-                messagebox.showinfo("File Save", "Done ^_^")
+        if slience_mode==False:
+            messagebox.showinfo("File Save", "Done ^_^")
 
     return is_all_data_correct
 
@@ -424,12 +465,10 @@ def btn_run_clicked():
         else:
             interpreter_binary = 'python'
             interpreter_binary_alt = 'python3'
-
             if platform.system() == 'Darwin':
                 # try python3 before python.
                 interpreter_binary = 'python3'
                 interpreter_binary_alt = 'python'
-
             print("execute in shell mode.")
             working_dir = os.path.dirname(os.path.realpath(__file__))
             #print("script path:", working_dir)
@@ -620,6 +659,13 @@ def applyNewLanguage():
     lbl_adblock_plus_memo.config(text=translate[language_code]["adblock_plus_memo"])
     lbl_adblock_plus_settings.config(text=translate[language_code]["adblock_plus_settings"])
 
+    global btn_run
+    global btn_save
+    global btn_exit
+    btn_run.config(text=translate[language_code]["run"])
+    btn_save.config(text=translate[language_code]["save"])
+    btn_exit.config(text=translate[language_code]["exit"])
+
 def callbackHomepageOnChange(event):
     showHideBlocks()
 
@@ -690,7 +736,6 @@ def showHideBlocks(all_layout_visible=False):
         else:
             frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
             frame_group_kktix.grid_forget()
-
 
     showHideTixcraftBlocks()
 
@@ -785,13 +830,13 @@ def showHideTixcraftBlocks():
 
 
 def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
-    homepage = None
-    browser = None
+    homepage = CONST_HOMEPAGE_DEFAULT
+    browser = "chrome"
     language = "English"
     ticket_number = "2"
 
-    auto_press_next_step_button = False     # default not checked.
-    auto_fill_ticket_number = False         # default not checked.
+    auto_press_next_step_button = False
+    auto_fill_ticket_number = False
 
     kktix_area_mode = ""
     kktix_area_keyword = ""
@@ -799,7 +844,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # disable password brute force attack
     # PS: because of the question is always variable.
     #kktix_answer_dictionary = ""
-    auto_guess_options = False              # default not checked.
+    auto_guess_options = False
 
     date_auto_select_enable = None
     date_auto_select_mode = ""
@@ -812,146 +857,96 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     area_keyword_3 = ""
     area_keyword_4 = ""
 
-    pass_1_seat_remaining_enable = False        # default not checked.
-    pass_date_is_sold_out_enable = False        # default not checked.
-    auto_reload_coming_soon_page_enable = True  # default checked.
+    pass_1_seat_remaining_enable = False
+    pass_date_is_sold_out_enable = False
+    auto_reload_coming_soon_page_enable = True
 
     debugMode = False
 
-    if not config_dict is None:
-        # read config.
-        if u'homepage' in config_dict:
-            homepage = config_dict["homepage"]
+    # read config.
+    homepage = config_dict["homepage"]
+    browser = config_dict["browser"]
+    language = config_dict["language"]
+    debugMode = config_dict["debug"]
 
-        if u'browser' in config_dict:
-            browser = config_dict["browser"]
+    # default ticket number
+    # 說明：自動選擇的票數
+    ticket_number = str(config_dict["ticket_number"])
 
-        if u'language' in config_dict:
-            language = config_dict["language"]
+    # for ["kktix"]
+    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
+    if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
+        kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
+    kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
+    kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+    auto_guess_options = config_dict["kktix"]["auto_guess_options"]
 
-        if u'debug' in config_dict:
-            debugMode = config_dict["debug"]
+    # disable password brute force attack
+    # PS: feature disabled.
+    if 'answer_dictionary' in config_dict["kktix"]:
+        kktix_answer_dictionary = config_dict["kktix"]["answer_dictionary"]
+        if kktix_answer_dictionary is None:
+            kktix_answer_dictionary = ""
+        kktix_answer_dictionary = kktix_answer_dictionary.strip()
 
-        # default ticket number
-        # 說明：自動選擇的票數
-        if u'ticket_number' in config_dict:
-            ticket_number = str(config_dict["ticket_number"])
+    # for ["tixcraft"]
+    date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
+        date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+    if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
+        area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
+    area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+    area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+    area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+    area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
+    pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
+    pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-        # for ["kktix"]
-        if 'kktix' in config_dict:
-            auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-            auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    # output config:
+    print("setting app version", CONST_APP_VERSION)
+    print("python version", platform.python_version())
+    print("homepage", homepage)
+    print("browser", browser)
+    print("language", language)
+    print("ticket_number", ticket_number)
 
-            if 'area_mode' in config_dict["kktix"]:
-                kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
-            if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
-                kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
+    # for kktix
+    print("==[kktix]==")
+    print("auto_press_next_step_button", auto_press_next_step_button)
+    print("auto_fill_ticket_number", auto_fill_ticket_number)
+    print("kktix_area_mode", kktix_area_mode)
+    print("kktix_area_keyword", kktix_area_keyword)
+    print("kktix_date_keyword", kktix_date_keyword)
+    # disable password brute force attack
+    #print("kktix_answer_dictionary", kktix_answer_dictionary)
+    print("auto_guess_options", auto_guess_options)
 
-            if 'area_keyword' in config_dict["kktix"]:
-                kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
+    # for tixcraft
+    print("==[tixcraft]==")
+    print("date_auto_select_enable", date_auto_select_enable)
+    print("date_auto_select_mode", date_auto_select_mode)
+    print("date_keyword", date_keyword)
 
-            if 'date_keyword' in config_dict["kktix"]:
-                kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+    print("area_auto_select_enable", area_auto_select_enable)
+    print("area_auto_select_mode", area_auto_select_mode)
+    print("area_keyword_1", area_keyword_1)
+    print("area_keyword_2", area_keyword_2)
+    print("area_keyword_3", area_keyword_3)
+    print("area_keyword_4", area_keyword_4)
 
-            if 'auto_guess_options' in config_dict["kktix"]:
-                auto_guess_options = config_dict["kktix"]["auto_guess_options"]
+    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+    print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
 
-            # disable password brute force attack
-            if 'answer_dictionary' in config_dict["kktix"]:
-                kktix_answer_dictionary = config_dict["kktix"]["answer_dictionary"]
-                if kktix_answer_dictionary is None:
-                    kktix_answer_dictionary = ""
-                kktix_answer_dictionary = kktix_answer_dictionary.strip()
+    print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
 
-        # for ["tixcraft"]
-        if 'tixcraft' in config_dict:
-            date_auto_select_enable = False
-            date_auto_select_mode = None
-
-            if 'date_auto_select' in config_dict["tixcraft"]:
-                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-                date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-
-            if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-                date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
-
-            if 'date_keyword' in config_dict["tixcraft"]["date_auto_select"]:
-                date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-
-            area_auto_select_enable = False
-            area_auto_select_mode = None
-
-            if 'area_auto_select' in config_dict["tixcraft"]:
-                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-                area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-
-            if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-                area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
-
-            if 'area_keyword_1' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
-
-            if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
-
-            if 'area_keyword_3' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
-
-            if 'area_keyword_4' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
-
-            pass_1_seat_remaining_enable = False
-            if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
-                pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
-
-            pass_date_is_sold_out_enable = False
-            if 'pass_date_is_sold_out' in config_dict["tixcraft"]:
-                pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
-
-            auto_reload_coming_soon_page_enable = True
-            if 'auto_reload_coming_soon_page' in config_dict["tixcraft"]:
-                auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
-        # output config:
-        print("setting app version", CONST_APP_VERSION)
-        print("python version", platform.python_version())
-        print("homepage", homepage)
-        print("browser", browser)
-        print("language", language)
-        print("ticket_number", ticket_number)
-
-        # for kktix
-        print("==[kktix]==")
-        print("auto_press_next_step_button", auto_press_next_step_button)
-        print("auto_fill_ticket_number", auto_fill_ticket_number)
-        print("kktix_area_mode", kktix_area_mode)
-        print("kktix_area_keyword", kktix_area_keyword)
-        print("kktix_date_keyword", kktix_date_keyword)
-        # disable password brute force attack
-        #print("kktix_answer_dictionary", kktix_answer_dictionary)
-        print("auto_guess_options", auto_guess_options)
-
-        # for tixcraft
-        print("==[tixcraft]==")
-        print("date_auto_select_enable", date_auto_select_enable)
-        print("date_auto_select_mode", date_auto_select_mode)
-        print("date_keyword", date_keyword)
-
-        print("area_auto_select_enable", area_auto_select_enable)
-        print("area_auto_select_mode", area_auto_select_mode)
-        print("area_keyword_1", area_keyword_1)
-        print("area_keyword_2", area_keyword_2)
-        print("area_keyword_3", area_keyword_3)
-        print("area_keyword_4", area_keyword_4)
-
-        print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
-        print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
-
-        print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
-
-        print("debug Mode", debugMode)
-    else:
-        print('config is none')
+    print("debug Mode", debugMode)
 
     global lbl_homepage
     global lbl_browser
@@ -1348,8 +1343,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     facebook_account = ""
     play_captcha_sound = False
-    captcha_sound_filename_default = "ding-dong.wav"
-    captcha_sound_filename = ""
+    captcha_sound_filename = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
     adblock_plus_enable = False
 
     if 'advanced' in config_dict:
@@ -1460,7 +1454,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_icon_copy.image = icon_copy_img
     lbl_icon_copy.grid(column=3, row=group_row_count, sticky = W+N)
     lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
-    
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
@@ -1528,6 +1521,10 @@ def AboutTab(root, language_code):
 
 def get_action_bar(root,language_code):
     frame_action = Frame(root)
+
+    global btn_run
+    global btn_save
+    global btn_exit
 
     btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command=btn_run_clicked)
     btn_run.grid(column=0, row=0)
