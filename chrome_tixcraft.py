@@ -205,7 +205,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
         #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
         is_local_chrome_browser_lower = False
         try:
-            driver = uc.Chrome(executable_path=chromedriver_path, desired_capabilities=caps, suppress_welcome=False)
+            driver = uc.Chrome(executable_path=chromedriver_path, options=options, desired_capabilities=caps, suppress_welcome=False)
         except Exception as exc:
             if "cannot connect to chrome" in str(exc):
                 if "This version of ChromeDriver only supports Chrome version" in str(exc):
@@ -220,7 +220,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
-        driver = uc.Chrome(desired_capabilities=caps, suppress_welcome=False)
+        driver = uc.Chrome(options=options, desired_capabilities=caps, suppress_welcome=False)
 
     if driver is None:
         print("create web drive object fail!")
@@ -426,6 +426,7 @@ def get_driver_by_config(config_dict, driver_type):
         print("platform.system().lower():", platform.system().lower())
 
         adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+        print("adblock_plus_enable:", adblock_plus_enable)
 
         if browser == "chrome":
             # method 6: Selenium Stealth
