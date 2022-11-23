@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.11.21)"
+CONST_APP_VERSION = u"MaxBot (2022.11.22)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -262,8 +262,10 @@ def get_default_config():
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
     config_dict["kktix"]["area_mode"] = CONST_SELECT_ORDER_DEFAULT
-    config_dict["kktix"]["area_keyword"] = ""
-    config_dict["kktix"]["date_keyword"] = ""
+    config_dict["kktix"]["area_keyword_1"] = ""
+    config_dict["kktix"]["area_keyword_1_and"] = ""
+    config_dict["kktix"]["area_keyword_2"] = ""
+    config_dict["kktix"]["area_keyword_2_and"] = ""
     config_dict["kktix"]["auto_guess_options"] = True
 
     config_dict['tixcraft']={}
@@ -328,8 +330,10 @@ def btn_save_act(slience_mode=False):
 
     global chk_state_auto_press_next_step_button
     global chk_state_auto_fill_ticket_number
-    global txt_kktix_area_keyword
-    global txt_kktix_date_keyword
+    global txt_kktix_area_keyword_1
+    global txt_kktix_area_keyword_1_and
+    global txt_kktix_area_keyword_2
+    global txt_kktix_area_keyword_2_and
     # disable password brute force attack
     global txt_kktix_answer_dictionary
 
@@ -386,20 +390,16 @@ def btn_save_act(slience_mode=False):
             config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
 
     if is_all_data_correct:
-        if not 'kktix' in config_dict:
-            config_dict['kktix']={}
-
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
         config_dict["kktix"]["area_mode"] = combo_kktix_area_mode.get().strip()
-        config_dict["kktix"]["area_keyword"] = txt_kktix_area_keyword.get().strip()
-        config_dict["kktix"]["date_keyword"] = txt_kktix_date_keyword.get().strip()
+        config_dict["kktix"]["area_keyword_1"] = txt_kktix_area_keyword_1.get().strip()
+        config_dict["kktix"]["area_keyword_1_and"] = txt_kktix_area_keyword_1_and.get().strip()
+        config_dict["kktix"]["area_keyword_2"] = txt_kktix_area_keyword_2.get().strip()
+        config_dict["kktix"]["area_keyword_2_and"] = txt_kktix_area_keyword_2_and.get().strip()
         # disable password brute force attack
         #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
         config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
-
-        if not 'tixcraft' in config_dict:
-            config_dict['tixcraft']={}
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
@@ -416,12 +416,6 @@ def btn_save_act(slience_mode=False):
         config_dict["tixcraft"]["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
-
-        if not 'advanced' in config_dict:
-            config_dict['advanced']={}
-
-            if not 'play_captcha_sound' in config_dict['advanced']:
-                config_dict['advanced']['play_captcha_sound']={}
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
@@ -563,8 +557,10 @@ def applyNewLanguage():
     global lbl_auto_press_next_step_button
     global lbl_auto_fill_ticket_number
     global lbl_kktix_area_mode
-    global lbl_kktix_area_keyword
-    global lbl_kktix_area_keyword_and_text
+    global lbl_kktix_area_keyword_1
+    global lbl_kktix_area_keyword_1_and_text
+    global lbl_kktix_area_keyword_2
+    global lbl_kktix_area_keyword_2_and_text
     global lbl_auto_guess_options
 
     # for tixcraft
@@ -612,8 +608,10 @@ def applyNewLanguage():
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
     lbl_kktix_area_mode.config(text=translate[language_code]["area_select_order"])
-    lbl_kktix_area_keyword.config(text=translate[language_code]["area_keyword"])
-    lbl_kktix_area_keyword_and_text.config(text=translate[language_code]["and"])
+    lbl_kktix_area_keyword_1.config(text=translate[language_code]["area_keyword_1"])
+    lbl_kktix_area_keyword_1_and_text.config(text=translate[language_code]["and"])
+    lbl_kktix_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
+    lbl_kktix_area_keyword_2_and_text.config(text=translate[language_code]["and"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
     lbl_date_auto_select_mode.config(text=translate[language_code]["date_select_order"])
@@ -839,8 +837,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     auto_fill_ticket_number = False
 
     kktix_area_mode = ""
-    kktix_area_keyword = ""
-    kktix_date_keyword = ""
+    kktix_area_keyword_1 = ""
+    kktix_area_keyword_1_and = ""
+    kktix_area_keyword_2 = ""
+    kktix_area_keyword_2_and = ""
     # disable password brute force attack
     # PS: because of the question is always variable.
     #kktix_answer_dictionary = ""
@@ -879,8 +879,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
     if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
         kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
-    kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
-    kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+    kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
+    kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
+    kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
+    kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
     auto_guess_options = config_dict["kktix"]["auto_guess_options"]
 
     # disable password brute force attack
@@ -922,8 +924,8 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("auto_press_next_step_button", auto_press_next_step_button)
     print("auto_fill_ticket_number", auto_fill_ticket_number)
     print("kktix_area_mode", kktix_area_mode)
-    print("kktix_area_keyword", kktix_area_keyword)
-    print("kktix_date_keyword", kktix_date_keyword)
+    print("kktix_area_keyword_1", kktix_area_keyword_1)
+    print("kktix_area_keyword_1_and", kktix_area_keyword_1_and)
     # disable password brute force attack
     #print("kktix_answer_dictionary", kktix_answer_dictionary)
     print("auto_guess_options", auto_guess_options)
@@ -1079,33 +1081,63 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    global lbl_kktix_area_keyword
-    lbl_kktix_area_keyword = Label(frame_group_kktix, text=translate[language_code]['area_keyword'])
-    lbl_kktix_area_keyword.grid(column=0, row=group_row_count, sticky = E)
+    global lbl_kktix_area_keyword_1
+    lbl_kktix_area_keyword_1 = Label(frame_group_kktix, text=translate[language_code]['area_keyword_1'])
+    lbl_kktix_area_keyword_1.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_kktix_area_keyword
-    txt_kktix_area_keyword_value = StringVar(frame_group_kktix, value=kktix_area_keyword)
-    txt_kktix_area_keyword = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_value)
-    txt_kktix_area_keyword.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_kktix_area_keyword_and_label = Label(frame_group_kktix, text="")
-    lbl_kktix_area_keyword_and_label.grid(column=0, row=group_row_count, sticky = E)
-
-    global lbl_kktix_area_keyword_and_text
-    lbl_kktix_area_keyword_and_text = Label(frame_group_kktix, text=translate[language_code]['and'])
-    lbl_kktix_area_keyword_and_text.grid(column=1, row=group_row_count, sticky = W)
+    global txt_kktix_area_keyword_1
+    txt_kktix_area_keyword_1_value = StringVar(frame_group_kktix, value=kktix_area_keyword_1)
+    txt_kktix_area_keyword_1 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_value)
+    txt_kktix_area_keyword_1.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
-    lbl_kktix_date_keyword = Label(frame_group_kktix, text="")
-    lbl_kktix_date_keyword.grid(column=0, row=group_row_count, sticky = E)
+    lbl_kktix_area_keyword_1_and_label = Label(frame_group_kktix, text="")
+    lbl_kktix_area_keyword_1_and_label.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_kktix_date_keyword
-    txt_kktix_date_keyword_value = StringVar(frame_group_kktix, value=kktix_date_keyword)
-    txt_kktix_date_keyword = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_date_keyword_value)
-    txt_kktix_date_keyword.grid(column=1, row=group_row_count, sticky = W)
+    global lbl_kktix_area_keyword_1_and_text
+    lbl_kktix_area_keyword_1_and_text = Label(frame_group_kktix, text=translate[language_code]['and'])
+    lbl_kktix_area_keyword_1_and_text.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    lbl_kktix_area_keyword_1_tmp = Label(frame_group_kktix, text="")
+    lbl_kktix_area_keyword_1_tmp.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_area_keyword_1_and
+    txt_kktix_area_keyword_1_and_value = StringVar(frame_group_kktix, value=kktix_area_keyword_1_and)
+    txt_kktix_area_keyword_1_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_and_value)
+    txt_kktix_area_keyword_1_and.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_kktix_area_keyword_2
+    lbl_kktix_area_keyword_2 = Label(frame_group_kktix, text=translate[language_code]['area_keyword_2'])
+    lbl_kktix_area_keyword_2.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_area_keyword_2
+    txt_kktix_area_keyword_2_value = StringVar(frame_group_kktix, value=kktix_area_keyword_2)
+    txt_kktix_area_keyword_2 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_value)
+    txt_kktix_area_keyword_2.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    lbl_kktix_area_keyword_2_and_label = Label(frame_group_kktix, text="")
+    lbl_kktix_area_keyword_2_and_label.grid(column=0, row=group_row_count, sticky = E)
+
+    global lbl_kktix_area_keyword_2_and_text
+    lbl_kktix_area_keyword_2_and_text = Label(frame_group_kktix, text=translate[language_code]['and'])
+    lbl_kktix_area_keyword_2_and_text.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    lbl_kktix_area_keyword_2_tmp = Label(frame_group_kktix, text="")
+    lbl_kktix_area_keyword_2_tmp.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_area_keyword_2_and
+    txt_kktix_area_keyword_2_and_value = StringVar(frame_group_kktix, value=kktix_area_keyword_2_and)
+    txt_kktix_area_keyword_2_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_and_value)
+    txt_kktix_area_keyword_2_and.grid(column=1, row=group_row_count, sticky = W)
 
     #group_row_count+=1
 

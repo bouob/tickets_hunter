@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #encoding=utf-8
-# 'seleniumwire' and 'selenium 4' raise error when running python 2.x 
-# PS: python 2.x will be removed in future. 
+# 'seleniumwire' and 'selenium 4' raise error when running python 2.x
+# PS: python 2.x will be removed in future.
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 import os
 import sys
@@ -39,7 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.11.21)"
+CONST_APP_VERSION = u"MaxBot (2022.11.22)"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
@@ -236,7 +236,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
 
     return driver
 
-def close_browser_tabs(driver):        
+def close_browser_tabs(driver):
     if not driver is None:
         try:
             window_handles_count = len(driver.window_handles)
@@ -282,197 +282,144 @@ def get_driver_by_config(config_dict, driver_type):
 
     debugMode = False
 
-    if not config_dict is None:
-        # read config.
-        if 'homepage' in config_dict:
-            homepage = config_dict["homepage"]
-        if 'browser' in config_dict:
-            browser = config_dict["browser"]
+    # read config.
+    homepage = config_dict["homepage"]
+    browser = config_dict["browser"]
 
-        # output debug message in client side.
-        if 'debug' in config_dict:
-            debugMode = config_dict["debug"]
+    # output debug message in client side.
+    debugMode = config_dict["debug"]
+    ticket_number = str(config_dict["ticket_number"])
 
-        # default ticket number
-        # 說明：自動選擇的票數
-        #ticket_number = "2"
-        ticket_number = ""
-        if 'ticket_number' in config_dict:
-            ticket_number = str(config_dict["ticket_number"])
+    # for ["kktix"]
+    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"].strip()
+    if not kktix_area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
+        kktix_area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
-        # for ["kktix"]
-        if 'kktix' in config_dict:
-            auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-            auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
+    kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
+    kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
+    kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
 
-            if 'area_mode' in config_dict["kktix"]:
-                kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"].strip()
-            if not kktix_area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-                kktix_area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
+    # disable password brute force attack
+    # PS: because of the question is always variable.
 
-            if 'area_keyword' in config_dict["kktix"]:
-                kktix_area_keyword = config_dict["kktix"]["area_keyword"]
-                if kktix_area_keyword is None:
-                    kktix_area_keyword = ""
-                kktix_area_keyword = kktix_area_keyword.strip()
+    auto_guess_options = config_dict["kktix"]["auto_guess_options"]
 
-            if 'date_keyword' in config_dict["kktix"]:
-                kktix_date_keyword = config_dict["kktix"]["date_keyword"]
-                if kktix_date_keyword is None:
-                    kktix_date_keyword = ""
-                kktix_date_keyword = kktix_date_keyword.strip()
+    # for ["tixcraft"]
+    date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
+        date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
-            # disable password brute force attack
-            # PS: because of the question is always variable.
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
 
-            if 'auto_guess_options' in config_dict["kktix"]:
-                auto_guess_options = config_dict["kktix"]["auto_guess_options"]
+    area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+    if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
+        area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
 
-        # for ["tixcraft"]
-        if 'tixcraft' in config_dict:
-            date_auto_select_enable = False
-            date_auto_select_mode = None
+    area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+    area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+    area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+    area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
 
-            if 'date_auto_select' in config_dict["tixcraft"]:
-                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-                date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
+    pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-            if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-                date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
+    # output config:
+    print("maxbot app version", CONST_APP_VERSION)
+    print("python version", platform.python_version())
+    print("homepage", homepage)
+    print("browser", browser)
+    print("ticket_number", ticket_number)
 
-            if 'date_keyword' in config_dict["tixcraft"]["date_auto_select"]:
-                date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"]
-                date_keyword = date_keyword.strip()
+    # for kktix
+    print("==[kktix]==")
+    print("auto_press_next_step_button", auto_press_next_step_button)
+    print("auto_fill_ticket_number", auto_fill_ticket_number)
+    print("kktix_area_keyword_1", kktix_area_keyword_1)
+    print("kktix_area_keyword_1_and", kktix_area_keyword_1_and)
+    print("kktix_area_keyword_2", kktix_area_keyword_2)
+    print("kktix_area_keyword_2_and", kktix_area_keyword_2_and)
+    print("auto_guess_options", auto_guess_options)
 
-            area_auto_select_enable = False
-            area_auto_select_mode = None
+    # for tixcraft
+    print("==[tixcraft]==")
+    print("date_auto_select_enable", date_auto_select_enable)
+    print("date_auto_select_mode", date_auto_select_mode)
+    print("date_keyword", date_keyword)
 
-            if 'area_auto_select' in config_dict["tixcraft"]:
-                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-                area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+    print("area_auto_select_enable", area_auto_select_enable)
+    print("area_auto_select_mode", area_auto_select_mode)
+    print("area_keyword_1", area_keyword_1)
+    print("area_keyword_2", area_keyword_2)
+    print("area_keyword_3", area_keyword_3)
+    print("area_keyword_4", area_keyword_4)
 
-            if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-                area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
+    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+    print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
+    print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
+    print("debug Mode", debugMode)
 
-            if 'area_keyword_1' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"]
-                area_keyword_1 = area_keyword_1.strip()
+    # entry point
+    if homepage is None:
+        homepage = ""
+    if len(homepage) == 0:
+        homepage = CONST_HOMEPAGE_DEFAULT
 
-            if 'area_keyword_2' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"]
-                area_keyword_2 = area_keyword_2.strip()
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    print("platform.system().lower():", platform.system().lower())
 
-            if 'area_keyword_3' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"]
-                area_keyword_3 = area_keyword_3.strip()
+    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+    print("adblock_plus_enable:", adblock_plus_enable)
 
-            if 'area_keyword_4' in config_dict["tixcraft"]["area_auto_select"]:
-                area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"]
-                area_keyword_4 = area_keyword_4.strip()
-
-            pass_1_seat_remaining_enable = False
-            if 'pass_1_seat_remaining' in config_dict["tixcraft"]:
-                pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
-
-            pass_date_is_sold_out_enable = False
-            if 'pass_date_is_sold_out' in config_dict["tixcraft"]:
-                pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
-
-            auto_reload_coming_soon_page_enable = True
-            if 'auto_reload_coming_soon_page' in config_dict["tixcraft"]:
-                auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
-        # output config:
-        print("maxbot app version", CONST_APP_VERSION)
-        print("python version", platform.python_version())
-        print("homepage", homepage)
-        print("browser", browser)
-        print("ticket_number", ticket_number)
-
-        # for kktix
-        print("==[kktix]==")
-        print("auto_press_next_step_button", auto_press_next_step_button)
-        print("auto_fill_ticket_number", auto_fill_ticket_number)
-        print("kktix_area_keyword", kktix_area_keyword)
-        print("kktix_date_keyword", kktix_date_keyword)
-        print("auto_guess_options", auto_guess_options)
-
-        # for tixcraft
-        print("==[tixcraft]==")
-        print("date_auto_select_enable", date_auto_select_enable)
-        print("date_auto_select_mode", date_auto_select_mode)
-        print("date_keyword", date_keyword)
-
-        print("area_auto_select_enable", area_auto_select_enable)
-        print("area_auto_select_mode", area_auto_select_mode)
-        print("area_keyword_1", area_keyword_1)
-        print("area_keyword_2", area_keyword_2)
-        print("area_keyword_3", area_keyword_3)
-        print("area_keyword_4", area_keyword_4)
-
-        print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
-        print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
-        print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
-        print("debug Mode", debugMode)
-
-        # entry point
-        if homepage is None:
-            homepage = ""
-        if len(homepage) == 0:
-            homepage = CONST_HOMEPAGE_DEFAULT
-
-        Root_Dir = get_app_root()
-        webdriver_path = os.path.join(Root_Dir, "webdriver")
-        print("platform.system().lower():", platform.system().lower())
-
-        adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
-        print("adblock_plus_enable:", adblock_plus_enable)
-
-        if browser == "chrome":
-            # method 6: Selenium Stealth
-            if driver_type != "undetected_chromedriver":
-                driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
-            else:
-                # method 5: uc
-                # multiprocessing not work bug.
-                if platform.system().lower()=="windows":
-                    if hasattr(sys, 'frozen'):
-                        from multiprocessing import freeze_support
-                        freeze_support()
-                driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable)
-
-        if browser == "firefox":
-            # default os is linux/mac
-            chromedriver_path = os.path.join(webdriver_path,"geckodriver")
-            if platform.system().lower()=="windows":
-                chromedriver_path = os.path.join(webdriver_path,"geckodriver.exe")
-
-            firefox_service = Service(chromedriver_path)
-            driver = webdriver.Firefox(service=firefox_service)
-
-        #print("try to close opened tabs.")
-        '''
-        time.sleep(1.0)
-        for i in range(1):
-            close_browser_tabs(driver)
-        '''
-
-        if driver is None:
-            print("create web driver object fail @_@;")
+    if browser == "chrome":
+        # method 6: Selenium Stealth
+        if driver_type != "undetected_chromedriver":
+            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
         else:
-            try:
-                print("goto url:", homepage)
-                if homepage=="https://tixcraft.com":
-                    homepage="https://tixcraft.com/user/changeLanguage/lang/zh_tw"
-                driver.get(homepage)
-            except WebDriverException as exce2:
-                print('oh no not again, WebDriverException')
-                print('WebDriverException:', exce2)
-            except Exception as exce1:
-                print('get URL Exception:', exec1)
-                pass
+            # method 5: uc
+            # multiprocessing not work bug.
+            if platform.system().lower()=="windows":
+                if hasattr(sys, 'frozen'):
+                    from multiprocessing import freeze_support
+                    freeze_support()
+            driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable)
+
+    if browser == "firefox":
+        # default os is linux/mac
+        chromedriver_path = os.path.join(webdriver_path,"geckodriver")
+        if platform.system().lower()=="windows":
+            chromedriver_path = os.path.join(webdriver_path,"geckodriver.exe")
+
+        firefox_service = Service(chromedriver_path)
+        driver = webdriver.Firefox(service=firefox_service)
+
+    #print("try to close opened tabs.")
+    '''
+    time.sleep(1.0)
+    for i in range(1):
+        close_browser_tabs(driver)
+    '''
+
+    if driver is None:
+        print("create web driver object fail @_@;")
     else:
-        print("Config error!")
+        try:
+            print("goto url:", homepage)
+            if homepage=="https://tixcraft.com":
+                homepage="https://tixcraft.com/user/changeLanguage/lang/zh_tw"
+            driver.get(homepage)
+        except WebDriverException as exce2:
+            print('oh no not again, WebDriverException')
+            print('WebDriverException:', exce2)
+        except Exception as exce1:
+            print('get URL Exception:', exec1)
+            pass
 
     return driver
 
@@ -1203,7 +1150,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 if areas is None:
                     if show_debug_message:
                         print("use area keyword #2", area_keyword_2)
-                    
+
                     # only when keyword#2 filled to query.
                     if len(area_keyword_2) > 0 :
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
@@ -1214,7 +1161,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 if areas is None:
                     if show_debug_message:
                         print("use area keyword #3", area_keyword_3)
-                    
+
                     # only when keyword#3 filled to query.
                     if len(area_keyword_3) > 0 :
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable)
@@ -1225,7 +1172,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 if areas is None:
                     if show_debug_message:
                         print("use area keyword #4", area_keyword_4)
-                    
+
                     # only when keyword#4 filled to query.
                     if len(area_keyword_4) > 0 :
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
@@ -1549,7 +1496,7 @@ def tixcraft_ticket_main(driver, config_dict):
                 select_obj = Select(form_select)
             except Exception as exc:
                 pass
-    
+
     is_verifyCode_editing = False
     is_assign_ticket_number = False
     if not select_obj is None:
@@ -1688,7 +1635,7 @@ def kktix_press_next_button(driver):
                     is_visible = True
             except Exception as exc:
                 pass
-            
+
             if is_visible:
                 try:
                     driver.execute_script("arguments[0].click();", next_step_button)
@@ -1747,10 +1694,10 @@ def kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string
                     is_cpatcha_sent = True
                 except Exception as exc:
                     pass
-    
+
     return is_cpatcha_sent
 
-def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
+def kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -1774,19 +1721,19 @@ def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
             print("start to travel rows..........")
     else:
         print("find ticket-price span fail")
-    
+
     is_travel_interrupted = False
 
     if price_list_count > 0:
         areas = []
 
         # clean stop word.
-        kktix_area_keyword = format_keyword_string(kktix_area_keyword)
-        kktix_date_keyword = format_keyword_string(kktix_date_keyword)
+        kktix_area_keyword_1 = format_keyword_string(kktix_area_keyword_1)
+        kktix_area_keyword_1_and = format_keyword_string(kktix_area_keyword_1_and)
 
         if show_debug_message:
-            print('kktix_area_keyword:', kktix_area_keyword)
-            print('kktix_date_keyword:', kktix_date_keyword)
+            print('kktix_area_keyword_1:', kktix_area_keyword_1)
+            print('kktix_area_keyword_1_and:', kktix_area_keyword_1_and)
 
         row_index = 0
         for row in ticket_price_list:
@@ -1825,7 +1772,7 @@ def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
                         is_visible = ticket_price_input.is_enabled()
                     except Exception as exc:
                         pass
-                    
+
                     if len(current_ticket_number) > 0:
                         if current_ticket_number != "0":
                             is_ticket_number_assigened = True
@@ -1838,23 +1785,23 @@ def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
                         is_match_area = False
                         match_area_code = 0
 
-                        if len(kktix_area_keyword) == 0:
+                        if len(kktix_area_keyword_1) == 0:
                             # keyword #1, empty, direct add to list.
                             is_match_area = True
                             match_area_code = 1
                         else:
                             # MUST match keyword #1.
-                            if kktix_area_keyword in row_text:
+                            if kktix_area_keyword_1 in row_text:
                                 #print('match keyword#1')
-                                
+
                                 # because of logic between keywords is AND!
-                                if len(kktix_date_keyword) == 0:
+                                if len(kktix_area_keyword_1_and) == 0:
                                     #print('keyword#2 is empty, directly match.')
                                     # keyword #2 is empty, direct append.
                                     is_match_area = True
                                     match_area_code = 2
                                 else:
-                                    if kktix_date_keyword in row_text:
+                                    if kktix_area_keyword_1_and in row_text:
                                         #print('match keyword#2')
                                         is_match_area = True
                                         match_area_code = 3
@@ -1886,11 +1833,11 @@ def kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword):
 
     return is_ticket_number_assigened, areas
 
-def kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword, kktix_date_keyword):
+def kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, kktix_area_keyword, kktix_date_keyword)
+    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_and)
 
     target_area = None
     if not is_ticket_number_assigened:
@@ -2051,7 +1998,7 @@ def kktix_check_agree_checkbox(driver):
             is_need_refresh = True
     else:
         is_need_refresh = True
-        
+
     if is_need_refresh:
         print("find person_agree_terms checkbox fail, do refresh page.")
 
@@ -2524,17 +2471,23 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
     except Exception as exc:
         pass
         #print("find input fail:", exc)
-    
+
     # part 2: assign ticket number
     ticket_number = str(config_dict["ticket_number"])
     is_assign_ticket_number = False
     if not registrationsNewApp_div is None:
         kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
-        kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
-        kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+        kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
+        kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
+        kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
+        kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
 
-        for retry_index in range(3):
-            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword, kktix_date_keyword)
+        for retry_index in range(2):
+            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+            if not is_assign_ticket_number:
+                is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+                if not is_assign_ticket_number:
+                    is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
             if is_assign_ticket_number:
                 break
     #print('is_assign_ticket_number:', is_assign_ticket_number)
@@ -2568,10 +2521,10 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
             is_captcha_appear = True
             if show_debug_message:
                 print("found captcha_inner_div layor.")
-            
+
             auto_guess_options = config_dict["kktix"]["auto_guess_options"]
             captcha_password_string, answer_list, my_answer_delimitor = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess_options)
-        
+
             if captcha_password_string is not None:
                 # password is not None, try to send.
                 is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string)
@@ -2603,7 +2556,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                             # let user to input answer, bot sleep 1 second.
                         except Exception as exc:
                             pass
-            
+
         if show_debug_message:
             print("is_captcha_appear:", is_captcha_appear)
             print("is_captcha_appear_and_filled_password:", is_captcha_appear_and_filled_password)
@@ -2615,7 +2568,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
     is_do_press_next_button = False
     if is_assign_ticket_number:
         auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-        if auto_press_next_step_button:        
+        if auto_press_next_step_button:
             if is_finish_checkbox_click:
                 is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number)
             else:
@@ -2831,7 +2784,7 @@ def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, a
                         except Exception as exc:
                             print("get row text fail")
                             break
-                        
+
                         if row_text is None:
                             row_text = ""
 
@@ -2851,7 +2804,7 @@ def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, a
                                 if area_keyword_1 in area_html_text:
                                     #print("is_match_area area_keyword_1")
                                     is_match_area = True
-                                
+
                                 # check keyword 2
                                 if len(area_keyword_2) > 0:
                                     if area_keyword_2 in area_html_text:
@@ -2965,7 +2918,7 @@ def fami_home(driver, url, config_dict):
                 is_select_box_visible = True
         except Exception as exc:
             pass
-    
+
     is_assign_ticket_number = False
     if is_select_box_visible:
         ticket_number_select = None
@@ -3477,7 +3430,7 @@ def cityline_next_button_press(driver):
 def cityline_performance(driver, config_dict):
     show_debug_message = True       # debug.
     #show_debug_message = False      # online
-    
+
     auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
     if auto_fill_ticket_number:
         # click price row.
@@ -3548,7 +3501,7 @@ def facebook_login(driver, facebook_account):
             pass
 
     el_pass = None
-    if is_email_sent:        
+    if is_email_sent:
         try:
             el_pass = driver.find_element(By.CSS_SELECTOR, '#pass')
         except Exception as exc:
@@ -3663,7 +3616,11 @@ def main():
     #driver_type = 'stealth'
     driver_type = 'undetected_chromedriver'
 
-    driver = get_driver_by_config(config_dict, driver_type)
+    driver = None
+    if not config_dict is None:
+        driver = get_driver_by_config(config_dict, driver_type)
+    else:
+        print("Config error!")
 
     # internal variable. 說明：這是一個內部變數，請略過。
     url = ""
@@ -3702,7 +3659,7 @@ def main():
         url = ""
         try:
             url = driver.current_url
-        
+
         except NoSuchWindowException:
             #print('NoSuchWindowException at this url:', url )
             #print("last_url:", last_url)
@@ -3722,7 +3679,7 @@ def main():
 
             # PS: do nothing...
             # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
-            # raise exception at selenium/webdriver/remote/errorhandler.py 
+            # raise exception at selenium/webdriver/remote/errorhandler.py
             # after dialog disappear new excpetion: unhandled inspector error: Not attached to an active page
             is_pass_alert = False
             is_pass_alert = True
