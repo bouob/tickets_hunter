@@ -39,7 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.11.22)"
+CONST_APP_VERSION = u"MaxBot (2022.11.24)"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
@@ -289,6 +289,7 @@ def get_driver_by_config(config_dict, driver_type):
     # output debug message in client side.
     debugMode = config_dict["debug"]
     ticket_number = str(config_dict["ticket_number"])
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
 
     # for ["kktix"]
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
@@ -325,7 +326,6 @@ def get_driver_by_config(config_dict, driver_type):
     area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
     area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
 
-    pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -335,6 +335,7 @@ def get_driver_by_config(config_dict, driver_type):
     print("homepage", homepage)
     print("browser", browser)
     print("ticket_number", ticket_number)
+    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
 
     # for kktix
     print("==[kktix]==")
@@ -359,7 +360,6 @@ def get_driver_by_config(config_dict, driver_type):
     print("area_keyword_3", area_keyword_3)
     print("area_keyword_4", area_keyword_4)
 
-    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
     print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
     print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
     print("debug Mode", debugMode)
@@ -1123,7 +1123,12 @@ def tixcraft_area_auto_select(driver, url, config_dict):
     area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
     area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
     area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-    pass_1_seat_remaining_enable = config_dict["tixcraft"]["pass_1_seat_remaining"]
+
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+    # disable pass 1 seat remaining when target ticket number is 1.
+    ticket_number = config_dict["ticket_number"]
+    if ticket_number == 1:
+        pass_1_seat_remaining_enable = False
 
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -1697,7 +1702,7 @@ def kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string
 
     return is_cpatcha_sent
 
-def kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -1781,6 +1786,22 @@ def kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_a
                         # no need to travel
                         break
 
+                    is_danger_notice = False
+                    if ticket_number > 1:
+                        # start to check danger notice.
+                        span_danger_popup = None
+                        try:
+                            span_danger_popup = row.find_element(By.CSS_SELECTOR, "span.danger")
+                            if span_danger_popup.is_displayed():
+                                is_danger_notice = True
+                        except Exception as exc:
+                            pass
+                    
+                        if is_danger_notice:
+                            # skip this row, because assign will fail, or fill ticket number as 1.
+                            if pass_1_seat_remaining_enable:
+                                continue
+
                     if is_visible:
                         is_match_area = False
                         match_area_code = 0
@@ -1833,11 +1854,13 @@ def kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_a
 
     return is_ticket_number_assigened, areas
 
-def kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, kktix_area_keyword_1, kktix_area_keyword_1_and)
+    ticket_number_str = str(ticket_number)
+
+    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and)
 
     target_area = None
     if not is_ticket_number_assigened:
@@ -1882,9 +1905,9 @@ def kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mod
     if is_visible and len(current_ticket_number) > 0:
         if current_ticket_number == "0":
             try:
-                print("asssign ticket number:%s" % str(ticket_number))
+                print("asssign ticket number:%s" % ticket_number_str)
                 ticket_price_input.clear()
-                ticket_price_input.send_keys(ticket_number)
+                ticket_price_input.send_keys(ticket_number_str)
 
                 is_ticket_number_assigened = True
             except Exception as exc:
@@ -2424,7 +2447,7 @@ def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess
 
     return captcha_password_string, answer_list, my_answer_delimitor
 
-def kktix_double_check_all_text_value(driver, ticket_number):
+def kktix_double_check_all_text_value(driver, ticket_number_str):
     is_do_press_next_button = False
 
     # double check ticket input textbox.
@@ -2451,7 +2474,7 @@ def kktix_double_check_all_text_value(driver, ticket_number):
                 current_ticket_number = ""
             if len(current_ticket_number) > 0:
                 #print(row_index, "current_ticket_number:", current_ticket_number)
-                if current_ticket_number == ticket_number:
+                if current_ticket_number == ticket_number_str:
                     #print("bingo, match target ticket number.")
 
                     # ONLY, this case to auto press next button.
@@ -2473,7 +2496,14 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
         #print("find input fail:", exc)
 
     # part 2: assign ticket number
-    ticket_number = str(config_dict["ticket_number"])
+    ticket_number_str = str(config_dict["ticket_number"])
+
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+    # disable pass 1 seat remaining when target ticket number is 1.
+    ticket_number = config_dict["ticket_number"]
+    if ticket_number == 1:
+        pass_1_seat_remaining_enable = False
+
     is_assign_ticket_number = False
     if not registrationsNewApp_div is None:
         kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
@@ -2483,11 +2513,11 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
         kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
 
         for retry_index in range(2):
-            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
             if not is_assign_ticket_number:
-                is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+                is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
                 if not is_assign_ticket_number:
-                    is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
+                    is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
             if is_assign_ticket_number:
                 break
     #print('is_assign_ticket_number:', is_assign_ticket_number)
@@ -2570,7 +2600,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
         auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
         if auto_press_next_step_button:
             if is_finish_checkbox_click:
-                is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number)
+                is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number_str)
             else:
                 print("still unable to assign checkbox as selected.")
 
