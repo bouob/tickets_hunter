@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2022-11-24)：KKTix 支援避開「剩餘 1」的區域的功能。增加關鍵字#2 的欄位。
+
+https://youtu.be/nupJlwRNOIA
+
 Max搶票機器人 (2022-11-18)：增加 adblock plus 的功能。輸入驗證碼時，會播放音效，在清票時很有幫功，不需要一直緊盯著螢幕。
 
 https://youtu.be/Atujl8MPHQI
