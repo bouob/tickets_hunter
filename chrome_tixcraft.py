@@ -39,7 +39,8 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.11.24)"
+CONST_APP_VERSION = u"MaxBot (2022.12.14)"
+
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
@@ -1285,8 +1286,10 @@ def tixcraft_ticket_agree(driver):
             print("click TicketForm_agree fail")
             pass
 
-    if not is_finish_checkbox_click:
-        # 使用 plan B.
+    # 使用 plan B.
+    #if not is_finish_checkbox_click:
+    # alway not use Plan B.
+    if False:
         try:
             print("use plan_b to check TicketForm_agree.")
             driver.execute_script("$(\"input[type='checkbox']\").prop('checked', true);")
@@ -1332,8 +1335,9 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
                     print("select_by_visible_text 1 fail")
                     pass
 
-    # because click cause click wrong row.
-    if not is_assign_ticket_number:
+    # Plan B.
+    # if not is_assign_ticket_number:
+    if False:
         if select is not None:
             try:
                 # target ticket number
@@ -1477,7 +1481,10 @@ def tixcraft_verify(driver):
     return ret
 
 def tixcraft_ticket_main(driver, config_dict):
-    is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+    is_finish_checkbox_click = False
+    auto_check_agree = config_dict["auto_check_agree"]
+    if auto_check_agree:
+        tixcraft_ticket_agree(driver)
 
     # allow agree not enable to assign ticket number.
     form_select = None
@@ -1493,7 +1500,8 @@ def tixcraft_ticket_main(driver, config_dict):
     if form_select is not None:
         is_visible = False
         try:
-            is_visible = form_select.is_enabled()
+            if form_select.is_enabled():
+                is_visible = True
         except Exception as exc:
             pass
         if is_visible:
@@ -2593,7 +2601,9 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
 
     # retry check agree checkbox again.
     if not is_finish_checkbox_click:
-        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
+        auto_check_agree = config_dict["auto_check_agree"]
+        if auto_check_agree:
+            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
 
     is_do_press_next_button = False
     if is_assign_ticket_number:
@@ -2688,12 +2698,14 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
                 if registerStatus != 'IN_STOCK':
                     is_need_refresh = True
 
-    if not is_need_refresh:
-        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
-    if not is_need_refresh:
-        if not is_finish_checkbox_click:
-            # retry again.
+    auto_check_agree = config_dict["auto_check_agree"]
+    if auto_check_agree:
+        if not is_need_refresh:
             is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
+        if not is_need_refresh:
+            if not is_finish_checkbox_click:
+                # retry again.
+                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
     #print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
 
     if is_need_refresh:

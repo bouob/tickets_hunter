@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.11.24)"
+CONST_APP_VERSION = u"MaxBot (2022.12.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -51,6 +51,10 @@ def load_translate():
     en_us["browser"] = 'Browser'
     en_us["language"] = 'Language'
     en_us["ticket_number"] = 'Ticker Number'
+
+    en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
+    en_us["auto_check_agree"] = 'Auto check agree checkbox'
+
     en_us["enable"] = 'Enable'
     en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
@@ -68,7 +72,6 @@ def load_translate():
     en_us["area_keyword_2"] = 'Area Keyword #2'
     en_us["area_keyword_3"] = 'Area Keyword #3'
     en_us["area_keyword_4"] = 'Area Keyword #4'
-    en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
 
@@ -98,6 +101,10 @@ def load_translate():
     zh_tw["browser"] = '瀏覽器'
     zh_tw["language"] = '語言'
     zh_tw["ticket_number"] = '門票張數'
+
+    zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
+    zh_tw["auto_check_agree"] = '自動勾選同意'
+
     zh_tw["enable"] = '啟用'
     zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
@@ -115,7 +122,6 @@ def load_translate():
     zh_tw["area_keyword_2"] = '區域關鍵字 #2'
     zh_tw["area_keyword_3"] = '區域關鍵字 #3'
     zh_tw["area_keyword_4"] = '區域關鍵字 #4'
-    zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的場次'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的活動頁面'
 
@@ -145,6 +151,10 @@ def load_translate():
     zh_cn["browser"] = '浏览器'
     zh_cn["language"] = '语言'
     zh_cn["ticket_number"] = '门票张数'
+
+    zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
+    zh_cn["auto_check_agree"] = '自动勾选同意'
+
     zh_cn["enable"] = '启用'
     zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
@@ -162,7 +172,6 @@ def load_translate():
     zh_cn["area_keyword_2"] = '区域关键字 #2'
     zh_cn["area_keyword_3"] = '区域关键字 #3'
     zh_cn["area_keyword_4"] = '区域关键字 #4'
-    zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的场次'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的活动页面'
 
@@ -192,6 +201,10 @@ def load_translate():
     ja_jp["browser"] = 'ブラウザ'
     ja_jp["language"] = '言語'
     ja_jp["ticket_number"] = '枚数'
+
+    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
+    ja_jp["auto_check_agree"] = '自動的に同意をチェック'
+
     ja_jp["enable"] = '有効'
     ja_jp["auto_press_next_step_button"] = '次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
@@ -209,7 +222,6 @@ def load_translate():
     ja_jp["area_keyword_2"] = 'エリアキーワード #2'
     ja_jp["area_keyword_3"] = 'エリアキーワード #3'
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
-    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
 
@@ -258,6 +270,7 @@ def get_default_config():
     config_dict["language"] = "English"
     config_dict["ticket_number"] = 2
     config_dict["pass_1_seat_remaining"] = True
+    config_dict["auto_check_agree"] = True
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -267,7 +280,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_1_and"] = ""
     config_dict["kktix"]["area_keyword_2"] = ""
     config_dict["kktix"]["area_keyword_2_and"] = ""
-    config_dict["kktix"]["auto_guess_options"] = True
+    config_dict["kktix"]["auto_guess_options"] = False
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["date_auto_select"] = {}
@@ -328,6 +341,7 @@ def btn_save_act(slience_mode=False):
     global combo_language
     global combo_ticket_number
     global chk_state_pass_1_seat_remaining
+    global chk_state_auto_check_agree
 
     global chk_state_auto_press_next_step_button
     global chk_state_auto_fill_ticket_number
@@ -391,6 +405,7 @@ def btn_save_act(slience_mode=False):
 
     if is_all_data_correct:
         config_dict["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
+        config_dict["auto_check_agree"] = bool(chk_state_auto_check_agree.get())
 
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
@@ -557,6 +572,7 @@ def applyNewLanguage():
     global lbl_language
     global lbl_ticket_number
     global lbl_pass_1_seat_remaining
+    global lbl_auto_check_agree
 
     # for kktix
     global lbl_auto_press_next_step_button
@@ -583,6 +599,7 @@ def applyNewLanguage():
 
     # for checkbox
     global chk_pass_1_seat_remaining
+    global chk_auto_check_agree
 
     global chk_auto_press_next_step_button
     global chk_auto_fill_ticket_number
@@ -610,6 +627,7 @@ def applyNewLanguage():
     lbl_language.config(text=translate[language_code]["language"])
     lbl_ticket_number.config(text=translate[language_code]["ticket_number"])
     lbl_pass_1_seat_remaining.config(text=translate[language_code]["pass_1_seat_remaining"])
+    lbl_auto_check_agree.config(text=translate[language_code]["auto_check_agree"])
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
@@ -632,6 +650,7 @@ def applyNewLanguage():
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
+    chk_auto_check_agree.config(text=translate[language_code]["enable"])
     chk_auto_press_next_step_button.config(text=translate[language_code]["enable"])
     chk_auto_fill_ticket_number.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
@@ -856,6 +875,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     language = "English"
     ticket_number = 2
     pass_1_seat_remaining_enable = False
+    auto_check_agree_enable = False
 
     auto_press_next_step_button = False
     auto_fill_ticket_number = False
@@ -896,6 +916,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # 說明：自動選擇的票數
     ticket_number = config_dict["ticket_number"]
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+    auto_check_agree_enable = config_dict["auto_check_agree"]
 
     # for ["kktix"]
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
@@ -942,6 +963,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("language", language)
     print("ticket_number", ticket_number)
     print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
+    print("auto_check_agree", auto_check_agree_enable)
 
     # for kktix
     print("==[kktix]==")
@@ -1067,6 +1089,20 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_pass_1_seat_remaining
     chk_pass_1_seat_remaining = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_pass_1_seat_remaining)
     chk_pass_1_seat_remaining.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_auto_check_agree
+    lbl_auto_check_agree = Label(frame_group_header, text=translate[language_code]['auto_check_agree'])
+    lbl_auto_check_agree.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_check_agree
+    chk_state_auto_check_agree = BooleanVar()
+    chk_state_auto_check_agree.set(auto_check_agree_enable)
+
+    global chk_auto_check_agree
+    chk_auto_check_agree = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_check_agree)
+    chk_auto_check_agree.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
@@ -1387,10 +1423,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_tixcraft_index = row_count
     frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
-    row_count+=1
-
-    lbl_hr = Label(root, text="")
-    lbl_hr.grid(column=0, row=row_count)
 
     showHideBlocks(all_layout_visible=True)
 
