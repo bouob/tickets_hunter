@@ -39,7 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.12.14)"
+CONST_APP_VERSION = u"MaxBot (2022.12.22)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -241,7 +241,7 @@ def close_browser_tabs(driver):
     if not driver is None:
         try:
             window_handles_count = len(driver.window_handles)
-            if window_handles_count >= 1:
+            if window_handles_count > 1:
                 driver.switch_to.window(driver.window_handles[1])
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
@@ -1712,7 +1712,7 @@ def kktix_input_captcha_text(captcha_password_input_tag, captcha_password_string
 
 def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    #show_debug_message = False      # online
 
     areas = None
     is_ticket_number_assigened = False
@@ -1864,7 +1864,7 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
 
 def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    #show_debug_message = False      # online
 
     ticket_number_str = str(ticket_number)
 
@@ -2493,7 +2493,7 @@ def kktix_double_check_all_text_value(driver, ticket_number_str):
 
 def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_dict):
     show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    #show_debug_message = False      # online
 
     # part 1: check div.
     registrationsNewApp_div = None
@@ -3252,128 +3252,49 @@ def urbtix_performance(driver, config_dict):
 # return:
 #   True: area block appear.
 #   False: area block not appear.
-# ps: return value for date auto select.
-def cityline_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword):
+# ps: return is successfully click on the price radio.
+def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
     ret = False
     areas = None
+
+    # clean stop word.
+    area_keyword_1 = format_keyword_string(area_keyword_1)
+    area_keyword_1_and = format_keyword_string(area_keyword_1_and)
 
     area_list = None
     try:
         #print("try to find cityline area block")
-        # form[name="text"] > table:nth-child(12) > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(1) > table > tbody > tr
-        my_css_selector = "tr.menubar_text ~ tr"
+        my_css_selector = ".form-check"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-        if area_list is not None:
-            area_list_count = len(area_list)
-            #print("area_list_count:", area_list_count)
-
-            if area_list_count > 0:
-                ret = True
-
-                if len(kktix_area_keyword) == 0:
-                    areas = area_list
-                else:
-                    # match keyword.
-                    #print("start to match keyword:", kktix_area_keyword)
-                    areas = []
-
-                    row_index = 0
-                    for row in area_list:
-                        row_index += 1
-                        row_is_enabled=False
-                        try:
-                            row_is_enabled = row.is_enabled()
-                        except Exception as exc:
-                            pass
-
-                        if row_is_enabled:
-                            row_text = ""
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
-
-                            if row_text is None:
-                                row_text = ""
-
-                            if len(row_text) > 0:
-                                # for debug.
-                                #print("area row_text:", row_index, row_text)
-                                if kktix_area_keyword in row_text:
-                                    areas.append(row)
-
-                    #print("after match keyword, found count:", len(areas))
-            else:
-                print("not found area tr")
-                pass
-        else:
-            print("area tr is None")
-            pass
-
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
         print(exc)
 
-    area = None
-    if areas is not None:
-        #print("area_auto_select_mode", area_auto_select_mode)
-        #print("len(areas)", len(areas))
-        if len(areas) > 0:
-            target_row_index = 0
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("area_list_count:", area_list_count)
 
-            #if area_auto_select_mode == 'from_top_to_down':
-                #pass
+        if area_list_count > 0:
+            ret = True
 
-            #if area_auto_select_mode == 'from_down_to_up':
-                #target_row_index = len(areas)-1
+            if len(area_keyword_1) == 0:
+                areas = area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", area_keyword_1)
+                    print("keyword and:", area_keyword_1_and)
+                areas = []
 
-            #if area_auto_select_mode == "random":
-                #target_row_index = random.randint(0,len(areas)-1)
-
-            #print("target_row_index", target_row_index)
-            area = areas[target_row_index]
-
-    if area is not None:
-        el = None
-        try:
-            #print("area text", area.text)
-
-            my_css_selector = "input[type=radio]"
-            el = area.find_element(By.CSS_SELECTOR, my_css_selector)
-            if el is not None:
-                if el.is_enabled():
-                    if not el.is_selected():
-                        el.click()
-                    ret = True
-                    #print("bingo, click area radio")
-
-        except Exception as exc:
-            print("click area radio a link fail")
-            print(exc)
-            pass
-
-    return ret
-
-def cityline_area_selected_text(driver):
-    ret = None
-
-    area_list = None
-    try:
-        #my_css_selector = "table.onePriceZoneInfoTable > tbody > tr"
-        my_css_selector = "tr.menubar_text ~ tr"
-        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-        if area_list is not None:
-            if len(area_list) > 0:
                 row_index = 0
                 for row in area_list:
                     row_index += 1
-                    row_is_enabled=False
-                    try:
-                        row_is_enabled = row.is_enabled()
-                    except Exception as exc:
-                        pass
-
+                    #row_is_enabled=False
+                    row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
                         try:
@@ -3386,24 +3307,85 @@ def cityline_area_selected_text(driver):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            el = None
-                            try:
-                                my_css_selector = "input[type=radio]"
-                                el = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                                if el is not None:
-                                    if el.is_enabled():
-                                        if el.is_selected():
-                                            ret = row_text
-                                            break
-                            except Exception as exc:
-                                print(exc)
-                                pass
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
 
-    except Exception as exc:
-        print(exc)
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if area_keyword_1 in row_text:
+                                if len(area_keyword_1_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword#2 is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if area_keyword_1_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword#2')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword#2')
+                                        pass
+
+                            if is_match_area:
+                                areas.append(row)
+
+                if show_debug_message:
+                    print("after match keyword, found count:", len(areas))
+        else:
+            print("not found area form-check")
+            pass
+    else:
+        print("area form-check is None")
         pass
+
+    target_area = None
+    if areas is not None:
+        if len(areas) > 0:
+            target_row_index = 0
+
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(areas)-1
+
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(areas)-1)
+
+            target_area = areas[target_row_index]
+
+    if target_area is not None:
+        el = None
+        try:
+            #print("target_area text", target_area.text)
+            my_css_selector = "input[type=radio]"
+            el = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+            if el is not None:
+                if el.is_enabled():
+                    if not el.is_selected():
+                        el.click()
+                        ret = True
+                    else:
+                        ret = True
+                    #print("bingo, click target_area radio")
+
+        except Exception as exc:
+            print("click target_area radio a link fail")
+            print(exc)
+            pass
+
     return ret
 
+def cityline_area_selected_text(driver):
+    ret = False
+
+    return ret
 
 def cityline_ticket_number_auto_select(driver, ticket_number):
     show_debug_message = True       # debug.
@@ -3452,11 +3434,26 @@ def cityline_ticket_number_auto_select(driver, ticket_number):
 
     return is_assign_ticket_number
 
+def cityline_purchase_button_press(driver):
+    ret = False
+    try:
+        el = driver.find_element(By.CSS_SELECTOR, 'button.purchase-btn')
+        if el is not None:
+            print("bingo, found next button")
+            if el.is_enabled():
+                el.click()
+                ret = True
+    except Exception as exc:
+        print("find next button fail")
+        print(exc)
+
+    return ret
+
 
 def cityline_next_button_press(driver):
     ret = False
     try:
-        el = driver.find_element(By.CSS_SELECTOR, '#expressPurchaseButton')
+        el = driver.find_element(By.CSS_SELECTOR, '#expressPurchaseBtn')
         if el is not None:
             print("bingo, found next button")
             if el.is_enabled():
@@ -3474,18 +3471,33 @@ def cityline_performance(driver, config_dict):
     #show_debug_message = False      # online
 
     auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
+    is_price_assign_by_bot = False
     if auto_fill_ticket_number:
         # click price row.
-        area_div_exist = False
-        kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
-        kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
-        if len(kktix_area_keyword) > 0:
-            #area_div_exist = cityline_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword)
-            pass
+        area_auto_select_mode = config_dict["kktix"]["area_mode"]
+        area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
+        area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
+        area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
+        area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
+        
+        if len(area_keyword_1) > 0:
+            if show_debug_message:
+                print("area_keyword_1:", area_keyword_1)
+                print("area_keyword_1_and:", area_keyword_1_and)
 
-        if show_debug_message:
-            print("kktix_area_keyword:", kktix_area_keyword)
-            print("kktix_date_keyword:", kktix_date_keyword)
+            is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+        else:
+            # empty keyword.
+            # default select at the first radio.
+            is_price_assign_by_bot = True
+
+        if not is_price_assign_by_bot:
+            # try keyword_2
+            if show_debug_message:
+                    print("area_keyword_2:", area_keyword_2)
+                    print("area_keyword_2_and:", area_keyword_2_and)
+            if len(area_keyword_2) > 0:
+                area_div_exist = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
         # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
@@ -3495,18 +3507,20 @@ def cityline_performance(driver, config_dict):
             print("ticket_number:", ticket_number)
             print("is_assign_ticket_number:", is_assign_ticket_number)
 
-        is_assign_ticket_number = False
         if is_assign_ticket_number:
             auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
             if auto_press_next_step_button:
-                selected_text = cityline_area_selected_text(driver)
-                if not selected_text is None:
-                    if kktix_area_keyword in selected_text:
-                        # must same with our settting to auto press.
-                        for i in range(3):
-                            click_ret = cityline_next_button_press(driver)
-                            if click_ret:
-                                break
+                if not is_price_assign_by_bot:
+                    #[TODO]:
+                    # double check selected radio matched by keyword/keyword_and.
+                    # cityline_area_selected_text(driver)
+                    pass
+
+                if is_price_assign_by_bot:
+                    for i in range(3):
+                        click_ret = cityline_next_button_press(driver)
+                        if click_ret:
+                            break
 
 def facebook_login(driver, facebook_account):
     ret = False
@@ -3634,7 +3648,7 @@ def check_pop_alert(driver):
             #print("last_url:", last_url)
             try:
                 window_handles_count = len(driver.window_handles)
-                if window_handles_count >= 1:
+                if window_handles_count > 1:
                     driver.switch_to.window(driver.window_handles[0])
             except Exception as excSwithFail:
                 pass
@@ -3707,7 +3721,7 @@ def main():
             #print("last_url:", last_url)
             try:
                 window_handles_count = len(driver.window_handles)
-                if window_handles_count >= 1:
+                if window_handles_count > 1:
                     driver.switch_to.window(driver.window_handles[0])
             except Exception as excSwithFail:
                 pass
@@ -3920,7 +3934,19 @@ def main():
             if '/Login.html' in url:
                 continue
 
-            if '/internet/performance?' in url:
+            try:
+                window_handles_count = len(driver.window_handles)
+                if window_handles_count > 1:
+                    driver.switch_to.window(driver.window_handles[0])
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[0])
+            except Exception as excSwithFail:
+                pass
+
+            if '/eventDetail?' in url:
+                cityline_purchase_button_press(driver)
+
+            if '/performance?' in url:
                 cityline_performance(driver, config_dict)
 
         # for facebook
