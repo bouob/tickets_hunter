@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2022-12-22)：支援新版本的 cityline
+
+https://youtu.be/KOhQ2XdfjjQ
+
 Max搶票機器人 (2022-11-24)：KKTix 支援避開「剩餘 1」的區域的功能。增加關鍵字#2 的欄位。
 
 https://youtu.be/nupJlwRNOIA
