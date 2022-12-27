@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.12.22)"
+CONST_APP_VERSION = u"MaxBot (2022.12.26)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -62,6 +62,7 @@ def load_translate():
     en_us["area_keyword"] = 'Area Keyword'
     en_us["and"] = 'And with'
     en_us["auto_guess_options"] = 'Guess Options in Question'
+    en_us["user_guess_string"] = 'Fill This Answer in Question'
 
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
@@ -83,8 +84,11 @@ def load_translate():
     en_us["save"] = 'Save'
     en_us["exit"] = 'Close'
     en_us["copy"] = 'Copy'
+    en_us["restore_defaults"] = 'Restore Defaults'
+    en_us["done"] = 'Done'
 
     en_us["facebook_account"] = 'Facebook account'
+    en_us["kktix_account"] = 'KKTIX account'
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
     en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
@@ -112,6 +116,7 @@ def load_translate():
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["and"] = '而且（同列）'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
+    zh_tw["user_guess_string"] = '在驗證問題中填寫此答案'
 
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
@@ -133,8 +138,11 @@ def load_translate():
     zh_tw["save"] = '存檔'
     zh_tw["exit"] = '關閉'
     zh_tw["copy"] = '複製'
+    zh_tw["restore_defaults"] = '恢復預設值'
+    zh_tw["done"] = '完成'
 
     zh_tw["facebook_account"] = 'Facebook 帳號'
+    zh_tw["kktix_account"] = 'KKTIX 帳號'
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
     zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
@@ -162,6 +170,7 @@ def load_translate():
     zh_cn["area_keyword"] = '区域关键字'
     zh_cn["and"] = '而且（同列）'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
+    zh_cn["user_guess_string"] = '在验证问题中填写此答案'
 
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
@@ -183,8 +192,12 @@ def load_translate():
     zh_cn["run"] = '抢票'
     zh_cn["save"] = '存档'
     zh_cn["exit"] = '关闭'
+    zh_cn["copy"] = '复制'
+    zh_cn["restore_defaults"] = '恢复默认值'
+    zh_cn["done"] = '完成'
 
     zh_cn["facebook_account"] = 'Facebook 帐号'
+    zh_cn["kktix_account"] = 'KKTIX 帐号'
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
     zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
@@ -212,6 +225,7 @@ def load_translate():
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["and"] = 'そして（同列）'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
+    ja_jp["user_guess_string"] = '質問に回答を記入'
 
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
@@ -233,8 +247,11 @@ def load_translate():
     ja_jp["save"] = '保存'
     ja_jp["exit"] = '閉じる'
     ja_jp["copy"] = 'コピー'
+    ja_jp["restore_defaults"] = 'デフォルトに戻す'
+    ja_jp["done"] = '終わり'
 
     ja_jp["facebook_account"] = 'Facebookのアカウント'
+    ja_jp["kktix_account"] = 'KKTIXのアカウント'
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
 
@@ -281,6 +298,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_2"] = ""
     config_dict["kktix"]["area_keyword_2_and"] = ""
     config_dict["kktix"]["auto_guess_options"] = False
+    config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["date_auto_select"] = {}
@@ -298,6 +316,7 @@ def get_default_config():
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = False
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
+    config_dict["tixcraft"]["presale_code"] = ""
 
     config_dict['advanced']={}
 
@@ -306,6 +325,7 @@ def get_default_config():
     config_dict["advanced"]["play_captcha_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
 
     config_dict["advanced"]["facebook_account"] = ""
+    config_dict["advanced"]["kktix_account"] = ""
     config_dict["advanced"]["adblock_plus_enable"] = False
 
     config_dict['debug']=False
@@ -326,10 +346,23 @@ def load_json():
         config_dict = get_default_config()
     return config_filepath, config_dict
 
-def btn_save_clicked():
-    btn_save_act()
+def btn_restore_defaults_clicked(language_code):
+    app_root = get_app_root()
+    config_filepath = os.path.join(app_root, 'settings.json')
 
-def btn_save_act(slience_mode=False):
+    config_dict = get_default_config()
+    import json
+    with open(config_filepath, 'w') as outfile:
+        json.dump(config_dict, outfile)
+    messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
+
+    global root
+    load_GUI(root, config_dict)
+
+def btn_save_clicked(language_code):
+    btn_save_act(language_code)
+
+def btn_save_act(language_code, slience_mode=False):
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, 'settings.json')
 
@@ -351,6 +384,7 @@ def btn_save_act(slience_mode=False):
     global txt_kktix_area_keyword_2_and
     # disable password brute force attack
     global txt_kktix_answer_dictionary
+    global txt_kktix_user_guess_string
 
     global chk_state_auto_guess_options
 
@@ -367,8 +401,10 @@ def btn_save_act(slience_mode=False):
 
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
+    global txt_presale_code
 
     global txt_facebook_account
+    global txt_kktix_account
     global chk_state_play_captcha_sound
     global txt_captcha_sound_filename
     global chk_state_adblock_plus
@@ -395,6 +431,8 @@ def btn_save_act(slience_mode=False):
             messagebox.showerror("Error", "Please select a language")
         else:
             config_dict["language"] = combo_language.get().strip()
+            # display as new language.
+            language_code = get_language_code_by_name(config_dict["language"])
 
     if is_all_data_correct:
         if combo_ticket_number.get().strip()=="":
@@ -417,6 +455,7 @@ def btn_save_act(slience_mode=False):
         # disable password brute force attack
         #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
         config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
+        config_dict["kktix"]["user_guess_string"] = txt_kktix_user_guess_string.get().strip()
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
@@ -432,11 +471,13 @@ def btn_save_act(slience_mode=False):
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
+        config_dict["tixcraft"]["presale_code"] = txt_presale_code.get().strip()
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
 
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
+        config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
 
 
@@ -446,17 +487,17 @@ def btn_save_act(slience_mode=False):
         with open(config_filepath, 'w') as outfile:
             json.dump(config_dict, outfile)
 
-        if slience_mode==False:
-            messagebox.showinfo("File Save", "Done ^_^")
+        if not slience_mode:
+            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
     return is_all_data_correct
 
-def btn_run_clicked():
+def btn_run_clicked(language_code):
     import subprocess
 
     print('run button pressed.')
     Root_Dir = ""
-    save_ret = btn_save_act(slience_mode=True)
+    save_ret = btn_save_act(language_code, slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
         if hasattr(sys, 'frozen'):
@@ -583,6 +624,7 @@ def applyNewLanguage():
     global lbl_kktix_area_keyword_2
     global lbl_kktix_area_keyword_2_and_text
     global lbl_auto_guess_options
+    global lbl_user_guess_string
 
     # for tixcraft
     global lbl_date_auto_select
@@ -596,6 +638,7 @@ def applyNewLanguage():
     global lbl_area_keyword_4
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
+    global lbl_presale_code
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -637,6 +680,8 @@ def applyNewLanguage():
     lbl_kktix_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
     lbl_kktix_area_keyword_2_and_text.config(text=translate[language_code]["and"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
+    lbl_user_guess_string.config(text=translate[language_code]["user_guess_string"])
+    
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
     lbl_date_auto_select_mode.config(text=translate[language_code]["date_select_order"])
     lbl_date_keyword.config(text=translate[language_code]["date_keyword"])
@@ -648,6 +693,7 @@ def applyNewLanguage():
     lbl_area_keyword_4.config(text=translate[language_code]["area_keyword_4"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
+    lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -666,9 +712,11 @@ def applyNewLanguage():
     tabControl.tab(2, text=translate[language_code]["about"])
 
     global lbl_facebook_account
+    global lbl_kktix_account
     global lbl_play_captcha_sound
     global lbl_captcha_sound_filename
     lbl_facebook_account.config(text=translate[language_code]["facebook_account"])
+    lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
     lbl_play_captcha_sound.config(text=translate[language_code]["play_captcha_sound"])
     lbl_captcha_sound_filename.config(text=translate[language_code]["captcha_sound_filename"])
 
@@ -684,9 +732,13 @@ def applyNewLanguage():
     global btn_run
     global btn_save
     global btn_exit
+    global btn_restore_defaults
+
     btn_run.config(text=translate[language_code]["run"])
     btn_save.config(text=translate[language_code]["save"])
-    btn_exit.config(text=translate[language_code]["exit"])
+    if btn_exit:
+        btn_exit.config(text=translate[language_code]["exit"])
+    btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -889,6 +941,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # PS: because of the question is always variable.
     #kktix_answer_dictionary = ""
     auto_guess_options = False
+    user_guess_string = ""
 
     date_auto_select_enable = None
     date_auto_select_mode = ""
@@ -903,6 +956,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     pass_date_is_sold_out_enable = False
     auto_reload_coming_soon_page_enable = True
+    presale_code = ""
 
     debugMode = False
 
@@ -929,6 +983,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
     kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
     auto_guess_options = config_dict["kktix"]["auto_guess_options"]
+    user_guess_string = config_dict["kktix"]["user_guess_string"].strip()
 
     # disable password brute force attack
     # PS: feature disabled.
@@ -954,6 +1009,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+    presale_code = config_dict["tixcraft"]["presale_code"].strip()
 
     # output config:
     print("setting app version", CONST_APP_VERSION)
@@ -975,6 +1031,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # disable password brute force attack
     #print("kktix_answer_dictionary", kktix_answer_dictionary)
     print("auto_guess_options", auto_guess_options)
+    print("user_guess_string", user_guess_string)
 
     # for tixcraft
     print("==[tixcraft]==")
@@ -992,6 +1049,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
 
     print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
+    print("presale_code", presale_code)
 
     print("debug Mode", debugMode)
 
@@ -1246,8 +1304,15 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    lbl_hr = Label(frame_group_kktix, text="")
-    lbl_hr.grid(column=0, row=group_row_count)
+    global lbl_user_guess_string
+    lbl_user_guess_string = Label(frame_group_kktix, text=translate[language_code]['user_guess_string'])
+    lbl_user_guess_string.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_user_guess_string
+    txt_kktix_user_guess_string_value = StringVar(frame_group_kktix, value=user_guess_string)
+    txt_kktix_user_guess_string = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_user_guess_string_value)
+    txt_kktix_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
+
 
     global frame_group_kktix_index
     frame_group_kktix_index = row_count
@@ -1419,6 +1484,15 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
+    global lbl_presale_code
+    lbl_presale_code = Label(frame_group_tixcraft, text=translate[language_code]['user_guess_string'])
+    lbl_presale_code.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_presale_code
+    txt_presale_code_value = StringVar(frame_group_tixcraft, value=presale_code)
+    txt_presale_code = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_value)
+    txt_presale_code.grid(column=1, row=group_row_count, sticky = W)
+
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
     frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
@@ -1433,13 +1507,14 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     group_row_count = 0
 
     facebook_account = ""
+    kktix_account = ""
     play_captcha_sound = False
     captcha_sound_filename = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
     adblock_plus_enable = False
 
     if 'advanced' in config_dict:
-        if 'facebook_account' in config_dict["advanced"]:
-            facebook_account = config_dict["advanced"]["facebook_account"].strip()
+        facebook_account = config_dict["advanced"]["facebook_account"].strip()
+        kktix_account = config_dict["advanced"]["kktix_account"].strip()
         if 'play_captcha_sound' in config_dict["advanced"]:
             if 'enable' in config_dict["advanced"]["play_captcha_sound"]:
                 play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
@@ -1451,6 +1526,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     # for kktix
     print("==[advanced]==")
     print("facebook_account", facebook_account)
+    print("kktix_account", kktix_account)
     print("play_captcha_sound", play_captcha_sound)
     print("captcha_sound_filename", captcha_sound_filename)
     print("adblock_plus_enable", adblock_plus_enable)
@@ -1470,6 +1546,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_facebook_account_value = StringVar(frame_group_header, value=facebook_account)
     txt_facebook_account = Entry(frame_group_header, width=20, textvariable = txt_facebook_account_value)
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_kktix_account
+    lbl_kktix_account = Label(frame_group_header, text=translate[language_code]['kktix_account'])
+    lbl_kktix_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_account
+    txt_kktix_account_value = StringVar(frame_group_header, value=kktix_account)
+    txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
+    txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -1610,44 +1697,35 @@ def AboutTab(root, language_code):
 
     frame_group_header.grid(column=0, row=row_count)
 
-def get_action_bar(root,language_code):
+def get_action_bar(root, language_code):
     frame_action = Frame(root)
 
     global btn_run
     global btn_save
     global btn_exit
+    global btn_restore_defaults
 
-    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command=btn_run_clicked)
+    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command= lambda: btn_run_clicked(language_code))
     btn_run.grid(column=0, row=0)
 
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command=btn_save_clicked)
+    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked(language_code) )
     btn_save.grid(column=1, row=0)
 
     btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
-    btn_exit.grid(column=3, row=0)
+    #btn_exit.grid(column=2, row=0)
+
+    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
+    btn_restore_defaults.grid(column=2, row=0)
 
     return frame_action
 
-def main():
-    global translate
-    translate = load_translate()
+def clearFrame(frame):
+    # destroy all widgets from frame
+    for widget in frame.winfo_children():
+       widget.destroy()
 
-    global config_filepath
-    global config_dict
-    config_filepath, config_dict = load_json()
-
-    global root
-    root = Tk()
-    root.title(CONST_APP_VERSION)
-
-    #style = ttk.Style(root)
-    #style.theme_use('aqua')
-
-    #root.configure(background='lightgray')
-    # style configuration
-    #style = Style(root)
-    #style.configure('TLabel', background='lightgray', foreground='black')
-    #style.configure('TFrame', background='lightgray')
+def load_GUI(root, config_dict):
+    clearFrame(root)
 
     language_code="en_us"
     if not config_dict is None:
@@ -1669,18 +1747,36 @@ def main():
 
     row_count+=1
 
-    frame_action = get_action_bar(root,language_code)
+    frame_action = get_action_bar(root, language_code)
     frame_action.grid(column=0, row=row_count)
+
+    global UI_PADDING_X
+    PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
+    AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab3, language_code)
+
+
+def main():
+    global translate
+    # only need to load translate once.
+    translate = load_translate()
+
+    global config_filepath
+    global config_dict
+    # only need to load json file once.
+    config_filepath, config_dict = load_json()
+
+    global root
+    root = Tk()
+    root.title(CONST_APP_VERSION)
 
     global UI_PADDING_X
     UI_PADDING_X = 15
 
-    GUI_SIZE_WIDTH = 460
-    GUI_SIZE_HEIGHT = 550
+    load_GUI(root, config_dict)
 
-    PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
-    AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab3, language_code)
+    GUI_SIZE_WIDTH = 460
+    GUI_SIZE_HEIGHT = 575
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-90)

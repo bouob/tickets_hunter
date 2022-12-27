@@ -39,7 +39,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.12.22)"
+CONST_APP_VERSION = u"MaxBot (2022.12.26)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1351,13 +1351,15 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
 
     return is_assign_ticket_number
 
-def tixcraft_verify(driver):
+def tixcraft_verify(driver, presale_code):
     show_debug_message = True       # debug.
     #show_debug_message = False      # online
 
     ret = False
 
     captcha_password_string = None
+    if len(presale_code) > 0:
+        captcha_password_string = presale_code
 
     form_select = None
     try:
@@ -1400,10 +1402,11 @@ def tixcraft_verify(driver):
     is_options_in_question = False
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
-    if u'請輸入"YES"' in html_text:
-        if u'已詳閱' in html_text:
-            if u'並同意' in html_text:
-                captcha_password_string = 'YES'
+    if captcha_password_string is None:
+        if u'請輸入"YES"' in html_text:
+            if u'已詳閱' in html_text:
+                if u'並同意' in html_text:
+                    captcha_password_string = 'YES'
 
     if show_debug_message:
         print("captcha_password_string:", captcha_password_string)
@@ -1433,7 +1436,6 @@ def tixcraft_verify(driver):
             try:
                 # PS: sometime may send key twice...
                 form_input.clear()
-
                 form_input.send_keys(captcha_password_string)
                 is_password_sent = True
                 if show_debug_message:
@@ -1474,7 +1476,6 @@ def tixcraft_verify(driver):
         if len(default_value)==0:
             try:
                 form_input.click()
-                time.sleep(0.5)
             except Exception as exc:
                 pass
 
@@ -2087,7 +2088,7 @@ def kktix_check_register_status(url):
     #print("registerStatus:", registerStatus)
     return registerStatus
 
-def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess_options):
+def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2449,9 +2450,8 @@ def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess
 
         # still no answer.
         if captcha_password_string is None:
-            if auto_guess_options:
-                if not is_combine_two_question:
-                    answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
+            if not is_combine_two_question:
+                answer_list, my_answer_delimitor = get_answer_list_by_question(captcha_text_div_text)
 
     return captcha_password_string, answer_list, my_answer_delimitor
 
@@ -2561,7 +2561,14 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                 print("found captcha_inner_div layor.")
 
             auto_guess_options = config_dict["kktix"]["auto_guess_options"]
-            captcha_password_string, answer_list, my_answer_delimitor = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div, auto_guess_options)
+            user_guess_string = config_dict["kktix"]["user_guess_string"]
+
+            if len(user_guess_string) > 0:
+                captcha_password_string = user_guess_string
+            else:
+                if auto_guess_options:
+                    captcha_password_string, answer_list, my_answer_delimitor = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div)
+
 
             if captcha_password_string is not None:
                 # password is not None, try to send.
@@ -2587,7 +2594,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                         inputed_captcha_text = ""
                     if len(inputed_captcha_text) == 0:
                         try:
-                            print("focus() captcha to input.")
+                            #print("focus() captcha to input.")
                             check_and_play_sound_for_captcha(config_dict)
                             captcha_password_input_tag.click()
                             time.sleep(1)
@@ -2659,7 +2666,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                             # exceed index, do nothing.
                             pass
                 else:
-                    # captcha appear but we do no have answer list.
+                    # captcha appeared, but we don't have answer list.
                     pass
 
 
@@ -3522,11 +3529,61 @@ def cityline_performance(driver, config_dict):
                         if click_ret:
                             break
 
-def facebook_login(driver, facebook_account):
+def facebook_login(driver, account):
     ret = False
     el_email = None
     try:
         el_email = driver.find_element(By.CSS_SELECTOR, '#email')
+    except Exception as exc:
+        pass
+
+    is_visible = False
+    if el_email is not None:
+        try:
+            if el_email.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    is_email_sent = False
+    if is_visible:
+        try:
+            inputed_text = el_email.get_attribute('value')
+            if inputed_text is not None:
+                if len(inputed_text) == 0:
+                    el_email.send_keys(account)
+                    is_email_sent = True
+        except Exception as exc:
+            pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            el_pass = driver.find_element(By.CSS_SELECTOR, '#pass')
+        except Exception as exc:
+            pass
+
+    is_visible = False
+    if el_pass is not None:
+        try:
+            if el_pass.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    if is_visible:
+        try:
+            el_pass.click()
+        except Exception as exc:
+            pass
+
+    return ret
+
+def kktix_login(driver, account):
+    ret = False
+    el_email = None
+    try:
+        el_email = driver.find_element(By.CSS_SELECTOR, '#user_login')
     except Exception as exc:
         #print("find #email fail")
         #print(exc)
@@ -3536,11 +3593,8 @@ def facebook_login(driver, facebook_account):
     if el_email is not None:
         try:
             if el_email.is_enabled():
-                if el_email.is_displayed():
-                    is_visible = True
+                is_visible = True
         except Exception as exc:
-            #print("find #email fail")
-            #print(exc)
             pass
 
     is_email_sent = False
@@ -3549,39 +3603,30 @@ def facebook_login(driver, facebook_account):
             inputed_text = el_email.get_attribute('value')
             if inputed_text is not None:
                 if len(inputed_text) == 0:
-                    el_email.send_keys(facebook_account)
+                    el_email.send_keys(account)
                     is_email_sent = True
         except Exception as exc:
-            #print("find #email fail")
-            #print(exc)
             pass
 
     el_pass = None
     if is_email_sent:
         try:
-            el_pass = driver.find_element(By.CSS_SELECTOR, '#pass')
+            el_pass = driver.find_element(By.CSS_SELECTOR, '#user_password')
         except Exception as exc:
-            #print("find #email fail")
-            #print(exc)
             pass
 
     is_visible = False
     if el_pass is not None:
         try:
             if el_pass.is_enabled():
-                if el_pass.is_displayed():
-                    is_visible = True
+                is_visible = True
         except Exception as exc:
-            #print("find #email fail")
-            #print(exc)
             pass
 
     if is_visible:
         try:
             el_pass.click()
         except Exception as exc:
-            #print("find #email fail")
-            #print(exc)
             pass
 
     return ret
@@ -3858,7 +3903,8 @@ def main():
                 tixcraft_area_auto_select(driver, url, config_dict)
 
             if '/ticket/verify/' in url:
-                tixcraft_verify(driver)
+                presale_code = config_dict["tixcraft"]["presale_code"]
+                tixcraft_verify(driver, presale_code)
 
             # main app, to select ticket number.
             if '/ticket/ticket/' in url:
@@ -3870,9 +3916,12 @@ def main():
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
             auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+            kktix_account = config_dict["advanced"]["kktix_account"]
 
             # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
-            if '/users/sign_in' in url:
+            if '/users/sign_in?' in url:
+                if len(kktix_account) > 4:
+                    kktix_login(driver, kktix_account)
                 continue
 
             if '/registrations/new' in url:
