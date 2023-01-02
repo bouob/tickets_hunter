@@ -13,7 +13,9 @@ https://youtu.be/R5LY7pJgAzI
 
 Max搶票機器人 (2023-01-01)：支援新版本的 urbtix
 
-https://youtu.be/_6jxqVC39x8
+https://youtu.be/_6jxqVC39x8 (macOS)
+
+https://youtu.be/PWKBZ8aG9Rg (Windows)
 
 Max搶票機器人 (2022-12-22)：支援新版本的 cityline
 
