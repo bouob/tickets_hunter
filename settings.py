@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2022.12.26)"
+CONST_APP_VERSION = u"MaxBot (2023.01.01)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -746,7 +746,7 @@ def callbackHomepageOnChange(event):
 def callbackDateAutoOnChange():
     showHideTixcraftBlocks()
 
-def showHideBlocks(all_layout_visible=False):
+def showHideBlocks():
     global UI_PADDING_X
 
     global frame_group_kktix
@@ -754,62 +754,27 @@ def showHideBlocks(all_layout_visible=False):
     global frame_group_tixcraft
     global frame_group_tixcraft_index
 
-    # for kktix only.
-    global lbl_kktix_area_mode
-
-    # disable password brute force attack
-    #global lbl_kktix_answer_dictionary
-
-    #global txt_kktix_answer_dictionary
-    #global txt_kktix_answer_dictionary_index
-
     global combo_homepage
-    global combo_kktix_area_mode
-    global combo_kktix_area_mode_index
 
     new_homepage = combo_homepage.get().strip()
     #print("new homepage value:", new_homepage)
 
-    show_block_index = 0
-    if u'tixcraft' in new_homepage:
-        show_block_index = 1
-    if u'famiticket' in new_homepage:
-        show_block_index = 1
+    BLOCK_STYLE_TIXCRAFT = 0
+    BLOCK_STYLE_KKTIX = 1
+    STYLE_KKTIX_DOMAIN_LIST = ['kktix']
 
-    # all_layout_visible==true, means enter function when onload().
-    #print("all_layout_visible:", all_layout_visible)
-    if all_layout_visible:
-        if show_block_index==0:
-            frame_group_tixcraft.grid_forget()
+    show_block_index = BLOCK_STYLE_TIXCRAFT
+    for domain_name in STYLE_KKTIX_DOMAIN_LIST:
+        if domain_name in new_homepage:
+            show_block_index = BLOCK_STYLE_KKTIX
 
-            if u'kktix' in new_homepage:
-                #combo_kktix_area_mode.grid(column=1, row=combo_kktix_area_mode_index, sticky = W)
-                #txt_kktix_answer_dictionary.grid(column=1, row=txt_kktix_answer_dictionary_index, sticky = W)
-                pass
-            else:
-                combo_kktix_area_mode.grid_forget()
-                # disable password brute force attack
-                #txt_kktix_answer_dictionary.grid_forget()
+    if show_block_index == BLOCK_STYLE_KKTIX:
+        frame_group_kktix.grid(column=0, row=frame_group_kktix_index, padx=UI_PADDING_X)
+        frame_group_tixcraft.grid_forget()
 
-        else:
-            frame_group_kktix.grid_forget()
     else:
-        if show_block_index == 0:
-            frame_group_kktix.grid(column=0, row=frame_group_kktix_index, padx=UI_PADDING_X)
-            frame_group_tixcraft.grid_forget()
-
-            if u'kktix' in new_homepage:
-                combo_kktix_area_mode.grid(column=1, row=combo_kktix_area_mode_index, sticky = W)
-                # disable password brute force attack
-                #txt_kktix_answer_dictionary.grid(column=1, row=txt_kktix_answer_dictionary_index, sticky = W)
-            else:
-                combo_kktix_area_mode.grid_forget()
-                # disable password brute force attack
-                #txt_kktix_answer_dictionary.grid_forget()
-
-        else:
-            frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
-            frame_group_kktix.grid_forget()
+        frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
+        frame_group_kktix.grid_forget()
 
     showHideTixcraftBlocks()
     showHidePass1SeatRemaining()
@@ -1316,7 +1281,8 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global frame_group_kktix_index
     frame_group_kktix_index = row_count
-    frame_group_kktix.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+    #PS: don't need show when onload(), because show/hide block will load again.
+    #frame_group_kktix.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
     row_count+=1
 
@@ -1495,10 +1461,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
-    frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+    #PS: don't need show when onload(), because show/hide block will load again.
+    #frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
-
-    showHideBlocks(all_layout_visible=True)
+    showHideBlocks()
 
 def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0

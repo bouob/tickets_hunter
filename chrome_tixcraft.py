@@ -22,6 +22,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 # for selenium 4
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.action_chains import ActionChains
 # for wait #1
 import time
 import re
@@ -39,7 +40,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2022.12.26)"
+CONST_APP_VERSION = u"MaxBot (2023.01.01)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1000,14 +1001,14 @@ def tixcraft_date_auto_select(driver, url, config_dict):
 # PURPOSE: get target area list.
 # RETURN:
 #   is_need_refresh
-#   areas
-# PS: areas will be None, if length equals zero.
+#   matched_blocks
+# PS: matched_blocks will be None, if length equals zero.
 def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_seat_remaining_enable):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     is_need_refresh = False
-    areas = None
+    matched_blocks = None
 
     area_list = None
     area_list_count = 0
@@ -1028,7 +1029,7 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
             is_need_refresh = True
 
     if area_list_count > 0:
-        areas = []
+        matched_blocks = []
         for row in area_list:
             row_is_enabled=False
             try:
@@ -1100,7 +1101,7 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                     print("is_append_this_row:", is_append_this_row)
 
                 if is_append_this_row:
-                    areas.append(row)
+                    matched_blocks.append(row)
 
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         print("only need first item, break area list loop.")
@@ -1109,11 +1110,11 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
                         print("row_text:" + row_text)
                         print("match:" + area_keyword)
 
-        if len(areas) == 0:
-            areas = None
+        if len(matched_blocks) == 0:
+            matched_blocks = None
             is_need_refresh = True
 
-    return is_need_refresh, areas
+    return is_need_refresh, matched_blocks
 
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
@@ -1303,14 +1304,14 @@ def tixcraft_ticket_agree(driver):
     return is_finish_checkbox_click
 
 def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
     if select_obj is not None:
         try:
             # target ticket number
             select_obj.select_by_visible_text(ticket_number)
             #select.select_by_value(ticket_number)
             #select.select_by_index(int(ticket_number))
-            is_assign_ticket_number = True
+            is_ticket_number_assigned = True
         except Exception as exc:
             print("select_by_visible_text ticket_number fail")
             print(exc)
@@ -1320,7 +1321,7 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
                 select_obj.select_by_visible_text(ticket_number)
                 #select.select_by_value(ticket_number)
                 #select.select_by_index(int(ticket_number))
-                is_assign_ticket_number = True
+                is_ticket_number_assigned = True
             except Exception as exc:
                 print("select_by_visible_text ticket_number fail...2")
                 print(exc)
@@ -1330,13 +1331,13 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
                     select_obj.select_by_visible_text("1")
                     #select.select_by_value("1")
                     #select.select_by_index(int(ticket_number))
-                    is_assign_ticket_number = True
+                    is_ticket_number_assigned = True
                 except Exception as exc:
                     print("select_by_visible_text 1 fail")
                     pass
 
     # Plan B.
-    # if not is_assign_ticket_number:
+    # if not is_ticket_number_assigned:
     if False:
         if select is not None:
             try:
@@ -1344,12 +1345,12 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
                 #select.select_by_visible_text(ticket_number)
                 print("assign ticker number by jQuery:",ticket_number)
                 driver.execute_script("$(\"input[type='select']\").val(\""+ ticket_number +"\");")
-                is_assign_ticket_number = True
+                is_ticket_number_assigned = True
             except Exception as exc:
                 print("jQuery select_by_visible_text ticket_number fail (after click.)")
                 print(exc)
 
-    return is_assign_ticket_number
+    return is_ticket_number_assigned
 
 def tixcraft_verify(driver, presale_code):
     show_debug_message = True       # debug.
@@ -1512,7 +1513,7 @@ def tixcraft_ticket_main(driver, config_dict):
                 pass
 
     is_verifyCode_editing = False
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
     if not select_obj is None:
         row_text = None
         try:
@@ -1523,19 +1524,19 @@ def tixcraft_ticket_main(driver, config_dict):
             if len(row_text) > 0:
                 if row_text != "0":
                     # ticket assign.
-                    is_assign_ticket_number = True
+                    is_ticket_number_assigned = True
 
         # must wait select object ready to assign ticket number.
-        if not is_assign_ticket_number:
+        if not is_ticket_number_assigned:
             # only this case:"ticket number changed by bot" to play sound!
             # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
             check_and_play_sound_for_captcha(config_dict)
 
             ticket_number = str(config_dict["ticket_number"])
-            is_assign_ticket_number = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
 
             # must wait ticket number assign to focus captcha.
-            if is_assign_ticket_number:
+            if is_ticket_number_assigned:
                 # only this case to focus()
                 # start to input verify code.
                 form_verifyCode = None
@@ -1716,7 +1717,7 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
     #show_debug_message = False      # online
 
     areas = None
-    is_ticket_number_assigened = False
+    is_ticket_number_assigned = False
 
     ticket_price_list = None
     try:
@@ -1789,9 +1790,9 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
 
                     if len(current_ticket_number) > 0:
                         if current_ticket_number != "0":
-                            is_ticket_number_assigened = True
+                            is_ticket_number_assigned = True
 
-                    if is_ticket_number_assigened:
+                    if is_ticket_number_assigned:
                         # no need to travel
                         break
 
@@ -1861,7 +1862,7 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
     if is_travel_interrupted:
         pass
 
-    return is_ticket_number_assigened, areas
+    return is_ticket_number_assigned, areas
 
 def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
@@ -1869,10 +1870,10 @@ def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enab
 
     ticket_number_str = str(ticket_number)
 
-    is_ticket_number_assigened, areas = kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and)
+    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and)
 
     target_area = None
-    if not is_ticket_number_assigened:
+    if not is_ticket_number_assigned:
         if areas is not None:
             if len(areas) > 0:
                 target_row_index = 0
@@ -1918,23 +1919,23 @@ def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enab
                 ticket_price_input.clear()
                 ticket_price_input.send_keys(ticket_number_str)
 
-                is_ticket_number_assigened = True
+                is_ticket_number_assigned = True
             except Exception as exc:
                 print("asssign ticket number to ticket-price field Exception:")
                 print(exc)
                 try:
                     ticket_price_input.clear()
                     ticket_price_input.send_keys("1")
-                    is_ticket_number_assigened = True
+                    is_ticket_number_assigned = True
                 except Exception as exc2:
                     pass
         else:
             if show_debug_message:
                 print("value already assigned.")
             # already assigned.
-            is_ticket_number_assigened = True
+            is_ticket_number_assigned = True
 
-    return is_ticket_number_assigened
+    return is_ticket_number_assigned
 
 def kktix_get_web_datetime(registrationsNewApp_div):
     show_debug_message = True       # debug.
@@ -2512,7 +2513,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
     if ticket_number == 1:
         pass_1_seat_remaining_enable = False
 
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
     if not registrationsNewApp_div is None:
         kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
         kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
@@ -2521,14 +2522,14 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
         kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
 
         for retry_index in range(2):
-            is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
-            if not is_assign_ticket_number:
-                is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
-                if not is_assign_ticket_number:
-                    is_assign_ticket_number = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
-            if is_assign_ticket_number:
+            is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+            if not is_ticket_number_assigned:
+                is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+                if not is_ticket_number_assigned:
+                    is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
+            if is_ticket_number_assigned:
                 break
-    #print('is_assign_ticket_number:', is_assign_ticket_number)
+    #print('is_ticket_number_assigned:', is_ticket_number_assigned)
 
     # part 3: captcha
     is_captcha_appear = False
@@ -2538,7 +2539,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
     # TODO: in guess options mode, no need to travel div again.
     captcha_inner_div = None
 
-    if is_assign_ticket_number:
+    if is_ticket_number_assigned:
         try:
             captcha_inner_div = driver.find_element(By.CSS_SELECTOR, '.custom-captcha-inner')
         except Exception as exc:
@@ -2613,7 +2614,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
             is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
 
     is_do_press_next_button = False
-    if is_assign_ticket_number:
+    if is_ticket_number_assigned:
         auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
         if auto_press_next_step_button:
             if is_finish_checkbox_click:
@@ -2935,7 +2936,7 @@ def fami_activity(driver):
 def fami_home(driver, url, config_dict):
     #print("fami_home bingo")
 
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
 
     ticket_number = str(config_dict["ticket_number"])
 
@@ -2968,7 +2969,7 @@ def fami_home(driver, url, config_dict):
         except Exception as exc:
             pass
 
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
     if is_select_box_visible:
         ticket_number_select = None
         try:
@@ -2982,7 +2983,7 @@ def fami_home(driver, url, config_dict):
                 if ticket_number_select.first_selected_option.text=="0" or ticket_number_select.first_selected_option.text=="選擇張數":
                     # target ticket number
                     ticket_number_select.select_by_visible_text(ticket_number)
-                    is_assign_ticket_number = True
+                    is_ticket_number_assigned = True
             except Exception as exc:
                 print("select_by_visible_text ticket_number fail")
                 print(exc)
@@ -2990,7 +2991,7 @@ def fami_home(driver, url, config_dict):
                 try:
                     # try target ticket number twice
                     ticket_number_select.select_by_visible_text(ticket_number)
-                    is_assign_ticket_number = True
+                    is_ticket_number_assigned = True
                 except Exception as exc:
                     print("select_by_visible_text ticket_number fail...2")
                     print(exc)
@@ -2998,7 +2999,7 @@ def fami_home(driver, url, config_dict):
                     # try buy one ticket
                     try:
                         ticket_number_select.select_by_visible_text("1")
-                        is_assign_ticket_number = True
+                        is_ticket_number_assigned = True
                     except Exception as exc:
                         print("select_by_visible_text 1 fail")
                         pass
@@ -3006,7 +3007,7 @@ def fami_home(driver, url, config_dict):
     #---------------------------
     # part 4: press "next" button.
     #---------------------------
-    if is_assign_ticket_number:
+    if is_ticket_number_assigned:
         fami_assign_site_button = None
         try:
             my_css_selector = "div.col > a.btn"
@@ -3078,182 +3079,568 @@ def fami_home(driver, url, config_dict):
                     except Exception as exc:
                         pass
 
-def urbtix_ticket_number_auto_select(driver, ticket_number):
+
+# purpose: date auto select
+def urbtix_date_auto_select(driver, auto_select_mode, date_keyword):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
     ret = False
-    is_assign_ticket_number = False
+    matched_blocks = None
 
-    try:
-        el = driver.find_element(By.CSS_SELECTOR, 'select.chzn-select')
-        if el is not None:
-            ret = True
-            #print("bingo, found ticket_number select")
-
-            ticket_number_select = Select(el)
-            if ticket_number_select is not None:
-                try:
-                    #print("get select ticket value:" + Select(ticket_number_select).first_selected_option.text)
-                    if ticket_number_select.first_selected_option.text=="0":
-                        # target ticket number
-                        ticket_number_select.select_by_visible_text(ticket_number)
-                        is_assign_ticket_number = True
-                except Exception as exc:
-                    print("select_by_visible_text ticket_number fail")
-                    print(exc)
-
-                    try:
-                        # try target ticket number twice
-                        ticket_number_select.select_by_visible_text(ticket_number)
-                        is_assign_ticket_number = True
-                    except Exception as exc:
-                        print("select_by_visible_text ticket_number fail...2")
-                        print(exc)
-
-                        # try buy one ticket
-                        try:
-                            ticket_number_select.select_by_visible_text("1")
-                            is_assign_ticket_number = True
-                        except Exception as exc:
-                            print("select_by_visible_text 1 fail")
-                            pass
-
-    except Exception as exc:
-        print("find ticket_number select fail...")
-        #time.sleep(0.1)
-        #print(exc)
-        pass
-
-    return ret, is_assign_ticket_number
-
-# purpose: area auto select
-# return:
-#   True: area block appear.
-#   False: area block not appear.
-# ps: return value for date auto select.
-def urbtix_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword):
-    ret = False
-    areas = None
+    # clean stop word.
+    date_keyword = format_keyword_string(date_keyword)
+    date_keyword_and = ""
 
     area_list = None
     try:
-        #print("try to find urbtix area block")
-        my_css_selector = "#ticket-price-tbl > tbody > tr"
+        #print("try to find cityline area block")
+        my_css_selector = "div.available-performance-wrapper > div.conent-wrapper > div.list-wrapper > ul"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-        if area_list is not None:
-            if len(area_list) > 0:
-                ret = True
+    except Exception as exc:
+        print("find #date-time-position date list fail")
+        print(exc)
 
-                if len(kktix_area_keyword) == 0:
-                    areas = area_list
-                else:
-                    # match keyword.
-                    areas = []
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
 
-                    row_index = 0
-                    for row in area_list:
-                        row_index += 1
-                        row_is_enabled=False
+        if area_list_count > 0:
+            ret = True
+
+            if len(date_keyword) == 0:
+                matched_blocks = area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", date_keyword)
+                matched_blocks = []
+
+                row_index = 0
+                for row in area_list:
+                    row_index += 1
+                    #row_is_enabled=False
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
                         try:
-                            row_is_enabled = row.is_enabled()
+                            row_text = row.text
                         except Exception as exc:
-                            pass
+                            print("get text fail")
+                            break
 
-                        if row_is_enabled:
+                        if row_text is None:
                             row_text = ""
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
 
-                            if row_text is None:
-                                row_text = ""
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
 
-                            if len(row_text) > 0:
-                                #print("area row_text:", row_index, row_text)
-                                if kktix_area_keyword in row_text:
-                                    areas.append(row)
+                            is_match_area = False
+                            match_area_code = 0
 
+                            if date_keyword in row_text:
+                                if len(date_keyword_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and # is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if date_keyword_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    if target_area is not None:
+        el_btn = None
+        try:
+            #print("target_area text", target_area.text)
+            my_css_selector = "div.buy-icon"
+            el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+        if el_btn is not None:
+            try:
+                if el_btn.is_enabled():
+                    el_btn.click()
+                    print("buy icon pressed.")
+            except Exception as exc:
+                # use plan B
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_btn)
+                    ret = True
+                except Exception as exc:
+                    pass
+
+    return ret
+
+def urbtix_purchase_ticket(driver, config_dict):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
+    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+
+    is_date_assign_by_bot = False
+    if len(date_keyword) > 0:
+        if show_debug_message:
+            print("date_keyword:", date_keyword)
+        is_date_assign_by_bot = urbtix_date_auto_select(driver, date_auto_select_mode, date_keyword)
+    else:
+        # empty keyword.
+        # default select at the first radio.
+        is_date_assign_by_bot = True
+
+    return is_date_assign_by_bot
+
+# purpose: area auto select
+def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
+    ret = False
+    matched_blocks = None
+
+    # clean stop word.
+    area_keyword_1 = format_keyword_string(area_keyword_1)
+    area_keyword_1_and = format_keyword_string(area_keyword_1_and)
+
+    area_list = None
+    try:
+        #print("try to find cityline area block")
+        my_css_selector = "div.area-info"
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
         print(exc)
 
-    area = None
-    if areas is not None:
-        #print("area_auto_select_mode", area_auto_select_mode)
-        #print("len(areas)", len(areas))
-        if len(areas) > 0:
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("area_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            ret = True
+
+            if len(area_keyword_1) == 0:
+                matched_blocks = area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", area_keyword_1)
+                    print("keyword and:", area_keyword_1_and)
+                matched_blocks = []
+
+                row_index = 0
+                for row in area_list:
+                    row_index += 1
+                    
+                    row_is_enabled=True
+
+                    try:
+                        button_class_string = str(row.get_attribute('class'))
+                        if len(button_class_string) > 1:
+                            if 'disabled' in button_class_string:
+                                row_is_enabled=False
+                            if 'selected' in button_class_string:
+                                # someone is selected. skip this process.
+                                row_is_enabled=False
+                                matched_blocks = []
+                                ret = True
+                                break
+
+                    except Exception as exc:
+                        pass
+
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if area_keyword_1 in row_text:
+                                if len(area_keyword_1_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if area_keyword_1_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found area form-check")
+            pass
+    else:
+        print("area form-check is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
             target_row_index = 0
 
-            #if area_auto_select_mode == 'from_top_to_down':
-                #pass
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
 
-            #if area_auto_select_mode == 'from_down_to_up':
-                #target_row_index = len(areas)-1
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
 
-            #if area_auto_select_mode == "random":
-                #target_row_index = random.randint(0,len(areas)-1)
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
 
-            #print("target_row_index", target_row_index)
-            area = areas[target_row_index]
+            target_area = matched_blocks[target_row_index]
 
-    if area is not None:
-        el = None
+    if target_area is not None:
         try:
-            #print("area text", area.text)
-
-            my_css_selector = "input.pricezone-radio-input"
-            el = area.find_element(By.CSS_SELECTOR, my_css_selector)
-            if el is not None:
-                if el.is_enabled():
-                    if not el.is_selected():
-                        el.click()
-                    ret = True
-                    #print("bingo, click area radio")
-
+            if target_area.is_enabled():
+                target_area.click()
+                ret = True
         except Exception as exc:
-            print("click area radio a link fail")
+            print("click target_area link fail")
             print(exc)
             pass
 
     return ret
 
-def urbtix_next_button_press(driver):
-    ret = False
-    try:
-        el = driver.find_element(By.CSS_SELECTOR, '#free-seat-purchase-btn')
-        if el is not None:
-            el_span = el.find_element(By.TAG_NAME, 'span')
-            if el_span is not None:
-                #ret = True
-                #print("bingo, found next button")
 
-                if el_span.is_enabled():
-                    el_span.click()
-                    ret = True
+def urbtix_ticket_number_auto_select(driver, ticket_number):
+    show_debug_message = True       # debug.
+    #show_debug_message = False      # online
+
+    is_ticket_number_assigned = False
+    ticket_number_str = str(ticket_number)
+
+    # check ticket input textbox.
+    ticket_price_input = None
+    try:
+        ticket_price_input = driver.find_element(By.CSS_SELECTOR, "input.ticket-count")
     except Exception as exc:
-        print("find next button fail")
-        print(exc)
+        pass
+
+    if ticket_price_input is not None:
+        current_ticket_number = ""
+        is_visible = False
+
+        try:
+            current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
+            is_visible = ticket_price_input.is_enabled()
+        except Exception as exc:
+            pass
+
+        if len(current_ticket_number) > 0:
+            if current_ticket_number == "0":
+                try:
+                    print("asssign ticket number:%s" % ticket_number_str)
+                    ticket_price_input.clear()
+                    ticket_price_input.send_keys(ticket_number_str)
+
+                    is_ticket_number_assigned = True
+                except Exception as exc:
+                    print("asssign ticket number to ticket-price field Exception:")
+                    print(exc)
+                    try:
+                        ticket_price_input.clear()
+                        ticket_price_input.send_keys("1")
+                        is_ticket_number_assigned = True
+                    except Exception as exc2:
+                        pass
+            else:
+                # already assigned.
+                is_ticket_number_assigned = True
+
+
+    if is_ticket_number_assigned:
+        el_btn = None
+        try:
+            my_css_selector = "div.footer > div > div"
+            el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+        if el_btn is not None:
+            try:
+                if el_btn.is_enabled():
+                    el_btn.click()
+                    print("varify site icon pressed.")
+            except Exception as exc:
+                # use plan B
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_btn)
+                    ret = True
+                except Exception as exc:
+                    pass
+        else:
+            if show_debug_message:
+                print("varify site icon is None.")
+
+    if is_ticket_number_assigned:
+        el_btn = None
+        try:
+            my_css_selector = "div.button-inner > div > div.button-text"
+            el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+        if el_btn is not None:
+            try:
+                if el_btn.is_enabled():
+                    el_btn.click()
+                    print("shopping-cart icon pressed.")
+            except Exception as exc:
+                # use plan B
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_btn)
+                    ret = True
+                except Exception as exc:
+                    pass
+        else:
+            if show_debug_message:
+                print("shopping-cart site icon is None.")
+
+    return is_ticket_number_assigned
+
+
+def urbtix_performance(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    ret = False
+
+    is_price_assign_by_bot = False
+
+    auto_fill_ticket_number = True
+    if auto_fill_ticket_number:
+        # click price row.
+        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+        area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+        area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+        area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+        area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
+        area_keyword_1_and = ""
+        area_keyword_2_and = ""
+
+        if len(area_keyword_1) > 0:
+            if show_debug_message:
+                print("area_keyword_1:", area_keyword_1)
+                #print("area_keyword_1_and:", area_keyword_1_and)
+            is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+        else:
+            # empty keyword.
+            # default select at the first radio.
+            is_price_assign_by_bot = True
+
+        if not is_price_assign_by_bot:
+            # try keyword_2
+            if show_debug_message:
+                print("area_keyword_2:", area_keyword_2)
+                #print("area_keyword_2_and:", area_keyword_2_and)
+            if len(area_keyword_2) > 0:
+                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+
+        if not is_price_assign_by_bot:
+            if len(area_keyword_3) > 0:
+                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+
+        if not is_price_assign_by_bot:
+            if len(area_keyword_4) > 0:
+                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+
+        # choose ticket.
+        ticket_number = str(config_dict["ticket_number"])
+        is_ticket_number_assigned = urbtix_ticket_number_auto_select(driver, ticket_number)
+
+        if show_debug_message:
+            print("ticket_number:", ticket_number)
+            print("is_ticket_number_assigned:", is_ticket_number_assigned)
+
 
     return ret
 
-def urbtix_performance(driver, config_dict):
-    #print("urbtix performance bingo")
 
-    kktix_area_keyword = config_dict["kktix"]["area_keyword"].strip()
-    kktix_date_keyword = config_dict["kktix"]["date_keyword"].strip()
+# purpose: date auto select
+def cityline_date_auto_select(driver, auto_select_mode, date_keyword):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
 
-    ticket_number = str(config_dict["ticket_number"])
-    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
-    if auto_fill_ticket_number:
-        area_div_exist = urbtix_area_auto_select(driver, kktix_area_keyword, kktix_date_keyword)
+    ret = False
+    matched_blocks = None
 
-    ticket_number_select_exist, is_assign_ticket_number = urbtix_ticket_number_auto_select(driver, ticket_number)
+    # clean stop word.
+    date_keyword = format_keyword_string(date_keyword)
+    date_keyword_and = ""
 
-    # todo.
-    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-    if auto_press_next_step_button:
-        if is_assign_ticket_number:
-            urbtix_next_button_press(driver)
+    area_list = None
+    try:
+        #print("try to find cityline area block")
+        my_css_selector = "button.date-time-position"
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find #date-time-position date list fail")
+        print(exc)
+
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            ret = True
+
+            if len(date_keyword) == 0:
+                matched_blocks = area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", date_keyword)
+                matched_blocks = []
+
+                row_index = 0
+                for row in area_list:
+                    row_index += 1
+                    #row_is_enabled=False
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if date_keyword in row_text:
+                                if len(date_keyword_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and # is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if date_keyword_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    if target_area is not None:
+        try:
+            if target_area.is_enabled():
+                target_area.click()
+                ret = True
+        except Exception as exc:
+            pass
+
+    return ret
 
 # purpose: area auto select
 # return:
@@ -3265,7 +3652,7 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
     show_debug_message = False      # online
 
     ret = False
-    areas = None
+    matched_blocks = None
 
     # clean stop word.
     area_keyword_1 = format_keyword_string(area_keyword_1)
@@ -3289,13 +3676,13 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
             ret = True
 
             if len(area_keyword_1) == 0:
-                areas = area_list
+                matched_blocks = area_list
             else:
                 # match keyword.
                 if show_debug_message:
                     print("start to match keyword:", area_keyword_1)
                     print("keyword and:", area_keyword_1_and)
-                areas = []
+                matched_blocks = []
 
                 row_index = 0
                 for row in area_list:
@@ -3324,26 +3711,26 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
                             if area_keyword_1 in row_text:
                                 if len(area_keyword_1_and) == 0:
                                     if show_debug_message:
-                                        print('keyword#2 is empty, directly match.')
+                                        print('keyword_and is empty, directly match.')
                                     # keyword #2 is empty, direct append.
                                     is_match_area = True
                                     match_area_code = 2
                                 else:
                                     if area_keyword_1_and in row_text:
                                         if show_debug_message:
-                                            print('match keyword#2')
+                                            print('match keyword_and')
                                         is_match_area = True
                                         match_area_code = 3
                                     else:
                                         if show_debug_message:
-                                            print('not match keyword#2')
+                                            print('not match keyword_and')
                                         pass
 
                             if is_match_area:
-                                areas.append(row)
+                                matched_blocks.append(row)
 
                 if show_debug_message:
-                    print("after match keyword, found count:", len(areas))
+                    print("after match keyword, found count:", len(matched_blocks))
         else:
             print("not found area form-check")
             pass
@@ -3352,31 +3739,31 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
         pass
 
     target_area = None
-    if areas is not None:
-        if len(areas) > 0:
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
             target_row_index = 0
 
             if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(areas)-1
+                target_row_index = len(matched_blocks)-1
 
             if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(areas)-1)
+                target_row_index = random.randint(0,len(matched_blocks)-1)
 
-            target_area = areas[target_row_index]
+            target_area = matched_blocks[target_row_index]
 
     if target_area is not None:
-        el = None
+        el_btn = None
         try:
             #print("target_area text", target_area.text)
             my_css_selector = "input[type=radio]"
-            el = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
-            if el is not None:
-                if el.is_enabled():
-                    if not el.is_selected():
-                        el.click()
+            el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+            if el_btn is not None:
+                if el_btn.is_enabled():
+                    if not el_btn.is_selected():
+                        el_btn.click()
                         ret = True
                     else:
                         ret = True
@@ -3420,7 +3807,7 @@ def cityline_ticket_number_auto_select(driver, ticket_number):
             except Exception as exc:
                 pass
 
-    is_assign_ticket_number = False
+    is_ticket_number_assigned = False
     if not select_obj is None:
         row_text = None
         try:
@@ -3431,67 +3818,120 @@ def cityline_ticket_number_auto_select(driver, ticket_number):
             if len(row_text) > 0:
                 if row_text != "0":
                     # ticket assign.
-                    is_assign_ticket_number = True
+                    is_ticket_number_assigned = True
 
-        if not is_assign_ticket_number:
-            is_assign_ticket_number = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+        if not is_ticket_number_assigned:
+            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
         else:
             if show_debug_message:
                 print("ticket_number assigned by previous action.")
 
-    return is_assign_ticket_number
+    return is_ticket_number_assigned
 
-def cityline_purchase_button_press(driver):
+def cityline_purchase_button_press(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
     ret = False
+
+    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+
+    is_date_assign_by_bot = False
+    if len(date_keyword) > 0:
+        if show_debug_message:
+            print("date_keyword:", date_keyword)
+        is_date_assign_by_bot = cityline_date_auto_select(driver, date_auto_select_mode, date_keyword)
+    else:
+        # empty keyword.
+        # default select at the first radio.
+        is_date_assign_by_bot = True
+
+    el_btn = None
     try:
-        el = driver.find_element(By.CSS_SELECTOR, 'button.purchase-btn')
-        if el is not None:
-            print("bingo, found next button")
-            if el.is_enabled():
-                el.click()
-                ret = True
+        el_btn = driver.find_element(By.CSS_SELECTOR, 'button.purchase-btn')
     except Exception as exc:
         print("find next button fail")
         print(exc)
+
+    if el_btn is not None:
+        print("bingo, found next button")
+        try:
+            if el_btn.is_enabled():
+                el_btn.click()
+                ret = True
+        except Exception as exc:
+            print("press next button fail")
+            print(exc)
+            # use plan B
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", el_btn)
+                ret = True
+            except Exception as exc:
+                pass
 
     return ret
 
 
 def cityline_next_button_press(driver):
     ret = False
+
+    el_nav = None
+    el_btn = None
+
     try:
-        el = driver.find_element(By.CSS_SELECTOR, '#expressPurchaseBtn')
-        if el is not None:
-            print("bingo, found next button")
-            if el.is_enabled():
-                el.click()
-                ret = True
+        el_nav = driver.find_element(By.CSS_SELECTOR, '.puchase-bottom')
+        el_btn = driver.find_element(By.CSS_SELECTOR, '#expressPurchaseBtn')
     except Exception as exc:
-        print("find next button fail")
+        print("find next button fail...")
         print(exc)
+
+    if el_btn is not None and el_nav is not None:
+        print("bingo, found next button, start to press")
+        try:
+            if el_btn.is_enabled():
+                #el_btn.click()
+                builder = ActionChains(driver)
+                builder.move_to_element(el_nav)
+                builder.click(el_btn)
+                builder.perform()
+                ret = True
+        except Exception as exc:
+            print("click next button fail...")
+            print(exc)
+            # use plan B
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", el_btn)
+                ret = True
+            except Exception as exc:
+                pass
 
     return ret
 
 
 def cityline_performance(driver, config_dict):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
-    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
     is_price_assign_by_bot = False
+
+    auto_fill_ticket_number = True
     if auto_fill_ticket_number:
         # click price row.
-        area_auto_select_mode = config_dict["kktix"]["area_mode"]
-        area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
-        area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
-        area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
-        area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
-        
+        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+        area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+        area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+        area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+        area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
+        area_keyword_1_and = ""
+        area_keyword_2_and = ""
+
         if len(area_keyword_1) > 0:
             if show_debug_message:
                 print("area_keyword_1:", area_keyword_1)
-                print("area_keyword_1_and:", area_keyword_1_and)
-
+                #print("area_keyword_1_and:", area_keyword_1_and)
             is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
         else:
             # empty keyword.
@@ -3501,21 +3941,29 @@ def cityline_performance(driver, config_dict):
         if not is_price_assign_by_bot:
             # try keyword_2
             if show_debug_message:
-                    print("area_keyword_2:", area_keyword_2)
-                    print("area_keyword_2_and:", area_keyword_2_and)
+                print("area_keyword_2:", area_keyword_2)
+                #print("area_keyword_2_and:", area_keyword_2_and)
             if len(area_keyword_2) > 0:
-                area_div_exist = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+
+        if not is_price_assign_by_bot:
+            if len(area_keyword_3) > 0:
+                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+
+        if not is_price_assign_by_bot:
+            if len(area_keyword_4) > 0:
+                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
 
         # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
-        is_assign_ticket_number = cityline_ticket_number_auto_select(driver, ticket_number)
+        is_ticket_number_assigned = cityline_ticket_number_auto_select(driver, ticket_number)
 
         if show_debug_message:
             print("ticket_number:", ticket_number)
-            print("is_assign_ticket_number:", is_assign_ticket_number)
+            print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
-        if is_assign_ticket_number:
-            auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+        if is_ticket_number_assigned:
+            auto_press_next_step_button = True
             if auto_press_next_step_button:
                 if not is_price_assign_by_bot:
                     #[TODO]:
@@ -3957,12 +4405,10 @@ def main():
             if 'msg.urbtix.hk' in url:
                 # delay to avoid ip block.
                 time.sleep(1.0)
-
                 try:
                     driver.get('https://www.urbtix.hk/')
                 except Exception as exec1:
                     pass
-
                 pass
             # http://busy.urbtix.hk
             if 'busy.urbtix.hk' in url:
@@ -3974,8 +4420,27 @@ def main():
                     pass
                 pass
 
-            if '/performanceDetail/' in url:
-                urbtix_performance(driver, config_dict)
+            if '/logout?' in url:
+                try:
+                    driver.get('https://www.urbtix.hk/')
+                except Exception as exec1:
+                    pass
+                pass
+
+            # https://www.urbtix.hk/event-detail/00000/
+            if '/event-detail/' in url:
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                if date_auto_select_enable:
+                    is_event_page = False
+                    if len(url.split('/'))<=6:
+                        is_event_page = True
+                    urbtix_purchase_ticket(driver, config_dict)
+
+            # https://www.urbtix.hk/performance-detail/?eventId=00000&performanceId=00000
+            if '/performance-detail/?eventId=' in url:
+                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+                if area_auto_select_enable:
+                    urbtix_performance(driver, config_dict)
 
         if 'cityline.com' in url:
             # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
@@ -3993,10 +4458,14 @@ def main():
                 pass
 
             if '/eventDetail?' in url:
-                cityline_purchase_button_press(driver)
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                if date_auto_select_enable:
+                    cityline_purchase_button_press(driver, config_dict)
 
             if '/performance?' in url:
-                cityline_performance(driver, config_dict)
+                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+                if area_auto_select_enable:
+                    cityline_performance(driver, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
