@@ -50,9 +50,11 @@ Max搶票機器人 (2022-03-24):
 https://youtu.be/AmOYg8Oj0qM
 
 # How to use (如何使用)
-https://max-everyday.com/2018/03/tixcraft-bot/
-or
-https://max-everyday.com/2018/12/kktix-bot/
+* tixcraft: https://max-everyday.com/2018/03/tixcraft-bot/
+* kktix: https://max-everyday.com/2018/12/kktix-bot/
+* cityline: https://max-everyday.com/2019/03/cityline-bot/
+* urbtix: https://max-everyday.com/2019/02/urbtix-bot/
+* FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
 
 # How to execute source code (透過原始碼的執行方法)
 1: download chromedrive to "webdriver" folder:
