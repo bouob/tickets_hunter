@@ -9,7 +9,9 @@ https://github.com/max32002/tixcraft_bot/releases
 # Demo (示範影片)
 Max搶票機器人 (2023-01-01)：支援新版本的 cityline
 
-https://youtu.be/R5LY7pJgAzI
+https://youtu.be/R5LY7pJgAzI (macOS)
+
+https://youtu.be/2UNaAEjysvk (Windows)
 
 Max搶票機器人 (2023-01-01)：支援新版本的 urbtix
 
