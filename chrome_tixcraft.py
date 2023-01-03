@@ -40,7 +40,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.02)"
+CONST_APP_VERSION = u"MaxBot (2023.01.03)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -503,17 +503,19 @@ def guess_answer_list_from_multi_options(tmp_text):
             if len(options_list) <= 2:
                 options_list = None
 
-    is_same_length = True
-    options_list_length = len(options_list)
-    for i in range(options_list_length-1):
-        if len(options_list[i]) != len(options_list[i]):
-            is_same_length = False
-
     return_list = None
-    if is_same_length:
-        return_list = []
-        for each_option in options_list:
-            return_list.append(each_option[1:-1])
+    if not options_list is None:
+        options_list_length = len(options_list)
+        if options_list_length > 2:
+            is_all_options_same_length = True
+            for i in range(options_list_length-1):
+                if len(options_list[i]) != len(options_list[i]):
+                    is_all_options_same_length = False
+
+            if is_all_options_same_length:
+                return_list = []
+                for each_option in options_list:
+                    return_list.append(each_option[1:-1])
     return return_list
 
 #PS: this may get a wrong answer list. XD
@@ -2596,6 +2598,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
             is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
             if not is_ticket_number_assigned:
                 is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
+                #PS: keyword_2 not input, means all rows are match.
                 if not is_ticket_number_assigned:
                     is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
             if is_ticket_number_assigned:
@@ -2740,23 +2743,6 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
 
 def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_dict):
     registerStatus = kktix_register_status_last
-
-    #---------------------------
-    # part 1: checkbox.
-    #---------------------------
-    # check i agree (javascript)
-
-    # method #1
-    # use this method cuase "next button not able to enable"
-    '''
-    try:
-        #driver.execute_script("document.getElementById(\"person_agree_terms\").checked;")
-        driver.execute_script("$(\"#person_agree_terms\").prop('checked', true);")
-    except Exception as exc:
-        print("javascript check person_agree_terms fail")
-        print(exc)
-        pass
-    '''
 
     # auto refresh for area list page.
     is_need_refresh = False
