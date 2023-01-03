@@ -7,6 +7,10 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
+Max搶票機器人 (2023-01-02)：支援 ibon 售票系統
+
+https://youtu.be/VaYc5GKk1Rk
+
 Max搶票機器人 (2023-01-01)：支援新版本的 cityline
 
 https://youtu.be/R5LY7pJgAzI (macOS)
