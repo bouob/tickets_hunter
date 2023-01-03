@@ -3160,19 +3160,23 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.available-performance-wrapper > div.conent-wrapper > div.list-wrapper > ul"
+        my_css_selector = "div.conent-wrapper > div.list-wrapper > ul"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #date-time-position date list fail")
         print(exc)
 
-    formated_area_list = []
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
+
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
 
         if area_list_count > 0:
+            formated_area_list = []
+
             # filter list.
             row_index = 0
             for row in area_list:
@@ -3183,14 +3187,12 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                     my_css_selector = "div.buy-icon"
                     el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
                     if el_btn is not None:
-                        if not el_btn.is_enabled():
-                            #print("row's button disabled!")
-                            row_is_enabled=False
-                        else:
-                            button_class_string = str(el_btn.get_attribute('class'))
-                            if len(button_class_string) > 1:
-                                if 'disabled' in button_class_string:
-                                    row_is_enabled=False
+                        button_class_string = str(el_btn.get_attribute('class'))
+                        if len(button_class_string) > 1:
+                            if 'disabled' in button_class_string:
+                                if show_debug_message:
+                                    print("found disabled activity at row:", row_index)
+                                row_is_enabled=False
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -3315,12 +3317,13 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
         # no target.
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
-            if len(formated_area_list) == 0:
-                try:
-                    driver.refresh()
-                    time.sleep(1.0)
-                except Exception as exc:
-                    pass
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        driver.refresh()
+                        time.sleep(1.0)
+                    except Exception as exc:
+                        pass
 
     return ret
 
@@ -3359,16 +3362,42 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
         print("find #ticket-price-tbl date list fail")
         print(exc)
 
+
+    formated_area_list = None
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
 
         if area_list_count > 0:
-            ret = True
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    button_class_string = str(row.get_attribute('class'))
+                    if len(button_class_string) > 1:
+                        if 'disabled' in button_class_string:
+                            row_is_enabled=False
+                        if 'selected' in button_class_string:
+                            # someone is selected. skip this process.
+                            row_is_enabled=False
+                            matched_blocks = []
+                            ret = True
+                            break
+                except Exception as exc:
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
 
             if len(area_keyword_1) == 0:
-                matched_blocks = area_list
+                matched_blocks = formated_area_list
             else:
                 # match keyword.
                 if show_debug_message:
@@ -3377,24 +3406,10 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
                 matched_blocks = []
 
                 row_index = 0
-                for row in area_list:
+                for row in formated_area_list:
                     row_index += 1
 
                     row_is_enabled=True
-                    try:
-                        button_class_string = str(row.get_attribute('class'))
-                        if len(button_class_string) > 1:
-                            if 'disabled' in button_class_string:
-                                row_is_enabled=False
-                            if 'selected' in button_class_string:
-                                # someone is selected. skip this process.
-                                row_is_enabled=False
-                                matched_blocks = []
-                                ret = True
-                                break
-                    except Exception as exc:
-                        pass
-
                     if row_is_enabled:
                         row_text = ""
                         try:
@@ -3476,6 +3491,9 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
                 ret = True
             except Exception as exc:
                 pass
+
+    # [TODO]: auto reload area page when all sold out.
+    # ...
 
     return ret
 
@@ -3598,21 +3616,15 @@ def urbtix_performance(driver, config_dict):
         area_keyword_1_and = ""
         area_keyword_2_and = ""
 
-        if len(area_keyword_1) > 0:
-            if show_debug_message:
-                print("area_keyword_1:", area_keyword_1)
-                #print("area_keyword_1_and:", area_keyword_1_and)
-            is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
-        else:
-            # empty keyword.
-            # default select at the first radio.
-            is_price_assign_by_bot = True
+        if show_debug_message:
+            print("area_keyword_1:", area_keyword_1)
+            #print("area_keyword_1_and:", area_keyword_1_and)
+            print("area_keyword_2:", area_keyword_2)
+            #print("area_keyword_2_and:", area_keyword_2_and)
+        is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
         if not is_price_assign_by_bot:
             # try keyword_2
-            if show_debug_message:
-                print("area_keyword_2:", area_keyword_2)
-                #print("area_keyword_2_and:", area_keyword_2_and)
             if len(area_keyword_2) > 0:
                 is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
@@ -3657,13 +3669,16 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         print("find #date-time-position date list fail")
         print(exc)
 
-    formated_area_list = []
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
+    
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
 
         if area_list_count > 0:
+            formated_area_list = []
             # filter list.
             
             row_index = 0
@@ -3780,12 +3795,13 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         # no target.
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
-            if len(formated_area_list) == 0:
-                try:
-                    driver.refresh()
-                    time.sleep(0.5)
-                except Exception as exc:
-                    pass
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        driver.refresh()
+                        time.sleep(0.5)
+                    except Exception as exc:
+                        pass
 
     return ret
 
@@ -3814,16 +3830,40 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
         print("find #ticket-price-tbl date list fail")
         print(exc)
 
+    formated_area_list = None
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
 
         if area_list_count > 0:
-            ret = True
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    my_css_selector = "span.price-limited > span"
+                    span_price_limited = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                    if not span_price_limited is None:
+                        #print("found span limited at idx:", row_index)
+                        span_i18n_string = str(span_price_limited.get_attribute('data-i18n'))
+                        if len(span_i18n_string) > 1:
+                            if 'soldout' in span_i18n_string:
+                                #print("found span limited soldout at idx:", row_index)
+                                row_is_enabled=False
+                except Exception as exc:
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
 
             if len(area_keyword_1) == 0:
-                matched_blocks = area_list
+                matched_blocks = formated_area_list
             else:
                 # match keyword.
                 if show_debug_message:
@@ -3832,7 +3872,7 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
                 matched_blocks = []
 
                 row_index = 0
-                for row in area_list:
+                for row in formated_area_list:
                     row_index += 1
                     #row_is_enabled=False
                     row_is_enabled=True
@@ -3920,8 +3960,13 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
             print(exc)
             pass
 
+    # [TODO]: auto reload area page when all sold out.
+    # ...
+
     return ret
 
+#[TODO]:
+# double check selected radio matched by keyword/keyword_and.
 def cityline_area_selected_text(driver):
     ret = False
 
@@ -3933,7 +3978,7 @@ def cityline_ticket_number_auto_select(driver, ticket_number):
     return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
 
 def ibon_ticket_number_auto_select(driver, ticket_number):
-    selector_string = 'td.action > select'
+    selector_string = 'table.table > tbody > tr > td > select'
     by_method = By.CSS_SELECTOR
     return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
 
@@ -4080,15 +4125,12 @@ def cityline_performance(driver, config_dict):
         area_keyword_1_and = ""
         area_keyword_2_and = ""
 
-        if len(area_keyword_1) > 0:
-            if show_debug_message:
-                print("area_keyword_1:", area_keyword_1)
-                #print("area_keyword_1_and:", area_keyword_1_and)
-            is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
-        else:
-            # empty keyword.
-            # default select at the first radio.
-            is_price_assign_by_bot = True
+        if show_debug_message:
+            print("area_keyword_1:", area_keyword_1)
+            #print("area_keyword_1_and:", area_keyword_1_and)
+        
+        # PS: cityline price default value is selected at the first option.
+        is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
         if not is_price_assign_by_bot:
             # try keyword_2
@@ -4124,7 +4166,7 @@ def cityline_performance(driver, config_dict):
                     pass
 
                 if is_price_assign_by_bot:
-                    for i in range(3):
+                    for i in range(2):
                         click_ret = cityline_next_button_press(driver)
                         if click_ret:
                             break
@@ -4149,13 +4191,16 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
         print("find #date-time-position date list fail")
         print(exc)
 
-    formated_area_list = []
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
 
         if area_list_count > 0:
+            formated_area_list = []
+
             # filter list.
             row_index = 0
             for row in area_list:
@@ -4280,12 +4325,13 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
         # no target to click.
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
-            if len(formated_area_list) == 0:
-                try:
-                    driver.refresh()
-                    time.sleep(0.3)
-                except Exception as exc:
-                    pass
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        driver.refresh()
+                        time.sleep(0.5)
+                    except Exception as exc:
+                        pass
     return ret
 
 def ibon_activity_info(driver, config_dict):
@@ -4323,16 +4369,42 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
         print("find #ticket-price-tbl date list fail")
         print(exc)
 
+
+    formated_area_list = None
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
 
         if area_list_count > 0:
-            ret = True
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    button_class_string = str(row.get_attribute('class'))
+                    if len(button_class_string) > 1:
+                        if 'disabled' in button_class_string:
+                            row_is_enabled=False
+                        if 'selected' in button_class_string:
+                            # someone is selected. skip this process.
+                            row_is_enabled=False
+                            matched_blocks = []
+                            ret = True
+                            break
+                except Exception as exc:
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
 
             if len(area_keyword_1) == 0:
-                matched_blocks = area_list
+                matched_blocks = formated_area_list
             else:
                 # match keyword.
                 if show_debug_message:
@@ -4341,16 +4413,9 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                 matched_blocks = []
 
                 row_index = 0
-                for row in area_list:
+                for row in formated_area_list:
                     row_index += 1
                     row_is_enabled=True
-                    try:
-                        button_class_string = str(row.get_attribute('class'))
-                        if len(button_class_string) > 1:
-                            if 'disabled' in button_class_string:
-                                row_is_enabled=False
-                    except Exception as exc:
-                        pass
                     if row_is_enabled:
                         row_text = ""
                         try:
@@ -4432,12 +4497,16 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
             except Exception as exc:
                 pass
 
+
+    # [TODO]: auto reload area page when all sold out.
+    # ...
+
     return ret
 
 
 def ibon_performance(driver, config_dict):
     show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    #show_debug_message = False      # online
 
     is_price_assign_by_bot = False
 
@@ -4452,54 +4521,29 @@ def ibon_performance(driver, config_dict):
         area_keyword_1_and = ""
         area_keyword_2_and = ""
 
-        if len(area_keyword_1) > 0:
-            if show_debug_message:
-                print("area_keyword_1:", area_keyword_1)
-                #print("area_keyword_1_and:", area_keyword_1_and)
+        if show_debug_message:
+            print("area_keyword_1:", area_keyword_1)
+            #print("area_keyword_1_and:", area_keyword_1_and)
+            print("area_keyword_2:", area_keyword_2)
+            #print("area_keyword_2_and:", area_keyword_2_and)
+
+        if not is_price_assign_by_bot:
             is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
-        else:
-            # empty keyword.
-            # default select at the first radio.
-            is_price_assign_by_bot = True
 
         if not is_price_assign_by_bot:
             # try keyword_2
-            if show_debug_message:
-                print("area_keyword_2:", area_keyword_2)
-                #print("area_keyword_2_and:", area_keyword_2_and)
             if len(area_keyword_2) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
         if not is_price_assign_by_bot:
             if len(area_keyword_3) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
 
         if not is_price_assign_by_bot:
             if len(area_keyword_4) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
 
-        # choose ticket.
-        ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = cityline_ticket_number_auto_select(driver, ticket_number)
-
-        if show_debug_message:
-            print("ticket_number:", ticket_number)
-            print("is_ticket_number_assigned:", is_ticket_number_assigned)
-
-        if is_ticket_number_assigned:
-            auto_press_next_step_button = True
-            if auto_press_next_step_button:
-                if not is_price_assign_by_bot:
-                    #[TODO]:
-                    # double check selected radio matched by keyword/keyword_and.
-                    # cityline_area_selected_text(driver)
-                    pass
-
-                if is_price_assign_by_bot:
-                    for i in range(3):
-                        click_ret = cityline_next_button_press(driver)
-                        if click_ret:
-                            break
+    return is_price_assign_by_bot
 
 def ibon_purchase_button_press(driver):
     ret = False
@@ -4873,10 +4917,7 @@ def ibon_main(driver, url, config_dict):
                     ticket_number = str(config_dict["ticket_number"])
                     is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, ticket_number)
                     if is_ticket_number_assigned:
-                        for i in range(3):
-                            click_ret = ibon_purchase_button_press(driver)
-                            if click_ret:
-                                break
+                        click_ret = ibon_purchase_button_press(driver)
                 else:
                     # step 1: select area.
                     ibon_performance(driver, config_dict)
