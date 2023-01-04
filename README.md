@@ -9,7 +9,9 @@ https://github.com/max32002/tixcraft_bot/releases
 # Demo (示範影片)
 Max搶票機器人 (2023-01-02)：KKITX自動猜測驗證問題
 
-https://youtu.be/7CtSVBGwx9I
+https://youtu.be/7CtSVBGwx9I (macOS)
+
+https://youtu.be/BcyfkXF2AJU (Windows)
 
 Max搶票機器人 (2023-01-02)：支援 ibon 售票系統
 
