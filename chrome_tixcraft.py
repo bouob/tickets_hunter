@@ -40,7 +40,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.04)"
+CONST_APP_VERSION = u"MaxBot (2023.01.05)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -4890,6 +4890,14 @@ def cityline_main(driver, url, config_dict):
     # ignore url redirect
     if '/Login.html' in url:
         return
+
+    # https://msg.cityline.com/
+    if 'msg.cityline.com' in url:
+        try:
+            driver.execute_script("goEvent();")
+        except Exception as exec1:
+            pass
+        pass
 
     try:
         window_handles_count = len(driver.window_handles)
