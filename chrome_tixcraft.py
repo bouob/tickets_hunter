@@ -140,7 +140,8 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
+    # Deprecated chrome option is ignored: useAutomationExtension
+    #chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
 
     #caps = DesiredCapabilities().CHROME
@@ -1543,11 +1544,20 @@ def tixcraft_verify(driver, presale_code):
                             submit_btn.click()
                             is_submited = True
                             if show_debug_message:
-                                print("press submit button when time #", i+1)
+                                print("press submit button at time #", i+1)
                     except Exception as exc:
                         pass
 
                     if is_submited:
+                        break
+
+            if is_submited:
+                for i in range(3):
+                    time.sleep(0.1)
+                    alert_ret = check_pop_alert(driver)
+                    if alert_ret:
+                        if show_debug_message:
+                            print("press accept button at time #", i+1)                    
                         break
     else:
         if len(default_value)==0:
@@ -4689,19 +4699,23 @@ def check_pop_alert(driver):
     is_alert_popup = False
 
     # https://stackoverflow.com/questions/57481723/is-there-a-change-in-the-handling-of-unhandled-alert-in-chromedriver-and-chrome
-    default_close_alert_text = []
+    default_close_alert_text = [""]
     if len(default_close_alert_text) > 0:
         try:
             alert = None
             if not driver is None:
                 alert = driver.switch_to.alert
             if not alert is None:
-                if not alert.text is None:
+                alert_text = str(alert.text)
+                if not alert_text is None:
                     is_match_auto_close_text = False
                     for txt in default_close_alert_text:
                         if len(txt) > 0:
                             if txt in alert.text:
                                 is_match_auto_close_text = True
+                        else:
+                            is_match_auto_close_text = True
+                    #print("is_match_auto_close_text:", is_match_auto_close_text)
                     #print("alert3 text:", alert.text)
 
                     if is_match_auto_close_text:
@@ -4715,14 +4729,7 @@ def check_pop_alert(driver):
             #logger.error('NoAlertPresentException for alert')
             pass
         except NoSuchWindowException:
-            #print('NoSuchWindowException2 at this url:', url )
-            #print("last_url:", last_url)
-            try:
-                window_handles_count = len(driver.window_handles)
-                if window_handles_count > 1:
-                    driver.switch_to.window(driver.window_handles[0])
-            except Exception as excSwithFail:
-                pass
+            pass
         except Exception as exc:
             logger.error('Exception2 for alert')
             logger.error(exc, exc_info=True)
@@ -4981,6 +4988,8 @@ def main():
     answer_index = -1
     kktix_register_status_last = None
 
+    DISCONNECTED_MSG = 'Unable to evaluate script: no such window: target window already closed'
+
     debugMode = False
     if 'debug' in config_dict:
         debugMode = config_dict["debug"]
@@ -4997,7 +5006,7 @@ def main():
             print("web driver not accessible!")
             break
 
-        is_alert_popup = check_pop_alert(driver)
+        #is_alert_popup = check_pop_alert(driver)
 
         #MUST "do nothing: if alert popup.
         #print("is_alert_popup:", is_alert_popup)
@@ -5008,8 +5017,14 @@ def main():
         try:
             url = driver.current_url
         except NoSuchWindowException:
-            #print('NoSuchWindowException at this url:', url )
+            print('NoSuchWindowException at this url:', url )
             #print("last_url:", last_url)
+            #print("get_log:", driver.get_log('driver'))
+            if DISCONNECTED_MSG in driver.get_log('driver')[-1]['message']:
+                print('quit bot by NoSuchWindowException')
+                driver.quit()
+                sys.exit()
+                break
             try:
                 window_handles_count = len(driver.window_handles)
                 if window_handles_count > 1:
@@ -5072,7 +5087,7 @@ def main():
                 '''
                 if isinstance(str_exc, str):
                     if each_error_string in str_exc:
-                        print(u'quit bot')
+                        print('quit bot by error:', each_error_string)
                         driver.quit()
                         sys.exit()
                         break
@@ -5098,7 +5113,7 @@ def main():
 
         # for Max's manuall test.
         if '/Downloads/varify.html' in url:
-            tixcraft_verify(driver)
+            tixcraft_verify(driver, "")
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
