@@ -40,7 +40,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.05)"
+CONST_APP_VERSION = u"MaxBot (2023.01.07)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1443,7 +1443,7 @@ def tixcraft_verify(driver, presale_code):
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '.zone-verify')
     except Exception as exc:
-        print("find verify fail")
+        print("find verify textbox fail")
         pass
 
     question_text = None
@@ -1456,6 +1456,7 @@ def tixcraft_verify(driver, presale_code):
     html_text = ""
     if question_text is not None:
         if len(question_text) > 0:
+            # format question text.
             html_text = question_text
             html_text = html_text.replace(u'「',u'【')
             html_text = html_text.replace(u'〔',u'【')
@@ -1481,10 +1482,17 @@ def tixcraft_verify(driver, presale_code):
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
-        if u'請輸入"YES"' in html_text:
-            if u'已詳閱' in html_text:
-                if u'並同意' in html_text:
+        if u'輸入"YES"' in html_text:
+            if u'已詳閱' in html_text or '請詳閱' in html_text:
+                if u'同意' in html_text:
                     inferred_answer_string = 'YES'
+
+    # 購票前請詳閱注意事項，並於驗證碼欄位輸入【同意】繼續購票流程。
+    if inferred_answer_string is None:
+        if '驗證碼' in html_text or '驗證欄位' in html_text:
+            if '已詳閱' in html_text or '請詳閱' in html_text:
+                if '輸入【同意】' in html_text:
+                    inferred_answer_string = '同意'
 
     if show_debug_message:
         print("inferred_answer_string:", inferred_answer_string)
