@@ -75,6 +75,7 @@ https://youtu.be/AmOYg8Oj0qM
 * cityline: https://max-everyday.com/2019/03/cityline-bot/
 * urbtix: https://max-everyday.com/2019/02/urbtix-bot/
 * FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
+* ibon: https://max-everyday.com/2023/01/ibon-bot/
 
 # How to execute source code (透過原始碼的執行方法)
 1: download chromedrive to "webdriver" folder:
