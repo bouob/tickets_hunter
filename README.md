@@ -61,7 +61,7 @@ Max搶票機器人 (2022-10-21)：針對kktix 活動增加第二個關鍵字欄�
 
 https://youtu.be/x-OdqvUupiA
 
-Max搶票機器人 (2022-01-26):
+Max搶票機器人 (2022-01-26)：FamiTicket
 
 https://youtu.be/ZV-G91FHVik
 
