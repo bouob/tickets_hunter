@@ -4969,7 +4969,7 @@ def urbtix_main(driver, url, config_dict):
     for waiting_url in waiting_for_access_url:
         if waiting_url in url:
             # delay to avoid ip block.
-            #time.sleep(0.5)
+            time.sleep(1.0)
             try:
                 driver.get('https://www.urbtix.hk/')
             except Exception as exec1:
