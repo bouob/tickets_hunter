@@ -40,7 +40,10 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 
 # ocr
 import base64
-import ddddocr
+try:
+    import ddddocr
+except Exception as exc:
+    pass
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -1640,30 +1643,32 @@ def tixcraft_manully_keyin_verify_code(driver, ocr_answer = ""):
 #PS: credit to LinShihJhang's share
 def tixcraft_auto_ocr(driver, ocr):
     print("start to ddddocr")
-    try:
-        row_text = select_obj.first_selected_option.text
-    except Exception as exc:
-        pass
+    orc_answer = None
+    if not ocr is None:
+        try:
+            form_verifyCode_base64 = driver.execute_async_script("""
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                var img = document.getElementById('yw0');
+                canvas.height = img.naturalHeight;
+                canvas.width = img.naturalWidth;
+                context.drawImage(img, 0, 0);
 
-    form_verifyCode_base64 = driver.execute_async_script("""
-        var canvas = document.createElement('canvas');
-        var context = canvas.getContext('2d');
-        var img = document.getElementById('yw0');
-        canvas.height = img.naturalHeight;
-        canvas.width = img.naturalWidth;
-        context.drawImage(img, 0, 0);
+                callback = arguments[arguments.length - 1];
+                callback(canvas.toDataURL());
+                """)
+            img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+            orc_answer = ocr.classification(img_base64)
+        except Exception as exc:
+            pass
 
-        callback = arguments[arguments.length - 1];
-        callback(canvas.toDataURL());
-        """)
-    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
-    orc_answer = ocr.classification(img_base64)
     if not orc_answer is None:
         print("orc_answer:", orc_answer)
         if len(orc_answer)==4:
             tixcraft_manully_keyin_verify_code(driver, orc_answer)
         else:
             tixcraft_manully_keyin_verify_code(driver, "")
+
 
 def tixcraft_ticket_main(driver, config_dict, ocr):
     is_finish_checkbox_click = False
@@ -5123,7 +5128,11 @@ def main():
     if debugMode:
         print("Start to looping, detect browser url...")
 
-    ocr = ddddocr.DdddOcr()
+    ocr = None
+    try:
+        ocr = ddddocr.DdddOcr()
+    except Exception as exc:
+        pass
 
     while True:
         time.sleep(0.1)
