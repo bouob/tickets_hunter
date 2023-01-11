@@ -48,7 +48,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.10)"
+CONST_APP_VERSION = u"MaxBot (2023.01.12)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1661,14 +1661,17 @@ def tixcraft_auto_ocr(driver, ocr):
             orc_answer = ocr.classification(img_base64)
         except Exception as exc:
             pass
+    else:
+        print("ddddocr is None")
 
     if not orc_answer is None:
         print("orc_answer:", orc_answer)
         if len(orc_answer)==4:
             tixcraft_manully_keyin_verify_code(driver, orc_answer)
         else:
-            tixcraft_manully_keyin_verify_code(driver, "")
-
+            tixcraft_manully_keyin_verify_code(driver)
+    else:
+        tixcraft_manully_keyin_verify_code(driver)
 
 def tixcraft_ticket_main(driver, config_dict, ocr):
     is_finish_checkbox_click = False
