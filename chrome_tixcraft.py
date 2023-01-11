@@ -40,7 +40,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.07)"
+CONST_APP_VERSION = u"MaxBot (2023.01.10)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -3340,6 +3340,8 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
     show_debug_message = False      # online
 
     ret = False
+    is_need_refresh = False
+
     matched_blocks = None
 
     # clean stop word.
@@ -3384,10 +3386,21 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
 
                 if row_is_enabled:
                     formated_area_list.append(row)
-
+        else:
             if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
 
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
             if len(area_keyword_1) == 0:
                 matched_blocks = formated_area_list
             else:
@@ -3446,13 +3459,9 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
                     if not matched_blocks is None:
                         print("after match keyword, found count:", len(matched_blocks))
         else:
+            is_need_refresh = True
             if show_debug_message:
-                print("area_list_count is empty.")
-            pass
-    else:
-        if show_debug_message:
-            print("area_list_count is None.")
-        pass
+                print("formated_area_list is empty.")
 
     target_area = None
     if matched_blocks is not None:
@@ -3486,10 +3495,7 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
             except Exception as exc:
                 pass
 
-    # [TODO]: auto reload area page when all sold out.
-    # ...
-
-    return ret
+    return is_need_refresh, ret
 
 
 def urbtix_ticket_number_auto_select(driver, ticket_number):
@@ -3598,6 +3604,7 @@ def urbtix_performance(driver, config_dict):
     ret = False
 
     is_price_assign_by_bot = False
+    is_need_refresh = False
 
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
@@ -3615,20 +3622,31 @@ def urbtix_performance(driver, config_dict):
             #print("area_keyword_1_and:", area_keyword_1_and)
             print("area_keyword_2:", area_keyword_2)
             #print("area_keyword_2_and:", area_keyword_2_and)
-        is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+        is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
-        if not is_price_assign_by_bot:
-            # try keyword_2
-            if len(area_keyword_2) > 0:
-                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                # try keyword_2
+                if len(area_keyword_2) > 0:
+                    is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_3) > 0:
-                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_3) > 0:
+                    is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_4) > 0:
-                is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_4) > 0:
+                    is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+
+        # un-tested. disable refresh for now.
+        is_need_refresh = False
+        if is_need_refresh:
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
 
         # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
@@ -3810,6 +3828,8 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
     show_debug_message = False      # online
 
     ret = False
+    is_need_refresh = False
+
     matched_blocks = None
 
     # clean stop word.
@@ -3853,10 +3873,21 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
 
                 if row_is_enabled:
                     formated_area_list.append(row)
-
+        else:
             if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
 
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
             if len(area_keyword_1) == 0:
                 matched_blocks = formated_area_list
             else:
@@ -3914,13 +3945,9 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
                     if not matched_blocks is None:
                         print("after match keyword, found count:", len(matched_blocks))
         else:
+            is_need_refresh = True
             if show_debug_message:
-                print("area_list_count is empty.")
-            pass
-    else:
-        if show_debug_message:
-            print("area_list_count is None.")
-        pass
+                print("formated_area_list is empty.")
 
     target_area = None
     if matched_blocks is not None:
@@ -3957,10 +3984,7 @@ def cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, are
             print(exc)
             pass
 
-    # [TODO]: auto reload area page when all sold out.
-    # ...
-
-    return ret
+    return is_need_refresh, ret
 
 #[TODO]:
 # double check selected radio matched by keyword/keyword_and.
@@ -4110,6 +4134,7 @@ def cityline_performance(driver, config_dict):
     show_debug_message = False      # online
 
     is_price_assign_by_bot = False
+    is_need_refresh = False
 
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
@@ -4129,20 +4154,31 @@ def cityline_performance(driver, config_dict):
                 #print("area_keyword_2_and:", area_keyword_2_and)
             
         # PS: cityline price default value is selected at the first option.
-        is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+        is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
-        if not is_price_assign_by_bot:
-            # try keyword_2
-            if len(area_keyword_2) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                # try keyword_2
+                if len(area_keyword_2) > 0:
+                    is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_3) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_3) > 0:
+                    is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_4) > 0:
-                is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_4) > 0:
+                    is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+
+        # un-tested. disable refresh for now.
+        is_need_refresh = False
+        if is_need_refresh:
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
 
         # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
@@ -4351,6 +4387,8 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
     show_debug_message = False      # online
 
     ret = False
+    is_need_refresh = False
+
     matched_blocks = None
 
     # clean stop word.
@@ -4384,6 +4422,8 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                     if len(button_class_string) > 1:
                         if 'disabled' in button_class_string:
                             row_is_enabled=False
+                        if 'sold-out' in button_class_string:
+                            row_is_enabled=False
                         if 'selected' in button_class_string:
                             # someone is selected. skip this process.
                             row_is_enabled=False
@@ -4395,10 +4435,21 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
 
                 if row_is_enabled:
                     formated_area_list.append(row)
-
+        else:
             if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
 
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
             if len(area_keyword_1) == 0:
                 matched_blocks = formated_area_list
             else:
@@ -4456,13 +4507,9 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                     if not matched_blocks is None:
                         print("after match keyword, found count:", len(matched_blocks))
         else:
+            is_need_refresh = True
             if show_debug_message:
-                print("area_list_count is empty.")
-            pass
-    else:
-        if show_debug_message:
-            print("area_list_count is None.")
-        pass
+                print("formated_area_list is empty.")
 
     target_area = None
     if matched_blocks is not None:
@@ -4496,11 +4543,7 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
             except Exception as exc:
                 pass
 
-
-    # [TODO]: auto reload area page when all sold out.
-    # ...
-
-    return ret
+    return is_need_refresh, ret
 
 
 def ibon_performance(driver, config_dict):
@@ -4508,6 +4551,7 @@ def ibon_performance(driver, config_dict):
     show_debug_message = False      # online
 
     is_price_assign_by_bot = False
+    is_need_refresh = False
 
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
@@ -4526,21 +4570,30 @@ def ibon_performance(driver, config_dict):
             print("area_keyword_2:", area_keyword_2)
             #print("area_keyword_2_and:", area_keyword_2_and)
 
+        is_need_refresh = False
         if not is_price_assign_by_bot:
-            is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
-        if not is_price_assign_by_bot:
-            # try keyword_2
-            if len(area_keyword_2) > 0:
-                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                # try keyword_2
+                if len(area_keyword_2) > 0:
+                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_3) > 0:
-                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_3) > 0:
+                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_4) > 0:
+                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
 
-        if not is_price_assign_by_bot:
-            if len(area_keyword_4) > 0:
-                is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+        if is_need_refresh:
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
 
     return is_price_assign_by_bot
 
@@ -4831,23 +4884,16 @@ def famiticket_main(driver, url, config_dict):
 
 def urbtix_main(driver, url, config_dict):
     # http://msg.urbtix.hk
-    if 'msg.urbtix.hk' in url:
-        # delay to avoid ip block.
-        time.sleep(1.0)
-        try:
-            driver.get('https://www.urbtix.hk/')
-        except Exception as exec1:
+    waiting_for_access_url = ['/session/landing-timer/0/?type=busy','msg.urbtix.hk','busy.urbtix.hk']
+    for waiting_url in waiting_for_access_url:
+        if waiting_url in url:
+            # delay to avoid ip block.
+            #time.sleep(0.5)
+            try:
+                driver.get('https://www.urbtix.hk/')
+            except Exception as exec1:
+                pass
             pass
-        pass
-    # http://busy.urbtix.hk
-    if 'busy.urbtix.hk' in url:
-        # delay to avoid ip block.
-        time.sleep(1.0)
-        try:
-            driver.get('https://www.urbtix.hk/')
-        except Exception as exec1:
-            pass
-        pass
 
     if '/logout?' in url:
         try:
