@@ -2,8 +2,12 @@ certifi
 chardet
 cryptography
 idna
-selenium
+selenium>=4.0.0
 selenium-stealth
 undetected-chromedriver
 playsound
 pyperclip
+ddddocr
+urllib3>=1.21.1
+numpy==1.21
+daal==2021.4.0

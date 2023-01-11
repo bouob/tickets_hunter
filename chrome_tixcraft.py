@@ -20,6 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 # for selenium 4
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -36,6 +37,10 @@ import requests
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 warnings.simplefilter('ignore',InsecureRequestWarning)
+
+# ocr
+import base64
+import ddddocr
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -907,15 +912,13 @@ def tixcraft_redirect(driver, url):
     game_name = ""
 
     # get game_name from url
-    if "/activity/detail/" in url:
-        url_split = url.split("/")
-        if len(url_split) >= 6:
-            game_name = url_split[5]
+    url_split = url.split("/")
+    if len(url_split) >= 6:
+        game_name = url_split[5]
 
     if "/activity/detail/%s" % (game_name,) in url:
         # to support teamear
         entry_url = url.replace("/activity/detail/","/activity/game/")
-        #entry_url = "tixcraft.com/activity/game/%s" % (game_name,)
         print("redirec to new url:", entry_url)
         try:
             driver.get(entry_url)
@@ -927,15 +930,13 @@ def tixcraft_redirect(driver, url):
 
 def tixcraft_date_auto_select(driver, url, config_dict):
     show_debug_message = True    # debug.
-    show_debug_message = False   # online
+    #show_debug_message = False   # online
 
     # read config.
     date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
-    is_date_selected = False
 
     # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
     sold_out_text_list = ["選購一空","No tickets available","空席なし"]
@@ -962,74 +963,88 @@ def tixcraft_date_auto_select(driver, url, config_dict):
                 print("date keyword:", date_keyword)
         check_game_detail = True
 
+    date_list = None
     if check_game_detail:
-        date_list = None
         try:
             date_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
         except Exception as exc:
             print("find #gameList fail")
 
+    is_coming_soon = False
+    coming_soon_condictions_list = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
+    
+    button_list = None
+    if date_list is not None:
         button_list = []
-        if date_list is not None:
-            for row in date_list:
-                # step 1: check keyword.
-                is_match_keyword_row = False
+        for row in date_list:
+            # step 1: check keyword.
+            is_match_keyword_row = False
 
+            row_text = ""
+            try:
+                row_text = row.text
+            except Exception as exc:
+                print("get text fail")
+                # should use continue or break?
+                break
+
+            if row_text is None:
                 row_text = ""
-                try:
-                    row_text = row.text
-                except Exception as exc:
-                    print("get text fail")
-                    # should use continue or break?
+
+            if len(row_text) > 0:
+                is_match_all_coming_soon_condiction = True
+                for condiction_string in coming_soon_condictions_list:
+                    if not condiction_string in row_text:
+                        is_match_all_coming_soon_condiction = False
+                        break
+                if is_match_all_coming_soon_condiction:
+                    is_coming_soon = True
                     break
 
-                if row_text is None:
-                    row_text = ""
-
-                if len(row_text) > 0:
-                    if len(date_keyword) == 0:
-                        # no keyword, match all.
+                if len(date_keyword) == 0:
+                    # no keyword, match all.
+                    is_match_keyword_row = True
+                else:
+                    # check keyword.
+                    if date_keyword in row_text:
                         is_match_keyword_row = True
-                    else:
-                        # check keyword.
-                        if date_keyword in row_text:
-                            is_match_keyword_row = True
 
-                # step 2: check sold out.
-                if is_match_keyword_row:
-                    if pass_date_is_sold_out_enable:
-                        for sold_out_item in sold_out_text_list:
-                            row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
-                            if show_debug_message:
-                                print("check right part text:", row_text_right_part)
-                            if sold_out_item in row_text_right_part:
-                                is_match_keyword_row = False
-
-                                if show_debug_message:
-                                    print("match sold out text: %s, skip this row." % (sold_out_item))
-
-                                # no need check next language item.
-                                break
-
-                # step 3: add to list.
-                if is_match_keyword_row:
-                    el = None
-                    try:
-                        el = row.find_element(By.CSS_SELECTOR, '.btn-next')
-                    except Exception as exc:
+            # step 2: check sold out.
+            if is_match_keyword_row:
+                if pass_date_is_sold_out_enable:
+                    for sold_out_item in sold_out_text_list:
+                        row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
                         if show_debug_message:
-                            print("find .btn-next fail")
-                        pass
+                            print("check right part text:", row_text_right_part)
+                        if sold_out_item in row_text_right_part:
+                            is_match_keyword_row = False
 
-                    if el is not None:
-                        button_list.append(el)
-                        if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                            # only need one row.
                             if show_debug_message:
-                                print("match date row, only need first row, start to break")
+                                print("match sold out text: %s, skip this row." % (sold_out_item))
+
+                            # no need check next language item.
                             break
 
+            # step 3: add to list.
+            if is_match_keyword_row:
+                el = None
+                try:
+                    el = row.find_element(By.CSS_SELECTOR, '.btn-next')
+                except Exception as exc:
+                    if show_debug_message:
+                        print("find .btn-next fail")
+                    pass
 
+                if el is not None:
+                    button_list.append(el)
+                    if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        # only need one row.
+                        if show_debug_message:
+                            print("match date row, only need first row, start to break")
+                        break
+
+    is_date_selected = False
+    if button_list is not None:
         if len(button_list) > 0:
             # default first row.
             target_row_index = 0
@@ -1040,10 +1055,10 @@ def tixcraft_date_auto_select(driver, url, config_dict):
             if date_auto_select_mode == CONST_RANDOM:
                 target_row_index = random.randint(0,len(button_list)-1)
 
-            try:
-                if show_debug_message:
-                    print("clicking row number:", target_row_index)
+            if show_debug_message:
+                print("clicking row number:", target_row_index)
 
+            try:
                 el = button_list[target_row_index]
                 el.click()
                 is_date_selected = True
@@ -1058,20 +1073,27 @@ def tixcraft_date_auto_select(driver, url, config_dict):
         #   (A)user input keywords, with matched text, but no hyperlink to click.
         #   (B)user input keywords, but not no matched text with hyperlink to click.
 
-        # [PS]: current reload condition only when No hyperlink button.
-        if auto_reload_coming_soon_page_enable and not is_date_selected:
-            # auto refresh for date list page.
-            el_list = None
+    # [PS]: current reload condition only when 
+    if auto_reload_coming_soon_page_enable:
+        if is_coming_soon:
+            # case 2: match one row is coming soon.
             try:
-                el_list = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
-                if el_list is None:
-                    driver.refresh()
-                else:
-                    if len(el_list) == 0:
-                        driver.refresh()
+                driver.refresh()
             except Exception as exc:
                 pass
-                #print("find .btn-next fail:", exc)
+        else:
+            if not is_date_selected:
+                # case 1: No hyperlink button.
+                el_list = None
+                try:
+                    el_list = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
+                    if el_list is None:
+                        driver.refresh()
+                    else:
+                        if len(el_list) == 0:
+                            driver.refresh()
+                except Exception as exc:
+                    pass
 
     return is_date_selected
 
@@ -1576,9 +1598,81 @@ def tixcraft_verify(driver, presale_code):
 
     return ret
 
-def tixcraft_ticket_main(driver, config_dict):
+def tixcraft_manully_keyin_verify_code(driver, ocr_answer = ""):
+    is_verifyCode_editing = False
+
+    # manually keyin verify code.
+    # start to input verify code.
+    form_verifyCode = None
+    try:
+        form_verifyCode = driver.find_element(By.ID, 'TicketForm_verifyCode')
+    except Exception as exc:
+        print("find form_verifyCode fail")
+
+    if form_verifyCode is not None:
+        is_visible = False
+        try:
+            if form_verifyCode.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_verifyCode.click()
+                if len(ocr_answer)==4:
+                    #print("start to auto submit.")
+                    form_verifyCode.send_keys(ocr_answer)
+                    form_verifyCode.send_keys(Keys.ENTER)
+                is_verifyCode_editing = True
+            except Exception as exc:
+                print("click form_verifyCode fail, tring to use javascript.")
+                # plan B
+                try:
+                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
+                    is_verifyCode_editing = True
+                except Exception as exc:
+                    print("click form_verifyCode fail")
+                    pass
+                pass
+    return is_verifyCode_editing
+
+#PS: credit to LinShihJhang's share
+def tixcraft_auto_ocr(driver, ocr):
+    print("start to ddddocr")
+    try:
+        row_text = select_obj.first_selected_option.text
+    except Exception as exc:
+        pass
+
+    form_verifyCode_base64 = driver.execute_async_script("""
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        var img = document.getElementById('yw0');
+        canvas.height = img.naturalHeight;
+        canvas.width = img.naturalWidth;
+        context.drawImage(img, 0, 0);
+
+        callback = arguments[arguments.length - 1];
+        callback(canvas.toDataURL());
+        """)
+    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+    orc_answer = ocr.classification(img_base64)
+    if not orc_answer is None:
+        print("orc_answer:", orc_answer)
+        if len(orc_answer)==4:
+            tixcraft_manully_keyin_verify_code(driver, orc_answer)
+        else:
+            tixcraft_manully_keyin_verify_code(driver, "")
+
+def tixcraft_ticket_main(driver, config_dict, ocr):
     is_finish_checkbox_click = False
     auto_check_agree = config_dict["auto_check_agree"]
+    
+    #auto_verify_code = config_dict["auto_verify_code"]
+    auto_verify_code = False
+    auto_verify_code = True
+
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
 
@@ -1606,7 +1700,6 @@ def tixcraft_ticket_main(driver, config_dict):
             except Exception as exc:
                 pass
 
-    is_verifyCode_editing = False
     is_ticket_number_assigned = False
     if not select_obj is None:
         row_text = None
@@ -1620,47 +1713,24 @@ def tixcraft_ticket_main(driver, config_dict):
                     # ticket assign.
                     is_ticket_number_assigned = True
 
-        # must wait select object ready to assign ticket number.
-        if not is_ticket_number_assigned:
-            # only this case:"ticket number changed by bot" to play sound!
-            # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
-            check_and_play_sound_for_captcha(config_dict)
+    is_verifyCode_editing = False
 
-            ticket_number = str(config_dict["ticket_number"])
-            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+    # must wait select object ready to assign ticket number.
+    if not is_ticket_number_assigned:
+        # only this case:"ticket number changed by bot" to play sound!
+        # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
+        check_and_play_sound_for_captcha(config_dict)
 
-            # must wait ticket number assign to focus captcha.
-            if is_ticket_number_assigned:
-                # only this case to focus()
-                # start to input verify code.
-                form_verifyCode = None
-                try:
-                    form_verifyCode = driver.find_element(By.ID, 'TicketForm_verifyCode')
-                except Exception as exc:
-                    print("find form_verifyCode fail")
+        ticket_number = str(config_dict["ticket_number"])
+        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
 
-                if form_verifyCode is not None:
-                    is_visible = False
-                    try:
-                        if form_verifyCode.is_enabled():
-                            is_visible = True
-                    except Exception as exc:
-                        pass
-
-                    if is_visible:
-                        try:
-                            form_verifyCode.click()
-                            is_verifyCode_editing = True
-                        except Exception as exc:
-                            print("click form_verifyCode fail, tring to use javascript.")
-                            # plan B
-                            try:
-                                driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
-                                is_verifyCode_editing = True
-                            except Exception as exc:
-                                print("click form_verifyCode fail")
-                                pass
-                            pass
+        # must wait ticket number assign to focus captcha.
+        if is_ticket_number_assigned:
+            if not auto_verify_code:
+                is_verifyCode_editing = tixcraft_manully_keyin_verify_code(driver)
+            else:
+                tixcraft_auto_ocr(driver, ocr)
+                is_verifyCode_editing = True
 
     print("is_finish_checkbox_click:", is_finish_checkbox_click)
 
@@ -4804,24 +4874,27 @@ def list_all_cookies(driver):
         cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
-def tixcraft_main(driver, url, config_dict, is_verifyCode_editing):
+def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr):
     if url == 'https://tixcraft.com/':
         tixcraft_home(driver)
 
     if url == 'https://indievox.com/':
         tixcraft_home(driver)
 
-    is_redirected = tixcraft_redirect(driver, url)
+    if "/activity/detail/" in url:
+        is_redirected = tixcraft_redirect(driver, url)
 
     is_date_selected = False
-    date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-    if date_auto_select_enable:
-        is_date_selected = tixcraft_date_auto_select(driver, url, config_dict)
+    if "/activity/game/" in url:
+        date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+        if date_auto_select_enable:
+            is_date_selected = tixcraft_date_auto_select(driver, url, config_dict)
 
     # choose area
-    area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-    if area_auto_select_enable:
-        tixcraft_area_auto_select(driver, url, config_dict)
+    if '/ticket/area/' in url:
+        area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+        if area_auto_select_enable:
+            tixcraft_area_auto_select(driver, url, config_dict)
 
     if '/ticket/verify/' in url:
         presale_code = config_dict["tixcraft"]["presale_code"]
@@ -4830,7 +4903,7 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing):
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
         if not is_verifyCode_editing:
-            is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict)
+            is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr)
     else:
         is_verifyCode_editing = False
 
@@ -4884,7 +4957,7 @@ def famiticket_main(driver, url, config_dict):
 
 def urbtix_main(driver, url, config_dict):
     # http://msg.urbtix.hk
-    waiting_for_access_url = ['/session/landing-timer/0/?type=busy','msg.urbtix.hk','busy.urbtix.hk']
+    waiting_for_access_url = ['/session/landing-timer/','msg.urbtix.hk','busy.urbtix.hk']
     for waiting_url in waiting_for_access_url:
         if waiting_url in url:
             # delay to avoid ip block.
@@ -5050,6 +5123,8 @@ def main():
     if debugMode:
         print("Start to looping, detect browser url...")
 
+    ocr = ddddocr.DdddOcr()
+
     while True:
         time.sleep(0.1)
 
@@ -5177,7 +5252,7 @@ def main():
             tixcraft_family = True
 
         if tixcraft_family:
-            is_verifyCode_editing = tixcraft_main(driver, url, config_dict, is_verifyCode_editing)
+            is_verifyCode_editing = tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
@@ -5210,6 +5285,7 @@ if __name__ == "__main__":
     CONST_MODE_CLI = 1
     mode = CONST_MODE_GUI
     #mode = CONST_MODE_CLI
+    
     if mode == CONST_MODE_GUI:
         main()
     else:
@@ -5218,7 +5294,14 @@ if __name__ == "__main__":
         #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
         #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
         #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
-        #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
+        captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
+
+        ocr = ddddocr.DdddOcr()
+        with open('captcha-oapi.png', 'rb') as f:
+            image_bytes = f.read()
+        res = ocr.classification(image_bytes)
+        print(res)
+
