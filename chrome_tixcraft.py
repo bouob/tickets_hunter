@@ -118,7 +118,7 @@ def find_continuous_pattern(allowed_char, text):
 
 def get_favoriate_extension_path(webdriver_path):
     no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
-    no_ad_path = os.path.join(webdriver_path,"Adblock_3.14.2.0.crx")
+    no_ad_path = os.path.join(webdriver_path,"Adblock_3.15.2.0.crx")
     return no_google_analytics_path, no_ad_path
 
 def get_chromedriver_path(webdriver_path):
