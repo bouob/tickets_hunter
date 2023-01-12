@@ -27,7 +27,12 @@ class NonBrowser():
         return base64_data
 
     def Request_Refresh_Captcha(self) -> str:
-        result = self.Session.get(self.refresh_url, stream = True)
-        if result.status_code == 200:
-            json_data = json.loads(result.text)
-            return json_data.get("url","")
+        try:
+            result = self.Session.get(self.refresh_url, stream = True)
+            if result.status_code == 200:
+                json_data = json.loads(result.text)
+                return json_data.get("url","")
+            else:
+                return ""
+        except Exception as e:
+            return ""

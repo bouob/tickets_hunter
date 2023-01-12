@@ -1676,17 +1676,21 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
     ocr_total_count = 0 #ocr 總次數
     orc_answer = None
     while True:
-        ocr_count += 1
-        ocr_total_count += 1
-        if ocr_total_count > 6: #如果總次數大於6次, 直接手動輸入
+        if ocr_total_count >= 6: #如果總次數大於6次, 直接手動介入
             orc_answer = None
             break
-        if ocr_count > 3: #如果次數大於3次, 取得新的Captcha
+        if ocr_count >= 3: #如果次數大於3次, 取得新的Captcha
+            print("Get New Captcha")
             new_captcha_url = Non_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
-            if new_captcha_url != "":
+            if new_captcha_url != "": #如果capthca取得成功繼續OCR, 失敗直接手動介入
                 ocr_count = 0
                 tixcraft_change_captcha(driver,new_captcha_url) #更改CAPTCHA圖
                 continue
+            else:
+                orc_answer = None
+                break
+        ocr_count += 1
+        ocr_total_count += 1
         img_base64 = base64.b64decode(Non_Browser.Request_Captcha())
         if not ocr is None:
             try:
