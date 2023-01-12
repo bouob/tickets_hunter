@@ -48,7 +48,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.12)2版"
+CONST_APP_VERSION = u"MaxBot (2023.01.12)3版"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -60,7 +60,6 @@ CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_T
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 
 CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
-
 
 def get_app_root():
     # 讀取檔案裡的參數值
@@ -1608,7 +1607,17 @@ def tixcraft_verify(driver, presale_code):
 
     return ret
 
-def tixcraft_manully_keyin_verify_code(driver, ocr_answer = ""):
+def tixcraft_toast(driver, message):
+    toast_element = None
+    try:
+        my_css_selector = ".remark-word"
+        toast_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not toast_element is None:
+            driver.execute_script("arguments[0].innerHTML='%s';" % message, toast_element)
+    except Exception as exc:
+        print("find toast element fail")
+
+def tixcraft_manully_keyin_verify_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
 
     # manually keyin verify code.
@@ -1630,10 +1639,14 @@ def tixcraft_manully_keyin_verify_code(driver, ocr_answer = ""):
         if is_visible:
             try:
                 form_verifyCode.click()
-                if len(ocr_answer)==4:
-                    #print("start to auto submit.")
-                    form_verifyCode.send_keys(ocr_answer)
+                #print("start to fill answer.")
+                form_verifyCode.send_keys(answer)
+                if auto_submit:
                     form_verifyCode.send_keys(Keys.ENTER)
+                else:
+                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
+                    tixcraft_toast(driver, "※ Press Enter if answer is: " + answer)
+    
                 is_verifyCode_editing = True
             except Exception as exc:
                 print("click form_verifyCode fail, tring to use javascript.")
@@ -1648,7 +1661,7 @@ def tixcraft_manully_keyin_verify_code(driver, ocr_answer = ""):
     return is_verifyCode_editing
 
 #PS: credit to LinShihJhang's share
-def tixcraft_auto_ocr(driver, ocr):
+def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
     print("start to ddddocr")
     orc_answer = None
     if not ocr is None:
@@ -1674,9 +1687,10 @@ def tixcraft_auto_ocr(driver, ocr):
     if not orc_answer is None:
         print("orc_answer:", orc_answer)
         if len(orc_answer)==4:
-            tixcraft_manully_keyin_verify_code(driver, orc_answer)
+            tixcraft_manully_keyin_verify_code(driver, answer = orc_answer)
         else:
             tixcraft_manully_keyin_verify_code(driver)
+            tixcraft_toast(driver, "※ Ocr fail...")
     else:
         tixcraft_manully_keyin_verify_code(driver)
 
@@ -1684,7 +1698,8 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
     is_finish_checkbox_click = False
     auto_check_agree = config_dict["auto_check_agree"]
     
-    ocr_captcha_enable = config_dict["ocr_captcha"]
+    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
+    ocr_captcha_with_submit = config_dict["ocr_captcha"]["auto_submit"]
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -1742,7 +1757,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
             if not ocr_captcha_enable:
                 is_verifyCode_editing = tixcraft_manully_keyin_verify_code(driver)
             else:
-                tixcraft_auto_ocr(driver, ocr)
+                tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit)
                 is_verifyCode_editing = True
 
     print("is_finish_checkbox_click:", is_finish_checkbox_click)
@@ -5138,7 +5153,7 @@ def main():
 
     ocr = None
     try:
-        if config_dict["ocr_captcha"]:
+        if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr()
     except Exception as exc:
         pass

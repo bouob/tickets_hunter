@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.12)2版"
+CONST_APP_VERSION = u"MaxBot (2023.01.12)3版"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -77,6 +77,7 @@ def load_translate():
     en_us["area_keyword_4"] = 'Area Keyword #4'
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
+    en_us["ocr_captcha_with_submit"] = 'After guess auto submit'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -133,6 +134,7 @@ def load_translate():
     zh_tw["area_keyword_4"] = '區域關鍵字 #4'
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
+    zh_tw["ocr_captcha_with_submit"] = '猜測後自動送出'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -189,6 +191,7 @@ def load_translate():
     zh_cn["area_keyword_4"] = '区域关键字 #4'
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
+    zh_cn["ocr_captcha_with_submit"] = '猜测后自动送出'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -246,6 +249,7 @@ def load_translate():
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
+    ja_jp["ocr_captcha_with_submit"] = '提出で推測した後'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -296,7 +300,9 @@ def get_default_config():
     config_dict["ticket_number"] = 2
     config_dict["pass_1_seat_remaining"] = True
     config_dict["auto_check_agree"] = True
-    config_dict["ocr_captcha"] = True
+    config_dict["ocr_captcha"] = {}
+    config_dict["ocr_captcha"]["enable"] = True
+    config_dict["ocr_captcha"]["auto_submit"] = False
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -418,6 +424,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_captcha_sound_filename
     global chk_state_adblock_plus
     global chk_state_ocr_captcha
+    global chk_state_ocr_captcha_with_submit
 
     is_all_data_correct = True
 
@@ -490,7 +497,9 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         
-        config_dict["ocr_captcha"] = bool(chk_state_ocr_captcha.get())
+        config_dict["ocr_captcha"] = {}
+        config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
+        config_dict["ocr_captcha"]["auto_submit"] = bool(chk_state_ocr_captcha_with_submit.get())
 
     # save config.
     if is_all_data_correct:
@@ -651,6 +660,7 @@ def applyNewLanguage():
     global lbl_auto_reload_coming_soon_page
     global lbl_presale_code
     global lbl_ocr_captcha
+    global lbl_ocr_captcha_with_submit
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -666,6 +676,7 @@ def applyNewLanguage():
     global chk_play_captcha_sound
     global chk_adblock_plus
     global chk_ocr_captcha
+    global chk_ocr_captcha_with_sumit
 
     global tabControl
 
@@ -708,6 +719,7 @@ def applyNewLanguage():
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
+    lbl_ocr_captcha_with_submit.config(text=translate[language_code]["ocr_captcha_with_submit"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -721,6 +733,7 @@ def applyNewLanguage():
     chk_play_captcha_sound.config(text=translate[language_code]["enable"])
     chk_adblock_plus.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
+    chk_ocr_captcha_with_sumit.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -793,6 +806,24 @@ def showHideBlocks():
 
     showHideTixcraftBlocks()
     showHidePass1SeatRemaining()
+    showHideOcrCaptchaWithSubmit()
+
+def showHideOcrCaptchaWithSubmit():
+    global chk_state_ocr_captcha
+    is_ocr_captcha_enable = bool(chk_state_ocr_captcha.get())
+
+    global ocr_captcha_with_submit_index
+    global lbl_ocr_captcha_with_submit
+    global chk_ocr_captcha_with_sumit
+
+    if is_ocr_captcha_enable:
+        # show.
+        lbl_ocr_captcha_with_submit.grid(column=0, row=ocr_captcha_with_submit_index, sticky = E)
+        chk_ocr_captcha_with_sumit.grid(column=1, row=ocr_captcha_with_submit_index, sticky = W)
+    else:
+        # hide
+        lbl_ocr_captcha_with_submit.grid_forget()
+        chk_ocr_captcha_with_sumit.grid_forget()
 
 def showHidePass1SeatRemaining():
     global combo_ticket_number
@@ -1450,11 +1481,28 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_ocr_captcha
     chk_state_ocr_captcha = BooleanVar()
-    chk_state_ocr_captcha.set(config_dict['ocr_captcha'])
+    chk_state_ocr_captcha.set(config_dict['ocr_captcha']["enable"])
 
     global chk_ocr_captcha
-    chk_ocr_captcha = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha)
+    chk_ocr_captcha = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
     chk_ocr_captcha.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global ocr_captcha_with_submit_index
+    ocr_captcha_with_submit_index = group_row_count
+
+    global lbl_ocr_captcha_with_submit
+    lbl_ocr_captcha_with_submit = Label(frame_group_tixcraft, text=translate[language_code]['ocr_captcha_with_submit'])
+    lbl_ocr_captcha_with_submit.grid(column=0, row=ocr_captcha_with_submit_index, sticky = E)
+
+    global chk_state_ocr_captcha_with_submit
+    chk_state_ocr_captcha_with_submit = BooleanVar()
+    chk_state_ocr_captcha_with_submit.set(config_dict['ocr_captcha']["auto_submit"])
+
+    global chk_ocr_captcha_with_sumit
+    chk_ocr_captcha_with_sumit = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_with_submit)
+    chk_ocr_captcha_with_sumit.grid(column=1, row=group_row_count, sticky = W)
 
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
@@ -1768,7 +1816,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 460
-    GUI_SIZE_HEIGHT = 575
+    GUI_SIZE_HEIGHT = 594
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-90)
