@@ -1702,6 +1702,7 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
                 pass
         else:
             print("ddddocr is None")
+            break
     print("ocr_total_count:",ocr_total_count)
     if not orc_answer is None:
         print("orc_answer:", orc_answer)
