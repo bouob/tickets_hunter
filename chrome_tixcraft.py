@@ -1607,6 +1607,12 @@ def tixcraft_verify(driver, presale_code):
 
     return ret
 
+def tixcraft_change_captcha(driver,url):
+    try:
+        driver.execute_script(f"document.querySelector('.verify-img').children[0].setAttribute('src','{url}');")
+    except Exception as exc:
+        print("edit captcha element fail")
+
 def tixcraft_toast(driver, message):
     toast_element = None
     try:
@@ -1663,27 +1669,36 @@ def tixcraft_manully_keyin_verify_code(driver, answer = "", auto_submit = False)
 #PS: credit to LinShihJhang's share
 def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
     print("start to ddddocr")
+    from NonBrowser import NonBrowser
+    Non_Browser = NonBrowser()
+    Non_Browser.Set_cookies(driver.get_cookies())
+    ocr_count = 0 #ocr 次數
+    ocr_total_count = 0 #ocr 總次數
     orc_answer = None
-    if not ocr is None:
-        try:
-            form_verifyCode_base64 = driver.execute_async_script("""
-                var canvas = document.createElement('canvas');
-                var context = canvas.getContext('2d');
-                var img = document.getElementById('yw0');
-                canvas.height = img.naturalHeight;
-                canvas.width = img.naturalWidth;
-                context.drawImage(img, 0, 0);
-
-                callback = arguments[arguments.length - 1];
-                callback(canvas.toDataURL());
-                """)
-            img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
-            orc_answer = ocr.classification(img_base64)
-        except Exception as exc:
-            pass
-    else:
-        print("ddddocr is None")
-
+    while True:
+        ocr_count += 1
+        ocr_total_count += 1
+        if ocr_total_count > 6: #如果總次數大於6次, 直接手動輸入
+            orc_answer = None
+            break
+        if ocr_count > 3: #如果次數大於3次, 取得新的Captcha
+            new_captcha_url = Non_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+            if new_captcha_url != "":
+                ocr_count = 0
+                tixcraft_change_captcha(driver,new_captcha_url) #更改CAPTCHA圖
+                continue
+        img_base64 = base64.b64decode(Non_Browser.Request_Captcha())
+        if not ocr is None:
+            try:
+                orc_answer = ocr.classification(img_base64)
+                if not orc_answer is None:
+                    if len(orc_answer)==4:
+                        break
+            except Exception as exc:
+                pass
+        else:
+            print("ddddocr is None")
+    print("ocr_total_count:",ocr_total_count)
     if not orc_answer is None:
         print("orc_answer:", orc_answer)
         if len(orc_answer)==4:
