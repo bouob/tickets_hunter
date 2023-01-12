@@ -1389,7 +1389,8 @@ def tixcraft_ticket_agree(driver):
         try:
             # TODO: check the status: checked.
             if form_checkbox.is_enabled():
-                form_checkbox.click()
+                if not form_checkbox.is_selected():
+                    form_checkbox.click()
                 is_finish_checkbox_click = True
         except Exception as exc:
             print("click TicketForm_agree fail")
@@ -1617,8 +1618,9 @@ def tixcraft_toast(driver, message):
     except Exception as exc:
         print("find toast element fail")
 
-def tixcraft_manully_keyin_verify_code(driver, answer = "", auto_submit = False):
+def  tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
+    is_form_sumbited = False
 
     # manually keyin verify code.
     # start to input verify code.
@@ -1639,14 +1641,6 @@ def tixcraft_manully_keyin_verify_code(driver, answer = "", auto_submit = False)
         if is_visible:
             try:
                 form_verifyCode.click()
-                #print("start to fill answer.")
-                form_verifyCode.send_keys(answer)
-                if auto_submit:
-                    form_verifyCode.send_keys(Keys.ENTER)
-                else:
-                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
-                    tixcraft_toast(driver, "※ Press Enter if answer is: " + answer)
-    
                 is_verifyCode_editing = True
             except Exception as exc:
                 print("click form_verifyCode fail, tring to use javascript.")
@@ -1655,15 +1649,48 @@ def tixcraft_manully_keyin_verify_code(driver, answer = "", auto_submit = False)
                     driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
                     is_verifyCode_editing = True
                 except Exception as exc:
-                    print("click form_verifyCode fail")
-                    pass
-                pass
-    return is_verifyCode_editing
+                    print("click form_verifyCode fail.")
+
+            #print("start to fill answer.")
+            try:
+                if len(answer) > 0:
+                    form_verifyCode.send_keys(answer)
+                if auto_submit:
+                    form_verifyCode.send_keys(Keys.ENTER)
+                    is_verifyCode_editing = False
+                    is_form_sumbited = True
+                else:
+                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
+                    if len(answer) > 0:
+                        tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
+            except Exception as exc:
+                print("send_keys ocr answer fail.")
+
+    return is_verifyCode_editing, is_form_sumbited
+
+def tixcraft_reload_captcha(driver):
+    # manually keyin verify code.
+    # start to input verify code.
+    ret = False
+    form_captcha = None
+    try:
+        form_captcha = driver.find_element(By.ID, 'yw0')
+        if not form_captcha is None:
+            form_captcha.click()
+            ret = True
+    except Exception as exc:
+        print("find form_captcha fail")
+
+    return ret
 
 #PS: credit to LinShihJhang's share
-def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
+def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_submit, previous_answer):
     print("start to ddddocr")
+    is_need_redo_ocr = False
+    is_form_sumbited = False
+
     orc_answer = None
+
     if not ocr is None:
         try:
             form_verifyCode_base64 = driver.execute_async_script("""
@@ -1685,21 +1712,38 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit):
         print("ddddocr is None")
 
     if not orc_answer is None:
+        orc_answer = orc_answer.strip()
         print("orc_answer:", orc_answer)
         if len(orc_answer)==4:
-            tixcraft_manully_keyin_verify_code(driver, answer = orc_answer)
+            who_care_var, is_form_sumbited = tixcraft_keyin_captcha_code(driver, answer = orc_answer, auto_submit = ocr_captcha_with_submit)
         else:
-            tixcraft_manully_keyin_verify_code(driver)
-            tixcraft_toast(driver, "※ Ocr fail...")
+            if not ocr_captcha_force_submit:
+                tixcraft_keyin_captcha_code(driver)
+                tixcraft_toast(driver, "※ Ocr fail...")
+            else:
+                is_need_redo_ocr = True
+                if previous_answer != orc_answer:
+                    previous_answer = orc_answer
+                    print("click captcha again")
+                    tixcraft_reload_captcha(driver)
+                    time.sleep(0.3)
     else:
-        tixcraft_manully_keyin_verify_code(driver)
+        print("orc_answer is None")
+        print("previous_answer:", previous_answer)
+        if previous_answer is None:
+            tixcraft_keyin_captcha_code(driver)
+        else:
+            # page is not ready, retry again.
+            is_need_redo_ocr = True
+
+    return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main(driver, config_dict, ocr):
-    is_finish_checkbox_click = False
     auto_check_agree = config_dict["auto_check_agree"]
     
     ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     ocr_captcha_with_submit = config_dict["ocr_captcha"]["auto_submit"]
+    ocr_captcha_force_submit = config_dict["ocr_captcha"]["force_submit"]
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -1755,12 +1799,20 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
         # must wait ticket number assign to focus captcha.
         if is_ticket_number_assigned:
             if not ocr_captcha_enable:
-                is_verifyCode_editing = tixcraft_manully_keyin_verify_code(driver)
+                is_verifyCode_editing =  tixcraft_keyin_captcha_code(driver)
             else:
-                tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit)
+                previous_answer = None
                 is_verifyCode_editing = True
-
-    print("is_finish_checkbox_click:", is_finish_checkbox_click)
+                for redo_ocr in range(999):
+                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_submit, previous_answer)
+                    if is_form_sumbited:
+                        # start next loop.
+                        is_verifyCode_editing = False
+                        break
+                    if not ocr_captcha_force_submit:
+                        break
+                    if not is_need_redo_ocr:
+                        break
 
     if is_verifyCode_editing:
         print("goto is_verifyCode_editing == True")
@@ -5154,7 +5206,7 @@ def main():
     ocr = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
-            ocr = ddddocr.DdddOcr()
+            ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
     except Exception as exc:
         pass
 
@@ -5332,8 +5384,8 @@ if __name__ == "__main__":
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
 
-        ocr = ddddocr.DdddOcr()
-        with open('captcha-oapi.png', 'rb') as f:
+        ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+        with open('captcha-xxxx.png', 'rb') as f:
             image_bytes = f.read()
         res = ocr.classification(image_bytes)
         print(res)
