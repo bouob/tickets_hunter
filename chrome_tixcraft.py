@@ -1608,6 +1608,12 @@ def tixcraft_verify(driver, presale_code):
 
     return ret
 
+def tixcraft_change_captcha(driver,url):
+    try:
+        driver.execute_script(f"document.querySelector('.verify-img').children[0].setAttribute('src','{url}');")
+    except Exception as exc:
+        print("edit captcha element fail")
+
 def tixcraft_toast(driver, message):
     toast_element = None
     try:
@@ -1686,31 +1692,23 @@ def tixcraft_reload_captcha(driver):
 #PS: credit to LinShihJhang's share
 def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_submit, previous_answer):
     print("start to ddddocr")
+    from NonBrowser import NonBrowser
+
     is_need_redo_ocr = False
     is_form_sumbited = False
 
     orc_answer = None
-
     if not ocr is None:
+        Non_Browser = NonBrowser()
+        Non_Browser.Set_cookies(driver.get_cookies())
+        img_base64 = base64.b64decode(Non_Browser.Request_Captcha())
         try:
-            form_verifyCode_base64 = driver.execute_async_script("""
-                var canvas = document.createElement('canvas');
-                var context = canvas.getContext('2d');
-                var img = document.getElementById('yw0');
-                canvas.height = img.naturalHeight;
-                canvas.width = img.naturalWidth;
-                context.drawImage(img, 0, 0);
-
-                callback = arguments[arguments.length - 1];
-                callback(canvas.toDataURL());
-                """)
-            img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
             orc_answer = ocr.classification(img_base64)
         except Exception as exc:
             pass
     else:
         print("ddddocr is None")
-
+        
     if not orc_answer is None:
         orc_answer = orc_answer.strip()
         print("orc_answer:", orc_answer)
