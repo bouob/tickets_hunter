@@ -48,7 +48,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.12)"
+CONST_APP_VERSION = u"MaxBot (2023.01.12)2版"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -349,6 +349,7 @@ def get_driver_by_config(config_dict, driver_type):
     # output config:
     print("maxbot app version", CONST_APP_VERSION)
     print("python version", platform.python_version())
+    print("platform", platform.platform())
     print("homepage", homepage)
     print("browser", browser)
     print("ticket_number", ticket_number)
@@ -369,6 +370,8 @@ def get_driver_by_config(config_dict, driver_type):
     print("date_auto_select_enable", date_auto_select_enable)
     print("date_auto_select_mode", date_auto_select_mode)
     print("date_keyword", date_keyword)
+    print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
+    print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
 
     print("area_auto_select_enable", area_auto_select_enable)
     print("area_auto_select_mode", area_auto_select_mode)
@@ -377,8 +380,12 @@ def get_driver_by_config(config_dict, driver_type):
     print("area_keyword_3", area_keyword_3)
     print("area_keyword_4", area_keyword_4)
 
-    print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
-    print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
+    print("presale_code", config_dict["tixcraft"]["presale_code"])
+    print("ocr_captcha", config_dict['ocr_captcha'])
+    print("==[advanced]==")
+    print("play_captcha_sound", config_dict["advanced"]["play_captcha_sound"]["enable"])
+    print("sound file path", config_dict["advanced"]["play_captcha_sound"]["filename"])
+    print("adblock_plus_enable", config_dict["advanced"]["adblock_plus_enable"])
     print("debug Mode", debugMode)
 
     # entry point
@@ -933,7 +940,7 @@ def tixcraft_redirect(driver, url):
 
 def tixcraft_date_auto_select(driver, url, config_dict):
     show_debug_message = True    # debug.
-    #show_debug_message = False   # online
+    show_debug_message = False   # online
 
     # read config.
     date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
@@ -1059,7 +1066,7 @@ def tixcraft_date_auto_select(driver, url, config_dict):
                 target_row_index = random.randint(0,len(button_list)-1)
 
             if show_debug_message:
-                print("clicking row number:", target_row_index)
+                print("clicking row:", target_row_index+1)
 
             try:
                 el = button_list[target_row_index]
@@ -1124,10 +1131,10 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
         if area_list is not None:
             area_list_count = len(area_list)
             if area_list_count == 0:
-                print("(with keyword) list is empty, do refresh!")
+                print("area list is empty, do refresh!")
                 is_need_refresh = True
         else:
-            print("(with keyword) list is None, do refresh!")
+            print("area list is None, do refresh!")
             is_need_refresh = True
 
     if area_list_count > 0:
@@ -1677,9 +1684,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
     is_finish_checkbox_click = False
     auto_check_agree = config_dict["auto_check_agree"]
     
-    #auto_verify_code = config_dict["auto_verify_code"]
-    auto_verify_code = False
-    auto_verify_code = True
+    ocr_captcha_enable = config_dict["ocr_captcha"]
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -1734,7 +1739,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
 
         # must wait ticket number assign to focus captcha.
         if is_ticket_number_assigned:
-            if not auto_verify_code:
+            if not ocr_captcha_enable:
                 is_verifyCode_editing = tixcraft_manully_keyin_verify_code(driver)
             else:
                 tixcraft_auto_ocr(driver, ocr)
@@ -5110,7 +5115,7 @@ def main():
     if not config_dict is None:
         driver = get_driver_by_config(config_dict, driver_type)
     else:
-        print("Config error!")
+        print("Load config error!")
 
     # internal variable. 說明：這是一個內部變數，請略過。
     url = ""
@@ -5133,7 +5138,8 @@ def main():
 
     ocr = None
     try:
-        ocr = ddddocr.DdddOcr()
+        if config_dict["ocr_captcha"]:
+            ocr = ddddocr.DdddOcr()
     except Exception as exc:
         pass
 

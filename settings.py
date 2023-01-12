@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.12)"
+CONST_APP_VERSION = u"MaxBot (2023.01.12)2版"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -52,10 +52,9 @@ def load_translate():
     en_us["language"] = 'Language'
     en_us["ticket_number"] = 'Ticker Number'
 
-    en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["auto_check_agree"] = 'Auto check agree checkbox'
-
     en_us["enable"] = 'Enable'
+
     en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
     en_us["area_select_order"] = 'Area select order'
@@ -67,14 +66,17 @@ def load_translate():
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
     en_us["date_keyword"] = 'Date Keyword'
+    en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
+    en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
+    
     en_us["area_auto_select"] = 'Area Auto Select'
     #en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword_1"] = 'Area Keyword #1'
     en_us["area_keyword_2"] = 'Area Keyword #2'
     en_us["area_keyword_3"] = 'Area Keyword #3'
     en_us["area_keyword_4"] = 'Area Keyword #4'
-    en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
-    en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
+    en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
+    en_us["ocr_captcha"] = 'OCR captcha'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -106,7 +108,6 @@ def load_translate():
     zh_tw["language"] = '語言'
     zh_tw["ticket_number"] = '門票張數'
 
-    zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["auto_check_agree"] = '自動勾選同意'
 
     zh_tw["enable"] = '啟用'
@@ -121,14 +122,17 @@ def load_translate():
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
     zh_tw["date_keyword"] = '日期關鍵字'
+    zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
+    zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
+
     zh_tw["area_auto_select"] = '區域自動點選'
     #zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword_1"] = '區域關鍵字 #1'
     zh_tw["area_keyword_2"] = '區域關鍵字 #2'
     zh_tw["area_keyword_3"] = '區域關鍵字 #3'
     zh_tw["area_keyword_4"] = '區域關鍵字 #4'
-    zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的場次'
-    zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的活動頁面'
+    zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
+    zh_tw["ocr_captcha"] = '猜測驗證碼'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -160,10 +164,9 @@ def load_translate():
     zh_cn["language"] = '语言'
     zh_cn["ticket_number"] = '门票张数'
 
-    zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["auto_check_agree"] = '自动勾选同意'
-
     zh_cn["enable"] = '启用'
+
     zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
     zh_cn["area_select_order"] = '区域排序方式'
@@ -175,14 +178,17 @@ def load_translate():
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
     zh_cn["date_keyword"] = '日期关键字'
+    zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
+    zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
+
     zh_cn["area_auto_select"] = '区域自动点选'
     #zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword_1"] = '区域关键字 #1'
     zh_cn["area_keyword_2"] = '区域关键字 #2'
     zh_cn["area_keyword_3"] = '区域关键字 #3'
     zh_cn["area_keyword_4"] = '区域关键字 #4'
-    zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的场次'
-    zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的活动页面'
+    zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
+    zh_cn["ocr_captcha"] = '猜测验证码'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -215,10 +221,9 @@ def load_translate():
     ja_jp["language"] = '言語'
     ja_jp["ticket_number"] = '枚数'
 
-    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["auto_check_agree"] = '自動的に同意をチェック'
-
     ja_jp["enable"] = '有効'
+
     ja_jp["auto_press_next_step_button"] = '次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
     ja_jp["area_select_order"] = 'エリアソート方法'
@@ -230,14 +235,17 @@ def load_translate():
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
     ja_jp["date_keyword"] = '日付キーワード'
+    ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
+    ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
+
     ja_jp["area_auto_select"] = 'エリア自動選択'
     #ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword_1"] = 'エリアキーワード #1'
     ja_jp["area_keyword_2"] = 'エリアキーワード #2'
     ja_jp["area_keyword_3"] = 'エリアキーワード #3'
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
-    ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
-    ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
+    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
+    ja_jp["ocr_captcha"] = 'キャプチャを推測する'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -288,6 +296,7 @@ def get_default_config():
     config_dict["ticket_number"] = 2
     config_dict["pass_1_seat_remaining"] = True
     config_dict["auto_check_agree"] = True
+    config_dict["ocr_captcha"] = True
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -314,7 +323,7 @@ def get_default_config():
     config_dict["tixcraft"]["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["tixcraft"]["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
 
-    config_dict["tixcraft"]["pass_date_is_sold_out"] = False
+    config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
     config_dict["tixcraft"]["presale_code"] = ""
 
@@ -408,6 +417,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_play_captcha_sound
     global txt_captcha_sound_filename
     global chk_state_adblock_plus
+    global chk_state_ocr_captcha
 
     is_all_data_correct = True
 
@@ -479,7 +489,8 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
-
+        
+        config_dict["ocr_captcha"] = bool(chk_state_ocr_captcha.get())
 
     # save config.
     if is_all_data_correct:
@@ -639,6 +650,7 @@ def applyNewLanguage():
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
     global lbl_presale_code
+    global lbl_ocr_captcha
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -653,6 +665,7 @@ def applyNewLanguage():
     global chk_auto_reload_coming_soon_page
     global chk_play_captcha_sound
     global chk_adblock_plus
+    global chk_ocr_captcha
 
     global tabControl
 
@@ -694,6 +707,7 @@ def applyNewLanguage():
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
+    lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -706,6 +720,7 @@ def applyNewLanguage():
     chk_auto_reload_coming_soon_page.config(text=translate[language_code]["enable"])
     chk_play_captcha_sound.config(text=translate[language_code]["enable"])
     chk_adblock_plus.config(text=translate[language_code]["enable"])
+    chk_ocr_captcha.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -888,8 +903,6 @@ def showHideTixcraftBlocks():
 
 def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     homepage = CONST_HOMEPAGE_DEFAULT
-    browser = "chrome"
-    language = "English"
     ticket_number = 2
     pass_1_seat_remaining_enable = False
     auto_check_agree_enable = False
@@ -979,9 +992,8 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # output config:
     print("setting app version", CONST_APP_VERSION)
     print("python version", platform.python_version())
+    print("platform", platform.platform())
     print("homepage", homepage)
-    print("browser", browser)
-    print("language", language)
     print("ticket_number", ticket_number)
     print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
     print("auto_check_agree", auto_check_agree_enable)
@@ -1019,8 +1031,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("debug Mode", debugMode)
 
     global lbl_homepage
-    global lbl_browser
-    global lbl_language
     global lbl_ticket_number
 
     global lbl_kktix
@@ -1041,39 +1051,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_browser = Label(frame_group_header, text=translate[language_code]['browser'])
-    lbl_browser.grid(column=0, row=group_row_count, sticky = E)
-
-    #global txt_browser
-    #txt_browser = Entry(root, width=20, textvariable = StringVar(root, value=browser))
-    #txt_browser.grid(column=1, row=group_row_count)
-
-    global combo_browser
-    combo_browser = ttk.Combobox(frame_group_header, state="readonly")
-    combo_browser['values']= ("chrome","firefox")
-    #combo_browser.current(0)
-    combo_browser.set(browser)
-    combo_browser.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_language = Label(frame_group_header, text=translate[language_code]['language'])
-    lbl_language.grid(column=0, row=group_row_count, sticky = E)
-
-    #global txt_language
-    #txt_language = Entry(root, width=20, textvariable = StringVar(root, value=language))
-    #txt_language.grid(column=1, row=group_row_count)
-
-    global combo_language
-    combo_language = ttk.Combobox(frame_group_header, state="readonly")
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
-    #combo_language.current(0)
-    combo_language.set(language)
-    combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
-    combo_language.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1337,6 +1314,40 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
+    global lbl_pass_date_is_sold_out
+    lbl_pass_date_is_sold_out = Label(frame_group_tixcraft, text=translate[language_code]['pass_date_is_sold_out'])
+    lbl_pass_date_is_sold_out.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_pass_date_is_sold_out
+    chk_state_pass_date_is_sold_out = BooleanVar()
+    chk_state_pass_date_is_sold_out.set(pass_date_is_sold_out_enable)
+
+    global chk_pass_date_is_sold_out
+    chk_pass_date_is_sold_out = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_pass_date_is_sold_out)
+    chk_pass_date_is_sold_out.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_auto_reload_coming_soon_page
+    lbl_auto_reload_coming_soon_page = Label(frame_group_tixcraft, text=translate[language_code]['auto_reload_coming_soon_page'])
+    lbl_auto_reload_coming_soon_page.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_reload_coming_soon_page
+    chk_state_auto_reload_coming_soon_page = BooleanVar()
+    chk_state_auto_reload_coming_soon_page.set(auto_reload_coming_soon_page_enable)
+
+    global chk_auto_reload_coming_soon_page
+    chk_auto_reload_coming_soon_page = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_auto_reload_coming_soon_page)
+    chk_auto_reload_coming_soon_page.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_date_hr
+    lbl_date_hr = Label(frame_group_tixcraft, text='')
+    lbl_date_hr.grid(column=0, row=group_row_count, sticky = E, columnspan=2)
+
+    group_row_count+=1
+
     global lbl_area_auto_select
     lbl_area_auto_select = Label(frame_group_tixcraft, text=translate[language_code]['area_auto_select'])
     lbl_area_auto_select.grid(column=0, row=group_row_count, sticky = E)
@@ -1422,34 +1433,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    global lbl_pass_date_is_sold_out
-    lbl_pass_date_is_sold_out = Label(frame_group_tixcraft, text=translate[language_code]['pass_date_is_sold_out'])
-    lbl_pass_date_is_sold_out.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_pass_date_is_sold_out
-    chk_state_pass_date_is_sold_out = BooleanVar()
-    chk_state_pass_date_is_sold_out.set(pass_date_is_sold_out_enable)
-
-    global chk_pass_date_is_sold_out
-    chk_pass_date_is_sold_out = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_pass_date_is_sold_out)
-    chk_pass_date_is_sold_out.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_auto_reload_coming_soon_page
-    lbl_auto_reload_coming_soon_page = Label(frame_group_tixcraft, text=translate[language_code]['auto_reload_coming_soon_page'])
-    lbl_auto_reload_coming_soon_page.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_auto_reload_coming_soon_page
-    chk_state_auto_reload_coming_soon_page = BooleanVar()
-    chk_state_auto_reload_coming_soon_page.set(auto_reload_coming_soon_page_enable)
-
-    global chk_auto_reload_coming_soon_page
-    chk_auto_reload_coming_soon_page = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_auto_reload_coming_soon_page)
-    chk_auto_reload_coming_soon_page.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
     global lbl_presale_code
     lbl_presale_code = Label(frame_group_tixcraft, text=translate[language_code]['user_guess_string'])
     lbl_presale_code.grid(column=0, row=group_row_count, sticky = E)
@@ -1458,6 +1441,20 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_presale_code_value = StringVar(frame_group_tixcraft, value=presale_code)
     txt_presale_code = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_value)
     txt_presale_code.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_ocr_captcha
+    lbl_ocr_captcha = Label(frame_group_tixcraft, text=translate[language_code]['ocr_captcha'])
+    lbl_ocr_captcha.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_ocr_captcha
+    chk_state_ocr_captcha = BooleanVar()
+    chk_state_ocr_captcha.set(config_dict['ocr_captcha'])
+
+    global chk_ocr_captcha
+    chk_ocr_captcha = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha)
+    chk_ocr_captcha.grid(column=1, row=group_row_count, sticky = W)
 
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
@@ -1491,6 +1488,8 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     # for kktix
     print("==[advanced]==")
+    print("browser", config_dict['browser'])
+    print("language", config_dict['language'])
     print("facebook_account", facebook_account)
     print("kktix_account", kktix_account)
     print("play_captcha_sound", play_captcha_sound)
@@ -1503,6 +1502,33 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     if len(captcha_sound_filename)==0:
         captcha_sound_filename = captcha_sound_filename_default
 
+
+    global lbl_browser
+    lbl_browser = Label(frame_group_header, text=translate[language_code]['browser'])
+    lbl_browser.grid(column=0, row=group_row_count, sticky = E)
+
+    global combo_browser
+    combo_browser = ttk.Combobox(frame_group_header, state="readonly")
+    combo_browser['values']= ("chrome","firefox")
+    #combo_browser.current(0)
+    combo_browser.set(config_dict['browser'])
+    combo_browser.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_language
+    lbl_language = Label(frame_group_header, text=translate[language_code]['language'])
+    lbl_language.grid(column=0, row=group_row_count, sticky = E)
+
+    global combo_language
+    combo_language = ttk.Combobox(frame_group_header, state="readonly")
+    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
+    #combo_language.current(0)
+    combo_language.set(config_dict['language'])
+    combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
+    combo_language.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
 
     global lbl_facebook_account
     lbl_facebook_account = Label(frame_group_header, text=translate[language_code]['facebook_account'])
