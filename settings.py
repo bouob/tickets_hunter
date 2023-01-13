@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.13)"
+CONST_APP_VERSION = u"MaxBot (2023.01.13) ver.2"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -78,7 +78,7 @@ def load_translate():
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_with_submit"] = 'After guess auto submit'
-    en_us["ocr_captcha_force_submit"] = 'Allow submit wrong answer'
+    en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -136,7 +136,7 @@ def load_translate():
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_with_submit"] = '猜測後自動送出'
-    zh_tw["ocr_captcha_force_submit"] = '允許送出錯的驗證碼'
+    zh_tw["ocr_captcha_force_submit"] = '掛機模式'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -194,7 +194,7 @@ def load_translate():
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_with_submit"] = '猜测后自动送出'
-    zh_cn["ocr_captcha_force_submit"] = '允许送出错的验证码'
+    zh_cn["ocr_captcha_force_submit"] = '挂机模式'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -253,7 +253,7 @@ def load_translate():
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_with_submit"] = '提出で推測した後'
-    zh_cn["ocr_captcha_force_submit"] = '間違った回答の送信を許可する'
+    zh_cn["ocr_captcha_force_submit"] = 'キーボードから離れて'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'

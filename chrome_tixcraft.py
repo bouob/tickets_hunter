@@ -48,7 +48,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.12)3版"
+CONST_APP_VERSION = u"MaxBot (2023.01.13) ver.2"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1690,7 +1690,7 @@ def tixcraft_reload_captcha(driver):
     return ret
 
 #PS: credit to LinShihJhang's share
-def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_submit, previous_answer):
+def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, away_from_keyboard_enable, previous_answer):
     print("start to ddddocr")
     from NonBrowser import NonBrowser
 
@@ -1715,7 +1715,7 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_su
         if len(orc_answer)==4:
             who_care_var, is_form_sumbited = tixcraft_keyin_captcha_code(driver, answer = orc_answer, auto_submit = ocr_captcha_with_submit)
         else:
-            if not ocr_captcha_force_submit:
+            if not away_from_keyboard_enable:
                 tixcraft_keyin_captcha_code(driver)
                 tixcraft_toast(driver, "※ Ocr fail...")
             else:
@@ -1724,7 +1724,6 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_su
                     previous_answer = orc_answer
                     print("click captcha again")
                     tixcraft_reload_captcha(driver)
-                    time.sleep(0.3)
     else:
         print("orc_answer is None")
         print("previous_answer:", previous_answer)
@@ -1732,6 +1731,7 @@ def tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_su
             tixcraft_keyin_captcha_code(driver)
         else:
             # page is not ready, retry again.
+            # PS: usually occur in async script get captcha image.
             is_need_redo_ocr = True
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
@@ -1741,7 +1741,11 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
     
     ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     ocr_captcha_with_submit = config_dict["ocr_captcha"]["auto_submit"]
-    ocr_captcha_force_submit = config_dict["ocr_captcha"]["force_submit"]
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not ocr_captcha_enable:
+        ocr_captcha_with_submit = False
+    if not ocr_captcha_with_submit:
+        away_from_keyboard_enable = False
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -1802,13 +1806,15 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
                 previous_answer = None
                 is_verifyCode_editing = True
                 for redo_ocr in range(999):
-                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, ocr_captcha_force_submit, previous_answer)
+                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, ocr_captcha_with_submit, away_from_keyboard_enable, previous_answer)
                     if is_form_sumbited:
                         # start next loop.
                         is_verifyCode_editing = False
                         break
-                    if not ocr_captcha_force_submit:
+                    
+                    if not away_from_keyboard_enable:
                         break
+                    
                     if not is_need_redo_ocr:
                         break
 
