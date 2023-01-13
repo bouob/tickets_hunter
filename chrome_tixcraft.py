@@ -44,11 +44,12 @@ try:
     import ddddocr
 except Exception as exc:
     pass
+from NonBrowser import NonBrowser
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.13) ver.3"
+CONST_APP_VERSION = u"MaxBot (2023.01.14)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -296,14 +297,11 @@ def get_driver_by_config(config_dict, driver_type):
     area_auto_select_enable = None
     area_auto_select_mode = ""
 
-    debugMode = False
-
     # read config.
     homepage = config_dict["homepage"]
     browser = config_dict["browser"]
 
     # output debug message in client side.
-    debugMode = config_dict["debug"]
     ticket_number = str(config_dict["ticket_number"])
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
 
@@ -385,7 +383,6 @@ def get_driver_by_config(config_dict, driver_type):
     print("play_captcha_sound", config_dict["advanced"]["play_captcha_sound"]["enable"])
     print("sound file path", config_dict["advanced"]["play_captcha_sound"]["filename"])
     print("adblock_plus_enable", config_dict["advanced"]["adblock_plus_enable"])
-    print("debug Mode", debugMode)
 
     # entry point
     if homepage is None:
@@ -862,11 +859,15 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
 
 # close some div on home url.
 def tixcraft_home(driver):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
     accept_all_cookies_btn = None
     try:
         accept_all_cookies_btn = driver.find_element(By.ID, 'onetrust-accept-btn-handler')
     except Exception as exc:
-        #print("find accept_all_cookies_btn fail")
+        if show_debug_message:
+            print("find accept_all_cookies_btn fail")
         pass
 
     if accept_all_cookies_btn is not None:
@@ -878,6 +879,8 @@ def tixcraft_home(driver):
             pass
 
         if is_visible:
+            if show_debug_message:
+                print("accept_all_cookies_btn visible. start to press.")
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
@@ -886,6 +889,9 @@ def tixcraft_home(driver):
                     driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
                 except Exception as exc:
                     pass
+        else:
+            if show_debug_message:
+                print("accept_all_cookies_btn invisible.")
 
     close_all_alert_btns = None
     try:
@@ -1674,13 +1680,16 @@ def  tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
     return is_verifyCode_editing, is_form_sumbited
 
-def tixcraft_reload_captcha(driver):
+def tixcraft_reload_captcha(driver, domain_name):
     # manually keyin verify code.
     # start to input verify code.
     ret = False
     form_captcha = None
     try:
-        form_captcha = driver.find_element(By.ID, 'yw0')
+        image_id = 'yw0'
+        if 'indievox.com' in domain_name:
+            image_id = 'TicketForm_verifyCode-image'
+        form_captcha = driver.find_element(By.ID, image_id)
         if not form_captcha is None:
             form_captcha.click()
             ret = True
@@ -1690,22 +1699,58 @@ def tixcraft_reload_captcha(driver):
     return ret
 
 #PS: credit to LinShihJhang's share
-def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer):
+def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
     print("start to ddddocr")
-    from NonBrowser import NonBrowser
+
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
 
     is_need_redo_ocr = False
     is_form_sumbited = False
 
     orc_answer = None
     if not ocr is None:
-        Non_Browser = NonBrowser()
-        Non_Browser.Set_cookies(driver.get_cookies())
-        img_base64 = base64.b64decode(Non_Browser.Request_Captcha())
-        try:
-            orc_answer = ocr.classification(img_base64)
-        except Exception as exc:
-            pass
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+
+        img_base64 = None
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
+            img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+            image_id = 'yw0'
+            if 'indievox.com' in domain_name:
+                image_id = 'TicketForm_verifyCode-image'
+            try:
+                form_verifyCode_base64 = driver.execute_async_script("""
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    var img = document.getElementById('%s');
+                    canvas.height = img.naturalHeight;
+                    canvas.width = img.naturalWidth;
+                    context.drawImage(img, 0, 0);
+                    callback = arguments[arguments.length - 1];
+                    callback(canvas.toDataURL());
+                    """ % (image_id))
+                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas exception:", str(exc))
+                pass
+        if not img_base64 is None:
+            try:
+                orc_answer = ocr.classification(img_base64)
+            except Exception as exc:
+                pass
+        
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
     else:
         print("ddddocr is None")
         
@@ -1723,7 +1768,17 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer):
                 if previous_answer != orc_answer:
                     previous_answer = orc_answer
                     print("click captcha again")
-                    tixcraft_reload_captcha(driver)
+                    if True:
+                        # selenium solution.
+                        tixcraft_reload_captcha(driver, domain_name)
+
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+                            time.sleep(0.3)
+                    else:
+                        # Non_Browser solution.
+                        new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                        if new_captcha_url != "":
+                            tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
     else:
         print("orc_answer is None")
         print("previous_answer:", previous_answer)
@@ -1736,13 +1791,14 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer):
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
-def tixcraft_ticket_main(driver, config_dict, ocr):
+def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     auto_check_agree = config_dict["auto_check_agree"]
     
     ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not ocr_captcha_enable:
         away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"] 
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -1803,7 +1859,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr):
                 previous_answer = None
                 is_verifyCode_editing = True
                 for redo_ocr in range(999):
-                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer)
+                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
                     if is_form_sumbited:
                         # start next loop.
                         is_verifyCode_editing = False
@@ -4955,12 +5011,16 @@ def list_all_cookies(driver):
         cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
-def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr):
-    if url == 'https://tixcraft.com/':
-        tixcraft_home(driver)
+def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_Browser):
+    home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/']
+    for each_url in home_url_list:
+        if each_url == url:
+            tixcraft_home(driver)
 
-    if url == 'https://indievox.com/':
-        tixcraft_home(driver)
+            domain_name = url.split('/')[2]
+            #PS: need set cookies once, if user change domain.
+            Captcha_Browser.Set_cookies(driver.get_cookies())
+            Captcha_Browser.Set_Domain(domain_name)
 
     if "/activity/detail/" in url:
         is_redirected = tixcraft_redirect(driver, url)
@@ -4984,7 +5044,8 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr):
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
         if not is_verifyCode_editing:
-            is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr)
+            domain_name = url.split('/')[2]
+            is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
     else:
         is_verifyCode_editing = False
 
@@ -5198,18 +5259,13 @@ def main():
 
     DISCONNECTED_MSG = 'Unable to evaluate script: no such window: target window already closed'
 
-    debugMode = False
-    if 'debug' in config_dict:
-        debugMode = config_dict["debug"]
-    if debugMode:
-        print("Start to looping, detect browser url...")
-
     ocr = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
     except Exception as exc:
         pass
+    Captcha_Browser = NonBrowser()
 
     while True:
         time.sleep(0.1)
@@ -5318,8 +5374,7 @@ def main():
                 continue
 
         # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
-        if debugMode:
-            print("url:", url)
+        #print("url:", url)
 
         if len(url) > 0 :
             if url != last_url:
@@ -5338,7 +5393,7 @@ def main():
             tixcraft_family = True
 
         if tixcraft_family:
-            is_verifyCode_editing = tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr)
+            is_verifyCode_editing = tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_Browser)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:

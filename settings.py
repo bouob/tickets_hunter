@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.13) ver.3"
+CONST_APP_VERSION = u"MaxBot (2023.01.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -78,6 +78,7 @@ def load_translate():
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
+    en_us["ocr_captcha_image_source"] = 'OCR image source'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -135,6 +136,7 @@ def load_translate():
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
+    zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -192,6 +194,7 @@ def load_translate():
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
+    zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -249,7 +252,8 @@ def load_translate():
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
-    zh_cn["ocr_captcha_force_submit"] = 'キーボードから離れて'
+    ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
+    ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -303,6 +307,7 @@ def get_default_config():
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
     config_dict["ocr_captcha"]["force_submit"] = False
+    config_dict["ocr_captcha"]["image_source"] = "canvas"
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -425,6 +430,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_adblock_plus
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_force_submit
+    global combo_ocr_captcha_image_source
 
     is_all_data_correct = True
 
@@ -500,6 +506,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
+        config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
 
     # save config.
     if is_all_data_correct:
@@ -661,6 +668,7 @@ def applyNewLanguage():
     global lbl_presale_code
     global lbl_ocr_captcha
     global lbl_ocr_captcha_force_submit
+    global lbl_ocr_captcha_image_source
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -720,6 +728,7 @@ def applyNewLanguage():
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
+    lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -967,13 +976,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     auto_reload_coming_soon_page_enable = True
     presale_code = ""
 
-    debugMode = False
-
     # read config.
     homepage = config_dict["homepage"]
     browser = config_dict["browser"]
     language = config_dict["language"]
-    debugMode = config_dict["debug"]
 
     # default ticket number
     # 說明：自動選擇的票數
@@ -1058,8 +1064,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
     print("presale_code", presale_code)
-
-    print("debug Mode", debugMode)
 
     global lbl_homepage
     global lbl_ticket_number
@@ -1559,7 +1563,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global combo_browser
     combo_browser = ttk.Combobox(frame_group_header, state="readonly")
     combo_browser['values']= ("chrome","firefox")
-    #combo_browser.current(0)
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1572,7 +1575,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly")
     combo_language['values']= ("English","繁體中文","簡体中文","日本語")
-    #combo_language.current(0)
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
@@ -1598,6 +1600,21 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kktix_account_value = StringVar(frame_group_header, value=kktix_account)
     txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
+
+    global lbl_ocr_captcha_image_source
+    lbl_ocr_captcha_image_source = Label(frame_group_header, text=translate[language_code]['ocr_captcha_image_source'])
+    lbl_ocr_captcha_image_source.grid(column=0, row=group_row_count, sticky = E)
+
+    global combo_ocr_captcha_image_source
+    combo_ocr_captcha_image_source = ttk.Combobox(frame_group_header, state="readonly")
+    combo_ocr_captcha_image_source['values']= (CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER, CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS)
+    combo_ocr_captcha_image_source.set(config_dict["ocr_captcha"]["image_source"])
+    combo_ocr_captcha_image_source.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
