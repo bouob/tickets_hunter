@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-01-14)：優化KKTIX "演出日期"的驗證問題
+
+https://youtu.be/ChmGZMaV2w8
+
 Max搶票機器人 (2023-01-14) indievox 猜測驗證碼
 
 https://youtu.be/O84H1wNO2_w
