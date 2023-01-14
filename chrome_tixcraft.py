@@ -42,9 +42,11 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import base64
 try:
     import ddddocr
+
+    #PS: python 3.11.1 raise PIL conflict.
+    from NonBrowser import NonBrowser
 except Exception as exc:
     pass
-from NonBrowser import NonBrowser
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -1721,7 +1723,8 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
 
         img_base64 = None
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
-            img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+            if not Captcha_Browser is None:
+                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
             image_id = 'yw0'
             if 'indievox.com' in domain_name:
@@ -1776,9 +1779,10 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                             time.sleep(0.3)
                     else:
                         # Non_Browser solution.
-                        new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
-                        if new_captcha_url != "":
-                            tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
+                        if not Captcha_Browser is None:
+                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                            if new_captcha_url != "":
+                                tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
     else:
         print("orc_answer is None")
         print("previous_answer:", previous_answer)
@@ -5017,10 +5021,14 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_
         if each_url == url:
             tixcraft_home(driver)
 
-            domain_name = url.split('/')[2]
-            #PS: need set cookies once, if user change domain.
-            Captcha_Browser.Set_cookies(driver.get_cookies())
-            Captcha_Browser.Set_Domain(domain_name)
+            if config_dict["ocr_captcha"]["enable"]:
+                domain_name = url.split('/')[2]
+                #PS: need set cookies once, if user change domain.
+                if not Captcha_Browser is None:
+                    Captcha_Browser.Set_cookies(driver.get_cookies())
+                    Captcha_Browser.Set_Domain(domain_name)
+
+            break
 
     if "/activity/detail/" in url:
         is_redirected = tixcraft_redirect(driver, url)
@@ -5260,12 +5268,13 @@ def main():
     DISCONNECTED_MSG = 'Unable to evaluate script: no such window: target window already closed'
 
     ocr = None
+    Captcha_Browser = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+            Captcha_Browser = NonBrowser()
     except Exception as exc:
         pass
-    Captcha_Browser = NonBrowser()
 
     while True:
         time.sleep(0.1)
