@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.14)"
+CONST_APP_VERSION = u"MaxBot (2023.01.14) ver.6"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -606,15 +606,13 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
             offical_hint_string = tmp_text
     return offical_hint_string
 
-def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
+def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    CONST_INPUT_SYMBOL = '輸入'
-
     return_list = None
 
-    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
     my_question = ""
     my_options = ""
@@ -800,8 +798,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
 
     return return_list
 
-def format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
-    CONST_INPUT_SYMBOL = '輸入'
+def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
 
     tmp_text = captcha_text_div_text
     tmp_text = tmp_text.replace(u'  ',u' ')
@@ -812,6 +809,8 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
     # replace ex.
     tmp_text = tmp_text.replace(u'例如', CONST_EXAMPLE_SYMBOL)
     tmp_text = tmp_text.replace(u'如:', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace(u'如為', CONST_EXAMPLE_SYMBOL+'為')
+
     tmp_text = tmp_text.replace(u'舉例', CONST_EXAMPLE_SYMBOL)
     if not CONST_EXAMPLE_SYMBOL in tmp_text:
         tmp_text = tmp_text.replace(u'例', CONST_EXAMPLE_SYMBOL)
@@ -840,10 +839,10 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
 
     return tmp_text
 
-def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
+def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     return_list = None
 
-    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
     # guess answer list from multi-options: 【】() []
     if return_list is None:
@@ -851,7 +850,7 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, captcha_text_div_text):
         pass
 
     if return_list is None:
-        return_list = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+        return_list = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
     # try rule8:
     if return_list is None:
@@ -2293,6 +2292,10 @@ def kktix_get_web_datetime(registrationsNewApp_div):
     else:
         print("find td.ng-binding fail")
 
+    if show_debug_message:
+        print('is_found_web_datetime:', is_found_web_datetime)
+        print('web_datetime:', web_datetime)
+
     return web_datetime
 
 def kktix_check_agree_checkbox(driver):
@@ -2394,7 +2397,7 @@ def kktix_check_register_status(url):
     #print("registerStatus:", registerStatus)
     return registerStatus
 
-def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
+def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2429,7 +2432,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_di
             if show_debug_message:
                 print("web_datetime:", web_datetime)
 
-            captcha_text_formatted = format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+            captcha_text_formatted = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
             if show_debug_message:
                 print("captcha_text_formatted", captcha_text_formatted)
 
@@ -2442,8 +2445,12 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_di
 
             # for "如為2月30日，請輸入0230"
             if my_datetime_foramted is None:
+                right_part = ""
                 if CONST_EXAMPLE_SYMBOL in captcha_text_formatted:
                     right_part = captcha_text_formatted.split(CONST_EXAMPLE_SYMBOL)[1]
+
+                if CONST_INPUT_SYMBOL in right_part:
+                    right_part = right_part.split(CONST_INPUT_SYMBOL)[1]
                     number_text = find_continuous_number(right_part)
 
                     my_anwser_formated = convert_string_to_pattern(number_text, dynamic_length=False)
@@ -2452,6 +2459,9 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_di
                     if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
                         my_datetime_foramted = "%m%d"
                     #print("my_datetime_foramted:", my_datetime_foramted)
+
+            if show_debug_message:
+                print("my_datetime_foramted", my_datetime_foramted)
 
             if my_datetime_foramted is None:
                 now = datetime.now()
@@ -2500,26 +2510,27 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_di
                         break
 
             if not my_datetime_foramted is None:
-                my_delimitor_symbol = u' '
+                my_delimitor_symbol = ' '
                 if my_delimitor_symbol in web_datetime:
                     web_datetime = web_datetime[:web_datetime.find(my_delimitor_symbol)]
                 date_time = datetime.strptime(web_datetime,u"%Y/%m/%d")
                 if show_debug_message:
-                    print("date_time:", date_time)
+                    print("our web date_time:", date_time)
                 ans = None
                 try:
-                    ans = date_time.strftime(my_datetime_foramted)
+                    if not date_time is None:
+                        ans = date_time.strftime(my_datetime_foramted)
                 except Exception as exc:
                     pass
                 inferred_answer_string = ans
                 if show_debug_message:
-                    print("my_anwser:", ans)
+                    print("web date_time anwser:", ans)
 
     return inferred_answer_string
 
-def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
+def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
     inferred_answer_string = None
 
@@ -2547,7 +2558,7 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, registrationsNewApp_di
         if not registrationsNewApp_div is None:
             web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
         if not web_datetime is None:
-            tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+            tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
             my_datetime_foramted = None
 
@@ -2639,14 +2650,15 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     is_need_keep_symbol = check_answer_keep_symbol(captcha_text_div_text)
 
     CONST_EXAMPLE_SYMBOL = "範例"
+    CONST_INPUT_SYMBOL = "輸入"
 
     # 請在下方空白處輸入引號內文字：
     if inferred_answer_string is None:
         is_use_quota_message = False
         if u"「" in captcha_text_div_text and u"」" in captcha_text_div_text:
-            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and u'輸入' in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
                 is_use_quota_message = True
-            if u'半形' in captcha_text_div_text and u'輸入' in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            if u'半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
@@ -2656,9 +2668,9 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     if inferred_answer_string is None:
         is_use_quota_message = False
         if u"【" in captcha_text_div_text and u"】" in captcha_text_div_text:
-            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and u'輸入' in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
                 is_use_quota_message = True
-            if u'半形' in captcha_text_div_text and u'輸入' in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            if u'半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
@@ -2667,11 +2679,11 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     # parse '演出日期'
     if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
+        inferred_answer_string = get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
 
     # parse '演出時間'
     if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
+        inferred_answer_string = get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
 
     # name of event.
     if inferred_answer_string is None:
@@ -2713,7 +2725,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     # still no answer.
     if inferred_answer_string is None:
         if not is_combine_two_question:
-            answer_list = get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, captcha_text_div_text)
+            answer_list = get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
             if show_debug_message:
                 print("guess answer list:", answer_list)
         else:

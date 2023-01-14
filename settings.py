@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.14)"
+CONST_APP_VERSION = u"MaxBot (2023.01.14) ver.6"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -317,7 +317,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_1_and"] = ""
     config_dict["kktix"]["area_keyword_2"] = ""
     config_dict["kktix"]["area_keyword_2_and"] = ""
-    config_dict["kktix"]["auto_guess_options"] = False
+    config_dict["kktix"]["auto_guess_options"] = True
     config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
