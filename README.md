@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-01-14) indievox 猜測驗證碼
+
+https://youtu.be/O84H1wNO2_w
+
 Max搶票機器人 (2023-01-12) tixcraft 猜測驗證碼後不送出
 
 https://youtu.be/mVzyDUV8Mao
