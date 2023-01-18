@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.14) ver.7"
+CONST_APP_VERSION = u"MaxBot (2023.01.17)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -3782,12 +3782,15 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
                     print("varify site icon pressed.")
             except Exception as exc:
                 # use plan B
+                '''
                 try:
                     print("force to click by js.")
                     driver.execute_script("arguments[0].click();", el_btn)
                     ret = True
                 except Exception as exc:
                     pass
+                '''
+                pass
         else:
             if show_debug_message:
                 print("varify site icon is None.")
@@ -4035,7 +4038,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                 if len(formated_area_list) == 0:
                     try:
                         driver.refresh()
-                        time.sleep(0.5)
+                        time.sleep(0.4)
                     except Exception as exc:
                         pass
 
@@ -4585,7 +4588,7 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
                 if len(formated_area_list) == 0:
                     try:
                         driver.refresh()
-                        time.sleep(0.5)
+                        time.sleep(0.4)
                     except Exception as exc:
                         pass
     return ret
@@ -4951,6 +4954,110 @@ def kktix_login(driver, account):
 
     return ret
 
+def cityline_login(driver, account):
+    ret = False
+    el_email = None
+    try:
+        el_email = driver.find_element(By.CSS_SELECTOR, 'input.ant-input')
+    except Exception as exc:
+        #print("find #email fail")
+        #print(exc)
+        pass
+
+    is_visible = False
+    if el_email is not None:
+        try:
+            if el_email.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    is_email_sent = False
+    if is_visible:
+        try:
+            inputed_text = el_email.get_attribute('value')
+            if inputed_text is not None:
+                if len(inputed_text) == 0:
+                    el_email.send_keys(account)
+                    is_email_sent = True
+        except Exception as exc:
+            pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            el_pass = driver.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+        except Exception as exc:
+            pass
+
+    is_visible = False
+    if el_pass is not None:
+        try:
+            if el_pass.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    if is_visible:
+        try:
+            el_pass.click()
+        except Exception as exc:
+            pass
+
+    return ret
+
+def urbtix_login(driver, account):
+    ret = False
+    el_email = None
+    try:
+        el_email = driver.find_element(By.CSS_SELECTOR, 'input[name="loginId"]')
+    except Exception as exc:
+        #print("find #email fail")
+        #print(exc)
+        pass
+
+    is_visible = False
+    if el_email is not None:
+        try:
+            if el_email.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    is_email_sent = False
+    if is_visible:
+        try:
+            inputed_text = el_email.get_attribute('value')
+            if inputed_text is not None:
+                if len(inputed_text) == 0:
+                    el_email.send_keys(account)
+                    is_email_sent = True
+        except Exception as exc:
+            pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            el_pass = driver.find_element(By.CSS_SELECTOR, 'input[name="password"]')
+        except Exception as exc:
+            pass
+
+    is_visible = False
+    if el_pass is not None:
+        try:
+            if el_pass.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    if is_visible:
+        try:
+            el_pass.click()
+        except Exception as exc:
+            pass
+
+    return ret
+
 def check_and_play_sound_for_captcha(config_dict):
     play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
     captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
@@ -5117,6 +5224,48 @@ def famiticket_main(driver, url, config_dict):
     if '/Sales/Home/Index/' in url:
         fami_home(driver, url, config_dict)
 
+def urbtix_performance_confirm_dialog_popup(driver):
+    ret = False
+
+    el_div = None
+    try:
+        el_div = driver.find_element(By.CSS_SELECTOR, 'div.notification-confirm-btn > div.button-text')
+    except Exception as exc:
+        #print("find modal-dialog fail")
+        #print(exc)
+        pass
+
+    if el_div is not None:
+        print("bingo, found notification-confirm-btn")
+        is_visible = False
+        try:
+            if el_div.is_enabled():
+                if el_div.is_displayed():
+                    is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                el_div.click()
+                ret = True
+            except Exception as exc:
+                # use plan B
+                '''
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_div)
+                    ret = True
+                except Exception as exc:
+                    pass
+                '''
+                pass
+
+        if ret:
+            time.sleep(0.4)
+    
+    return ret
+
 def urbtix_main(driver, url, config_dict):
     # http://msg.urbtix.hk
     waiting_for_access_url = ['/session/landing-timer/','msg.urbtix.hk','busy.urbtix.hk']
@@ -5136,6 +5285,11 @@ def urbtix_main(driver, url, config_dict):
         except Exception as exec1:
             pass
         pass
+
+    if '.hk/member-login' in url:
+        urbtix_account = config_dict["advanced"]["urbtix_account"]
+        if len(urbtix_account) > 2:
+            urbtix_login(driver, urbtix_account)
 
     # https://www.urbtix.hk/event-detail/00000/
     if '/event-detail/' in url:
@@ -5157,7 +5311,12 @@ def urbtix_main(driver, url, config_dict):
     if is_performace_page:
         area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
         if area_auto_select_enable:
-            urbtix_performance(driver, config_dict)
+
+            is_confirm_dialog_popup = urbtix_performance_confirm_dialog_popup(driver)
+            if is_confirm_dialog_popup:
+                print("is_confirm_dialog_popup! auto press confirm...")
+            else:
+                urbtix_performance(driver, config_dict)
 
 def check_modal_dialog_popup(driver):
     ret = False
@@ -5185,6 +5344,9 @@ def cityline_main(driver, url, config_dict):
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
     if '/Login.html' in url:
+        cityline_account = config_dict["advanced"]["cityline_account"]
+        if len(cityline_account) > 2:
+            cityline_login(driver, cityline_account)
         return
 
     # https://msg.cityline.com/

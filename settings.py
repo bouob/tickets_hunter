@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.14) ver.7"
+CONST_APP_VERSION = u"MaxBot (2023.01.17)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -93,6 +93,9 @@ def load_translate():
 
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
+    en_us["cityline_account"] = 'cityline account'
+    en_us["urbtix_account"] = 'URBTIX account'
+    
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
     en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
@@ -151,6 +154,9 @@ def load_translate():
 
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
+    zh_tw["cityline_account"] = 'cityline 帳號'
+    zh_tw["urbtix_account"] = 'URBTIX 帳號'
+    
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
     zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
@@ -210,6 +216,9 @@ def load_translate():
 
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
+    zh_cn["cityline_account"] = 'cityline 帳號'
+    zh_cn["urbtix_account"] = 'URBTIX 帳號'
+    
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
     zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
@@ -268,6 +277,9 @@ def load_translate():
 
     ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
+    ja_jp["cityline_account"] = 'citylineのアカウント'
+    ja_jp["urbtix_account"] = 'URBTIXのアカウント'
+    
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
 
@@ -346,6 +358,8 @@ def get_default_config():
 
     config_dict["advanced"]["facebook_account"] = ""
     config_dict["advanced"]["kktix_account"] = ""
+    config_dict["advanced"]["cityline_account"] = ""
+    config_dict["advanced"]["urbtix_account"] = ""
     config_dict["advanced"]["adblock_plus_enable"] = False
 
     config_dict['debug']=False
@@ -425,6 +439,9 @@ def btn_save_act(language_code, slience_mode=False):
 
     global txt_facebook_account
     global txt_kktix_account
+    global txt_cityline_account
+    global txt_urbtix_account
+
     global chk_state_play_captcha_sound
     global txt_captcha_sound_filename
     global chk_state_adblock_plus
@@ -501,6 +518,8 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
+        config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
+        config_dict["advanced"]["urbtix_account"] = txt_urbtix_account.get().strip()
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         
         config_dict["ocr_captcha"] = {}
@@ -750,10 +769,15 @@ def applyNewLanguage():
 
     global lbl_facebook_account
     global lbl_kktix_account
+    global lbl_cityline_account
+    global lbl_urbtix_account
+
     global lbl_play_captcha_sound
     global lbl_captcha_sound_filename
     lbl_facebook_account.config(text=translate[language_code]["facebook_account"])
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
+    lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
+    lbl_urbtix_account.config(text=translate[language_code]["urbtix_account"])
     lbl_play_captcha_sound.config(text=translate[language_code]["play_captcha_sound"])
     lbl_captcha_sound_filename.config(text=translate[language_code]["captcha_sound_filename"])
 
@@ -1522,15 +1546,11 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_header = Frame(root)
     group_row_count = 0
 
-    facebook_account = ""
-    kktix_account = ""
     play_captcha_sound = False
     captcha_sound_filename = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
     adblock_plus_enable = False
 
     if 'advanced' in config_dict:
-        facebook_account = config_dict["advanced"]["facebook_account"].strip()
-        kktix_account = config_dict["advanced"]["kktix_account"].strip()
         if 'play_captcha_sound' in config_dict["advanced"]:
             if 'enable' in config_dict["advanced"]["play_captcha_sound"]:
                 play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
@@ -1543,8 +1563,10 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     print("==[advanced]==")
     print("browser", config_dict['browser'])
     print("language", config_dict['language'])
-    print("facebook_account", facebook_account)
-    print("kktix_account", kktix_account)
+    print("facebook_account", config_dict["advanced"]["facebook_account"].strip())
+    print("kktix_account", config_dict["advanced"]["kktix_account"].strip())
+    print("cityline_account", config_dict["advanced"]["cityline_account"].strip())
+    print("urbtix_account", config_dict["advanced"]["urbtix_account"].strip())
     print("play_captcha_sound", play_captcha_sound)
     print("captcha_sound_filename", captcha_sound_filename)
     print("adblock_plus_enable", adblock_plus_enable)
@@ -1586,7 +1608,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_facebook_account.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_facebook_account
-    txt_facebook_account_value = StringVar(frame_group_header, value=facebook_account)
+    txt_facebook_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["facebook_account"].strip())
     txt_facebook_account = Entry(frame_group_header, width=20, textvariable = txt_facebook_account_value)
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1597,9 +1619,31 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_kktix_account.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_account
-    txt_kktix_account_value = StringVar(frame_group_header, value=kktix_account)
+    txt_kktix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kktix_account"].strip())
     txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_cityline_account
+    lbl_cityline_account = Label(frame_group_header, text=translate[language_code]['cityline_account'])
+    lbl_cityline_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_cityline_account
+    txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
+    txt_cityline_account = Entry(frame_group_header, width=20, textvariable = txt_cityline_account_value)
+    txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_urbtix_account
+    lbl_urbtix_account = Label(frame_group_header, text=translate[language_code]['urbtix_account'])
+    lbl_urbtix_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_urbtix_account
+    txt_urbtix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["urbtix_account"].strip())
+    txt_urbtix_account = Entry(frame_group_header, width=20, textvariable = txt_urbtix_account_value)
+    txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
