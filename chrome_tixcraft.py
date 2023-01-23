@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.22)"
+CONST_APP_VERSION = u"MaxBot (2023.01.23)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -1519,20 +1519,20 @@ def tixcraft_verify(driver, presale_code):
         print("find verify code fail")
         pass
 
-    default_value = None
+    inputed_value = None
     if form_input is not None:
         try:
-            default_value = form_input.get_attribute('value')
+            inputed_value = form_input.get_attribute('value')
         except Exception as exc:
             print("find verify code fail")
             pass
 
-    if default_value is None:
-        default_value = ""
+    if inputed_value is None:
+        inputed_value = ""
 
     if not inferred_answer_string is None:
         is_password_sent = False
-        if len(default_value)==0:
+        if len(inputed_value)==0:
             try:
                 # PS: sometime may send key twice...
                 form_input.clear()
@@ -1543,7 +1543,7 @@ def tixcraft_verify(driver, presale_code):
             except Exception as exc:
                 pass
 
-        if default_value == inferred_answer_string:
+        if inputed_value == inferred_answer_string:
             if show_debug_message:
                 print("sent password by previous time.")
             is_password_sent = True
@@ -1582,7 +1582,7 @@ def tixcraft_verify(driver, presale_code):
                             print("press accept button at time #", i+1)                    
                         break
     else:
-        if len(default_value)==0:
+        if len(inputed_value)==0:
             try:
                 form_input.click()
             except Exception as exc:
@@ -4457,6 +4457,11 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
                 if row_is_enabled:
                     formated_area_list.append(row)
 
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+        if area_list_count > 0:
             if len(date_keyword) == 0:
                 matched_blocks = formated_area_list
             else:
@@ -5563,6 +5568,12 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                     if row_is_enabled:
                         formated_area_list.append(row)
 
+        if formated_area_list is not None:
+            area_list_count = len(formated_area_list)
+            if show_debug_message:
+                print("formated_area_list count:", area_list_count)
+            if area_list_count > 0:
+
                 if len(date_keyword) == 0:
                     matched_blocks = formated_area_list
                 else:
@@ -5656,10 +5667,9 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                     is_date_assigned = True
                 except Exception as exc:
                     pass
-    
 
-    if is_date_assigned:
-        # auto submit
+    # alway, auto submit
+    if True:
         el_btn = None
         try:
             my_css_selector = "#buyButton > input"
@@ -6070,7 +6080,11 @@ def hkticketing_performance(driver, config_dict):
     return is_price_assign_by_bot
 
 def hkticketing_main(driver, url, config_dict):
-    home_url_list = ['https://premier.hkticketing.com/','https://premier.hkticketing.com/default.aspx']
+    home_url_list = ['https://premier.hkticketing.com/'
+    ,'https://hotshow.hkticketing.com/'
+    ,'https://premier.hkticketing.com/default.aspx'
+    ,'https://hotshow.hkticketing.com/default.aspx'
+    ]
     for each_url in home_url_list:
         if each_url == url:
             hkticketing_home(driver)
@@ -6096,12 +6110,849 @@ def hkticketing_main(driver, url, config_dict):
         if '/seatmap' in url:
             hkticketing_go_to_payment(driver)
 
+def khan_go_buy_redirect(driver):
+    ret = False
+
+    el_btn = None
+    try:
+        el_btn = driver.find_element(By.CSS_SELECTOR, 'div.btn_go > input[type="image"]')
+    except Exception as exc:
+        #print("find next button fail...")
+        #print(exc)
+        pass
+
+    if el_btn is not None:
+        print("bingo, found next button, start to press")
+        try:
+            if el_btn.is_enabled() and el_btn.is_displayed():
+                el_btn.click()
+                ret = True
+        except Exception as exc:
+            print("click next button fail...")
+            print(exc)
+
+    return ret
+
+def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    ret = False
+    matched_blocks = None
+
+    # clean stop word.
+    date_keyword = format_keyword_string(date_keyword)
+    date_keyword_and = ""
+
+    # default not selected.
+    is_date_assigned = False
+    if not is_date_assigned:
+        area_list = None
+        try:
+            my_css_selector = "td.contentCenterBg > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > div > table > tbody > tr"
+            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            print("find #date-time tr list fail")
+            print(exc)
+
+        #PS: some blocks are generate by ajax, not appear at first time.
+        formated_area_list = None
+        if area_list is not None:
+            area_list_count = len(area_list)
+            if show_debug_message:
+                print("date_list_count:", area_list_count)
+
+            if area_list_count > 0:
+                formated_area_list = []
+
+                # filter list.
+                row_index = 0
+                for row in area_list:
+                    row_index += 1
+                    row_is_enabled=False
+                    try:
+                        row_text = row.text
+                        if '立即訂購' in row_text:
+                            my_css_selector = "a.showoder"
+                            el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                            if el_btn is not None:
+                                if el_btn.is_enabled():
+                                    #print("row's button enabled.")
+                                    row_is_enabled=True
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(exc)
+                        pass
+
+                    if row_is_enabled:
+                        formated_area_list.append(row)
+            else:
+                if show_debug_message:
+                    print("area_list is None...")
+
+        if formated_area_list is not None:
+            area_list_count = len(formated_area_list)
+            if show_debug_message:
+                print("formated_area_list count:", area_list_count)
+            if area_list_count > 0:
+                if len(date_keyword) == 0:
+                    matched_blocks = formated_area_list
+                else:
+                    # match keyword.
+                    if show_debug_message:
+                        print("start to match keyword:", date_keyword)
+                    matched_blocks = []
+
+                    row_index = 0
+                    for row in formated_area_list:
+                        row_index += 1
+                        row_is_enabled=True
+                        if row_is_enabled:
+                            row_text = ""
+                            try:
+                                row_text = row.text
+                            except Exception as exc:
+                                print("get text fail")
+                                break
+
+                            if row_text is None:
+                                row_text = ""
+
+                            if len(row_text) > 0:
+                                row_text = format_keyword_string(row_text)
+                                if show_debug_message:
+                                    print("row_text:", row_text)
+
+                                is_match_area = False
+                                match_area_code = 0
+
+                                if date_keyword in row_text:
+                                    if len(date_keyword_and) == 0:
+                                        if show_debug_message:
+                                            print('keyword_and # is empty, directly match.')
+                                        # keyword #2 is empty, direct append.
+                                        is_match_area = True
+                                        match_area_code = 2
+                                    else:
+                                        if date_keyword_and in row_text:
+                                            if show_debug_message:
+                                                print('match keyword_and')
+                                            is_match_area = True
+                                            match_area_code = 3
+                                        else:
+                                            if show_debug_message:
+                                                print('not match keyword_and')
+                                            pass
+
+                                if is_match_area:
+                                    matched_blocks.append(row)
+
+                    if show_debug_message:
+                        if not matched_blocks is None:
+                            print("after match keyword, found count:", len(matched_blocks))
+            else:
+                print("not found date-time-position")
+                pass
+        else:
+            print("date date-time-position is None")
+            pass
+
+        target_area = None
+        if matched_blocks is not None:
+            if len(matched_blocks) > 0:
+                target_row_index = 0
+
+                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                    pass
+
+                if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                    target_row_index = len(matched_blocks)-1
+
+                if auto_select_mode == CONST_RANDOM:
+                    target_row_index = random.randint(0,len(matched_blocks)-1)
+
+                target_area = matched_blocks[target_row_index]
+
+        if target_area is not None:
+            el_btn = None
+            try:
+                my_css_selector = "a.showoder"
+                el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                pass
+
+            if el_btn is not None:
+                try:
+                    if el_btn.is_enabled() and el_btn.is_displayed():
+                        el_btn.click()
+                        print("buy button pressed.")
+                        ret = True
+                except Exception as exc:
+                    # use plan B
+                    try:
+                        print("force to click by js.")
+                        driver.execute_script("arguments[0].click();", el_btn)
+                        ret = True
+                    except Exception as exc:
+                        pass    
+
+    '''
+        if auto_reload_coming_soon_page_enable:
+            # auto refresh for date list page.
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        driver.refresh()
+                        time.sleep(0.4)
+                    except Exception as exc:
+                        pass
+    '''
+
+    return ret
+
+def kham_product(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
+    if show_debug_message:
+        print("date_keyword:", date_keyword)
+        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
+    is_date_assign_by_bot = hkam_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
+
+    return is_date_assign_by_bot
+
+def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and, ticket_number):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    matched_blocks = None
+
+    # clean stop word.
+    area_keyword_1 = format_keyword_string(area_keyword_1)
+    area_keyword_1_and = format_keyword_string(area_keyword_1_and)
+
+    area_list = None
+    try:
+        my_css_selector = "table.salesTable > tbody > tr > td > table > tbody > tr"
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find #ticket-price-tbl date list fail")
+        print(exc)
+
+    formated_area_list = None
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("area_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=False
+                try:
+                    is_row_with_id = False
+                    tr_id_string = str(row.get_attribute('id'))
+                    if len(tr_id_string) > 1:
+                        is_row_with_id = True
+
+                    if is_row_with_id:
+                        my_css_selector = "span.textPrice"
+                        el_remaining = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                        if el_remaining is not None:
+                            remaining_value = str(el_remaining.text)
+                            if int(remaining_value) >= ticket_number:
+                                row_is_enabled=True
+                except Exception as exc:
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+        else:
+            if show_debug_message:
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
+
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
+            if len(area_keyword_1) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", area_keyword_1)
+                    print("keyword and:", area_keyword_1_and)
+                matched_blocks = []
+
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if area_keyword_1 in row_text:
+                                if len(area_keyword_1_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if area_keyword_1_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            is_need_refresh = True
+            if show_debug_message:
+                print("formated_area_list is empty.")
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+    else:
+        if show_debug_message:
+            print("matched_blocks is None.")
+
+    if target_area is not None:
+        try:
+            if target_area.is_enabled():
+                target_area.click()
+                is_price_assign_by_bot = True
+        except Exception as exc:
+            print("click target_area link fail")
+            print(exc)
+            # use plan B
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", target_area)
+                is_price_assign_by_bot = True
+            except Exception as exc:
+                pass
+    else:
+        if show_debug_message:
+            print("target_area is None, no target to click.")
+
+    if show_debug_message:
+        print("is_need_refresh:", is_need_refresh)
+        print("is_price_assign_by_bot:", is_price_assign_by_bot)
+
+    return is_need_refresh, is_price_assign_by_bot
+
+def kham_performance_ticket_number(driver, ticket_number):
+    ret = False
+
+    form_input = None
+    try:
+        form_input = driver.find_element(By.CSS_SELECTOR, 'td.tdtext_orangeunderline > input[type="text"]')
+    except Exception as exc:
+        #print("find modal-dialog fail")
+        #print(exc)
+        pass
+
+    inputed_value = None
+    if form_input is not None:
+        try:
+            inputed_value = form_input.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+
+    if inputed_value is None:
+        inputed_value = ""
+
+    if inputed_value == "":
+        is_visible = False
+        try:
+            if form_input.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_input.click()
+                form_input.send_keys(str(ticket_number))
+                ret = True
+            except Exception as exc:
+                # use plan B
+                '''
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_div)
+                    ret = True
+                except Exception as exc:
+                    pass
+                '''
+                pass
+
+    return ret
+
+def kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    auto_fill_ticket_number = True
+    if auto_fill_ticket_number:
+        # click price row.
+        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+        area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+        area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+        area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+        area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
+        area_keyword_1_and = ""
+        area_keyword_2_and = ""
+
+        ticket_number = config_dict["ticket_number"]
+
+        if show_debug_message:
+            print("area_keyword_1:", area_keyword_1)
+            #print("area_keyword_1_and:", area_keyword_1_and)
+            print("area_keyword_2:", area_keyword_2)
+            #print("area_keyword_2_and:", area_keyword_2_and)
+            print("ticket_number:", ticket_number)
+
+        is_need_refresh = False
+        if not is_price_assign_by_bot:
+            is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and, ticket_number)
+
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                # try keyword_2
+                if len(area_keyword_2) > 0:
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and, ticket_number)
+
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_3) > 0:
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "", ticket_number)
+        if not is_need_refresh:
+            if not is_price_assign_by_bot:
+                if len(area_keyword_4) > 0:
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "", ticket_number)
+
+        if is_need_refresh:
+            if show_debug_message:
+                print("is_need_refresh:", is_need_refresh)
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
+
+        # special case for UTK0202 model.
+        is_ticket_number_assigned = kham_performance_ticket_number(driver, ticket_number)
+        if is_ticket_number_assigned:
+            is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+            if is_captcha_sent:
+                el_btn = None
+                try:
+                    my_css_selector = 'input[onclick="return chkCart();"]'
+                    el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                    if not el_btn is None:
+                        el_btn.click()
+                except Exception as exc:
+                    print("find chkCart button fail")
+                    pass
+
+    return is_price_assign_by_bot
+
+
+def kham_performance_confirm_dialog_popup(driver):
+    ret = False
+
+    el_div = None
+    try:
+        el_div = driver.find_element(By.CSS_SELECTOR, 'div.ui-dialog-buttonset > button.ui-button')
+    except Exception as exc:
+        #print("find modal-dialog fail")
+        #print(exc)
+        pass
+
+    if el_div is not None:
+        #print("bingo, found ui-dialog-buttonset confirm-btn")
+        is_visible = False
+        try:
+            if el_div.is_enabled():
+                if el_div.is_displayed():
+                    is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                el_div.click()
+                ret = True
+            except Exception as exc:
+                # use plan B
+                '''
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_div)
+                    ret = True
+                except Exception as exc:
+                    pass
+                '''
+                pass
+
+    return ret
+
+def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
+    is_verifyCode_editing = False
+    is_form_sumbited = False
+
+    # manually keyin verify code.
+    # start to input verify code.
+    form_verifyCode = None
+    try:
+        #my_css_selector = 'table#blockLogin > tbody > tr > td > input[type="text"]'
+        my_css_selector = 'input[value="驗證碼"]'
+        form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find blockLogin input fail")
+        try:
+            my_css_selector = 'input[placeholder="驗證碼"]'
+            form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+    if form_verifyCode is not None:
+        inputed_value = None
+        try:
+            inputed_value = form_verifyCode.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+
+        if inputed_value is None:
+            inputed_value = ""
+
+        if inputed_value == "驗證碼":
+            try:
+                form_verifyCode.clear()
+            except Exception as exc:
+                print("clear verify code fail")
+                pass
+        else:
+            if len(inputed_value) > 0:
+                print("captcha text inputed.")
+                form_verifyCode = None
+                is_verifyCode_editing = True
+
+    if form_verifyCode is not None:
+        is_visible = False
+        try:
+            if form_verifyCode.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_verifyCode.click()
+                is_verifyCode_editing = True
+            except Exception as exc:
+                pass
+
+            #print("start to fill answer.")
+            try:
+                if len(answer) > 0:
+                    answer=answer.upper()
+                    form_verifyCode.clear()
+                    form_verifyCode.send_keys(answer)
+                if auto_submit:
+                    form_verifyCode.send_keys(Keys.ENTER)
+                    is_verifyCode_editing = False
+                    is_form_sumbited = True
+                else:
+                    print("select all captcha text")
+                    driver.execute_script("arguments[0].select();", form_verifyCode)
+                    if len(answer) > 0:
+                        #tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
+                        pass
+            except Exception as exc:
+                print("send_keys ocr answer fail.")
+
+    return is_verifyCode_editing, is_form_sumbited
+
+def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+    print("start to ddddocr")
+
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
+
+    is_need_redo_ocr = False
+    is_form_sumbited = False
+
+    orc_answer = None
+    if not ocr is None:
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+
+        img_base64 = None
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
+            if not Captcha_Browser is None:
+                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+            image_id = 'chk_pic'
+            try:
+                form_verifyCode_base64 = driver.execute_async_script("""
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    var img = document.getElementById('%s');
+                    canvas.height = img.naturalHeight;
+                    canvas.width = img.naturalWidth;
+                    context.drawImage(img, 0, 0);
+                    callback = arguments[arguments.length - 1];
+                    callback(canvas.toDataURL());
+                    """ % (image_id))
+                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas exception:", str(exc))
+                pass
+        if not img_base64 is None:
+            try:
+                orc_answer = ocr.classification(img_base64)
+            except Exception as exc:
+                pass
+        
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+    else:
+        print("ddddocr is None")
+        
+    if not orc_answer is None:
+        orc_answer = orc_answer.strip()
+        print("orc_answer:", orc_answer)
+        if len(orc_answer)==4:
+            who_care_var, is_form_sumbited = kham_keyin_captcha_code(driver, answer = orc_answer, auto_submit = away_from_keyboard_enable)
+        else:
+            if not away_from_keyboard_enable:
+                kham_keyin_captcha_code(driver)
+                #tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
+            else:
+                is_need_redo_ocr = True
+                if previous_answer != orc_answer:
+                    previous_answer = orc_answer
+                    print("click captcha again")
+                    if True:
+                        # selenium solution.
+                        jquery_string = '$("#chk_pic").attr("src", "/pic.aspx?TYPE=%s&ts=" + new Date().getTime());' % (model_name)
+                        driver.execute_script(jquery_string)
+
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+                            time.sleep(0.3)
+                    else:
+                        # Non_Browser solution.
+                        if not Captcha_Browser is None:
+                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                            if new_captcha_url != "":
+                                #PS:[TODO]
+                                #tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
+                                pass
+    else:
+        print("orc_answer is None")
+        print("previous_answer:", previous_answer)
+        if previous_answer is None:
+            kham_keyin_captcha_code(driver)
+        else:
+            # page is not ready, retry again.
+            # PS: usually occur in async script get captcha image.
+            is_need_redo_ocr = True
+
+    return is_need_redo_ocr, previous_answer, is_form_sumbited
+
+def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
+    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not ocr_captcha_enable:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"] 
+
+    #PS: need a 'auto assign site' feature to enable away_from_keyboard feature.
+    away_from_keyboard_enable = False
+
+    is_cpatcha_sent = False
+    previous_answer = None
+    is_verifyCode_editing = True
+    for redo_ocr in range(999):
+        is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
+        
+        # TODO: must ensure the answer is corrent...
+        is_cpatcha_sent = True
+        
+        if is_form_sumbited:
+            break
+        
+        if not away_from_keyboard_enable:
+            break
+        
+        if not is_need_redo_ocr:
+            break
+
+    return is_cpatcha_sent
+
+def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
+    home_url_list = ['https://kham.com.tw/'
+    ,'https://kham.com.tw/application/UTK01/UTK0101_.aspx'
+    ,'https://kham.com.tw/application/UTK01/UTK0101_03.aspx']
+    for each_url in home_url_list:
+        if each_url == url:
+            tixcraft_home(driver)
+
+            if config_dict["ocr_captcha"]["enable"]:
+                domain_name = url.split('/')[2]
+                if not Captcha_Browser is None:
+                    Captcha_Browser.Set_cookies(driver.get_cookies())
+                    Captcha_Browser.Set_Domain(domain_name)
+
+            break
+
+    # https://kham.com.tw/application/UTK13/UTK1306_.aspx
+    if 'UTK1306' in url and '.aspx' in url:
+        if config_dict["ocr_captcha"]["enable"]:
+            domain_name = url.split('/')[2]
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+            #PS: need set cookies once, if user change domain.
+            if not Captcha_Browser is None:
+                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+            kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+    #https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=XXX
+    if 'UTK0201_.aspx?PRODUCT_ID=' in url:
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+
+        if is_event_page:
+            khan_go_buy_redirect(driver)
+
+    # https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=N28TFATD
+    if 'UTK0201_00.aspx?PRODUCT_ID=' in url:
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+
+        if is_event_page:
+            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+            if date_auto_select_enable:
+                kham_product(driver, config_dict)
+
+    # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
+    if '.aspx?PERFORMANCE_ID=' in url and 'PRODUCT_ID=' in url:
+        area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+        if area_auto_select_enable:
+            domain_name = url.split('/')[2]
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+            #PS: need set cookies once, if user change domain.
+            if not Captcha_Browser is None:
+                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+            is_confirm_dialog_popup = kham_performance_confirm_dialog_popup(driver)
+            if is_confirm_dialog_popup:
+                print("is_confirm_dialog_popup! auto press confirm...")
+
+            kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+    #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
+    if '.aspx?PERFORMANCE_ID=' in url and 'PERFORMANCE_PRICE_AREA_ID=' in url:
+        is_confirm_dialog_popup = kham_performance_confirm_dialog_popup(driver)
+        if is_confirm_dialog_popup:
+            print("is_confirm_dialog_popup! auto press confirm...")
+        if config_dict["ocr_captcha"]["enable"]:
+            domain_name = url.split('/')[2]
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+            #PS: need set cookies once, if user change domain.
+            if not Captcha_Browser is None:
+                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+            kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+
 def main():
     config_dict = get_config_dict()
 
     driver_type = 'selenium'
     #driver_type = 'stealth'
-    #driver_type = 'undetected_chromedriver'
+    driver_type = 'undetected_chromedriver'
 
     driver = None
     if not config_dict is None:
@@ -6263,23 +7114,24 @@ def main():
         if 'kktix.c' in url:
             answer_index, kktix_register_status_last = kktix_main(driver, url, config_dict, answer_index, kktix_register_status_last)
 
-        # for famiticket
         if 'famiticket.com' in url:
             famiticket_main(driver, url, config_dict)
 
-        # for urbtix
-        # https://ticket.urbtix.hk/internet/secure/event/37348/performanceDetail
+        if 'ibon.com' in url:
+            ibon_main(driver, url, config_dict)
+
+        if 'kham.com' in url:
+            kham_main(driver, url, config_dict, ocr, Captcha_Browser)
+
         if 'urbtix.hk' in url:
             urbtix_main(driver, url, config_dict)
 
         if 'cityline.com' in url:
             cityline_main(driver, url, config_dict)
 
-        if 'ibon.com' in url:
-            ibon_main(driver, url, config_dict)
-
         if 'hkticketing.com' in url:
             hkticketing_main(driver, url, config_dict)
+
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
