@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.01.17)"
+CONST_APP_VERSION = u"MaxBot (2023.01.22)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -456,7 +456,10 @@ def btn_save_act(language_code, slience_mode=False):
             is_all_data_correct = False
             messagebox.showerror("Error", "Please enter homepage")
         else:
-            config_dict["homepage"] = combo_homepage.get().strip()
+            homepage_domain = combo_homepage.get().strip()
+            if ' (' in homepage_domain:
+                homepage_domain = homepage_domain.split(' (')[0]
+            config_dict["homepage"] = homepage_domain
 
     if is_all_data_correct:
         if combo_browser.get().strip()=="":
@@ -1061,33 +1064,11 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     # for kktix
     print("==[kktix]==")
-    print("auto_press_next_step_button", auto_press_next_step_button)
-    print("auto_fill_ticket_number", auto_fill_ticket_number)
-    print("kktix_area_mode", kktix_area_mode)
-    print("kktix_area_keyword_1", kktix_area_keyword_1)
-    print("kktix_area_keyword_1_and", kktix_area_keyword_1_and)
-    # disable password brute force attack
-    #print("kktix_answer_dictionary", kktix_answer_dictionary)
-    print("auto_guess_options", auto_guess_options)
-    print("user_guess_string", user_guess_string)
+    print(config_dict["kktix"])
 
     # for tixcraft
     print("==[tixcraft]==")
-    print("date_auto_select_enable", date_auto_select_enable)
-    print("date_auto_select_mode", date_auto_select_mode)
-    print("date_keyword", date_keyword)
-
-    print("area_auto_select_enable", area_auto_select_enable)
-    print("area_auto_select_mode", area_auto_select_mode)
-    print("area_keyword_1", area_keyword_1)
-    print("area_keyword_2", area_keyword_2)
-    print("area_keyword_3", area_keyword_3)
-    print("area_keyword_4", area_keyword_4)
-
-    print("pass_date_is_sold_out", pass_date_is_sold_out_enable)
-
-    print("auto_reload_coming_soon_page", auto_reload_coming_soon_page_enable)
-    print("presale_code", presale_code)
+    print(config_dict["tixcraft"])
 
     global lbl_homepage
     global lbl_ticket_number
@@ -1106,7 +1087,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_homepage
     combo_homepage = ttk.Combobox(frame_group_header, state="readonly")
-    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com","https://www.indievox.com/","https://www.famiticket.com.tw","http://www.urbtix.hk/","https://www.cityline.com/","https://ticket.ibon.com.tw/")
+    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com (拓元)","https://www.indievox.com/ (獨立音樂)","https://www.famiticket.com.tw (全網)","https://ticket.ibon.com.tw/","http://www.urbtix.hk/ (城市)","https://www.cityline.com/ (買飛)","https://premier.hkticketing.com/ (快達票)")
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)
@@ -1546,37 +1527,21 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_header = Frame(root)
     group_row_count = 0
 
-    play_captcha_sound = False
-    captcha_sound_filename = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
-    adblock_plus_enable = False
-
-    if 'advanced' in config_dict:
-        if 'play_captcha_sound' in config_dict["advanced"]:
-            if 'enable' in config_dict["advanced"]["play_captcha_sound"]:
-                play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
-            if 'filename' in config_dict["advanced"]["play_captcha_sound"]:
-                captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-        if 'adblock_plus_enable' in config_dict["advanced"]:
-            adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+    play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
+    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
+    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
 
     # for kktix
     print("==[advanced]==")
     print("browser", config_dict['browser'])
     print("language", config_dict['language'])
-    print("facebook_account", config_dict["advanced"]["facebook_account"].strip())
-    print("kktix_account", config_dict["advanced"]["kktix_account"].strip())
-    print("cityline_account", config_dict["advanced"]["cityline_account"].strip())
-    print("urbtix_account", config_dict["advanced"]["urbtix_account"].strip())
-    print("play_captcha_sound", play_captcha_sound)
-    print("captcha_sound_filename", captcha_sound_filename)
-    print("adblock_plus_enable", adblock_plus_enable)
+    print(config_dict["advanced"])
 
     # assign default value.
     if captcha_sound_filename is None:
         captcha_sound_filename = ""
     if len(captcha_sound_filename)==0:
         captcha_sound_filename = captcha_sound_filename_default
-
 
     global lbl_browser
     lbl_browser = Label(frame_group_header, text=translate[language_code]['browser'])
