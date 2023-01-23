@@ -7,6 +7,11 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
+
+Max搶票機器人 (2023-01-22)：hkticketing(快達票)
+
+https://youtu.be/pZJlcMjayco
+
 Max搶票機器人 (2023-01-17)：優化URBTIX 被登出的問題
 
 https://youtu.be/hBa_0fOBTl8
@@ -94,10 +99,11 @@ https://youtu.be/AmOYg8Oj0qM
 # How to use (如何使用)
 * tixcraft: https://max-everyday.com/2018/03/tixcraft-bot/
 * kktix: https://max-everyday.com/2018/12/kktix-bot/
-* cityline: https://max-everyday.com/2019/03/cityline-bot/
-* urbtix: https://max-everyday.com/2019/02/urbtix-bot/
 * FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
 * ibon: https://max-everyday.com/2023/01/ibon-bot/
+* cityline: https://max-everyday.com/2019/03/cityline-bot/
+* urbtix: https://max-everyday.com/2019/02/urbtix-bot/
+* hkticketing: https://max-everyday.com/2023/01/hkticketing-bot/
 
 # How to execute source code (透過原始碼的執行方法)
 1: download chromedrive to "webdriver" folder:
