@@ -1087,7 +1087,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_homepage
     combo_homepage = ttk.Combobox(frame_group_header, state="readonly")
-    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com (拓元)","https://www.indievox.com/ (獨立音樂)","https://www.famiticket.com.tw (全網)","https://ticket.ibon.com.tw/","https://kham.com.tw/ (寬宏)","http://www.urbtix.hk/ (城市)","https://www.cityline.com/ (買飛)","https://premier.hkticketing.com/ (快達票)")
+    combo_homepage['values']= ("https://kktix.com","https://tixcraft.com (拓元)","https://teamear.tixcraft.com/ (添翼)","https://www.indievox.com/ (獨立音樂)","https://www.famiticket.com.tw (全網)","https://ticket.ibon.com.tw/","https://kham.com.tw/ (寬宏)","http://www.urbtix.hk/ (城市)","https://www.cityline.com/ (買飛)","https://premier.hkticketing.com/ (快達票)")
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)

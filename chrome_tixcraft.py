@@ -5118,7 +5118,7 @@ def list_all_cookies(driver):
     print(cookies_dict)
 
 def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_Browser):
-    home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/']
+    home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
             tixcraft_home(driver)
