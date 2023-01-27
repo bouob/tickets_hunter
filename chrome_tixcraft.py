@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.23)"
+CONST_APP_VERSION = u"MaxBot (2023.01.26)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -6089,6 +6089,13 @@ def hkticketing_main(driver, url, config_dict):
         if each_url == url:
             hkticketing_home(driver)
             break
+
+    if 'queue.hkticketing.com/hotshow.html' in url:
+        entry_url = 'http://entry-hotshow.hkticketing.com/'
+        try:
+            driver.get(entry_url)
+        except Exception as exc:
+            pass
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
     if 'shows/show.aspx?' in url:
