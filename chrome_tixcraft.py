@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.26)"
+CONST_APP_VERSION = u"MaxBot (2023.01.29)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -5477,7 +5477,6 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
     date_keyword = format_keyword_string(date_keyword)
     date_keyword_and = ""
 
-
     form_select = None
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '#p')
@@ -5515,6 +5514,8 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
     if show_debug_message:
         print("is_date_assigned:", is_date_assigned)
 
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
     if not is_date_assigned:
         area_list = None
         try:
@@ -5524,8 +5525,6 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
             print("find #p options date list fail")
             print(exc)
 
-        #PS: some blocks are generate by ajax, not appear at first time.
-        formated_area_list = None
         if area_list is not None:
             area_list_count = len(area_list)
             if show_debug_message:
@@ -5669,40 +5668,47 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                     pass
 
     # alway, auto submit
-    if True:
-        el_btn = None
+    el_btn = None
+    try:
+        my_css_selector = "#buyButton > input"
+        el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        pass
+
+    if el_btn is not None:
         try:
-            my_css_selector = "#buyButton > input"
-            el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if el_btn.is_enabled() and el_btn.is_displayed():
+                el_btn.click()
+                print("buy button pressed.")
+                ret = True
         except Exception as exc:
-            pass
-
-        if el_btn is not None:
+            # use plan B
             try:
-                if el_btn.is_enabled() and el_btn.is_displayed():
-                    el_btn.click()
-                    print("buy button pressed.")
-                    ret = True
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", el_btn)
+                ret = True
             except Exception as exc:
-                # use plan B
-                try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", el_btn)
-                    ret = True
-                except Exception as exc:
-                    pass
-
-    '''
+                pass
+    else:
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
-            if not formated_area_list is None:
-                if len(formated_area_list) == 0:
-                    try:
-                        driver.refresh()
-                        time.sleep(0.4)
-                    except Exception as exc:
-                        pass
-    '''
+            is_need_refresh = True
+
+            if is_date_assigned:
+                # if select box assign.
+                is_need_refresh = False
+            else:
+                if not formated_area_list is None:
+                    if len(formated_area_list) > 0:
+                        # option waiting to assign at next loop.
+                        is_need_refresh = False
+
+            if is_need_refresh:
+                try:
+                    driver.refresh()
+                    time.sleep(0.3)
+                except Exception as exc:
+                    pass
 
     return ret
 
@@ -5889,6 +5895,18 @@ def hkticketing_ticket_number_auto_select(driver, ticket_number):
     by_method = By.CSS_SELECTOR
     return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
 
+def hkticketing_nav_to_footer(driver):
+    try:
+        el_nav = None
+        el_nav = driver.find_element(By.CSS_SELECTOR, '#wrapFooter')
+        if not el_nav is None:
+            builder = ActionChains(driver)
+            builder.move_to_element(el_nav)
+            builder.click(el_nav)
+            builder.perform()
+    except Exception as exc:
+        pass
+
 def hkticketing_next_button_press(driver):
     ret = False
 
@@ -5901,15 +5919,8 @@ def hkticketing_next_button_press(driver):
 
     if el_btn is not None:
         print("bingo, found next button, start to press")
+        hkticketing_nav_to_footer(driver)
         try:
-            el_nav = None
-            el_nav = driver.find_element(By.CSS_SELECTOR, '#wrapFooter')
-            if not el_nav is None:
-                builder = ActionChains(driver)
-                builder.move_to_element(el_nav)
-                builder.click(el_nav)
-                builder.perform()
-            
             if el_btn.is_enabled() and el_btn.is_displayed():
                 el_btn.click()
                 ret = True
@@ -5932,14 +5943,6 @@ def hkticketing_go_to_payment(driver):
     if el_btn is not None:
         print("bingo, found next button, start to press")
         try:
-            el_nav = None
-            el_nav = driver.find_element(By.CSS_SELECTOR, '#wrapFooter')
-            if not el_nav is None:
-                builder = ActionChains(driver)
-                builder.move_to_element(el_nav)
-                builder.click(el_nav)
-                builder.perform()
-            
             if el_btn.is_enabled() and el_btn.is_displayed():
                 el_btn.click()
                 ret = True
@@ -5986,7 +5989,13 @@ def hkticketing_ticket_delivery_option(driver):
             print("delivery_option fail")
             print(exc)
 
-    # clean block content.
+
+    return is_delivery_option_assigned
+
+def hkticketing_hide_tickets_blocks(driver):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
     actionBlock_divs = None
     try:
         selector_string = 'div.actionBlock.note'
@@ -5999,9 +6008,26 @@ def hkticketing_ticket_delivery_option(driver):
             print(exc)
         pass
 
-    return is_delivery_option_assigned
+    detailModuleCopy_divs = None
+    try:
+        selector_string = 'div.detailModuleCopy'
+        detailModuleCopy_divs = driver.find_elements(By.CSS_SELECTOR, selector_string)
+        if not detailModuleCopy_divs is None:
+            driver.execute_script("arguments[0].innerHTML='';", detailModuleCopy_divs);
+    except Exception as exc:
+        pass
 
-def hkticketing_performance(driver, config_dict):
+    mapWrapper_divs = None
+    try:
+        selector_string = 'div.mapWrapper'
+        mapWrapper_divs = driver.find_elements(By.CSS_SELECTOR, selector_string)
+        if not mapWrapper_divs is None:
+            driver.execute_script("arguments[0].innerHTML='';", mapWrapper_divs);
+    except Exception as exc:
+        pass
+    
+
+def hkticketing_performance(driver, config_dict, domain_name):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -6052,6 +6078,12 @@ def hkticketing_performance(driver, config_dict):
             except Exception as exc:
                 pass
 
+        # hide blocks.
+        hkticketing_hide_tickets_blocks(driver)
+
+        # goto bottom.
+        hkticketing_nav_to_footer(driver)
+
         # choose ticket.
         ticket_number = str(config_dict["ticket_number"])
         is_ticket_number_assigned = hkticketing_ticket_number_auto_select(driver, ticket_number)
@@ -6060,11 +6092,14 @@ def hkticketing_performance(driver, config_dict):
             print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
         # Select a delivery option
-        is_delivery_option_assigned = False
-        if is_ticket_number_assigned:
-            is_delivery_option_assigned = hkticketing_ticket_delivery_option(driver)
-        if show_debug_message:
-            print("is_delivery_option_assigned:", is_delivery_option_assigned)
+        is_delivery_option_assigned = True
+        if not 'galaxymacau.com' in domain_name:
+            # hkticketing
+            is_delivery_option_assigned = False
+            if is_ticket_number_assigned:
+                is_delivery_option_assigned = hkticketing_ticket_delivery_option(driver)
+            if show_debug_message:
+                print("is_delivery_option_assigned:", is_delivery_option_assigned)
 
         if is_delivery_option_assigned:
             auto_press_next_step_button = True
@@ -6078,6 +6113,8 @@ def hkticketing_performance(driver, config_dict):
 
 
     return is_price_assign_by_bot
+
+
 
 def hkticketing_main(driver, url, config_dict):
     home_url_list = ['https://premier.hkticketing.com/'
@@ -6111,10 +6148,14 @@ def hkticketing_main(driver, url, config_dict):
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
         if '/tickets' in url:
+            domain_name = url.split('/')[2]
             area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
             if area_auto_select_enable:
-                hkticketing_performance(driver, config_dict)
+                hkticketing_performance(driver, config_dict, domain_name)
+        
         if '/seatmap' in url:
+            # goto bottom.
+            hkticketing_nav_to_footer(driver)
             hkticketing_go_to_payment(driver)
 
 def khan_go_buy_redirect(driver):
@@ -7139,6 +7180,8 @@ def main():
         if 'hkticketing.com' in url:
             hkticketing_main(driver, url, config_dict)
 
+        if 'galaxymacau.com' in url:
+            hkticketing_main(driver, url, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
