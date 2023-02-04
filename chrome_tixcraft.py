@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.01.29)"
+CONST_APP_VERSION = u"MaxBot (2023.02.03)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -702,9 +702,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             if len(new_hint) > 0:
                 offical_hint_string_anwser = new_hint
 
+    # resize offical_hint_string_anwser for options contains in hint string.
+    #print("offical_hint_string_anwser:", offical_hint_string_anwser)
+    if len(offical_hint_string_anwser) > 0:
+        offical_hint_string = offical_hint_string.split(offical_hint_string_anwser)[0]
 
     if show_debug_message:
-        print("offical_hint_string:",offical_hint_string)
+        print("offical_hint_string:", offical_hint_string)
 
     # try rule4:
     # get hint from rule 3: without '(' & '), but use "*"
@@ -2736,7 +2740,6 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     inferred_answer_string = None
     answer_list = None
-    is_need_keep_symbol = check_answer_keep_symbol(captcha_text_div_text)
 
     CONST_EXAMPLE_SYMBOL = "範例"
     CONST_INPUT_SYMBOL = "輸入"
@@ -7320,13 +7323,14 @@ if __name__ == "__main__":
         #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
         #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
         #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
+        #captcha_text_div_text = "以下為選擇題：請問 「OHM NANON 1st Fan Meeting in Hong Kong」 舉行日期是？請以半形細楷英文於下方輸入答案 (例如：a)  a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
         #captcha_text_div_text = "以下哪個「不是」正確的林俊傑與其他藝人合唱的歌曲組合？（選項為歌名/合作藝人 ，請以半形輸入法作答選項，大小寫需要一模一樣，範例:jju） 選項： (jja)小酒窩/A-Sa蔡卓妍 (jjb)被風吹過的夏天/金莎 (jjc)友人說/張懷秋 (jjd)全面開戰/五月天阿信 (jje)小說/阿杜"
         #captcha_text_div_text = "請問《龍的傳人2060》演唱會是以下哪位藝人的演出？（請以半形輸入法作答，大小寫需要一模一樣，範例：B2）A1.周杰倫 B2.林俊傑 C3.張學友 D4.王力宏"
         #captcha_text_div_text = "王力宏何時發行第一張專輯?（請以半形輸入法作答，大小寫需要一模一樣，範例:B2） A1.1985 B2.2005 C3.2015 D4.1995"
         #captcha_text_div_text = "朴寶劍三月以歌手出道的日期和單曲名為？ Answer the single’s name & the debut date. *以半形輸入，大小寫/符號須都相同。例:(E1) Please use the same format given in the options.ex:(E1) (A1)20/Bloomin'(B1)2/Blossom(C1)2/Bloomin'(D1)20/Blossom"
         #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
         #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
-        captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
+        #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
