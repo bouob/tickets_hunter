@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-03)：優化KKTIX 推論驗證問題
+
+https://youtu.be/I4OOTlgpsOA
+
 Max搶票機器人 (2023-01-29)：支援galaxymacau(澳門銀河)
 
 https://youtu.be/yt7SkRvBujU
