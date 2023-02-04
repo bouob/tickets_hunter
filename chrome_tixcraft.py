@@ -473,38 +473,101 @@ def convert_string_to_pattern(my_str, dynamic_length=True):
     return my_formated
 
 def guess_answer_list_from_multi_options(tmp_text):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
     options_list = None
+    matched_pattern = ""
     if options_list is None:
         if u'【' in tmp_text and u'】' in tmp_text:
-            options_list = re.findall(u'【.*?】', tmp_text)
+            pattern = '【.*?】'
+            options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
+            else:
+                matched_pattern = pattern
 
     if options_list is None:
         if u'(' in tmp_text and u')' in tmp_text:
-            options_list = re.findall(u'\(.*?\)', tmp_text)
+            pattern = '\(.*?\)'
+            options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
+            else:
+                matched_pattern = pattern
 
     if options_list is None:
         if u'[' in tmp_text and u']' in tmp_text:
-            options_list = re.findall(u'[.*?]', tmp_text)
+            pattern = '\[.*?\]'
+            options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
+            else:
+                matched_pattern = pattern
+
+    if show_debug_message:
+        print("matched pattern:", matched_pattern)
+
+    # default remove quota
+    is_trim_quota = not check_answer_keep_symbol(tmp_text)
+    if show_debug_message:
+        print("is_trim_quota:", is_trim_quota)
 
     return_list = None
     if not options_list is None:
         options_list_length = len(options_list)
+        if show_debug_message:
+            print("options_list_length:", options_list_length)
+            print("options_list:", options_list)
         if options_list_length > 2:
             is_all_options_same_length = True
+            options_length_count = {}
             for i in range(options_list_length-1):
-                if len(options_list[i]) != len(options_list[i]):
+                current_option_length = len(options_list[i])
+                next_option_length = len(options_list[i+1])
+                if current_option_length != next_option_length:
                     is_all_options_same_length = False
+                if current_option_length in options_length_count:
+                    options_length_count[current_option_length] += 1
+                else:
+                    options_length_count[current_option_length] = 1
+
+            if show_debug_message:
+                print("is_all_options_same_length:", is_all_options_same_length)
 
             if is_all_options_same_length:
                 return_list = []
                 for each_option in options_list:
-                    return_list.append(each_option[1:-1])
+                    if is_trim_quota:
+                        return_list.append(each_option[1:-1])
+                    else:
+                        return_list.append(each_option)
+            else:
+                #print("options_length_count:", options_length_count)
+                if len(options_length_count) > 0:
+                    target_option_length = 0
+                    most_length_count = 0
+                    for k in options_length_count.keys():
+                        if options_length_count[k] > most_length_count:
+                            most_length_count = options_length_count[k]
+                            target_option_length = k
+                    #print("most_length_count:", most_length_count)
+                    #print("target_option_length:", target_option_length)
+                    if target_option_length > 0:
+                        return_list = []
+                        for each_option in options_list:
+                            current_option_length = len(each_option)
+                            if current_option_length == target_option_length:
+                                if is_trim_quota:
+                                    return_list.append(each_option[1:-1])
+                                else:
+                                    return_list.append(each_option)
+
+    # something is wrong, give up those options.
+    if not return_list is None:
+        if len(return_list) <= 2:
+            return_list = None
+
     return return_list
 
 #PS: this may get a wrong answer list. XD
@@ -611,22 +674,12 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     # ps: hint_list is not options list
 
     if offical_hint_string == "":
-        offical_hint_string = get_offical_hint_string_from_symbol(CONST_EXAMPLE_SYMBOL, tmp_text)
-        if len(offical_hint_string) > 0:
-            right_part = offical_hint_string.split(CONST_EXAMPLE_SYMBOL)[1]
-            if len(offical_hint_string) == len(tmp_text):
-                offical_hint_string = right_part
-
-            new_hint = find_continuous_text(right_part)
-            if len(new_hint) > 0:
-                offical_hint_string_anwser = new_hint
-
-    if offical_hint_string == "":
         # for: 若你覺得答案為 a，請輸入 a
         if '答案' in tmp_text and CONST_INPUT_SYMBOL in tmp_text:
             offical_hint_string = get_offical_hint_string_from_symbol(CONST_INPUT_SYMBOL, tmp_text)
         if len(offical_hint_string) > 0:
             right_part = offical_hint_string.split(CONST_INPUT_SYMBOL)[1]
+            #print("right_part:", right_part)
             if len(offical_hint_string) == len(tmp_text):
                 offical_hint_string = right_part
 
@@ -635,6 +688,20 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 # TODO: 答案為B需填入Bb)
                 #if u'答案' in offical_hint_string and CONST_INPUT_SYMBOL in offical_hint_string:
                 offical_hint_string_anwser = new_hint
+
+
+    if offical_hint_string == "":
+        offical_hint_string = get_offical_hint_string_from_symbol(CONST_EXAMPLE_SYMBOL, tmp_text)
+        if len(offical_hint_string) > 0:
+            right_part = offical_hint_string.split(CONST_EXAMPLE_SYMBOL)[1]
+            if len(offical_hint_string) == len(tmp_text):
+                offical_hint_string = right_part
+
+            # PS: find first text will only get B char in this case: 答案為B需填入Bb)
+            new_hint = find_continuous_text(right_part)
+            if len(new_hint) > 0:
+                offical_hint_string_anwser = new_hint
+
 
     if show_debug_message:
         print("offical_hint_string:",offical_hint_string)
@@ -650,7 +717,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
     # is need to merge next block
     if len(offical_hint_string) > 0:
-        target_symbol = offical_hint_string + u" "
+        target_symbol = offical_hint_string + " "
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
             next_block_index = star_index + len(target_symbol)
@@ -723,16 +790,14 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             offical_hint_string = tmp_text[star_index: space_index]
 
     if len(offical_hint_string) > 0:
-        #print("offical_hint_string_anwser:", offical_hint_string_anwser)
+        if show_debug_message:
+            print("offical_hint_string_anwser:", offical_hint_string_anwser)
         my_anwser_formated = convert_string_to_pattern(offical_hint_string_anwser)
 
     my_options = tmp_text
     if len(my_question) < len(tmp_text):
         my_options = my_options.replace(my_question,u"")
     my_options = my_options.replace(offical_hint_string,u"")
-    #print("tmp_text:", tmp_text)
-    #print("my_options:", my_options)
-    #print("offical_hint_string:", offical_hint_string)
 
     # try rule7:
     # check is chinese/english in question, if match, apply my_options rule.
@@ -745,7 +810,9 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 star_index = tmp_text_org.find(target_symbol)
                 my_options = tmp_text_org[star_index-1:]
 
-    #print(u"my_options:", my_options)
+    if show_debug_message:
+        print("tmp_text:", tmp_text)
+        print("my_options:", my_options)
 
     if len(my_anwser_formated) > 0:
         allow_delimitor_symbols = ")].: }"
@@ -757,19 +824,40 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 maybe_delimitor = my_options[span_end+0:span_end+1]
             if maybe_delimitor in allow_delimitor_symbols:
                 my_answer_delimitor = maybe_delimitor
-    #print(u"my_answer_delimitor:", my_answer_delimitor)
+
+    if show_debug_message:
+        print(u"my_answer_delimitor:", my_answer_delimitor)
+
+    # default remove quota
+    is_trim_quota = not check_answer_keep_symbol(tmp_text)
+    if show_debug_message:
+        print("is_trim_quota:", is_trim_quota)
 
     if len(my_anwser_formated) > 0:
-        #print("text:" , re.findall('\([\w]+\)', tmp_text))
         new_pattern = my_anwser_formated
         if len(my_answer_delimitor) > 0:
             new_pattern = my_anwser_formated + u'\\' + my_answer_delimitor
+
         return_list = re.findall(new_pattern, my_options)
+        if show_debug_message:
+            print("my_anwser_formated:", my_anwser_formated)
+            print("new_pattern:", new_pattern)
+            print("return_list:" , return_list)
 
         if not return_list is None:
             if len(return_list) == 1:
                 # re-sample for this case.
                 return_list = re.findall(my_anwser_formated, my_options)
+
+            # clean delimitor
+            if is_trim_quota:
+                return_list_length = len(return_list)
+                if return_list_length >= 1:
+                    if len(my_answer_delimitor) > 0:
+                        for idx in range(return_list_length):
+                            return_list[idx]=return_list[idx].replace(my_answer_delimitor,'')
+                if show_debug_message:
+                    print("cleaned return_list:" , return_list)
 
     return return_list
 
@@ -815,6 +903,9 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_tex
     return tmp_text
 
 def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
     return_list = None
 
     tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
@@ -822,14 +913,21 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     # guess answer list from multi-options: 【】() []
     if return_list is None:
         return_list = guess_answer_list_from_multi_options(tmp_text)
-        pass
+    if show_debug_message:
+        if not return_list is None:
+            print("guess_answer_list_from_multi_options:", return_list)
 
     if return_list is None:
         return_list = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+    if show_debug_message:
+        if not return_list is None:
+            print("guess_answer_list_from_hint:", return_list)
 
-    # try rule8:
     if return_list is None:
         return_list = guess_answer_list_from_symbols(captcha_text_div_text)
+    if show_debug_message:
+        if not return_list is None:
+            print("guess_answer_list_from_symbols:", return_list)
 
     return return_list
 
@@ -2612,6 +2710,22 @@ def check_answer_keep_symbol(captcha_text_div_text):
         is_need_keep_symbol = True
 
     if u'符號須相同' in keep_symbol_tmp:
+        is_need_keep_symbol = True
+
+    # for: 大小寫含括號需一模一樣
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'含', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'和', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'與', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'還有', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'及', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'以及', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'需', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'必須', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'而且', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'且', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace(u'一模', '')
+    #print("keep_symbol_tmp:", keep_symbol_tmp)
+    if '大小寫括號相同' in keep_symbol_tmp:
         is_need_keep_symbol = True
 
     return is_need_keep_symbol
@@ -7200,18 +7314,28 @@ if __name__ == "__main__":
         main()
     else:
         #for test kktix infer answer.
-        #captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
+        captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
         #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
         #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
         #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
-        captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
+        #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
+        #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
+        #captcha_text_div_text = "以下哪個「不是」正確的林俊傑與其他藝人合唱的歌曲組合？（選項為歌名/合作藝人 ，請以半形輸入法作答選項，大小寫需要一模一樣，範例:jju） 選項： (jja)小酒窩/A-Sa蔡卓妍 (jjb)被風吹過的夏天/金莎 (jjc)友人說/張懷秋 (jjd)全面開戰/五月天阿信 (jje)小說/阿杜"
+        #captcha_text_div_text = "請問《龍的傳人2060》演唱會是以下哪位藝人的演出？（請以半形輸入法作答，大小寫需要一模一樣，範例：B2）A1.周杰倫 B2.林俊傑 C3.張學友 D4.王力宏"
+        #captcha_text_div_text = "王力宏何時發行第一張專輯?（請以半形輸入法作答，大小寫需要一模一樣，範例:B2） A1.1985 B2.2005 C3.2015 D4.1995"
+        #captcha_text_div_text = "朴寶劍三月以歌手出道的日期和單曲名為？ Answer the single’s name & the debut date. *以半形輸入，大小寫/符號須都相同。例:(E1) Please use the same format given in the options.ex:(E1) (A1)20/Bloomin'(B1)2/Blossom(C1)2/Bloomin'(D1)20/Blossom"
+        #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
+        #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
+        captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
 
         ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
-        with open('captcha-xxxx.png', 'rb') as f:
-            image_bytes = f.read()
-        res = ocr.classification(image_bytes)
-        print(res)
+        image_file = 'captcha-xxxx.png'
+        if os.path.exists(image_file):
+            with open(image_file, 'rb') as f:
+                image_bytes = f.read()
+            res = ocr.classification(image_bytes)
+            print(res)
 
