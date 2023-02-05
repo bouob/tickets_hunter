@@ -16,7 +16,7 @@ Max搶票機器人 (2023-01-29)：支援galaxymacau(澳門銀河)
 
 https://youtu.be/yt7SkRvBujU
 
-Max搶票機器人 (2023-01-22)：hkticketing(快達票)
+Max搶票機器人 (2023-01-22)：hkticketing(快達票) 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
 
 https://youtu.be/pZJlcMjayco
 
@@ -111,7 +111,7 @@ https://youtu.be/AmOYg8Oj0qM
 * ibon: https://max-everyday.com/2023/01/ibon-bot/
 * cityline: https://max-everyday.com/2019/03/cityline-bot/
 * urbtix: https://max-everyday.com/2019/02/urbtix-bot/
-* hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
+* hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/ 
 
 # How to execute source code (透過原始碼的執行方法)
 1: download chromedrive to "webdriver" folder:
