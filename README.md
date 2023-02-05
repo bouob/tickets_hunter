@@ -133,6 +133,8 @@ PS:
 * 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站([https://www.python.org/downloads/](https://www.python.org/downloads/))來安裝 python3, 如果在 macOS 裡會使用終端機(Terminal)，建議使用 https://brew.sh/ 安裝 python3.
 * 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有2個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
 
+PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。
+
 # Introduce the implement (實作方法)
 https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
 
@@ -146,6 +148,13 @@ please run this source code with high performance hardware computer and high spe
 目前自動輸入驗證碼用的元件是:
 
 https://github.com/sml2h3/ddddocr
+
+附註：
+* macOS 新的電腦 arm 系列, 暫時沒有提供自動輸入驗證碼功能, 使用上的限制和 ddddocr 相同. 
+* macOS 舊款intel CPU 的電腦裡的 python 版本要降到低於等於 3.9 版, 例如: https://www.python.org/ftp/python/3.9.13/python-3.9.13-macosx10.9.pkg .
+* 猜測驗證碼時比較容易出錯的是字英 f 和 t，還有 q 和 g, v 和 u 還有 w.
+* 猜測驗證碼必錯的情況是，目前不允許有重覆的2個字母出來。
+
 
 想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
 
