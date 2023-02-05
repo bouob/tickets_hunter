@@ -143,8 +143,14 @@ please run this source code with high performance hardware computer and high spe
 
 # TODO about cpatcha (關於驗證碼)
 
-目前驗證碼需要手動輸入，也許你會想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
+目前自動輸入驗證碼用的元件是:
+
+https://github.com/sml2h3/ddddocr
+
+想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
+
 https://github.com/JasonLiTW/simple-railway-captcha-solver
+
 
 # Donate (贊助Max)
 
