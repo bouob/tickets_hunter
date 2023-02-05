@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.02.03)"
+CONST_APP_VERSION = u"MaxBot (2023.02.04)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1096,9 +1096,12 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
         ,"https://kham.com.tw/ (寬宏)"
         ,"http://www.urbtix.hk/ (城市)"
         ,"https://www.cityline.com/ (買飛)"
-        ,"https://premier.hkticketing.com/ (快達票)"
         ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
         ]
+    # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
+    '''
+        ,"https://premier.hkticketing.com/ (快達票)"
+    '''
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)

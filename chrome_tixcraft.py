@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.03)"
+CONST_APP_VERSION = u"MaxBot (2023.02.04)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -5777,12 +5777,14 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 print("click target_area link fail")
                 print(exc)
                 # use plan B
+                '''
                 try:
                     print("force to click by js.")
                     driver.execute_script("arguments[0].click();", target_area)
                     is_date_assigned = True
                 except Exception as exc:
                     pass
+                '''
 
     # alway, auto submit
     el_btn = None
@@ -5800,12 +5802,14 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 ret = True
         except Exception as exc:
             # use plan B
+            '''
             try:
                 print("force to click by js.")
                 driver.execute_script("arguments[0].click();", el_btn)
                 ret = True
             except Exception as exc:
                 pass
+            '''
     else:
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
@@ -6232,6 +6236,27 @@ def hkticketing_performance(driver, config_dict, domain_name):
     return is_price_assign_by_bot
 
 
+def hkticketing_escape_robot_detection(driver):
+    ret = False
+
+    el_main_iframe = None
+    try:
+        el_main_iframe = driver.find_element(By.ID, 'main-iframe')
+    except Exception as exc:
+        print("find el_main_iframe fail...")
+        #print(exc)
+        pass
+
+    if el_main_iframe is not None:
+        print("bingo, found el_main_iframe, start to escape")
+        entry_url="https://queue.hkticketing.com/hotshow.html"
+        try:
+            driver.get(entry_url)
+        except Exception as exc:
+            print(exc)
+
+    return ret
+
 
 def hkticketing_main(driver, url, config_dict):
     home_url_list = ['https://premier.hkticketing.com/'
@@ -6261,14 +6286,18 @@ def hkticketing_main(driver, url, config_dict):
             date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
             if date_auto_select_enable:
                 hkticketing_show(driver, config_dict)
+                pass
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
+        robot_detection = hkticketing_escape_robot_detection(driver)
+
         if '/tickets' in url:
             domain_name = url.split('/')[2]
             area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
             if area_auto_select_enable:
                 hkticketing_performance(driver, config_dict, domain_name)
+                pass
         
         if '/seatmap' in url:
             # goto bottom.
@@ -7171,17 +7200,22 @@ def main():
             print('NoSuchWindowException at this url:', url )
             #print("last_url:", last_url)
             #print("get_log:", driver.get_log('driver'))
-            if DISCONNECTED_MSG in driver.get_log('driver')[-1]['message']:
-                print('quit bot by NoSuchWindowException')
-                driver.quit()
-                sys.exit()
-                break
+            window_handles_count = 0
             try:
                 window_handles_count = len(driver.window_handles)
-                if window_handles_count > 1:
+                #print("window_handles_count:", window_handles_count)
+                if window_handles_count >= 1:
                     driver.switch_to.window(driver.window_handles[0])
+                    driver.switch_to.default_content()
+                else:
+                    if DISCONNECTED_MSG in driver.get_log('driver')[-1]['message']:
+                        print('quit bot by NoSuchWindowException')
+                        driver.quit()
+                        sys.exit()
+                        break
             except Exception as excSwithFail:
                 pass
+
         except UnexpectedAlertPresentException as exc1:
             # PS: DON'T remove this line.
             is_verifyCode_editing = False
