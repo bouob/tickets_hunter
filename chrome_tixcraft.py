@@ -1826,6 +1826,12 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 orc_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
+        else:
+            if previous_answer is None:
+                # page is not ready, retry again.
+                # PS: usually occur in async script get captcha image.
+                is_need_redo_ocr = True
+                time.sleep(0.1)
         
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
@@ -1852,7 +1858,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                         tixcraft_reload_captcha(driver, domain_name)
 
                         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
-                            time.sleep(0.3)
+                            time.sleep(0.1)
                     else:
                         # Non_Browser solution.
                         if not Captcha_Browser is None:
