@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.04)"
+CONST_APP_VERSION = u"MaxBot (2023.02.05)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -5440,6 +5440,30 @@ def check_modal_dialog_popup(driver):
 
     return ret
 
+
+def cityline_shows_goto_cta(driver):
+    ret = False
+
+    el_btn = None
+    try:
+        el_btn = driver.find_element(By.CSS_SELECTOR, '.btn_cta')
+    except Exception as exc:
+        #print("find next button fail...")
+        #print(exc)
+        pass
+
+    if el_btn is not None:
+        #print("bingo, found next button, start to press")
+        try:
+            if el_btn.is_enabled() and el_btn.is_displayed():
+                el_btn.click()
+                ret = True
+        except Exception as exc:
+            print("click next button fail...")
+            print(exc)
+
+    return ret
+
 def cityline_main(driver, url, config_dict):
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
@@ -5463,6 +5487,7 @@ def cityline_main(driver, url, config_dict):
             driver.switch_to.window(driver.window_handles[0])
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
+            time.sleep(0.2)
     except Exception as excSwithFail:
         pass
 
@@ -5483,6 +5508,11 @@ def cityline_main(driver, url, config_dict):
             area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
             if area_auto_select_enable:
                 cityline_performance(driver, config_dict)
+
+    if '.htm' in url:
+        if not '/slim_end.htm' in url:
+            if len(url.split('/'))>=5:
+                cityline_shows_goto_cta(driver)
 
 def ibon_main(driver, url, config_dict):
     #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
@@ -7207,6 +7237,7 @@ def main():
                 if window_handles_count >= 1:
                     driver.switch_to.window(driver.window_handles[0])
                     driver.switch_to.default_content()
+                    time.sleep(0.2)
                 else:
                     if DISCONNECTED_MSG in driver.get_log('driver')[-1]['message']:
                         print('quit bot by NoSuchWindowException')
