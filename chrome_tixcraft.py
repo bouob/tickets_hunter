@@ -394,6 +394,10 @@ def get_driver_by_config(config_dict, driver_type):
         if platform.system().lower()=="windows":
             chromedriver_path = os.path.join(webdriver_path,"geckodriver.exe")
 
+        if "macos" in platform.platform().lower():
+            if "arm64" in platform.platform().lower():
+                chromedriver_path = os.path.join(webdriver_path,"geckodriver_arm")
+
         webdriver_service = Service(chromedriver_path)
         driver = webdriver.Firefox(service=webdriver_service)
 
