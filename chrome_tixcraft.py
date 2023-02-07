@@ -1837,12 +1837,6 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 orc_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
-        else:
-            if previous_answer is None:
-                # page is not ready, retry again.
-                # PS: usually occur in async script get captcha image.
-                is_need_redo_ocr = True
-                time.sleep(0.1)
         
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
@@ -1863,7 +1857,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 is_need_redo_ocr = True
                 if previous_answer != orc_answer:
                     previous_answer = orc_answer
-                    print("click captcha again")
+                    print("click captcha again.")
                     if True:
                         # selenium solution.
                         tixcraft_reload_captcha(driver, domain_name)
@@ -1879,12 +1873,12 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     else:
         print("orc_answer is None")
         print("previous_answer:", previous_answer)
+        # page is not ready, retry again.
+        # PS: usually occur in async script get captcha image.
+        is_need_redo_ocr = True
         if previous_answer is None:
             tixcraft_keyin_captcha_code(driver)
-        else:
-            # page is not ready, retry again.
-            # PS: usually occur in async script get captcha image.
-            is_need_redo_ocr = True
+        time.sleep(0.1)
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
