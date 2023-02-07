@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.02.05)"
+CONST_APP_VERSION = u"MaxBot (2023.02.06)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -43,6 +43,9 @@ URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
 URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
 URL_FB = 'https://www.facebook.com/maxbot.ticket'
+URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
+URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
+URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
 
 def load_translate():
     translate = {}
@@ -1563,7 +1566,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_browser
     combo_browser = ttk.Combobox(frame_group_header, state="readonly")
-    combo_browser['values']= ("chrome","firefox")
+    combo_browser['values']= ("chrome","firefox","edge")
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1776,6 +1779,34 @@ def AboutTab(root, language_code):
     lbl_fb_fans_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_fb_fans_url.bind("<Button-1>", lambda e: open_url(URL_FB))
 
+
+    group_row_count +=1
+
+    lbl_chrome_driver = Label(frame_group_header, text=u'Chrome Driver')
+    lbl_chrome_driver.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_chrome_driver_url = Label(frame_group_header, text=URL_CHROME_DRIVER, fg="blue", cursor="hand2")
+    lbl_chrome_driver_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_chrome_driver_url.bind("<Button-1>", lambda e: open_url(URL_CHROME_DRIVER))
+
+    group_row_count +=1
+
+    lbl_firefox_driver = Label(frame_group_header, text=u'Firefox Driver')
+    lbl_firefox_driver.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_firefox_driver_url = Label(frame_group_header, text=URL_FIREFOX_DRIVER, fg="blue", cursor="hand2")
+    lbl_firefox_driver_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_firefox_driver_url.bind("<Button-1>", lambda e: open_url(URL_FIREFOX_DRIVER))
+
+    group_row_count +=1
+
+    lbl_edge_driver = Label(frame_group_header, text=u'Edge Driver')
+    lbl_edge_driver.grid(column=0, row=group_row_count, sticky = E)
+
+    lbl_edge_driver_url = Label(frame_group_header, text=URL_EDGE_DRIVER, fg="blue", cursor="hand2")
+    lbl_edge_driver_url.grid(column=1, row=group_row_count, sticky = W)
+    lbl_edge_driver_url.bind("<Button-1>", lambda e: open_url(URL_EDGE_DRIVER))
+
     frame_group_header.grid(column=0, row=row_count)
 
 def get_action_bar(root, language_code):
@@ -1856,7 +1887,7 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 460
+    GUI_SIZE_WIDTH = 500
     GUI_SIZE_HEIGHT = 594
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)

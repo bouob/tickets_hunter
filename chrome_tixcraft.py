@@ -389,12 +389,23 @@ def get_driver_by_config(config_dict, driver_type):
 
     if browser == "firefox":
         # default os is linux/mac
+        # download url: https://github.com/mozilla/geckodriver/releases
         chromedriver_path = os.path.join(webdriver_path,"geckodriver")
         if platform.system().lower()=="windows":
             chromedriver_path = os.path.join(webdriver_path,"geckodriver.exe")
 
-        firefox_service = Service(chromedriver_path)
-        driver = webdriver.Firefox(service=firefox_service)
+        webdriver_service = Service(chromedriver_path)
+        driver = webdriver.Firefox(service=webdriver_service)
+
+    if browser == "edge":
+        # default os is linux/mac
+        # download url: https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/
+        chromedriver_path = os.path.join(webdriver_path,"msedgedriver")
+        if platform.system().lower()=="windows":
+            chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
+
+        webdriver_service = Service(chromedriver_path)
+        driver = webdriver.Edge(service=webdriver_service)
 
     #print("try to close opened tabs.")
     '''
@@ -5372,6 +5383,7 @@ def urbtix_performance_confirm_dialog_popup(driver):
     
     return ret
 
+
 def urbtix_main(driver, url, config_dict):
     # http://msg.urbtix.hk
     waiting_for_access_url = ['/session/landing-timer/','msg.urbtix.hk','busy.urbtix.hk']
@@ -7201,7 +7213,7 @@ def main():
     answer_index = -1
     kktix_register_status_last = None
 
-    DISCONNECTED_MSG = 'Unable to evaluate script: no such window: target window already closed'
+    DISCONNECTED_MSG = ': target window already closed'
 
     ocr = None
     Captcha_Browser = None
@@ -7244,14 +7256,26 @@ def main():
                     driver.switch_to.window(driver.window_handles[0])
                     driver.switch_to.default_content()
                     time.sleep(0.2)
-                else:
-                    if DISCONNECTED_MSG in driver.get_log('driver')[-1]['message']:
+            except Exception as excSwithFail:
+                #print("excSwithFail:", excSwithFail)
+                pass
+            if window_handles_count==0:
+                try:
+                    driver_log = driver.get_log('driver')[-1]['message']
+                    print("get_log:", driver_log)
+                    if DISCONNECTED_MSG in driver_log:
                         print('quit bot by NoSuchWindowException')
                         driver.quit()
                         sys.exit()
                         break
-            except Exception as excSwithFail:
-                pass
+                except Exception as excGetDriverMessageFail:
+                    #print("excGetDriverMessageFail:", excGetDriverMessageFail)
+                    except_string = str(excGetDriverMessageFail)
+                    if 'HTTP method not allowed' in except_string:
+                        print('quit bot by close browser')
+                        driver.quit()
+                        sys.exit()
+                        break
 
         except UnexpectedAlertPresentException as exc1:
             # PS: DON'T remove this line.
