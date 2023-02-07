@@ -1841,7 +1841,13 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 orc_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
-        
+        else:
+            if previous_answer is None:
+                # page is not ready, retry again.
+                # PS: usually occur in async script get captcha image.
+                is_need_redo_ocr = True
+                time.sleep(0.1)
+
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
         print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
@@ -1877,12 +1883,14 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     else:
         print("orc_answer is None")
         print("previous_answer:", previous_answer)
-        # page is not ready, retry again.
-        # PS: usually occur in async script get captcha image.
-        is_need_redo_ocr = True
         if previous_answer is None:
             tixcraft_keyin_captcha_code(driver)
-        time.sleep(0.1)
+        else:
+            # page is not ready, retry again.
+            # PS: usually occur in async script get captcha image.
+            # PS: previous answer is not none means OCR object works.
+            #     some user enable OCR feature, but component create fail, ex: macOS arm CPU. 
+            is_need_redo_ocr = True
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
