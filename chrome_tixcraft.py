@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.05)"
+CONST_APP_VERSION = u"MaxBot (2023.02.08)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -129,10 +129,10 @@ def get_chromedriver_path(webdriver_path):
         chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
     return chromedriver_path
 
-def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
+def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome"):
     chrome_options = webdriver.ChromeOptions()
-
-    chromedriver_path = get_chromedriver_path(webdriver_path)
+    if browser=="edge":
+        chrome_options = webdriver.EdgeOptions()
 
     # some windows cause: timed out receiving message from renderer
     if adblock_plus_enable:
@@ -166,10 +166,25 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
     #caps["unhandledPromptBehavior"] = u"dismiss"
     caps["unhandledPromptBehavior"] = u"accept"
 
-    chrome_service = Service(chromedriver_path)
+    return chrome_options, caps
 
-    # method 6: Selenium Stealth
-    driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
+def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
+    chromedriver_path = get_chromedriver_path(webdriver_path)
+    chrome_service = Service(chromedriver_path)
+    chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable)
+    driver = None
+    try:
+        # method 6: Selenium Stealth
+        driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
+    except Exception as exc:
+        error_message = str(exc)
+        left_part = None
+        if "Stacktrace:" in error_message:
+            left_part = error_message.split("Stacktrace:")[0]
+            print(left_part)
+
+        if "This version of ChromeDriver only supports Chrome version" in error_message:
+            print("Please download the WebDriver version to match your browser version.")
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
@@ -226,10 +241,16 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
         try:
             driver = uc.Chrome(executable_path=chromedriver_path, options=options, desired_capabilities=caps, suppress_welcome=False)
         except Exception as exc:
-            if "cannot connect to chrome" in str(exc):
-                if "This version of ChromeDriver only supports Chrome version" in str(exc):
-                    is_local_chrome_browser_lower = True
-            print(exc)
+            error_message = str(exc)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
+
+            if "This version of ChromeDriver only supports Chrome version" in error_message:
+                print("Please download the WebDriver version to match your browser version.")
+                is_local_chrome_browser_lower = True
+            #print(exc)
             pass
 
         if is_local_chrome_browser_lower:
@@ -399,7 +420,15 @@ def get_driver_by_config(config_dict, driver_type):
                 chromedriver_path = os.path.join(webdriver_path,"geckodriver_arm")
 
         webdriver_service = Service(chromedriver_path)
-        driver = webdriver.Firefox(service=webdriver_service)
+        driver = None
+        try:
+            driver = webdriver.Firefox(service=webdriver_service)
+        except Exception as exc:
+            error_message = str(exc)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
 
     if browser == "edge":
         # default os is linux/mac
@@ -409,7 +438,19 @@ def get_driver_by_config(config_dict, driver_type):
             chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
 
         webdriver_service = Service(chromedriver_path)
-        driver = webdriver.Edge(service=webdriver_service)
+        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, browser="edge")
+
+        driver = None
+        try:
+            driver = webdriver.Edge(service=webdriver_service, options=chrome_options)
+        except Exception as exc:
+            error_message = str(exc)
+            #print(error_message)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
+
 
     #print("try to close opened tabs.")
     '''
@@ -977,7 +1018,7 @@ def tixcraft_home(driver):
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
-                print("try to click accept_all_cookies_btn fail")
+                print("try to click accept_all_cookies_btn fail, force click by js.")
                 try:
                     driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
                 except Exception as exc:
@@ -1007,7 +1048,7 @@ def tixcraft_home(driver):
                 try:
                     alert_btn.click()
                 except Exception as exc:
-                    print("try to click alert_btn fail")
+                    print("try to click alert_btn fail, force click by js.")
                     try:
                         driver.execute_script("arguments[0].click();", alert_btn)
                     except Exception as exc:
@@ -1036,7 +1077,7 @@ def tixcraft_redirect(driver, url):
 
     return ret
 
-def tixcraft_date_auto_select(driver, url, config_dict):
+def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
@@ -1164,14 +1205,26 @@ def tixcraft_date_auto_select(driver, url, config_dict):
                 target_row_index = random.randint(0,len(button_list)-1)
 
             if show_debug_message:
-                print("clicking row:", target_row_index+1)
+                print("clicking at button index:", target_row_index+1)
 
+            el = None
             try:
                 el = button_list[target_row_index]
+                if show_debug_message:
+                    print("pressing button...")
                 el.click()
+                '''
+                ticket_url = el.get_attribute('data-href')
+                is_redirected = False
+                if not ticket_url is None:
+                    if len(ticket_url) > 0:
+                        driver.get("https:%s%s" % (domain_name, ticket_url))
+                        is_redirected = True
+                '''
                 is_date_selected = True
             except Exception as exc:
-                print("try to click .btn-next fail")
+                print("try to click .btn-next fail, force click by js.")
+                print(exc)
                 try:
                     driver.execute_script("arguments[0].click();", el)
                 except Exception as exc:
@@ -1184,6 +1237,9 @@ def tixcraft_date_auto_select(driver, url, config_dict):
     # [PS]: current reload condition only when 
     if auto_reload_coming_soon_page_enable:
         if is_coming_soon:
+            if show_debug_message:
+                print("match is_coming_soon, start to reload page.")
+
             # case 2: match one row is coming soon.
             try:
                 driver.refresh()
@@ -2082,7 +2138,7 @@ def kktix_captcha_text_value(captcha_inner_div):
 
 def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string, force_overwrite = False):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
     is_cpatcha_sent = False
     inputed_captcha_text = ""
@@ -3840,7 +3896,7 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
 
 def urbtix_ticket_number_auto_select(driver, ticket_number):
     show_debug_message = True       # debug.
-    #show_debug_message = False      # online
+    show_debug_message = False      # online
 
     is_ticket_number_assigned = False
     ticket_number_str = str(ticket_number)
@@ -5269,7 +5325,6 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_
                 if not Captcha_Browser is None:
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
-
             break
 
     if "/activity/detail/" in url:
@@ -5279,7 +5334,8 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_
     if "/activity/game/" in url:
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
-            is_date_selected = tixcraft_date_auto_select(driver, url, config_dict)
+            domain_name = url.split('/')[2]
+            is_date_selected = tixcraft_date_auto_select(driver, url, config_dict, domain_name)
 
     # choose area
     if '/ticket/area/' in url:
@@ -6332,31 +6388,39 @@ def hkticketing_main(driver, url, config_dict):
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
     if 'shows/show.aspx?' in url:
-        is_event_page = False
-        if len(url.split('/'))==5:
-            is_event_page = True
+        is_modal_dialog_popup = check_modal_dialog_popup(driver)
+        if is_modal_dialog_popup:
+            print("is_modal_dialog_popup! skip...")
+        else:
+            is_event_page = False
+            if len(url.split('/'))==5:
+                is_event_page = True
 
-        if is_event_page:
-            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-            if date_auto_select_enable:
-                hkticketing_show(driver, config_dict)
-                pass
+            if is_event_page:
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                if date_auto_select_enable:
+                    hkticketing_show(driver, config_dict)
+                    pass
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
         robot_detection = hkticketing_escape_robot_detection(driver)
 
-        if '/tickets' in url:
-            domain_name = url.split('/')[2]
-            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-            if area_auto_select_enable:
-                hkticketing_performance(driver, config_dict, domain_name)
-                pass
-        
-        if '/seatmap' in url:
-            # goto bottom.
-            hkticketing_nav_to_footer(driver)
-            hkticketing_go_to_payment(driver)
+        is_modal_dialog_popup = check_modal_dialog_popup(driver)
+        if is_modal_dialog_popup:
+            print("is_modal_dialog_popup! skip...")
+        else:
+            if '/tickets' in url:
+                domain_name = url.split('/')[2]
+                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+                if area_auto_select_enable:
+                    hkticketing_performance(driver, config_dict, domain_name)
+                    pass
+            
+            if '/seatmap' in url:
+                # goto bottom.
+                hkticketing_nav_to_footer(driver)
+                hkticketing_go_to_payment(driver)
 
 def khan_go_buy_redirect(driver):
     ret = False
@@ -6617,9 +6681,14 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                         my_css_selector = "span.textPrice"
                         el_remaining = row.find_element(By.CSS_SELECTOR, my_css_selector)
                         if el_remaining is not None:
-                            remaining_value = str(el_remaining.text)
-                            if int(remaining_value) >= ticket_number:
+                            remaining_value = str(el_remaining.text).strip()
+                            if remaining_value.isnumeric():
+                                if int(remaining_value) >= ticket_number:
+                                    row_is_enabled=True
+                            else:
+                                # text directly allow.
                                 row_is_enabled=True
+
                 except Exception as exc:
                     pass
 
