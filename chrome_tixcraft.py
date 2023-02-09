@@ -54,6 +54,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 CONST_APP_VERSION = u"MaxBot (2023.02.09)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
+URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -463,6 +464,9 @@ def get_driver_by_config(config_dict, driver_type):
         print("create web driver object fail @_@;")
     else:
         try:
+            if config_dict["advanced"]["open_google_oauth_url"]:
+                driver.execute_script("window.open('%s','_blank');" % (URL_GOOGLE_OAUTH));
+
             print("goto url:", homepage)
             if homepage=="https://tixcraft.com":
                 homepage="https://tixcraft.com/user/changeLanguage/lang/zh_tw"
@@ -471,7 +475,7 @@ def get_driver_by_config(config_dict, driver_type):
             print('oh no not again, WebDriverException')
             print('WebDriverException:', exce2)
         except Exception as exce1:
-            print('get URL Exception:', exec1)
+            print('get URL Exception:', exce1)
             pass
 
     return driver

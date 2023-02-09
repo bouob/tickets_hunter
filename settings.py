@@ -46,7 +46,6 @@ URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
-URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 
 def load_translate():
     translate = {}
@@ -105,6 +104,7 @@ def load_translate():
     en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
     en_us["adblock_plus_memo"] = 'Default adblock is disable'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
+    en_us["open_google_oauth_url"] = "Open Google OAuth URL"
 
     en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Wish you good luck.'
     en_us["donate"] = 'Donate'
@@ -166,6 +166,7 @@ def load_translate():
     zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
     zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
+    zh_tw["open_google_oauth_url"] = "開啟 Google OAuth 網站"
 
     zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝您搶票成功。'
     zh_tw["donate"] = '打賞'
@@ -228,6 +229,7 @@ def load_translate():
     zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
     zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
+    zh_cn["open_google_oauth_url"] = "开启 Google OAuth 网站"
 
     zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
     zh_cn["donate"] = '打赏'
@@ -286,10 +288,11 @@ def load_translate():
     
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
-
     ja_jp["adblock_plus_enable"] = 'Adblock 拡張機能'
     ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
+    ja_jp["open_google_oauth_url"] = "Google OAuth URL を開く"
+
     ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
     ja_jp["donate"] = '寄付'
     ja_jp["help"] = '利用方法'
@@ -365,6 +368,7 @@ def get_default_config():
     config_dict["advanced"]["cityline_account"] = ""
     config_dict["advanced"]["urbtix_account"] = ""
     config_dict["advanced"]["adblock_plus_enable"] = False
+    config_dict["advanced"]["open_google_oauth_url"] = False
 
     config_dict['debug']=False
 
@@ -451,6 +455,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_adblock_plus
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_force_submit
+    global chk_state_google_oauth
     global combo_ocr_captcha_image_source
 
     is_all_data_correct = True
@@ -528,6 +533,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
         config_dict["advanced"]["urbtix_account"] = txt_urbtix_account.get().strip()
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
+        config_dict["advanced"]["open_google_oauth_url"] = bool(chk_state_google_oauth.get())
         
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
@@ -636,9 +642,6 @@ def btn_help_clicked():
 def btn_copy_clicked():
     pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
-def btn_copy_oauth_url_clicked():
-    pyperclip.copy(URL_GOOGLE_OAUTH)
-
 def callbackTicketNumberOnChange(event):
     showHidePass1SeatRemaining()
 
@@ -714,6 +717,7 @@ def applyNewLanguage():
     global chk_adblock_plus
     global chk_ocr_captcha
     global chk_ocr_captcha_force_submit
+    global chk_google_oauth
 
     global tabControl
 
@@ -725,6 +729,7 @@ def applyNewLanguage():
     global lbl_adblock_plus
     global lbl_adblock_plus_memo
     global lbl_adblock_plus_settings
+    global lbl_google_oauth
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -758,6 +763,7 @@ def applyNewLanguage():
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
+    lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -772,6 +778,7 @@ def applyNewLanguage():
     chk_adblock_plus.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
+    chk_google_oauth.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -1724,18 +1731,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     group_row_count +=1
 
     global lbl_google_oauth
-    lbl_google_oauth = Label(frame_group_header, text='Google OAuth URL')
+    lbl_google_oauth = Label(frame_group_header, text=translate[language_code]['open_google_oauth_url'])
     lbl_google_oauth.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_google_oauth
-    txt_google_oauth_value = StringVar(frame_group_header, value=URL_GOOGLE_OAUTH)
-    txt_google_oauth = Entry(frame_group_header, width=20, textvariable = txt_google_oauth_value)
-    txt_google_oauth.grid(column=1, row=group_row_count, sticky = W)
+    global chk_state_google_oauth
+    chk_state_google_oauth = BooleanVar()
+    chk_state_google_oauth.set(config_dict["advanced"]["open_google_oauth_url"])
 
-    lbl_icon_oauth_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
-    lbl_icon_oauth_copy.image = icon_copy_img
-    lbl_icon_oauth_copy.grid(column=2, row=group_row_count, sticky = W+N)
-    lbl_icon_oauth_copy.bind("<Button-1>", lambda e: btn_copy_oauth_url_clicked())
+    global chk_google_oauth
+    chk_google_oauth = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_google_oauth)
+    chk_google_oauth.grid(column=1, row=group_row_count, sticky = W)
+
 
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
