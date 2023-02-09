@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.08)"
+CONST_APP_VERSION = u"MaxBot (2023.02.09)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 

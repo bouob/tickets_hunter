@@ -19,7 +19,7 @@ import json
 import webbrowser
 import pyperclip
 
-CONST_APP_VERSION = u"MaxBot (2023.02.08)"
+CONST_APP_VERSION = u"MaxBot (2023.02.09)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -46,6 +46,7 @@ URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
+URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 
 def load_translate():
     translate = {}
@@ -634,6 +635,9 @@ def btn_help_clicked():
 
 def btn_copy_clicked():
     pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
+
+def btn_copy_oauth_url_clicked():
+    pyperclip.copy(URL_GOOGLE_OAUTH)
 
 def callbackTicketNumberOnChange(event):
     showHidePass1SeatRemaining()
@@ -1673,7 +1677,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     lbl_icon_play = Label(frame_group_header, image=icon_play_img, cursor="hand2")
     lbl_icon_play.image = icon_play_img
-    lbl_icon_play.grid(column=3, row=group_row_count)
+    lbl_icon_play.grid(column=2, row=group_row_count)
     lbl_icon_play.bind("<Button-1>", lambda e: btn_preview_sound_clicked())
 
     group_row_count +=1
@@ -1714,8 +1718,25 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     lbl_icon_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
     lbl_icon_copy.image = icon_copy_img
-    lbl_icon_copy.grid(column=3, row=group_row_count, sticky = W+N)
+    lbl_icon_copy.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
+
+    group_row_count +=1
+
+    global lbl_google_oauth
+    lbl_google_oauth = Label(frame_group_header, text='Google OAuth URL')
+    lbl_google_oauth.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_google_oauth
+    txt_google_oauth_value = StringVar(frame_group_header, value=URL_GOOGLE_OAUTH)
+    txt_google_oauth = Entry(frame_group_header, width=20, textvariable = txt_google_oauth_value)
+    txt_google_oauth.grid(column=1, row=group_row_count, sticky = W)
+
+    lbl_icon_oauth_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_oauth_copy.image = icon_copy_img
+    lbl_icon_oauth_copy.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_oauth_copy.bind("<Button-1>", lambda e: btn_copy_oauth_url_clicked())
+
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
