@@ -8,6 +8,18 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-08)：Edge瀏覽器WebDriver下載與設定
+
+https://youtu.be/TzbBAEVVtoM
+
+Max搶票機器人 (2023-02-08)：修正寬宏售票「熱賣中」文字的誤判
+
+https://youtu.be/Q6bISNSXaWw
+
+Max搶票機器人 (2023-02-08)：重新支援hkticketing
+
+https://youtu.be/pk-7gIztB2Y
+
 Max搶票機器人 (2023-02-03)：優化KKTIX 推論驗證問題
 
 https://youtu.be/I4OOTlgpsOA
