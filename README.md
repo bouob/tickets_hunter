@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-09)：開啟Google OAuth網址
+
+https://youtu.be/8PxOXsjuI5Q
+
 Max搶票機器人 (2023-02-08)：Edge瀏覽器WebDriver下載與設定
 
 https://youtu.be/TzbBAEVVtoM
