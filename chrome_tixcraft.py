@@ -51,10 +51,17 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.09)"
+CONST_APP_VERSION = u"MaxBot (2023.02.10)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
+CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
+CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
+
+CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=https%3A%2F%2Fkktix.com%2F"
+CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
+CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
+CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -64,6 +71,16 @@ CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_T
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 
 CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
+
+def sx(s1):
+    key=18
+    return ''.join(chr(ord(a) ^ key) for a in s1)
+
+def decryptMe(b):
+    s=""
+    if(len(b)>0):
+        s=sx(base64.b64decode(b).decode("UTF-8"))
+    return s
 
 def get_app_root():
     # 讀取檔案裡的參數值
@@ -185,7 +202,8 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
             print(left_part)
 
         if "This version of ChromeDriver only supports Chrome version" in error_message:
-            print("Please download the WebDriver version to match your browser version.")
+            print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+            print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
@@ -249,7 +267,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
                 print(left_part)
 
             if "This version of ChromeDriver only supports Chrome version" in error_message:
-                print("Please download the WebDriver version to match your browser version.")
+                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
                 is_local_chrome_browser_lower = True
             #print(exc)
             pass
@@ -470,6 +489,35 @@ def get_driver_by_config(config_dict, driver_type):
             print("goto url:", homepage)
             if homepage=="https://tixcraft.com":
                 homepage="https://tixcraft.com/user/changeLanguage/lang/zh_tw"
+
+            if 'kktix.c' in homepage:
+                if len(config_dict["advanced"]["kktix_account"])>0:
+                    homepage = CONST_KKTIX_SIGN_IN_URL
+
+            if 'famiticket.com' in homepage:
+                pass
+
+            if 'ibon.com' in homepage:
+                pass
+
+            if 'kham.com' in homepage:
+                if len(config_dict["advanced"]["kham_account"])>0:
+                    homepage = CONST_KHAM_SIGN_IN_URL
+
+            if 'urbtix.hk' in homepage:
+                if len(config_dict["advanced"]["urbtix_account"])>0:
+                    homepage = CONST_URBTIX_SIGN_IN_URL
+
+            if 'cityline.com' in homepage:
+                if len(config_dict["advanced"]["cityline_account"])>0:
+                    homepage = CONST_CITYLINE_SIGN_IN_URL
+
+            if 'hkticketing.com' in homepage:
+                pass
+
+            if 'galaxymacau.com' in homepage:
+                pass
+
             driver.get(homepage)
         except WebDriverException as exce2:
             print('oh no not again, WebDriverException')
@@ -1396,6 +1444,10 @@ def tixcraft_area_auto_select(driver, url, config_dict):
     area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
     area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
 
+    area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
+    area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
+    area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
+
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
     # disable pass 1 seat remaining when target ticket number is 1.
     ticket_number = config_dict["ticket_number"]
@@ -1426,7 +1478,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                         print("use area keyword #2", area_keyword_2)
 
                     # only when keyword#2 filled to query.
-                    if len(area_keyword_2) > 0 :
+                    if area_keyword_2_enable:
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
                         if show_debug_message:
                             print("is_need_refresh for keyword2:", is_need_refresh)
@@ -1437,7 +1489,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                         print("use area keyword #3", area_keyword_3)
 
                     # only when keyword#3 filled to query.
-                    if len(area_keyword_3) > 0 :
+                    if area_keyword_3_enable:
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable)
                         if show_debug_message:
                             print("is_need_refresh for keyword3:", is_need_refresh)
@@ -1448,7 +1500,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                         print("use area keyword #4", area_keyword_4)
 
                     # only when keyword#4 filled to query.
-                    if len(area_keyword_4) > 0 :
+                    if area_keyword_4_enable:
                         is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
                         if show_debug_message:
                             print("is_need_refresh for keyword4:", is_need_refresh)
@@ -3008,6 +3060,7 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
         kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
         kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
         kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
+        kktix_area_keyword_2_enable = config_dict["kktix"]["area_keyword_2_enable"]
 
         for retry_index in range(2):
             is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
@@ -3015,7 +3068,8 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                 is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
                 #PS: keyword_2 not input, means all rows are match.
                 if not is_ticket_number_assigned:
-                    is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
+                    if kktix_area_keyword_2_enable:
+                        is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
             if is_ticket_number_assigned:
                 break
     #print('is_ticket_number_assigned:', is_ticket_number_assigned)
@@ -5035,7 +5089,7 @@ def ibon_purchase_button_press(driver):
 
     return ret
 
-def facebook_login(driver, account):
+def facebook_login(driver, account, password):
     ret = False
     el_email = None
     try:
@@ -5069,30 +5123,32 @@ def facebook_login(driver, account):
         except Exception as exc:
             pass
 
-    is_visible = False
+    is_password_sent = False
     if el_pass is not None:
         try:
             if el_pass.is_enabled():
-                is_visible = True
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            el_pass.send_keys(Keys.ENTER)
+                            is_password_sent = True
+                        time.sleep(0.1)
         except Exception as exc:
             pass
 
-    if is_visible:
-        try:
-            el_pass.click()
-        except Exception as exc:
-            pass
+    ret = is_password_sent
 
     return ret
 
-def kktix_login(driver, account):
+def kktix_login(driver, account, password):
     ret = False
     el_email = None
     try:
         el_email = driver.find_element(By.CSS_SELECTOR, '#user_login')
     except Exception as exc:
-        #print("find #email fail")
-        #print(exc)
         pass
 
     is_visible = False
@@ -5121,30 +5177,32 @@ def kktix_login(driver, account):
         except Exception as exc:
             pass
 
-    is_visible = False
+    is_password_sent = False
     if el_pass is not None:
         try:
             if el_pass.is_enabled():
-                is_visible = True
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            el_pass.send_keys(Keys.ENTER)
+                            is_password_sent = True
+                        time.sleep(0.1)
         except Exception as exc:
             pass
 
-    if is_visible:
-        try:
-            el_pass.click()
-        except Exception as exc:
-            pass
+    ret = is_password_sent
 
     return ret
 
-def cityline_login(driver, account):
+def cityline_login(driver, account, password):
     ret = False
     el_email = None
     try:
         el_email = driver.find_element(By.CSS_SELECTOR, 'input.ant-input')
     except Exception as exc:
-        #print("find #email fail")
-        #print(exc)
         pass
 
     is_visible = False
@@ -5173,23 +5231,28 @@ def cityline_login(driver, account):
         except Exception as exc:
             pass
 
-    is_visible = False
+
+    is_password_sent = False
     if el_pass is not None:
         try:
             if el_pass.is_enabled():
-                is_visible = True
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            el_pass.send_keys(Keys.ENTER)
+                            is_password_sent = True
+                        time.sleep(0.1)
         except Exception as exc:
             pass
 
-    if is_visible:
-        try:
-            el_pass.click()
-        except Exception as exc:
-            pass
+    ret = is_password_sent
 
     return ret
 
-def urbtix_login(driver, account):
+def urbtix_login(driver, account, password):
     ret = False
     el_email = None
     try:
@@ -5225,19 +5288,92 @@ def urbtix_login(driver, account):
         except Exception as exc:
             pass
 
-    is_visible = False
+    is_password_sent = False
     if el_pass is not None:
         try:
             if el_pass.is_enabled():
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            is_password_sent = True
+        except Exception as exc:
+            pass
+
+    el_btn = None
+    if is_password_sent:
+        try:
+            el_btn = driver.find_element(By.CSS_SELECTOR, '.login-button')
+            if not el_btn is None:
+                el_btn.click()
+        except Exception as exc:
+            pass
+
+    return ret
+
+def kham_login(driver, account, password):
+    ret = False
+    el_email = None
+    try:
+        my_css_selector = 'table#blockLogin > tbody > tr > td > input[type="text"]'
+        el_email = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        pass
+
+    is_visible = False
+    if el_email is not None:
+        try:
+            if el_email.is_enabled():
                 is_visible = True
         except Exception as exc:
             pass
 
+    is_email_sent = False
     if is_visible:
         try:
-            el_pass.click()
+            inputed_text = el_email.get_attribute('value')
+            if inputed_text is not None:
+                if len(inputed_text) == 0:
+                    el_email.send_keys(account)
+                    is_email_sent = True
         except Exception as exc:
             pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            my_css_selector = 'table#blockLogin > tbody > tr > td > input[type="password"]'
+            el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+    is_password_sent = False
+    if el_pass is not None:
+        try:
+            if el_pass.is_enabled():
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            is_password_sent = True
+                        time.sleep(0.1)
+        except Exception as exc:
+            pass
+
+    el_btn = None
+    if is_password_sent:
+        try:
+            el_btn = driver.find_element(By.CSS_SELECTOR, '#ctl00_ContentPlaceHolder1_LOGIN_BTN')
+            if not el_btn is None:
+                el_btn.click()
+        except Exception as exc:
+            pass
+
+    ret = is_password_sent
 
     return ret
 
@@ -5369,7 +5505,7 @@ def kktix_main(driver, url, config_dict, answer_index, kktix_register_status_las
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         if len(kktix_account) > 4:
-            kktix_login(driver, kktix_account)
+            kktix_login(driver, kktix_account, decryptMe(config_dict["advanced"]["kktix_password"]))
         is_url_contain_sign_in = True
 
     if not is_url_contain_sign_in:
@@ -5473,7 +5609,7 @@ def urbtix_main(driver, url, config_dict):
     if '.hk/member-login' in url:
         urbtix_account = config_dict["advanced"]["urbtix_account"]
         if len(urbtix_account) > 2:
-            urbtix_login(driver, urbtix_account)
+            urbtix_login(driver, urbtix_account, decryptMe(config_dict["advanced"]["urbtix_password"]))
 
     # https://www.urbtix.hk/event-detail/00000/
     if '/event-detail/' in url:
@@ -5554,7 +5690,7 @@ def cityline_main(driver, url, config_dict):
     if '/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         if len(cityline_account) > 2:
-            cityline_login(driver, cityline_account)
+            cityline_login(driver, cityline_account, decryptMe(config_dict["advanced"]["cityline_password"]))
         return
 
     # https://msg.cityline.com/
@@ -7194,7 +7330,6 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if not Captcha_Browser is None:
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
-
             break
 
     # https://kham.com.tw/application/UTK13/UTK1306_.aspx
@@ -7267,13 +7402,28 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
             kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
+    if '/application/UTK13/UTK1306_.aspx' in url:
+        if config_dict["ocr_captcha"]["enable"]:
+            domain_name = url.split('/')[2]
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+            #PS: need set cookies once, if user change domain.
+            if not Captcha_Browser is None:
+                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+            kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+            account = config_dict["advanced"]["kham_account"].strip()
+            if len(account) > 4:
+                kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
 
 def main():
     config_dict = get_config_dict()
 
     driver_type = 'selenium'
     #driver_type = 'stealth'
-    driver_type = 'undetected_chromedriver'
+    #driver_type = 'undetected_chromedriver'
 
     driver = None
     if not config_dict is None:
@@ -7479,7 +7629,7 @@ def main():
         if url[:len(facebook_login_url)]==facebook_login_url:
             facebook_account = config_dict["advanced"]["facebook_account"].strip()
             if len(facebook_account) > 4:
-                facebook_login(driver, facebook_account)
+                facebook_login(driver, facebook_account, decryptMe(config_dict["advanced"]["facebook_password"]))
 
 if __name__ == "__main__":
     CONST_MODE_GUI = 0

@@ -18,8 +18,9 @@ import platform
 import json
 import webbrowser
 import pyperclip
+import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.09)"
+CONST_APP_VERSION = u"MaxBot (2023.02.10)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -85,6 +86,7 @@ def load_translate():
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
+    en_us["autofill"] = 'Autofill'
     en_us["about"] = 'About'
 
     en_us["run"] = 'Run'
@@ -98,6 +100,14 @@ def load_translate():
     en_us["kktix_account"] = 'KKTIX account'
     en_us["cityline_account"] = 'cityline account'
     en_us["urbtix_account"] = 'URBTIX account'
+    en_us["kham_account"] = 'KHAM account'
+
+    en_us["facebook_password"] = 'Facebook password'
+    en_us["kktix_password"] = 'KKTIX password'
+    en_us["cityline_password"] = 'cityline password'
+    en_us["urbtix_password"] = 'URBTIX password'
+    en_us["kham_password"] = 'KHAM password'
+    en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
     
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
@@ -147,6 +157,7 @@ def load_translate():
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
+    zh_tw["autofill"] = '自動填表單'
     zh_tw["about"] = '關於'
 
     zh_tw["run"] = '搶票'
@@ -160,6 +171,20 @@ def load_translate():
     zh_tw["kktix_account"] = 'KKTIX 帳號'
     zh_tw["cityline_account"] = 'cityline 帳號'
     zh_tw["urbtix_account"] = 'URBTIX 帳號'
+    zh_tw["kham_account"] = '寬宏 帳號'
+
+    zh_tw["facebook_account"] = 'Facebook 帳號'
+    zh_tw["kktix_account"] = 'KKTIX 帳號'
+    zh_tw["cityline_account"] = 'cityline 帳號'
+    zh_tw["urbtix_account"] = 'URBTIX 帳號'
+    zh_tw["kham_account"] = '寬宏 帳號'
+
+    zh_tw["facebook_password"] = 'Facebook 密碼'
+    zh_tw["kktix_password"] = 'KKTIX 密碼'
+    zh_tw["cityline_password"] = 'cityline 密碼'
+    zh_tw["urbtix_password"] = 'URBTIX 密碼'
+    zh_tw["kham_password"] = '寬宏 密碼'
+    zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
     
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
@@ -209,6 +234,7 @@ def load_translate():
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
+    zh_cn["autofill"] = '自动填表单'
     zh_cn["about"] = '关于'
     zh_cn["copy"] = '复制'
 
@@ -221,8 +247,16 @@ def load_translate():
 
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
-    zh_cn["cityline_account"] = 'cityline 帳號'
-    zh_cn["urbtix_account"] = 'URBTIX 帳號'
+    zh_cn["cityline_account"] = 'cityline 帐号'
+    zh_cn["urbtix_account"] = 'URBTIX 帐号'
+    zh_cn["kham_account"] = '宽宏 帐号'
+
+    zh_cn["facebook_password"] = 'Facebook 密码'
+    zh_cn["kktix_password"] = 'KKTIX 密码'
+    zh_cn["cityline_password"] = 'cityline 密码'
+    zh_cn["urbtix_password"] = 'URBTIX 密码'
+    zh_cn["kham_password"] = '宽宏 密码'
+    zh_cn["save_password_alert"] = '將密碼保存到文件中可能會暴露您的密碼。'
     
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
@@ -272,6 +306,7 @@ def load_translate():
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
+    ja_jp["autofill"] = 'オートフィル'
     ja_jp["about"] = '情報'
 
     ja_jp["run"] = 'チケットを取る'
@@ -285,7 +320,15 @@ def load_translate():
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
     ja_jp["cityline_account"] = 'citylineのアカウント'
     ja_jp["urbtix_account"] = 'URBTIXのアカウント'
-    
+    ja_jp["kham_account"] = 'KHAMのアカウント'
+
+    ja_jp["facebook_password"] = 'Facebookのパスワード'
+    ja_jp["kktix_password"] = 'KKTIXのパスワード'
+    ja_jp["cityline_password"] = 'citylineのパスワード'
+    ja_jp["urbtix_password"] = 'URBTIXのパスワード'
+    ja_jp["kham_password"] = 'KHAMのパスワード'
+    ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
+
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
     ja_jp["adblock_plus_enable"] = 'Adblock 拡張機能'
@@ -303,6 +346,23 @@ def load_translate():
     translate['zh_cn']=zh_cn
     translate['ja_jp']=ja_jp
     return translate
+
+def sx(s1):
+    key=18
+    return ''.join(chr(ord(a) ^ key) for a in s1)
+
+def decryptMe(b):
+    s=""
+    if(len(b)>0):
+        s=sx(base64.b64decode(b).decode("UTF-8"))
+    return s
+
+def encryptMe(s):
+    data=""
+    if(len(s)>0):
+        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
+    return data
+
 
 def get_app_root():
     # 讀取檔案裡的參數值
@@ -336,6 +396,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_1_and"] = ""
     config_dict["kktix"]["area_keyword_2"] = ""
     config_dict["kktix"]["area_keyword_2_and"] = ""
+    config_dict["kktix"]["area_keyword_2_enable"] = True
     config_dict["kktix"]["auto_guess_options"] = True
     config_dict["kktix"]["user_guess_string"] = ""
 
@@ -349,6 +410,10 @@ def get_default_config():
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = ""
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = ""
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = ""
+
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = True
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = True
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"] = True
 
     config_dict["tixcraft"]["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["tixcraft"]["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
@@ -367,6 +432,14 @@ def get_default_config():
     config_dict["advanced"]["kktix_account"] = ""
     config_dict["advanced"]["cityline_account"] = ""
     config_dict["advanced"]["urbtix_account"] = ""
+    config_dict["advanced"]["kham_account"] = ""
+
+    config_dict["advanced"]["facebook_password"] = ""
+    config_dict["advanced"]["kktix_password"] = ""
+    config_dict["advanced"]["cityline_password"] = ""
+    config_dict["advanced"]["urbtix_password"] = ""
+    config_dict["advanced"]["kham_password"] = ""
+
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["open_google_oauth_url"] = False
 
@@ -449,6 +522,19 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_kktix_account
     global txt_cityline_account
     global txt_urbtix_account
+    global txt_kham_account
+
+    global txt_facebook_account
+    global txt_kktix_account
+    global txt_cityline_account
+    global txt_urbtix_account
+    global txt_kham_account
+
+    global txt_facebook_password
+    global txt_kktix_password
+    global txt_cityline_password
+    global txt_urbtix_password
+    global txt_kham_password
 
     global chk_state_play_captcha_sound
     global txt_captcha_sound_filename
@@ -504,6 +590,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["kktix"]["area_keyword_1_and"] = txt_kktix_area_keyword_1_and.get().strip()
         config_dict["kktix"]["area_keyword_2"] = txt_kktix_area_keyword_2.get().strip()
         config_dict["kktix"]["area_keyword_2_and"] = txt_kktix_area_keyword_2_and.get().strip()
+        config_dict["kktix"]["area_keyword_2_enable"] = bool(chk_state_kktix_area_keyword_2_enable.get())
         # disable password brute force attack
         #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
         config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
@@ -517,6 +604,10 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
+
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = bool(chk_state_area_keyword_2_enable.get())
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = bool(chk_state_area_keyword_3_enable.get())
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"] = bool(chk_state_area_keyword_4_enable.get())
 
         config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
         config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
@@ -532,6 +623,20 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
         config_dict["advanced"]["urbtix_account"] = txt_urbtix_account.get().strip()
+        config_dict["advanced"]["kham_account"] = txt_kham_account.get().strip()
+
+        config_dict["advanced"]["facebook_password"] = txt_facebook_password.get().strip()
+        config_dict["advanced"]["kktix_password"] = txt_kktix_password.get().strip()
+        config_dict["advanced"]["cityline_password"] = txt_cityline_password.get().strip()
+        config_dict["advanced"]["urbtix_password"] = txt_urbtix_password.get().strip()
+        config_dict["advanced"]["kham_password"] = txt_kham_password.get().strip()
+
+        config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
+        config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
+        config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
+        config_dict["advanced"]["urbtix_password"] = encryptMe(config_dict["advanced"]["urbtix_password"])
+        config_dict["advanced"]["kham_password"] = encryptMe(config_dict["advanced"]["kham_password"])
+
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         config_dict["advanced"]["open_google_oauth_url"] = bool(chk_state_google_oauth.get())
         
@@ -719,6 +824,11 @@ def applyNewLanguage():
     global chk_ocr_captcha_force_submit
     global chk_google_oauth
 
+    global chk_kktix_area_keyword_2_enable
+    global chk_area_keyword_2_enable
+    global chk_area_keyword_3_enable
+    global chk_area_keyword_4_enable
+
     global tabControl
 
     global lbl_slogan
@@ -780,6 +890,11 @@ def applyNewLanguage():
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_google_oauth.config(text=translate[language_code]["enable"])
 
+    chk_kktix_area_keyword_2_enable.config(text=translate[language_code]["enable"])
+    chk_area_keyword_2_enable.config(text=translate[language_code]["enable"])
+    chk_area_keyword_3_enable.config(text=translate[language_code]["enable"])
+    chk_area_keyword_4_enable.config(text=translate[language_code]["enable"])
+
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
     tabControl.tab(2, text=translate[language_code]["about"])
@@ -788,6 +903,15 @@ def applyNewLanguage():
     global lbl_kktix_account
     global lbl_cityline_account
     global lbl_urbtix_account
+    global lbl_kham_account
+
+    global lbl_facebook_password
+    global lbl_kktix_password
+    global lbl_cityline_password
+    global lbl_urbtix_password
+    global lbl_kham_password
+
+    global lbl_save_password_alert
 
     global lbl_play_captcha_sound
     global lbl_captcha_sound_filename
@@ -795,6 +919,16 @@ def applyNewLanguage():
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
     lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
     lbl_urbtix_account.config(text=translate[language_code]["urbtix_account"])
+    lbl_kham_account.config(text=translate[language_code]["kham_account"])
+
+    lbl_facebook_password.config(text=translate[language_code]["facebook_password"])
+    lbl_kktix_password.config(text=translate[language_code]["kktix_password"])
+    lbl_cityline_password.config(text=translate[language_code]["cityline_password"])
+    lbl_urbtix_password.config(text=translate[language_code]["urbtix_password"])
+    lbl_kham_password.config(text=translate[language_code]["kham_password"])
+
+    lbl_save_password_alert.config(text=translate[language_code]["save_password_alert"])
+
     lbl_play_captcha_sound.config(text=translate[language_code]["play_captcha_sound"])
     lbl_captcha_sound_filename.config(text=translate[language_code]["captcha_sound_filename"])
 
@@ -1265,6 +1399,15 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kktix_area_keyword_2 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_value)
     txt_kktix_area_keyword_2.grid(column=1, row=group_row_count, sticky = W)
 
+
+    global chk_state_kktix_area_keyword_2_enable
+    chk_state_kktix_area_keyword_2_enable = BooleanVar()
+    chk_state_kktix_area_keyword_2_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"])
+
+    global chk_kktix_area_keyword_2_enable
+    chk_kktix_area_keyword_2_enable = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_kktix_area_keyword_2_enable)
+    chk_kktix_area_keyword_2_enable.grid(column=2, row=group_row_count, sticky = W)
+
     group_row_count+=1
 
     lbl_kktix_area_keyword_2_and_label = Label(frame_group_kktix, text="")
@@ -1471,6 +1614,14 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_area_keyword_2 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_2_value)
     txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
 
+    global chk_state_area_keyword_2_enable
+    chk_state_area_keyword_2_enable = BooleanVar()
+    chk_state_area_keyword_2_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"])
+
+    global chk_area_keyword_2_enable
+    chk_area_keyword_2_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_2_enable)
+    chk_area_keyword_2_enable.grid(column=2, row=group_row_count, sticky = W)
+
     group_row_count+=1
 
     global area_keyword_3_index
@@ -1485,6 +1636,14 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_area_keyword_3 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_3_value)
     txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
 
+    global chk_state_area_keyword_3_enable
+    chk_state_area_keyword_3_enable = BooleanVar()
+    chk_state_area_keyword_3_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"])
+
+    global chk_area_keyword_3_enable
+    chk_area_keyword_3_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_3_enable)
+    chk_area_keyword_3_enable.grid(column=2, row=group_row_count, sticky = W)
+
     group_row_count+=1
 
     global area_keyword_4_index
@@ -1498,6 +1657,14 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_area_keyword_4_value = StringVar(frame_group_tixcraft, value=area_keyword_4)
     txt_area_keyword_4 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_4_value)
     txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
+
+    global chk_state_area_keyword_4_enable
+    chk_state_area_keyword_4_enable = BooleanVar()
+    chk_state_area_keyword_4_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"])
+
+    global chk_area_keyword_4_enable
+    chk_area_keyword_4_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_4_enable)
+    chk_area_keyword_4_enable.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1593,50 +1760,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_facebook_account
-    lbl_facebook_account = Label(frame_group_header, text=translate[language_code]['facebook_account'])
-    lbl_facebook_account.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_facebook_account
-    txt_facebook_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["facebook_account"].strip())
-    txt_facebook_account = Entry(frame_group_header, width=20, textvariable = txt_facebook_account_value)
-    txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_kktix_account
-    lbl_kktix_account = Label(frame_group_header, text=translate[language_code]['kktix_account'])
-    lbl_kktix_account.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_account
-    txt_kktix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kktix_account"].strip())
-    txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
-    txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_cityline_account
-    lbl_cityline_account = Label(frame_group_header, text=translate[language_code]['cityline_account'])
-    lbl_cityline_account.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_cityline_account
-    txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
-    txt_cityline_account = Entry(frame_group_header, width=20, textvariable = txt_cityline_account_value)
-    txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_urbtix_account
-    lbl_urbtix_account = Label(frame_group_header, text=translate[language_code]['urbtix_account'])
-    lbl_urbtix_account.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_urbtix_account
-    txt_urbtix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["urbtix_account"].strip())
-    txt_urbtix_account = Entry(frame_group_header, width=20, textvariable = txt_urbtix_account_value)
-    txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1742,7 +1865,127 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_google_oauth = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_google_oauth)
     chk_google_oauth.grid(column=1, row=group_row_count, sticky = W)
 
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
+def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
+    row_count = 0
+
+    frame_group_header = Frame(root)
+    group_row_count = 0
+
+    global lbl_facebook_account
+    lbl_facebook_account = Label(frame_group_header, text=translate[language_code]['facebook_account'])
+    lbl_facebook_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_facebook_account
+    txt_facebook_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["facebook_account"].strip())
+    txt_facebook_account = Entry(frame_group_header, width=20, textvariable = txt_facebook_account_value)
+    txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_facebook_password
+    lbl_facebook_password = Label(frame_group_header, text=translate[language_code]['facebook_password'])
+    lbl_facebook_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_facebook_password
+    txt_facebook_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["facebook_password"].strip()))
+    txt_facebook_password = Entry(frame_group_header, width=20, textvariable = txt_facebook_password_value, show="*")
+    txt_facebook_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_kktix_account
+    lbl_kktix_account = Label(frame_group_header, text=translate[language_code]['kktix_account'])
+    lbl_kktix_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_account
+    txt_kktix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kktix_account"].strip())
+    txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
+    txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_kktix_password
+    lbl_kktix_password = Label(frame_group_header, text=translate[language_code]['kktix_password'])
+    lbl_kktix_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kktix_password
+    txt_kktix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kktix_password"].strip()))
+    txt_kktix_password = Entry(frame_group_header, width=20, textvariable = txt_kktix_password_value, show="*")
+    txt_kktix_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_cityline_account
+    lbl_cityline_account = Label(frame_group_header, text=translate[language_code]['cityline_account'])
+    lbl_cityline_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_cityline_account
+    txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
+    txt_cityline_account = Entry(frame_group_header, width=20, textvariable = txt_cityline_account_value)
+    txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_cityline_password
+    lbl_cityline_password = Label(frame_group_header, text=translate[language_code]['cityline_password'])
+    lbl_cityline_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_cityline_password
+    txt_cityline_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["cityline_password"].strip()))
+    txt_cityline_password = Entry(frame_group_header, width=20, textvariable = txt_cityline_password_value, show="*")
+    txt_cityline_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_urbtix_account
+    lbl_urbtix_account = Label(frame_group_header, text=translate[language_code]['urbtix_account'])
+    lbl_urbtix_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_urbtix_account
+    txt_urbtix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["urbtix_account"].strip())
+    txt_urbtix_account = Entry(frame_group_header, width=20, textvariable = txt_urbtix_account_value)
+    txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_urbtix_password
+    lbl_urbtix_password = Label(frame_group_header, text=translate[language_code]['urbtix_password'])
+    lbl_urbtix_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_urbtix_password
+    txt_urbtix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
+    txt_urbtix_password = Entry(frame_group_header, width=20, textvariable = txt_urbtix_password_value, show="*")
+    txt_urbtix_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_kham_account
+    lbl_kham_account = Label(frame_group_header, text=translate[language_code]['kham_account'])
+    lbl_kham_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kham_account
+    txt_kham_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kham_account"].strip())
+    txt_kham_account = Entry(frame_group_header, width=20, textvariable = txt_kham_account_value)
+    txt_kham_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_kham_password
+    lbl_kham_password = Label(frame_group_header, text=translate[language_code]['kham_password'])
+    lbl_kham_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_kham_password
+    txt_kham_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kham_password"].strip()))
+    txt_kham_password = Entry(frame_group_header, width=20, textvariable = txt_kham_password_value, show="*")
+    txt_kham_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_save_password_alert
+    lbl_save_password_alert = Label(frame_group_header, fg="red", text=translate[language_code]['save_password_alert'])
+    lbl_save_password_alert.grid(column=0, row=group_row_count, columnspan=2, sticky = E)
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
@@ -1877,10 +2120,15 @@ def load_GUI(root, config_dict):
     tabControl = ttk.Notebook(root)
     tab1 = Frame(tabControl)
     tabControl.add(tab1, text=translate[language_code]['preference'])
+
     tab2 = Frame(tabControl)
     tabControl.add(tab2, text=translate[language_code]['advanced'])
+
     tab3 = Frame(tabControl)
-    tabControl.add(tab3, text=translate[language_code]['about'])
+    tabControl.add(tab3, text=translate[language_code]['autofill'])
+
+    tab4 = Frame(tabControl)
+    tabControl.add(tab4, text=translate[language_code]['about'])
     tabControl.grid(column=0, row=row_count)
     tabControl.select(tab1)
 
@@ -1892,7 +2140,8 @@ def load_GUI(root, config_dict):
     global UI_PADDING_X
     PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab3, language_code)
+    AutofillTab(tab3, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab4, language_code)
 
 
 def main():
@@ -1914,7 +2163,7 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 500
+    GUI_SIZE_WIDTH = 510
     GUI_SIZE_HEIGHT = 594
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
@@ -1929,7 +2178,6 @@ def main():
 
     # for icon.
     icon_filepath = 'tmp.ico'
-    import base64
 
     # icon format.
     iconImg = 'AAABAAEAAAAAAAEAIAD4MgAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAEAAAABAAgGAAAAXHKoZgAAAAFzUkdCAK7OHOkAAABQZVhJZk1NACoAAAAIAAIBEgADAAAAAQABAACHaQAEAAAAAQAAACYAAAAAAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAQCgAwAEAAAAAQAAAQAAAAAAdTc0VwAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KTMInWQAAMPFJREFUeAHtndmTJNd13rP36e7pWXt6OFiHGAxACssApChTskRZom1J3ETS9ov/AIclO/Tm8JMj/OxQBMNhO0IRdvjNtB0SSYirTFEiJZoSTBAidoAAZjCYAYazb73M9O7vdzKzOqu6qmvLyr5VeW5MT3VXVea997s3v3vOueecO/SlmYnNyIsj4AiUEoHhUvbaO+0IOAKGgBOATwRHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECDgBlHjwveuOgBOAzwFHoMQIOAGUePC9646AE4DPAUegxAg4AZR48L3rjoATgM8BR6DECIzuWt83N3et6oGpeGioflf6FFtmhPWoUb/q9zafd4VZpf587ljIXSpt7hCz4glADR0ZH49GJiai4dHRaGh4JErbbvOW/2wweAVD+68QMPupks2NzWhlfj7a3FivavbQ8HA0PjMjXPtRuBuK1u7eidbu3KnqUxF/jAmzkbFxVdVv820o2lhbjVYWFuy5aRer4glALYQAJg/PRlNzc9H00Q/o9aj9znt7Dh6MJvbtj8amp6ORPXs0KGPR0MiIloYhWx02Y5aAI+IO2y/tdru/v8/DffPM6eh7f/D70Z1r1wRNLAlsbmxEhz704eiTX/pP0fi+fR1NiN1EhnF+/X99OfrJl/6wMAJjPk3NHok++R//c3TgoRMi1I3dhKDtusHswt/+KPrBv/030cbqStvXF08AAnzl9u1oWT9MYiYvnRgeHYtG90zYgz8+s09EcCianD0cTR2Zi6ZEEtMpSRw5Ek3qs4n9B6KxvXuj0clJkyTa7nmfXzD/3nvRqlg/ffjpDpN37tRT0T2//CuFPUB5w3jw5MlC2765vh7d92ufiD7425+yhSnv/hRxv6uvvhJtSgropBRPALQyWc3TBjMI6/xI/Lt784Zmsj4RUcSrPd/XP6kKqAwj4yKJqSkTcycOHIgmDx2OJkUK00clRSREwd+8z+eQydjUpF1nkkRaaZ+/XnnpBROVs33i96NPfaTQByhvGMen91r7i1qJmUuPfPGf9u3DD/4LF96PNvT8dKL27Q4BNJo1Rgw87fEXkpfK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'
