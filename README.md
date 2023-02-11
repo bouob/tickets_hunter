@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-10)：自動填表單/關鍵字的開關
+
+https://youtu.be/Ft2WIWglZ5E
+
 Max搶票機器人 (2023-02-09)：開啟Google OAuth網址
 
 https://youtu.be/8PxOXsjuI5Q
