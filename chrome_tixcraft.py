@@ -51,7 +51,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.10)"
+CONST_APP_VERSION = u"MaxBot (2023.02.11).002"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -71,6 +71,13 @@ CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_T
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 
 CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
+
+CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
+CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
+
+CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
+#CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
+CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 
 def sx(s1):
     key=18
@@ -307,7 +314,7 @@ def close_browser_tabs(driver):
         except Exception as excSwithFail:
             pass
 
-def get_driver_by_config(config_dict, driver_type):
+def get_driver_by_config(config_dict):
     global driver
 
     homepage = None
@@ -386,6 +393,8 @@ def get_driver_by_config(config_dict, driver_type):
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
+    driver_type = config_dict["webdriver_type"]
+
     # output config:
     print("maxbot app version", CONST_APP_VERSION)
     print("python version", platform.python_version())
@@ -401,6 +410,7 @@ def get_driver_by_config(config_dict, driver_type):
     print(config_dict["tixcraft"])
     print("==[advanced]==")
     print(config_dict["advanced"])
+    print("webdriver_type", driver_type)
 
     # entry point
     if homepage is None:
@@ -417,7 +427,7 @@ def get_driver_by_config(config_dict, driver_type):
 
     if browser == "chrome":
         # method 6: Selenium Stealth
-        if driver_type != "undetected_chromedriver":
+        if driver_type != CONST_WEBDRIVER_TYPE_UC:
             driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
         else:
             # method 5: uc
@@ -1909,9 +1919,6 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     show_debug_message = False      # online
     print("start to ddddocr")
 
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
-
     is_need_redo_ocr = False
     is_form_sumbited = False
 
@@ -1928,7 +1935,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
-        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'yw0'
             if 'indievox.com' in domain_name:
                 image_id = 'TicketForm_verifyCode-image'
@@ -1984,7 +1991,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                         # selenium solution.
                         tixcraft_reload_captcha(driver, domain_name)
 
-                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
                             time.sleep(0.1)
                     else:
                         # Non_Browser solution.
@@ -7198,7 +7205,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
     print("start to ddddocr")
 
     CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
+    CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
     is_need_redo_ocr = False
     is_form_sumbited = False
@@ -7216,7 +7223,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
-        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'chk_pic'
             try:
                 form_verifyCode_base64 = driver.execute_async_script("""
@@ -7265,7 +7272,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
                         jquery_string = '$("#chk_pic").attr("src", "/pic.aspx?TYPE=%s&ts=" + new Date().getTime());' % (model_name)
                         driver.execute_script(jquery_string)
 
-                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS:
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
                             time.sleep(0.3)
                     else:
                         # Non_Browser solution.
@@ -7421,13 +7428,9 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 def main():
     config_dict = get_config_dict()
 
-    driver_type = 'selenium'
-    #driver_type = 'stealth'
-    #driver_type = 'undetected_chromedriver'
-
     driver = None
     if not config_dict is None:
-        driver = get_driver_by_config(config_dict, driver_type)
+        driver = get_driver_by_config(config_dict)
     else:
         print("Load config error!")
 

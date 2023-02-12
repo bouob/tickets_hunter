@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.10)"
+CONST_APP_VERSION = u"MaxBot (2023.02.11).002"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -37,6 +37,13 @@ tixcraft.com##.nav-line
 tixcraft.com##.page-info.row.line-btm.mg-0'''
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
+
+CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
+CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
+
+CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
+#CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
+CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 
 translate={}
 
@@ -83,6 +90,7 @@ def load_translate():
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
     en_us["ocr_captcha_image_source"] = 'OCR image source'
+    en_us["webdriver_type"] = 'WebDriver type'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -154,6 +162,7 @@ def load_translate():
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
+    zh_tw["webdriver_type"] = 'WebDriver類別'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -231,6 +240,7 @@ def load_translate():
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
+    zh_cn["webdriver_type"] = 'WebDriver类别'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -303,6 +313,7 @@ def load_translate():
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
+    ja_jp["webdriver_type"] = 'WebDriverタイプ'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -386,7 +397,8 @@ def get_default_config():
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
     config_dict["ocr_captcha"]["force_submit"] = False
-    config_dict["ocr_captcha"]["image_source"] = "canvas"
+    config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
+    config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -543,6 +555,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha_force_submit
     global chk_state_google_oauth
     global combo_ocr_captcha_image_source
+    global combo_webdriver_type
 
     is_all_data_correct = True
 
@@ -644,6 +657,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
+        config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
 
     # save config.
     if is_all_data_correct:
@@ -806,6 +820,7 @@ def applyNewLanguage():
     global lbl_ocr_captcha
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
+    global lbl_webdriver_type
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -873,6 +888,7 @@ def applyNewLanguage():
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
+    lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
@@ -897,7 +913,8 @@ def applyNewLanguage():
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
-    tabControl.tab(2, text=translate[language_code]["about"])
+    tabControl.tab(2, text=translate[language_code]["autofill"])
+    tabControl.tab(3, text=translate[language_code]["about"])
 
     global lbl_facebook_account
     global lbl_kktix_account
@@ -1763,18 +1780,27 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS = "canvas"
-
     global lbl_ocr_captcha_image_source
     lbl_ocr_captcha_image_source = Label(frame_group_header, text=translate[language_code]['ocr_captcha_image_source'])
     lbl_ocr_captcha_image_source.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_ocr_captcha_image_source
     combo_ocr_captcha_image_source = ttk.Combobox(frame_group_header, state="readonly")
-    combo_ocr_captcha_image_source['values']= (CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER, CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_CANVAS)
+    combo_ocr_captcha_image_source['values']= (CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER, CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS)
     combo_ocr_captcha_image_source.set(config_dict["ocr_captcha"]["image_source"])
     combo_ocr_captcha_image_source.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_webdriver_type
+    lbl_webdriver_type = Label(frame_group_header, text=translate[language_code]['webdriver_type'])
+    lbl_webdriver_type.grid(column=0, row=group_row_count, sticky = E)
+
+    global combo_webdriver_type
+    combo_webdriver_type = ttk.Combobox(frame_group_header, state="readonly")
+    combo_webdriver_type['values']= (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
+    combo_webdriver_type.set(config_dict["webdriver_type"])
+    combo_webdriver_type.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
