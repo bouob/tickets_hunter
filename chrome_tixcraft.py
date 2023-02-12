@@ -42,7 +42,6 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import base64
 try:
     import ddddocr
-
     #PS: python 3.11.1 raise PIL conflict.
     from NonBrowser import NonBrowser
 except Exception as exc:
@@ -51,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.11).002"
+CONST_APP_VERSION = u"MaxBot (2023.02.12)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -62,6 +61,7 @@ CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=https%3A%2F%2
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
+CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Membership/Login.aspx"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -523,7 +523,8 @@ def get_driver_by_config(config_dict):
                     homepage = CONST_CITYLINE_SIGN_IN_URL
 
             if 'hkticketing.com' in homepage:
-                pass
+                if len(config_dict["advanced"]["hkticketing_account"])>0:
+                    homepage = CONST_HKTICKETING_SIGN_IN_URL
 
             if 'galaxymacau.com' in homepage:
                 pass
@@ -4680,10 +4681,10 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.grid-wrap.event.table-wrap > div > div > div.tr"
+        my_css_selector = "div.single-content > div > div.row > div > div.tr"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
-        print("find #date-time-position date list fail")
+        print("find date-time rows fail")
         print(exc)
 
     #PS: some blocks are generate by ajax, not appear at first time.
@@ -5120,6 +5121,9 @@ def facebook_login(driver, account, password):
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
         except Exception as exc:
             pass
 
@@ -5174,6 +5178,9 @@ def kktix_login(driver, account, password):
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
         except Exception as exc:
             pass
 
@@ -5228,6 +5235,9 @@ def cityline_login(driver, account, password):
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
         except Exception as exc:
             pass
 
@@ -5285,6 +5295,9 @@ def urbtix_login(driver, account, password):
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
         except Exception as exc:
             pass
 
@@ -5345,6 +5358,9 @@ def kham_login(driver, account, password):
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
         except Exception as exc:
             pass
 
@@ -5383,6 +5399,81 @@ def kham_login(driver, account, password):
     ret = is_password_sent
 
     return ret
+
+def hkticketing_login(driver, account, password):
+    ret = False
+    el_email = None
+    try:
+        my_css_selector = 'div#myTick2Col > div.formMod2Col > div.formModule > div.loginContentContainer > input.borInput'
+        el_email = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        #print("find_element exception")
+        #print(exc)
+        pass
+
+    is_visible = False
+    if el_email is not None:
+        try:
+            if el_email.is_enabled():
+                is_visible = True
+            else:
+                el_email.click()
+        except Exception as exc:
+            pass
+    else:
+        #print("account field is None.")
+        pass
+
+    is_email_sent = False
+    if is_visible:
+        try:
+            # PS: this is special case...
+            el_email.click()
+
+            inputed_text = el_email.get_attribute('value')
+            if inputed_text is not None:
+                if len(inputed_text) == 0:
+                    #print("send account text:", account)
+                    el_email.send_keys(account)
+                    is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
+        except Exception as exc:
+            pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            my_css_selector = 'div.loginContentContainer > input[type="password"]'
+            el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+    is_password_sent = False
+    if el_pass is not None:
+        try:
+            if el_pass.is_enabled():
+                el_pass.click()
+                inputed_text = el_pass.get_attribute('value')
+                if inputed_text is not None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            #print("send password text:", password)
+                            el_pass.send_keys(password)
+                            el_pass.send_keys(Keys.ENTER)
+                            is_password_sent = True
+                        time.sleep(0.1)
+            else:
+                el_pass.click()
+        except Exception as exc:
+            pass
+
+    ret = is_password_sent
+
+    return ret
+
 
 def check_and_play_sound_for_captcha(config_dict):
     play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
@@ -5741,7 +5832,39 @@ def cityline_main(driver, url, config_dict):
             if len(url.split('/'))>=5:
                 cityline_shows_goto_cta(driver)
 
-def ibon_main(driver, url, config_dict):
+def ibon_verification_question(driver, answer_index, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    user_guess_string = config_dict["kktix"]["user_guess_string"]
+
+    # part 1: check div.
+    question_div = None
+    try:
+        question_div = driver.find_element(By.CSS_SELECTOR, '')
+    except Exception as exc:
+        pass
+        #print("find input fail:", exc)
+
+    #captcha_text_div_text
+
+    captcha_password_inputbox = None
+    try:
+        captcha_password_inputbox = driver.find_element(By.CSS_SELECTOR, '')
+    except Exception as exc:
+        pass
+
+    if not captcha_password_inputbox is None:
+        inferred_answer_string = None
+
+        if len(user_guess_string) > 0:
+            inferred_answer_string = user_guess_string
+        else:
+            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
+
+    return answer_index
+
+def ibon_main(driver, url, config_dict, answer_index):
     #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
     if '/ActivityInfo/Details/' in url:
         is_event_page = False
@@ -5752,6 +5875,18 @@ def ibon_main(driver, url, config_dict):
             date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
             if date_auto_select_enable:
                 ibon_activity_info(driver, config_dict)
+    
+    # validation question url:
+    # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
+    if '/application/UTK02/' in url and '.aspx?rn=' in url:
+        #PS: not sure, use 'kktix' block or 'tixcraft' block for this feature.
+        #auto_guess_options = config_dict["kktix"]["auto_guess_options"]
+        auto_guess_options = True
+        if auto_guess_options:
+            #answer_index = ibon_verification_question(driver, answer_index, config_dict)
+            pass
+    else:
+        answer_index = -1
 
     # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
     if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
@@ -5771,6 +5906,8 @@ def ibon_main(driver, url, config_dict):
                 else:
                     # step 1: select area.
                     ibon_performance(driver, config_dict)
+
+    return answer_index
 
 def hkticketing_home(driver):
     show_debug_message = True    # debug.
@@ -6520,6 +6657,8 @@ def hkticketing_main(driver, url, config_dict):
     ,'https://hotshow.hkticketing.com/'
     ,'https://premier.hkticketing.com/default.aspx'
     ,'https://hotshow.hkticketing.com/default.aspx'
+    ,'https://premier.hkticketing.com/Membership/Login.aspx'
+    ,'https://hotshow.hkticketing.com/Membership/Login.aspx'
     ]
     for each_url in home_url_list:
         if each_url == url:
@@ -6532,6 +6671,12 @@ def hkticketing_main(driver, url, config_dict):
             driver.get(entry_url)
         except Exception as exc:
             pass
+
+    # PS: share function with galaxymacau, but memeber is not shared.
+    if 'hkticketing.com/Membership/Login.aspx' in url:
+        account = config_dict["advanced"]["hkticketing_account"].strip()
+        if len(account) > 4:
+            hkticketing_login(driver, account, decryptMe(config_dict["advanced"]["hkticketing_password"]))
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
     if 'shows/show.aspx?' in url:
@@ -7610,7 +7755,7 @@ def main():
             famiticket_main(driver, url, config_dict)
 
         if 'ibon.com' in url:
-            ibon_main(driver, url, config_dict)
+            answer_index = ibon_main(driver, url, config_dict, answer_index)
 
         if 'kham.com' in url:
             kham_main(driver, url, config_dict, ocr, Captcha_Browser)
@@ -7658,6 +7803,7 @@ if __name__ == "__main__":
         #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
         #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
         #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
+        captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)

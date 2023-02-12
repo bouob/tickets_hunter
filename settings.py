@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.11).002"
+CONST_APP_VERSION = u"MaxBot (2023.02.12)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -108,12 +108,14 @@ def load_translate():
     en_us["kktix_account"] = 'KKTIX account'
     en_us["cityline_account"] = 'cityline account'
     en_us["urbtix_account"] = 'URBTIX account'
+    en_us["hkticketing_account"] = 'HKTICKETING account'
     en_us["kham_account"] = 'KHAM account'
 
     en_us["facebook_password"] = 'Facebook password'
     en_us["kktix_password"] = 'KKTIX password'
     en_us["cityline_password"] = 'cityline password'
     en_us["urbtix_password"] = 'URBTIX password'
+    en_us["hkticketing_password"] = 'HKTICKETING password'
     en_us["kham_password"] = 'KHAM password'
     en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
     
@@ -180,18 +182,14 @@ def load_translate():
     zh_tw["kktix_account"] = 'KKTIX 帳號'
     zh_tw["cityline_account"] = 'cityline 帳號'
     zh_tw["urbtix_account"] = 'URBTIX 帳號'
-    zh_tw["kham_account"] = '寬宏 帳號'
-
-    zh_tw["facebook_account"] = 'Facebook 帳號'
-    zh_tw["kktix_account"] = 'KKTIX 帳號'
-    zh_tw["cityline_account"] = 'cityline 帳號'
-    zh_tw["urbtix_account"] = 'URBTIX 帳號'
+    zh_tw["hkticketing_account"] = 'HKTICKETING 帳號'
     zh_tw["kham_account"] = '寬宏 帳號'
 
     zh_tw["facebook_password"] = 'Facebook 密碼'
     zh_tw["kktix_password"] = 'KKTIX 密碼'
     zh_tw["cityline_password"] = 'cityline 密碼'
     zh_tw["urbtix_password"] = 'URBTIX 密碼'
+    zh_tw["hkticketing_password"] = 'HKTICKETING 密碼'
     zh_tw["kham_password"] = '寬宏 密碼'
     zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
     
@@ -259,12 +257,14 @@ def load_translate():
     zh_cn["kktix_account"] = 'KKTIX 帐号'
     zh_cn["cityline_account"] = 'cityline 帐号'
     zh_cn["urbtix_account"] = 'URBTIX 帐号'
+    zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
     zh_cn["kham_account"] = '宽宏 帐号'
 
     zh_cn["facebook_password"] = 'Facebook 密码'
     zh_cn["kktix_password"] = 'KKTIX 密码'
     zh_cn["cityline_password"] = 'cityline 密码'
     zh_cn["urbtix_password"] = 'URBTIX 密码'
+    zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
     zh_cn["kham_password"] = '宽宏 密码'
     zh_cn["save_password_alert"] = '將密碼保存到文件中可能會暴露您的密碼。'
     
@@ -331,12 +331,14 @@ def load_translate():
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
     ja_jp["cityline_account"] = 'citylineのアカウント'
     ja_jp["urbtix_account"] = 'URBTIXのアカウント'
+    ja_jp["hkticketing_account"] = 'HKTICKETINGのアカウント'
     ja_jp["kham_account"] = 'KHAMのアカウント'
 
     ja_jp["facebook_password"] = 'Facebookのパスワード'
     ja_jp["kktix_password"] = 'KKTIXのパスワード'
     ja_jp["cityline_password"] = 'citylineのパスワード'
     ja_jp["urbtix_password"] = 'URBTIXのパスワード'
+    ja_jp["hkticketing_password"] = 'HKTICKETINGのパスワード'
     ja_jp["kham_password"] = 'KHAMのパスワード'
     ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
 
@@ -444,12 +446,14 @@ def get_default_config():
     config_dict["advanced"]["kktix_account"] = ""
     config_dict["advanced"]["cityline_account"] = ""
     config_dict["advanced"]["urbtix_account"] = ""
+    config_dict["advanced"]["hkticketing_account"] = ""
     config_dict["advanced"]["kham_account"] = ""
 
     config_dict["advanced"]["facebook_password"] = ""
     config_dict["advanced"]["kktix_password"] = ""
     config_dict["advanced"]["cityline_password"] = ""
     config_dict["advanced"]["urbtix_password"] = ""
+    config_dict["advanced"]["hkticketing_password"] = ""
     config_dict["advanced"]["kham_password"] = ""
 
     config_dict["advanced"]["adblock_plus_enable"] = False
@@ -534,18 +538,14 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_kktix_account
     global txt_cityline_account
     global txt_urbtix_account
-    global txt_kham_account
-
-    global txt_facebook_account
-    global txt_kktix_account
-    global txt_cityline_account
-    global txt_urbtix_account
+    global txt_hkticketing_account
     global txt_kham_account
 
     global txt_facebook_password
     global txt_kktix_password
     global txt_cityline_password
     global txt_urbtix_password
+    global txt_hkticketing_password
     global txt_kham_password
 
     global chk_state_play_captcha_sound
@@ -636,18 +636,21 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
         config_dict["advanced"]["urbtix_account"] = txt_urbtix_account.get().strip()
+        config_dict["advanced"]["hkticketing_account"] = txt_hkticketing_account.get().strip()
         config_dict["advanced"]["kham_account"] = txt_kham_account.get().strip()
 
         config_dict["advanced"]["facebook_password"] = txt_facebook_password.get().strip()
         config_dict["advanced"]["kktix_password"] = txt_kktix_password.get().strip()
         config_dict["advanced"]["cityline_password"] = txt_cityline_password.get().strip()
         config_dict["advanced"]["urbtix_password"] = txt_urbtix_password.get().strip()
+        config_dict["advanced"]["hkticketing_password"] = txt_hkticketing_password.get().strip()
         config_dict["advanced"]["kham_password"] = txt_kham_password.get().strip()
 
         config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
         config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
         config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
         config_dict["advanced"]["urbtix_password"] = encryptMe(config_dict["advanced"]["urbtix_password"])
+        config_dict["advanced"]["hkticketing_password"] = encryptMe(config_dict["advanced"]["hkticketing_password"])
         config_dict["advanced"]["kham_password"] = encryptMe(config_dict["advanced"]["kham_password"])
 
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
@@ -920,12 +923,14 @@ def applyNewLanguage():
     global lbl_kktix_account
     global lbl_cityline_account
     global lbl_urbtix_account
+    global lbl_hkticketing_account
     global lbl_kham_account
 
     global lbl_facebook_password
     global lbl_kktix_password
     global lbl_cityline_password
     global lbl_urbtix_password
+    global lbl_hkticketing_password
     global lbl_kham_password
 
     global lbl_save_password_alert
@@ -936,12 +941,14 @@ def applyNewLanguage():
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
     lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
     lbl_urbtix_account.config(text=translate[language_code]["urbtix_account"])
+    lbl_hkticketing_account.config(text=translate[language_code]["hkticketing_account"])
     lbl_kham_account.config(text=translate[language_code]["kham_account"])
 
     lbl_facebook_password.config(text=translate[language_code]["facebook_password"])
     lbl_kktix_password.config(text=translate[language_code]["kktix_password"])
     lbl_cityline_password.config(text=translate[language_code]["cityline_password"])
     lbl_urbtix_password.config(text=translate[language_code]["urbtix_password"])
+    lbl_hkticketing_password.config(text=translate[language_code]["hkticketing_password"])
     lbl_kham_password.config(text=translate[language_code]["kham_password"])
 
     lbl_save_password_alert.config(text=translate[language_code]["save_password_alert"])
@@ -1984,6 +1991,28 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_urbtix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
     txt_urbtix_password = Entry(frame_group_header, width=20, textvariable = txt_urbtix_password_value, show="*")
     txt_urbtix_password.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_hkticketing_account
+    lbl_hkticketing_account = Label(frame_group_header, text=translate[language_code]['hkticketing_account'])
+    lbl_hkticketing_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_hkticketing_account
+    txt_hkticketing_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["hkticketing_account"].strip())
+    txt_hkticketing_account = Entry(frame_group_header, width=20, textvariable = txt_hkticketing_account_value)
+    txt_hkticketing_account.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_hkticketing_password
+    lbl_hkticketing_password = Label(frame_group_header, text=translate[language_code]['hkticketing_password'])
+    lbl_hkticketing_password.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_hkticketing_password
+    txt_hkticketing_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
+    txt_hkticketing_password = Entry(frame_group_header, width=20, textvariable = txt_hkticketing_password_value, show="*")
+    txt_hkticketing_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
