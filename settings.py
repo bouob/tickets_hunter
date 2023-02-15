@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.12)"
+CONST_APP_VERSION = u"MaxBot (2023.02.14)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -1768,7 +1768,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_browser
     combo_browser = ttk.Combobox(frame_group_header, state="readonly")
-    combo_browser['values']= ("chrome","firefox","edge")
+    combo_browser['values']= ("chrome","firefox","edge","safari")
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
 
@@ -2222,7 +2222,7 @@ def main():
     GUI_SIZE_HEIGHT = 594
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-90)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
 
     GUI_SIZE =GUI_SIZE_MACOS
 

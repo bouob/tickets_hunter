@@ -50,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.12)"
+CONST_APP_VERSION = u"MaxBot (2023.02.14)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -158,6 +158,8 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome"):
     chrome_options = webdriver.ChromeOptions()
     if browser=="edge":
         chrome_options = webdriver.EdgeOptions()
+    if browser=="safari":
+        chrome_options = webdriver.SafariOptions()
 
     # some windows cause: timed out receiving message from renderer
     if adblock_plus_enable:
@@ -473,6 +475,18 @@ def get_driver_by_config(config_dict):
         driver = None
         try:
             driver = webdriver.Edge(service=webdriver_service, options=chrome_options)
+        except Exception as exc:
+            error_message = str(exc)
+            #print(error_message)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
+
+    if browser == "safari":
+        driver = None
+        try:
+            driver = webdriver.Safari()
         except Exception as exc:
             error_message = str(exc)
             #print(error_message)
@@ -5795,6 +5809,7 @@ def cityline_main(driver, url, config_dict):
     if 'msg.cityline.com' in url:
         try:
             driver.execute_script("goEvent();")
+            time.sleep(0.2)
         except Exception as exec1:
             pass
         pass
@@ -6663,6 +6678,7 @@ def hkticketing_main(driver, url, config_dict):
     for each_url in home_url_list:
         if each_url == url:
             hkticketing_home(driver)
+            time.sleep(0.2)
             break
 
     if 'queue.hkticketing.com/hotshow.html' in url:
@@ -6949,6 +6965,32 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
         print(exc)
+
+    readme_table_mode = False
+    if area_list is None:
+        readme_table_mode = True
+    else:
+        if len(area_list)==0:
+            readme_table_mode = True
+    if readme_table_mode:
+        if show_debug_message:
+            print("for without table.salesTable")
+        try:
+            my_css_selector = "#readmeTable"
+            readme_table = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not readme_table is None:
+                if show_debug_message:
+                    print("found readme_table")
+                target_table = readme_table.find_element(By.XPATH, '../..')
+                if not target_table is None:
+                    if show_debug_message:
+                        print("found target_table")
+                    my_css_selector = "td > table > tbody > tr"
+                    area_list = target_table.find_elements(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            print("find #ticket-price-tbl date list fail")
+            print(exc)
+
 
     formated_area_list = None
     if area_list is not None:
