@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.14)"
+CONST_APP_VERSION = u"MaxBot (2023.02.16)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -73,6 +73,7 @@ def load_translate():
     en_us["and"] = 'And with'
     en_us["auto_guess_options"] = 'Guess Options in Question'
     en_us["user_guess_string"] = 'Fill This Answer in Question'
+    en_us["presale_code_delimiter"] = 'Answer delimiter'
 
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
@@ -147,6 +148,7 @@ def load_translate():
     zh_tw["and"] = '而且（同列）'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
     zh_tw["user_guess_string"] = '在驗證問題中填寫此答案'
+    zh_tw["presale_code_delimiter"] = '答案中的分隔符號'
 
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
@@ -221,6 +223,7 @@ def load_translate():
     zh_cn["and"] = '而且（同列）'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
     zh_cn["user_guess_string"] = '在验证问题中填写此答案'
+    zh_cn["presale_code_delimiter"] = '答案中的分隔符号'
 
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
@@ -296,6 +299,7 @@ def load_translate():
     ja_jp["and"] = 'そして（同列）'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
     ja_jp["user_guess_string"] = '質問に回答を記入'
+    ja_jp["presale_code_delimiter"] = '回答区切り'
 
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
@@ -435,6 +439,7 @@ def get_default_config():
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
     config_dict["tixcraft"]["presale_code"] = ""
+    config_dict["tixcraft"]["presale_code_delimiter"] = ""
 
     config_dict['advanced']={}
 
@@ -533,6 +538,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
     global txt_presale_code
+    global txt_presale_code_delimiter
 
     global txt_facebook_account
     global txt_kktix_account
@@ -628,6 +634,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
         config_dict["tixcraft"]["presale_code"] = txt_presale_code.get().strip()
+        config_dict["tixcraft"]["presale_code_delimiter"] = txt_presale_code_delimiter.get().strip()
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
@@ -820,6 +827,7 @@ def applyNewLanguage():
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
     global lbl_presale_code
+    global lbl_presale_code_delimiter
     global lbl_ocr_captcha
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
@@ -888,6 +896,7 @@ def applyNewLanguage():
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
+    lbl_presale_code_delimiter.config(text=translate[language_code]["presale_code_delimiter"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
@@ -1173,7 +1182,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     pass_date_is_sold_out_enable = False
     auto_reload_coming_soon_page_enable = True
-    presale_code = ""
 
     # read config.
     homepage = config_dict["homepage"]
@@ -1223,7 +1231,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-    presale_code = config_dict["tixcraft"]["presale_code"].strip()
 
     # output config:
     print("setting app version", CONST_APP_VERSION)
@@ -1697,9 +1704,20 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_presale_code.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_presale_code
-    txt_presale_code_value = StringVar(frame_group_tixcraft, value=presale_code)
+    txt_presale_code_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code"])
     txt_presale_code = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_value)
     txt_presale_code.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_presale_code_delimiter
+    lbl_presale_code_delimiter = Label(frame_group_tixcraft, text=translate[language_code]['presale_code_delimiter'])
+    lbl_presale_code_delimiter.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_presale_code_delimiter
+    txt_presale_code_delemiter_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code_delimiter"])
+    txt_presale_code_delimiter = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_delemiter_value)
+    txt_presale_code_delimiter.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -2219,10 +2237,10 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 510
-    GUI_SIZE_HEIGHT = 594
+    GUI_SIZE_HEIGHT = 619
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-55)
 
     GUI_SIZE =GUI_SIZE_MACOS
 

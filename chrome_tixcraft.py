@@ -50,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.14)"
+CONST_APP_VERSION = u"MaxBot (2023.02.16)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1697,15 +1697,8 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
 
     return is_ticket_number_assigned
 
-def tixcraft_verify(driver, presale_code):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    ret = False
-
-    inferred_answer_string = None
-    if len(presale_code) > 0:
-        inferred_answer_string = presale_code
+def guess_tixcraft_question(driver):
+    inferred_answer_string = None    
 
     form_select = None
     try:
@@ -1761,10 +1754,29 @@ def tixcraft_verify(driver, presale_code):
             if '已詳閱' in html_text or '請詳閱' in html_text:
                 if '輸入【同意】' in html_text:
                     inferred_answer_string = '同意'
+    return inferred_answer_string
+
+def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    inferred_answer_string = None
+    answer_list = []
+    if len(presale_code) > 0:
+        inferred_answer_string = presale_code
+
+        if len(presale_code_delimiter) > 0:
+            if presale_code_delimiter in presale_code:
+                answer_list = presale_code.split(presale_code_delimiter)
+                if len(answer_list) > 0:
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_string = answer_list[answer_index+1]
+
+    if inferred_answer_string is None:
+        inferred_answer_string = guess_tixcraft_question(driver)
 
     if show_debug_message:
         print("inferred_answer_string:", inferred_answer_string)
-
 
     form_input = None
     try:
@@ -1791,50 +1803,55 @@ def tixcraft_verify(driver, presale_code):
                 # PS: sometime may send key twice...
                 form_input.clear()
                 form_input.send_keys(inferred_answer_string)
+                form_input.send_keys(Keys.ENTER)
                 is_password_sent = True
+                
+                # guess answer mode.
+                if len(presale_code_delimiter) > 0:
+                    answer_index += 1
+
                 if show_debug_message:
-                    print("sent password by bot.")
+                    print("sent password by bot:", inferred_answer_string)
             except Exception as exc:
                 pass
+        else:
+            if inputed_value == inferred_answer_string:
+                if show_debug_message:
+                    print("sent password by previous time.")
+                is_password_sent = True
+                try:
+                    form_input.send_keys(Keys.ENTER)
+                except Exception as exc:
+                    pass
 
-        if inputed_value == inferred_answer_string:
-            if show_debug_message:
-                print("sent password by previous time.")
-            is_password_sent = True
+            # guess answer mode.
+            if len(presale_code_delimiter) > 0:
+                if answer_index > -1:
+                    # here not is first option.
+                    inferred_answer_previous = None
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_previous = answer_list[answer_index]
+                    if inputed_value == inferred_answer_previous:
+                        try:
+                            form_input.clear()
+                            form_input.send_keys(inferred_answer_string)
+                            form_input.send_keys(Keys.ENTER)
+                            is_password_sent = True
+                            if show_debug_message:
+                                print("sent password by bot:", inferred_answer_string, "at index:", answer_index+2)
+
+                            answer_index += 1
+                        except Exception as exc:
+                            pass
 
         if is_password_sent:
-            submit_btn = None
-            try:
-                submit_btn = driver.find_element(By.ID, 'submitButton')
-            except Exception as exc:
-                if show_debug_message:
-                    print("find submit button fail")
-                    print(exc)
-                pass
-
-            is_submited = False
-            if not submit_btn is None:
-                for i in range(3):
-                    try:
-                        if submit_btn.is_enabled():
-                            submit_btn.click()
-                            is_submited = True
-                            if show_debug_message:
-                                print("press submit button at time #", i+1)
-                    except Exception as exc:
-                        pass
-
-                    if is_submited:
-                        break
-
-            if is_submited:
-                for i in range(3):
-                    time.sleep(0.1)
-                    alert_ret = check_pop_alert(driver)
-                    if alert_ret:
-                        if show_debug_message:
-                            print("press accept button at time #", i+1)                    
-                        break
+            for i in range(3):
+                time.sleep(0.1)
+                alert_ret = check_pop_alert(driver)
+                if alert_ret:
+                    if show_debug_message:
+                        print("press accept button at time #", i+1)                    
+                    break
     else:
         if len(inputed_value)==0:
             try:
@@ -1842,7 +1859,7 @@ def tixcraft_verify(driver, presale_code):
             except Exception as exc:
                 pass
 
-    return ret
+    return answer_index
 
 def tixcraft_change_captcha(driver,url):
     try:
@@ -5565,7 +5582,7 @@ def list_all_cookies(driver):
         cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
-def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_Browser):
+def tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing, ocr, Captcha_Browser):
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
@@ -5597,7 +5614,10 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_
 
     if '/ticket/verify/' in url:
         presale_code = config_dict["tixcraft"]["presale_code"]
-        tixcraft_verify(driver, presale_code)
+        presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
+        answer_index = tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index)
+    else:
+        answer_index = -1
 
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
@@ -5607,7 +5627,7 @@ def tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_
     else:
         is_verifyCode_editing = False
 
-    return is_verifyCode_editing
+    return answer_index, is_verifyCode_editing
 
 def kktix_main(driver, url, config_dict, answer_index, kktix_register_status_last):
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
@@ -7777,7 +7797,7 @@ def main():
 
         # for Max's manuall test.
         if '/Downloads/varify.html' in url:
-            tixcraft_verify(driver, "")
+            answer_index = tixcraft_verify(driver, "", "", answer_index)
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -7787,7 +7807,7 @@ def main():
             tixcraft_family = True
 
         if tixcraft_family:
-            is_verifyCode_editing = tixcraft_main(driver, url, config_dict, is_verifyCode_editing, ocr, Captcha_Browser)
+            answer_index, is_verifyCode_editing = tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing, ocr, Captcha_Browser)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
