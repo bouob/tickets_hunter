@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-16)：拓元，從字典檔輸入驗證答案
+
+https://youtu.be/TuacFXzuvlM
+
 Max搶票機器人 (2023-02-10)：自動填表單/關鍵字的開關
 
 https://youtu.be/Ft2WIWglZ5E
@@ -154,6 +158,8 @@ PS:
 * 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有2個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
 
 PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。
+
+PS：「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
 
 # Introduce the implement (實作方法)
 https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
