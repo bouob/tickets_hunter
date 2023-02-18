@@ -187,6 +187,13 @@ https://github.com/sml2h3/ddddocr
 https://github.com/JasonLiTW/simple-railway-captcha-solver
 
 
+Max 搶蛋黃酥影片:
+
+https://youtu.be/cU8HcMBP5EQ
+
+影片的重點在: 從開賣到按下送出需花費的時間, 如果你搶票用的電腦，反應速度跟搶蛋黃酥影片中的反應速度差太多的話， 那麼你用目前環境可以搶到票的機率就會低很多。影片中我用的筆電是 levono 1萬9千元的, 網路是用台灣之星的行動網路透過手機熱點分享給筆電, 筆電是在2022年中所購買. 
+
+
 # Donate (贊助Max)
 
 如果你覺得這篇文章或MaxBot寫的很好，想打賞Max，贊助方式如下： https://max-everyday.com/about/#donate
