@@ -688,19 +688,20 @@ def btn_run_clicked(language_code):
     save_ret = btn_save_act(language_code, slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
+        working_dir = os.path.dirname(os.path.realpath(__file__))
         if hasattr(sys, 'frozen'):
             print("execute in frozen mode")
 
             # check platform here.
             if platform.system() == 'Darwin':
                 print("execute MacOS python script")
-                subprocess.Popen("./chrome_tixcraft", shell=True)
+                subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
             if platform.system() == 'Linux':
                 print("execute linux binary")
-                subprocess.Popen("./chrome_tixcraft", shell=True)
+                subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
             if platform.system() == 'Windows':
                 print("execute .exe binary.")
-                subprocess.Popen("chrome_tixcraft.exe", shell=True)
+                subprocess.Popen("chrome_tixcraft.exe", shell=True, cwd=working_dir)
         else:
             interpreter_binary = 'python'
             interpreter_binary_alt = 'python3'
@@ -709,7 +710,6 @@ def btn_run_clicked(language_code):
                 interpreter_binary = 'python3'
                 interpreter_binary_alt = 'python'
             print("execute in shell mode.")
-            working_dir = os.path.dirname(os.path.realpath(__file__))
             #print("script path:", working_dir)
             #messagebox.showinfo(title="Debug0", message=working_dir)
 

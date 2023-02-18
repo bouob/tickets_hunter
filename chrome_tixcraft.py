@@ -279,7 +279,6 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
                 is_local_chrome_browser_lower = True
-            #print(exc)
             pass
 
         if is_local_chrome_browser_lower:
@@ -289,7 +288,20 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
-        driver = uc.Chrome(options=options, desired_capabilities=caps, suppress_welcome=False)
+        try:
+            driver = uc.Chrome(options=options, desired_capabilities=caps, suppress_welcome=False)
+        except Exception as exc:
+            error_message = str(exc)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
+
+            if "This version of ChromeDriver only supports Chrome version" in error_message:
+                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+                is_local_chrome_browser_lower = True
+            pass
 
     if driver is None:
         print("create web drive object fail!")
