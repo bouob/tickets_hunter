@@ -7042,6 +7042,8 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                             else:
                                 # text directly allow.
                                 row_is_enabled=True
+                                if '售完' in remaining_value:
+                                    row_is_enabled=False
 
                 except Exception as exc:
                     pass
