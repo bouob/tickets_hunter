@@ -12,7 +12,7 @@ Max搶票機器人 (2023-02-16)：拓元，從字典檔輸入驗證答案
 
 https://youtu.be/TuacFXzuvlM
 
-Max搶票機器人 (2023-02-10)：自動填表單/關鍵字的開關
+Max搶票機器人 (2023-02-10)：自動登入/區域關鍵字增加開關
 
 https://youtu.be/Ft2WIWglZ5E
 
@@ -40,7 +40,7 @@ Max搶票機器人 (2023-01-29)：支援galaxymacau(澳門銀河)
 
 https://youtu.be/yt7SkRvBujU
 
-Max搶票機器人 (2023-01-22)：hkticketing(快達票) 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
+Max搶票機器人 (2023-01-22)：hkticketing(快達票)
 
 https://youtu.be/pZJlcMjayco
 
@@ -52,7 +52,7 @@ Max搶票機器人 (2023-01-14)：優化KKTIX "演出日期"的驗證問題
 
 https://youtu.be/ChmGZMaV2w8
 
-Max搶票機器人 (2023-01-14) indievox 猜測驗證碼
+Max搶票機器人 (2023-01-14) indievox 猜測驗證碼 / 視窗多開
 
 https://youtu.be/O84H1wNO2_w
 
@@ -185,6 +185,13 @@ https://github.com/sml2h3/ddddocr
 想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
 
 https://github.com/JasonLiTW/simple-railway-captcha-solver
+
+
+Max 搶蛋黃酥影片:
+
+https://youtu.be/cU8HcMBP5EQ
+
+影片的重點在: 從開賣到按下送出需花費的時間, 如果你搶票用的電腦，反應速度跟搶蛋黃酥影片中的反應速度差太多的話， 那麼你用目前環境可以搶到票的機率就會低很多。影片中我用的筆電是 levono 1萬9千元的, 網路是用台灣之星的行動網路透過手機熱點分享給筆電, 筆電是在2022年中所購買. 
 
 
 # Donate (贊助Max)
