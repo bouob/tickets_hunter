@@ -12,7 +12,7 @@ Max搶票機器人 (2023-02-16)：拓元，從字典檔輸入驗證答案
 
 https://youtu.be/TuacFXzuvlM
 
-Max搶票機器人 (2023-02-10)：自動填表單/關鍵字的開關
+Max搶票機器人 (2023-02-10)：自動登入/區域關鍵字增加開關
 
 https://youtu.be/Ft2WIWglZ5E
 
@@ -40,7 +40,7 @@ Max搶票機器人 (2023-01-29)：支援galaxymacau(澳門銀河)
 
 https://youtu.be/yt7SkRvBujU
 
-Max搶票機器人 (2023-01-22)：hkticketing(快達票) 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
+Max搶票機器人 (2023-01-22)：hkticketing(快達票)
 
 https://youtu.be/pZJlcMjayco
 
@@ -52,7 +52,7 @@ Max搶票機器人 (2023-01-14)：優化KKTIX "演出日期"的驗證問題
 
 https://youtu.be/ChmGZMaV2w8
 
-Max搶票機器人 (2023-01-14) indievox 猜測驗證碼
+Max搶票機器人 (2023-01-14) indievox 猜測驗證碼 / 視窗多開
 
 https://youtu.be/O84H1wNO2_w
 
