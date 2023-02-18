@@ -50,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.16)"
+CONST_APP_VERSION = u"MaxBot (2023.02.18)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1069,7 +1069,7 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     return return_list
 
 # close some div on home url.
-def tixcraft_home(driver):
+def tixcraft_home_close_window(driver):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
@@ -5586,7 +5586,7 @@ def tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing,
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
-            tixcraft_home(driver)
+            tixcraft_home_close_window(driver)
 
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
@@ -7533,13 +7533,44 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     return is_cpatcha_sent
 
+def kham_home_close_window(driver):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    close_all_alert_btns = None
+    try:
+        close_all_alert_btns = driver.find_elements(By.ID, 'Close')
+    except Exception as exc:
+        print("find close_all_alert_btns fail")
+
+    if close_all_alert_btns is not None:
+        if show_debug_message:
+            print('all alert count:', len(close_all_alert_btns))
+        for alert_btn in close_all_alert_btns:
+            is_visible = False
+            try:
+                if alert_btn.is_enabled() and alert_btn.is_displayed():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
+                try:
+                    alert_btn.click()
+                except Exception as exc:
+                    print("try to click alert_btn fail, force click by js.")
+                    try:
+                        driver.execute_script("arguments[0].click();", alert_btn)
+                    except Exception as exc:
+                        pass
+
 def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     home_url_list = ['https://kham.com.tw/'
-    ,'https://kham.com.tw/application/UTK01/UTK0101_.aspx'
-    ,'https://kham.com.tw/application/UTK01/UTK0101_03.aspx']
+    ,'https://kham.com.tw/application/utk01/utk0101_.aspx'
+    ,'https://kham.com.tw/application/utk01/utk0101_03.aspx']
     for each_url in home_url_list:
-        if each_url == url:
-            tixcraft_home(driver)
+        if each_url == url.lower():
+            kham_home_close_window(driver)
 
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
@@ -7549,7 +7580,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             break
 
     # https://kham.com.tw/application/UTK13/UTK1306_.aspx
-    if 'UTK1306' in url and '.aspx' in url:
+    if 'utk1306' in url.lower() and '.aspx' in url:
         if config_dict["ocr_captcha"]["enable"]:
             domain_name = url.split('/')[2]
             model_name = url.split('/')[5]
@@ -7563,7 +7594,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
     #https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=XXX
-    if 'UTK0201_.aspx?PRODUCT_ID=' in url:
+    if 'utk0201_.aspx?product_id=' in url.lower():
         is_event_page = False
         if len(url.split('/'))==6:
             is_event_page = True
@@ -7572,7 +7603,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             khan_go_buy_redirect(driver)
 
     # https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=N28TFATD
-    if 'UTK0201_00.aspx?PRODUCT_ID=' in url:
+    if 'utk0201_00.aspx?product_id=' in url.lower():
         is_event_page = False
         if len(url.split('/'))==6:
             is_event_page = True
@@ -7583,7 +7614,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 kham_product(driver, config_dict)
 
     # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
-    if '.aspx?PERFORMANCE_ID=' in url and 'PRODUCT_ID=' in url:
+    if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
         area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
         if area_auto_select_enable:
             domain_name = url.split('/')[2]
@@ -7602,7 +7633,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name)
 
     #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
-    if '.aspx?PERFORMANCE_ID=' in url and 'PERFORMANCE_PRICE_AREA_ID=' in url:
+    if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
         is_confirm_dialog_popup = kham_performance_confirm_dialog_popup(driver)
         if is_confirm_dialog_popup:
             print("is_confirm_dialog_popup! auto press confirm...")
@@ -7618,7 +7649,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
             kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
-    if '/application/UTK13/UTK1306_.aspx' in url:
+    if '/application/utk13/utk1306_.aspx' in url.lower():
         if config_dict["ocr_captcha"]["enable"]:
             domain_name = url.split('/')[2]
             model_name = url.split('/')[5]
