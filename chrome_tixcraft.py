@@ -50,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.18)"
+CONST_APP_VERSION = u"MaxBot (2023.02.19)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1210,7 +1210,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     is_coming_soon = False
     coming_soon_condictions_list = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
-    
+
     button_list = None
     if date_list is not None:
         button_list = []
@@ -1323,7 +1323,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         #   (A)user input keywords, with matched text, but no hyperlink to click.
         #   (B)user input keywords, but not no matched text with hyperlink to click.
 
-    # [PS]: current reload condition only when 
+    # [PS]: current reload condition only when
     if auto_reload_coming_soon_page_enable:
         if is_coming_soon:
             if show_debug_message:
@@ -1710,7 +1710,11 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
     return is_ticket_number_assigned
 
 def guess_tixcraft_question(driver):
-    inferred_answer_string = None    
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    inferred_answer_string = None
+    answer_list = []
 
     form_select = None
     try:
@@ -1726,47 +1730,51 @@ def guess_tixcraft_question(driver):
         except Exception as exc:
             print("get text fail")
 
-    html_text = ""
+    formated_html_text = ""
     if question_text is not None:
         if len(question_text) > 0:
             # format question text.
-            html_text = question_text
-            html_text = html_text.replace(u'「',u'【')
-            html_text = html_text.replace(u'〔',u'【')
-            html_text = html_text.replace(u'［',u'【')
-            html_text = html_text.replace(u'〖',u'【')
-            html_text = html_text.replace(u'[',u'【')
+            formated_html_text = question_text
+            formated_html_text = formated_html_text.replace(u'「',u'【')
+            formated_html_text = formated_html_text.replace(u'〔',u'【')
+            formated_html_text = formated_html_text.replace(u'［',u'【')
+            formated_html_text = formated_html_text.replace(u'〖',u'【')
+            formated_html_text = formated_html_text.replace(u'[',u'【')
 
-            html_text = html_text.replace(u'」',u'】')
-            html_text = html_text.replace(u'〕',u'】')
-            html_text = html_text.replace(u'］',u'】')
-            html_text = html_text.replace(u'〗',u'】')
-            html_text = html_text.replace(u']',u'】')
+            formated_html_text = formated_html_text.replace(u'」',u'】')
+            formated_html_text = formated_html_text.replace(u'〕',u'】')
+            formated_html_text = formated_html_text.replace(u'］',u'】')
+            formated_html_text = formated_html_text.replace(u'〗',u'】')
+            formated_html_text = formated_html_text.replace(u']',u'】')
 
-            if u'【' in html_text and u'】' in html_text:
+            if u'【' in formated_html_text and u'】' in formated_html_text:
                 # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
-                #inferred_answer_string = find_between(html_text, u"【", u"】")
+                #inferred_answer_string = find_between(formated_html_text, u"【", u"】")
                 pass
 
     if show_debug_message:
-        print("html_text:", html_text)
+        print("formated_html_text:", formated_html_text)
 
     is_options_in_question = False
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
-        if u'輸入"YES"' in html_text:
-            if u'已詳閱' in html_text or '請詳閱' in html_text:
-                if u'同意' in html_text:
+        if u'輸入"YES"' in formated_html_text:
+            if u'已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
+                if u'同意' in formated_html_text:
                     inferred_answer_string = 'YES'
 
     # 購票前請詳閱注意事項，並於驗證碼欄位輸入【同意】繼續購票流程。
     if inferred_answer_string is None:
-        if '驗證碼' in html_text or '驗證欄位' in html_text:
-            if '已詳閱' in html_text or '請詳閱' in html_text:
-                if '輸入【同意】' in html_text:
+        if '驗證碼' in formated_html_text or '驗證欄位' in formated_html_text:
+            if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
+                if '輸入【同意】' in formated_html_text:
                     inferred_answer_string = '同意'
-    return inferred_answer_string
+
+    if inferred_answer_string is None:
+        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+
+    return inferred_answer_string, answer_list
 
 def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
     show_debug_message = True       # debug.
@@ -1774,21 +1782,34 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
 
     inferred_answer_string = None
     answer_list = []
-    if len(presale_code) > 0:
-        inferred_answer_string = presale_code
 
+    is_retry_user_single_answer = False
+
+    if len(presale_code) > 0:
         if len(presale_code_delimiter) > 0:
             if presale_code_delimiter in presale_code:
                 answer_list = presale_code.split(presale_code_delimiter)
                 if len(answer_list) > 0:
                     if answer_index < len(answer_list)-1:
                         inferred_answer_string = answer_list[answer_index+1]
+        else:
+            is_retry_user_single_answer = True
+            if answer_index < 2:
+                inferred_answer_string = presale_code
 
     if inferred_answer_string is None:
-        inferred_answer_string = guess_tixcraft_question(driver)
+        inferred_answer_string, answer_list = guess_tixcraft_question(driver)
+        if inferred_answer_string is None:
+            if not answer_list is None:
+                if len(answer_list) > 0:
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_string = answer_list[answer_index+1]
 
     if show_debug_message:
+        print("answer_index:", answer_index)
         print("inferred_answer_string:", inferred_answer_string)
+        print("answer_index:", answer_index)
+        print("is_retry_user_single_answer:", is_retry_user_single_answer)
 
     form_input = None
     try:
@@ -1817,10 +1838,9 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
                 form_input.send_keys(inferred_answer_string)
                 form_input.send_keys(Keys.ENTER)
                 is_password_sent = True
-                
+
                 # guess answer mode.
-                if len(presale_code_delimiter) > 0:
-                    answer_index += 1
+                answer_index += 1
 
                 if show_debug_message:
                     print("sent password by bot:", inferred_answer_string)
@@ -1835,9 +1855,12 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
                     form_input.send_keys(Keys.ENTER)
                 except Exception as exc:
                     pass
-
-            # guess answer mode.
-            if len(presale_code_delimiter) > 0:
+            
+            if is_retry_user_single_answer:
+                # increase counter for waiting for stop retry.
+                answer_index += 1
+            else:
+                # guess answer mode.
                 if answer_index > -1:
                     # here not is first option.
                     inferred_answer_previous = None
@@ -1862,7 +1885,7 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
                 alert_ret = check_pop_alert(driver)
                 if alert_ret:
                     if show_debug_message:
-                        print("press accept button at time #", i+1)                    
+                        print("press accept button at time #", i+1)
                     break
     else:
         if len(inputed_value)==0:
@@ -2016,7 +2039,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
         print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
     else:
         print("ddddocr is None")
-        
+
     if not orc_answer is None:
         orc_answer = orc_answer.strip()
         print("orc_answer:", orc_answer)
@@ -2052,19 +2075,19 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
             # page is not ready, retry again.
             # PS: usually occur in async script get captcha image.
             # PS: previous answer is not none means OCR object works.
-            #     some user enable OCR feature, but component create fail, ex: macOS arm CPU. 
+            #     some user enable OCR feature, but component create fail, ex: macOS arm CPU.
             is_need_redo_ocr = True
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     auto_check_agree = config_dict["auto_check_agree"]
-    
+
     ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not ocr_captcha_enable:
         away_from_keyboard_enable = False
-    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"] 
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     if auto_check_agree:
         tixcraft_ticket_agree(driver)
@@ -2130,10 +2153,10 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
                         # start next loop.
                         is_verifyCode_editing = False
                         break
-                    
+
                     if not away_from_keyboard_enable:
                         break
-                    
+
                     if not is_need_redo_ocr:
                         break
 
@@ -4191,7 +4214,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
 
     #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
-    
+
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
@@ -4200,7 +4223,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            
+
             row_index = 0
             for row in area_list:
                 row_index += 1
@@ -4659,7 +4682,7 @@ def cityline_performance(driver, config_dict):
             #print("area_keyword_1_and:", area_keyword_1_and)
             print("area_keyword_2:", area_keyword_2)
                 #print("area_keyword_2_and:", area_keyword_2_and)
-            
+
         # PS: cityline price default value is selected at the first option.
         is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
@@ -5571,7 +5594,7 @@ def check_pop_alert(driver):
 
                     if is_match_auto_close_text:
                         alert.accept()
-                        print("alert3 accepted")
+                        #print("alert3 accepted")
 
                     is_alert_popup = True
             else:
@@ -5726,7 +5749,7 @@ def urbtix_performance_confirm_dialog_popup(driver):
 
         if ret:
             time.sleep(0.4)
-    
+
     return ret
 
 
@@ -5922,7 +5945,7 @@ def ibon_main(driver, url, config_dict, answer_index):
             date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
             if date_auto_select_enable:
                 ibon_activity_info(driver, config_dict)
-    
+
     # validation question url:
     # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
     if '/application/UTK02/' in url and '.aspx?rn=' in url:
@@ -6587,7 +6610,7 @@ def hkticketing_hide_tickets_blocks(driver):
             driver.execute_script("arguments[0].innerHTML='';", mapWrapper_divs);
     except Exception as exc:
         pass
-    
+
 
 def hkticketing_performance(driver, config_dict, domain_name):
     show_debug_message = True       # debug.
@@ -6756,7 +6779,7 @@ def hkticketing_main(driver, url, config_dict):
                 if area_auto_select_enable:
                     hkticketing_performance(driver, config_dict, domain_name)
                     pass
-            
+
             if '/seatmap' in url:
                 # goto bottom.
                 hkticketing_nav_to_footer(driver)
@@ -6946,7 +6969,7 @@ def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
                         driver.execute_script("arguments[0].click();", el_btn)
                         ret = True
                     except Exception as exc:
-                        pass    
+                        pass
 
     '''
         if auto_reload_coming_soon_page_enable:
@@ -7467,13 +7490,13 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
                 orc_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
-        
+
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
         print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
     else:
         print("ddddocr is None")
-        
+
     if not orc_answer is None:
         orc_answer = orc_answer.strip()
         print("orc_answer:", orc_answer)
@@ -7520,7 +7543,7 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not ocr_captcha_enable:
         away_from_keyboard_enable = False
-    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"] 
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     #PS: need a 'auto assign site' feature to enable away_from_keyboard feature.
     away_from_keyboard_enable = False
@@ -7530,16 +7553,16 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
     is_verifyCode_editing = True
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
-        
+
         # TODO: must ensure the answer is corrent...
         is_cpatcha_sent = True
-        
+
         if is_form_sumbited:
             break
-        
+
         if not away_from_keyboard_enable:
             break
-        
+
         if not is_need_redo_ocr:
             break
 
@@ -7891,7 +7914,7 @@ if __name__ == "__main__":
     CONST_MODE_CLI = 1
     mode = CONST_MODE_GUI
     #mode = CONST_MODE_CLI
-    
+
     if mode == CONST_MODE_GUI:
         main()
     else:
