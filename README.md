@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-02-19)：拓元，從驗證問題猜測答案
+
+https://youtu.be/5rOi56dNEs8
+
 Max搶票機器人 (2023-02-16)：拓元，從字典檔輸入驗證答案
 
 https://youtu.be/TuacFXzuvlM
