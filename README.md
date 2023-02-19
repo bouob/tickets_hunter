@@ -1,4 +1,4 @@
-# tixcraft_bot
+# Max搶票機器人
 MaxBot是一個免費、開放原始碼的搶票機器人。祝您搶票成功。
 
 MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.
@@ -190,6 +190,11 @@ https://github.com/sml2h3/ddddocr
 
 https://github.com/JasonLiTW/simple-railway-captcha-solver
 
+# 創新帳號需要的門號
+
+註冊拓元的新帳號時的身份證字號欄位, 建議使用親朋好友的真實資料。新帳號的電話綁定, 除了請親朋好友支援簡訊驗證之外，也可以申請台灣之星的”49元親子卡”, 每個身份證字號最多可以有5個預付卡門號, 相當於花 $245元可以取得 5個新門號, 也可以申辦 “台灣之星0月租費” 方案, 相當於花$300元, 取得1張SIM卡。
+
+# 你的硬體設備該不該升級
 
 Max 搶蛋黃酥影片:
 
