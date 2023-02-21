@@ -50,7 +50,7 @@ except Exception as exc:
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.19)"
+CONST_APP_VERSION = u"MaxBot (2023.02.21)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1270,7 +1270,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                     el = row.find_element(By.CSS_SELECTOR, 'button')
                 except Exception as exc:
                     if show_debug_message:
-                        print("find .btn-next fail")
+                        print("find button fail")
                     pass
 
                 if el is not None:
@@ -1312,7 +1312,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 '''
                 is_date_selected = True
             except Exception as exc:
-                print("try to click .btn-next fail, force click by js.")
+                print("try to click button fail, force click by js.")
                 print(exc)
                 try:
                     driver.execute_script("arguments[0].click();", el)
@@ -1339,7 +1339,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 # case 1: No hyperlink button.
                 el_list = None
                 try:
-                    el_list = driver.find_elements(By.CSS_SELECTOR, '.btn-next')
+                    el_list = driver.find_elements(By.CSS_SELECTOR, 'button')
                     if el_list is None:
                         driver.refresh()
                     else:
