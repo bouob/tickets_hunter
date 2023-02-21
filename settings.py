@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.19)"
+CONST_APP_VERSION = u"MaxBot (2023.02.21)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -379,7 +379,6 @@ def encryptMe(s):
     if(len(s)>0):
         data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
     return data
-
 
 def get_app_root():
     # 讀取檔案裡的參數值
