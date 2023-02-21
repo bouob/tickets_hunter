@@ -1267,7 +1267,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             if is_match_keyword_row:
                 el = None
                 try:
-                    el = row.find_element(By.CSS_SELECTOR, '.btn-next')
+                    el = row.find_element(By.CSS_SELECTOR, 'button')
                 except Exception as exc:
                     if show_debug_message:
                         print("find .btn-next fail")
@@ -1813,7 +1813,7 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
 
     form_input = None
     try:
-        form_input = driver.find_element(By.CSS_SELECTOR, '#checkCode')
+        form_input = driver.find_element(By.CSS_SELECTOR, "input[name='checkCode']")
     except Exception as exc:
         print("find verify code fail")
         pass
@@ -2003,7 +2003,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
             if not Captcha_Browser is None:
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
-            image_id = 'yw0'
+            image_id = 'TicketForm_verifyCode-image'
             if 'indievox.com' in domain_name:
                 image_id = 'TicketForm_verifyCode-image'
             try:
@@ -2090,7 +2090,10 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     if auto_check_agree:
-        tixcraft_ticket_agree(driver)
+        for i in range(3):
+            is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+            if is_finish_checkbox_click:
+                break
 
     # allow agree not enable to assign ticket number.
     form_select = None
