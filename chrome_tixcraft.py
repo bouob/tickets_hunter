@@ -1968,7 +1968,7 @@ def tixcraft_reload_captcha(driver, domain_name):
     ret = False
     form_captcha = None
     try:
-        image_id = 'yw0'
+        image_id = 'TicketForm_verifyCode-image'
         if 'indievox.com' in domain_name:
             image_id = 'TicketForm_verifyCode-image'
         form_captcha = driver.find_element(By.ID, image_id)
@@ -5854,7 +5854,46 @@ def cityline_shows_goto_cta(driver):
 
     return ret
 
+def cityline_home_close_window(driver):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    close_styles_list = ['.anticon-close', '.cookieWrapper_closeBtn']
+
+    for close_styles in close_styles_list:
+        close_all_alert_btns = None
+        try:
+            close_all_alert_btns = driver.find_elements(By.CSS_SELECTOR, close_styles)
+        except Exception as exc:
+            print("find close button fail")
+
+        if close_all_alert_btns is not None:
+            if show_debug_message:
+                print('all close button count:', len(close_all_alert_btns))
+            for alert_btn in close_all_alert_btns:
+                is_visible = False
+                try:
+                    if alert_btn.is_enabled() and alert_btn.is_displayed():
+                        is_visible = True
+                except Exception as exc:
+                    pass
+
+                if is_visible:
+                    try:
+                        alert_btn.click()
+                    except Exception as exc:
+                        print("try to click close button fail, force click by js.")
+                        try:
+                            driver.execute_script("arguments[0].click();", alert_btn)
+                        except Exception as exc:
+                            pass
+
+
 def cityline_main(driver, url, config_dict):
+    #https://www.cityline.com/Events.html
+    if 'cityline.com/Events.html' in url:
+        cityline_home_close_window(driver)
+
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
     if '/Login.html' in url:
@@ -5863,11 +5902,13 @@ def cityline_main(driver, url, config_dict):
             cityline_login(driver, cityline_account, decryptMe(config_dict["advanced"]["cityline_password"]))
         return
 
-    # https://msg.cityline.com/
-    if 'msg.cityline.com' in url:
+    # https://msg.cityline.com/ https://event.cityline.com/
+    if 'msg.cityline.com' or 'event.cityline.com' in url:
         try:
+            WebDriverWait(driver, 10, poll_frequency=0.01).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[@id='btn-retry-en-1']"))
+            )
             driver.execute_script("goEvent();")
-            time.sleep(0.2)
         except Exception as exec1:
             pass
         pass
