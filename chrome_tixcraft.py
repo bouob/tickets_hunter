@@ -52,14 +52,14 @@ import webbrowser
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.22)"
+CONST_APP_VERSION = u"MaxBot (2023.02.23)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
 
-CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=https%3A%2F%2Fkktix.com%2F"
+CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
@@ -541,13 +541,10 @@ def get_driver_by_config(config_dict):
             if config_dict["advanced"]["open_google_oauth_url"]:
                 driver.execute_script("window.open('%s','_blank');" % (URL_GOOGLE_OAUTH));
 
-            print("goto url:", homepage)
-            if homepage=="https://tixcraft.com":
-                homepage="https://tixcraft.com/user/changeLanguage/lang/zh_tw"
-
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
-                    homepage = CONST_KKTIX_SIGN_IN_URL
+                    if not 'https://kktix.com/users/sign_in?' in homepage:
+                        homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
             if 'famiticket.com' in homepage:
                 pass
@@ -574,6 +571,7 @@ def get_driver_by_config(config_dict):
             if 'galaxymacau.com' in homepage:
                 pass
 
+            print("goto url:", homepage)
             driver.get(homepage)
 
             tixcraft_family = False
@@ -586,7 +584,7 @@ def get_driver_by_config(config_dict):
             if tixcraft_family:
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
                     for i in range(5):
-                        time.sleep(1.0)
+                        time.sleep(0.5)
                         tixcraft_home_close_window(driver)
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
@@ -2203,15 +2201,46 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     return is_verifyCode_editing
 
+def kktix_confirm_order_button(driver):
+    ret = False
+
+    wait = WebDriverWait(driver, 1)
+    next_step_button = None
+    try:
+        # method #3 wait
+        next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.form-actions a.btn-primary')))
+        if not next_step_button is None:
+            if next_step_button.is_enabled():
+                next_step_button.click()
+                ret = True
+    except Exception as exc:
+        print("wait form-actions div wait to be clickable Exception:")
+        #print(exc)
+        pass
+
+        if not next_step_button is None:
+            is_visible = False
+            try:
+                if next_step_button.is_enabled():
+                    is_visible = True
+            except Exception as exc:
+                pass
+
+            if is_visible:
+                try:
+                    driver.execute_script("arguments[0].click();", next_step_button)
+                    ret = True
+                except Exception as exc:
+                    pass
+
+    return ret
+
 # PS: There are two "Next" button in kktix.
 #   : 1: /events/xxx
 #   : 2: /events/xxx/registrations/new
 #   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
     ret = False
-
-    # let javascript to enable button.
-    time.sleep(0.1)
 
     wait = WebDriverWait(driver, 1)
     next_step_button = None
@@ -5700,12 +5729,13 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         tixcraft_dict["is_verifyCode_editing"] = False
 
     if '/ticket/checkout' in url:
-        if not tixcraft_dict["is_popup_checkout"]:
-            domain_name = url.split('/')[2]
-            checkout_url = "https://%s/ticket/checkout" % (domain_name)
-            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-            webbrowser.open_new(checkout_url)
-            tixcraft_dict["is_popup_checkout"] = True
+        if config_dict["advanced"]["headless"]:
+            if not tixcraft_dict["is_popup_checkout"]:
+                domain_name = url.split('/')[2]
+                checkout_url = "https://%s/ticket/checkout" % (domain_name)
+                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                webbrowser.open_new(checkout_url)
+                tixcraft_dict["is_popup_checkout"] = True
     else:
         tixcraft_dict["is_popup_checkout"] = False
 
@@ -5740,6 +5770,24 @@ def kktix_main(driver, url, config_dict, kktix_dict):
 
             kktix_dict["answer_index"] = -1
             kktix_dict["kktix_register_status_last"] = None
+
+    if '/events/' in url and '/registrations/' in url and "-" in url:
+        if config_dict["advanced"]["headless"]:
+            if not kktix_dict["is_popup_checkout"]:
+                is_event_page = False
+                if len(url.split('/'))==8:
+                    is_event_page = True
+                if is_event_page:
+                    confirm_clicked = kktix_confirm_order_button(driver)
+                    if confirm_clicked:
+                        domain_name = url.split('/')[2]
+                        checkout_url = "https://%s/account/orders" % (domain_name)
+                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                        webbrowser.open_new(checkout_url)
+                        tixcraft_dict["is_popup_checkout"] = True
+    else:
+        kktix_dict["is_popup_checkout"] = False
+
     return kktix_dict
 
 def famiticket_main(driver, url, config_dict):
@@ -7811,6 +7859,7 @@ def main():
     kktix_dict = {}
     kktix_dict["answer_index"]=-1
     kktix_dict["kktix_register_status_last"] = None
+    kktix_dict["is_popup_checkout"] = False
 
     ibon_dict = {}
     ibon_dict["answer_index"]=-1
