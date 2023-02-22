@@ -47,10 +47,12 @@ try:
 except Exception as exc:
     pass
 
+import webbrowser
+
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.21)"
+CONST_APP_VERSION = u"MaxBot (2023.02.22)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -107,6 +109,19 @@ def get_config_dict():
     if os.path.isfile(config_filepath):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
+
+            # special case for headless.
+            is_headless_enable = False
+            if config_dict["advanced"]["headless"]:
+                # for tixcraft headless.
+                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                    is_headless_enable = True
+                else:
+                    print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
+
+            if is_headless_enable:
+                config_dict["ocr_captcha"]["enable"] = True
+                config_dict["ocr_captcha"]["force_submit"] = True
     return config_dict
 
 def format_keyword_string(keyword):
@@ -154,7 +169,7 @@ def get_chromedriver_path(webdriver_path):
         chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
     return chromedriver_path
 
-def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome"):
+def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", headless = False):
     chrome_options = webdriver.ChromeOptions()
     if browser=="edge":
         chrome_options = webdriver.EdgeOptions()
@@ -170,7 +185,8 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome"):
             chrome_options.add_extension(no_google_analytics_path)
         if os.path.exists(no_ad_path):
             chrome_options.add_extension(no_ad_path)
-
+    if headless:
+        chrome_options.add_argument('--headless')
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
@@ -195,10 +211,10 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome"):
 
     return chrome_options, caps
 
-def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
+def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless):
     chromedriver_path = get_chromedriver_path(webdriver_path)
     chrome_service = Service(chromedriver_path)
-    chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable)
+    chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, headless=headless)
     driver = None
     try:
         # method 6: Selenium Stealth
@@ -229,7 +245,7 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable):
 
     return driver
 
-def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
+def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     import undetected_chromedriver as uc
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
@@ -251,6 +267,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable):
         if len(load_extension_path) > 0:
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
+    if headless:
+        options.add_argument('--headless')
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
@@ -438,11 +456,12 @@ def get_driver_by_config(config_dict):
 
     adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
     print("adblock_plus_enable:", adblock_plus_enable)
+    headless = config_dict["advanced"]["headless"]
 
     if browser == "chrome":
         # method 6: Selenium Stealth
         if driver_type != CONST_WEBDRIVER_TYPE_UC:
-            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
+            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
         else:
             # method 5: uc
             # multiprocessing not work bug.
@@ -450,7 +469,7 @@ def get_driver_by_config(config_dict):
                 if hasattr(sys, 'frozen'):
                     from multiprocessing import freeze_support
                     freeze_support()
-            driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable)
+            driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless)
 
     if browser == "firefox":
         # default os is linux/mac
@@ -482,7 +501,7 @@ def get_driver_by_config(config_dict):
             chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
 
         webdriver_service = Service(chromedriver_path)
-        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, browser="edge")
+        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, browser="edge", headless=headless)
 
         driver = None
         try:
@@ -556,6 +575,22 @@ def get_driver_by_config(config_dict):
                 pass
 
             driver.get(homepage)
+
+            tixcraft_family = False
+            if 'tixcraft.com' in homepage:
+                tixcraft_family = True
+
+            if 'indievox.com' in homepage:
+                tixcraft_family = True
+
+            if tixcraft_family:
+                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                    for i in range(5):
+                        time.sleep(1.0)
+                        tixcraft_home_close_window(driver)
+                    tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
+                    driver.delete_cookie("SID")
+                    driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
         except WebDriverException as exce2:
             print('oh no not again, WebDriverException')
             print('WebDriverException:', exce2)
@@ -1096,7 +1131,7 @@ def tixcraft_home_close_window(driver):
     if accept_all_cookies_btn is not None:
         is_visible = False
         try:
-            if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
+            if accept_all_cookies_btn.is_enabled():
                 is_visible = True
         except Exception as exc:
             pass
@@ -1912,7 +1947,7 @@ def tixcraft_toast(driver, message):
     except Exception as exc:
         print("find toast element fail")
 
-def  tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
+def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
     is_form_sumbited = False
 
@@ -5620,12 +5655,11 @@ def list_all_cookies(driver):
         cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
-def tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing, ocr, Captcha_Browser):
+def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
             tixcraft_home_close_window(driver)
-
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
                 #PS: need set cookies once, if user change domain.
@@ -5653,21 +5687,31 @@ def tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing,
     if '/ticket/verify/' in url:
         presale_code = config_dict["tixcraft"]["presale_code"]
         presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
-        answer_index = tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index)
+        tixcraft_dict["answer_index"] = tixcraft_verify(driver, presale_code, presale_code_delimiter, tixcraft_dict["answer_index"])
     else:
-        answer_index = -1
+        tixcraft_dict["answer_index"] = -1
 
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
-        if not is_verifyCode_editing:
+        if not tixcraft_dict["is_verifyCode_editing"]:
             domain_name = url.split('/')[2]
-            is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
+            tixcraft_dict["is_verifyCode_editing"] = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
     else:
-        is_verifyCode_editing = False
+        tixcraft_dict["is_verifyCode_editing"] = False
 
-    return answer_index, is_verifyCode_editing
+    if '/ticket/checkout' in url:
+        if not tixcraft_dict["is_popup_checkout"]:
+            domain_name = url.split('/')[2]
+            checkout_url = "https://%s/ticket/checkout" % (domain_name)
+            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+            webbrowser.open_new(checkout_url)
+            tixcraft_dict["is_popup_checkout"] = True
+    else:
+        tixcraft_dict["is_popup_checkout"] = False
 
-def kktix_main(driver, url, config_dict, answer_index, kktix_register_status_last):
+    return tixcraft_dict
+
+def kktix_main(driver, url, config_dict, kktix_dict):
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
     kktix_account = config_dict["advanced"]["kktix_account"]
 
@@ -5680,7 +5724,7 @@ def kktix_main(driver, url, config_dict, answer_index, kktix_register_status_las
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
-            answer_index, kktix_register_status_last = kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_dict)
+            kktix_dict["answer_index"], kktix_dict["kktix_register_status_last"] = kktix_reg_new(driver, url, kktix_dict["answer_index"], kktix_dict["kktix_register_status_last"], config_dict)
         else:
             is_event_page = False
             if '/events/' in url:
@@ -5694,9 +5738,9 @@ def kktix_main(driver, url, config_dict, answer_index, kktix_register_status_las
                     #print("should press next here.")
                     kktix_events_press_next_button(driver)
 
-            answer_index = -1
-            kktix_register_status_last = None
-    return answer_index, kktix_register_status_last
+            kktix_dict["answer_index"] = -1
+            kktix_dict["kktix_register_status_last"] = None
+    return kktix_dict
 
 def famiticket_main(driver, url, config_dict):
     try:
@@ -5997,10 +6041,10 @@ def ibon_main(driver, url, config_dict, answer_index):
         #auto_guess_options = config_dict["kktix"]["auto_guess_options"]
         auto_guess_options = True
         if auto_guess_options:
-            #answer_index = ibon_verification_question(driver, answer_index, config_dict)
+            #ibon_dict["answer_index"] = ibon_verification_question(driver, ibon_dict["answer_index"], config_dict)
             pass
     else:
-        answer_index = -1
+        ibon_dict["answer_index"] = -1
 
     # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
     if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
@@ -6021,7 +6065,7 @@ def ibon_main(driver, url, config_dict, answer_index):
                     # step 1: select area.
                     ibon_performance(driver, config_dict)
 
-    return answer_index
+    return ibon_dict
 
 def hkticketing_home(driver):
     show_debug_message = True    # debug.
@@ -7758,11 +7802,18 @@ def main():
     last_url = ""
 
     # for tixcraft
-    is_verifyCode_editing = False
+    tixcraft_dict = {}
+    tixcraft_dict["answer_index"]=-1
+    tixcraft_dict["is_verifyCode_editing"] = False
+    tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
-    answer_index = -1
-    kktix_register_status_last = None
+    kktix_dict = {}
+    kktix_dict["answer_index"]=-1
+    kktix_dict["kktix_register_status_last"] = None
+
+    ibon_dict = {}
+    ibon_dict["answer_index"]=-1
 
     DISCONNECTED_MSG = ': target window already closed'
 
@@ -7907,10 +7958,6 @@ def main():
                 print(url)
             last_url = url
 
-        # for Max's manuall test.
-        if '/Downloads/varify.html' in url:
-            answer_index = tixcraft_verify(driver, "", "", answer_index)
-
         tixcraft_family = False
         if 'tixcraft.com' in url:
             tixcraft_family = True
@@ -7919,17 +7966,17 @@ def main():
             tixcraft_family = True
 
         if tixcraft_family:
-            answer_index, is_verifyCode_editing = tixcraft_main(driver, url, config_dict, answer_index, is_verifyCode_editing, ocr, Captcha_Browser)
+            tixcraft_dict = tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
-            answer_index, kktix_register_status_last = kktix_main(driver, url, config_dict, answer_index, kktix_register_status_last)
+            kktix_dict = kktix_main(driver, url, config_dict, kktix_dict)
 
         if 'famiticket.com' in url:
             famiticket_main(driver, url, config_dict)
 
         if 'ibon.com' in url:
-            answer_index = ibon_main(driver, url, config_dict, answer_index)
+            ibon_dict = ibon_main(driver, url, config_dict, ibon_dict)
 
         if 'kham.com' in url:
             kham_main(driver, url, config_dict, ocr, Captcha_Browser)

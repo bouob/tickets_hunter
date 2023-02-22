@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.21)"
+CONST_APP_VERSION = u"MaxBot (2023.02.22)"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -29,12 +29,12 @@ CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM)
 CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT = '''tixcraft.com###topAlert
-tixcraft.com##.col-md-7.col-xs-12.mg-top
+tixcraft.com##.col-md-7.col-xs-12.mgt-16.text-center
+tixcraft.com##.col-md-7.col-xs-12.mgt-16.mx-auto
 tixcraft.com##.topBar.alert-box.emergency
 tixcraft.com##.footer.clearfix
-tixcraft.com##.row.process-wizard.process-wizard-info
-tixcraft.com##.nav-line
-tixcraft.com##.page-info.row.line-btm.mg-0'''
+tixcraft.com##.page-info.row.line-btm.mg-0
+tixcraft.com##.row.justify-content-start.navbar-location'''
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -92,6 +92,7 @@ def load_translate():
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
     en_us["ocr_captcha_image_source"] = 'OCR image source'
     en_us["webdriver_type"] = 'WebDriver type'
+    en_us["headless"] = 'Headless mode'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -105,6 +106,7 @@ def load_translate():
     en_us["restore_defaults"] = 'Restore Defaults'
     en_us["done"] = 'Done'
 
+    en_us["tixcraft_sid"] = 'Tixcraft cookie SID'
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
     en_us["cityline_account"] = 'cityline account'
@@ -167,6 +169,7 @@ def load_translate():
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
     zh_tw["webdriver_type"] = 'WebDriver類別'
+    zh_tw["headless"] = '無圖形界面模式'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -180,6 +183,7 @@ def load_translate():
     zh_tw["restore_defaults"] = '恢復預設值'
     zh_tw["done"] = '完成'
 
+    zh_tw["tixcraft_sid"] = 'Tixcraft cookie SID'
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
     zh_tw["cityline_account"] = 'cityline 帳號'
@@ -242,6 +246,7 @@ def load_translate():
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
     zh_cn["webdriver_type"] = 'WebDriver类别'
+    zh_cn["headless"] = '无图形界面模式'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -256,6 +261,7 @@ def load_translate():
     zh_cn["restore_defaults"] = '恢复默认值'
     zh_cn["done"] = '完成'
 
+    zh_cn["tixcraft_sid"] = 'Tixcraft cookie SID'
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
     zh_cn["cityline_account"] = 'cityline 帐号'
@@ -318,6 +324,7 @@ def load_translate():
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
+    ja_jp["headless"] = 'ヘッドレスモード'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -331,6 +338,7 @@ def load_translate():
     ja_jp["restore_defaults"] = 'デフォルトに戻す'
     ja_jp["done"] = '終わり'
 
+    ja_jp["tixcraft_sid"] = 'Tixcraft cookie SID'
     ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
     ja_jp["cityline_account"] = 'citylineのアカウント'
@@ -446,6 +454,7 @@ def get_default_config():
     config_dict["advanced"]["play_captcha_sound"]["enable"] = True
     config_dict["advanced"]["play_captcha_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
 
+    config_dict["advanced"]["tixcraft_sid"] = ""
     config_dict["advanced"]["facebook_account"] = ""
     config_dict["advanced"]["kktix_account"] = ""
     config_dict["advanced"]["cityline_account"] = ""
@@ -462,6 +471,7 @@ def get_default_config():
 
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["open_google_oauth_url"] = False
+    config_dict["advanced"]["headless"] = False
 
     config_dict['debug']=False
 
@@ -539,6 +549,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_presale_code
     global txt_presale_code_delimiter
 
+    global txt_tixcraft_sid
     global txt_facebook_account
     global txt_kktix_account
     global txt_cityline_account
@@ -559,6 +570,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_force_submit
     global chk_state_google_oauth
+    global chk_state_headless
     global combo_ocr_captcha_image_source
     global combo_webdriver_type
 
@@ -638,6 +650,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
 
+        config_dict["advanced"]["tixcraft_sid"] = txt_tixcraft_sid.get().strip()
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
@@ -652,6 +665,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["hkticketing_password"] = txt_hkticketing_password.get().strip()
         config_dict["advanced"]["kham_password"] = txt_kham_password.get().strip()
 
+        config_dict["advanced"]["tixcraft_sid"] = encryptMe(config_dict["advanced"]["tixcraft_sid"])
         config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
         config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
         config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
@@ -667,6 +681,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
+        config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
 
     # save config.
     if is_all_data_correct:
@@ -831,6 +846,7 @@ def applyNewLanguage():
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
     global lbl_webdriver_type
+    global lbl_headless
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -848,6 +864,7 @@ def applyNewLanguage():
     global chk_ocr_captcha
     global chk_ocr_captcha_force_submit
     global chk_google_oauth
+    global chk_headless
 
     global chk_kktix_area_keyword_2_enable
     global chk_area_keyword_2_enable
@@ -901,6 +918,7 @@ def applyNewLanguage():
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
+    lbl_headless.config(text=translate[language_code]["headless"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -916,6 +934,7 @@ def applyNewLanguage():
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_google_oauth.config(text=translate[language_code]["enable"])
+    chk_headless.config(text=translate[language_code]["enable"])
 
     chk_kktix_area_keyword_2_enable.config(text=translate[language_code]["enable"])
     chk_area_keyword_2_enable.config(text=translate[language_code]["enable"])
@@ -927,6 +946,7 @@ def applyNewLanguage():
     tabControl.tab(2, text=translate[language_code]["autofill"])
     tabControl.tab(3, text=translate[language_code]["about"])
 
+    global lbl_tixcraft_sid
     global lbl_facebook_account
     global lbl_kktix_account
     global lbl_cityline_account
@@ -945,6 +965,8 @@ def applyNewLanguage():
 
     global lbl_play_captcha_sound
     global lbl_captcha_sound_filename
+
+    lbl_tixcraft_sid.config(text=translate[language_code]["tixcraft_sid"])
     lbl_facebook_account.config(text=translate[language_code]["facebook_account"])
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
     lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
@@ -1264,7 +1286,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_homepage.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_homepage
-    combo_homepage = ttk.Combobox(frame_group_header, state="readonly")
+    combo_homepage = ttk.Combobox(frame_group_header)
     combo_homepage['values']= ["https://kktix.com"
         ,"https://tixcraft.com (拓元)"
         ,"https://teamear.tixcraft.com/ (添翼)"
@@ -1915,6 +1937,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_google_oauth = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_google_oauth)
     chk_google_oauth.grid(column=1, row=group_row_count, sticky = W)
 
+    group_row_count+=1
+
+    global lbl_headless
+    lbl_headless = Label(frame_group_header, text=translate[language_code]['headless'])
+    lbl_headless.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_headless
+    chk_state_headless = BooleanVar()
+    chk_state_headless.set(config_dict['advanced']["headless"])
+
+    global chk_headless
+    chk_headless = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_headless)
+    chk_headless.grid(column=1, row=group_row_count, sticky = W)
+
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
 def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
@@ -1922,6 +1958,17 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header = Frame(root)
     group_row_count = 0
+
+    global lbl_tixcraft_sid
+    lbl_tixcraft_sid = Label(frame_group_header, text=translate[language_code]['tixcraft_sid'])
+    lbl_tixcraft_sid.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_tixcraft_sid
+    txt_tixcraft_sid_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["tixcraft_sid"].strip()))
+    txt_tixcraft_sid = Entry(frame_group_header, width=20, textvariable = txt_tixcraft_sid_value, show="*")
+    txt_tixcraft_sid.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
 
     global lbl_facebook_account
     lbl_facebook_account = Label(frame_group_header, text=translate[language_code]['facebook_account'])
