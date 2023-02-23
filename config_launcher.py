@@ -21,6 +21,8 @@ import base64
 
 CONST_APP_VERSION = u"MaxBot (2023.02.24)"
 
+CONST_LAUNCHER_CONFIG_FILENAME = "config_launcher.json"
+
 translate={}
 
 URL_DONATE = 'https://max-everyday.com/about/#donate'
@@ -151,7 +153,7 @@ def load_json():
     app_root = get_app_root()
 
     # overwrite config path.
-    config_filepath = os.path.join(app_root, 'config_manager.json')
+    config_filepath = os.path.join(app_root, CONST_LAUNCHER_CONFIG_FILENAME)
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -163,7 +165,7 @@ def load_json():
 
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, 'config_manager.json')
+    config_filepath = os.path.join(app_root, CONST_LAUNCHER_CONFIG_FILENAME)
 
     config_dict = get_default_config()
     import json
@@ -179,7 +181,7 @@ def btn_save_clicked(language_code):
 
 def btn_save_act(language_code, slience_mode=True):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, 'config_manager.json')
+    config_filepath = os.path.join(app_root, CONST_LAUNCHER_CONFIG_FILENAME)
 
     config_dict = get_default_config()
 
