@@ -526,14 +526,6 @@ def get_driver_by_config(config_dict):
                 left_part = error_message.split("Stacktrace:")[0]
                 print(left_part)
 
-
-    #print("try to close opened tabs.")
-    '''
-    time.sleep(1.0)
-    for i in range(1):
-        close_browser_tabs(driver)
-    '''
-
     if driver is None:
         print("create web driver object fail @_@;")
     else:
@@ -583,8 +575,8 @@ def get_driver_by_config(config_dict):
 
             if tixcraft_family:
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    for i in range(5):
-                        time.sleep(0.5)
+                    for i in range(10):
+                        time.sleep(1.0)
                         tixcraft_home_close_window(driver)
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
@@ -5702,6 +5694,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
     is_date_selected = False
     if "/activity/game/" in url:
+        tixcraft_home_close_window(driver)
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
             domain_name = url.split('/')[2]
