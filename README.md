@@ -8,7 +8,11 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
-Max掛號機器人 (2023-02-22)：拓元，無視窗模式
+Max搶票機器人 (2023-02-24)：KKTix，無視窗模式，多設定檔管
+
+https://youtu.be/QgLAHkJbhqQ
+
+Max搶票機器人 (2023-02-22)：拓元，無視窗模式
 
 https://youtu.be/fkx0HGqTpTg
 
