@@ -48,11 +48,12 @@ except Exception as exc:
     pass
 
 import webbrowser
+import argparse
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.23)"
+CONST_APP_VERSION = u"MaxBot (2023.02.24)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -81,6 +82,15 @@ CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 #CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 
+def t_or_f(arg):
+    ret = False
+    ua = str(arg).upper()
+    if 'TRUE'.startswith(ua):
+        ret = True
+    elif 'YES'.startswith(ua):
+        ret = True
+    return ret
+
 def sx(s1):
     key=18
     return ''.join(chr(ord(a) ^ key) for a in s1)
@@ -90,6 +100,12 @@ def decryptMe(b):
     if(len(b)>0):
         s=sx(base64.b64decode(b).decode("UTF-8"))
     return s
+
+def encryptMe(s):
+    data=""
+    if(len(s)>0):
+        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
+    return data
 
 def get_app_root():
     # 讀取檔案裡的參數值
@@ -101,14 +117,43 @@ def get_app_root():
     app_root = os.path.dirname(basis)
     return app_root
 
-def get_config_dict():
+def get_config_dict(args):
     config_json_filename = 'settings.json'
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, config_json_filename)
+
+    # allow assign config by command line.
+    if not args.input is None:
+        if len(args.input) > 0:
+            config_filepath = args.input
+
     config_dict = None
     if os.path.isfile(config_filepath):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
+
+            # start to overwrite config settings.
+            if not args.headless is None:
+                headless_flag = t_or_f(args.headless)
+                if headless_flag:
+                    config_dict["advanced"]["headless"] = True
+
+            if not args.homepage is None:
+                if len(args.homepage) > 0:
+                    config_dict["homepage"] = args.homepage
+            if not args.browser is None:
+                if len(args.browser) > 0:
+                    config_dict["browser"] = args.browser
+
+            if not args.tixcraft_sid is None:
+                if len(args.tixcraft_sid) > 0:
+                    config_dict["advanced"]["tixcraft_sid"] = encryptMe(args.tixcraft_sid)
+            if not args.kktix_account is None:
+                if len(args.kktix_account) > 0:
+                    config_dict["advanced"]["kktix_account"] = args.kktix_account
+            if not args.kktix_password is None:
+                if len(args.kktix_password) > 0:
+                    config_dict["advanced"]["kktix_password"] = args.kktix_password
 
             # special case for headless.
             is_headless_enable = False
@@ -186,7 +231,8 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
         if os.path.exists(no_ad_path):
             chrome_options.add_extension(no_ad_path)
     if headless:
-        chrome_options.add_argument('--headless')
+        #chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
@@ -268,7 +314,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
     if headless:
-        options.add_argument('--headless')
+        #options.add_argument('--headless')
+        options.add_argument('--headless=new')
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
@@ -575,9 +622,6 @@ def get_driver_by_config(config_dict):
 
             if tixcraft_family:
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    for i in range(10):
-                        time.sleep(1.0)
-                        tixcraft_home_close_window(driver)
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
@@ -1121,7 +1165,7 @@ def tixcraft_home_close_window(driver):
     if accept_all_cookies_btn is not None:
         is_visible = False
         try:
-            if accept_all_cookies_btn.is_enabled():
+            if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
                 is_visible = True
         except Exception as exc:
             pass
@@ -1797,7 +1841,8 @@ def guess_tixcraft_question(driver):
                     inferred_answer_string = '同意'
 
     if inferred_answer_string is None:
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+        if not question_text is None:
+            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
 
     return inferred_answer_string, answer_list
 
@@ -1907,6 +1952,7 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
         if is_password_sent:
             for i in range(3):
                 time.sleep(0.1)
+
                 alert_ret = check_pop_alert(driver)
                 if alert_ret:
                     if show_debug_message:
@@ -3011,6 +3057,9 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     CONST_EXAMPLE_SYMBOL = "範例"
     CONST_INPUT_SYMBOL = "輸入"
+
+    if captcha_text_div_text is None:
+        captcha_text_div_text = ""
 
     # 請在下方空白處輸入引號內文字：
     if inferred_answer_string is None:
@@ -5637,7 +5686,8 @@ def check_pop_alert(driver):
         try:
             alert = None
             if not driver is None:
-                alert = driver.switch_to.alert
+                #alert = driver.switch_to.alert
+                alert = WebDriverWait(driver, 0.2).until(EC.alert_is_present())
             if not alert is None:
                 alert_text = str(alert.text)
                 if not alert_text is None:
@@ -5653,7 +5703,7 @@ def check_pop_alert(driver):
 
                     if is_match_auto_close_text:
                         alert.accept()
-                        #print("alert3 accepted")
+                        print("alert3 accepted")
 
                     is_alert_popup = True
             else:
@@ -5664,8 +5714,9 @@ def check_pop_alert(driver):
         except NoSuchWindowException:
             pass
         except Exception as exc:
-            logger.error('Exception2 for alert')
-            logger.error(exc, exc_info=True)
+            #logger.error('Exception2 for alert')
+            #logger.error(exc, exc_info=True)
+            pass
 
     return is_alert_popup
 
@@ -5677,10 +5728,10 @@ def list_all_cookies(driver):
     print(cookies_dict)
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
+    tixcraft_home_close_window(driver)
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
-            tixcraft_home_close_window(driver)
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
                 #PS: need set cookies once, if user change domain.
@@ -5694,7 +5745,6 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
     is_date_selected = False
     if "/activity/game/" in url:
-        tixcraft_home_close_window(driver)
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
             domain_name = url.split('/')[2]
@@ -6046,6 +6096,7 @@ def ibon_verification_question(driver, answer_index, config_dict):
         #print("find input fail:", exc)
 
     #captcha_text_div_text
+    captcha_text_div_text = None
 
     captcha_password_inputbox = None
     try:
@@ -6059,11 +6110,12 @@ def ibon_verification_question(driver, answer_index, config_dict):
         if len(user_guess_string) > 0:
             inferred_answer_string = user_guess_string
         else:
-            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
+            if not captcha_text_div_text is None:
+                inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
 
     return answer_index
 
-def ibon_main(driver, url, config_dict, answer_index):
+def ibon_main(driver, url, config_dict, ibon_dict):
     #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
     if '/ActivityInfo/Details/' in url:
         is_event_page = False
@@ -7829,8 +7881,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if len(account) > 4:
                 kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
 
-def main():
-    config_dict = get_config_dict()
+def main(args):
+    config_dict = get_config_dict(args)
 
     driver = None
     if not config_dict is None:
@@ -8042,6 +8094,44 @@ def main():
             if len(facebook_account) > 4:
                 facebook_login(driver, facebook_account, decryptMe(config_dict["advanced"]["facebook_password"]))
 
+def cli():
+    parser = argparse.ArgumentParser(
+            description="resize image to new width")
+
+    parser.add_argument("--input",
+        help="config file path",
+        type=str)
+
+    parser.add_argument("--homepage",
+        help="overwrite homepage setting",
+        type=str)
+
+    parser.add_argument("--tixcraft_sid",
+        help="overwrite tixcraft sid field",
+        type=str)
+
+    parser.add_argument("--kktix_account",
+        help="overwrite kktix_account field",
+        type=str)
+
+    parser.add_argument("--kktix_password",
+        help="overwrite kktix_password field",
+        type=str)
+
+    parser.add_argument("--headless",
+        help="headless mode",
+        default='False',
+        type=str)
+
+    parser.add_argument("--browser",
+        help="overwrite browser setting",
+        default='',
+        choices=['chrome','firefox','edge','safari'],
+        type=str)
+
+    args = parser.parse_args()
+    main(args)
+
 if __name__ == "__main__":
     CONST_MODE_GUI = 0
     CONST_MODE_CLI = 1
@@ -8049,7 +8139,7 @@ if __name__ == "__main__":
     #mode = CONST_MODE_CLI
 
     if mode == CONST_MODE_GUI:
-        main()
+        cli()
     else:
         #for test kktix infer answer.
         captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
