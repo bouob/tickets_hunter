@@ -532,13 +532,23 @@ def get_driver_by_config(config_dict):
         webdriver_service = Service(chromedriver_path)
         driver = None
         try:
-            driver = webdriver.Firefox(service=webdriver_service)
+            from selenium.webdriver.firefox.options import Options
+            options = Options()
+            if headless:
+                options.add_argument('--headless')
+                #options.add_argument('--headless=new')
+            if platform.system().lower()=="windows":
+                options.binary_location = r'C:\Program Files\Mozilla Firefox\firefox.exe'
+
+            driver = webdriver.Firefox(service=webdriver_service, options=options)
         except Exception as exc:
             error_message = str(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
                 print(left_part)
+            else:
+                print(exc)
 
     if browser == "edge":
         # default os is linux/mac
