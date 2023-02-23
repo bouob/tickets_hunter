@@ -6063,7 +6063,7 @@ def ibon_verification_question(driver, answer_index, config_dict):
 
     return answer_index
 
-def ibon_main(driver, url, config_dict, answer_index):
+def ibon_main(driver, url, config_dict, ibon_dict):
     #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
     if '/ActivityInfo/Details/' in url:
         is_event_page = False
