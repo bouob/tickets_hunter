@@ -7250,29 +7250,36 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
             row_index = 0
             for row in area_list:
                 row_index += 1
-                row_is_enabled=False
+                row_is_sold_out=False
                 try:
-                    is_row_with_id = False
-                    tr_id_string = str(row.get_attribute('id'))
-                    if len(tr_id_string) > 1:
-                        is_row_with_id = True
-
-                    if is_row_with_id:
-                        my_css_selector = "span.textPrice"
-                        el_remaining = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if el_remaining is not None:
-                            remaining_value = str(el_remaining.text).strip()
-                            if remaining_value.isnumeric():
-                                if int(remaining_value) >= ticket_number:
-                                    row_is_enabled=True
-                            else:
-                                # text directly allow.
-                                row_is_enabled=True
-                                if '售完' in remaining_value:
-                                    row_is_enabled=False
-
+                    row_text = row.text
+                    if row_text is None:
+                        row_text = ""
+                        if '售完' in row_text:
+                            row_is_sold_out = True
                 except Exception as exc:
                     pass
+
+                row_is_enabled=False
+                if not row_is_sold_out:
+                    try:
+                        is_row_with_id = False
+                        tr_id_string = str(row.get_attribute('id'))
+                        if len(tr_id_string) > 1:
+                            is_row_with_id = True
+
+                        if is_row_with_id:
+                            my_css_selector = "span.textPrice"
+                            el_remaining = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                            if el_remaining is not None:
+                                remaining_value = str(el_remaining.text).strip()
+                                if remaining_value.isnumeric():
+                                    if int(remaining_value) >= ticket_number:
+                                        row_is_enabled=True
+                                else:
+                                    row_is_enabled=True
+                    except Exception as exc:
+                        pass
 
                 if row_is_enabled:
                     formated_area_list.append(row)
