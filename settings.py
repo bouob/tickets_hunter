@@ -20,7 +20,9 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.24)"
+CONST_APP_VERSION = u"MaxBot (2023.02.25)"
+
+CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -104,9 +106,11 @@ def load_translate():
     en_us["exit"] = 'Close'
     en_us["copy"] = 'Copy'
     en_us["restore_defaults"] = 'Restore Defaults'
+    en_us["config_launcher"] = 'Launcher'
     en_us["done"] = 'Done'
 
     en_us["tixcraft_sid"] = 'Tixcraft cookie SID'
+    en_us["ibon_ibonqware"] = 'ibon cookie ibonqware'
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
     en_us["cityline_account"] = 'cityline account'
@@ -181,9 +185,11 @@ def load_translate():
     zh_tw["exit"] = '關閉'
     zh_tw["copy"] = '複製'
     zh_tw["restore_defaults"] = '恢復預設值'
+    zh_tw["config_launcher"] = '設定檔管理'
     zh_tw["done"] = '完成'
 
     zh_tw["tixcraft_sid"] = 'Tixcraft cookie SID'
+    zh_tw["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
     zh_tw["cityline_account"] = 'cityline 帳號'
@@ -259,9 +265,11 @@ def load_translate():
     zh_cn["exit"] = '关闭'
     zh_cn["copy"] = '复制'
     zh_cn["restore_defaults"] = '恢复默认值'
+    zh_cn["config_launcher"] = '设定档管理'
     zh_cn["done"] = '完成'
 
     zh_cn["tixcraft_sid"] = 'Tixcraft cookie SID'
+    zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
     zh_cn["cityline_account"] = 'cityline 帐号'
@@ -336,9 +344,11 @@ def load_translate():
     ja_jp["exit"] = '閉じる'
     ja_jp["copy"] = 'コピー'
     ja_jp["restore_defaults"] = 'デフォルトに戻す'
+    ja_jp["config_launcher"] = 'ランチャー'
     ja_jp["done"] = '終わり'
 
     ja_jp["tixcraft_sid"] = 'Tixcraft cookie SID'
+    ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
     ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
     ja_jp["cityline_account"] = 'citylineのアカウント'
@@ -455,6 +465,7 @@ def get_default_config():
     config_dict["advanced"]["play_captcha_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
 
     config_dict["advanced"]["tixcraft_sid"] = ""
+    config_dict["advanced"]["ibonqware"] = ""
     config_dict["advanced"]["facebook_account"] = ""
     config_dict["advanced"]["kktix_account"] = ""
     config_dict["advanced"]["cityline_account"] = ""
@@ -481,7 +492,7 @@ def load_json():
     app_root = get_app_root()
 
     # overwrite config path.
-    config_filepath = os.path.join(app_root, 'settings.json')
+    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -493,7 +504,7 @@ def load_json():
 
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, 'settings.json')
+    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
 
     config_dict = get_default_config()
     import json
@@ -504,12 +515,61 @@ def btn_restore_defaults_clicked(language_code):
     global root
     load_GUI(root, config_dict)
 
+def btn_launcher_clicked(language_code):
+    import subprocess
+
+    print('run button pressed.')
+    Root_Dir = ""
+    save_ret = btn_save_act(language_code, slience_mode=True)
+    print("save config result:", save_ret)
+    if save_ret:
+        working_dir = os.path.dirname(os.path.realpath(__file__))
+        if hasattr(sys, 'frozen'):
+            print("execute in frozen mode")
+
+            # check platform here.
+            if platform.system() == 'Darwin':
+                print("execute MacOS python script")
+                subprocess.Popen("./config_launcher", shell=True, cwd=working_dir)
+            if platform.system() == 'Linux':
+                print("execute linux binary")
+                subprocess.Popen("./config_launcher", shell=True, cwd=working_dir)
+            if platform.system() == 'Windows':
+                print("execute .exe binary.")
+                subprocess.Popen("config_launcher.exe", shell=True, cwd=working_dir)
+        else:
+            interpreter_binary = 'python'
+            interpreter_binary_alt = 'python3'
+            if platform.system() == 'Darwin':
+                # try python3 before python.
+                interpreter_binary = 'python3'
+                interpreter_binary_alt = 'python'
+            print("execute in shell mode.")
+            #print("script path:", working_dir)
+            #messagebox.showinfo(title="Debug0", message=working_dir)
+
+            # some python3 binary, running in 'python' command.
+            try:
+                print('try', interpreter_binary)
+                s=subprocess.Popen([interpreter_binary, 'config_launcher.py'], cwd=working_dir)
+                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
+                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+                #messagebox.showinfo(title="Debug1", message=str(s))
+            except Exception as exc:
+                print('try', interpreter_binary_alt)
+                try:
+                    s=subprocess.Popen([interpreter_binary_alt, 'config_launcher.py'], cwd=working_dir)
+                except Exception as exc:
+                    msg=str(exc)
+                    print("exeption:", msg)
+                    #messagebox.showinfo(title="Debug2", message=msg)
+                    pass
 def btn_save_clicked(language_code):
     btn_save_act(language_code)
 
 def btn_save_act(language_code, slience_mode=False):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, 'settings.json')
+    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
 
     config_dict = get_default_config()
 
@@ -550,6 +610,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_presale_code_delimiter
 
     global txt_tixcraft_sid
+    global txt_ibon_ibonqware
     global txt_facebook_account
     global txt_kktix_account
     global txt_cityline_account
@@ -651,6 +712,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
 
         config_dict["advanced"]["tixcraft_sid"] = txt_tixcraft_sid.get().strip()
+        config_dict["advanced"]["ibonqware"] = txt_ibon_ibonqware.get().strip()
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
@@ -666,6 +728,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["kham_password"] = txt_kham_password.get().strip()
 
         config_dict["advanced"]["tixcraft_sid"] = encryptMe(config_dict["advanced"]["tixcraft_sid"])
+        config_dict["advanced"]["ibonqware"] = encryptMe(config_dict["advanced"]["ibonqware"])
         config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
         config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
         config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
@@ -947,6 +1010,7 @@ def applyNewLanguage():
     tabControl.tab(3, text=translate[language_code]["about"])
 
     global lbl_tixcraft_sid
+    global lbl_ibon_ibonqware
     global lbl_facebook_account
     global lbl_kktix_account
     global lbl_cityline_account
@@ -967,6 +1031,7 @@ def applyNewLanguage():
     global lbl_captcha_sound_filename
 
     lbl_tixcraft_sid.config(text=translate[language_code]["tixcraft_sid"])
+    lbl_ibon_ibonqware.config(text=translate[language_code]["ibon_ibonqware"])
     lbl_facebook_account.config(text=translate[language_code]["facebook_account"])
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
     lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
@@ -999,12 +1064,14 @@ def applyNewLanguage():
     global btn_save
     global btn_exit
     global btn_restore_defaults
+    global btn_launcher
 
     btn_run.config(text=translate[language_code]["run"])
     btn_save.config(text=translate[language_code]["save"])
     if btn_exit:
         btn_exit.config(text=translate[language_code]["exit"])
     btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
+    btn_launcher.config(text=translate[language_code]["config_launcher"])
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -1970,6 +2037,17 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
+    global lbl_ibon_ibonqware
+    lbl_ibon_ibonqware = Label(frame_group_header, text=translate[language_code]['ibon_ibonqware'])
+    lbl_ibon_ibonqware.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_ibon_ibonqware
+    txt_ibon_ibonqware_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ibonqware"].strip()))
+    txt_ibon_ibonqware = Entry(frame_group_header, width=20, textvariable = txt_ibon_ibonqware_value, show="*")
+    txt_ibon_ibonqware.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
     global lbl_facebook_account
     lbl_facebook_account = Label(frame_group_header, text=translate[language_code]['facebook_account'])
     lbl_facebook_account.grid(column=0, row=group_row_count, sticky = E)
@@ -2205,6 +2283,7 @@ def get_action_bar(root, language_code):
     global btn_save
     global btn_exit
     global btn_restore_defaults
+    global btn_launcher
 
     btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command= lambda: btn_run_clicked(language_code))
     btn_run.grid(column=0, row=0)
@@ -2217,6 +2296,10 @@ def get_action_bar(root, language_code):
 
     btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
     btn_restore_defaults.grid(column=2, row=0)
+
+    btn_launcher = ttk.Button(frame_action, text=translate[language_code]['config_launcher'], command= lambda: btn_launcher_clicked(language_code))
+    btn_launcher.grid(column=3, row=0)
+
 
     return frame_action
 

@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.24)"
+CONST_APP_VERSION = u"MaxBot (2023.02.25)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -154,6 +154,10 @@ def get_config_dict(args):
             if not args.kktix_password is None:
                 if len(args.kktix_password) > 0:
                     config_dict["advanced"]["kktix_password"] = args.kktix_password
+            if not args.ibonqware is None:
+                if len(args.ibonqware) > 0:
+                    config_dict["advanced"]["ibonqware"] = encryptMe(args.ibonqware)
+
 
             # special case for headless.
             is_headless_enable = False
@@ -635,6 +639,14 @@ def get_driver_by_config(config_dict):
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
+
+
+            if 'ibon.com' in homepage:
+                if len(config_dict["advanced"]["ibonqware"]) > 1:
+                    ibonqware = decryptMe(config_dict["advanced"]["ibonqware"])
+                    driver.delete_cookie("ibonqware")
+                    driver.add_cookie({"name":"ibonqware", "value": ibonqware, "domain" : "ibon.com.tw", "secure":True})
+
         except WebDriverException as exce2:
             print('oh no not again, WebDriverException')
             print('WebDriverException:', exce2)
@@ -1090,7 +1102,6 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     return return_list
 
 def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-
     tmp_text = captcha_text_div_text
     tmp_text = tmp_text.replace(u'  ',u' ')
     tmp_text = tmp_text.replace(u'：',u':')
@@ -1158,6 +1169,37 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             print("guess_answer_list_from_symbols:", return_list)
 
     return return_list
+
+def force_press_button(driver, select_by, select_query, force_by_js=True):
+    ret = False
+    next_step_button = None
+    try:
+        next_step_button = driver.find_element(select_by ,select_query)
+        if not next_step_button is None:
+            if next_step_button.is_enabled():
+                next_step_button.click()
+                ret = True
+    except Exception as exc:
+        print("find %s clickable Exception:" % (select_query))
+        #print(exc)
+        pass
+
+        if force_by_js:
+            if not next_step_button is None:
+                is_visible = False
+                try:
+                    if next_step_button.is_enabled():
+                        is_visible = True
+                except Exception as exc:
+                    pass
+
+                if is_visible:
+                    try:
+                        driver.execute_script("arguments[0].click();", next_step_button)
+                        ret = True
+                    except Exception as exc:
+                        pass
+    return ret
 
 # close some div on home url.
 def tixcraft_home_close_window(driver):
@@ -2283,43 +2325,14 @@ def kktix_confirm_order_button(driver):
 
     return ret
 
+
 # PS: There are two "Next" button in kktix.
 #   : 1: /events/xxx
 #   : 2: /events/xxx/registrations/new
 #   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
-    ret = False
-
-    wait = WebDriverWait(driver, 1)
-    next_step_button = None
-    try:
-        # method #3 wait
-        next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.tickets a.btn-point')))
-        if not next_step_button is None:
-            if next_step_button.is_enabled():
-                next_step_button.click()
-                ret = True
-    except Exception as exc:
-        print("wait form-actions div wait to be clickable Exception:")
-        #print(exc)
-        pass
-
-        if not next_step_button is None:
-            is_visible = False
-            try:
-                if next_step_button.is_enabled():
-                    is_visible = True
-            except Exception as exc:
-                pass
-
-            if is_visible:
-                try:
-                    driver.execute_script("arguments[0].click();", next_step_button)
-                    ret = True
-                except Exception as exc:
-                    pass
-
-    return ret
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.tickets a.btn-point')
+    return is_button_clicked
 
 #   : This is for case-2 next button.
 def kktix_press_next_button(driver):
@@ -5071,19 +5084,22 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
             for row in area_list:
                 row_index += 1
                 row_is_enabled=True
-                try:
-                    button_class_string = str(row.get_attribute('class'))
-                    if len(button_class_string) > 1:
-                        if 'disabled' in button_class_string:
+
+                if row_is_enabled:
+                    try:
+                        if '已售完' in row.text:
                             row_is_enabled=False
-                        if 'sold-out' in button_class_string:
-                            row_is_enabled=False
-                        if 'selected' in button_class_string:
-                            # someone is selected. skip this process.
-                            is_price_assign_by_bot = True
-                            break
-                except Exception as exc:
-                    pass
+                    except Exception as exc:
+                        pass
+
+                if row_is_enabled:
+                    try:
+                        button_class_string = str(row.get_attribute('class'))
+                        if len(button_class_string) > 1:
+                            if 'disabled' in button_class_string:
+                                row_is_enabled=False
+                    except Exception as exc:
+                        pass
 
                 if row_is_enabled:
                     formated_area_list.append(row)
@@ -5181,6 +5197,10 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                 target_row_index = random.randint(0,len(matched_blocks)-1)
 
             target_area = matched_blocks[target_row_index]
+        else:
+            is_need_refresh = True
+            if show_debug_message:
+                print("matched_blocks is empty.")
 
     if target_area is not None:
         try:
@@ -5218,6 +5238,12 @@ def ibon_performance(driver, config_dict):
         area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
         area_keyword_1_and = ""
         area_keyword_2_and = ""
+        area_keyword_3_and = ""
+        area_keyword_4_and = ""
+
+        area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
+        area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
+        area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
 
         if show_debug_message:
             print("area_keyword_1:", area_keyword_1)
@@ -5229,20 +5255,23 @@ def ibon_performance(driver, config_dict):
         if not is_price_assign_by_bot:
             is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
 
-        if not is_need_refresh:
-            if not is_price_assign_by_bot:
-                # try keyword_2
-                if len(area_keyword_2) > 0:
+            if is_need_refresh:
+                if area_keyword_2_enable:
                     is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword2:", is_need_refresh)
 
-        if not is_need_refresh:
-            if not is_price_assign_by_bot:
-                if len(area_keyword_3) > 0:
-                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "")
-        if not is_need_refresh:
-            if not is_price_assign_by_bot:
-                if len(area_keyword_4) > 0:
-                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "")
+            if is_need_refresh:
+                if area_keyword_3_enable:
+                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, area_keyword_3_and)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword3:", is_need_refresh)
+
+            if is_need_refresh:
+                if area_keyword_4_enable:
+                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, area_keyword_4_and)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword4:", is_need_refresh)
 
         if is_need_refresh:
             try:
@@ -5253,33 +5282,8 @@ def ibon_performance(driver, config_dict):
     return is_price_assign_by_bot
 
 def ibon_purchase_button_press(driver):
-    ret = False
-
-    el_btn = None
-    try:
-        el_btn = driver.find_element(By.CSS_SELECTOR, '#ticket-wrap > a.btn')
-    except Exception as exc:
-        print("find next button fail...")
-        print(exc)
-
-    if el_btn is not None:
-        print("bingo, found next button, start to press")
-        try:
-            if el_btn.is_enabled():
-                el_btn.click()
-                ret = True
-        except Exception as exc:
-            print("click next button fail...")
-            print(exc)
-            # use plan B
-            try:
-                print("force to click by js.")
-                driver.execute_script("arguments[0].click();", el_btn)
-                ret = True
-            except Exception as exc:
-                pass
-
-    return ret
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#ticket-wrap > a.btn')
+    return is_button_clicked
 
 def facebook_login(driver, account, password):
     ret = False
@@ -6125,11 +6129,75 @@ def ibon_verification_question(driver, answer_index, config_dict):
 
     return answer_index
 
+def ibon_ticket_agree(driver):
+    # check agree
+    form_checkbox = None
+    try:
+        form_checkbox = driver.find_element(By.ID, 'agreen')
+    except Exception as exc:
+        print("find #agreen fail")
+
+    is_finish_checkbox_click = False
+    if form_checkbox is not None:
+        try:
+            # TODO: check the status: checked.
+            if form_checkbox.is_enabled():
+                if not form_checkbox.is_selected():
+                    form_checkbox.click()
+                is_finish_checkbox_click = True
+        except Exception as exc:
+            print("click #agreen fail")
+            #pass
+            try:
+                print("use plan_b to check #agreen.")
+                driver.execute_script("$(\"input[type='checkbox']\").prop('checked', true);")
+                is_finish_checkbox_click = True
+            except Exception as exc:
+                print("javascript check #agreen fail")
+                print(exc)
+                pass
+
+    return is_finish_checkbox_click
+
+def ibon_check_sold_out(driver):
+    is_sold_out = False
+
+    # check agree
+    div_ticket_info = None
+    try:
+        div_ticket_info = driver.find_element(By.CSS_SELECTOR, '#ticket-info')
+    except Exception as exc:
+        print("find #ticket-info fail")
+
+    if div_ticket_info is not None:
+        try:
+            div_ticket_info_text = div_ticket_info.text
+            if not div_ticket_info_text is None:
+                if '已售完' in div_ticket_info_text:
+                    is_sold_out = True
+        except Exception as exc:
+            pass
+
+    return is_sold_out
+
+def ibon_auto_signup(driver):
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '.btn.btn-signup')
+    return is_button_clicked
+
 def ibon_main(driver, url, config_dict, ibon_dict):
+    # https://tour.ibon.com.tw/event/e23010000300mxu
+    if 'tour' in url and '/event/' in url:
+        is_event_page = False
+        if len(url.split('/'))==5:
+            is_event_page = True
+
+        if is_event_page:
+            ibon_auto_signup(driver)
+
     #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
     if '/ActivityInfo/Details/' in url:
         is_event_page = False
-        if len(url.split('/'))<=6:
+        if len(url.split('/'))==6:
             is_event_page = True
 
         if is_event_page:
@@ -6152,7 +6220,7 @@ def ibon_main(driver, url, config_dict, ibon_dict):
     # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
     if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
         is_event_page = False
-        if len(url.split('/'))<=6:
+        if len(url.split('/'))==6:
             is_event_page = True
 
         if is_event_page:
@@ -6164,9 +6232,32 @@ def ibon_main(driver, url, config_dict, ibon_dict):
                     is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, ticket_number)
                     if is_ticket_number_assigned:
                         click_ret = ibon_purchase_button_press(driver)
+                    else:
+                        is_sold_out = ibon_check_sold_out(driver)
+                        if is_sold_out:
+                            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                            driver.back()
+                            driver.refresh()
                 else:
                     # step 1: select area.
                     ibon_performance(driver, config_dict)
+
+    #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
+    if 'orders.ibon.com.tw/application/UTK02/UTK020' in url and '.aspx' in url:
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+
+        if is_event_page:
+            auto_check_agree = config_dict["auto_check_agree"]
+            if auto_check_agree:
+                is_finish_checkbox_click = False
+                for i in range(3):
+                    is_finish_checkbox_click = ibon_ticket_agree(driver)
+                    if is_finish_checkbox_click:
+                        break
+                if is_finish_checkbox_click:
+                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
 
     return ibon_dict
 
@@ -8133,6 +8224,10 @@ def cli():
 
     parser.add_argument("--kktix_password",
         help="overwrite kktix_password field",
+        type=str)
+
+    parser.add_argument("--ibonqware",
+        help="overwrite ibonqware field",
         type=str)
 
     parser.add_argument("--headless",
