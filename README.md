@@ -8,6 +8,14 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max掛號機器人 (2023-02-25)：ibon只搶限定的票價
+
+https://youtu.be/ZtnAh-VY5qs
+
+Max掛號機器人 (2023-02-25)：透過cookie的ibonware登入ibon
+
+https://youtu.be/QnaCRQjAlng
+
 Max搶票機器人 (2023-02-24)：KKTix，無視窗模式，多設定檔管
 
 https://youtu.be/QgLAHkJbhqQ
