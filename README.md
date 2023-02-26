@@ -12,7 +12,7 @@ Max搶票機器人 (2023-02-25)：ibon只搶限定的票價
 
 https://youtu.be/ZtnAh-VY5qs
 
-Max搶票機器人 (2023-02-25)：透過cookie的ibonware登入ibon
+Max搶票機器人 (2023-02-25)：透過cookie的ibonqware登入ibon
 
 https://youtu.be/QnaCRQjAlng
 
