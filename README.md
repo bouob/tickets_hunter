@@ -165,7 +165,7 @@ change the chromedrive in chrome_tixcraft.py, source code:
 <code>chromedriver_path =Root_Dir+ "webdriver/chromedriver"</code>
 the default path is the script path + "webdriver/chromedriver", My suggestion is to create a new directory, then move the chromedrive under new folder.
 
-2: <code>python3 -m pip install selenium</code>
+2: <code>python3 -m pip install -r pip-req.txt</code>
 
 3: <code>python3 settings.py</code>
 
