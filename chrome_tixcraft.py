@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.25)"
+CONST_APP_VERSION = u"MaxBot (2023.02.26)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -6265,9 +6265,10 @@ def hkticketing_home(driver):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
-    is_hotshow_popup = False
-
+    # OMG, I forgot why I wrote this code.
+    '''
     body_iframe = None
+    body_iframe_list = None
     try:
         body_iframe_list = driver.find_elements(By.CSS_SELECTOR, 'body > iframe')
     except Exception as exc:
@@ -6285,26 +6286,25 @@ def hkticketing_home(driver):
                 hotshow_btn = driver.find_element(By.CSS_SELECTOR, 'div.hotshow > a.btn')
                 if hotshow_btn is not None:
                     if hotshow_btn.is_enabled() and hotshow_btn.is_displayed():
-                        is_hotshow_popup = True
-                driver.switch_to.default_content()
+                        hotshow_btn.click()
             except Exception as exc:
+                pass
                 if show_debug_message:
                     print("find hotshow btn fail:", exc)
-                driver.switch_to.default_content()
+            driver.switch_to.default_content()
+    '''
 
-    if show_debug_message:
-        print("is_hotshow_popup", is_hotshow_popup)
+def hkticketing_accept_cookie(driver):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
 
     accept_all_cookies_btn = None
-    if not is_hotshow_popup:
-        try:
-            accept_all_cookies_btn = driver.find_element(By.ID, 'closepolicy_new')
-        except Exception as exc:
-            if show_debug_message:
-                print("find closepolicy_new fail")
-            pass
-    else:
-        print("reCaptcha popup, do nothing.")
+    try:
+        accept_all_cookies_btn = driver.find_element(By.ID, 'closepolicy_new')
+    except Exception as exc:
+        if show_debug_message:
+            print("find closepolicy_new fail")
+        pass
 
     if accept_all_cookies_btn is not None:
         is_visible = False
@@ -6320,11 +6320,14 @@ def hkticketing_home(driver):
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
+                pass
+                '''
                 print("try to click closepolicy_new fail")
                 try:
                     driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
                 except Exception as exc:
                     pass
+                '''
         else:
             if show_debug_message:
                 print("closepolicy_new invisible.")
@@ -6344,7 +6347,7 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '#p')
     except Exception as exc:
-        print("find select fail")
+        print("find select#p fail")
         pass
 
     select_obj = None
@@ -6379,6 +6382,7 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
 
     #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
+    is_page_ready = True
     if not is_date_assigned:
         area_list = None
         try:
@@ -6393,7 +6397,9 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
             if show_debug_message:
                 print("date_list_count:", area_list_count)
 
-            if area_list_count > 0:
+            if area_list_count == 0:
+                is_page_ready = False
+            else:
                 formated_area_list = []
 
                 # filter list.
@@ -6404,11 +6410,16 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                     option_value_string = None
                     try:
                         if row.is_enabled():
+                            '''
                             option_value_string = str(row.get_attribute('value'))
-                            if len(option_value_string) > 4:
+                            if len(option_value_string) > 6:
                                 row_is_enabled=True
+                            '''
                             # alway disable.
                             option_text_string = str(row.text)
+                            print("option_text_string:", option_text_string)
+                            if '20' in option_text_string:
+                                row_is_enabled=True
                             if ' Exhausted' in option_text_string:
                                 row_is_enabled=False
                             if '配售完畢' in option_text_string:
@@ -6519,6 +6530,9 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 if target_area.is_enabled():
                     target_area.click()
                     is_date_assigned = True
+
+                    #PS:must delay here, due to next loop coming to soon, will cause refresh.
+                    time.sleep(0.5)
             except Exception as exc:
                 print("click target_area link fail")
                 print(exc)
@@ -6570,8 +6584,14 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                         # option waiting to assign at next loop.
                         is_need_refresh = False
 
+            # due to select option not generated by server side.
+            if is_need_refresh:
+                if not is_page_ready:
+                    is_need_refresh = False
+
             if is_need_refresh:
                 try:
+                    print("is_need_refresh...")
                     driver.refresh()
                     time.sleep(0.3)
                 except Exception as exc:
@@ -6994,10 +7014,13 @@ def hkticketing_escape_robot_detection(driver):
         pass
 
     if el_main_iframe is not None:
-        print("bingo, found el_main_iframe, start to escape")
-        entry_url="https://queue.hkticketing.com/hotshow.html"
+        print("we have been detected..., found el_main_iframe")
+        #entry_url="https://queue.hkticketing.com/hotshow.html"
+        entry_url="https://premier.hkticketing.com/"
         try:
-            driver.get(entry_url)
+            #print("start to escape..")
+            #driver.get(entry_url)
+            pass
         except Exception as exc:
             print(exc)
 
@@ -7015,8 +7038,9 @@ def hkticketing_main(driver, url, config_dict):
     for each_url in home_url_list:
         if each_url == url:
             hkticketing_home(driver)
-            time.sleep(0.2)
             break
+
+    hkticketing_accept_cookie(driver)
 
     if 'queue.hkticketing.com/hotshow.html' in url:
         entry_url = 'http://entry-hotshow.hkticketing.com/'
