@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.27)"
+CONST_APP_VERSION = u"MaxBot (2023.02.28)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -631,6 +631,7 @@ def get_driver_by_config(config_dict):
 
             print("goto url:", homepage)
             driver.get(homepage)
+            time.sleep(3.0)
 
             tixcraft_family = False
             if 'tixcraft.com' in homepage:
@@ -644,7 +645,6 @@ def get_driver_by_config(config_dict):
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
-                    set_non_browser_cookies(driver, homepage, Captcha_Browser)
 
 
             if 'ibon.com' in homepage:
@@ -2104,28 +2104,18 @@ def tixcraft_reload_captcha(driver, domain_name):
 
     return ret
 
-#PS: credit to LinShihJhang's share
-def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name):
+def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
-    print("start to ddddocr")
 
-    is_need_redo_ocr = False
-    is_form_sumbited = False
-
-    orc_answer = None
+    ocr_answer = None
     if not ocr is None:
-        if show_debug_message:
-            print("away_from_keyboard_enable:", away_from_keyboard_enable)
-            print("previous_answer:", previous_answer)
-            print("ocr_captcha_image_source:", ocr_captcha_image_source)
-
-        ocr_start_time = time.time()
-
         img_base64 = None
+        
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+        
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'TicketForm_verifyCode-image'
             if 'indievox.com' in domain_name:
@@ -2154,59 +2144,68 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 pass
         if not img_base64 is None:
             try:
-                orc_answer = ocr.classification(img_base64)
+                ocr_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
-        else:
-            if previous_answer is None:
+
+    return ocr_answer
+#PS: credit to LinShihJhang's share
+def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+    print("start to ddddocr")
+
+    is_need_redo_ocr = False
+    is_form_sumbited = False
+
+    if not ocr is None:
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+        ocr_answer = tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+
+        if ocr_answer is None:
+            if away_from_keyboard_enable:
                 # page is not ready, retry again.
                 # PS: usually occur in async script get captcha image.
                 is_need_redo_ocr = True
                 time.sleep(0.1)
+            else:
+                tixcraft_keyin_captcha_code(driver)
+        else:
+            ocr_answer = ocr_answer.strip()
+            print("ocr_answer:", ocr_answer)
+            if len(ocr_answer)==4:
+                who_care_var, is_form_sumbited = tixcraft_keyin_captcha_code(driver, answer = ocr_answer, auto_submit = away_from_keyboard_enable)
+            else:
+                if not away_from_keyboard_enable:
+                    tixcraft_keyin_captcha_code(driver)
+                    tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
+                else:
+                    is_need_redo_ocr = True
+                    if previous_answer != ocr_answer:
+                        previous_answer = ocr_answer
+                        print("click captcha again.")
+                        if True:
+                            # selenium solution.
+                            tixcraft_reload_captcha(driver, domain_name)
 
-        ocr_done_time = time.time()
-        ocr_elapsed_time = ocr_done_time - ocr_start_time
-        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+                            if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+                                time.sleep(0.1)
+                        else:
+                            # Non_Browser solution.
+                            if not Captcha_Browser is None:
+                                new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                                if new_captcha_url != "":
+                                    tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
     else:
         print("ddddocr component is not able to use, you may running in arm environment.")
-
-    if not orc_answer is None:
-        orc_answer = orc_answer.strip()
-        print("orc_answer:", orc_answer)
-        if len(orc_answer)==4:
-            who_care_var, is_form_sumbited = tixcraft_keyin_captcha_code(driver, answer = orc_answer, auto_submit = away_from_keyboard_enable)
-        else:
-            if not away_from_keyboard_enable:
-                tixcraft_keyin_captcha_code(driver)
-                tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
-            else:
-                is_need_redo_ocr = True
-                if previous_answer != orc_answer:
-                    previous_answer = orc_answer
-                    print("click captcha again.")
-                    if True:
-                        # selenium solution.
-                        tixcraft_reload_captcha(driver, domain_name)
-
-                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
-                            time.sleep(0.1)
-                    else:
-                        # Non_Browser solution.
-                        if not Captcha_Browser is None:
-                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
-                            if new_captcha_url != "":
-                                tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
-    else:
-        print("orc_answer is None")
-        print("previous_answer:", previous_answer)
-        if previous_answer is None:
-            tixcraft_keyin_captcha_code(driver)
-        else:
-            # page is not ready, retry again.
-            # PS: usually occur in async script get captcha image.
-            # PS: previous answer is not none means OCR object works.
-            #     some user enable OCR feature, but component create fail, ex: macOS arm CPU.
-            is_need_redo_ocr = True
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
@@ -7778,7 +7777,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
     is_need_redo_ocr = False
     is_form_sumbited = False
 
-    orc_answer = None
+    ocr_answer = None
     if not ocr is None:
         if show_debug_message:
             print("away_from_keyboard_enable:", away_from_keyboard_enable)
@@ -7811,7 +7810,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
                 pass
         if not img_base64 is None:
             try:
-                orc_answer = ocr.classification(img_base64)
+                ocr_answer = ocr.classification(img_base64)
             except Exception as exc:
                 pass
 
@@ -7821,19 +7820,19 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
     else:
         print("ddddocr is None")
 
-    if not orc_answer is None:
-        orc_answer = orc_answer.strip()
-        print("orc_answer:", orc_answer)
-        if len(orc_answer)==4:
-            who_care_var, is_form_sumbited = kham_keyin_captcha_code(driver, answer = orc_answer, auto_submit = away_from_keyboard_enable)
+    if not ocr_answer is None:
+        ocr_answer = ocr_answer.strip()
+        print("ocr_answer:", ocr_answer)
+        if len(ocr_answer)==4:
+            who_care_var, is_form_sumbited = kham_keyin_captcha_code(driver, answer = ocr_answer, auto_submit = away_from_keyboard_enable)
         else:
             if not away_from_keyboard_enable:
                 kham_keyin_captcha_code(driver)
                 #tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
             else:
                 is_need_redo_ocr = True
-                if previous_answer != orc_answer:
-                    previous_answer = orc_answer
+                if previous_answer != ocr_answer:
+                    previous_answer = ocr_answer
                     print("click captcha again")
                     if True:
                         # selenium solution.
@@ -7851,7 +7850,7 @@ def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captc
                                 #tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
                                 pass
     else:
-        print("orc_answer is None")
+        print("ocr_answer is None")
         print("previous_answer:", previous_answer)
         if previous_answer is None:
             kham_keyin_captcha_code(driver)
@@ -8055,16 +8054,20 @@ def main(args):
     hkticketing_dict = {}
     hkticketing_dict["is_date_submiting"] = False
 
-    DISCONNECTED_MSG = ': target window already closed'
-
     ocr = None
     Captcha_Browser = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
             Captcha_Browser = NonBrowser()
+
+            if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
     except Exception as exc:
+        print(exc)
         pass
+
+    DISCONNECTED_MSG = ': target window already closed'
 
     while True:
         time.sleep(0.1)
@@ -8163,16 +8166,6 @@ def main(args):
             , u'web view not found'
             ]
             for each_error_string in exit_bot_error_strings:
-                # for python2
-                # say goodbye to python2
-                '''
-                try:
-                    basestring
-                    if isinstance(each_error_string, unicode):
-                        each_error_string = str(each_error_string)
-                except NameError:  # Python 3.x
-                    basestring = str
-                '''
                 if isinstance(str_exc, str):
                     if each_error_string in str_exc:
                         print('quit bot by error:', each_error_string)
