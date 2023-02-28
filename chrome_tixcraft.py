@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.26)"
+CONST_APP_VERSION = u"MaxBot (2023.02.27)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -141,6 +141,9 @@ def get_config_dict(args):
             if not args.homepage is None:
                 if len(args.homepage) > 0:
                     config_dict["homepage"] = args.homepage
+            if not args.ticket_number is None:
+                if args.homepage > 0:
+                    config_dict["ticket_number"] = args.ticket_number
             if not args.browser is None:
                 if len(args.browser) > 0:
                     config_dict["browser"] = args.browser
@@ -159,7 +162,7 @@ def get_config_dict(args):
                     config_dict["advanced"]["ibonqware"] = encryptMe(args.ibonqware)
 
 
-            # special case for headless.
+            # special case for headless to enable away from keyboard mode.
             is_headless_enable = False
             if config_dict["advanced"]["headless"]:
                 # for tixcraft headless.
@@ -240,6 +243,7 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
+    #chrome_options.add_argument('--disable-web-security')
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -323,6 +327,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
+    #options.add_argument('--disable-web-security')
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
@@ -639,6 +644,7 @@ def get_driver_by_config(config_dict):
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
+                    set_non_browser_cookies(driver, url, Captcha_Browser)
 
 
             if 'ibon.com' in homepage:
@@ -1298,7 +1304,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
-    sold_out_text_list = ["選購一空","No tickets available","空席なし"]
+    sold_out_text_list = ["選購一空","已售完","No tickets available","Sold out","空席なし","完売した"]
+    find_ticket_text_list = ['立即訂購','Find tickets','お申込みへ進む']
 
     game_name = ""
 
@@ -1330,11 +1337,11 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             print("find #gameList fail")
 
     is_coming_soon = False
-    coming_soon_condictions_list = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
+    coming_soon_condictions_list_tw = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
 
-    button_list = None
+    matched_row_list = None
     if date_list is not None:
-        button_list = []
+        matched_row_list = []
         for row in date_list:
             # step 1: check keyword.
             is_match_keyword_row = False
@@ -1352,7 +1359,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
             if len(row_text) > 0:
                 is_match_all_coming_soon_condiction = True
-                for condiction_string in coming_soon_condictions_list:
+                for condiction_string in coming_soon_condictions_list_tw:
                     if not condiction_string in row_text:
                         is_match_all_coming_soon_condiction = False
                         break
@@ -1368,81 +1375,73 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                     if date_keyword in row_text:
                         is_match_keyword_row = True
 
-            # step 2: check sold out.
+
+            # step 2: check button in row.
+            if is_match_keyword_row:
+                is_match_keyword_row = False
+                for text_item in find_ticket_text_list:
+                    if text_item in row_text:
+                        is_match_keyword_row = True
+                        break
+
+            # step 3: check sold out.
             if is_match_keyword_row:
                 if pass_date_is_sold_out_enable:
                     for sold_out_item in sold_out_text_list:
                         row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
                         if show_debug_message:
-                            print("check right part text:", row_text_right_part)
+                            #print("check right part text:", row_text_right_part)
+                            pass
                         if sold_out_item in row_text_right_part:
                             is_match_keyword_row = False
-
                             if show_debug_message:
                                 print("match sold out text: %s, skip this row." % (sold_out_item))
-
-                            # no need check next language item.
                             break
 
-            # step 3: add to list.
+            # step 4: add to list.
             if is_match_keyword_row:
-                el = None
-                try:
-                    el = row.find_element(By.CSS_SELECTOR, 'button')
-                except Exception as exc:
-                    if show_debug_message:
-                        print("find button fail")
-                    pass
-
-                if el is not None:
-                    button_list.append(el)
-                    if date_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                        # only need one row.
-                        if show_debug_message:
-                            print("match date row, only need first row, start to break")
-                        break
+                if show_debug_message:
+                    print("match row text: %s" % (row_text))
+                matched_row_list.append(row)
 
     is_date_selected = False
-    if button_list is not None:
-        if len(button_list) > 0:
+    if matched_row_list is not None:
+        matched_row_count = len(matched_row_list)
+        if show_debug_message:
+            print("matched_row_count:", matched_row_count)
+        if matched_row_count > 0:
             # default first row.
             target_row_index = 0
 
             if date_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(button_list) - 1
+                target_row_index = len(matched_row_list) - 1
 
             if date_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(button_list)-1)
+                target_row_index = random.randint(0,len(matched_row_list)-1)
 
             if show_debug_message:
                 print("clicking at button index:", target_row_index+1)
 
-            el = None
+            target_row = matched_row_list[target_row_index]
+            target_button = None
             try:
-                el = button_list[target_row_index]
-                if show_debug_message:
-                    print("pressing button...")
-                el.click()
-                '''
-                ticket_url = el.get_attribute('data-href')
-                is_redirected = False
-                if not ticket_url is None:
-                    if len(ticket_url) > 0:
-                        driver.get("https:%s%s" % (domain_name, ticket_url))
-                        is_redirected = True
-                '''
-                is_date_selected = True
+                target_button = target_row.find_element(By.CSS_SELECTOR, 'button')
+                if target_button.is_enabled():
+                    if show_debug_message:
+                        print("pressing button...")
+                    target_button.click()
+                    is_date_selected = True
             except Exception as exc:
-                print("try to click button fail, force click by js.")
-                print(exc)
-                try:
-                    driver.execute_script("arguments[0].click();", el)
-                except Exception as exc:
-                    pass
+                if show_debug_message:
+                    print("find or press button fail")
 
-        # PS: Is this case need to reload page?
-        #   (A)user input keywords, with matched text, but no hyperlink to click.
-        #   (B)user input keywords, but not no matched text with hyperlink to click.
+                if not target_button is None:
+                    print("try to click button fail, force click by js.")
+                    #print(exc)
+                    try:
+                        driver.execute_script("arguments[0].click();", target_button)
+                    except Exception as exc:
+                        pass
 
     # [PS]: current reload condition only when
     if auto_reload_coming_soon_page_enable:
@@ -1460,8 +1459,10 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 # case 1: No hyperlink button.
                 el_list = None
                 try:
-                    el_list = driver.find_elements(By.CSS_SELECTOR, 'button')
+                    el_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr > td > button.btn')
                     if el_list is None:
+                        if show_debug_message:
+                            print("No buttons in list, do refresh...")
                         driver.refresh()
                     else:
                         if len(el_list) == 0:
@@ -2128,7 +2129,8 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'TicketForm_verifyCode-image'
             if 'indievox.com' in domain_name:
-                image_id = 'TicketForm_verifyCode-image'
+                #image_id = 'TicketForm_verifyCode-image'
+                pass
             try:
                 form_verifyCode_base64 = driver.execute_async_script("""
                     var canvas = document.createElement('canvas');
@@ -2141,6 +2143,11 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                     callback(canvas.toDataURL());
                     """ % (image_id))
                 img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+
+                if img_base64 is None:
+                    if not Captcha_Browser is None:
+                        print("canvas get image fail, use plan_b: NonBrowser")
+                        img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
             except Exception as exc:
                 if show_debug_message:
                     print("canvas exception:", str(exc))
@@ -2161,7 +2168,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
         ocr_elapsed_time = ocr_done_time - ocr_start_time
         print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
     else:
-        print("ddddocr is None")
+        print("ddddocr component is not able to use, you may running in arm environment.")
 
     if not orc_answer is None:
         orc_answer = orc_answer.strip()
@@ -5741,17 +5748,20 @@ def list_all_cookies(driver):
         cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
+def set_non_browser_cookies(driver, url, Captcha_Browser):
+    domain_name = url.split('/')[2]
+    #PS: need set cookies once, if user change domain.
+    if not Captcha_Browser is None:
+        Captcha_Browser.Set_cookies(driver.get_cookies())
+        Captcha_Browser.Set_Domain(domain_name)
+
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     tixcraft_home_close_window(driver)
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
     for each_url in home_url_list:
         if each_url == url:
             if config_dict["ocr_captcha"]["enable"]:
-                domain_name = url.split('/')[2]
-                #PS: need set cookies once, if user change domain.
-                if not Captcha_Browser is None:
-                    Captcha_Browser.Set_cookies(driver.get_cookies())
-                    Captcha_Browser.Set_Domain(domain_name)
+                set_non_browser_cookies(driver, url, Captcha_Browser)
             break
 
     if "/activity/detail/" in url:
@@ -6336,7 +6346,6 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    ret = False
     matched_blocks = None
 
     # clean stop word.
@@ -6530,9 +6539,6 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 if target_area.is_enabled():
                     target_area.click()
                     is_date_assigned = True
-
-                    #PS:must delay here, due to next loop coming to soon, will cause refresh.
-                    time.sleep(0.5)
             except Exception as exc:
                 print("click target_area link fail")
                 print(exc)
@@ -6547,6 +6553,7 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 '''
 
     # alway, auto submit
+    is_date_submiting = False
     el_btn = None
     try:
         my_css_selector = "#buyButton > input"
@@ -6559,8 +6566,9 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
             if el_btn.is_enabled() and el_btn.is_displayed():
                 el_btn.click()
                 print("buy button pressed.")
-                ret = True
+                is_date_submiting = True
         except Exception as exc:
+            pass
             # use plan B
             '''
             try:
@@ -6597,7 +6605,7 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                 except Exception as exc:
                     pass
 
-    return ret
+    return is_date_submiting
 
 def hkticketing_show(driver, config_dict):
     show_debug_message = True       # debug.
@@ -6610,9 +6618,9 @@ def hkticketing_show(driver, config_dict):
     if show_debug_message:
         print("date_keyword:", date_keyword)
         print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
-    is_date_assign_by_bot = hkticketing_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
+    is_date_submiting = hkticketing_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
 
-    return is_date_assign_by_bot
+    return is_date_submiting
 
 def hkticketing_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and):
     show_debug_message = True       # debug.
@@ -6966,7 +6974,7 @@ def hkticketing_performance(driver, config_dict, domain_name):
                 pass
 
         # hide blocks.
-        hkticketing_hide_tickets_blocks(driver)
+        #hkticketing_hide_tickets_blocks(driver)
 
         # goto bottom.
         hkticketing_nav_to_footer(driver)
@@ -7009,7 +7017,7 @@ def hkticketing_escape_robot_detection(driver):
     try:
         el_main_iframe = driver.find_element(By.ID, 'main-iframe')
     except Exception as exc:
-        print("find el_main_iframe fail...")
+        #print("find el_main_iframe fail...")
         #print(exc)
         pass
 
@@ -7027,7 +7035,7 @@ def hkticketing_escape_robot_detection(driver):
     return ret
 
 
-def hkticketing_main(driver, url, config_dict):
+def hkticketing_main(driver, url, config_dict, hkticketing_dict):
     home_url_list = ['https://premier.hkticketing.com/'
     ,'https://hotshow.hkticketing.com/'
     ,'https://premier.hkticketing.com/default.aspx'
@@ -7068,8 +7076,9 @@ def hkticketing_main(driver, url, config_dict):
             if is_event_page:
                 date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
                 if date_auto_select_enable:
-                    hkticketing_show(driver, config_dict)
-                    pass
+                    if not hkticketing_dict["is_date_submiting"]:
+                        hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
+                        pass
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
@@ -7090,6 +7099,8 @@ def hkticketing_main(driver, url, config_dict):
                 # goto bottom.
                 hkticketing_nav_to_footer(driver)
                 hkticketing_go_to_payment(driver)
+
+    return hkticketing_dict
 
 def khan_go_buy_redirect(driver):
     ret = False
@@ -8041,6 +8052,9 @@ def main(args):
     ibon_dict = {}
     ibon_dict["answer_index"]=-1
 
+    hkticketing_dict = {}
+    hkticketing_dict["is_date_submiting"] = False
+
     DISCONNECTED_MSG = ': target window already closed'
 
     ocr = None
@@ -8214,10 +8228,10 @@ def main(args):
             cityline_main(driver, url, config_dict)
 
         if 'hkticketing.com' in url:
-            hkticketing_main(driver, url, config_dict)
+            hkticketing_dict = hkticketing_main(driver, url, config_dict, hkticketing_dict)
 
         if 'galaxymacau.com' in url:
-            hkticketing_main(driver, url, config_dict)
+            hkticketing_dict = hkticketing_main(driver, url, config_dict, hkticketing_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
@@ -8237,6 +8251,10 @@ def cli():
     parser.add_argument("--homepage",
         help="overwrite homepage setting",
         type=str)
+
+    parser.add_argument("--ticket_number",
+        help="overwrite ticket_number setting",
+        type=int)
 
     parser.add_argument("--tixcraft_sid",
         help="overwrite tixcraft sid field",
