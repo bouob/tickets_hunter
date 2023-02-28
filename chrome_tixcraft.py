@@ -644,7 +644,7 @@ def get_driver_by_config(config_dict):
                     tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
-                    set_non_browser_cookies(driver, url, Captcha_Browser)
+                    set_non_browser_cookies(driver, homepage, Captcha_Browser)
 
 
             if 'ibon.com' in homepage:
@@ -7077,7 +7077,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
                 if date_auto_select_enable:
                     if not hkticketing_dict["is_date_submiting"]:
-                        hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
+                        #hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
                         pass
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
@@ -7092,7 +7092,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 domain_name = url.split('/')[2]
                 area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
                 if area_auto_select_enable:
-                    hkticketing_performance(driver, config_dict, domain_name)
+                    #hkticketing_performance(driver, config_dict, domain_name)
                     pass
 
             if '/seatmap' in url:
