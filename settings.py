@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.02.28)"
+CONST_APP_VERSION = u"MaxBot (2023.03.02)"
 
 CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
 
@@ -2294,11 +2294,12 @@ def get_action_bar(root, language_code):
     btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
     #btn_exit.grid(column=2, row=0)
 
-    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
-    btn_restore_defaults.grid(column=2, row=0)
-
     btn_launcher = ttk.Button(frame_action, text=translate[language_code]['config_launcher'], command= lambda: btn_launcher_clicked(language_code))
-    btn_launcher.grid(column=3, row=0)
+    btn_launcher.grid(column=2, row=0)
+
+    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
+    btn_restore_defaults.grid(column=3, row=0)
+
 
 
     return frame_action

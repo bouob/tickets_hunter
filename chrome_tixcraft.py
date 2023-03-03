@@ -7099,6 +7099,12 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 hkticketing_nav_to_footer(driver)
                 hkticketing_go_to_payment(driver)
 
+    # for ticketing.galaxymacau
+    if "/busy_galaxy.html" in url:
+        domain_name = url.split('/')[2]
+        new_url = "https://%s/default.aspx" % (domain_name)
+        driver.get(new_url)
+
     return hkticketing_dict
 
 def khan_go_buy_redirect(driver):
