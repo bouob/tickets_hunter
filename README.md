@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-03-02)：澳門銀河購票無延遲
+
+https://youtu.be/mFxzzWU4ksU
+
 Max搶票機器人 (2023-02-25)：ibon只搶限定的票價
 
 https://youtu.be/ZtnAh-VY5qs
