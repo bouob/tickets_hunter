@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.03)"
+CONST_APP_VERSION = u"MaxBot (2023.03.04)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -212,7 +212,7 @@ def find_continuous_pattern(allowed_char, text):
 
 def get_favoriate_extension_path(webdriver_path):
     no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
-    no_ad_path = os.path.join(webdriver_path,"Adblock_3.15.2.0.crx")
+    no_ad_path = os.path.join(webdriver_path,"Adblock_3.16.1.0.crx")
     return no_google_analytics_path, no_ad_path
 
 def get_chromedriver_path(webdriver_path):
@@ -243,7 +243,8 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
-    #chrome_options.add_argument('--disable-web-security')
+    chrome_options.add_argument('--disable-web-security')
+    chrome_options.add_argument("--no-sandbox");
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -327,7 +328,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
-    #options.add_argument('--disable-web-security')
+    options.add_argument('--disable-web-security')
+    options.add_argument("--no-sandbox");
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
@@ -1978,7 +1980,7 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
                     form_input.send_keys(Keys.ENTER)
                 except Exception as exc:
                     pass
-            
+
             if is_retry_user_single_answer:
                 # increase counter for waiting for stop retry.
                 answer_index += 1
@@ -2111,11 +2113,11 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
     ocr_answer = None
     if not ocr is None:
         img_base64 = None
-        
+
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
-        
+
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'TicketForm_verifyCode-image'
             if 'indievox.com' in domain_name:
@@ -6341,6 +6343,42 @@ def hkticketing_accept_cookie(driver):
             if show_debug_message:
                 print("closepolicy_new invisible.")
 
+def hkticketing_date_buy_button_press(driver):
+    is_date_submiting = False
+    el_btn = None
+    try:
+        my_css_selector = "#buyButton > input"
+        el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        pass
+
+    if el_btn is not None:
+        try:
+            if el_btn.is_enabled() and el_btn.is_displayed():
+                el_btn.click()
+                print("buy button pressed.")
+                is_date_submiting = True
+            else:
+                if not el_btn.is_enabled():
+                    print("force to press disabled buy button.")
+                    try:
+                        driver.execute_script("arguments[0].click();", el_btn)
+                        ret = True
+                    except Exception as exc:
+                        pass
+        except Exception as exc:
+            pass
+            # use plan B
+            '''
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", el_btn)
+                ret = True
+            except Exception as exc:
+                pass
+            '''
+    return is_date_submiting
+
 def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -7078,6 +7116,11 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                     if not hkticketing_dict["is_date_submiting"]:
                         hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
                         pass
+                    else:
+                        #print('double check buy button status.')
+                        hkticketing_date_buy_button_press(driver)
+    else:
+        hkticketing_dict["is_date_submiting"] = False
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
