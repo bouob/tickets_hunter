@@ -20,7 +20,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.03.02)"
+CONST_APP_VERSION = u"MaxBot (2023.03.03)"
 
 CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
 

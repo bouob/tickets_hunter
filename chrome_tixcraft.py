@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.02.28)"
+CONST_APP_VERSION = u"MaxBot (2023.03.03)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -7076,7 +7076,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
                 if date_auto_select_enable:
                     if not hkticketing_dict["is_date_submiting"]:
-                        #hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
+                        hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
                         pass
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
@@ -7091,7 +7091,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 domain_name = url.split('/')[2]
                 area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
                 if area_auto_select_enable:
-                    #hkticketing_performance(driver, config_dict, domain_name)
+                    hkticketing_performance(driver, config_dict, domain_name)
                     pass
 
             if '/seatmap' in url:
