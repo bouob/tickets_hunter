@@ -1300,7 +1300,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     show_debug_message = False   # online
 
     # read config.
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
@@ -1318,7 +1318,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     if show_debug_message:
         print('get date game_name:', game_name)
-        print("date_auto_select_mode:", date_auto_select_mode)
+        print("date_auto_select_mode:", auto_select_mode)
         print("date_keyword:", date_keyword)
 
     check_game_detail = False
@@ -1331,119 +1331,182 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 print("date keyword:", date_keyword)
         check_game_detail = True
 
-    date_list = None
+    area_list = None
     if check_game_detail:
         try:
-            date_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
+            area_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
         except Exception as exc:
             print("find #gameList fail")
 
     is_coming_soon = False
     coming_soon_condictions_list_tw = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
 
-    matched_row_list = None
-    if date_list is not None:
-        matched_row_list = []
-        for row in date_list:
-            # step 1: check keyword.
-            is_match_keyword_row = False
+    matched_blocks = None
+    formated_area_list = None
 
-            row_text = ""
-            try:
-                row_text = row.text
-            except Exception as exc:
-                print("get text fail")
-                # should use continue or break?
-                break
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
 
-            if row_text is None:
-                row_text = ""
+        if area_list_count > 0:
+            formated_area_list = []
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    if not row.is_enabled():
+                        row_is_enabled=False
+                    
+                    row_text = ""
+                    # check buy button.
+                    if row_is_enabled:
+                        row_text = row.text
+                        if row_text is None:
+                            row_text = ""
 
-            if len(row_text) > 0:
-                is_match_all_coming_soon_condiction = True
-                for condiction_string in coming_soon_condictions_list_tw:
-                    if not condiction_string in row_text:
-                        is_match_all_coming_soon_condiction = False
-                        break
-                if is_match_all_coming_soon_condiction:
-                    is_coming_soon = True
-                    break
+                        row_is_enabled=False
+                        for text_item in find_ticket_text_list:
+                            if text_item in row_text:
+                                row_is_enabled = True
+                                break
 
-                if len(date_keyword) == 0:
-                    # no keyword, match all.
-                    is_match_keyword_row = True
-                else:
-                    # check keyword.
-                    if date_keyword in row_text:
-                        is_match_keyword_row = True
+                    # check sold out text.
+                    if row_is_enabled:
+                        if pass_date_is_sold_out_enable:
+                            for sold_out_item in sold_out_text_list:
+                                row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
+                                if show_debug_message:
+                                    #print("check right part text:", row_text_right_part)
+                                    pass
+                                if sold_out_item in row_text_right_part:
+                                    row_is_enabled = False
+                                    if show_debug_message:
+                                        print("match sold out text: %s, skip this row." % (sold_out_item))
+                                    break
 
-
-            # step 2: check button in row.
-            if is_match_keyword_row:
-                is_match_keyword_row = False
-                for text_item in find_ticket_text_list:
-                    if text_item in row_text:
-                        is_match_keyword_row = True
-                        break
-
-            # step 3: check sold out.
-            if is_match_keyword_row:
-                if pass_date_is_sold_out_enable:
-                    for sold_out_item in sold_out_text_list:
-                        row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
-                        if show_debug_message:
-                            #print("check right part text:", row_text_right_part)
-                            pass
-                        if sold_out_item in row_text_right_part:
-                            is_match_keyword_row = False
-                            if show_debug_message:
-                                print("match sold out text: %s, skip this row." % (sold_out_item))
+                    # check is coming soon.
+                    if row_is_enabled:
+                        is_match_all_coming_soon_condiction = True
+                        for condiction_string in coming_soon_condictions_list_tw:
+                            if not condiction_string in row_text:
+                                is_match_all_coming_soon_condiction = False
+                                break
+                        if is_match_all_coming_soon_condiction:
+                            is_coming_soon = True
                             break
 
-            # step 4: add to list.
-            if is_match_keyword_row:
-                if show_debug_message:
-                    print("match row text: %s" % (row_text))
-                matched_row_list.append(row)
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    pass
 
-    is_date_selected = False
-    if matched_row_list is not None:
-        matched_row_count = len(matched_row_list)
-        if show_debug_message:
-            print("matched_row_count:", matched_row_count)
-        if matched_row_count > 0:
-            # default first row.
-            target_row_index = 0
-
-            if date_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_row_list) - 1
-
-            if date_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_row_list)-1)
+                if row_is_enabled:
+                    formated_area_list.append(row)
 
             if show_debug_message:
-                print("clicking at button index:", target_row_index+1)
+                print("formated_area_list count:", len(formated_area_list))
 
-            target_row = matched_row_list[target_row_index]
-            target_button = None
-            try:
-                target_button = target_row.find_element(By.CSS_SELECTOR, 'button')
-                if target_button.is_enabled():
-                    if show_debug_message:
-                        print("pressing button...")
-                    target_button.click()
-                    is_date_selected = True
-            except Exception as exc:
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
                 if show_debug_message:
-                    print("find or press button fail")
+                    print("start to match keyword:", date_keyword)
+                matched_blocks = []
 
-                if not target_button is None:
-                    print("try to click button fail, force click by js.")
-                    #print(exc)
-                    try:
-                        driver.execute_script("arguments[0].click();", target_button)
-                    except Exception as exc:
-                        pass
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if date_keyword in row_text:
+                                if len(date_keyword_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and # is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if date_keyword_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    is_date_selected = False
+    if target_area is not None:
+        target_button = None
+        try:
+            target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
+            if target_button.is_enabled():
+                if show_debug_message:
+                    print("pressing button...")
+                target_button.click()
+                is_date_selected = True
+        except Exception as exc:
+            if show_debug_message:
+                print("find or press button fail")
+
+            if not target_button is None:
+                print("try to click button fail, force click by js.")
+                #print(exc)
+                try:
+                    driver.execute_script("arguments[0].click();", target_button)
+                except Exception as exc:
+                    pass
 
     # [PS]: current reload condition only when
     if auto_reload_coming_soon_page_enable:
@@ -1458,19 +1521,13 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 pass
         else:
             if not is_date_selected:
-                # case 1: No hyperlink button.
-                el_list = None
-                try:
-                    el_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr > td > button.btn')
-                    if el_list is None:
-                        if show_debug_message:
-                            print("No buttons in list, do refresh...")
-                        driver.refresh()
-                    else:
-                        if len(el_list) == 0:
+                if not formated_area_list is None:
+                    if len(formated_area_list) == 0:
+                        try:
                             driver.refresh()
-                except Exception as exc:
-                    pass
+                            time.sleep(0.3)
+                        except Exception as exc:
+                            pass
 
     return is_date_selected
 
@@ -4351,9 +4408,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         print("find #date-time-position date list fail")
         print(exc)
 
-    #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
-
     if area_list is not None:
         area_list_count = len(area_list)
         if show_debug_message:
@@ -4361,13 +4416,10 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
 
         if area_list_count > 0:
             formated_area_list = []
-            # filter list.
-
             row_index = 0
             for row in area_list:
                 row_index += 1
                 row_is_enabled=True
-                el_btn = None
                 try:
                     if not row.is_enabled():
                         row_is_enabled=False
@@ -4482,7 +4534,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                 if len(formated_area_list) == 0:
                     try:
                         driver.refresh()
-                        time.sleep(0.4)
+                        time.sleep(0.3)
                     except Exception as exc:
                         pass
 
