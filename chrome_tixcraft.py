@@ -360,7 +360,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
         if is_local_chrome_browser_lower:
             print("Use local user downloaded chromedriver to lunch chrome browser.")
             driver_type = "selenium"
-            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable)
+            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
