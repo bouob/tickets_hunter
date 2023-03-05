@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.04)"
+CONST_APP_VERSION = u"MaxBot (2023.03.05)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'

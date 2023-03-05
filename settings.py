@@ -12,6 +12,7 @@ except ImportError:
     from tkinter import *
     from tkinter import ttk
     from tkinter import messagebox
+    from tkinter.filedialog import asksaveasfilename
 import os
 import sys
 import platform
@@ -20,7 +21,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.03.04)"
+CONST_APP_VERSION = u"MaxBot (2023.03.05)"
 
 CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
 
@@ -749,13 +750,23 @@ def btn_save_act(language_code, slience_mode=False):
     # save config.
     if is_all_data_correct:
         import json
-        with open(config_filepath, 'w') as outfile:
-            json.dump(config_dict, outfile)
 
         if not slience_mode:
-            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
+            #messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
+            file_to_save = asksaveasfilename(initialfile = CONST_SETTINGS_CONFIG_FILENAME, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
+            if not file_to_save is None:
+                print("save as to:", file_to_save)
+                with open(str(file_to_save), 'w') as outfile:
+                    json.dump(config_dict, outfile)
+        else:
+            # slience
+            with open(config_filepath, 'w') as outfile:
+                json.dump(config_dict, outfile)
+
 
     return is_all_data_correct
+
+
 
 def btn_run_clicked(language_code):
     import subprocess

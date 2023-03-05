@@ -11,6 +11,7 @@ except ImportError:
     from tkinter import *
     from tkinter import ttk
     from tkinter import messagebox
+    from tkinter import filedialog
 
 import os
 import sys
@@ -19,7 +20,7 @@ import json
 import webbrowser
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.03.04)"
+CONST_APP_VERSION = u"MaxBot (2023.03.05)"
 
 CONST_LAUNCHER_CONFIG_FILENAME = "config_launcher.json"
 
@@ -46,6 +47,7 @@ def load_translate():
     en_us["about"] = 'About'
 
     en_us["run"] = 'Run'
+    en_us["browse"] = 'Browse...'
     en_us["save"] = 'Save'
     en_us["exit"] = 'Close'
     en_us["copy"] = 'Copy'
@@ -67,6 +69,7 @@ def load_translate():
     zh_tw["about"] = '關於'
 
     zh_tw["run"] = '搶票'
+    zh_tw["browse"] = '開啟...'
     zh_tw["save"] = '存檔'
     zh_tw["exit"] = '關閉'
     zh_tw["copy"] = '複製'
@@ -89,6 +92,7 @@ def load_translate():
     zh_cn["copy"] = '复制'
 
     zh_cn["run"] = '抢票'
+    zh_cn["browse"] = '开启...'
     zh_cn["save"] = '存档'
     zh_cn["exit"] = '关闭'
     zh_cn["copy"] = '复制'
@@ -110,6 +114,7 @@ def load_translate():
     ja_jp["about"] = '情報'
 
     ja_jp["run"] = 'チケットを取る'
+    ja_jp["browse"] = '開ける...'
     ja_jp["save"] = '保存'
     ja_jp["exit"] = '閉じる'
     ja_jp["copy"] = 'コピー'
@@ -269,15 +274,17 @@ def applyNewLanguage():
     lbl_donate.config(text=translate[language_code]["donate"])
     lbl_release.config(text=translate[language_code]["release"])
 
+    global btn_browse
+    for i in range(15):
+        btn_browse[i].config(text=translate[language_code]['browse'] + " " + str(i+1))
+
     global btn_run
     for i in range(15):
         btn_run[i].config(text=translate[language_code]['run'] + " " + str(i+1))
 
-    #global btn_run
     global btn_save
     global btn_restore_defaults
 
-    #btn_run.config(text=translate[language_code]["run"])
     btn_save.config(text=translate[language_code]["save"])
     btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
 
@@ -288,7 +295,21 @@ def callbackHomepageOnChange(event):
 def showHideBlocks(all_layout_visible=False):
     pass
 
-def btn_items_event(event):
+def btn_items_browse_event(event):
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    btn_index = int(str(event.widget['text']).split(" ")[1])
+    global txt_file_name_value
+    file_path = filedialog.askopenfilename(initialdir=working_dir, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
+    if not file_path is None:
+        display_path = file_path
+        if len(file_path) > len(working_dir):
+            if file_path[:len(working_dir)]==working_dir:
+                display_path = file_path[len(working_dir)+1:]
+        #print("json file path:", file_path)
+        txt_file_name_value[btn_index-1].set(display_path)
+        #print("new json file path:", txt_file_name[btn_index-1].get().strip())
+
+def btn_items_run_event(event):
     btn_index = int(str(event.widget['text']).split(" ")[1])
     global txt_file_name
     filename=txt_file_name[btn_index-1].get().strip()
@@ -349,10 +370,12 @@ def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
     global lbl_file_name
     global txt_file_name
     global txt_file_name_value
+    global btn_browse
     global btn_run
     lbl_file_name = {}
     txt_file_name = {}
     txt_file_name_value = {}
+    btn_browse = {}
     btn_run = {}
 
     print("config_dict[list]:",config_dict["list"])
@@ -368,9 +391,13 @@ def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
         txt_file_name[i] = Entry(frame_group_header, width=20, textvariable = txt_file_name_value[i])
         txt_file_name[i].grid(column=1, row=group_row_count, sticky = W)
 
+        btn_browse[i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
+        btn_browse[i].grid(column=2, row=group_row_count, sticky = W)
+        btn_browse[i].bind('<Button-1>', btn_items_browse_event)
+
         btn_run[i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
-        btn_run[i].grid(column=2, row=group_row_count, sticky = W)
-        btn_run[i].bind('<Button-1>', btn_items_event)
+        btn_run[i].grid(column=3, row=group_row_count, sticky = W)
+        btn_run[i].bind('<Button-1>', btn_items_run_event)
 
         group_row_count+=1
 
