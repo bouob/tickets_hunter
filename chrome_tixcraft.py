@@ -7195,9 +7195,15 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 hkticketing_go_to_payment(driver)
 
     # for ticketing.galaxymacau
-    if "/busy_galaxy.html" in url:
+    if "/busy_galaxy.htm" in url:
         domain_name = url.split('/')[2]
         new_url = "https://%s/default.aspx" % (domain_name)
+        print("redirecting to url:", new_url)
+        try:
+            # web server is too busy to reponse.
+            driver.execute_script("retryIn=0;document.location.href = \"/default.aspx\";")
+        except Exception as exc:
+            pass
         driver.get(new_url)
 
     return hkticketing_dict
