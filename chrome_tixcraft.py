@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.05)"
+CONST_APP_VERSION = u"MaxBot (2023.03.06)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -2350,9 +2350,6 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
                     if not is_need_redo_ocr:
                         break
-
-    if is_verifyCode_editing:
-        print("goto is_verifyCode_editing == True")
 
     return is_verifyCode_editing
 
@@ -5842,11 +5839,8 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
-        if not tixcraft_dict["is_verifyCode_editing"]:
-            domain_name = url.split('/')[2]
-            tixcraft_dict["is_verifyCode_editing"] = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
-    else:
-        tixcraft_dict["is_verifyCode_editing"] = False
+        domain_name = url.split('/')[2]
+        is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     if '/ticket/checkout' in url:
         if config_dict["advanced"]["headless"]:
@@ -8146,7 +8140,6 @@ def main(args):
     # for tixcraft
     tixcraft_dict = {}
     tixcraft_dict["answer_index"]=-1
-    tixcraft_dict["is_verifyCode_editing"] = False
     tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
@@ -8230,10 +8223,7 @@ def main(args):
                         break
 
         except UnexpectedAlertPresentException as exc1:
-            # PS: DON'T remove this line.
-            is_verifyCode_editing = False
             print('UnexpectedAlertPresentException at this url:', url )
-            #time.sleep(3.5)
             # PS: do nothing...
             # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
             # raise exception at selenium/webdriver/remote/errorhandler.py
@@ -8247,8 +8237,6 @@ def main(args):
                     pass
 
         except Exception as exc:
-            is_verifyCode_editing = False
-
             logger.error('Maxbot URL Exception')
             logger.error(exc, exc_info=True)
 
