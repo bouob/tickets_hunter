@@ -21,7 +21,7 @@ import webbrowser
 import pyperclip
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.03.06)"
+CONST_APP_VERSION = u"MaxBot (2023.03.07)"
 
 CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
 
@@ -96,6 +96,8 @@ def load_translate():
     en_us["ocr_captcha_image_source"] = 'OCR image source'
     en_us["webdriver_type"] = 'WebDriver type'
     en_us["headless"] = 'Headless mode'
+    # Make the operation more talkative
+    en_us["verbose"] = 'Verbose mode'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
@@ -175,6 +177,7 @@ def load_translate():
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
     zh_tw["webdriver_type"] = 'WebDriver類別'
     zh_tw["headless"] = '無圖形界面模式'
+    zh_tw["verbose"] = '輸出詳細除錯訊息'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
@@ -254,6 +257,7 @@ def load_translate():
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
     zh_cn["webdriver_type"] = 'WebDriver类别'
     zh_cn["headless"] = '无图形界面模式'
+    zh_cn["verbose"] = '输出详细除错讯息'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
@@ -334,6 +338,7 @@ def load_translate():
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
     ja_jp["headless"] = 'ヘッドレスモード'
+    ja_jp["verbose"] = '詳細モード'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -484,8 +489,7 @@ def get_default_config():
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["open_google_oauth_url"] = False
     config_dict["advanced"]["headless"] = False
-
-    config_dict['debug']=False
+    config_dict["advanced"]["verbose"] = False
 
     return config_dict
 
@@ -633,6 +637,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha_force_submit
     global chk_state_google_oauth
     global chk_state_headless
+    global chk_state_verbose
     global combo_ocr_captcha_image_source
     global combo_webdriver_type
 
@@ -746,6 +751,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
+        config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
 
     # save config.
     if is_all_data_correct:
@@ -921,6 +927,7 @@ def applyNewLanguage():
     global lbl_ocr_captcha_image_source
     global lbl_webdriver_type
     global lbl_headless
+    global lbl_verbose
 
     # for checkbox
     global chk_pass_1_seat_remaining
@@ -939,6 +946,7 @@ def applyNewLanguage():
     global chk_ocr_captcha_force_submit
     global chk_google_oauth
     global chk_headless
+    global chk_verbose
 
     global chk_kktix_area_keyword_2_enable
     global chk_area_keyword_2_enable
@@ -993,6 +1001,7 @@ def applyNewLanguage():
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
     lbl_headless.config(text=translate[language_code]["headless"])
+    lbl_verbose.config(text=translate[language_code]["verbose"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -1009,6 +1018,7 @@ def applyNewLanguage():
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_google_oauth.config(text=translate[language_code]["enable"])
     chk_headless.config(text=translate[language_code]["enable"])
+    chk_verbose.config(text=translate[language_code]["enable"])
 
     chk_kktix_area_keyword_2_enable.config(text=translate[language_code]["enable"])
     chk_area_keyword_2_enable.config(text=translate[language_code]["enable"])
@@ -2028,6 +2038,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_headless
     chk_headless = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_headless)
     chk_headless.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_verbose
+    lbl_verbose = Label(frame_group_header, text=translate[language_code]['verbose'])
+    lbl_verbose.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_verbose
+    chk_state_verbose = BooleanVar()
+    chk_state_verbose.set(config_dict['advanced']["verbose"])
+
+    global chk_verbose
+    chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
+    chk_verbose.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 

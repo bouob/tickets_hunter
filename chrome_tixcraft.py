@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.06)"
+CONST_APP_VERSION = u"MaxBot (2023.03.07)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1299,6 +1299,9 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     # read config.
     auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
@@ -1394,6 +1397,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                                 is_match_all_coming_soon_condiction = False
                                 break
                         if is_match_all_coming_soon_condiction:
+                            if show_debug_message:
+                                print("match coming soon condiction at row:", row_text)
                             is_coming_soon = True
                             break
 
@@ -1486,23 +1491,26 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
             target_area = matched_blocks[target_row_index]
 
-    is_date_selected = False
+    is_date_clicked = False
     if target_area is not None:
         target_button = None
         try:
             target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
-            if target_button.is_enabled():
+            if not target_button is None:
+                if target_button.is_enabled():
+                    if show_debug_message:
+                        print("start to press button...")
+                    target_button.click()
+                    is_date_clicked = True
+            else:
                 if show_debug_message:
-                    print("pressing button...")
-                target_button.click()
-                is_date_selected = True
+                    print("target_button in target row is None.")
         except Exception as exc:
             if show_debug_message:
-                print("find or press button fail")
+                print("find or press button fail:", exc)
 
             if not target_button is None:
                 print("try to click button fail, force click by js.")
-                #print(exc)
                 try:
                     driver.execute_script("arguments[0].click();", target_button)
                 except Exception as exc:
@@ -1520,7 +1528,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             except Exception as exc:
                 pass
         else:
-            if not is_date_selected:
+            if not is_date_clicked:
                 if not formated_area_list is None:
                     if len(formated_area_list) == 0:
                         try:
@@ -1529,7 +1537,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         except Exception as exc:
                             pass
 
-    return is_date_selected
+    return is_date_clicked
 
 # PURPOSE: get target area list.
 # RETURN:
@@ -1654,6 +1662,9 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
 def tixcraft_area_auto_select(driver, url, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     # read config.
     area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
@@ -3302,6 +3313,9 @@ def kktix_double_check_all_text_value(driver, ticket_number_str):
 def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     # part 1: check div.
     registrationsNewApp_div = None
