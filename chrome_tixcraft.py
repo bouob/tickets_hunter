@@ -656,7 +656,6 @@ def get_driver_by_config(config_dict):
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
 
-
             if 'ibon.com' in homepage:
                 if len(config_dict["advanced"]["ibonqware"]) > 1:
                     ibonqware = decryptMe(config_dict["advanced"]["ibonqware"])
@@ -4876,6 +4875,9 @@ def cityline_performance(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_price_assign_by_bot = False
     is_need_refresh = False
 
@@ -7892,13 +7894,14 @@ def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
     return is_verifyCode_editing, is_form_sumbited
 
-def kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name):
+def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
-    print("start to ddddocr")
 
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
-    CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    print("start to ddddocr")
 
     is_need_redo_ocr = False
     is_form_sumbited = False
@@ -8001,7 +8004,7 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
     previous_answer = None
     is_verifyCode_editing = True
     for redo_ocr in range(999):
-        is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
+        is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
         # TODO: must ensure the answer is corrent...
         is_cpatcha_sent = True
@@ -8149,6 +8152,486 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if len(account) > 4:
                 kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
 
+def ticketplus_date_auto_select(driver, config_dict):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    # read config.
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    # TODO: implement this feature.
+    date_keyword_and = ""
+    pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
+    if show_debug_message:
+        print("date_auto_select_mode:", auto_select_mode)
+        print("date_keyword:", date_keyword)
+
+    area_list = None
+    try:
+        area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item')
+    except Exception as exc:
+        print("find #gameList fail")
+
+    find_ticket_text_list = ['立即購票']
+    sold_out_text_list = ['銷售一空','尚未開賣']
+
+    matched_blocks = None
+    formated_area_list = None
+
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = []
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    if not row.is_enabled():
+                        row_is_enabled=False
+                    
+                    row_text = ""
+                    # check buy button.
+                    if row_is_enabled:
+                        row_text = row.text
+                        if row_text is None:
+                            row_text = ""
+
+                        row_is_enabled=False
+                        for text_item in find_ticket_text_list:
+                            if text_item in row_text:
+                                row_is_enabled = True
+                                break
+
+                    # check sold out text.
+                    if row_is_enabled:
+                        if pass_date_is_sold_out_enable:
+                            for sold_out_item in sold_out_text_list:
+                                if sold_out_item in row_text:
+                                    row_is_enabled = False
+                                    if show_debug_message:
+                                        print("match sold out text: %s, skip this row." % (sold_out_item))
+                                    break
+
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
+
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                date_keyword = format_keyword_string(date_keyword)
+                if show_debug_message:
+                    print("start to match formated keyword:", date_keyword)
+                matched_blocks = []
+
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if date_keyword in row_text:
+                                if len(date_keyword_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and # is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if date_keyword_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    is_date_clicked = False
+    if target_area is not None:
+        target_button = None
+        try:
+            target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
+            if not target_button is None:
+                if target_button.is_enabled():
+                    if show_debug_message:
+                        print("start to press button...")
+                    target_button.click()
+                    is_date_clicked = True
+            else:
+                if show_debug_message:
+                    print("target_button in target row is None.")
+        except Exception as exc:
+            if show_debug_message:
+                print("find or press button fail:", exc)
+
+            if not target_button is None:
+                print("try to click button fail, force click by js.")
+                try:
+                    driver.execute_script("arguments[0].click();", target_button)
+                except Exception as exc:
+                    pass
+
+    # [PS]: current reload condition only when
+    if auto_reload_coming_soon_page_enable:
+        if not is_date_clicked:
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        driver.refresh()
+                        time.sleep(0.3)
+                    except Exception as exc:
+                        pass
+
+    return is_date_clicked
+
+def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
+    ticket_number_div = None
+    try:
+        ticket_number_div = driver.find_element(By.CSS_SELECTOR, 'div.count-button > div')
+    except Exception as exc:
+        print("find ticket_number_div fail")
+
+    ticket_number = config_dict["ticket_number"]
+    if not ticket_number_div is None:
+        ticket_number_text = ""
+        ticket_number_text_int = 0
+        try:
+            ticket_number_text = ticket_number_div.text
+        except Exception as exc:
+            print("get ticket_number_text fail")
+            pass
+
+        if ticket_number_text is None:
+            ticket_number_text = ""
+        if len(ticket_number_text) > 0:
+            ticket_number_text_int = int(ticket_number_text)
+            if ticket_number_text_int < ticket_number:
+                ticket_number_plus = None
+                try:
+                    ticket_number_plus = driver.find_element(By.CSS_SELECTOR, 'button > span > i.mid-plus')
+                except Exception as exc:
+                    print("find ticket_number_plus fail")
+
+                # add
+                add_count = ticket_number - ticket_number_text_int
+                for i in range(add_count):
+                    if not ticket_number_plus is None:
+                        try:
+                            if ticket_number_plus.is_enabled():
+                                ticket_number_plus.click()
+                        except Exception as exc:
+                            pass
+
+
+    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not ocr_captcha_enable:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+
+    is_cpatcha_sent = False
+    previous_answer = None
+    is_verifyCode_editing = True
+    for redo_ocr in range(999):
+        is_need_redo_ocr, previous_answer, is_form_sumbited = ticketplus_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source)
+
+        # TODO: must ensure the answer is corrent...
+        is_cpatcha_sent = True
+
+        if is_form_sumbited:
+            break
+
+        if not away_from_keyboard_enable:
+            break
+
+        if not is_need_redo_ocr:
+            break
+
+def ticketplus_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    print("start to ddddocr")
+
+    is_need_redo_ocr = False
+    is_form_sumbited = False
+
+    ocr_answer = None
+    if not ocr is None:
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+
+        img_base64 = None
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
+            if not Captcha_Browser is None:
+                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+            image_id = 'span.captcha-img'
+            try:
+                form_verifyCode_base64 = driver.execute_async_script("""
+function svgToPng(svg, callback) {
+  const url = getSvgUrl(svg);
+  svgUrlToPng(url, (imgData) => {
+    callback(imgData);
+    URL.revokeObjectURL(url);
+  });
+}
+function getSvgUrl(svg) {
+  return URL.createObjectURL(new Blob([svg], {
+    type: 'image/svg+xml'
+  }));
+}
+function svgUrlToPng(svgUrl, callback) {
+  const svgImage = document.createElement('img');
+  document.body.appendChild(svgImage);
+  svgImage.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = svgImage.clientWidth;
+    canvas.height = svgImage.clientHeight;
+    const canvasCtx = canvas.getContext('2d');
+    canvasCtx.drawImage(svgImage, 0, 0);
+    const imgData = canvas.toDataURL('image/png');
+    callback(imgData);
+  };
+  svgImage.src = svgUrl;
+}
+const img=document.querySelector('%s');
+const svg=img.innerHTML;
+svgToPng(svg, (imgData) => {
+  callback = arguments[arguments.length - 1];
+  callback(imgData);
+});
+                    """ % (image_id))
+                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas exception:", str(exc))
+                pass
+        if not img_base64 is None:
+            try:
+                ocr_answer = ocr.classification(img_base64)
+            except Exception as exc:
+                pass
+
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+    else:
+        print("ddddocr is None")
+
+    if not ocr_answer is None:
+        ocr_answer = ocr_answer.strip()
+        print("ocr_answer:", ocr_answer)
+        if len(ocr_answer)==4:
+            who_care_var, is_form_sumbited = ticketplus_keyin_captcha_code(driver, answer = ocr_answer, auto_submit = away_from_keyboard_enable)
+        else:
+            if not away_from_keyboard_enable:
+                ticketplus_keyin_captcha_code(driver)
+                #tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
+            else:
+                is_need_redo_ocr = True
+                if previous_answer != ocr_answer:
+                    previous_answer = ocr_answer
+                    print("refresh captcha...")
+                    refresh_btn = None
+                    try:
+                        my_css_selector = 'i.v-icon.mdi.mdi-refresh'
+                        refresh_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                        if not refresh_btn is None:
+                            refresh_btn.click()
+                            time.sleep(0.3)
+                    except Exception as exc:
+                        print("find refresh_btn fail")
+
+    else:
+        print("ocr_answer is None")
+        print("previous_answer:", previous_answer)
+        if previous_answer is None:
+            ticketplus_keyin_captcha_code(driver)
+        else:
+            # page is not ready, retry again.
+            # PS: usually occur in async script get captcha image.
+            is_need_redo_ocr = True
+
+    return is_need_redo_ocr, previous_answer, is_form_sumbited
+
+
+def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
+    is_verifyCode_editing = False
+    is_form_sumbited = False
+
+    # manually keyin verify code.
+    # start to input verify code.
+    form_verifyCode = None
+    try:
+        my_css_selector = 'input[placeholder="請輸入驗證碼"]'
+        form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find captcha input fail")
+
+    if form_verifyCode is not None:
+        inputed_value = None
+        try:
+            inputed_value = form_verifyCode.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+
+        if inputed_value is None:
+            inputed_value = ""
+
+        if inputed_value == "請輸入驗證碼":
+            try:
+                form_verifyCode.clear()
+            except Exception as exc:
+                print("clear verify code fail")
+                pass
+        else:
+            if len(inputed_value) > 0:
+                print("captcha text inputed.")
+                form_verifyCode = None
+                is_verifyCode_editing = True
+
+    if form_verifyCode is not None:
+        is_visible = False
+        try:
+            if form_verifyCode.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_verifyCode.click()
+                is_verifyCode_editing = True
+            except Exception as exc:
+                pass
+
+            #print("start to fill answer.")
+            try:
+                if len(answer) > 0:
+                    answer=answer.upper()
+                    form_verifyCode.clear()
+                    form_verifyCode.send_keys(answer)
+                if auto_submit:
+                    form_verifyCode.send_keys(Keys.ENTER)
+                    is_verifyCode_editing = False
+                    is_form_sumbited = True
+                else:
+                    print("select all captcha text")
+                    driver.execute_script("arguments[0].select();", form_verifyCode)
+                    if len(answer) > 0:
+                        #tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
+                        pass
+            except Exception as exc:
+                print("send_keys ocr answer fail.")
+
+    return is_verifyCode_editing, is_form_sumbited
+
+def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
+    home_url_list = ['https://ticketplus.com.tw/']
+    for each_url in home_url_list:
+        if each_url == url.lower():
+            if config_dict["ocr_captcha"]["enable"]:
+                domain_name = url.split('/')[2]
+                if not Captcha_Browser is None:
+                    Captcha_Browser.Set_cookies(driver.get_cookies())
+                    Captcha_Browser.Set_Domain(domain_name)
+            break
+
+    # https://ticketplus.com.tw/activity/XXX
+    if '/activity/' in url.lower():
+        is_event_page = False
+        if len(url.split('/'))==5:
+            is_event_page = True
+
+        if is_event_page:
+            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+            if date_auto_select_enable:
+                ticketplus_date_auto_select(driver, config_dict)
+
+    #https://ticketplus.com.tw/order/XXX/OOO
+    if '/order/' in url.lower():
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+
+        if is_event_page:
+            ticketplus_order(driver, config_dict, ocr, Captcha_Browser)
+
+
 def main(args):
     config_dict = get_config_dict(args)
 
@@ -8188,7 +8671,9 @@ def main(args):
     Captcha_Browser = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
-            ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+            ocr_beta_mode = True
+            #ocr_beta_mode = False
+            ocr = ddddocr.DdddOcr(show_ad=False, beta=ocr_beta_mode)
             Captcha_Browser = NonBrowser()
 
             if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
@@ -8338,6 +8823,9 @@ def main(args):
 
         if 'kham.com' in url:
             kham_main(driver, url, config_dict, ocr, Captcha_Browser)
+
+        if 'ticketplus.com' in url:
+            ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser)
 
         if 'urbtix.hk' in url:
             urbtix_main(driver, url, config_dict)

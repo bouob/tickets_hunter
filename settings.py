@@ -1382,6 +1382,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
         ,"https://www.famiticket.com.tw (全網)"
         ,"https://ticket.ibon.com.tw/"
         ,"https://kham.com.tw/ (寬宏)"
+        ,"https://ticketplus.com.tw/ (遠大)"
         ,"http://www.urbtix.hk/ (城市)"
         ,"https://www.cityline.com/ (買飛)"
         ,"https://premier.hkticketing.com/ (快達票)"
