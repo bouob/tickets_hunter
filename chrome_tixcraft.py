@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.07)"
+CONST_APP_VERSION = u"MaxBot (2023.03.07).02"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -1305,6 +1305,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     # read config.
     auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    # TODO: implement this feature.
+    date_keyword_and = ""
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -8143,7 +8145,12 @@ def main(args):
 
     driver = None
     if not config_dict is None:
-        driver = get_driver_by_config(config_dict)
+        for i in range(50):
+            driver = get_driver_by_config(config_dict)
+            if not driver is None:
+                break
+            else:
+                time.sleep(0.05)
     else:
         print("Load config error!")
 
@@ -8184,7 +8191,7 @@ def main(args):
     DISCONNECTED_MSG = ': target window already closed'
 
     while True:
-        time.sleep(0.1)
+        time.sleep(0.05)
 
         is_alert_popup = False
 
