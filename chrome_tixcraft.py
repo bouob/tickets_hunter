@@ -53,10 +53,12 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.07).02"
+CONST_APP_VERSION = u"MaxBot (2023.03.08)"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
+URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
+
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
 
@@ -267,23 +269,29 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     return chrome_options, caps
 
 def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless):
-    chromedriver_path = get_chromedriver_path(webdriver_path)
-    chrome_service = Service(chromedriver_path)
-    chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, headless=headless)
     driver = None
-    try:
-        # method 6: Selenium Stealth
-        driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
-    except Exception as exc:
-        error_message = str(exc)
-        left_part = None
-        if "Stacktrace:" in error_message:
-            left_part = error_message.split("Stacktrace:")[0]
-            print(left_part)
 
-        if "This version of ChromeDriver only supports Chrome version" in error_message:
-            print(CONST_CHROME_VERSION_NOT_MATCH_EN)
-            print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+    chromedriver_path = get_chromedriver_path(webdriver_path)
+    if not os.path.exists(chromedriver_path):
+        print("Please download chromedriver and extract zip to webdriver folder from this url:")
+        print("請下在面的網址下載與你chrome瀏覽器相同版本的chromedriver,解壓縮後放到webdriver目錄裡：")
+        print(URL_CHROME_DRIVER)
+    else:
+        chrome_service = Service(chromedriver_path)
+        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, headless=headless)
+        try:
+            # method 6: Selenium Stealth
+            driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
+        except Exception as exc:
+            error_message = str(exc)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
+
+            if "This version of ChromeDriver only supports Chrome version" in error_message:
+                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
@@ -358,7 +366,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             pass
 
         if is_local_chrome_browser_lower:
-            print("Use local user downloaded chromedriver to lunch chrome browser.")
+            print("Unable to use undetected_chromedriver, ")
+            print("try to use local chromedriver to launch chrome browser.")
             driver_type = "selenium"
             driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
     else:
@@ -376,7 +385,6 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
-                is_local_chrome_browser_lower = True
             pass
 
     if driver is None:
@@ -1419,8 +1427,9 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
+                date_keyword = format_keyword_string(date_keyword)
                 if show_debug_message:
-                    print("start to match keyword:", date_keyword)
+                    print("start to match formated keyword:", date_keyword)
                 matched_blocks = []
 
                 row_index = 0

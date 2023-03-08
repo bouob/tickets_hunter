@@ -20,7 +20,7 @@ import json
 import webbrowser
 import base64
 
-CONST_APP_VERSION = u"MaxBot (2023.03.07).02"
+CONST_APP_VERSION = u"MaxBot (2023.03.08)"
 
 CONST_LAUNCHER_CONFIG_FILENAME = "config_launcher.json"
 
