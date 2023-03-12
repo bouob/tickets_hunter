@@ -575,7 +575,7 @@ def btn_idle_clicked(language_code):
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
         text_file.write("")
-    update_maxbot_runtime_status(language_code)
+    update_maxbot_runtime_status()
 
 def btn_resume_clicked(language_code):
     app_root = get_app_root()
@@ -589,7 +589,7 @@ def btn_resume_clicked(language_code):
                 pass
         else:
             break
-    update_maxbot_runtime_status(language_code)
+    update_maxbot_runtime_status()
 
 def btn_launcher_clicked(language_code):
     import subprocess
@@ -999,6 +999,9 @@ def applyNewLanguage():
     global lbl_headless
     global lbl_verbose
 
+    global lbl_maxbot_status
+    global lbl_maxbot_last_url
+
     # for checkbox
     global chk_pass_1_seat_remaining
     global chk_auto_check_agree
@@ -1072,6 +1075,8 @@ def applyNewLanguage():
     lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
+    lbl_maxbot_status.config(text=translate[language_code]["running_status"])
+    lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
 
     chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
@@ -1158,12 +1163,18 @@ def applyNewLanguage():
     global btn_restore_defaults
     global btn_launcher
 
+    global btn_idle
+    global btn_resume
+
     btn_run.config(text=translate[language_code]["run"])
     btn_save.config(text=translate[language_code]["save"])
     if btn_exit:
         btn_exit.config(text=translate[language_code]["exit"])
     btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
     btn_launcher.config(text=translate[language_code]["config_launcher"])
+
+    btn_idle.config(text=translate[language_code]["idle"])
+    btn_resume.config(text=translate[language_code]["resume"])
 
 def callbackHomepageOnChange(event):
     showHideBlocks()
@@ -2293,17 +2304,21 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
-def settings_timer(language_code):
+def settings_timer():
     while True:
-        update_maxbot_runtime_status(language_code)
+        update_maxbot_runtime_status()
         time.sleep(0.5)
 
-def update_maxbot_runtime_status(language_code):
+def update_maxbot_runtime_status():
     is_paused = False
     if os.path.exists(CONST_MAXBOT_INT28_FILE):
         is_paused = True
 
     try:
+        global combo_language
+        new_language = combo_language.get().strip()
+        language_code=get_language_code_by_name(new_language)
+
         global lbl_maxbot_status_data
         maxbot_status = translate[language_code]['status_enabled']
         if is_paused:
@@ -2370,7 +2385,7 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_maxbot_last_url_data.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
-    update_maxbot_runtime_status(language_code)
+    update_maxbot_runtime_status()
 
 
 def AboutTab(root, language_code):
@@ -2534,7 +2549,7 @@ def load_GUI(root, config_dict):
     AutofillTab(tab3, config_dict, language_code, UI_PADDING_X)
     RuntimeTab(tab4, config_dict, language_code, UI_PADDING_X)
     AboutTab(tab5, language_code)
-    threading.Thread(target=settings_timer, args=(language_code,), daemon=True).start()
+    threading.Thread(target=settings_timer, daemon=True).start()
 
 
 def main():
