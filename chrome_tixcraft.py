@@ -53,7 +53,11 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.08)"
+CONST_APP_VERSION = u"MaxBot (2023.03.11)"
+
+CONST_MAXBOT_CONFIG_FILE = "settings.json"
+CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
+CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
@@ -83,6 +87,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 #CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
+
 
 def t_or_f(arg):
     ret = False
@@ -120,9 +125,8 @@ def get_app_root():
     return app_root
 
 def get_config_dict(args):
-    config_json_filename = 'settings.json'
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, config_json_filename)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     # allow assign config by command line.
     if not args.input is None:
@@ -177,6 +181,16 @@ def get_config_dict(args):
                 config_dict["ocr_captcha"]["enable"] = True
                 config_dict["ocr_captcha"]["force_submit"] = True
     return config_dict
+
+def write_last_url_to_file(url):
+    with open(CONST_MAXBOT_LAST_URL_FILE, "w") as text_file:
+        text_file.write("%s" % url)
+
+def read_last_url_from_file():
+    ret = ""
+    with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
+        ret = text_file.readline()
+    return ret
 
 def format_keyword_string(keyword):
     if not keyword is None:
@@ -1718,9 +1732,10 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 
                     # only when keyword#2 filled to query.
                     if area_keyword_2_enable:
-                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
-                        if show_debug_message:
-                            print("is_need_refresh for keyword2:", is_need_refresh)
+                        if area_keyword_1 != area_keyword_2:
+                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable)
+                            if show_debug_message:
+                                print("is_need_refresh for keyword2:", is_need_refresh)
 
             if is_need_refresh:
                 if areas is None:
@@ -1729,9 +1744,10 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 
                     # only when keyword#3 filled to query.
                     if area_keyword_3_enable:
-                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable)
-                        if show_debug_message:
-                            print("is_need_refresh for keyword3:", is_need_refresh)
+                        if area_keyword_1 != area_keyword_3:
+                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable)
+                            if show_debug_message:
+                                print("is_need_refresh for keyword3:", is_need_refresh)
 
             if is_need_refresh:
                 if areas is None:
@@ -1740,9 +1756,10 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 
                     # only when keyword#4 filled to query.
                     if area_keyword_4_enable:
-                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
-                        if show_debug_message:
-                            print("is_need_refresh for keyword4:", is_need_refresh)
+                        if area_keyword_1 != area_keyword_4:
+                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable)
+                            if show_debug_message:
+                                print("is_need_refresh for keyword4:", is_need_refresh)
 
             area_target = None
             if areas is not None:
@@ -5133,9 +5150,14 @@ def ibon_activity_info(driver, config_dict):
 
     return is_date_assign_by_bot
 
-def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and):
+def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -5179,9 +5201,22 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                 if row_is_enabled:
                     try:
                         button_class_string = str(row.get_attribute('class'))
-                        if len(button_class_string) > 1:
-                            if 'disabled' in button_class_string:
-                                row_is_enabled=False
+                        if not button_class_string is None:
+                            if len(button_class_string) > 1:
+                                if 'disabled' in button_class_string:
+                                    row_is_enabled=False
+                                if 'sold-out' in button_class_string:
+                                    row_is_enabled=False
+                    except Exception as exc:
+                        pass
+
+                if row_is_enabled:
+                    row_is_enabled = False
+                    try:
+                        row_id_string = str(row.get_attribute('id'))
+                        if not row_id_string is None:
+                            if len(row_id_string) > 1:
+                                row_is_enabled = True
                     except Exception as exc:
                         pass
 
@@ -5284,7 +5319,7 @@ def ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
         else:
             is_need_refresh = True
             if show_debug_message:
-                print("matched_blocks is empty.")
+                print("matched_blocks is empty, is_need_refresh")
 
     if target_area is not None:
         try:
@@ -5309,13 +5344,15 @@ def ibon_performance(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_price_assign_by_bot = False
     is_need_refresh = False
 
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
         # click price row.
-        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
         area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
         area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
         area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
@@ -5337,25 +5374,28 @@ def ibon_performance(driver, config_dict):
 
         is_need_refresh = False
         if not is_price_assign_by_bot:
-            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and)
+            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and)
 
             if is_need_refresh:
                 if area_keyword_2_enable:
-                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and)
-                    if show_debug_message:
-                        print("is_need_refresh for keyword2:", is_need_refresh)
+                    if area_keyword_1 != area_keyword_2:
+                        is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_2, area_keyword_2_and)
+                        if show_debug_message:
+                            print("is_need_refresh for keyword2:", is_need_refresh)
 
             if is_need_refresh:
                 if area_keyword_3_enable:
-                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_3, area_keyword_3_and)
-                    if show_debug_message:
-                        print("is_need_refresh for keyword3:", is_need_refresh)
+                    if area_keyword_1 != area_keyword_3:
+                        is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_3, area_keyword_3_and)
+                        if show_debug_message:
+                            print("is_need_refresh for keyword3:", is_need_refresh)
 
             if is_need_refresh:
                 if area_keyword_4_enable:
-                    is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, area_auto_select_mode, area_keyword_4, area_keyword_4_and)
-                    if show_debug_message:
-                        print("is_need_refresh for keyword4:", is_need_refresh)
+                    if area_keyword_1 != area_keyword_4:
+                        is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_4, area_keyword_4_and)
+                        if show_debug_message:
+                            print("is_need_refresh for keyword4:", is_need_refresh)
 
         if is_need_refresh:
             try:
@@ -6179,39 +6219,162 @@ def cityline_main(driver, url, config_dict):
             if len(url.split('/'))>=5:
                 cityline_shows_goto_cta(driver)
 
+def guess_ibon_question(driver):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    inferred_answer_string = None
+    answer_list = []
+
+    form_select = None
+    try:
+        form_select = driver.find_element(By.CSS_SELECTOR, 'div.editor-box > div > div.form-group > label')
+    except Exception as exc:
+        print("find verify textbox fail")
+        pass
+
+    question_text = None
+    if form_select is not None:
+        try:
+            question_text = form_select.text
+        except Exception as exc:
+            print("get text fail")
+
+    is_options_in_question = False
+
+    if inferred_answer_string is None:
+        if not question_text is None:
+            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+
+    return inferred_answer_string, answer_list
+
 def ibon_verification_question(driver, answer_index, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    user_guess_string = config_dict["kktix"]["user_guess_string"]
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
-    # part 1: check div.
-    question_div = None
-    try:
-        question_div = driver.find_element(By.CSS_SELECTOR, '')
-    except Exception as exc:
-        pass
-        #print("find input fail:", exc)
+    presale_code = config_dict["tixcraft"]["presale_code"]
+    presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
 
-    #captcha_text_div_text
-    captcha_text_div_text = None
+    inferred_answer_string = None
+    answer_list = []
 
-    captcha_password_inputbox = None
-    try:
-        captcha_password_inputbox = driver.find_element(By.CSS_SELECTOR, '')
-    except Exception as exc:
-        pass
+    is_retry_user_single_answer = False
 
-    if not captcha_password_inputbox is None:
-        inferred_answer_string = None
-
-        if len(user_guess_string) > 0:
-            inferred_answer_string = user_guess_string
+    if len(presale_code) > 0:
+        if len(presale_code_delimiter) > 0:
+            if presale_code_delimiter in presale_code:
+                answer_list = presale_code.split(presale_code_delimiter)
+                if len(answer_list) > 0:
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_string = answer_list[answer_index+1]
         else:
-            if not captcha_text_div_text is None:
-                inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
+            is_retry_user_single_answer = True
+            if answer_index < 2:
+                inferred_answer_string = presale_code
+
+    if inferred_answer_string is None:
+        inferred_answer_string, answer_list = guess_ibon_question(driver)
+        if inferred_answer_string is None:
+            if not answer_list is None:
+                if len(answer_list) > 0:
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_string = answer_list[answer_index+1]
+
+    if show_debug_message:
+        print("answer_index:", answer_index)
+        print("inferred_answer_string:", inferred_answer_string)
+        print("answer_index:", answer_index)
+        print("is_retry_user_single_answer:", is_retry_user_single_answer)
+
+    form_input = None
+    try:
+        form_input = driver.find_element(By.CSS_SELECTOR, 'div.editor-box > div > div.form-group > input')
+    except Exception as exc:
+        print("find verify code fail")
+        pass
+
+    inputed_value = None
+    if form_input is not None:
+        try:
+            inputed_value = form_input.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+
+    if inputed_value is None:
+        inputed_value = ""
+
+    if not inferred_answer_string is None:
+        is_password_sent = False
+        if len(inputed_value)==0:
+            try:
+                # PS: sometime may send key twice...
+                form_input.clear()
+                form_input.send_keys(inferred_answer_string)
+                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.editor-box > div > div.form-group > a.btn')
+                is_password_sent = True
+
+                # guess answer mode.
+                answer_index += 1
+
+                if show_debug_message:
+                    print("sent password by bot:", inferred_answer_string)
+            except Exception as exc:
+                pass
+        else:
+            if inputed_value == inferred_answer_string:
+                if show_debug_message:
+                    print("sent password by previous time.")
+                is_password_sent = True
+                try:
+                    form_input.send_keys(Keys.ENTER)
+                except Exception as exc:
+                    pass
+
+            if is_retry_user_single_answer:
+                # increase counter for waiting for stop retry.
+                answer_index += 1
+            else:
+                # guess answer mode.
+                if answer_index > -1:
+                    # here not is first option.
+                    inferred_answer_previous = None
+                    if answer_index < len(answer_list)-1:
+                        inferred_answer_previous = answer_list[answer_index]
+                    if inputed_value == inferred_answer_previous:
+                        try:
+                            form_input.clear()
+                            form_input.send_keys(inferred_answer_string)
+                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.editor-box > div > div.form-group > a.btn')
+                            is_password_sent = True
+                            if show_debug_message:
+                                print("sent password by bot:", inferred_answer_string, "at index:", answer_index+2)
+
+                            answer_index += 1
+                        except Exception as exc:
+                            pass
+
+        if is_password_sent:
+            for i in range(3):
+                time.sleep(0.1)
+
+                alert_ret = check_pop_alert(driver)
+                if alert_ret:
+                    if show_debug_message:
+                        print("press accept button at time #", i+1)
+                    break
+    else:
+        if len(inputed_value)==0:
+            try:
+                form_input.click()
+            except Exception as exc:
+                pass
 
     return answer_index
+
 
 def ibon_ticket_agree(driver):
     # check agree
@@ -6278,70 +6441,77 @@ def ibon_main(driver, url, config_dict, ibon_dict):
         if is_event_page:
             ibon_auto_signup(driver)
 
-    #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
-    if '/ActivityInfo/Details/' in url:
-        is_event_page = False
-        if len(url.split('/'))==6:
-            is_event_page = True
+    is_match_target_feature = False
 
-        if is_event_page:
-            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-            if date_auto_select_enable:
-                ibon_activity_info(driver, config_dict)
+    if not is_match_target_feature:
+        #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
+        if '/ActivityInfo/Details/' in url:
+            is_event_page = False
+            if len(url.split('/'))==6:
+                is_event_page = True
 
-    # validation question url:
-    # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
-    if '/application/UTK02/' in url and '.aspx?rn=' in url:
-        #PS: not sure, use 'kktix' block or 'tixcraft' block for this feature.
-        #auto_guess_options = config_dict["kktix"]["auto_guess_options"]
-        auto_guess_options = True
-        if auto_guess_options:
-            #ibon_dict["answer_index"] = ibon_verification_question(driver, ibon_dict["answer_index"], config_dict)
-            pass
-    else:
-        ibon_dict["answer_index"] = -1
+            if is_event_page:
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                if date_auto_select_enable:
+                    is_match_target_feature = True
+                    ibon_activity_info(driver, config_dict)
 
-    # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
-    if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
-        is_event_page = False
-        if len(url.split('/'))==6:
-            is_event_page = True
+    if not is_match_target_feature:
+        # validation question url:
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
+        if '/application/UTK02/' in url and '.aspx?rn=' in url:
+            is_match_target_feature = True
+            ibon_dict["answer_index"] = ibon_verification_question(driver, ibon_dict["answer_index"], config_dict)
+        else:
+            ibon_dict["answer_index"] = -1
 
-        if is_event_page:
-            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-            if area_auto_select_enable:
-                if 'PERFORMANCE_PRICE_AREA_ID=' in url:
-                    # step 2: assign ticket number.
-                    ticket_number = str(config_dict["ticket_number"])
-                    is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, ticket_number)
-                    if is_ticket_number_assigned:
-                        click_ret = ibon_purchase_button_press(driver)
-                    else:
-                        is_sold_out = ibon_check_sold_out(driver)
-                        if is_sold_out:
-                            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
-                            driver.back()
-                            driver.refresh()
-                else:
-                    # step 1: select area.
-                    ibon_performance(driver, config_dict)
 
-    #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
-    if 'orders.ibon.com.tw/application/UTK02/UTK020' in url and '.aspx' in url:
-        is_event_page = False
-        if len(url.split('/'))==6:
-            is_event_page = True
+    if not is_match_target_feature:
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
+        if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
+            is_event_page = False
+            if len(url.split('/'))==6:
+                is_event_page = True
 
-        if is_event_page:
-            auto_check_agree = config_dict["auto_check_agree"]
-            if auto_check_agree:
-                is_finish_checkbox_click = False
-                for i in range(3):
-                    is_finish_checkbox_click = ibon_ticket_agree(driver)
+            if is_event_page:
+                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+                if area_auto_select_enable:
+                    if 'PERFORMANCE_PRICE_AREA_ID=' in url:
+                        # step 2: assign ticket number.
+                        is_match_target_feature = True
+                        ticket_number = str(config_dict["ticket_number"])
+                        is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, ticket_number)
+                        if is_ticket_number_assigned:
+                            click_ret = ibon_purchase_button_press(driver)
+                        else:
+                            is_sold_out = ibon_check_sold_out(driver)
+                            if is_sold_out:
+                                #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                                driver.back()
+                                driver.refresh()
+
+                    if 'PRODUCT_ID=' in url:
+                        # step 1: select area.
+                        is_match_target_feature = True
+                        ibon_performance(driver, config_dict)
+
+    if not is_match_target_feature:
+        #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
+        if 'orders.ibon.com.tw/application/UTK02/UTK020' in url and '.aspx' in url:
+            is_event_page = False
+            if len(url.split('/'))==6:
+                is_event_page = True
+
+            if is_event_page:
+                auto_check_agree = config_dict["auto_check_agree"]
+                if auto_check_agree:
+                    is_finish_checkbox_click = False
+                    for i in range(3):
+                        is_finish_checkbox_click = ibon_ticket_agree(driver)
+                        if is_finish_checkbox_click:
+                            break
                     if is_finish_checkbox_click:
-                        break
-                if is_finish_checkbox_click:
-                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
+                        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
 
     return ibon_dict
 
@@ -8799,7 +8969,14 @@ def main(args):
         if len(url) > 0 :
             if url != last_url:
                 print(url)
+                write_last_url_to_file(url)
+                if os.path.exists(CONST_MAXBOT_INT28_FILE):
+                    print("MAXBOT Paused.")
             last_url = url
+
+        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+            time.sleep(0.2)
+            continue
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -8916,7 +9093,8 @@ if __name__ == "__main__":
         #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
         #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
         #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
-        captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
+        #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
+        captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)

@@ -20,10 +20,14 @@ import json
 import webbrowser
 import pyperclip
 import base64
+import time
+import threading
 
-CONST_APP_VERSION = u"MaxBot (2023.03.08)"
+CONST_APP_VERSION = u"MaxBot (2023.03.11)"
 
-CONST_SETTINGS_CONFIG_FILENAME = "settings.json"
+CONST_MAXBOT_CONFIG_FILE = "settings.json"
+CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
+CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -83,7 +87,7 @@ def load_translate():
     en_us["date_keyword"] = 'Date Keyword'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
-    
+
     en_us["area_auto_select"] = 'Area Auto Select'
     #en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword_1"] = 'Area Keyword #1'
@@ -98,10 +102,20 @@ def load_translate():
     en_us["headless"] = 'Headless mode'
     # Make the operation more talkative
     en_us["verbose"] = 'Verbose mode'
+    en_us["running_status"] = 'Running Status'
+    en_us["running_url"] = 'Running URL'
+    en_us["status_idle"] = 'Idle'
+    en_us["status_paused"] = 'Paused'
+    en_us["status_enabled"] = 'Enabled'
+    en_us["status_running"] = 'Running'
+
+    en_us["idle"] = 'Idle'
+    en_us["resume"] = 'Resume'
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
     en_us["autofill"] = 'Autofill'
+    en_us["runtime"] = 'Runtime'
     en_us["about"] = 'About'
 
     en_us["run"] = 'Run'
@@ -128,7 +142,7 @@ def load_translate():
     en_us["hkticketing_password"] = 'HKTICKETING password'
     en_us["kham_password"] = 'KHAM password'
     en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
-    
+
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
     en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
@@ -178,10 +192,20 @@ def load_translate():
     zh_tw["webdriver_type"] = 'WebDriver類別'
     zh_tw["headless"] = '無圖形界面模式'
     zh_tw["verbose"] = '輸出詳細除錯訊息'
+    zh_tw["running_status"] = '執行狀態'
+    zh_tw["running_url"] = '執行網址'
+    zh_tw["status_idle"] = '閒置中'
+    zh_tw["status_paused"] = '已暫停'
+    zh_tw["status_enabled"] = '已啟用'
+    zh_tw["status_running"] = '執行中'
+
+    zh_tw["idle"] = '暫停搶票'
+    zh_tw["resume"] = '接續搶票'
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
     zh_tw["autofill"] = '自動填表單'
+    zh_tw["runtime"] = '執行階段'
     zh_tw["about"] = '關於'
 
     zh_tw["run"] = '搶票'
@@ -208,7 +232,7 @@ def load_translate():
     zh_tw["hkticketing_password"] = 'HKTICKETING 密碼'
     zh_tw["kham_password"] = '寬宏 密碼'
     zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
-    
+
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
     zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
@@ -258,10 +282,20 @@ def load_translate():
     zh_cn["webdriver_type"] = 'WebDriver类别'
     zh_cn["headless"] = '无图形界面模式'
     zh_cn["verbose"] = '输出详细除错讯息'
+    zh_cn["running_status"] = '執行狀態'
+    zh_cn["running_url"] = '執行網址'
+    zh_cn["status_idle"] = '閒置中'
+    zh_cn["status_paused"] = '已暫停'
+    zh_cn["status_enabled"] = '已启用'
+    zh_cn["status_running"] = '執行中'
+
+    zh_cn["idle"] = '暂停抢票'
+    zh_cn["resume"] = '接续抢票'
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
     zh_cn["autofill"] = '自动填表单'
+    zh_cn["runtime"] = '运行'
     zh_cn["about"] = '关于'
     zh_cn["copy"] = '复制'
 
@@ -289,7 +323,7 @@ def load_translate():
     zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
     zh_cn["kham_password"] = '宽宏 密码'
     zh_cn["save_password_alert"] = '將密碼保存到文件中可能會暴露您的密碼。'
-    
+
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
     zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
@@ -339,10 +373,20 @@ def load_translate():
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
     ja_jp["headless"] = 'ヘッドレスモード'
     ja_jp["verbose"] = '詳細モード'
+    ja_jp["running_status"] = 'スターテス'
+    ja_jp["running_url"] = '現在の URL'
+    ja_jp["status_idle"] = '閒置中'
+    ja_jp["status_paused"] = '一時停止'
+    ja_jp["status_enabled"] = '有効'
+    ja_jp["status_running"] = 'ランニング'
+
+    ja_jp["idle"] = 'アイドル'
+    ja_jp["resume"] = '再開する'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
     ja_jp["autofill"] = 'オートフィル'
+    ja_jp["runtime"] = 'ランタイム'
     ja_jp["about"] = '情報'
 
     ja_jp["run"] = 'チケットを取る'
@@ -493,11 +537,17 @@ def get_default_config():
 
     return config_dict
 
+def read_last_url_from_file():
+    ret = ""
+    with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
+        ret = text_file.readline()
+    return ret
+
 def load_json():
     app_root = get_app_root()
 
     # overwrite config path.
-    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -509,7 +559,7 @@ def load_json():
 
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = get_default_config()
     import json
@@ -519,6 +569,27 @@ def btn_restore_defaults_clicked(language_code):
 
     global root
     load_GUI(root, config_dict)
+
+def btn_idle_clicked(language_code):
+    app_root = get_app_root()
+    idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
+    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
+        text_file.write("")
+    update_maxbot_runtime_status(language_code)
+
+def btn_resume_clicked(language_code):
+    app_root = get_app_root()
+    idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
+    for i in range(10):
+        if os.path.exists(idle_filepath):
+            try:
+                os.remove(idle_filepath)
+                break
+            except Exception as exc:
+                pass
+        else:
+            break
+    update_maxbot_runtime_status(language_code)
 
 def btn_launcher_clicked(language_code):
     import subprocess
@@ -574,7 +645,7 @@ def btn_save_clicked(language_code):
 
 def btn_save_act(language_code, slience_mode=False):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_SETTINGS_CONFIG_FILENAME)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = get_default_config()
 
@@ -744,7 +815,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         config_dict["advanced"]["open_google_oauth_url"] = bool(chk_state_google_oauth.get())
-        
+
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
@@ -759,7 +830,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         if not slience_mode:
             #messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
-            file_to_save = asksaveasfilename(initialfile = CONST_SETTINGS_CONFIG_FILENAME, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
+            file_to_save = asksaveasfilename(initialfile = CONST_MAXBOT_CONFIG_FILE, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
             if not file_to_save is None:
                 print("save as to:", file_to_save)
                 with open(str(file_to_save), 'w') as outfile:
@@ -833,7 +904,6 @@ def btn_preview_sound_clicked():
     play_mp3_async(new_sound_filename)
 
 def play_mp3_async(sound_filename):
-    import threading
     threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
 
 def play_mp3(sound_filename):
@@ -981,7 +1051,7 @@ def applyNewLanguage():
     lbl_kktix_area_keyword_2_and_text.config(text=translate[language_code]["and"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
     lbl_user_guess_string.config(text=translate[language_code]["user_guess_string"])
-    
+
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
     lbl_date_auto_select_mode.config(text=translate[language_code]["date_select_order"])
     lbl_date_keyword.config(text=translate[language_code]["date_keyword"])
@@ -1028,7 +1098,8 @@ def applyNewLanguage():
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
     tabControl.tab(2, text=translate[language_code]["autofill"])
-    tabControl.tab(3, text=translate[language_code]["about"])
+    tabControl.tab(3, text=translate[language_code]["runtime"])
+    tabControl.tab(4, text=translate[language_code]["about"])
 
     global lbl_tixcraft_sid
     global lbl_ibon_ibonqware
@@ -1385,11 +1456,11 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
         ,"https://ticketplus.com.tw/ (遠大)"
         ,"http://www.urbtix.hk/ (城市)"
         ,"https://www.cityline.com/ (買飛)"
-        ,"https://premier.hkticketing.com/ (快達票)"
         ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
         ]
     # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
     '''
+        ,"https://premier.hkticketing.com/ (快達票)"
     '''
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
@@ -2222,6 +2293,85 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
+def settings_timer(language_code):
+    while True:
+        update_maxbot_runtime_status(language_code)
+        time.sleep(0.5)
+
+def update_maxbot_runtime_status(language_code):
+    is_paused = False
+    if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        is_paused = True
+
+    try:
+        global lbl_maxbot_status_data
+        maxbot_status = translate[language_code]['status_enabled']
+        if is_paused:
+            maxbot_status = translate[language_code]['status_paused']
+
+        lbl_maxbot_status_data.config(text=maxbot_status)
+
+        global btn_idle
+        global btn_resume
+
+        if not is_paused:
+            btn_idle.grid(column=1, row=0)
+            btn_resume.grid_forget()
+        else:
+            btn_resume.grid(column=2, row=0)
+            btn_idle.grid_forget()
+
+        global lbl_maxbot_last_url_data
+        last_url = read_last_url_from_file()
+        lbl_maxbot_last_url_data.config(text=last_url)
+    except Exception as exc:
+        pass
+
+
+
+def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
+    row_count = 0
+
+    frame_group_header = Frame(root)
+    group_row_count = 0
+
+    maxbot_status = ""
+    global lbl_maxbot_status
+    lbl_maxbot_status = Label(frame_group_header, text=translate[language_code]['running_status'])
+    lbl_maxbot_status.grid(column=0, row=group_row_count, sticky = E)
+
+
+    frame_maxbot_interrupt = Frame(frame_group_header)
+
+    global lbl_maxbot_status_data
+    lbl_maxbot_status_data = Label(frame_maxbot_interrupt, text=maxbot_status)
+    lbl_maxbot_status_data.grid(column=0, row=group_row_count, sticky = W)
+
+    global btn_idle
+    global btn_resume
+
+    btn_idle = ttk.Button(frame_maxbot_interrupt, text=translate[language_code]['idle'], command= lambda: btn_idle_clicked(language_code) )
+    btn_idle.grid(column=1, row=0)
+
+    btn_resume = ttk.Button(frame_maxbot_interrupt, text=translate[language_code]['resume'], command= lambda: btn_resume_clicked(language_code))
+    btn_resume.grid(column=2, row=0)
+
+    frame_maxbot_interrupt.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_maxbot_last_url
+    lbl_maxbot_last_url = Label(frame_group_header, text=translate[language_code]['running_url'])
+    lbl_maxbot_last_url.grid(column=0, row=group_row_count, sticky = E)
+
+    last_url = ""
+    global lbl_maxbot_last_url_data
+    lbl_maxbot_last_url_data = Label(frame_group_header, text=last_url)
+    lbl_maxbot_last_url_data.grid(column=1, row=group_row_count, sticky = W)
+
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
+    update_maxbot_runtime_status(language_code)
+
 
 def AboutTab(root, language_code):
     row_count = 0
@@ -2336,8 +2486,6 @@ def get_action_bar(root, language_code):
     btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
     btn_restore_defaults.grid(column=3, row=0)
 
-
-
     return frame_action
 
 def clearFrame(frame):
@@ -2367,7 +2515,11 @@ def load_GUI(root, config_dict):
     tabControl.add(tab3, text=translate[language_code]['autofill'])
 
     tab4 = Frame(tabControl)
-    tabControl.add(tab4, text=translate[language_code]['about'])
+    tabControl.add(tab4, text=translate[language_code]['runtime'])
+
+    tab5 = Frame(tabControl)
+    tabControl.add(tab5, text=translate[language_code]['about'])
+
     tabControl.grid(column=0, row=row_count)
     tabControl.select(tab1)
 
@@ -2380,7 +2532,9 @@ def load_GUI(root, config_dict):
     PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
     AutofillTab(tab3, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab4, language_code)
+    RuntimeTab(tab4, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab5, language_code)
+    threading.Thread(target=settings_timer, args=(language_code,), daemon=True).start()
 
 
 def main():
@@ -2401,6 +2555,7 @@ def main():
     UI_PADDING_X = 15
 
     load_GUI(root, config_dict)
+
 
     GUI_SIZE_WIDTH = 510
     GUI_SIZE_HEIGHT = 619
