@@ -22,8 +22,9 @@ import pyperclip
 import base64
 import time
 import threading
+import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.11)"
+CONST_APP_VERSION = u"MaxBot (2023.03.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -846,54 +847,55 @@ def btn_save_act(language_code, slience_mode=False):
 
 
 def btn_run_clicked(language_code):
-    import subprocess
-
     print('run button pressed.')
     Root_Dir = ""
     save_ret = btn_save_act(language_code, slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-        if hasattr(sys, 'frozen'):
-            print("execute in frozen mode")
+        threading.Thread(target=launch_maxbot).start()
 
-            # check platform here.
-            if platform.system() == 'Darwin':
-                print("execute MacOS python script")
-                subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
-            if platform.system() == 'Linux':
-                print("execute linux binary")
-                subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
-            if platform.system() == 'Windows':
-                print("execute .exe binary.")
-                subprocess.Popen("chrome_tixcraft.exe", shell=True, cwd=working_dir)
-        else:
-            interpreter_binary = 'python'
-            interpreter_binary_alt = 'python3'
-            if platform.system() == 'Darwin':
-                # try python3 before python.
-                interpreter_binary = 'python3'
-                interpreter_binary_alt = 'python'
-            print("execute in shell mode.")
-            #print("script path:", working_dir)
-            #messagebox.showinfo(title="Debug0", message=working_dir)
+def launch_maxbot():
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    if hasattr(sys, 'frozen'):
+        print("execute in frozen mode")
 
-            # some python3 binary, running in 'python' command.
+        # check platform here.
+        if platform.system() == 'Darwin':
+            print("execute MacOS python script")
+            subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
+        if platform.system() == 'Linux':
+            print("execute linux binary")
+            subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
+        if platform.system() == 'Windows':
+            print("execute .exe binary.")
+            subprocess.Popen("chrome_tixcraft.exe", shell=True, cwd=working_dir)
+    else:
+        interpreter_binary = 'python'
+        interpreter_binary_alt = 'python3'
+        if platform.system() == 'Darwin':
+            # try python3 before python.
+            interpreter_binary = 'python3'
+            interpreter_binary_alt = 'python'
+        print("execute in shell mode.")
+        #print("script path:", working_dir)
+        #messagebox.showinfo(title="Debug0", message=working_dir)
+
+        # some python3 binary, running in 'python' command.
+        try:
+            print('try', interpreter_binary)
+            s=subprocess.Popen([interpreter_binary, 'chrome_tixcraft.py'], cwd=working_dir)
+            #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
+            #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+            #messagebox.showinfo(title="Debug1", message=str(s))
+        except Exception as exc:
+            print('try', interpreter_binary_alt)
             try:
-                print('try', interpreter_binary)
-                s=subprocess.Popen([interpreter_binary, 'chrome_tixcraft.py'], cwd=working_dir)
-                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-                #messagebox.showinfo(title="Debug1", message=str(s))
+                s=subprocess.Popen([interpreter_binary_alt, 'chrome_tixcraft.py'], cwd=working_dir)
             except Exception as exc:
-                print('try', interpreter_binary_alt)
-                try:
-                    s=subprocess.Popen([interpreter_binary_alt, 'chrome_tixcraft.py'], cwd=working_dir)
-                except Exception as exc:
-                    msg=str(exc)
-                    print("exeption:", msg)
-                    #messagebox.showinfo(title="Debug2", message=msg)
-                    pass
+                msg=str(exc)
+                print("exeption:", msg)
+                #messagebox.showinfo(title="Debug2", message=msg)
+                pass
 
 def btn_preview_sound_clicked():
     global txt_captcha_sound_filename
@@ -2549,7 +2551,6 @@ def load_GUI(root, config_dict):
     AutofillTab(tab3, config_dict, language_code, UI_PADDING_X)
     RuntimeTab(tab4, config_dict, language_code, UI_PADDING_X)
     AboutTab(tab5, language_code)
-    threading.Thread(target=settings_timer, daemon=True).start()
 
 
 def main():
@@ -2570,7 +2571,6 @@ def main():
     UI_PADDING_X = 15
 
     load_GUI(root, config_dict)
-
 
     GUI_SIZE_WIDTH = 510
     GUI_SIZE_HEIGHT = 619
@@ -2609,6 +2609,7 @@ def main():
         root.call('wm', 'iconphoto', root._w, logo)
     os.remove(icon_filepath)
 
+    threading.Thread(target=settings_timer, daemon=True).start()
     root.mainloop()
 
 if __name__ == "__main__":

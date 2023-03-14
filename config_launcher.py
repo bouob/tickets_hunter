@@ -19,8 +19,10 @@ import platform
 import json
 import webbrowser
 import base64
+import threading
+import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.11)"
+CONST_APP_VERSION = u"MaxBot (2023.03.12)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -314,8 +316,9 @@ def btn_items_run_event(event):
     btn_index = int(str(event.widget['text']).split(" ")[1])
     global txt_file_name
     filename=txt_file_name[btn_index-1].get().strip()
+    threading.Thread(target=launch_maxbot, args=(filename,)).start()
 
-    import subprocess
+def launch_maxbot(filename):
     if True:
         working_dir = os.path.dirname(os.path.realpath(__file__))
         if hasattr(sys, 'frozen'):
