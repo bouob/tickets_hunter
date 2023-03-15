@@ -6176,12 +6176,10 @@ def cityline_main(driver, url, config_dict):
         return
 
     # https://msg.cityline.com/ https://event.cityline.com/
-    if 'msg.cityline.com' or 'event.cityline.com' in url:
+    if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         try:
-            WebDriverWait(driver, 10, poll_frequency=0.01).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[@id='btn-retry-en-1']"))
-            )
             driver.execute_script("goEvent();")
+            time.sleep(0.1)
         except Exception as exec1:
             pass
         pass
