@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.12)"
+CONST_APP_VERSION = u"MaxBot (2023.03.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -360,30 +360,19 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     caps["unhandledPromptBehavior"] = u"accept"
 
     driver = None
-    if os.path.exists(chromedriver_path):
-        print("Use user driver path:", chromedriver_path)
-        #driver = uc.Chrome(service=chrome_service, options=options, suppress_welcome=False)
-        is_local_chrome_browser_lower = False
-        try:
-            driver = uc.Chrome(executable_path=chromedriver_path, options=options, desired_capabilities=caps, suppress_welcome=False)
-        except Exception as exc:
-            error_message = str(exc)
-            left_part = None
-            if "Stacktrace:" in error_message:
-                left_part = error_message.split("Stacktrace:")[0]
-                print(left_part)
+    try:
+        driver = uc.Chrome(executable_path=chromedriver_path, options=options, desired_capabilities=caps, suppress_welcome=False)
+    except Exception as exc:
+        error_message = str(exc)
+        left_part = None
+        if "Stacktrace:" in error_message:
+            left_part = error_message.split("Stacktrace:")[0]
+            print(left_part)
 
-            if "This version of ChromeDriver only supports Chrome version" in error_message:
-                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
-                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
-                is_local_chrome_browser_lower = True
-            pass
+        if "This version of ChromeDriver only supports Chrome version" in error_message:
+            print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+            print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
-        if is_local_chrome_browser_lower:
-            print("Unable to use undetected_chromedriver, ")
-            print("try to use local chromedriver to launch chrome browser.")
-            driver_type = "selenium"
-            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
     else:
         print("Oops! web driver not on path:",chromedriver_path )
         print('let uc automatically download chromedriver.')
@@ -402,16 +391,13 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             pass
 
     if driver is None:
-        print("create web drive object fail!")
-    else:
-        download_dir_path="."
-        params = {
-            "behavior": "allow",
-            "downloadPath": os.path.realpath(download_dir_path)
-        }
-        #print("assign setDownloadBehavior.")
-        driver.execute_cdp_cmd("Page.setDownloadBehavior", params)
-    #print("driver capabilities", driver.capabilities)
+        print("create web drive object by undetected_chromedriver fail!")
+
+        if os.path.exists(chromedriver_path):
+            print("Unable to use undetected_chromedriver, ")
+            print("try to use local chromedriver to launch chrome browser.")
+            driver_type = "selenium"
+            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
 
     return driver
 
@@ -1209,7 +1195,7 @@ def force_press_button(driver, select_by, select_query, force_by_js=True):
                 next_step_button.click()
                 ret = True
     except Exception as exc:
-        print("find %s clickable Exception:" % (select_query))
+        #print("find %s clickable Exception:" % (select_query))
         #print(exc)
         pass
 
@@ -5649,7 +5635,7 @@ def kham_login(driver, account, password):
     ret = False
     el_email = None
     try:
-        my_css_selector = 'table#blockLogin > tbody > tr > td > input[type="text"]'
+        my_css_selector = '#ACCOUNT'
         el_email = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         pass
@@ -5679,7 +5665,7 @@ def kham_login(driver, account, password):
     el_pass = None
     if is_email_sent:
         try:
-            my_css_selector = 'table#blockLogin > tbody > tr > td > input[type="password"]'
+            my_css_selector = 'table.login > tbody > tr > td > input[type="password"]'
             el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
             pass
@@ -5699,14 +5685,8 @@ def kham_login(driver, account, password):
         except Exception as exc:
             pass
 
-    el_btn = None
     if is_password_sent:
-        try:
-            el_btn = driver.find_element(By.CSS_SELECTOR, '#ctl00_ContentPlaceHolder1_LOGIN_BTN')
-            if not el_btn is None:
-                el_btn.click()
-        except Exception as exc:
-            pass
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.memberContent > p > a > button.red')
 
     ret = is_password_sent
 
@@ -6134,33 +6114,7 @@ def cityline_home_close_window(driver):
     close_styles_list = ['.anticon-close', '.cookieWrapper_closeBtn']
 
     for close_styles in close_styles_list:
-        close_all_alert_btns = None
-        try:
-            close_all_alert_btns = driver.find_elements(By.CSS_SELECTOR, close_styles)
-        except Exception as exc:
-            print("find close button fail")
-
-        if close_all_alert_btns is not None:
-            if show_debug_message:
-                print('all close button count:', len(close_all_alert_btns))
-            for alert_btn in close_all_alert_btns:
-                is_visible = False
-                try:
-                    if alert_btn.is_enabled() and alert_btn.is_displayed():
-                        is_visible = True
-                except Exception as exc:
-                    pass
-
-                if is_visible:
-                    try:
-                        alert_btn.click()
-                    except Exception as exc:
-                        print("try to click close button fail, force click by js.")
-                        try:
-                            driver.execute_script("arguments[0].click();", alert_btn)
-                        except Exception as exc:
-                            pass
-
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,  close_styles)
 
 def cityline_main(driver, url, config_dict):
     #https://www.cityline.com/Events.html
@@ -7398,31 +7352,17 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
     return hkticketing_dict
 
 def khan_go_buy_redirect(driver):
-    ret = False
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'p > a > button.red')
+    return is_button_clicked
 
-    el_btn = None
-    try:
-        el_btn = driver.find_element(By.CSS_SELECTOR, 'div.btn_go > input[type="image"]')
-    except Exception as exc:
-        #print("find next button fail...")
-        #print(exc)
-        pass
-
-    if el_btn is not None:
-        print("bingo, found next button, start to press")
-        try:
-            if el_btn.is_enabled() and el_btn.is_displayed():
-                el_btn.click()
-                ret = True
-        except Exception as exc:
-            print("click next button fail...")
-            print(exc)
-
-    return ret
-
-def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
+def hkam_date_auto_select(driver, config_dict, date_keyword, auto_reload_coming_soon_page_enable):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
 
     ret = False
     matched_blocks = None
@@ -7436,7 +7376,7 @@ def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
     if not is_date_assigned:
         area_list = None
         try:
-            my_css_selector = "td.contentCenterBg > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > div > table > tbody > tr"
+            my_css_selector = "table.eventTABLE > tbody > tr"
             area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
             print("find #date-time tr list fail")
@@ -7460,7 +7400,7 @@ def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
                     try:
                         row_text = row.text
                         if '立即訂購' in row_text:
-                            my_css_selector = "a.showoder"
+                            my_css_selector = "a > button"
                             el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
                             if el_btn is not None:
                                 if el_btn.is_enabled():
@@ -7563,7 +7503,7 @@ def hkam_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
         if target_area is not None:
             el_btn = None
             try:
-                my_css_selector = "a.showoder"
+                my_css_selector = "a > button"
                 el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
                 pass
@@ -7601,6 +7541,9 @@ def kham_product(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
@@ -7608,13 +7551,23 @@ def kham_product(driver, config_dict):
     if show_debug_message:
         print("date_keyword:", date_keyword)
         print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
-    is_date_assign_by_bot = hkam_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
+    is_date_assign_by_bot = hkam_date_auto_select(driver, config_dict, date_keyword, auto_reload_coming_soon_page_enable)
+
+    if not is_date_assign_by_bot:
+        # click not on sale now.
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+        pass
 
     return is_date_assign_by_bot
 
-def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and, ticket_number):
+def kham_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, ticket_number):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -7627,7 +7580,7 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
 
     area_list = None
     try:
-        my_css_selector = "table.salesTable > tbody > tr > td > table > tbody > tr"
+        my_css_selector = "table#salesTable > tbody > tr"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -7641,22 +7594,9 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
             readme_table_mode = True
     if readme_table_mode:
         if show_debug_message:
-            print("for without table.salesTable")
-        try:
-            my_css_selector = "#readmeTable"
-            readme_table = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-            if not readme_table is None:
-                if show_debug_message:
-                    print("found readme_table")
-                target_table = readme_table.find_element(By.XPATH, '../..')
-                if not target_table is None:
-                    if show_debug_message:
-                        print("found target_table")
-                    my_css_selector = "td > table > tbody > tr"
-                    area_list = target_table.find_elements(By.CSS_SELECTOR, my_css_selector)
-        except Exception as exc:
-            print("find #ticket-price-tbl date list fail")
-            print(exc)
+            print("for without table#salesTable")
+        # TODO://
+        # ...
 
 
     formated_area_list = None
@@ -7676,8 +7616,8 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                     row_text = row.text
                     if row_text is None:
                         row_text = ""
-                        if '售完' in row_text:
-                            row_is_sold_out = True
+                    if '售完' in row_text:
+                        row_is_sold_out = True
                 except Exception as exc:
                     pass
 
@@ -7688,17 +7628,8 @@ def kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_ke
                         tr_id_string = str(row.get_attribute('id'))
                         if len(tr_id_string) > 1:
                             is_row_with_id = True
-
                         if is_row_with_id:
-                            my_css_selector = "span.textPrice"
-                            el_remaining = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                            if el_remaining is not None:
-                                remaining_value = str(el_remaining.text).strip()
-                                if remaining_value.isnumeric():
-                                    if int(remaining_value) >= ticket_number:
-                                        row_is_enabled=True
-                                else:
-                                    row_is_enabled=True
+                            row_is_enabled=True
                     except Exception as exc:
                         pass
 
@@ -7877,13 +7808,15 @@ def kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_price_assign_by_bot = False
     is_need_refresh = False
 
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
         # click price row.
-        area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
         area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
         area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
         area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
@@ -7902,22 +7835,22 @@ def kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name):
 
         is_need_refresh = False
         if not is_price_assign_by_bot:
-            is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_keyword_1_and, ticket_number)
+            is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, ticket_number)
 
         if not is_need_refresh:
             if not is_price_assign_by_bot:
                 # try keyword_2
                 if len(area_keyword_2) > 0:
-                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_2, area_keyword_2_and, ticket_number)
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, config_dict, area_keyword_2, area_keyword_2_and, ticket_number)
 
         if not is_need_refresh:
             if not is_price_assign_by_bot:
                 if len(area_keyword_3) > 0:
-                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_3, "", ticket_number)
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, config_dict, area_keyword_3, "", ticket_number)
         if not is_need_refresh:
             if not is_price_assign_by_bot:
                 if len(area_keyword_4) > 0:
-                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, area_auto_select_mode, area_keyword_4, "", ticket_number)
+                    is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, config_dict, area_keyword_4, "", ticket_number)
 
         if is_need_refresh:
             if show_debug_message:
@@ -7944,45 +7877,6 @@ def kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     return is_price_assign_by_bot
 
-
-def kham_performance_confirm_dialog_popup(driver):
-    ret = False
-
-    el_div = None
-    try:
-        el_div = driver.find_element(By.CSS_SELECTOR, 'div.ui-dialog-buttonset > button.ui-button')
-    except Exception as exc:
-        #print("find modal-dialog fail")
-        #print(exc)
-        pass
-
-    if el_div is not None:
-        #print("bingo, found ui-dialog-buttonset confirm-btn")
-        is_visible = False
-        try:
-            if el_div.is_enabled():
-                if el_div.is_displayed():
-                    is_visible = True
-        except Exception as exc:
-            pass
-
-        if is_visible:
-            try:
-                el_div.click()
-                ret = True
-            except Exception as exc:
-                # use plan B
-                '''
-                try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", el_div)
-                    ret = True
-                except Exception as exc:
-                    pass
-                '''
-                pass
-
-    return ret
 
 def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
@@ -8189,35 +8083,7 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
     return is_cpatcha_sent
 
 def kham_home_close_window(driver):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    close_all_alert_btns = None
-    try:
-        close_all_alert_btns = driver.find_elements(By.ID, 'Close')
-    except Exception as exc:
-        print("find close_all_alert_btns fail")
-
-    if close_all_alert_btns is not None:
-        if show_debug_message:
-            print('all alert count:', len(close_all_alert_btns))
-        for alert_btn in close_all_alert_btns:
-            is_visible = False
-            try:
-                if alert_btn.is_enabled() and alert_btn.is_displayed():
-                    is_visible = True
-            except Exception as exc:
-                pass
-
-            if is_visible:
-                try:
-                    alert_btn.click()
-                except Exception as exc:
-                    print("try to click alert_btn fail, force click by js.")
-                    try:
-                        driver.execute_script("arguments[0].click();", alert_btn)
-                    except Exception as exc:
-                        pass
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.closeBTN')
 
 def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     home_url_list = ['https://kham.com.tw/'
@@ -8281,17 +8147,13 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if not Captcha_Browser is None:
                 Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
 
-            is_confirm_dialog_popup = kham_performance_confirm_dialog_popup(driver)
-            if is_confirm_dialog_popup:
-                print("is_confirm_dialog_popup! auto press confirm...")
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
 
             kham_performance(driver, config_dict, ocr, Captcha_Browser, model_name)
 
     #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
     if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
-        is_confirm_dialog_popup = kham_performance_confirm_dialog_popup(driver)
-        if is_confirm_dialog_popup:
-            print("is_confirm_dialog_popup! auto press confirm...")
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["ocr_captcha"]["enable"]:
             domain_name = url.split('/')[2]
             model_name = url.split('/')[5]

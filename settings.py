@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.12)"
+CONST_APP_VERSION = u"MaxBot (2023.03.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2340,6 +2340,8 @@ def update_maxbot_runtime_status():
 
         global lbl_maxbot_last_url_data
         last_url = read_last_url_from_file()
+        if len(last_url) > 60:
+            last_url=last_url[:60]+"..."
         lbl_maxbot_last_url_data.config(text=last_url)
     except Exception as exc:
         pass
