@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-03-14)：部份支援 ticketmaster
+
+https://youtu.be/XHE0cxmN4WE
+
 Max搶票機器人 (2023-03-02)：澳門銀河購票無延遲
 
 https://youtu.be/mFxzzWU4ksU
