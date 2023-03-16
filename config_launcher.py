@@ -22,7 +22,7 @@ import base64
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.13)"
+CONST_APP_VERSION = u"MaxBot (2023.03.14)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"

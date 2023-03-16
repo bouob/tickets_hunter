@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.13)"
+CONST_APP_VERSION = u"MaxBot (2023.03.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -648,6 +648,9 @@ def get_driver_by_config(config_dict):
                 tixcraft_family = True
 
             if 'indievox.com' in homepage:
+                tixcraft_family = True
+
+            if 'ticketmaster.sg' in homepage:
                 tixcraft_family = True
 
             if tixcraft_family:
@@ -1503,28 +1506,10 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     is_date_clicked = False
     if target_area is not None:
-        target_button = None
-        try:
-            target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
-            if not target_button is None:
-                if target_button.is_enabled():
-                    if show_debug_message:
-                        print("start to press button...")
-                    target_button.click()
-                    is_date_clicked = True
-            else:
-                if show_debug_message:
-                    print("target_button in target row is None.")
-        except Exception as exc:
-            if show_debug_message:
-                print("find or press button fail:", exc)
-
-            if not target_button is None:
-                print("try to click button fail, force click by js.")
-                try:
-                    driver.execute_script("arguments[0].click();", target_button)
-                except Exception as exc:
-                    pass
+        is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'button')
+        if not is_date_clicked:
+            # for: ticketmaster.sg
+            is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
 
     # [PS]: current reload condition only when
     if auto_reload_coming_soon_page_enable:
@@ -2139,6 +2124,18 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
         except Exception as exc:
             pass
 
+        inputed_value = None
+        try:
+            inputed_value = form_verifyCode.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+        if inputed_value is None:
+            inputed_value = ""
+        if answer==inputed_value:
+            # no need to send key.
+            is_visible = False
+
         if is_visible:
             try:
                 form_verifyCode.click()
@@ -2310,12 +2307,18 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
     # allow agree not enable to assign ticket number.
     form_select = None
     try:
-        #form_select = driver.find_element(By.TAG_NAME, 'select')
-        #PS: select box may appear many in the page with different price.
         form_select = driver.find_element(By.CSS_SELECTOR, '.mobile-select')
     except Exception as exc:
         print("find select fail")
         pass
+
+    # for ticketmaster
+    if form_select is None:
+        try:
+            form_select = driver.find_element(By.CSS_SELECTOR, 'td > select.form-select')
+        except Exception as exc:
+            print("find form-select fail")
+            pass
 
     select_obj = None
     if form_select is not None:
@@ -2341,8 +2344,9 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
         if not row_text is None:
             if len(row_text) > 0:
                 if row_text != "0":
-                    # ticket assign.
-                    is_ticket_number_assigned = True
+                    if row_text.isnumeric():
+                        # ticket assign.
+                        is_ticket_number_assigned = True
 
     is_verifyCode_editing = False
 
@@ -5852,6 +5856,126 @@ def set_non_browser_cookies(driver, url, Captcha_Browser):
         Captcha_Browser.Set_cookies(driver.get_cookies())
         Captcha_Browser.Set_Domain(domain_name)
 
+def ticketmaster_assign_ticket_number(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    table_select = None
+    try:
+        my_css_selector = 'table#ticketPriceList'
+        table_select = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        if show_debug_message:
+            print('fail to find my_css_selector:', my_css_selector)
+            #print("find table#ticketPriceList fail", exc)
+        pass
+
+    form_select = None
+    if not table_select is None:
+        if show_debug_message:
+            print('found table, start find select')
+
+        try:
+            my_css_selector = 'select'
+            form_select = table_select.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            if show_debug_message:
+                print('my_css_selector:', my_css_selector)
+                print("find form-select fail", exc)
+            pass
+
+    select_obj = None
+    if form_select is not None:
+        if show_debug_message:
+            print('found select.')
+
+        is_visible = False
+        try:
+            if form_select.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+        if is_visible:
+            try:
+                select_obj = Select(form_select)
+            except Exception as exc:
+                pass
+
+    is_ticket_number_assigned = False
+    if not select_obj is None:
+        row_text = None
+        try:
+            row_text = select_obj.first_selected_option.text
+        except Exception as exc:
+            pass
+        if not row_text is None:
+            if show_debug_message:
+                print('row_text:', row_text)
+
+            if len(row_text) > 0:
+                if row_text != "0":
+                    if row_text.isnumeric():
+                        # ticket assign.
+                        is_ticket_number_assigned = True
+
+    is_verifyCode_editing = False
+
+    if show_debug_message:
+        print('is_ticket_number_assigned:', is_ticket_number_assigned)
+
+
+    # must wait select object ready to assign ticket number.
+    if not is_ticket_number_assigned:
+        ticket_number = str(config_dict["ticket_number"])
+        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+
+        # must wait ticket number assign to focus captcha.
+        if is_ticket_number_assigned:
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'#autoMode')
+
+def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    auto_check_agree = config_dict["auto_check_agree"]
+
+    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not ocr_captcha_enable:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+
+    if auto_check_agree:
+        for i in range(3):
+            is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+            if is_finish_checkbox_click:
+                break
+
+    if not ocr_captcha_enable:
+        is_verifyCode_editing =  tixcraft_keyin_captcha_code(driver)
+    else:
+        previous_answer = None
+        is_verifyCode_editing = True
+        for redo_ocr in range(999):
+            is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
+            if is_form_sumbited:
+                # start next loop.
+                is_verifyCode_editing = False
+                break
+
+            if not away_from_keyboard_enable:
+                break
+
+            if not is_need_redo_ocr:
+                break
+
+
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     tixcraft_home_close_window(driver)
     home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
@@ -5873,9 +5997,22 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
     # choose area
     if '/ticket/area/' in url:
-        area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-        if area_auto_select_enable:
-            tixcraft_area_auto_select(driver, url, config_dict)
+        domain_name = url.split('/')[2]
+        if not 'ticketmaster' in domain_name:
+            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+            if area_auto_select_enable:
+                tixcraft_area_auto_select(driver, url, config_dict)
+        else:
+            # area auto select is too difficult!
+            pass
+
+            ticketmaster_assign_ticket_number(driver, config_dict)
+
+    # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
+    if '/ticket/check-captcha/' in url:
+        domain_name = url.split('/')[2]
+        ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
+
 
     if '/ticket/verify/' in url:
         presale_code = config_dict["tixcraft"]["presale_code"]
@@ -8843,6 +8980,9 @@ def main(args):
             tixcraft_family = True
 
         if 'indievox.com' in url:
+            tixcraft_family = True
+
+        if 'ticketmaster.sg' in url:
             tixcraft_family = True
 
         if tixcraft_family:

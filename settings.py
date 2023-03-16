@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.13)"
+CONST_APP_VERSION = u"MaxBot (2023.03.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1461,6 +1461,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_homepage = ttk.Combobox(frame_group_header)
     combo_homepage['values']= ["https://kktix.com"
         ,"https://tixcraft.com (拓元)"
+        ,"https://ticketmaster.sg"
         ,"https://teamear.tixcraft.com/ (添翼)"
         ,"https://www.indievox.com/ (獨立音樂)"
         ,"https://www.famiticket.com.tw (全網)"
