@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.14)"
+CONST_APP_VERSION = u"MaxBot (2023.03.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -95,6 +95,7 @@ def load_translate():
     en_us["area_keyword_2"] = 'Area Keyword #2'
     en_us["area_keyword_3"] = 'Area Keyword #3'
     en_us["area_keyword_4"] = 'Area Keyword #4'
+    en_us["area_keyword_exclude"] = 'Area Keyword Exclude'
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
@@ -186,6 +187,7 @@ def load_translate():
     zh_tw["area_keyword_2"] = '區域關鍵字 #2'
     zh_tw["area_keyword_3"] = '區域關鍵字 #3'
     zh_tw["area_keyword_4"] = '區域關鍵字 #4'
+    zh_tw["area_keyword_exclude"] = '排除區域關鍵字'
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
@@ -276,6 +278,7 @@ def load_translate():
     zh_cn["area_keyword_2"] = '区域关键字 #2'
     zh_cn["area_keyword_3"] = '区域关键字 #3'
     zh_cn["area_keyword_4"] = '区域关键字 #4'
+    zh_cn["area_keyword_exclude"] = '排除区域关键字'
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
@@ -367,6 +370,7 @@ def load_translate():
     ja_jp["area_keyword_2"] = 'エリアキーワード #2'
     ja_jp["area_keyword_3"] = 'エリアキーワード #3'
     ja_jp["area_keyword_4"] = 'エリアキーワード #4'
+    ja_jp["area_keyword_exclude"] = '除外エリア キーワード'
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
@@ -483,6 +487,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_2"] = ""
     config_dict["kktix"]["area_keyword_2_and"] = ""
     config_dict["kktix"]["area_keyword_2_enable"] = True
+    config_dict["kktix"]["area_keyword_exclude"] = "輪椅"
     config_dict["kktix"]["auto_guess_options"] = True
     config_dict["kktix"]["user_guess_string"] = ""
 
@@ -496,6 +501,7 @@ def get_default_config():
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = ""
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = ""
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = ""
+    config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"] = "輪椅"
 
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = True
     config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = True
@@ -677,6 +683,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_area_keyword_2
     global txt_area_keyword_3
     global txt_area_keyword_4
+    global txt_area_keyword_exclude
 
     global combo_date_auto_select_mode
     global combo_area_auto_select_mode
@@ -773,6 +780,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
+        config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"] = txt_area_keyword_exclude.get().strip()
 
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = bool(chk_state_area_keyword_2_enable.get())
         config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = bool(chk_state_area_keyword_3_enable.get())
@@ -990,6 +998,7 @@ def applyNewLanguage():
     global lbl_area_keyword_2
     global lbl_area_keyword_3
     global lbl_area_keyword_4
+    global lbl_area_keyword_exclude
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
     global lbl_presale_code
@@ -1066,6 +1075,7 @@ def applyNewLanguage():
     lbl_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
     lbl_area_keyword_3.config(text=translate[language_code]["area_keyword_3"])
     lbl_area_keyword_4.config(text=translate[language_code]["area_keyword_4"])
+    lbl_area_keyword_exclude.config(text=translate[language_code]["area_keyword_exclude"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
@@ -1216,7 +1226,6 @@ def showHideBlocks():
 
     showHideTixcraftBlocks()
     showHidePass1SeatRemaining()
-    showHideOcrCaptchaWithSubmit()
 
 def showHideOcrCaptchaWithSubmit():
     global chk_state_ocr_captcha
@@ -1393,10 +1402,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
     if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
         kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
-    kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
-    kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
-    kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
-    kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
     auto_guess_options = config_dict["kktix"]["auto_guess_options"]
     user_guess_string = config_dict["kktix"]["user_guess_string"].strip()
 
@@ -1418,10 +1423,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
     if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
         area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
-    area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
-    area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
-    area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
-    area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -1591,7 +1592,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_kktix_area_keyword_1.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_area_keyword_1
-    txt_kktix_area_keyword_1_value = StringVar(frame_group_kktix, value=kktix_area_keyword_1)
+    txt_kktix_area_keyword_1_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_1"].strip())
     txt_kktix_area_keyword_1 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_value)
     txt_kktix_area_keyword_1.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1610,7 +1611,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_kktix_area_keyword_1_tmp.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_area_keyword_1_and
-    txt_kktix_area_keyword_1_and_value = StringVar(frame_group_kktix, value=kktix_area_keyword_1_and)
+    txt_kktix_area_keyword_1_and_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_1_and"].strip())
     txt_kktix_area_keyword_1_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_and_value)
     txt_kktix_area_keyword_1_and.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1621,7 +1622,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_kktix_area_keyword_2.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_area_keyword_2
-    txt_kktix_area_keyword_2_value = StringVar(frame_group_kktix, value=kktix_area_keyword_2)
+    txt_kktix_area_keyword_2_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_2"].strip())
     txt_kktix_area_keyword_2 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_value)
     txt_kktix_area_keyword_2.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1649,7 +1650,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_kktix_area_keyword_2_tmp.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_area_keyword_2_and
-    txt_kktix_area_keyword_2_and_value = StringVar(frame_group_kktix, value=kktix_area_keyword_2_and)
+    txt_kktix_area_keyword_2_and_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_2_and"].strip())
     txt_kktix_area_keyword_2_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_and_value)
     txt_kktix_area_keyword_2_and.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1822,7 +1823,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_keyword_1.grid(column=0, row=area_keyword_1_index, sticky = E)
 
     global txt_area_keyword_1
-    txt_area_keyword_1_value = StringVar(frame_group_tixcraft, value=area_keyword_1)
+    txt_area_keyword_1_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip())
     txt_area_keyword_1 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_1_value)
     txt_area_keyword_1.grid(column=1, row=area_keyword_1_index, sticky = W)
 
@@ -1836,7 +1837,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
 
     global txt_area_keyword_2
-    txt_area_keyword_2_value = StringVar(frame_group_tixcraft, value=area_keyword_2)
+    txt_area_keyword_2_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip())
     txt_area_keyword_2 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_2_value)
     txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
 
@@ -1858,7 +1859,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_keyword_3.grid(column=0, row=area_keyword_3_index, sticky = E)
 
     global txt_area_keyword_3
-    txt_area_keyword_3_value = StringVar(frame_group_tixcraft, value=area_keyword_3)
+    txt_area_keyword_3_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip())
     txt_area_keyword_3 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_3_value)
     txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
 
@@ -1880,7 +1881,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_keyword_4.grid(column=0, row=area_keyword_4_index, sticky = E)
 
     global txt_area_keyword_4
-    txt_area_keyword_4_value = StringVar(frame_group_tixcraft, value=area_keyword_4)
+    txt_area_keyword_4_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip())
     txt_area_keyword_4 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_4_value)
     txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
 
@@ -1891,6 +1892,17 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_area_keyword_4_enable
     chk_area_keyword_4_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_4_enable)
     chk_area_keyword_4_enable.grid(column=2, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_area_keyword_exclude
+    lbl_area_keyword_exclude = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_exclude'])
+    lbl_area_keyword_exclude.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_area_keyword_exclude
+    txt_area_keyword_exclude_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"].strip())
+    txt_area_keyword_exclude = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_exclude_value)
+    txt_area_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1913,37 +1925,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_presale_code_delemiter_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code_delimiter"])
     txt_presale_code_delimiter = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_delemiter_value)
     txt_presale_code_delimiter.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_ocr_captcha
-    lbl_ocr_captcha = Label(frame_group_tixcraft, text=translate[language_code]['ocr_captcha'])
-    lbl_ocr_captcha.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_ocr_captcha
-    chk_state_ocr_captcha = BooleanVar()
-    chk_state_ocr_captcha.set(config_dict['ocr_captcha']["enable"])
-
-    global chk_ocr_captcha
-    chk_ocr_captcha = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
-    chk_ocr_captcha.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global ocr_captcha_force_submit_index
-    ocr_captcha_force_submit_index = group_row_count
-
-    global lbl_ocr_captcha_force_submit
-    lbl_ocr_captcha_force_submit = Label(frame_group_tixcraft, text=translate[language_code]['ocr_captcha_force_submit'])
-    lbl_ocr_captcha_force_submit.grid(column=0, row=ocr_captcha_force_submit_index, sticky = E)
-
-    global chk_state_ocr_captcha_force_submit
-    chk_state_ocr_captcha_force_submit = BooleanVar()
-    chk_state_ocr_captcha_force_submit.set(config_dict['ocr_captcha']["force_submit"])
-
-    global chk_ocr_captcha_force_submit
-    chk_ocr_captcha_force_submit = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_force_submit)
-    chk_ocr_captcha_force_submit.grid(column=1, row=group_row_count, sticky = W)
 
     # final flush.
     global frame_group_tixcraft_index
@@ -2139,7 +2120,41 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
     chk_verbose.grid(column=1, row=group_row_count, sticky = W)
 
+
+    group_row_count+=1
+
+    global lbl_ocr_captcha
+    lbl_ocr_captcha = Label(frame_group_header, text=translate[language_code]['ocr_captcha'])
+    lbl_ocr_captcha.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_ocr_captcha
+    chk_state_ocr_captcha = BooleanVar()
+    chk_state_ocr_captcha.set(config_dict['ocr_captcha']["enable"])
+
+    global chk_ocr_captcha
+    chk_ocr_captcha = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
+    chk_ocr_captcha.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global ocr_captcha_force_submit_index
+    ocr_captcha_force_submit_index = group_row_count
+
+    global lbl_ocr_captcha_force_submit
+    lbl_ocr_captcha_force_submit = Label(frame_group_header, text=translate[language_code]['ocr_captcha_force_submit'])
+    lbl_ocr_captcha_force_submit.grid(column=0, row=ocr_captcha_force_submit_index, sticky = E)
+
+    global chk_state_ocr_captcha_force_submit
+    chk_state_ocr_captcha_force_submit = BooleanVar()
+    chk_state_ocr_captcha_force_submit.set(config_dict['ocr_captcha']["force_submit"])
+
+    global chk_ocr_captcha_force_submit
+    chk_ocr_captcha_force_submit = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_force_submit)
+    chk_ocr_captcha_force_submit.grid(column=1, row=group_row_count, sticky = W)
+
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
+
+    showHideOcrCaptchaWithSubmit()
 
 def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0
@@ -2576,7 +2591,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 510
-    GUI_SIZE_HEIGHT = 619
+    GUI_SIZE_HEIGHT = 600
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-55)
