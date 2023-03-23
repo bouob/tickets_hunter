@@ -2063,8 +2063,10 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
         except Exception as exc:
             print("find verify code fail")
             pass
+        
         if inputed_value is None:
             inputed_value = ""
+        
         if answer==inputed_value:
             # no need to send key.
             is_visible = False
@@ -2080,22 +2082,24 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                     driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
                     is_verifyCode_editing = True
                 except Exception as exc:
-                    print("click form_verifyCode fail.")
+                    #print("click form_verifyCode fail.")
+                    pass
 
-            #print("start to fill answer.")
-            try:
-                if len(answer) > 0:
+            if len(answer) > 0:
+                #print("start to fill answer.")
+                try:
+                    form_verifyCode.clear()
                     form_verifyCode.send_keys(answer)
-                if auto_submit:
-                    form_verifyCode.send_keys(Keys.ENTER)
-                    is_verifyCode_editing = False
-                    is_form_sumbited = True
-                else:
-                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
-                    if len(answer) > 0:
+    
+                    if auto_submit:
+                        form_verifyCode.send_keys(Keys.ENTER)
+                        is_verifyCode_editing = False
+                        is_form_sumbited = True
+                    else:
+                        driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
                         tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
-            except Exception as exc:
-                print("send_keys ocr answer fail.")
+                except Exception as exc:
+                    print("send_keys ocr answer fail.")
 
     return is_verifyCode_editing, is_form_sumbited
 
@@ -2222,20 +2226,16 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
-def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
+def tixcraft_ticket_main_agree(driver, config_dict):
     auto_check_agree = config_dict["auto_check_agree"]
-
-    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
-    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
-    if not ocr_captcha_enable:
-        away_from_keyboard_enable = False
-    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
-
     if auto_check_agree:
         for i in range(3):
             is_finish_checkbox_click = tixcraft_ticket_agree(driver)
             if is_finish_checkbox_click:
                 break
+
+def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
+    tixcraft_ticket_main_agree(driver, config_dict)
 
     # allow agree not enable to assign ticket number.
     form_select = None
@@ -2267,8 +2267,8 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
             except Exception as exc:
                 pass
 
-    is_ticket_number_assigned = False
     if not select_obj is None:
+        is_ticket_number_assigned = False
         row_text = None
         try:
             row_text = select_obj.first_selected_option.text
@@ -2281,38 +2281,40 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
                         # ticket assign.
                         is_ticket_number_assigned = True
 
-    is_verifyCode_editing = False
+        # must wait select object ready to assign ticket number.
+        if not is_ticket_number_assigned:
+            # only this case: "ticket number changed by bot" to play sound!
+            # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
+            check_and_play_sound_for_captcha(config_dict)
 
-    # must wait select object ready to assign ticket number.
-    if not is_ticket_number_assigned:
-        # only this case:"ticket number changed by bot" to play sound!
-        # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
-        check_and_play_sound_for_captcha(config_dict)
+            ticket_number = str(config_dict["ticket_number"])
+            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
 
-        ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+            # must wait ticket number assign to focus captcha.
+            if is_ticket_number_assigned:
+                tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
-        # must wait ticket number assign to focus captcha.
-        if is_ticket_number_assigned:
-            if not ocr_captcha_enable:
-                is_verifyCode_editing =  tixcraft_keyin_captcha_code(driver)
-            else:
-                previous_answer = None
-                is_verifyCode_editing = True
-                for redo_ocr in range(999):
-                    is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
-                    if is_form_sumbited:
-                        # start next loop.
-                        is_verifyCode_editing = False
-                        break
+def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name):
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not config_dict["ocr_captcha"]["enable"]:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
-                    if not away_from_keyboard_enable:
-                        break
+    if not config_dict["ocr_captcha"]["enable"]:
+        tixcraft_keyin_captcha_code(driver)
+    else:
+        previous_answer = None
+        for redo_ocr in range(999):
+            is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
+            if is_form_sumbited:
+                # start next loop.
+                break
 
-                    if not is_need_redo_ocr:
-                        break
+            if not away_from_keyboard_enable:
+                break
 
-    return is_verifyCode_editing
+            if not is_need_redo_ocr:
+                break
 
 def kktix_confirm_order_button(driver):
     ret = False
@@ -5888,8 +5890,6 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
                         # ticket assign.
                         is_ticket_number_assigned = True
 
-    is_verifyCode_editing = False
-
     if show_debug_message:
         print('is_ticket_number_assigned:', is_ticket_number_assigned)
 
@@ -5912,9 +5912,8 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     auto_check_agree = config_dict["auto_check_agree"]
 
-    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
-    if not ocr_captcha_enable:
+    if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
@@ -5924,16 +5923,14 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
             if is_finish_checkbox_click:
                 break
 
-    if not ocr_captcha_enable:
-        is_verifyCode_editing =  tixcraft_keyin_captcha_code(driver)
+    if not config_dict["ocr_captcha"]["enable"]:
+        tixcraft_keyin_captcha_code(driver)
     else:
         previous_answer = None
-        is_verifyCode_editing = True
         for redo_ocr in range(999):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
                 # start next loop.
-                is_verifyCode_editing = False
                 break
 
             if not away_from_keyboard_enable:
@@ -5970,9 +5967,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
             if area_auto_select_enable:
                 tixcraft_area_auto_select(driver, url, config_dict)
         else:
-            # area auto select is too difficult!
-            pass
-
+            # area auto select is too difficult, skip in this version.
             ticketmaster_assign_ticket_number(driver, config_dict)
 
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
@@ -5991,7 +5986,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
         domain_name = url.split('/')[2]
-        is_verifyCode_editing = tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
+        tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     if '/ticket/checkout' in url:
         if config_dict["advanced"]["headless"]:
@@ -8193,9 +8188,8 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
-    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
-    if not ocr_captcha_enable:
+    if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
@@ -8204,7 +8198,6 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     is_cpatcha_sent = False
     previous_answer = None
-    is_verifyCode_editing = True
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
@@ -8571,15 +8564,13 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
                             pass
 
 
-    ocr_captcha_enable = config_dict["ocr_captcha"]["enable"]
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
-    if not ocr_captcha_enable:
+    if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     is_cpatcha_sent = False
     previous_answer = None
-    is_verifyCode_editing = True
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ticketplus_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source)
 
