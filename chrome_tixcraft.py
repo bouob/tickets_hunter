@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.20)"
+CONST_APP_VERSION = u"MaxBot (2023.03.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6371,7 +6371,8 @@ def ibon_verification_question(driver, answer_index, config_dict):
                 form_input.clear()
                 form_input.send_keys(inferred_answer_string)
                 is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.editor-box > div > div.form-group > a.btn')
-                is_password_sent = True
+                if is_button_clicked:
+                    is_password_sent = True
 
                 # guess answer mode.
                 answer_index += 1
@@ -6438,27 +6439,19 @@ def ibon_ticket_agree(driver):
     try:
         form_checkbox = driver.find_element(By.ID, 'agreen')
     except Exception as exc:
-        print("find #agreen fail")
+        #print("find #agreen fail")
+        pass
 
     is_finish_checkbox_click = False
     if form_checkbox is not None:
         try:
-            # TODO: check the status: checked.
             if form_checkbox.is_enabled():
                 if not form_checkbox.is_selected():
                     form_checkbox.click()
-                is_finish_checkbox_click = True
+                    is_finish_checkbox_click = True
         except Exception as exc:
-            print("click #agreen fail")
-            #pass
-            try:
-                print("use plan_b to check #agreen.")
-                driver.execute_script("$(\"input[type='checkbox']\").prop('checked', true);")
-                is_finish_checkbox_click = True
-            except Exception as exc:
-                print("javascript check #agreen fail")
-                print(exc)
-                pass
+            print("click #agreen fail, try plan_b click label.")
+            is_finish_checkbox_click = force_press_button(driver, By.CSS_SELECTOR,'label[for="agreen"]')
 
     return is_finish_checkbox_click
 
@@ -6520,7 +6513,6 @@ def ibon_main(driver, url, config_dict, ibon_dict):
             ibon_dict["answer_index"] = ibon_verification_question(driver, ibon_dict["answer_index"], config_dict)
         else:
             ibon_dict["answer_index"] = -1
-
 
     if not is_match_target_feature:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
