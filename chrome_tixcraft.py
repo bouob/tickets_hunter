@@ -6557,6 +6557,10 @@ def ibon_main(driver, url, config_dict, ibon_dict):
             if len(url.split('/'))==6:
                 is_event_page = True
 
+            # it's pay money page.
+            if '/UTK02/UTK0207_.aspx' in url
+                is_event_page = False
+
             if is_event_page:
                 auto_check_agree = config_dict["auto_check_agree"]
                 if auto_check_agree:
