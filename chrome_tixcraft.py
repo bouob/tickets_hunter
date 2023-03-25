@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.21)"
+CONST_APP_VERSION = u"MaxBot (2023.03.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -4918,9 +4918,20 @@ def cityline_performance(driver, config_dict):
                         if click_ret:
                             break
 
-def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
+def ibon_date_auto_select(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
+    if show_debug_message:
+        print("date_keyword:", date_keyword)
+        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
 
     ret = False
     matched_blocks = None
@@ -5054,27 +5065,36 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
             target_area = matched_blocks[target_row_index]
 
     if target_area is not None:
-        el_btn = None
-        try:
-            my_css_selector = "button.btn"
-            el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
-        except Exception as exc:
-            pass
-
-        if el_btn is not None:
+        is_button_clicked = False
+        for i in range(3):
+            el_btn = None
             try:
-                if el_btn.is_enabled():
-                    el_btn.click()
-                    print("buy icon pressed.")
-                    ret = True
+                my_css_selector = "button.btn"
+                el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
-                # use plan B
+                pass
+
+            if el_btn is not None:
                 try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", el_btn)
-                    ret = True
+                    if el_btn.is_enabled():
+                        el_btn.click()
+                        print("buy icon pressed.")
+                        is_button_clicked = True
                 except Exception as exc:
                     pass
+                    # use plan B
+                    '''
+                    try:
+                        print("force to click by js.")
+                        driver.execute_script("arguments[0].click();", el_btn)
+                        ret = True
+                    except Exception as exc:
+                        pass
+                    '''
+            if is_button_clicked:
+                break
+        ret = is_button_clicked
+
     else:
         # no target to click.
         if auto_reload_coming_soon_page_enable:
@@ -5088,29 +5108,14 @@ def ibon_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_co
                         pass
     return ret
 
-def ibon_activity_info(driver, config_dict):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
-    if show_debug_message:
-        print("date_keyword:", date_keyword)
-        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
-    is_date_assign_by_bot = ibon_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
-
-    return is_date_assign_by_bot
-
 def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, area_keyword_exclude):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
+
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -5124,7 +5129,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.col-md-5 > table > tbody > tr"
+        my_css_selector = "div.col-md-5 > table > tbody > tr[onclick=\"onTicketArea(this.id)\"]"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -5164,6 +5169,9 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
                         pass
 
                 if row_is_enabled:
+                    pass
+                    # each row to check is too slow.
+                    '''
                     row_is_enabled = False
                     try:
                         row_id_string = str(row.get_attribute('id'))
@@ -5172,6 +5180,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
                                 row_is_enabled = True
                     except Exception as exc:
                         pass
+                    '''
 
                 if row_is_enabled:
                     formated_area_list.append(row)
@@ -6498,7 +6507,7 @@ def ibon_main(driver, url, config_dict, ibon_dict):
                 date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
                 if date_auto_select_enable:
                     is_match_target_feature = True
-                    ibon_activity_info(driver, config_dict)
+                    is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
 
     if not is_match_target_feature:
         # validation question url:
@@ -6529,7 +6538,10 @@ def ibon_main(driver, url, config_dict, ibon_dict):
                         else:
                             is_sold_out = ibon_check_sold_out(driver)
                             if is_sold_out:
+                                print("is_sold_out, go back , and refresh.")
+                                # plan-A
                                 #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                                # plan-B, easy and better than plan-A
                                 driver.back()
                                 driver.refresh()
 
