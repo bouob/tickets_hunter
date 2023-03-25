@@ -6558,7 +6558,7 @@ def ibon_main(driver, url, config_dict, ibon_dict):
                 is_event_page = True
 
             # it's pay money page.
-            if '/UTK02/UTK0207_.aspx' in url
+            if '/UTK02/UTK0207_.aspx' in url:
                 is_event_page = False
 
             if is_event_page:
