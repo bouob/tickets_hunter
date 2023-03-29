@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.26)"
+CONST_APP_VERSION = u"MaxBot (2023.03.27)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -3246,7 +3246,7 @@ def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div):
 
     return inferred_answer_string, answer_list
 
-def kktix_double_check_all_text_value(driver, ticket_number_str):
+def kktix_double_check_all_text_value(driver, ticket_number):
     is_do_press_next_button = False
 
     # double check ticket input textbox.
@@ -3273,7 +3273,7 @@ def kktix_double_check_all_text_value(driver, ticket_number_str):
                 current_ticket_number = ""
             if len(current_ticket_number) > 0:
                 #print(row_index, "current_ticket_number:", current_ticket_number)
-                if current_ticket_number == ticket_number_str:
+                if current_ticket_number == str(ticket_number):
                     #print("bingo, match target ticket number.")
 
                     # ONLY, this case to auto press next button.
@@ -3371,7 +3371,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
     if auto_press_next_step_button:
         if is_finish_checkbox_click:
-            is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number_str)
+            is_do_press_next_button = kktix_double_check_all_text_value(driver, config_dict["ticket_number"])
         else:
             print("still unable to assign checkbox as selected.")
 
@@ -9255,7 +9255,8 @@ if __name__ == "__main__":
         #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
         #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
         #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
-        captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
+        #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
+        captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
