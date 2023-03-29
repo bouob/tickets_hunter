@@ -6116,6 +6116,113 @@ def urbtix_performance_confirm_dialog_popup(driver):
 
     return ret
 
+def urbtix_auto_survey(driver, config_dict):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    questions_div = None
+    try:
+        questions_div = driver.find_elements(By.CSS_SELECTOR, 'div.modal-content > div.content > div.questions > div.question-item')
+    except Exception as exc:
+        #print("find modal-dialog fail")
+        #print(exc)
+        pass
+
+    is_radio_clicked = False
+
+    if questions_div is not None:
+        quetions_count = len(questions_div)
+        if show_debug_message:
+            print("quetions_count:", quetions_count)
+
+        try:
+            for each_question_div in questions_div:
+                each_question_ask_div = each_question_div.find_element(By.CSS_SELECTOR, 'div.titles > div')
+                if not each_question_ask_div is None:
+                    question_text = each_question_ask_div.text
+                    if question_text is None:
+                        question_text = ""
+                    if show_debug_message:
+                        print("questions_div text:", question_text)
+
+                    seq = 0
+                    if '個數字' in question_text:
+                        temp_string = question_text.split('第')[1]
+                        seq_string  = temp_string.split('個')[0]
+                        if len(seq_string) > 0:
+                            seq = int(seq_string)
+
+                    if show_debug_message:
+                        print("seq:", seq)
+
+                    question_answer_char = ""
+                    option_text_string = ""
+                    if '「' in question_text and '」' in question_text :
+                        option_text_string = question_text.split('「')[1]
+                        option_text_string = option_text_string.split('」')[0]
+                        option_text_string = option_text_string.replace(' ','')
+                        if seq > 0:
+                            question_answer_char = option_text_string.split(',')[seq-1]
+                            question_answer_char = question_answer_char.strip()
+
+                    if len(question_answer_char) > 0:
+                        if show_debug_message:
+                            print("question_answer_char text:", question_answer_char)
+                        each_option_items_div = each_question_div.find_elements(By.CSS_SELECTOR, 'div.options > div.option-item')
+                        if not each_option_items_div is None:
+                            for each_option_div in each_option_items_div:
+                                option_content_div = each_option_div.find_element(By.CSS_SELECTOR, 'div.content-list')
+                                if not option_content_div is None:
+                                    option_content_div_text = option_content_div.text
+                                    if option_content_div is None:
+                                        option_content_div=""
+                                    option_content_div_text = option_content_div_text.strip()
+                                    if option_content_div_text == question_answer_char:
+                                        is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                        break
+        except Exception as exc:
+            if show_debug_message:
+                print(exc)
+            pass
+
+    if is_radio_clicked:
+        questions_remain_div = None
+        questions_remain_text = ""
+        try:
+            questions_remain_div = driver.find_element(By.CSS_SELECTOR, 'div.surplus-questions-number')
+            if not questions_remain_div is None:
+                questions_remain_text = questions_remain_div.text
+                questions_remain_text = questions_remain_text.strip()
+        except Exception as exc:
+            if show_debug_message:
+                print(exc)
+            pass
+
+        if show_debug_message:
+            #print("questions_remain_text:", questions_remain_text)
+            pass
+        
+        if questions_remain_text == "0" or questions_remain_text == "":
+            is_button_clicked = False
+            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div')
+
+            # Message: Element <div class="text-tc"> is not clickable at point (198,566) because another element <div class="modal-wrapper landing-question"> obscures it
+            '''
+            btn_submit = None
+            try:
+                btn_submit = driver.find_element(By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div.text-tc')
+                if not btn_submit is None:
+                    if btn_submit.is_enabled():
+                        btn_submit.click()
+            except Exception as exc:
+                if show_debug_message:
+                    print(exc)
+                pass
+            '''
+
 
 def urbtix_main(driver, url, config_dict):
     # http://msg.urbtix.hk
@@ -6136,6 +6243,10 @@ def urbtix_main(driver, url, config_dict):
         except Exception as exec1:
             pass
         pass
+
+    # for new survey.
+    if 'https://www.urbtix.hk/session/landing' == url:
+        urbtix_auto_survey(driver, config_dict)
 
     if '.hk/member-login' in url:
         urbtix_account = config_dict["advanced"]["urbtix_account"]
