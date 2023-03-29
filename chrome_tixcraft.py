@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.22)"
+CONST_APP_VERSION = u"MaxBot (2023.03.26)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2455,9 +2455,18 @@ def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string,
 
     return is_cpatcha_sent
 
-def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+    # disable pass 1 seat remaining when target ticket number is 1.
+    ticket_number = config_dict["ticket_number"]
+    if ticket_number == 1:
+        pass_1_seat_remaining_enable = False
 
     areas = None
     is_ticket_number_assigned = False
@@ -2476,7 +2485,6 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
         price_list_count = len(ticket_price_list)
         if show_debug_message:
             print("found price count:", price_list_count)
-            print("start to travel rows..........")
     else:
         print("find ticket-price span fail")
 
@@ -2510,6 +2518,15 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
             if row_text is None:
                 row_text = ""
 
+            if '已售完' in row_text:
+                row_text = ""
+
+            if 'Sold Out' in row_text:
+                row_text = ""
+
+            if '完売' in row_text:
+                row_text = ""
+            
             if len(row_text) > 0:
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
@@ -2591,7 +2608,7 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
                             print("match_area_code:", match_area_code)
 
                         if is_match_area:
-                            areas.append(row)
+                            areas.append(ticket_price_input)
 
             if is_travel_interrupted:
                 # not sure to break or continue..., maybe break better.
@@ -2607,15 +2624,26 @@ def kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable,
 
     return is_ticket_number_assigned, areas
 
-def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    ticket_number_str = str(ticket_number)
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
-    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_keyword_1, kktix_area_keyword_1_and)
+    ticket_number_str = str(config_dict["ticket_number"])
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+    # disable pass 1 seat remaining when target ticket number is 1.
+    ticket_number = config_dict["ticket_number"]
+    if ticket_number == 1:
+        pass_1_seat_remaining_enable = False
+    kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
 
-    target_area = None
+    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and)
+
+    is_need_refresh = False
+
+    ticket_price_input = None
     if not is_ticket_number_assigned:
         if areas is not None:
             if len(areas) > 0:
@@ -2632,17 +2660,9 @@ def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enab
 
                 if show_debug_message:
                     print("target_row_index", target_row_index)
-                target_area = areas[target_row_index]
-
-    ticket_price_input = None
-    if target_area is not None:
-        if show_debug_message:
-            print('try to get input box element.')
-        try:
-            #print("target_area text", target_area.text)
-            ticket_price_input = target_area.find_element(By.CSS_SELECTOR, "input[type='text']")
-        except Exception as exc:
-            pass
+                ticket_price_input = areas[target_row_index]
+            else:
+                is_need_refresh = True
 
     current_ticket_number = ""
     is_visible = False
@@ -2678,7 +2698,7 @@ def kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enab
             # already assigned.
             is_ticket_number_assigned = True
 
-    return is_ticket_number_assigned
+    return is_ticket_number_assigned, is_need_refresh
 
 def kktix_get_web_datetime(registrationsNewApp_div):
     show_debug_message = True       # debug.
@@ -3262,64 +3282,23 @@ def kktix_double_check_all_text_value(driver, ticket_number_str):
 
     return is_do_press_next_button
 
-def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_dict):
+def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_click, registrationsNewApp_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    # part 1: check div.
-    registrationsNewApp_div = None
-    try:
-        registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-    except Exception as exc:
-        pass
-        #print("find input fail:", exc)
-
-    # part 2: assign ticket number
-    ticket_number_str = str(config_dict["ticket_number"])
-
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
-    # disable pass 1 seat remaining when target ticket number is 1.
-    ticket_number = config_dict["ticket_number"]
-    if ticket_number == 1:
-        pass_1_seat_remaining_enable = False
-
-    is_ticket_number_assigned = False
-    if not registrationsNewApp_div is None:
-        kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
-        kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
-        kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
-        kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
-        kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
-        kktix_area_keyword_2_enable = config_dict["kktix"]["area_keyword_2_enable"]
-
-        for retry_index in range(2):
-            is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
-            if not is_ticket_number_assigned:
-                is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_1, kktix_area_keyword_1_and)
-                #PS: keyword_2 not input, means all rows are match.
-                if not is_ticket_number_assigned:
-                    if kktix_area_keyword_2_enable:
-                        is_ticket_number_assigned = kktix_assign_ticket_number(driver, ticket_number, pass_1_seat_remaining_enable, kktix_area_auto_select_mode, kktix_area_keyword_2, kktix_area_keyword_2_and)
-            if is_ticket_number_assigned:
-                break
-    #print('is_ticket_number_assigned:', is_ticket_number_assigned)
-
-    # part 3: captcha
     is_captcha_appear = False
     is_captcha_appear_and_filled_password = False
     answer_list = None
 
     # TODO: in guess options mode, no need to travel div again.
     captcha_inner_div = None
-
-    if is_ticket_number_assigned:
-        try:
-            captcha_inner_div = driver.find_element(By.CSS_SELECTOR, '.custom-captcha-inner')
-        except Exception as exc:
-            pass
+    try:
+        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, '.custom-captcha-inner')
+    except Exception as exc:
+        pass
 
     captcha_password_input_tag = None
     if not captcha_inner_div is None:
@@ -3389,13 +3368,12 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
             is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
 
     is_do_press_next_button = False
-    if is_ticket_number_assigned:
-        auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-        if auto_press_next_step_button:
-            if is_finish_checkbox_click:
-                is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number_str)
-            else:
-                print("still unable to assign checkbox as selected.")
+    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
+    if auto_press_next_step_button:
+        if is_finish_checkbox_click:
+            is_do_press_next_button = kktix_double_check_all_text_value(driver, ticket_number_str)
+        else:
+            print("still unable to assign checkbox as selected.")
 
     if show_debug_message:
         print("is_do_press_next_button:", is_do_press_next_button)
@@ -3440,6 +3418,54 @@ def kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_di
                     # captcha appeared, but we don't have answer list.
                     pass
 
+    return answer_index
+
+def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_click):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    # part 1: check div.
+    registrationsNewApp_div = None
+    try:
+        registrationsNewApp_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
+    except Exception as exc:
+        pass
+        #print("find input fail:", exc)
+
+    # part 2: assign ticket number
+    is_ticket_number_assigned = False
+    if not registrationsNewApp_div is None:
+        kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
+        kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
+        kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
+        kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
+        kktix_area_keyword_2_enable = config_dict["kktix"]["area_keyword_2_enable"]
+
+        is_need_refresh = False
+        for retry_index in range(2):
+            if not is_ticket_number_assigned:
+                is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and)
+                #PS: keyword_2 not input, means all rows are match.
+                if not is_ticket_number_assigned:
+                    if kktix_area_keyword_2_enable:
+                        is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_2, kktix_area_keyword_2_and)
+            if is_ticket_number_assigned:
+                break
+
+        # part 3: captcha
+        if is_ticket_number_assigned:
+            answer_index = kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_click, registrationsNewApp_div)
+        else:
+            if is_need_refresh:
+                try:
+                    print("no match any price, start to refresh page...")
+                    driver.refresh()
+                except Exception as exc:
+                    #print("refresh fail")
+                    pass
 
     return answer_index
 
@@ -3484,7 +3510,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
         # check is able to buy.
         auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
         if auto_fill_ticket_number:
-            answer_index = kktix_reg_new_main(driver, answer_index, is_finish_checkbox_click, config_dict)
+            answer_index = kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_click)
 
     return answer_index, registerStatus
 
