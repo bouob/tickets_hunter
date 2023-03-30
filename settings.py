@@ -839,11 +839,12 @@ def btn_save_act(language_code, slience_mode=False):
 
         if not slience_mode:
             #messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
-            file_to_save = asksaveasfilename(initialfile = CONST_MAXBOT_CONFIG_FILE, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
+            file_to_save = asksaveasfilename(initialdir=app_root , initialfile=CONST_MAXBOT_CONFIG_FILE, defaultextension=".json", filetypes=[("json Documents","*.json"),("All Files","*.*")])
             if not file_to_save is None:
-                print("save as to:", file_to_save)
-                with open(str(file_to_save), 'w') as outfile:
-                    json.dump(config_dict, outfile)
+                if len(file_to_save) > 0:
+                    print("save as to:", file_to_save)
+                    with open(file_to_save, 'w') as outfile:
+                        json.dump(config_dict, outfile)
         else:
             # slience
             with open(config_filepath, 'w') as outfile:
