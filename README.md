@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-03-27)：kktix無票時刷新頁面,暫停搶票程式
+
+https://www.youtube.com/watch?v=4trNmMDntwM
+
 Max搶票機器人 (2023-03-14)：部份支援 ticketmaster
 
 https://youtu.be/XHE0cxmN4WE
