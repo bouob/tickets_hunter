@@ -2804,7 +2804,7 @@ def kktix_check_agree_checkbox(driver):
 
     return is_need_refresh, is_finish_checkbox_click
 
-def kktix_check_register_status(url):
+def kktix_check_register_status(driver, url):
     #ex: https://xxx.kktix.cc/events/xxx
     prefix_list = ['.com/events/','.cc/events/']
     postfix = '/registrations/new'
@@ -2817,6 +2817,44 @@ def kktix_check_register_status(url):
             is_match_event_code = True
             #print('event_code:',event_code)
             break
+
+    if is_match_event_code:
+        js = '''
+function load_kktix_register_code(){
+let api_url = "https://kktix.com/g/events/%s/register_info";
+fetch(api_url).then(function (response)
+{
+return response.json();
+}
+).then(function (data)
+{
+let reload=false;
+console.log(data.inventory.registerStatus);
+if(data.inventory.registerStatus=='OUT_OF_STOCK') {reload=true;}
+if(data.inventory.registerStatus=='COMING_SOON') {reload=true;}
+console.log(reload);
+if(reload) {location.reload();}
+}
+).catch(function (err)
+{
+console.log(err);
+});
+}
+if (!$.kkUser) {
+    $.kkUser = {};
+}
+if (typeof $.kkUser.checked_status_register_code === 'undefined') {
+    $.kkUser.checked_status_register_code = true;
+    load_kktix_register_code();
+}
+        ''' % (event_code)
+        try:
+            driver.execute_script(js)
+        except Exception as exc:
+            pass
+
+        # use javascritp version only.
+        is_match_event_code = False
 
     html_result = None
     if is_match_event_code:
@@ -3478,7 +3516,9 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
 
     if not is_need_refresh:
         if registerStatus is None:
-            registerStatus = kktix_check_register_status(url)
+            # current version, change refresh event from selenium to javascript.
+            registerStatus = kktix_check_register_status(driver, url)
+            # for request solution, refresh on selenium.
             if not registerStatus is None:
                 print("registerStatus:", registerStatus)
                 # OUT_OF_STOCK
