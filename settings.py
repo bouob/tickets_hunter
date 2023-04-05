@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.03.27)"
+CONST_APP_VERSION = u"MaxBot (2023.03.31)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -915,7 +915,7 @@ def btn_preview_sound_clicked():
     play_mp3_async(new_sound_filename)
 
 def play_mp3_async(sound_filename):
-    threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
+    threading.Thread(target=play_mp3, args=(sound_filename,)).start()
 
 def play_mp3(sound_filename):
     from playsound import playsound
@@ -1464,6 +1464,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_homepage['values']= ["https://kktix.com"
         ,"https://tixcraft.com (拓元)"
         ,"https://ticketmaster.sg"
+        ,"https://ticketmaster.com"
         ,"https://teamear.tixcraft.com/ (添翼)"
         ,"https://www.indievox.com/ (獨立音樂)"
         ,"https://www.famiticket.com.tw (全網)"

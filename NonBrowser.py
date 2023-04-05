@@ -9,12 +9,15 @@ class NonBrowser():
         self.Session = requests.session()
         self.Set_Domain(domain_name)
 
-    def Set_cookies(self,cookies:dict):
-        for cookie in cookies:
-            self.Session.cookies.set(cookie["name"],cookie["value"])
-        return True
+    def Set_cookies(self, cookies:dict):
+        ret = False
+        if not cookies is None:
+            for cookie in cookies:
+                self.Session.cookies.set(cookie["name"],cookie["value"])
+                ret = True
+        return ret
 
-    def set_headers(self,header:str):
+    def set_headers(self, header:str):
         self.Session.headers = header
 
     def Set_Domain(self, domain_name, captcha_url="ticket/captcha", refresh_url="ticket/captcha?refresh=1"):

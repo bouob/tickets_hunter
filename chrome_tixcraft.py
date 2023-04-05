@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.27)"
+CONST_APP_VERSION = u"MaxBot (2023.03.31)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -577,7 +577,7 @@ def get_driver_by_config(config_dict):
             if 'indievox.com' in homepage:
                 tixcraft_family = True
 
-            if 'ticketmaster.sg' in homepage:
+            if 'ticketmaster.' in homepage:
                 tixcraft_family = True
 
             if tixcraft_family:
@@ -1453,11 +1453,198 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             if not is_date_clicked:
                 if not formated_area_list is None:
                     if len(formated_area_list) == 0:
+                        print('start to refresh page.')
                         try:
                             driver.refresh()
                             time.sleep(0.3)
                         except Exception as exc:
                             pass
+
+    return is_date_clicked
+
+def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    # read config.
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    # TODO: implement this feature.
+    date_keyword_and = ""
+    pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
+    # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
+    sold_out_text_list = ["選購一空","已售完","No tickets available","Sold out","空席なし","完売した"]
+    find_ticket_text_list = ['See Tickets']
+
+    area_list = None
+    try:
+        area_list = driver.find_elements(By.CSS_SELECTOR, '#list-view > div > div.event-listing > div.accordion-wrapper > div')
+    except Exception as exc:
+        print("find #gameList fail")
+
+    matched_blocks = None
+    formated_area_list = None
+
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = []
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+                try:
+                    if not row.is_enabled():
+                        row_is_enabled=False
+                    
+                    row_text = ""
+                    # check buy button.
+                    if row_is_enabled:
+                        row_text = row.text
+                        if row_text is None:
+                            row_text = ""
+
+                        row_is_enabled=False
+                        # must contains 'See Tickets'
+                        for text_item in find_ticket_text_list:
+                            if text_item in row_text:
+                                row_is_enabled = True
+                                break
+
+                    # check sold out text.
+                    if row_is_enabled:
+                        if pass_date_is_sold_out_enable:
+                            for sold_out_item in sold_out_text_list:
+                                if sold_out_item in row_text:
+                                    row_is_enabled = False
+                                    if show_debug_message:
+                                        print("match sold out text: %s, skip this row." % (sold_out_item))
+                                    break
+
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    pass
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
+
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                date_keyword = format_keyword_string(date_keyword)
+                if show_debug_message:
+                    print("start to match formated keyword:", date_keyword)
+                matched_blocks = []
+
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if date_keyword in row_text:
+                                if len(date_keyword_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and # is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if date_keyword_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    is_date_clicked = False
+    if target_area is not None:
+        is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
+        if is_date_clicked:
+            try:
+                window_handles_count = len(driver.window_handles)
+                if window_handles_count > 1:
+                    driver.switch_to.window(driver.window_handles[0])
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[0])
+                    time.sleep(0.2)
+            except Exception as excSwithFail:
+                pass
+
+
+    # [PS]: current reload condition only when
+    if auto_reload_coming_soon_page_enable:
+        if not is_date_clicked:
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    print('start to refresh page.')
+                    try:
+                        driver.refresh()
+                        time.sleep(0.3)
+                    except Exception as exc:
+                        pass
 
     return is_date_clicked
 
@@ -6017,7 +6204,15 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     tixcraft_home_close_window(driver)
-    home_url_list = ['https://tixcraft.com/','https://www.tixcraft.com/','https://indievox.com/','https://www.indievox.com/','https://teamear.tixcraft.com/activity']
+    
+    home_url_list = ['https://tixcraft.com/'
+    ,'https://www.tixcraft.com/'
+    ,'https://indievox.com/'
+    ,'https://www.indievox.com/'
+    ,'https://teamear.tixcraft.com/activity'
+    ,'https://www.ticketmaster.sg/'
+    ,'https://www.ticketmaster.com/'
+    ]
     for each_url in home_url_list:
         if each_url == url:
             if config_dict["ocr_captcha"]["enable"]:
@@ -6033,6 +6228,16 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         if date_auto_select_enable:
             domain_name = url.split('/')[2]
             is_date_selected = tixcraft_date_auto_select(driver, url, config_dict, domain_name)
+
+    if '/artist/' in url and 'ticketmaster.com' in url:
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+        if is_event_page:
+            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+            if date_auto_select_enable:
+                domain_name = url.split('/')[2]
+                is_date_selected = ticketmaster_date_auto_select(driver, url, config_dict, domain_name)
 
     # choose area
     if '/ticket/area/' in url:
@@ -9183,7 +9388,7 @@ def main(args):
         if 'indievox.com' in url:
             tixcraft_family = True
 
-        if 'ticketmaster.sg' in url:
+        if 'ticketmaster.' in url:
             tixcraft_family = True
 
         if tixcraft_family:
