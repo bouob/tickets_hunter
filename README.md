@@ -235,6 +235,7 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 * 為什麼要設計搶票的機制？
 * 為什麼網頁會有驗證碼？
 * 你的硬體設備該不該升級？
+* 想組一台新的電腦，是不是可以給我一些建議呢？
 
 
 # Donate (贊助Max)
