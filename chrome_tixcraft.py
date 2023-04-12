@@ -5417,11 +5417,13 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
                 row_is_enabled=True
 
                 if row_is_enabled:
+                    row_text = ""
                     try:
-                        if '已售完' in row.text:
-                            row_is_enabled=False
+                        row_text = row.text
                     except Exception as exc:
                         pass
+                    if '已售完' in row_text:
+                        row_is_enabled=False
 
                 if row_is_enabled:
                     try:
@@ -8959,45 +8961,303 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     return is_date_clicked
 
-def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
-    ticket_number_div = None
-    try:
-        ticket_number_div = driver.find_element(By.CSS_SELECTOR, 'div.count-button > div')
-    except Exception as exc:
-        print("find ticket_number_div fail")
+def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, area_keyword_exclude):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
 
-    ticket_number = config_dict["ticket_number"]
-    if not ticket_number_div is None:
-        ticket_number_text = ""
-        ticket_number_text_int = 0
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    matched_blocks = None
+
+    # clean stop word.
+    area_keyword_1 = format_keyword_string(area_keyword_1)
+    area_keyword_1_and = format_keyword_string(area_keyword_1_and)
+
+    area_list = None
+    try:
+        #print("try to find cityline area block")
+        my_css_selector = "div.v-expansion-panels > div.v-expansion-panel"
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find .v-expansion-panel date list fail")
+        print(exc)
+
+    formated_area_list = None
+    if area_list is not None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("area_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+
+                if row_is_enabled:
+                    row_text = ""
+                    try:
+                        row_text = row.text
+                    except Exception as exc:
+                        pass
+
+                    if '剩餘：0' in row_text:
+                        row_is_enabled=False
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+        else:
+            if show_debug_message:
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
+
+    if is_price_assign_by_bot:
+        formated_area_list = None
+
+    if formated_area_list is not None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
+            if len(area_keyword_1) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", area_keyword_1)
+                    print("keyword and:", area_keyword_1_and)
+                matched_blocks = []
+
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        try:
+                            row_text = row.text
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if row_text is None:
+                            row_text = ""
+
+                        if len(row_text) > 0:
+                            if len(area_keyword_exclude) > 0:
+                                if area_keyword_exclude in row_text:
+                                    row_text = ""
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+                            match_area_code = 0
+
+                            if area_keyword_1 in row_text:
+                                if len(area_keyword_1_and) == 0:
+                                    if show_debug_message:
+                                        print('keyword_and is empty, directly match.')
+                                    # keyword #2 is empty, direct append.
+                                    is_match_area = True
+                                    match_area_code = 2
+                                else:
+                                    if area_keyword_1_and in row_text:
+                                        if show_debug_message:
+                                            print('match keyword_and')
+                                        is_match_area = True
+                                        match_area_code = 3
+                                    else:
+                                        if show_debug_message:
+                                            print('not match keyword_and')
+                                        pass
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            is_need_refresh = True
+            if show_debug_message:
+                print("formated_area_list is empty.")
+
+    target_area = None
+    if matched_blocks is not None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+        else:
+            is_need_refresh = True
+            if show_debug_message:
+                print("matched_blocks is empty, is_need_refresh")
+
+    if target_area is not None:
         try:
-            ticket_number_text = ticket_number_div.text
+            if target_area.is_enabled():
+                target_area.click()
+                is_price_assign_by_bot = True
         except Exception as exc:
-            print("get ticket_number_text fail")
+            print("click target_area link fail")
+            print(exc)
+            # use plan B
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", target_area)
+                is_price_assign_by_bot = True
+            except Exception as exc:
+                pass
+
+    if is_price_assign_by_bot:
+        ticket_number_div = None
+        try:
+            ticket_number_div = target_area.find_element(By.CSS_SELECTOR, 'div.count-button > div')
+        except Exception as exc:
+            print("find ticket_number_div fail")
+
+        ticket_number = config_dict["ticket_number"]
+        if not ticket_number_div is None:
+            ticket_number_text = ""
+            ticket_number_text_int = 0
+            try:
+                ticket_number_text = ticket_number_div.text
+            except Exception as exc:
+                print("get ticket_number_text fail")
+                pass
+
+            if ticket_number_text is None:
+                ticket_number_text = ""
+            if len(ticket_number_text) > 0:
+                ticket_number_text_int = int(ticket_number_text)
+
+                if show_debug_message:
+                    print("ticket_number_text_int:", ticket_number_text_int)
+
+                if ticket_number_text_int < ticket_number:
+                    ticket_number_plus = None
+                    try:
+                        ticket_number_plus = target_area.find_element(By.CSS_SELECTOR, 'button > span > i.mdi-plus')
+                    except Exception as exc:
+                        print("find ticket_number_plus fail")
+
+                    if not ticket_number_plus is None:
+                        # add
+                        add_count = ticket_number - ticket_number_text_int
+                        if show_debug_message:
+                            print("add_count:", add_count)
+                        for i in range(add_count):
+                            if show_debug_message:
+                                print("click on plus button #",i)
+                            try:
+                                if ticket_number_plus.is_enabled():
+                                    ticket_number_plus.click()
+                                    time.sleep(0.1)
+                            except Exception as exc:
+                                pass
+
+    return is_need_refresh, is_price_assign_by_bot
+
+def ticketplus_order_expansion_panel(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    auto_fill_ticket_number = True
+    if auto_fill_ticket_number:
+        # click price row.
+        area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
+        area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
+        area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
+        area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
+        area_keyword_1_and = ""
+        area_keyword_2_and = ""
+        area_keyword_3_and = ""
+        area_keyword_4_and = ""
+
+        area_keyword_exclude = config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"]
+
+        area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
+        area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
+        area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
+
+        if show_debug_message:
+            print("area_keyword_1:", area_keyword_1)
+            #print("area_keyword_1_and:", area_keyword_1_and)
+            print("area_keyword_2:", area_keyword_2)
+            #print("area_keyword_2_and:", area_keyword_2_and)
+
+        is_need_refresh = False
+        is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, area_keyword_exclude)
+
+        if is_need_refresh:
+            if area_keyword_2_enable:
+                if area_keyword_1 != area_keyword_2:
+                    is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_2, area_keyword_2_and, area_keyword_exclude)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword2:", is_need_refresh)
+
+        if is_need_refresh:
+            if area_keyword_3_enable:
+                if area_keyword_1 != area_keyword_3:
+                    is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_3, area_keyword_3_and, area_keyword_exclude)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword3:", is_need_refresh)
+
+        if is_need_refresh:
+            if area_keyword_4_enable:
+                if area_keyword_1 != area_keyword_4:
+                    is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_4, area_keyword_4_and, area_keyword_exclude)
+                    if show_debug_message:
+                        print("is_need_refresh for keyword4:", is_need_refresh)
+
+        if is_need_refresh:
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
+
+    return is_price_assign_by_bot
+
+def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
+    is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict)
+    if is_price_assign_by_bot:
+        if config_dict["ocr_captcha"]["enable"]:
+            # OCR alway guess wrong answer, disable for now.
+            # ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
             pass
 
-        if ticket_number_text is None:
-            ticket_number_text = ""
-        if len(ticket_number_text) > 0:
-            ticket_number_text_int = int(ticket_number_text)
-            if ticket_number_text_int < ticket_number:
-                ticket_number_plus = None
-                try:
-                    ticket_number_plus = driver.find_element(By.CSS_SELECTOR, 'button > span > i.mid-plus')
-                except Exception as exc:
-                    print("find ticket_number_plus fail")
-
-                # add
-                add_count = ticket_number - ticket_number_text_int
-                for i in range(add_count):
-                    if not ticket_number_plus is None:
-                        try:
-                            if ticket_number_plus.is_enabled():
-                                ticket_number_plus.click()
-                        except Exception as exc:
-                            pass
-
-
+def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
