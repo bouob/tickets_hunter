@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.03.31)"
+CONST_APP_VERSION = u"MaxBot (2023.04.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -202,6 +202,20 @@ def format_keyword_string(keyword):
             keyword = keyword.replace('$','')
             keyword = keyword.replace(' ','').lower()
     return keyword
+
+def full2half(keyword):
+    n = ""
+    if not keyword is None:
+        if len(keyword) > 0:
+            for char in keyword:
+                num = ord(char)
+                if num == 0x3000:
+                    num = 32
+                elif 0xFF01 <= num <= 0xFF5E:
+                    num -= 0xfee0
+                n += chr(num)
+    return n
+
 
 def find_continuous_number(text):
     chars = "0123456789"
@@ -6431,13 +6445,25 @@ def urbtix_auto_survey(driver, config_dict):
 
                     question_answer_char = ""
                     option_text_string = ""
-                    if '「' in question_text and '」' in question_text :
-                        option_text_string = question_text.split('「')[1]
-                        option_text_string = option_text_string.split('」')[0]
+                    if '第' in question_text :
+                        option_text_string = full2half(question_text)
+                        option_text_string = option_text_string.replace('「','')
+                        option_text_string = option_text_string.replace('」','')
                         option_text_string = option_text_string.replace(' ','')
+
+                        # format question.
+                        option_text_string = option_text_string.replace(';',',')
+                        option_text_string = option_text_string.replace('.',',')
+                        option_text_string = option_text_string.replace(':',',')
+
                         if seq > 0:
-                            question_answer_char = option_text_string.split(',')[seq-1]
-                            question_answer_char = question_answer_char.strip()
+                            data_array = option_text_string.split(',')
+                            if show_debug_message:
+                                print("data_array:", data_array)
+                            if len(data_array) > 1:
+                                question_answer_char = data_array[seq-1]
+                                question_answer_char = question_answer_char.strip()
+                                question_answer_char = question_answer_char[:1]
 
                     if len(question_answer_char) > 0:
                         if show_debug_message:
@@ -6451,6 +6477,7 @@ def urbtix_auto_survey(driver, config_dict):
                                     if option_content_div is None:
                                         option_content_div=""
                                     option_content_div_text = option_content_div_text.strip()
+                                    option_content_div_text = full2half(option_content_div_text)
                                     if option_content_div_text == question_answer_char:
                                         is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                         break
@@ -6480,19 +6507,28 @@ def urbtix_auto_survey(driver, config_dict):
             is_button_clicked = False
             #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div')
 
-            # Message: Element <div class="text-tc"> is not clickable at point (198,566) because another element <div class="modal-wrapper landing-question"> obscures it
-            '''
+            # Message: Element <div class="text-tc"> is not clickable at point (351,566) because another element <div class="modal-wrapper landing-question"> obscures it
             btn_submit = None
             try:
-                btn_submit = driver.find_element(By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div.text-tc')
-                if not btn_submit is None:
-                    if btn_submit.is_enabled():
-                        btn_submit.click()
+                my_css_selector = 'div.landing-question > div.modal-inner > div.modal-content > div.content > div.button-container > div.button-and-number > div.button-wrapper > div.button-text-multi-lines > div.text-tc'
+                btn_submit = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                if not btn_submit.is_enabled():
+                    btn_submit = None
             except Exception as exc:
                 if show_debug_message:
                     print(exc)
                 pass
-            '''
+
+            if not btn_submit is None:
+                try:
+                    if show_debug_message:
+                        print("start to click btn.")
+                    btn_submit.click()
+                    is_button_clicked = True
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    pass
 
 
 def urbtix_main(driver, url, config_dict):
@@ -9513,4 +9549,3 @@ if __name__ == "__main__":
                 image_bytes = f.read()
             res = ocr.classification(image_bytes)
             print(res)
-
