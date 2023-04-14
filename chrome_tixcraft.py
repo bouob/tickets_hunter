@@ -9250,12 +9250,26 @@ def ticketplus_order_expansion_panel(driver, config_dict):
     return is_price_assign_by_bot
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
-    is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict)
-    if is_price_assign_by_bot:
-        if config_dict["ocr_captcha"]["enable"]:
-            # OCR alway guess wrong answer, disable for now.
-            # ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
-            pass
+    next_step_button = None
+    is_button_disabled = False
+    try:
+        my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
+        next_step_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not next_step_button is None:
+            if not next_step_button.is_enabled():
+                is_button_disabled = True
+    except Exception as exc:
+        print("find next_step_button fail")
+        print(exc)
+
+    #print("is_button_disabled:", is_button_disabled)
+    if is_button_disabled:
+        is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict)
+        if is_price_assign_by_bot:
+            if config_dict["ocr_captcha"]["enable"]:
+                # OCR alway guess wrong answer, disable for now.
+                # ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
+                pass
 
 def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
