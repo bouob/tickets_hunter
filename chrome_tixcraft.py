@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.12)"
+CONST_APP_VERSION = u"MaxBot (2023.04.15)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -388,8 +388,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
     else:
-        print("Oops! web driver not on path:",chromedriver_path )
-        print('let uc automatically download chromedriver.')
+        #print("Oops! web driver not on path:",chromedriver_path )
+        print('undetected_chromedriver automatically download chromedriver.')
         try:
             driver = uc.Chrome(options=options, desired_capabilities=caps, suppress_welcome=False)
         except Exception as exc:
@@ -412,6 +412,9 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             print("try to use local chromedriver to launch chrome browser.")
             driver_type = "selenium"
             driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
+        else:
+            print("建議您自行下載 ChromeDriver 到 webdriver 的資料夾下")
+            print("you need manually download ChromeDriver to webdriver folder.")
 
     return driver
 
@@ -6090,18 +6093,20 @@ def check_pop_alert(driver):
     return is_alert_popup
 
 def list_all_cookies(driver):
-    all_cookies=driver.get_cookies();
     cookies_dict = {}
-    for cookie in all_cookies:
-        cookies_dict[cookie['name']] = cookie['value']
+    if not driver is None:
+        all_cookies=driver.get_cookies();
+        for cookie in all_cookies:
+            cookies_dict[cookie['name']] = cookie['value']
     print(cookies_dict)
 
 def set_non_browser_cookies(driver, url, Captcha_Browser):
-    domain_name = url.split('/')[2]
-    #PS: need set cookies once, if user change domain.
-    if not Captcha_Browser is None:
-        Captcha_Browser.Set_cookies(driver.get_cookies())
-        Captcha_Browser.Set_Domain(domain_name)
+    if not driver is None:
+        domain_name = url.split('/')[2]
+        #PS: need set cookies once, if user change domain.
+        if not Captcha_Browser is None:
+            Captcha_Browser.Set_cookies(driver.get_cookies())
+            Captcha_Browser.Set_Domain(domain_name)
 
 def ticketmaster_assign_ticket_number(driver, config_dict):
     show_debug_message = True       # debug.
@@ -6904,7 +6909,203 @@ def ibon_auto_signup(driver):
     is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '.btn.btn-signup')
     return is_button_clicked
 
-def ibon_main(driver, url, config_dict, ibon_dict):
+def ibon_keyin_captcha_code(driver, answer = "", auto_submit = False):
+    is_verifyCode_editing = False
+
+    form_verifyCode = None
+    try:
+        my_css_selector = 'input[value="驗證碼"]'
+        form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find blockLogin input fail")
+        try:
+            my_css_selector = 'input[placeholder="驗證碼"]'
+            form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+    if form_verifyCode is not None:
+        inputed_value = None
+        try:
+            inputed_value = form_verifyCode.get_attribute('value')
+        except Exception as exc:
+            print("find verify code fail")
+            pass
+
+        if inputed_value is None:
+            inputed_value = ""
+
+        if inputed_value == "驗證碼":
+            try:
+                form_verifyCode.clear()
+            except Exception as exc:
+                print("clear verify code fail")
+                pass
+        else:
+            if len(inputed_value) > 0:
+                print("captcha text inputed.")
+                form_verifyCode = None
+                is_verifyCode_editing = True
+
+    if form_verifyCode is not None:
+        is_visible = False
+        try:
+            if form_verifyCode.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_verifyCode.click()
+                is_verifyCode_editing = True
+            except Exception as exc:
+                pass
+
+            #print("start to fill answer.")
+            try:
+                if len(answer) > 0:
+                    answer=answer.upper()
+                    form_verifyCode.clear()
+                    form_verifyCode.send_keys(answer)
+            except Exception as exc:
+                print("send_keys ocr answer fail.")
+
+    return is_verifyCode_editing
+
+def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    print("start to ddddocr")
+
+    is_need_redo_ocr = False
+    is_form_sumbited = False
+
+    ocr_answer = None
+    if not ocr is None:
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+
+        img_base64 = None
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
+            if not Captcha_Browser is None:
+                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+            image_id = 'chk_pic'
+            try:
+                form_verifyCode_base64 = driver.execute_async_script("""
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    var img = document.getElementById('%s');
+                    canvas.height = img.naturalHeight;
+                    canvas.width = img.naturalWidth;
+                    context.drawImage(img, 0, 0);
+                    callback = arguments[arguments.length - 1];
+                    callback(canvas.toDataURL());
+                    """ % (image_id))
+                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas exception:", str(exc))
+                pass
+        if not img_base64 is None:
+            try:
+                ocr_answer = ocr.classification(img_base64)
+            except Exception as exc:
+                pass
+
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+    else:
+        print("ddddocr is None")
+
+    if not ocr_answer is None:
+        ocr_answer = ocr_answer.strip()
+        print("ocr_answer:", ocr_answer)
+        if len(ocr_answer)==4:
+            who_care_var = ibon_keyin_captcha_code(driver, answer = ocr_answer, auto_submit = away_from_keyboard_enable)
+        else:
+            if not away_from_keyboard_enable:
+                ibon_keyin_captcha_code(driver)
+            else:
+                is_need_redo_ocr = True
+                if previous_answer != ocr_answer:
+                    previous_answer = ocr_answer
+                    print("click captcha again")
+                    if True:
+                        # selenium solution.
+                        jquery_string = '$("#chk_pic").attr("src", "/pic.aspx?TYPE=%s&ts=" + new Date().getTime());' % (model_name)
+                        driver.execute_script(jquery_string)
+
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+                            time.sleep(0.3)
+                    else:
+                        # Non_Browser solution.
+                        if not Captcha_Browser is None:
+                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                            if new_captcha_url != "":
+                                #PS:[TODO]
+                                #tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
+                                pass
+    else:
+        print("ocr_answer is None")
+        print("previous_answer:", previous_answer)
+        if previous_answer is None:
+            ibon_keyin_captcha_code(driver)
+        else:
+            # page is not ready, retry again.
+            # PS: usually occur in async script get captcha image.
+            is_need_redo_ocr = True
+
+    return is_need_redo_ocr, previous_answer, is_form_sumbited
+
+def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not config_dict["ocr_captcha"]["enable"]:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+
+    #PS: need a 'auto assign seat' feature to enable away_from_keyboard feature.
+    away_from_keyboard_enable = False
+
+    is_cpatcha_sent = False
+    previous_answer = None
+    for redo_ocr in range(999):
+        is_need_redo_ocr, previous_answer, is_form_sumbited = ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
+
+        # TODO: must ensure the answer is corrent...
+        is_cpatcha_sent = True
+
+        if is_form_sumbited:
+            break
+
+        if not away_from_keyboard_enable:
+            break
+
+        if not is_need_redo_ocr:
+            break
+
+    return is_cpatcha_sent
+
+def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
+    home_url_list = ['https://ticket.ibon.com.tw/'
+    ,'https://ticket.ibon.com.tw/Index/entertainment'
+    ]
+    for each_url in home_url_list:
+        if each_url == url:
+            if config_dict["ocr_captcha"]["enable"]:
+                set_non_browser_cookies(driver, url, Captcha_Browser)
+            break
+
     # https://tour.ibon.com.tw/event/e23010000300mxu
     if 'tour' in url and '/event/' in url:
         is_event_page = False
@@ -6949,6 +7150,19 @@ def ibon_main(driver, url, config_dict, ibon_dict):
                 area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
                 if area_auto_select_enable:
                     if 'PERFORMANCE_PRICE_AREA_ID=' in url:
+                        # captcha
+
+                        domain_name = url.split('/')[2]
+                        model_name = url.split('/')[5]
+                        if len(model_name) > 7:
+                            model_name=model_name[:7]
+                        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+                        #PS: need set cookies once, if user change domain.
+                        if not Captcha_Browser is None:
+                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+                        is_cpatcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
                         # step 2: assign ticket number.
                         is_match_target_feature = True
                         ticket_number = str(config_dict["ticket_number"])
@@ -9712,7 +9926,7 @@ def main(args):
             famiticket_main(driver, url, config_dict)
 
         if 'ibon.com' in url:
-            ibon_dict = ibon_main(driver, url, config_dict, ibon_dict)
+            ibon_dict = ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser)
 
         if 'kham.com' in url:
             kham_main(driver, url, config_dict, ocr, Captcha_Browser)
