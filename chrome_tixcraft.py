@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.17)"
+CONST_APP_VERSION = u"MaxBot (2023.04.17).ver.2"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2968,9 +2968,28 @@ def kktix_get_web_datetime(registrationsNewApp_div):
 
     return web_datetime
 
+def kktix_hide_blocks(driver):
+    is_need_refresh = False
+    elements = None
+    try:
+        elements = driver.find_elements(By.CSS_SELECTOR, "div[ng-controller='EventInfoCtrl']")
+    except Exception as exc:
+        print("find person_agree_terms checkbox Exception")
+        pass
+
+    if elements is not None:
+        for element in elements:
+            if element is not None:
+                try:
+                    driver.execute_script("arguments[0].innerHTML='';", element);
+                except Exception as exc:
+                    pass
+
 def kktix_check_agree_checkbox(driver):
     is_need_refresh = False
     is_finish_checkbox_click = False
+
+    kktix_hide_blocks(driver)
 
     person_agree_terms_checkbox = None
     try:
@@ -3002,7 +3021,7 @@ def kktix_check_agree_checkbox(driver):
                     is_finish_checkbox_click = True
                 except Exception as exc:
                     try:
-                        driver.execute_script("arguments[0].click();", next_stepperson_agree_terms_checkboxbutton)
+                        driver.execute_script("arguments[0].click();", person_agree_terms_checkbox)
                         is_finish_checkbox_click = True
                     except Exception as exc:
                         pass
