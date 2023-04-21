@@ -53,7 +53,7 @@ import argparse
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.15)"
+CONST_APP_VERSION = u"MaxBot (2023.04.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -241,9 +241,11 @@ def find_continuous_pattern(allowed_char, text):
     return ret
 
 def get_favoriate_extension_path(webdriver_path):
+    print("webdriver_path:", webdriver_path)
     no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
     no_ad_path = os.path.join(webdriver_path,"Adblock_3.16.1.0.crx")
-    return no_google_analytics_path, no_ad_path
+    buster_path = os.path.join(webdriver_path,"Buster_2.0.1.0.crx")
+    return no_google_analytics_path, no_ad_path, buster_path
 
 def get_chromedriver_path(webdriver_path):
     chromedriver_path = os.path.join(webdriver_path,"chromedriver")
@@ -261,12 +263,14 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     # some windows cause: timed out receiving message from renderer
     if adblock_plus_enable:
         # PS: this is ocx version.
-        no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+        no_google_analytics_path, no_ad_path, buster_path = get_favoriate_extension_path(webdriver_path)
 
         if os.path.exists(no_google_analytics_path):
             chrome_options.add_extension(no_google_analytics_path)
         if os.path.exists(no_ad_path):
             chrome_options.add_extension(no_ad_path)
+        if os.path.exists(buster_path):
+            chrome_options.add_extension(buster_path)
     if headless:
         #chrome_options.add_argument('--headless')
         chrome_options.add_argument('--headless=new')
@@ -347,14 +351,17 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     #print("strategy", options.page_load_strategy)
 
     if adblock_plus_enable:
-        no_google_analytics_path, no_ad_path = get_favoriate_extension_path(webdriver_path)
+        no_google_analytics_path, no_ad_path, buster_path = get_favoriate_extension_path(webdriver_path)
         no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
         no_ad_folder_path = no_ad_path.replace('.crx','')
+        buster_path = buster_path.replace('.crx','')
         load_extension_path = ""
         if os.path.exists(no_google_analytics_folder_path):
             load_extension_path += "," + no_google_analytics_folder_path
         if os.path.exists(no_ad_folder_path):
             load_extension_path += "," + no_ad_folder_path
+        if os.path.exists(buster_path):
+            load_extension_path += "," + buster_path
         if len(load_extension_path) > 0:
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
@@ -2994,7 +3001,11 @@ def kktix_check_agree_checkbox(driver):
                     person_agree_terms_checkbox.click()
                     is_finish_checkbox_click = True
                 except Exception as exc:
-                    pass
+                    try:
+                        driver.execute_script("arguments[0].click();", next_stepperson_agree_terms_checkboxbutton)
+                        is_finish_checkbox_click = True
+                    except Exception as exc:
+                        pass
             else:
                 #print('checked')
                 is_finish_checkbox_click = True
