@@ -10056,7 +10056,7 @@ if __name__ == "__main__":
         #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
         #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
         #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
-        captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之"選項"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
+        captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
