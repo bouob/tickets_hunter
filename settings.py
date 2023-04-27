@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.04.17)"
+CONST_APP_VERSION = u"MaxBot (2023.04.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -488,7 +488,7 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_2_and"] = ""
     config_dict["kktix"]["area_keyword_2_enable"] = True
     config_dict["kktix"]["area_keyword_exclude"] = "輪椅"
-    config_dict["kktix"]["auto_guess_options"] = True
+    config_dict["kktix"]["auto_guess_options"] = False
     config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
