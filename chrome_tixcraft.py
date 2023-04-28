@@ -49,11 +49,12 @@ except Exception as exc:
 
 import webbrowser
 import argparse
+import itertools
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.19)"
+CONST_APP_VERSION = u"MaxBot (2023.04.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -238,6 +239,26 @@ def find_continuous_pattern(allowed_char, text):
         else:
             # make not continuous
             is_allowed_char_start = False
+    return ret
+
+def is_all_alpha_or_numeric(text):
+    ret = False
+    alpha_count = 0
+    numeric_count = 0
+    for char in text:
+        try:
+            if char.encode('UTF-8').isalpha():
+                alpha_count += 1
+        except Exception as exc:
+            pass
+
+        if char.isnumeric():
+            numeric_count += 1
+
+    if (alpha_count + numeric_count) == len(text):
+        ret = True
+
+    #print("text/is_all_alpha_or_numeric:",text,ret)
     return ret
 
 def get_favoriate_extension_path(webdriver_path):
@@ -773,6 +794,15 @@ def guess_answer_list_from_multi_options(tmp_text):
         if len(return_list) <= 2:
             return_list = None
 
+    # remove chinese work options.
+    if not return_list is None:
+        new_list = []
+        for item in return_list:
+            if is_all_alpha_or_numeric(item):
+                new_list.append(item)
+        if len(new_list) >=3:
+            return_list = new_list
+
     return return_list
 
 #PS: this may get a wrong answer list. XD
@@ -1029,6 +1059,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
         search_result = pattern.search(my_options)
         if not search_result is None:
             (span_start, span_end) = search_result.span()
+            maybe_delimitor=""
             if len(my_options) > (span_end+1)+1:
                 maybe_delimitor = my_options[span_end+0:span_end+1]
             if maybe_delimitor in allow_delimitor_symbols:
@@ -1058,6 +1089,11 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 # re-sample for this case.
                 return_list = re.findall(my_anwser_formated, my_options)
 
+            if len(return_list) == 1:
+                # if use pattern to find matched only one, means it is for example text.
+                return_list = None
+
+        if not return_list is None:
             # clean delimitor
             if is_trim_quota:
                 return_list_length = len(return_list)
@@ -1068,7 +1104,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 if show_debug_message:
                     print("cleaned return_list:" , return_list)
 
-    return return_list
+    return return_list, offical_hint_string_anwser
 
 def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     tmp_text = captcha_text_div_text
@@ -1076,6 +1112,15 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_tex
     tmp_text = tmp_text.replace(u'：',u':')
     # for hint
     tmp_text = tmp_text.replace(u'*',u'*')
+
+    # stop word.
+    tmp_text = tmp_text.replace(u'輸入法',u'')
+    tmp_text = tmp_text.replace(u'請問',u'')
+    tmp_text = tmp_text.replace(u'請將',u'')
+    tmp_text = tmp_text.replace(u'請在',u'')
+    tmp_text = tmp_text.replace(u'請以',u'')
+    tmp_text = tmp_text.replace(u'請回答',u'')
+    tmp_text = tmp_text.replace(u'請',u'')
 
     # replace ex.
     tmp_text = tmp_text.replace(u'例如', CONST_EXAMPLE_SYMBOL)
@@ -1110,6 +1155,29 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_tex
 
     return tmp_text
 
+def permutations(iterable, r=None):
+    pool = tuple(iterable)
+    n = len(pool)
+    r = n if r is None else r
+    if r > n:
+        return
+    indices = list(range(n))
+    cycles = list(range(n, n-r, -1))
+    yield tuple(pool[i] for i in indices[:r])
+    while n:
+        for i in reversed(range(r)):
+            cycles[i] -= 1
+            if cycles[i] == 0:
+                indices[i:] = indices[i+1:] + indices[i:i+1]
+                cycles[i] = n - i
+            else:
+                j = cycles[i]
+                indices[i], indices[-j] = indices[-j], indices[i]
+                yield tuple(pool[i] for i in indices[:r])
+                break
+        else:
+            return
+
 def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
@@ -1125,8 +1193,39 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
         if not return_list is None:
             print("guess_answer_list_from_multi_options:", return_list)
 
+    offical_hint_string_anwser = ""
     if return_list is None:
-        return_list = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+        return_list, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+    else:
+        is_match_factorial = False
+        mutiple = 0
+
+        return_list_2, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+        if return_list_2 is None:
+            if len(offical_hint_string_anwser) >=3:
+                if len(return_list) >=3:
+                    mutiple = int(len(offical_hint_string_anwser) / len(return_list[0]))
+                    if mutiple >=3 :
+                        is_match_factorial = True
+
+        if show_debug_message:
+            print("mutiple:", mutiple)
+            print("is_match_factorial:", is_match_factorial)
+        if is_match_factorial:
+            is_match_factorial = False
+            order_string_list = ['排列','排序','依序','順序','遞增','遞減','升冪','降冪','新到舊','舊到新','小到大','大到小','高到低','低到高']
+            for order_string in order_string_list:
+                if order_string in tmp_text:
+                    is_match_factorial = True
+
+        if is_match_factorial:
+            new_array = permutations(return_list, mutiple)
+            #print("new_array:", new_array)
+            
+            return_list = []
+            for item_tuple in new_array:
+                return_list.append(''.join(item_tuple))
+
     if show_debug_message:
         if not return_list is None:
             print("guess_answer_list_from_hint:", return_list)
@@ -2111,14 +2210,20 @@ def guess_tixcraft_question(driver):
 
     return inferred_answer_string, answer_list
 
-def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
+def tixcraft_verify(driver, config_dict, answer_index):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     inferred_answer_string = None
     answer_list = []
 
     is_retry_user_single_answer = False
+
+    presale_code = config_dict["tixcraft"]["presale_code"]
+    presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
 
     if len(presale_code) > 0:
         if len(presale_code_delimiter) > 0:
@@ -2133,12 +2238,13 @@ def tixcraft_verify(driver, presale_code, presale_code_delimiter, answer_index):
                 inferred_answer_string = presale_code
 
     if inferred_answer_string is None:
-        inferred_answer_string, answer_list = guess_tixcraft_question(driver)
-        if inferred_answer_string is None:
-            if not answer_list is None:
-                if len(answer_list) > 0:
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_string = answer_list[answer_index+1]
+        if config_dict["advanced"]["auto_guess_options"]:
+            inferred_answer_string, answer_list = guess_tixcraft_question(driver)
+            if inferred_answer_string is None:
+                if not answer_list is None:
+                    if len(answer_list) > 0:
+                        if answer_index < len(answer_list)-1:
+                            inferred_answer_string = answer_list[answer_index+1]
 
     if show_debug_message:
         print("answer_index:", answer_index)
@@ -3588,13 +3694,10 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
             if show_debug_message:
                 print("found captcha_inner_div layor.")
 
-            auto_guess_options = config_dict["kktix"]["auto_guess_options"]
-            user_guess_string = config_dict["kktix"]["user_guess_string"]
-
             if len(user_guess_string) > 0:
-                inferred_answer_string = user_guess_string
+                inferred_answer_string = config_dict["kktix"]["user_guess_string"]
             else:
-                if auto_guess_options:
+                if config_dict["advanced"]["auto_guess_options"]:
                     inferred_answer_string, answer_list = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div)
 
             if inferred_answer_string is not None:
@@ -6308,9 +6411,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
 
     if '/ticket/verify/' in url:
-        presale_code = config_dict["tixcraft"]["presale_code"]
-        presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
-        tixcraft_dict["answer_index"] = tixcraft_verify(driver, presale_code, presale_code_delimiter, tixcraft_dict["answer_index"])
+        tixcraft_dict["answer_index"] = tixcraft_verify(driver, config_dict, tixcraft_dict["answer_index"])
     else:
         tixcraft_dict["answer_index"] = -1
 
@@ -10056,6 +10157,7 @@ if __name__ == "__main__":
         #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
         #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
         #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
+        #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
         captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
