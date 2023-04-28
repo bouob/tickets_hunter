@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.04.19)"
+CONST_APP_VERSION = u"MaxBot (2023.04.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -488,7 +488,6 @@ def get_default_config():
     config_dict["kktix"]["area_keyword_2_and"] = ""
     config_dict["kktix"]["area_keyword_2_enable"] = True
     config_dict["kktix"]["area_keyword_exclude"] = "輪椅"
-    config_dict["kktix"]["auto_guess_options"] = False
     config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
@@ -541,6 +540,7 @@ def get_default_config():
     config_dict["advanced"]["open_google_oauth_url"] = False
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
+    config_dict["advanced"]["auto_guess_options"] = False
 
     return config_dict
 
@@ -674,8 +674,6 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_kktix_answer_dictionary
     global txt_kktix_user_guess_string
 
-    global chk_state_auto_guess_options
-
     global chk_state_date_auto_select
     global txt_date_keyword
     global chk_state_area_auto_select
@@ -717,6 +715,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_google_oauth
     global chk_state_headless
     global chk_state_verbose
+    global chk_state_auto_guess_options
     global combo_ocr_captcha_image_source
     global combo_webdriver_type
 
@@ -769,7 +768,6 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["kktix"]["area_keyword_2_enable"] = bool(chk_state_kktix_area_keyword_2_enable.get())
         # disable password brute force attack
         #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
-        config_dict["kktix"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
         config_dict["kktix"]["user_guess_string"] = txt_kktix_user_guess_string.get().strip()
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
@@ -832,6 +830,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
+        config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
     # save config.
     if is_all_data_correct:
@@ -986,7 +985,6 @@ def applyNewLanguage():
     global lbl_kktix_area_keyword_1_and_text
     global lbl_kktix_area_keyword_2
     global lbl_kktix_area_keyword_2_and_text
-    global lbl_auto_guess_options
     global lbl_user_guess_string
 
     # for tixcraft
@@ -1010,6 +1008,7 @@ def applyNewLanguage():
     global lbl_webdriver_type
     global lbl_headless
     global lbl_verbose
+    global lbl_auto_guess_options
 
     global lbl_maxbot_status
     global lbl_maxbot_last_url
@@ -1020,7 +1019,6 @@ def applyNewLanguage():
 
     global chk_auto_press_next_step_button
     global chk_auto_fill_ticket_number
-    global chk_auto_guess_options
     global chk_date_auto_select
     global chk_area_auto_select
     global chk_pass_date_is_sold_out
@@ -1032,6 +1030,7 @@ def applyNewLanguage():
     global chk_google_oauth
     global chk_headless
     global chk_verbose
+    global chk_auto_guess_options
 
     global chk_kktix_area_keyword_2_enable
     global chk_area_keyword_2_enable
@@ -1064,7 +1063,6 @@ def applyNewLanguage():
     lbl_kktix_area_keyword_1_and_text.config(text=translate[language_code]["and"])
     lbl_kktix_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
     lbl_kktix_area_keyword_2_and_text.config(text=translate[language_code]["and"])
-    lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
     lbl_user_guess_string.config(text=translate[language_code]["user_guess_string"])
 
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
@@ -1088,6 +1086,8 @@ def applyNewLanguage():
     lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
+    lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
+
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
     lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
 
@@ -1095,7 +1095,6 @@ def applyNewLanguage():
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
     chk_auto_press_next_step_button.config(text=translate[language_code]["enable"])
     chk_auto_fill_ticket_number.config(text=translate[language_code]["enable"])
-    chk_auto_guess_options.config(text=translate[language_code]["enable"])
     chk_date_auto_select.config(text=translate[language_code]["enable"])
     chk_area_auto_select.config(text=translate[language_code]["enable"])
     chk_pass_date_is_sold_out.config(text=translate[language_code]["enable"])
@@ -1107,6 +1106,7 @@ def applyNewLanguage():
     chk_google_oauth.config(text=translate[language_code]["enable"])
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
+    chk_auto_guess_options.config(text=translate[language_code]["enable"])
 
     chk_kktix_area_keyword_2_enable.config(text=translate[language_code]["enable"])
     chk_area_keyword_2_enable.config(text=translate[language_code]["enable"])
@@ -1369,7 +1369,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # disable password brute force attack
     # PS: because of the question is always variable.
     #kktix_answer_dictionary = ""
-    auto_guess_options = False
     user_guess_string = ""
 
     date_auto_select_enable = None
@@ -1403,7 +1402,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
     if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
         kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
-    auto_guess_options = config_dict["kktix"]["auto_guess_options"]
     user_guess_string = config_dict["kktix"]["user_guess_string"].strip()
 
     # disable password brute force attack
@@ -1669,20 +1667,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     #txt_kktix_answer_dictionary_value = StringVar(frame_group_kktix, value=kktix_answer_dictionary)
     #txt_kktix_answer_dictionary = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_answer_dictionary_value)
     #txt_kktix_answer_dictionary.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_auto_guess_options
-    lbl_auto_guess_options = Label(frame_group_kktix, text=translate[language_code]['auto_guess_options'])
-    lbl_auto_guess_options.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_auto_guess_options
-    chk_state_auto_guess_options = BooleanVar()
-    chk_state_auto_guess_options.set(auto_guess_options)
-
-    global chk_auto_guess_options
-    chk_auto_guess_options = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_guess_options)
-    chk_auto_guess_options.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -2122,6 +2106,19 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
     chk_verbose.grid(column=1, row=group_row_count, sticky = W)
 
+    group_row_count+=1
+
+    global lbl_auto_guess_options
+    lbl_auto_guess_options = Label(frame_group_header, text=translate[language_code]['auto_guess_options'])
+    lbl_auto_guess_options.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_guess_options
+    chk_state_auto_guess_options = BooleanVar()
+    chk_state_auto_guess_options.set(config_dict["advanced"]["auto_guess_options"])
+
+    global chk_auto_guess_options
+    chk_auto_guess_options = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_guess_options)
+    chk_auto_guess_options.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
