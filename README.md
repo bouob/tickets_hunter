@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-04-24)：優化KKTIX 推論驗證問題/示範多開.
+
+https://youtu.be/Wn1qLz-Re8c
+
 Max搶票機器人 (2023-04-15)：ibon驗證碼
 
 https://youtu.be/NmFd7uLptGA
