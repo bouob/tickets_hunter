@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.22)"
+CONST_APP_VERSION = u"MaxBot (2023.04.24)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -706,7 +706,7 @@ def guess_answer_list_from_multi_options(tmp_text):
     matched_pattern = ""
     if options_list is None:
         if u'【' in tmp_text and u'】' in tmp_text:
-            pattern = '【.*?】'
+            pattern = '【.{1,4}】'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
@@ -715,7 +715,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if options_list is None:
         if u'(' in tmp_text and u')' in tmp_text:
-            pattern = '\(.*?\)'
+            pattern = '\(.{1,4}\)'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
@@ -724,7 +724,43 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if options_list is None:
         if u'[' in tmp_text and u']' in tmp_text:
-            pattern = '\[.*?\]'
+            pattern = '\[.{1,4}\]'
+            options_list = re.findall(pattern, tmp_text)
+            if len(options_list) <= 2:
+                options_list = None
+            else:
+                matched_pattern = pattern
+
+    if options_list is None:
+        if "\n" in tmp_text and u')' in tmp_text:
+            pattern = "\\n.{1,4}\)"
+            options_list = re.findall(pattern, tmp_text)
+            if len(options_list) <= 2:
+                options_list = None
+            else:
+                matched_pattern = pattern
+
+    if options_list is None:
+        if "\n" in tmp_text and u']' in tmp_text:
+            pattern = "\\n.{1,4}\]"
+            options_list = re.findall(pattern, tmp_text)
+            if len(options_list) <= 2:
+                options_list = None
+            else:
+                matched_pattern = pattern
+
+    if options_list is None:
+        if "\n" in tmp_text and u'】' in tmp_text:
+            pattern = "\\n.{1,4}】"
+            options_list = re.findall(pattern, tmp_text)
+            if len(options_list) <= 2:
+                options_list = None
+            else:
+                matched_pattern = pattern
+
+    if options_list is None:
+        if "\n" in tmp_text and u':' in tmp_text:
+            pattern = "\\n.{1,4}:"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = None
@@ -1190,8 +1226,9 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     if return_list is None:
         return_list = guess_answer_list_from_multi_options(tmp_text)
     if show_debug_message:
+        print("captcha_text_div_text:", captcha_text_div_text)
         if not return_list is None:
-            print("guess_answer_list_from_multi_options:", return_list)
+            print("found, guess_answer_list_from_multi_options:", return_list)
 
     offical_hint_string_anwser = ""
     if return_list is None:
@@ -1228,13 +1265,13 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
     if show_debug_message:
         if not return_list is None:
-            print("guess_answer_list_from_hint:", return_list)
+            print("found, guess_answer_list_from_hint:", return_list)
 
     if return_list is None:
         return_list = guess_answer_list_from_symbols(captcha_text_div_text)
     if show_debug_message:
         if not return_list is None:
-            print("guess_answer_list_from_symbols:", return_list)
+            print("found, guess_answer_list_from_symbols:", return_list)
 
     return return_list
 
@@ -3694,7 +3731,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
             if show_debug_message:
                 print("found captcha_inner_div layor.")
 
-            if len(user_guess_string) > 0:
+            if len(config_dict["kktix"]["user_guess_string"]) > 0:
                 inferred_answer_string = config_dict["kktix"]["user_guess_string"]
             else:
                 if config_dict["advanced"]["auto_guess_options"]:
@@ -10158,7 +10195,10 @@ if __name__ == "__main__":
         #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
         #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
         #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
-        captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
+        #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
+        captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
+        #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
+        #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
         inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("inferred_answer_string:", inferred_answer_string)
         print("answer_list:", answer_list)
