@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.04.24)"
+CONST_APP_VERSION = u"MaxBot (2023.05.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -217,6 +217,42 @@ def full2half(keyword):
                 n += chr(num)
     return n
 
+def get_chinese_numeric():
+    my_dict = {}
+    my_dict['0']=['zero','零']
+    my_dict['1']=['one','一','壹','①','❶','⑴']
+    my_dict['2']=['two','二','貳','②','❷','⑵']
+    my_dict['3']=['three','三','叁','③','❸','⑶']
+    my_dict['4']=['four','四','肆','④','❹','⑷']
+    my_dict['5']=['five','五','伍','⑤','❺','⑸']
+    my_dict['6']=['six','六','陸','⑥','❻','⑹']
+    my_dict['7']=['seven','七','柒','⑦','❼','⑺']
+    my_dict['8']=['eight','八','捌','⑧','❽','⑻']
+    my_dict['9']=['nine','九','玖','⑨','❾','⑼']
+
+    return my_dict
+
+# 同義字
+def synonyms(keyword):
+    ret = []
+    my_dict = get_chinese_numeric()
+    if keyword in my_dict:
+        ret = my_dict[keyword]
+    else:
+        ret.append(keyword)
+    return ret
+
+def normalize_chinese_numeric(keyword):
+    ret = None
+    my_dict = get_chinese_numeric()
+    for i in my_dict:
+        for item in my_dict[i]:
+            if keyword.lower() == item:
+                ret = int(i)
+                break
+        if not ret is None:
+            break
+    return ret
 
 def find_continuous_number(text):
     chars = "0123456789"
@@ -252,7 +288,8 @@ def is_all_alpha_or_numeric(text):
         except Exception as exc:
             pass
 
-        if char.isnumeric():
+        #if char.isnumeric():
+        if char.isdigit():
             numeric_count += 1
 
     if (alpha_count + numeric_count) == len(text):
@@ -6576,6 +6613,113 @@ def urbtix_performance_confirm_dialog_popup(driver):
 
     return ret
 
+def get_urbtix_survey_answer_by_question(question_text):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    question_text = question_text.replace('  ',' ')
+    question_text = full2half(question_text)
+
+    seq = 0
+    if '第' in question_text and '個' in question_text:
+        temp_string = question_text.split('第')[1]
+        seq_string  = temp_string.split('個')[0]
+        if len(seq_string) > 0:
+            if seq_string.isdigit():
+                seq = int(seq_string)
+            else:
+                tmp_seq = normalize_chinese_numeric(seq_string)
+                if not tmp_seq is None:
+                    seq = tmp_seq
+
+    if show_debug_message:
+        print("seq:", seq)
+
+    direction = "left"
+    if '右起' in question_text:
+        direction = "right"
+    if '由右' in question_text:
+        direction = "right"
+    if '從右' in question_text:
+        direction = "right"
+    if '自右' in question_text:
+        direction = "right"
+    if '右算' in question_text:
+        direction = "right"
+    if '右邊' in question_text:
+        direction = "right"
+    if ' from the RIGHT' in question_text:
+        direction = "right"
+
+    if '有多少個' in question_text:
+        direction = "count"
+    if '有幾個' in question_text:
+        direction = "count"
+    if 'How many ' in question_text:
+        direction = "count"
+
+    if show_debug_message:
+        print("direction:", direction)
+
+    question_text_formated = question_text
+    question_text_formated = question_text_formated.replace('「','')
+    question_text_formated = question_text_formated.replace('」','')
+    question_text_formated = question_text_formated.replace(' ','')
+    question_text_formated = question_text_formated.replace('-','')
+    question_text_formated = question_text_formated.replace('_','')
+
+    # format question.
+    question_text_formated = question_text_formated.replace(';','')
+    question_text_formated = question_text_formated.replace('.','')
+    question_text_formated = question_text_formated.replace(':','')
+    question_text_formated = question_text_formated.replace(',','')
+
+    question_answer_char = ""
+    option_text_string = find_continuous_text(question_text_formated)
+    
+
+    if show_debug_message:
+        print("option_text_string:", option_text_string)
+
+    if direction in ['left','right']:
+        if seq > 0:
+            if len(option_text_string) > 1:
+                if seq <= len(option_text_string):
+                    if direction == "left":
+                        question_answer_char = option_text_string[seq-1:seq]
+                    if direction == "right":
+                        question_answer_char = option_text_string[len(option_text_string)-seq:len(option_text_string)-seq+1]
+
+    if direction == "count":
+        if '個' in question_text_formated:
+            count_target = None
+            count_answer = 0
+
+            tmp_seq = question_text_formated.split('個')[1]
+            if len(tmp_seq) > 0:
+                count_target_string = tmp_seq[:1]
+                if len(count_target_string) > 0:
+                    if count_target_string.isdigit():
+                        count_target = int(count_target_string)
+                    else:
+                        count_target = normalize_chinese_numeric(count_target_string)
+
+            if not count_target is None:
+                for char in option_text_string:
+                    if char == str(count_target):
+                        count_answer += 1
+
+            question_answer_char = str(count_answer)
+            if show_debug_message:
+                print("count_target:", count_target)
+                print("count_answer:", count_answer)
+
+    if show_debug_message:
+        print("question_answer_char text:", question_answer_char)
+
+    return question_answer_char, direction
+
+
 def urbtix_auto_survey(driver, config_dict):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
@@ -6592,6 +6736,7 @@ def urbtix_auto_survey(driver, config_dict):
         pass
 
     is_radio_clicked = False
+    fill_question_count = 0
 
     if questions_div is not None:
         quetions_count = len(questions_div)
@@ -6608,60 +6753,76 @@ def urbtix_auto_survey(driver, config_dict):
                     if show_debug_message:
                         print("questions_div text:", question_text)
 
-                    seq = 0
-                    if '個數字' in question_text:
-                        temp_string = question_text.split('第')[1]
-                        seq_string  = temp_string.split('個')[0]
-                        if len(seq_string) > 0:
-                            seq = int(seq_string)
+                    question_answer_char, question_direction = get_urbtix_survey_answer_by_question(question_text)
+                    each_option_items_div = each_question_div.find_elements(By.CSS_SELECTOR, 'div.options > div.option-item')
+                    if not each_option_items_div is None:
+                        question_answered = False
+                        for each_option_div in each_option_items_div:
+                            option_content_div = each_option_div.find_element(By.CSS_SELECTOR, 'div.content-list')
+                            if not option_content_div is None:
+                                option_content_div_text = option_content_div.text
+                                if option_content_div is None:
+                                    option_content_div=""
+                                option_content_div_text = option_content_div_text.strip()
+                                option_content_div_text = full2half(option_content_div_text)
 
-                    if show_debug_message:
-                        print("seq:", seq)
+                                if question_direction in ['left','right']:
+                                    for answer_item in synonyms(question_answer_char):
+                                        if answer_item in option_content_div_text:
+                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            if is_radio_clicked:
+                                                if show_debug_message:
+                                                    print("fill answer:", answer_item)
+                                                question_answered = True
+                                                break
 
-                    question_answer_char = ""
-                    option_text_string = ""
-                    if '第' in question_text :
-                        option_text_string = full2half(question_text)
-                        option_text_string = option_text_string.replace('「','')
-                        option_text_string = option_text_string.replace('」','')
-                        option_text_string = option_text_string.replace(' ','')
+                                if question_direction == "count":
+                                    for answer_item in synonyms(question_answer_char):
+                                        if answer_item in option_content_div_text:
+                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            if is_radio_clicked:
+                                                if show_debug_message:
+                                                    print("fill answer:", answer_item)
+                                                question_answered = True
+                                                break
 
-                        # format question.
-                        option_text_string = option_text_string.replace(';',',')
-                        option_text_string = option_text_string.replace('.',',')
-                        option_text_string = option_text_string.replace(':',',')
+                                    if question_answer_char == '0':
+                                        if '沒有' in option_content_div_text:
+                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            if is_radio_clicked:
+                                                if show_debug_message:
+                                                    print("fill answer:", '沒有')
+                                                question_answered = True
+                                                break
 
-                        if seq > 0:
-                            data_array = option_text_string.split(',')
-                            if show_debug_message:
-                                print("data_array:", data_array)
-                            if len(data_array) > 1:
-                                question_answer_char = data_array[seq-1]
-                                question_answer_char = question_answer_char.strip()
-                                question_answer_char = question_answer_char[:1]
+                                    int_answer_char = int(question_answer_char)
+                                    if int_answer_char > 1:
+                                        for i in range(int_answer_char-1):
+                                            for answer_item in synonyms(str(i+1)):
+                                                    if answer_item + '個或以上' in option_content_div_text:
+                                                        is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                                        if is_radio_clicked:
+                                                            if show_debug_message:
+                                                                print("fill answer:", answer_item + '個或以上')
+                                                            question_answered = True
+                                                            break
+                                            if question_answered:
+                                                break
 
-                    if len(question_answer_char) > 0:
-                        if show_debug_message:
-                            print("question_answer_char text:", question_answer_char)
-                        each_option_items_div = each_question_div.find_elements(By.CSS_SELECTOR, 'div.options > div.option-item')
-                        if not each_option_items_div is None:
-                            for each_option_div in each_option_items_div:
-                                option_content_div = each_option_div.find_element(By.CSS_SELECTOR, 'div.content-list')
-                                if not option_content_div is None:
-                                    option_content_div_text = option_content_div.text
-                                    if option_content_div is None:
-                                        option_content_div=""
-                                    option_content_div_text = option_content_div_text.strip()
-                                    option_content_div_text = full2half(option_content_div_text)
-                                    if option_content_div_text == question_answer_char:
-                                        is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
-                                        break
+                                if question_answered:
+                                    fill_question_count += 1
+                                    break
+
         except Exception as exc:
             if show_debug_message:
                 print(exc)
             pass
 
-    if is_radio_clicked:
+        if show_debug_message:
+            print("fill_question_count:", fill_question_count)
+
+    #if is_radio_clicked and fill_question_count>=3:
+    if is_radio_clicked and fill_question_count>=2:
         questions_remain_div = None
         questions_remain_text = ""
         try:
@@ -6700,6 +6861,7 @@ def urbtix_auto_survey(driver, config_dict):
                         print("start to click btn.")
                     btn_submit.click()
                     is_button_clicked = True
+                    time.sleep(1.0)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -6728,7 +6890,8 @@ def urbtix_main(driver, url, config_dict):
 
     # for new survey.
     if 'https://www.urbtix.hk/session/landing' == url:
-        urbtix_auto_survey(driver, config_dict)
+        if config_dict["advanced"]["auto_guess_options"]:
+            urbtix_auto_survey(driver, config_dict)
 
     if '.hk/member-login' in url:
         urbtix_account = config_dict["advanced"]["urbtix_account"]
@@ -10210,3 +10373,12 @@ if __name__ == "__main__":
                 image_bytes = f.read()
             res = ocr.classification(image_bytes)
             print(res)
+
+        # for urbtix survey.
+        question_text = "「6- -V- -U - n--s- -z - j」由右起第三個數字/字母是甚麼?"
+        question_text = "「6---2 - 3 _ 8- -8 _ 4 - 1--4 _ 7」中有多少個「二」?"
+        question_answer_char, question_direction = get_urbtix_survey_answer_by_question(question_text)
+        print("question_text:", question_text)
+        print("question_answer_char:", question_answer_char)
+        print("question_text:", question_direction)
+
