@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.01)"
+CONST_APP_VERSION = u"MaxBot (2023.05.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -4677,11 +4677,16 @@ def urbtix_area_auto_select(driver, area_auto_select_mode, area_keyword_1, area_
     return is_need_refresh, is_price_assign_by_bot
 
 
-def urbtix_ticket_number_auto_select(driver, ticket_number):
+def urbtix_ticket_number_auto_select(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_ticket_number_assigned = False
+
+    ticket_number = config_dict["ticket_number"]
     ticket_number_str = str(ticket_number)
 
     # check ticket input textbox.
@@ -4722,10 +4727,25 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
                 # already assigned.
                 is_ticket_number_assigned = True
 
+    ticket_count = 0
 
     if is_ticket_number_assigned:
+        el_ticket_count = None
+        try:
+            my_css_selector = "div.left-content > span.total-count"
+            el_ticket_count = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not el_ticket_count is None:
+                tmp_ticket_count = el_ticket_count.text
+                if len(tmp_ticket_count) > 0: 
+                    if tmp_ticket_count.isdigit():
+                        ticket_count = int(tmp_ticket_count)
+        except Exception as exc:
+            pass
+
+    if is_ticket_number_assigned and ticket_count==0:
         el_btn = None
         try:
+            # this is "confirm"(確認) button.
             my_css_selector = "div.footer > div > div"
             el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
@@ -4736,8 +4756,11 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
                 if el_btn.is_enabled():
                     el_btn.click()
                     print("varify site icon pressed.")
+                    time.sleep(0.3)
             except Exception as exc:
                 # use plan B
+                if show_debug_message:
+                    print("varify site icon pressed fail:", exc)
                 '''
                 try:
                     print("force to click by js.")
@@ -4751,9 +4774,10 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
             if show_debug_message:
                 print("varify site icon is None.")
 
-    if is_ticket_number_assigned:
+    if is_ticket_number_assigned and ticket_count>0:
         el_btn = None
         try:
+            # this is "add to cart"(加入購物籃)
             my_css_selector = "div.button-inner > div > div.button-text"
             el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
@@ -4763,15 +4787,22 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
             try:
                 if el_btn.is_enabled():
                     el_btn.click()
+                    time.sleep(0.3)
+                    ret = True
                     print("shopping-cart icon pressed.")
             except Exception as exc:
                 # use plan B
+                if show_debug_message:
+                    print("click on button fail:", exc)
+                pass
+                '''
                 try:
                     print("force to click by js.")
                     driver.execute_script("arguments[0].click();", el_btn)
                     ret = True
                 except Exception as exc:
                     pass
+                '''
         else:
             if show_debug_message:
                 print("shopping-cart site icon is None.")
@@ -4782,6 +4813,9 @@ def urbtix_ticket_number_auto_select(driver, ticket_number):
 def urbtix_performance(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     ret = False
 
@@ -4833,11 +4867,8 @@ def urbtix_performance(driver, config_dict):
                 pass
 
         # choose ticket.
-        ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = urbtix_ticket_number_auto_select(driver, ticket_number)
-
+        is_ticket_number_assigned = urbtix_ticket_number_auto_select(driver, config_dict)
         if show_debug_message:
-            print("ticket_number:", ticket_number)
             print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
 
