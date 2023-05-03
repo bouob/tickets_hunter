@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.04.24)"
+CONST_APP_VERSION = u"MaxBot (2023.05.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -147,7 +147,7 @@ def load_translate():
 
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
-    en_us["adblock_plus_enable"] = 'Adblock Plus Extension'
+    en_us["adblock_plus_enable"] = 'Browser Extension'
     en_us["adblock_plus_memo"] = 'Default adblock is disable'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
     en_us["open_google_oauth_url"] = "Open Google OAuth URL"
@@ -238,7 +238,7 @@ def load_translate():
 
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
-    zh_tw["adblock_plus_enable"] = 'Adblock 瀏覽器擴充功能'
+    zh_tw["adblock_plus_enable"] = '瀏覽器擴充功能'
     zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
     zh_tw["open_google_oauth_url"] = "開啟 Google OAuth 網站"
@@ -330,7 +330,7 @@ def load_translate():
 
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
-    zh_cn["adblock_plus_enable"] = 'Adblock 浏览器扩充功能'
+    zh_cn["adblock_plus_enable"] = '浏览器扩充功能'
     zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
     zh_cn["open_google_oauth_url"] = "开启 Google OAuth 网站"
@@ -421,7 +421,7 @@ def load_translate():
 
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
-    ja_jp["adblock_plus_enable"] = 'Adblock 拡張機能'
+    ja_jp["adblock_plus_enable"] = '拡張機能'
     ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
     ja_jp["open_google_oauth_url"] = "Google OAuth URL を開く"
