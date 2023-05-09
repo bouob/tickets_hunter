@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.02)"
+CONST_APP_VERSION = u"MaxBot (2023.05.08)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6818,7 +6818,12 @@ def urbtix_auto_survey(driver, config_dict):
                                                 break
 
                                     if question_answer_char == '0':
+                                        is_match_none = False
                                         if '沒有' in option_content_div_text:
+                                            is_match_none = True
+                                        if 'LESS THEN ONE' in option_content_div_text.upper():
+                                            is_match_none = True
+                                        if is_match_none:
                                             is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
                                                 if show_debug_message:
@@ -6830,13 +6835,24 @@ def urbtix_auto_survey(driver, config_dict):
                                     if int_answer_char > 1:
                                         for i in range(int_answer_char-1):
                                             for answer_item in synonyms(str(i+1)):
-                                                    if answer_item + '個或以上' in option_content_div_text:
-                                                        is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
-                                                        if is_radio_clicked:
-                                                            if show_debug_message:
-                                                                print("fill answer:", answer_item + '個或以上')
-                                                            question_answered = True
-                                                            break
+                                                is_match_more_then = False
+                                                if answer_item + '個或以上' in option_content_div_text:
+                                                    is_match_more_then = True
+                                                if answer_item + '個以上' in option_content_div_text:
+                                                    is_match_more_then = True
+                                                if '多於' in option_content_div_text and answer_item + '個' in option_content_div_text:
+                                                    is_match_more_then = True
+                                                if '更多' in option_content_div_text and answer_item + '個' in option_content_div_text:
+                                                    is_match_more_then = True
+                                                if 'MORE THEN' in option_content_div_text.upper() and answer_item + '個' in option_content_div_text:
+                                                    is_match_more_then = True
+                                                if is_match_more_then:
+                                                    is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                                    if is_radio_clicked:
+                                                        if show_debug_message:
+                                                            print("fill answer:", answer_item + '個或以上')
+                                                        question_answered = True
+                                                        break
                                             if question_answered:
                                                 break
 
