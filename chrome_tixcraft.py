@@ -433,7 +433,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     options.add_argument("--no-sandbox");
 
     options.add_argument("--password-store=basic")
-    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False})
+    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
 
     caps = options.to_capabilities()
     caps["unhandledPromptBehavior"] = u"accept"
