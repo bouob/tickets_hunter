@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.08)"
+CONST_APP_VERSION = u"MaxBot (2023.05.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -615,9 +615,6 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            if config_dict["advanced"]["open_google_oauth_url"]:
-                driver.execute_script("window.open('%s','_blank');" % (URL_GOOGLE_OAUTH));
-
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
                     if not 'https://kktix.com/users/sign_in?' in homepage:

@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.05.08)"
+CONST_APP_VERSION = u"MaxBot (2023.05.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -150,7 +150,7 @@ def load_translate():
     en_us["adblock_plus_enable"] = 'Browser Extension'
     en_us["adblock_plus_memo"] = 'Default adblock is disable'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
-    en_us["open_google_oauth_url"] = "Open Google OAuth URL"
+    en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
 
     en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Wish you good luck.'
     en_us["donate"] = 'Donate'
@@ -241,7 +241,7 @@ def load_translate():
     zh_tw["adblock_plus_enable"] = '瀏覽器擴充功能'
     zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
-    zh_tw["open_google_oauth_url"] = "開啟 Google OAuth 網站"
+    zh_tw["disable_adjacent_seat"] = "允許不連續座位"
 
     zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝您搶票成功。'
     zh_tw["donate"] = '打賞'
@@ -333,7 +333,7 @@ def load_translate():
     zh_cn["adblock_plus_enable"] = '浏览器扩充功能'
     zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
-    zh_cn["open_google_oauth_url"] = "开启 Google OAuth 网站"
+    zh_cn["disable_adjacent_seat"] = "允许不连续座位"
 
     zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
     zh_cn["donate"] = '打赏'
@@ -424,7 +424,7 @@ def load_translate():
     ja_jp["adblock_plus_enable"] = '拡張機能'
     ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
-    ja_jp["open_google_oauth_url"] = "Google OAuth URL を開く"
+    ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
 
     ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
     ja_jp["donate"] = '寄付'
@@ -537,7 +537,7 @@ def get_default_config():
     config_dict["advanced"]["kham_password"] = ""
 
     config_dict["advanced"]["adblock_plus_enable"] = False
-    config_dict["advanced"]["open_google_oauth_url"] = False
+    config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
@@ -712,7 +712,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_adblock_plus
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_force_submit
-    global chk_state_google_oauth
+    global chk_state_adjacent_seat
     global chk_state_headless
     global chk_state_verbose
     global chk_state_auto_guess_options
@@ -821,7 +821,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["kham_password"] = encryptMe(config_dict["advanced"]["kham_password"])
 
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
-        config_dict["advanced"]["open_google_oauth_url"] = bool(chk_state_google_oauth.get())
+        config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
 
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
@@ -1027,7 +1027,7 @@ def applyNewLanguage():
     global chk_adblock_plus
     global chk_ocr_captcha
     global chk_ocr_captcha_force_submit
-    global chk_google_oauth
+    global chk_adjacent_seat
     global chk_headless
     global chk_verbose
     global chk_auto_guess_options
@@ -1047,7 +1047,7 @@ def applyNewLanguage():
     global lbl_adblock_plus
     global lbl_adblock_plus_memo
     global lbl_adblock_plus_settings
-    global lbl_google_oauth
+    global lbl_adjacent_seat
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -1083,7 +1083,7 @@ def applyNewLanguage():
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
-    lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
+    lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
@@ -1103,7 +1103,7 @@ def applyNewLanguage():
     chk_adblock_plus.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
-    chk_google_oauth.config(text=translate[language_code]["enable"])
+    chk_adjacent_seat.config(text=translate[language_code]["enable"])
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
@@ -2066,17 +2066,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
-    global lbl_google_oauth
-    lbl_google_oauth = Label(frame_group_header, text=translate[language_code]['open_google_oauth_url'])
-    lbl_google_oauth.grid(column=0, row=group_row_count, sticky = E)
+    global lbl_adjacent_seat
+    lbl_adjacent_seat = Label(frame_group_header, text=translate[language_code]['disable_adjacent_seat'])
+    lbl_adjacent_seat.grid(column=0, row=group_row_count, sticky = E)
 
-    global chk_state_google_oauth
-    chk_state_google_oauth = BooleanVar()
-    chk_state_google_oauth.set(config_dict["advanced"]["open_google_oauth_url"])
+    global chk_state_adjacent_seat
+    chk_state_adjacent_seat = BooleanVar()
+    chk_state_adjacent_seat.set(config_dict["advanced"]["disable_adjacent_seat"])
 
-    global chk_google_oauth
-    chk_google_oauth = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_google_oauth)
-    chk_google_oauth.grid(column=1, row=group_row_count, sticky = W)
+    global chk_adjacent_seat
+    chk_adjacent_seat = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_adjacent_seat)
+    chk_adjacent_seat.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
