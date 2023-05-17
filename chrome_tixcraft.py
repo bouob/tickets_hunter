@@ -4806,6 +4806,44 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
 
     return is_ticket_number_assigned
 
+def urbtix_uncheck_adjacent_seat(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    el_checkbox_icon = None
+    is_checkbox_checked = False
+    try:
+        my_css_selector = "div.quantity-inner > div.header > div.right > div.checkbox-wrapper > div.checkbox-icon"
+        el_checkbox_icon = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not el_checkbox_icon is None:
+            div_class_string = str(el_checkbox_icon.get_attribute('class'))
+            if not div_class_string is None:
+                if len(div_class_string) > 1:
+                    if 'checked' in div_class_string:
+                        is_checkbox_checked = True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(exc)
+        pass
+
+    try:
+        if is_checkbox_checked:
+            el_checkbox_icon.click()
+    except Exception as exc:
+        if show_debug_message:
+            print(exc)
+
+        # force to click when exception.
+        try:
+            driver.execute_script("arguments[0].click();", el_checkbox_icon)
+        except Exception as exc2:
+            pass
+
+        pass
 
 def urbtix_performance(driver, config_dict):
     show_debug_message = True       # debug.
@@ -4862,6 +4900,9 @@ def urbtix_performance(driver, config_dict):
                 driver.refresh()
             except Exception as exc:
                 pass
+
+        if config_dict["advanced"]["disable_adjacent_seat"]:
+            urbtix_uncheck_adjacent_seat(driver, config_dict)
 
         # choose ticket.
         is_ticket_number_assigned = urbtix_ticket_number_auto_select(driver, config_dict)
