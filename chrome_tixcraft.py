@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.16)"
+CONST_APP_VERSION = u"MaxBot (2023.05.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6788,7 +6788,7 @@ def get_urbtix_survey_answer_by_question(question_text):
 
     return question_answer_char, direction
 
-
+# PS: due to open-ended question, disable this feature now.
 def urbtix_auto_survey(driver, config_dict):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
@@ -6976,7 +6976,8 @@ def urbtix_main(driver, url, config_dict):
     # for new survey.
     if 'https://www.urbtix.hk/session/landing' == url:
         if config_dict["advanced"]["auto_guess_options"]:
-            urbtix_auto_survey(driver, config_dict)
+            #urbtix_auto_survey(driver, config_dict)
+            pass
 
     if '.hk/member-login' in url:
         urbtix_account = config_dict["advanced"]["urbtix_account"]
