@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.05.18)"
+CONST_APP_VERSION = u"MaxBot (2023.05.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -474,7 +474,7 @@ def get_default_config():
     config_dict["auto_check_agree"] = True
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
-    config_dict["ocr_captcha"]["force_submit"] = False
+    config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
 
@@ -1469,13 +1469,14 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
         ,"https://ticket.ibon.com.tw/"
         ,"https://kham.com.tw/ (寬宏)"
         ,"https://ticketplus.com.tw/ (遠大)"
+        ,"===[以下為香港的系統]==="
         ,"http://www.urbtix.hk/ (城市)"
         ,"https://www.cityline.com/ (買飛)"
+        ,"https://premier.hkticketing.com/ (快達票)"
         ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
         ]
     # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
     '''
-        ,"https://premier.hkticketing.com/ (快達票)"
     '''
     combo_homepage.set(homepage)
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
