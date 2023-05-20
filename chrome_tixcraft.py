@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.18)"
+CONST_APP_VERSION = u"MaxBot (2023.05.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7566,7 +7566,19 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
             if is_event_page:
                 area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
                 if area_auto_select_enable:
+                    is_do_ibon_performance_with_ticket_number = False
+
+                    if 'PRODUCT_ID=' in url:
+                        # step 1: select area.
+                        is_match_target_feature = True
+                        is_price_assign_by_bot = ibon_performance(driver, config_dict)
+                        if not is_price_assign_by_bot:
+                            is_do_ibon_performance_with_ticket_number = True
+
                     if 'PERFORMANCE_PRICE_AREA_ID=' in url:
+                        is_do_ibon_performance_with_ticket_number = True
+
+                    if is_do_ibon_performance_with_ticket_number:
                         # captcha
 
                         domain_name = url.split('/')[2]
@@ -7595,11 +7607,6 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                                 # plan-B, easy and better than plan-A
                                 driver.back()
                                 driver.refresh()
-
-                    if 'PRODUCT_ID=' in url:
-                        # step 1: select area.
-                        is_match_target_feature = True
-                        ibon_performance(driver, config_dict)
 
     if not is_match_target_feature:
         #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
