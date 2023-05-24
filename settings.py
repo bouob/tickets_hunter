@@ -24,7 +24,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.05.19)"
+CONST_APP_VERSION = u"MaxBot (2023.05.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -53,6 +53,27 @@ CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 #CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 
+CONST_SUPPORTED_SITES = ["https://kktix.com"
+    ,"https://tixcraft.com (拓元)"
+    ,"https://ticketmaster.sg"
+    ,"https://ticketmaster.com"
+    ,"https://teamear.tixcraft.com/ (添翼)"
+    ,"https://www.indievox.com/ (獨立音樂)"
+    ,"https://www.famiticket.com.tw (全網)"
+    ,"https://ticket.ibon.com.tw/"
+    ,"https://kham.com.tw/ (寬宏)"
+    ,"https://ticket.com.tw/ (年代)"
+    ,"https://ticketplus.com.tw/ (遠大)"
+    ,"===[以下為香港的系統]==="
+    ,"http://www.urbtix.hk/ (城市)"
+    ,"https://www.cityline.com/ (買飛)"
+    ,"https://premier.hkticketing.com/ (快達票)"
+    ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
+    ]
+# 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
+'''
+'''
+
 translate={}
 
 URL_DONATE = 'https://max-everyday.com/about/#donate'
@@ -76,8 +97,6 @@ def load_translate():
 
     en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
-    en_us["area_select_order"] = 'Area select order'
-    en_us["area_keyword"] = 'Area Keyword'
     en_us["and"] = 'And with'
     en_us["auto_guess_options"] = 'Guess Options in Question'
     en_us["user_guess_string"] = 'Fill This Answer in Question'
@@ -89,13 +108,12 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
 
+    en_us["area_select_order"] = 'Area select order'
+    en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
-    #en_us["area_select_order"] = 'Area select order'
-    en_us["area_keyword_1"] = 'Area Keyword #1'
-    en_us["area_keyword_2"] = 'Area Keyword #2'
-    en_us["area_keyword_3"] = 'Area Keyword #3'
-    en_us["area_keyword_4"] = 'Area Keyword #4'
     en_us["area_keyword_exclude"] = 'Area Keyword Exclude'
+    en_us["area_keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
+
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
@@ -168,8 +186,6 @@ def load_translate():
     zh_tw["enable"] = '啟用'
     zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
-    zh_tw["area_select_order"] = '區域排序方式'
-    zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["and"] = '而且（同列）'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
     zh_tw["user_guess_string"] = '在驗證問題中填寫此答案'
@@ -181,13 +197,12 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
 
+    zh_tw["area_select_order"] = '區域排序方式'
+    zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
-    #zh_tw["area_select_order"] = '區域排序方式'
-    zh_tw["area_keyword_1"] = '區域關鍵字 #1'
-    zh_tw["area_keyword_2"] = '區域關鍵字 #2'
-    zh_tw["area_keyword_3"] = '區域關鍵字 #3'
-    zh_tw["area_keyword_4"] = '區域關鍵字 #4'
     zh_tw["area_keyword_exclude"] = '排除區域關鍵字'
+    zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。.\n加入 ,\"\" 代表符合所有關鍵字'
+
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
@@ -259,8 +274,6 @@ def load_translate():
 
     zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
-    zh_cn["area_select_order"] = '区域排序方式'
-    zh_cn["area_keyword"] = '区域关键字'
     zh_cn["and"] = '而且（同列）'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
     zh_cn["user_guess_string"] = '在验证问题中填写此答案'
@@ -272,13 +285,12 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
 
+    zh_cn["area_select_order"] = '区域排序方式'
+    zh_cn["area_keyword"] = '区域关键字'
     zh_cn["area_auto_select"] = '区域自动点选'
-    #zh_cn["area_select_order"] = '区域排序方式'
-    zh_cn["area_keyword_1"] = '区域关键字 #1'
-    zh_cn["area_keyword_2"] = '区域关键字 #2'
-    zh_cn["area_keyword_3"] = '区域关键字 #3'
-    zh_cn["area_keyword_4"] = '区域关键字 #4'
     zh_cn["area_keyword_exclude"] = '排除区域关键字'
+    zh_cn["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n附加 ,\"\" 以匹配所有結果。'
+
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
@@ -351,8 +363,6 @@ def load_translate():
 
     ja_jp["auto_press_next_step_button"] = '次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
-    ja_jp["area_select_order"] = 'エリアソート方法'
-    ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["and"] = 'そして（同列）'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
     ja_jp["user_guess_string"] = '質問に回答を記入'
@@ -364,13 +374,12 @@ def load_translate():
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
 
+    ja_jp["area_select_order"] = 'エリアソート方法'
+    ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
-    #ja_jp["area_select_order"] = 'エリアソート方法'
-    ja_jp["area_keyword_1"] = 'エリアキーワード #1'
-    ja_jp["area_keyword_2"] = 'エリアキーワード #2'
-    ja_jp["area_keyword_3"] = 'エリアキーワード #3'
-    ja_jp["area_keyword_4"] = 'エリアキーワード #4'
     ja_jp["area_keyword_exclude"] = '除外エリア キーワード'
+    ja_jp["area_keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
+
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
@@ -478,36 +487,23 @@ def get_default_config():
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
 
+
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["area_mode"] = CONST_SELECT_ORDER_DEFAULT
-    config_dict["kktix"]["area_keyword_1"] = ""
-    config_dict["kktix"]["area_keyword_1_and"] = ""
-    config_dict["kktix"]["area_keyword_2"] = ""
-    config_dict["kktix"]["area_keyword_2_and"] = ""
-    config_dict["kktix"]["area_keyword_2_enable"] = True
-    config_dict["kktix"]["area_keyword_exclude"] = "輪椅"
     config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["date_auto_select"] = {}
     config_dict["tixcraft"]["date_auto_select"]["enable"] = True
     config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = ""
-    config_dict["tixcraft"]["area_auto_select"] = {}
-    config_dict["tixcraft"]["area_auto_select"]["enable"] = True
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = ""
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = ""
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = ""
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = ""
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"] = "輪椅"
-
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = True
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = True
-    config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"] = True
-
     config_dict["tixcraft"]["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
-    config_dict["tixcraft"]["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
+
+    config_dict["area_auto_select"] = {}
+    config_dict["area_auto_select"]["enable"] = True
+    config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
+    config_dict["area_auto_select"]["area_keyword"] = ""
+    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\""
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
@@ -666,21 +662,12 @@ def btn_save_act(language_code, slience_mode=False):
 
     global chk_state_auto_press_next_step_button
     global chk_state_auto_fill_ticket_number
-    global txt_kktix_area_keyword_1
-    global txt_kktix_area_keyword_1_and
-    global txt_kktix_area_keyword_2
-    global txt_kktix_area_keyword_2_and
-    # disable password brute force attack
-    global txt_kktix_answer_dictionary
     global txt_kktix_user_guess_string
 
     global chk_state_date_auto_select
     global txt_date_keyword
     global chk_state_area_auto_select
-    global txt_area_keyword_1
-    global txt_area_keyword_2
-    global txt_area_keyword_3
-    global txt_area_keyword_4
+    global txt_area_keyword
     global txt_area_keyword_exclude
 
     global combo_date_auto_select_mode
@@ -760,37 +747,21 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
-        config_dict["kktix"]["area_mode"] = combo_kktix_area_mode.get().strip()
-        config_dict["kktix"]["area_keyword_1"] = txt_kktix_area_keyword_1.get().strip()
-        config_dict["kktix"]["area_keyword_1_and"] = txt_kktix_area_keyword_1_and.get().strip()
-        config_dict["kktix"]["area_keyword_2"] = txt_kktix_area_keyword_2.get().strip()
-        config_dict["kktix"]["area_keyword_2_and"] = txt_kktix_area_keyword_2_and.get().strip()
-        config_dict["kktix"]["area_keyword_2_enable"] = bool(chk_state_kktix_area_keyword_2_enable.get())
-        # disable password brute force attack
-        #config_dict["kktix"]["answer_dictionary"] = txt_kktix_answer_dictionary.get().strip()
         config_dict["kktix"]["user_guess_string"] = txt_kktix_user_guess_string.get().strip()
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
-        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
-
-        config_dict["tixcraft"]["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"] = txt_area_keyword_1.get().strip()
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"] = txt_area_keyword_2.get().strip()
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"] = txt_area_keyword_3.get().strip()
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"] = txt_area_keyword_4.get().strip()
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"] = txt_area_keyword_exclude.get().strip()
-
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"] = bool(chk_state_area_keyword_2_enable.get())
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"] = bool(chk_state_area_keyword_3_enable.get())
-        config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"] = bool(chk_state_area_keyword_4_enable.get())
-
         config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
-        config_dict["tixcraft"]["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
+        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
         config_dict["tixcraft"]["presale_code"] = txt_presale_code.get().strip()
         config_dict["tixcraft"]["presale_code_delimiter"] = txt_presale_code_delimiter.get().strip()
+
+        config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
+        config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
+        config_dict["area_auto_select"]["area_keyword"] = txt_area_keyword.get("1.0",END)
+        config_dict["area_auto_select"]["area_keyword_exclude"] = txt_area_keyword_exclude.get("1.0",END)
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
@@ -980,11 +951,6 @@ def applyNewLanguage():
     # for kktix
     global lbl_auto_press_next_step_button
     global lbl_auto_fill_ticket_number
-    global lbl_kktix_area_mode
-    global lbl_kktix_area_keyword_1
-    global lbl_kktix_area_keyword_1_and_text
-    global lbl_kktix_area_keyword_2
-    global lbl_kktix_area_keyword_2_and_text
     global lbl_user_guess_string
 
     # for tixcraft
@@ -993,11 +959,10 @@ def applyNewLanguage():
     global lbl_date_keyword
     global lbl_area_auto_select
     global lbl_area_auto_select_mode
-    global lbl_area_keyword_1
-    global lbl_area_keyword_2
-    global lbl_area_keyword_3
-    global lbl_area_keyword_4
+    global lbl_area_keyword
     global lbl_area_keyword_exclude
+    global lbl_area_keyword_usage
+
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
     global lbl_presale_code
@@ -1032,11 +997,6 @@ def applyNewLanguage():
     global chk_verbose
     global chk_auto_guess_options
 
-    global chk_kktix_area_keyword_2_enable
-    global chk_area_keyword_2_enable
-    global chk_area_keyword_3_enable
-    global chk_area_keyword_4_enable
-
     global tabControl
 
     global lbl_slogan
@@ -1058,11 +1018,6 @@ def applyNewLanguage():
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
-    lbl_kktix_area_mode.config(text=translate[language_code]["area_select_order"])
-    lbl_kktix_area_keyword_1.config(text=translate[language_code]["area_keyword_1"])
-    lbl_kktix_area_keyword_1_and_text.config(text=translate[language_code]["and"])
-    lbl_kktix_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
-    lbl_kktix_area_keyword_2_and_text.config(text=translate[language_code]["and"])
     lbl_user_guess_string.config(text=translate[language_code]["user_guess_string"])
 
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
@@ -1070,11 +1025,9 @@ def applyNewLanguage():
     lbl_date_keyword.config(text=translate[language_code]["date_keyword"])
     lbl_area_auto_select.config(text=translate[language_code]["area_auto_select"])
     lbl_area_auto_select_mode.config(text=translate[language_code]["area_select_order"])
-    lbl_area_keyword_1.config(text=translate[language_code]["area_keyword_1"])
-    lbl_area_keyword_2.config(text=translate[language_code]["area_keyword_2"])
-    lbl_area_keyword_3.config(text=translate[language_code]["area_keyword_3"])
-    lbl_area_keyword_4.config(text=translate[language_code]["area_keyword_4"])
+    lbl_area_keyword.config(text=translate[language_code]["area_keyword"])
     lbl_area_keyword_exclude.config(text=translate[language_code]["area_keyword_exclude"])
+    lbl_area_keyword_usage.config(text=translate[language_code]["area_keyword_usage"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
@@ -1107,11 +1060,6 @@ def applyNewLanguage():
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
-
-    chk_kktix_area_keyword_2_enable.config(text=translate[language_code]["enable"])
-    chk_area_keyword_2_enable.config(text=translate[language_code]["enable"])
-    chk_area_keyword_3_enable.config(text=translate[language_code]["enable"])
-    chk_area_keyword_4_enable.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -1195,6 +1143,9 @@ def callbackHomepageOnChange(event):
 def callbackDateAutoOnChange():
     showHideTixcraftBlocks()
 
+def callbackAreaAutoOnChange():
+    showHideAreaBlocks()
+
 def showHideBlocks():
     global UI_PADDING_X
 
@@ -1265,7 +1216,6 @@ def showHidePass1SeatRemaining():
 # purpose: show detail blocks if master field is enable.
 def showHideTixcraftBlocks():
     # for tixcraft show/hide enable.
-    # field 1
     global chk_state_date_auto_select
 
     global date_auto_select_mode_index
@@ -1276,32 +1226,7 @@ def showHideTixcraftBlocks():
     global lbl_date_keyword
     global txt_date_keyword
 
-    # field 2
-    global chk_area_auto_select
-
-    global area_auto_select_index
-    global lbl_area_auto_select_mode
-    global combo_area_auto_select_mode
-
-    global area_keyword_1_index
-    global area_keyword_2_index
-    global area_keyword_3_index
-    global area_keyword_4_index
-
-    global lbl_area_keyword_1
-    global lbl_area_keyword_2
-    global lbl_area_keyword_3
-    global lbl_area_keyword_4
-
-    global txt_area_keyword_1
-    global txt_area_keyword_2
-    global txt_area_keyword_3
-    global txt_area_keyword_4
-
     is_date_set_to_enable = bool(chk_state_date_auto_select.get())
-    is_area_set_to_enable = bool(chk_state_area_auto_select.get())
-    #print("now is_date_set_to_enable value:", is_date_set_to_enable)
-    #print("now is_area_set_to_enable value:", is_area_set_to_enable)
 
     if is_date_set_to_enable:
         # show
@@ -1318,121 +1243,59 @@ def showHideTixcraftBlocks():
         lbl_date_keyword.grid_forget()
         txt_date_keyword.grid_forget()
 
+
+# purpose: show detail of area block.
+def showHideAreaBlocks():
+    # for tixcraft show/hide enable.
+    global chk_state_area_auto_select
+
+    global area_auto_select_mode_index
+    global lbl_area_auto_select_mode
+    global combo_area_auto_select_mode
+
+    area_keyword_index = area_auto_select_mode_index + 1
+    area_keyword_exclude_index = area_auto_select_mode_index + 2
+    area_keyword_usage_index = area_auto_select_mode_index + 3
+
+    global lbl_area_keyword
+    global txt_area_keyword
+
+    global lbl_area_keyword_exclude
+    global txt_area_keyword_exclude
+    global lbl_area_keyword_usage
+
+    is_area_set_to_enable = bool(chk_state_area_auto_select.get())
+
     if is_area_set_to_enable:
         # show
-        lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_index, sticky = E)
-        combo_area_auto_select_mode.grid(column=1, row=area_auto_select_index, sticky = W)
+        lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_mode_index, sticky = E)
+        combo_area_auto_select_mode.grid(column=1, row=area_auto_select_mode_index, sticky = W)
 
-        lbl_area_keyword_1.grid(column=0, row=area_keyword_1_index, sticky = E)
-        txt_area_keyword_1.grid(column=1, row=area_keyword_1_index, sticky = W)
+        lbl_area_keyword.grid(column=0, row=area_keyword_index, sticky = E+N)
+        txt_area_keyword.grid(column=1, row=area_keyword_index, sticky = W)
 
-        lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
-        txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
+        lbl_area_keyword_exclude.grid(column=0, row=area_keyword_exclude_index, sticky = E+N)
+        txt_area_keyword_exclude.grid(column=1, row=area_keyword_exclude_index, sticky = W)
 
-        lbl_area_keyword_3.grid(column=0, row=area_keyword_3_index, sticky = E)
-        txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
-
-        lbl_area_keyword_4.grid(column=0, row=area_keyword_4_index, sticky = E)
-        txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
+        lbl_area_keyword_usage.grid(column=1, row=area_keyword_usage_index, sticky = E)
     else:
         # hide
         lbl_area_auto_select_mode.grid_forget()
         combo_area_auto_select_mode.grid_forget()
 
-        lbl_area_keyword_1.grid_forget()
-        txt_area_keyword_1.grid_forget()
+        lbl_area_keyword.grid_forget()
+        txt_area_keyword.grid_forget()
 
-        lbl_area_keyword_2.grid_forget()
-        txt_area_keyword_2.grid_forget()
+        lbl_area_keyword_exclude.grid_forget()
+        txt_area_keyword_exclude.grid_forget()
 
-        lbl_area_keyword_3.grid_forget()
-        txt_area_keyword_3.grid_forget()
-
-        lbl_area_keyword_4.grid_forget()
-        txt_area_keyword_4.grid_forget()
-
+        lbl_area_keyword_usage.grid_forget()
 
 def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
-    homepage = CONST_HOMEPAGE_DEFAULT
-    ticket_number = 2
-    pass_1_seat_remaining_enable = False
-    auto_check_agree_enable = False
-
-    auto_press_next_step_button = False
-    auto_fill_ticket_number = False
-
-    kktix_area_mode = ""
-    kktix_area_keyword_1 = ""
-    kktix_area_keyword_1_and = ""
-    kktix_area_keyword_2 = ""
-    kktix_area_keyword_2_and = ""
-    # disable password brute force attack
-    # PS: because of the question is always variable.
-    #kktix_answer_dictionary = ""
-    user_guess_string = ""
-
-    date_auto_select_enable = None
-    date_auto_select_mode = ""
-    date_keyword = ""
-
-    area_auto_select_enable = None
-    area_auto_select_mode = ""
-    area_keyword_1 = ""
-    area_keyword_2 = ""
-    area_keyword_3 = ""
-    area_keyword_4 = ""
-
-    pass_date_is_sold_out_enable = False
-    auto_reload_coming_soon_page_enable = True
-
-    # read config.
-    homepage = config_dict["homepage"]
-    browser = config_dict["browser"]
-    language = config_dict["language"]
-
-    # default ticket number
-    # 說明：自動選擇的票數
-    ticket_number = config_dict["ticket_number"]
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
-    auto_check_agree_enable = config_dict["auto_check_agree"]
-
-    # for ["kktix"]
-    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-    auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
-    kktix_area_mode = config_dict["kktix"]["area_mode"].strip()
-    if not kktix_area_mode in CONST_SELECT_OPTIONS_ARRAY:
-        kktix_area_mode = CONST_SELECT_ORDER_DEFAULT
-    user_guess_string = config_dict["kktix"]["user_guess_string"].strip()
-
-    # disable password brute force attack
-    # PS: feature disabled.
-    if 'answer_dictionary' in config_dict["kktix"]:
-        kktix_answer_dictionary = config_dict["kktix"]["answer_dictionary"]
-        if kktix_answer_dictionary is None:
-            kktix_answer_dictionary = ""
-        kktix_answer_dictionary = kktix_answer_dictionary.strip()
-
-    # for ["tixcraft"]
-    date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    if not date_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-        date_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-    area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-    if not area_auto_select_mode in CONST_SELECT_OPTIONS_ARRAY:
-        area_auto_select_mode = CONST_SELECT_ORDER_DEFAULT
-    pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
-    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
     # output config:
     print("setting app version", CONST_APP_VERSION)
     print("python version", platform.python_version())
     print("platform", platform.platform())
-    print("homepage", homepage)
-    print("ticket_number", ticket_number)
-    print("pass_1_seat_remaining", pass_1_seat_remaining_enable)
-    print("auto_check_agree", auto_check_agree_enable)
 
     # for kktix
     print("==[kktix]==")
@@ -1459,26 +1322,8 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_homepage
     combo_homepage = ttk.Combobox(frame_group_header)
-    combo_homepage['values']= ["https://kktix.com"
-        ,"https://tixcraft.com (拓元)"
-        ,"https://ticketmaster.sg"
-        ,"https://ticketmaster.com"
-        ,"https://teamear.tixcraft.com/ (添翼)"
-        ,"https://www.indievox.com/ (獨立音樂)"
-        ,"https://www.famiticket.com.tw (全網)"
-        ,"https://ticket.ibon.com.tw/"
-        ,"https://kham.com.tw/ (寬宏)"
-        ,"https://ticketplus.com.tw/ (遠大)"
-        ,"===[以下為香港的系統]==="
-        ,"http://www.urbtix.hk/ (城市)"
-        ,"https://www.cityline.com/ (買飛)"
-        ,"https://premier.hkticketing.com/ (快達票)"
-        ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
-        ]
-    # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
-    '''
-    '''
-    combo_homepage.set(homepage)
+    combo_homepage['values'] = CONST_SUPPORTED_SITES
+    combo_homepage.set(config_dict["homepage"])
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1499,7 +1344,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_ticket_number = ttk.Combobox(frame_group_header, state="readonly")
     combo_ticket_number['values']= ("1","2","3","4","5","6","7","8","9","10","11","12")
     #combo_ticket_number.current(0)
-    combo_ticket_number.set(str(ticket_number))
+    combo_ticket_number.set(str(config_dict["ticket_number"]))
     combo_ticket_number.bind("<<ComboboxSelected>>", callbackTicketNumberOnChange)
     combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1514,7 +1359,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_pass_1_seat_remaining
     chk_state_pass_1_seat_remaining = BooleanVar()
-    chk_state_pass_1_seat_remaining.set(pass_1_seat_remaining_enable)
+    chk_state_pass_1_seat_remaining.set(config_dict["pass_1_seat_remaining"])
 
     global chk_pass_1_seat_remaining
     chk_pass_1_seat_remaining = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_pass_1_seat_remaining)
@@ -1528,7 +1373,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_auto_check_agree
     chk_state_auto_check_agree = BooleanVar()
-    chk_state_auto_check_agree.set(auto_check_agree_enable)
+    chk_state_auto_check_agree.set(config_dict["auto_check_agree"])
 
     global chk_auto_check_agree
     chk_auto_check_agree = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_check_agree)
@@ -1552,7 +1397,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_auto_press_next_step_button
     chk_state_auto_press_next_step_button = BooleanVar()
-    chk_state_auto_press_next_step_button.set(auto_press_next_step_button)
+    chk_state_auto_press_next_step_button.set(config_dict["kktix"]["auto_press_next_step_button"])
 
     global chk_auto_press_next_step_button
     chk_auto_press_next_step_button = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_press_next_step_button)
@@ -1566,108 +1411,11 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_auto_fill_ticket_number
     chk_state_auto_fill_ticket_number = BooleanVar()
-    chk_state_auto_fill_ticket_number.set(auto_fill_ticket_number)
+    chk_state_auto_fill_ticket_number.set(config_dict["kktix"]["auto_fill_ticket_number"])
 
     global chk_auto_fill_ticket_number
     chk_auto_fill_ticket_number = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_fill_ticket_number)
     chk_auto_fill_ticket_number.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_kktix_area_mode
-    lbl_kktix_area_mode = Label(frame_group_kktix, text=translate[language_code]['area_select_order'])
-    lbl_kktix_area_mode.grid(column=0, row=group_row_count, sticky = E)
-
-    global combo_kktix_area_mode
-    global combo_kktix_area_mode_index
-    combo_kktix_area_mode_index = group_row_count
-    combo_kktix_area_mode = ttk.Combobox(frame_group_kktix, state="readonly")
-    combo_kktix_area_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
-    combo_kktix_area_mode.set(kktix_area_mode)
-    combo_kktix_area_mode.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_kktix_area_keyword_1
-    lbl_kktix_area_keyword_1 = Label(frame_group_kktix, text=translate[language_code]['area_keyword_1'])
-    lbl_kktix_area_keyword_1.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_area_keyword_1
-    txt_kktix_area_keyword_1_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_1"].strip())
-    txt_kktix_area_keyword_1 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_value)
-    txt_kktix_area_keyword_1.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_kktix_area_keyword_1_and_label = Label(frame_group_kktix, text="")
-    lbl_kktix_area_keyword_1_and_label.grid(column=0, row=group_row_count, sticky = E)
-
-    global lbl_kktix_area_keyword_1_and_text
-    lbl_kktix_area_keyword_1_and_text = Label(frame_group_kktix, text=translate[language_code]['and'])
-    lbl_kktix_area_keyword_1_and_text.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_kktix_area_keyword_1_tmp = Label(frame_group_kktix, text="")
-    lbl_kktix_area_keyword_1_tmp.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_area_keyword_1_and
-    txt_kktix_area_keyword_1_and_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_1_and"].strip())
-    txt_kktix_area_keyword_1_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_1_and_value)
-    txt_kktix_area_keyword_1_and.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_kktix_area_keyword_2
-    lbl_kktix_area_keyword_2 = Label(frame_group_kktix, text=translate[language_code]['area_keyword_2'])
-    lbl_kktix_area_keyword_2.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_area_keyword_2
-    txt_kktix_area_keyword_2_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_2"].strip())
-    txt_kktix_area_keyword_2 = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_value)
-    txt_kktix_area_keyword_2.grid(column=1, row=group_row_count, sticky = W)
-
-
-    global chk_state_kktix_area_keyword_2_enable
-    chk_state_kktix_area_keyword_2_enable = BooleanVar()
-    chk_state_kktix_area_keyword_2_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"])
-
-    global chk_kktix_area_keyword_2_enable
-    chk_kktix_area_keyword_2_enable = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_kktix_area_keyword_2_enable)
-    chk_kktix_area_keyword_2_enable.grid(column=2, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_kktix_area_keyword_2_and_label = Label(frame_group_kktix, text="")
-    lbl_kktix_area_keyword_2_and_label.grid(column=0, row=group_row_count, sticky = E)
-
-    global lbl_kktix_area_keyword_2_and_text
-    lbl_kktix_area_keyword_2_and_text = Label(frame_group_kktix, text=translate[language_code]['and'])
-    lbl_kktix_area_keyword_2_and_text.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    lbl_kktix_area_keyword_2_tmp = Label(frame_group_kktix, text="")
-    lbl_kktix_area_keyword_2_tmp.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_area_keyword_2_and
-    txt_kktix_area_keyword_2_and_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["area_keyword_2_and"].strip())
-    txt_kktix_area_keyword_2_and = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_area_keyword_2_and_value)
-    txt_kktix_area_keyword_2_and.grid(column=1, row=group_row_count, sticky = W)
-
-    #group_row_count+=1
-
-    # disable password brute force attack
-    global lbl_kktix_answer_dictionary
-    #lbl_kktix_answer_dictionary = Label(frame_group_kktix, text="Answer Dictionary")
-    #lbl_kktix_answer_dictionary.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_answer_dictionary
-    global txt_kktix_answer_dictionary_index
-    txt_kktix_answer_dictionary_index = group_row_count
-    #txt_kktix_answer_dictionary_value = StringVar(frame_group_kktix, value=kktix_answer_dictionary)
-    #txt_kktix_answer_dictionary = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_answer_dictionary_value)
-    #txt_kktix_answer_dictionary.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1676,7 +1424,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_user_guess_string.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_user_guess_string
-    txt_kktix_user_guess_string_value = StringVar(frame_group_kktix, value=user_guess_string)
+    txt_kktix_user_guess_string_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["user_guess_string"].strip())
     txt_kktix_user_guess_string = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_user_guess_string_value)
     txt_kktix_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
 
@@ -1702,7 +1450,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_date_auto_select
     chk_state_date_auto_select = BooleanVar()
-    chk_state_date_auto_select.set(date_auto_select_enable)
+    chk_state_date_auto_select.set(config_dict["tixcraft"]["date_auto_select"]["enable"])
 
     global chk_date_auto_select
     chk_date_auto_select = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_date_auto_select, command=callbackDateAutoOnChange)
@@ -1720,7 +1468,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global combo_date_auto_select_mode
     combo_date_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly")
     combo_date_auto_select_mode['values']= (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP)
-    combo_date_auto_select_mode.set(date_auto_select_mode)
+    combo_date_auto_select_mode.set(config_dict["tixcraft"]["date_auto_select"]["mode"])
     combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
 
     group_row_count+=1
@@ -1733,7 +1481,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E)
 
     global txt_date_keyword
-    txt_date_keyword_value = StringVar(frame_group_tixcraft, value=date_keyword)
+    txt_date_keyword_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip())
     txt_date_keyword = Entry(frame_group_tixcraft, width=20, textvariable = txt_date_keyword_value)
     txt_date_keyword.grid(column=1, row=date_keyword_index, sticky = W)
 
@@ -1745,7 +1493,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_pass_date_is_sold_out
     chk_state_pass_date_is_sold_out = BooleanVar()
-    chk_state_pass_date_is_sold_out.set(pass_date_is_sold_out_enable)
+    chk_state_pass_date_is_sold_out.set(config_dict["tixcraft"]["pass_date_is_sold_out"])
 
     global chk_pass_date_is_sold_out
     chk_pass_date_is_sold_out = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_pass_date_is_sold_out)
@@ -1759,7 +1507,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_auto_reload_coming_soon_page
     chk_state_auto_reload_coming_soon_page = BooleanVar()
-    chk_state_auto_reload_coming_soon_page.set(auto_reload_coming_soon_page_enable)
+    chk_state_auto_reload_coming_soon_page.set(config_dict["tixcraft"]["auto_reload_coming_soon_page"])
 
     global chk_auto_reload_coming_soon_page
     chk_auto_reload_coming_soon_page = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_auto_reload_coming_soon_page)
@@ -1770,126 +1518,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global lbl_date_hr
     lbl_date_hr = Label(frame_group_tixcraft, text='')
     lbl_date_hr.grid(column=0, row=group_row_count, sticky = E, columnspan=2)
-
-    group_row_count+=1
-
-    global lbl_area_auto_select
-    lbl_area_auto_select = Label(frame_group_tixcraft, text=translate[language_code]['area_auto_select'])
-    lbl_area_auto_select.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_area_auto_select
-    chk_state_area_auto_select = BooleanVar()
-    chk_state_area_auto_select.set(area_auto_select_enable)
-
-    global chk_area_auto_select
-    chk_area_auto_select = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_auto_select, command=callbackDateAutoOnChange)
-    chk_area_auto_select.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global area_auto_select_index
-    area_auto_select_index = group_row_count
-
-    global lbl_area_auto_select_mode
-    lbl_area_auto_select_mode = Label(frame_group_tixcraft, text=translate[language_code]['area_auto_select'])
-    lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_index, sticky = E)
-
-    global combo_area_auto_select_mode
-    combo_area_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly")
-    combo_area_auto_select_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
-    combo_area_auto_select_mode.set(area_auto_select_mode)
-    combo_area_auto_select_mode.grid(column=1, row=area_auto_select_index, sticky = W)
-
-    group_row_count+=1
-
-    global area_keyword_1_index
-    area_keyword_1_index = group_row_count
-
-    global lbl_area_keyword_1
-    lbl_area_keyword_1 = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_1'])
-    lbl_area_keyword_1.grid(column=0, row=area_keyword_1_index, sticky = E)
-
-    global txt_area_keyword_1
-    txt_area_keyword_1_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip())
-    txt_area_keyword_1 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_1_value)
-    txt_area_keyword_1.grid(column=1, row=area_keyword_1_index, sticky = W)
-
-    group_row_count+=1
-
-    global area_keyword_2_index
-    area_keyword_2_index = group_row_count
-
-    global lbl_area_keyword_2
-    lbl_area_keyword_2 = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_2'])
-    lbl_area_keyword_2.grid(column=0, row=area_keyword_2_index, sticky = E)
-
-    global txt_area_keyword_2
-    txt_area_keyword_2_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip())
-    txt_area_keyword_2 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_2_value)
-    txt_area_keyword_2.grid(column=1, row=area_keyword_2_index, sticky = W)
-
-    global chk_state_area_keyword_2_enable
-    chk_state_area_keyword_2_enable = BooleanVar()
-    chk_state_area_keyword_2_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"])
-
-    global chk_area_keyword_2_enable
-    chk_area_keyword_2_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_2_enable)
-    chk_area_keyword_2_enable.grid(column=2, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global area_keyword_3_index
-    area_keyword_3_index = group_row_count
-
-    global lbl_area_keyword_3
-    lbl_area_keyword_3 = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_3'])
-    lbl_area_keyword_3.grid(column=0, row=area_keyword_3_index, sticky = E)
-
-    global txt_area_keyword_3
-    txt_area_keyword_3_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip())
-    txt_area_keyword_3 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_3_value)
-    txt_area_keyword_3.grid(column=1, row=area_keyword_3_index, sticky = W)
-
-    global chk_state_area_keyword_3_enable
-    chk_state_area_keyword_3_enable = BooleanVar()
-    chk_state_area_keyword_3_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"])
-
-    global chk_area_keyword_3_enable
-    chk_area_keyword_3_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_3_enable)
-    chk_area_keyword_3_enable.grid(column=2, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global area_keyword_4_index
-    area_keyword_4_index = group_row_count
-
-    global lbl_area_keyword_4
-    lbl_area_keyword_4 = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_4'])
-    lbl_area_keyword_4.grid(column=0, row=area_keyword_4_index, sticky = E)
-
-    global txt_area_keyword_4
-    txt_area_keyword_4_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip())
-    txt_area_keyword_4 = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_4_value)
-    txt_area_keyword_4.grid(column=1, row=area_keyword_4_index, sticky = W)
-
-    global chk_state_area_keyword_4_enable
-    chk_state_area_keyword_4_enable = BooleanVar()
-    chk_state_area_keyword_4_enable.set(config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"])
-
-    global chk_area_keyword_4_enable
-    chk_area_keyword_4_enable = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_area_keyword_4_enable)
-    chk_area_keyword_4_enable.grid(column=2, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_area_keyword_exclude
-    lbl_area_keyword_exclude = Label(frame_group_tixcraft, text=translate[language_code]['area_keyword_exclude'])
-    lbl_area_keyword_exclude.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_area_keyword_exclude
-    txt_area_keyword_exclude_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"].strip())
-    txt_area_keyword_exclude = Entry(frame_group_tixcraft, width=20, textvariable = txt_area_keyword_exclude_value)
-    txt_area_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1919,7 +1547,73 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     #PS: don't need show when onload(), because show/hide block will load again.
     #frame_group_tixcraft.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
+    row_count += 1
+
     showHideBlocks()
+
+    # for area block.
+    global frame_group_area
+    frame_group_area = Frame(root)
+    group_row_count = 0
+
+    global lbl_area_auto_select
+    lbl_area_auto_select = Label(frame_group_area, text=translate[language_code]['area_auto_select'])
+    lbl_area_auto_select.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_area_auto_select
+    chk_state_area_auto_select = BooleanVar()
+    chk_state_area_auto_select.set(config_dict["area_auto_select"]["enable"])
+
+    global chk_area_auto_select
+    chk_area_auto_select = Checkbutton(frame_group_area, text=translate[language_code]['enable'], variable=chk_state_area_auto_select, command=callbackAreaAutoOnChange)
+    chk_area_auto_select.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global area_auto_select_mode_index
+    area_auto_select_mode_index = group_row_count
+
+    global lbl_area_auto_select_mode
+    lbl_area_auto_select_mode = Label(frame_group_area, text=translate[language_code]['area_auto_select'])
+    lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_mode_index, sticky = E)
+
+    global combo_area_auto_select_mode
+    combo_area_auto_select_mode = ttk.Combobox(frame_group_area, state="readonly")
+    combo_area_auto_select_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
+    combo_area_auto_select_mode.set(config_dict["area_auto_select"]["mode"])
+    combo_area_auto_select_mode.grid(column=1, row=area_auto_select_mode_index, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_area_keyword
+    lbl_area_keyword = Label(frame_group_area, text=translate[language_code]['area_keyword'])
+    lbl_area_keyword.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_area_keyword
+    txt_area_keyword = Text(frame_group_area, width=30, height=4)
+    txt_area_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_area_keyword.insert("1.0", config_dict["area_auto_select"]["area_keyword"].strip())
+
+    row_count+=1
+
+    global lbl_area_keyword_exclude
+    lbl_area_keyword_exclude = Label(frame_group_area, text=translate[language_code]['area_keyword_exclude'])
+    lbl_area_keyword_exclude.grid(column=0, row=row_count, sticky = E+N)
+
+    global txt_area_keyword_exclude
+    txt_area_keyword_exclude = Text(frame_group_area, width=30, height=4)
+    txt_area_keyword_exclude.grid(column=1, row=row_count, sticky = W)
+    txt_area_keyword_exclude.insert("1.0", config_dict["area_auto_select"]["area_keyword_exclude"].strip())
+
+    row_count+=1
+
+    global lbl_area_keyword_usage
+    lbl_area_keyword_usage = Label(frame_group_area, text=translate[language_code]['area_keyword_usage'])
+    lbl_area_keyword_usage.grid(column=1, row=row_count, sticky = W)
+
+    frame_group_area.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+
+    showHideAreaBlocks()
 
 def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0
@@ -1931,7 +1625,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
     adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
 
-    # for kktix
+    # for advanced
     print("==[advanced]==")
     print("browser", config_dict['browser'])
     print("language", config_dict['language'])
@@ -2053,7 +1747,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_adblock_plus_settings = Label(frame_group_header, text=translate[language_code]['adblock_plus_settings'])
     lbl_adblock_plus_settings.grid(column=0, row=group_row_count, sticky = E+N)
 
-    txt_adblock_plus_settings = Text(frame_group_header, width=20, height=5)
+    txt_adblock_plus_settings = Text(frame_group_header, width=30, height=4)
     txt_adblock_plus_settings.grid(column=1, row=group_row_count, sticky = W)
     txt_adblock_plus_settings.insert("1.0", CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
@@ -2590,11 +2284,11 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 510
+    GUI_SIZE_WIDTH = 530
     GUI_SIZE_HEIGHT = 600
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-55)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-55)
 
     GUI_SIZE =GUI_SIZE_MACOS
 
