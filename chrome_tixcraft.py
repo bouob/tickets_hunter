@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.19)"
+CONST_APP_VERSION = u"MaxBot (2023.05.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1847,7 +1847,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 #   is_need_refresh
 #   matched_blocks
 # PS: matched_blocks will be None, if length equals zero.
-def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude):
+def get_tixcraft_target_area(el, area_keyword_list, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude_list):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -1892,10 +1892,12 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
             if row_text is None:
                 row_text = ""
 
-            if len(row_text):
-                if len(area_keyword_exclude) > 0:
-                    if area_keyword_exclude in row_text:
-                        row_text = ""
+            if len(row_text) > 0:
+                if len(area_keyword_exclude_list) > 0:
+                    area_keyword_exclude_array = json.loads("["+ area_keyword_exclude_list +"]")
+                    for area_keyword_exclude in area_keyword_exclude_array:
+                        if area_keyword_exclude in row_text:
+                            row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -1903,16 +1905,15 @@ def get_tixcraft_target_area(el, area_keyword, area_auto_select_mode, pass_1_sea
 
                 is_append_this_row = False
 
-                if len(area_keyword) > 0:
-                    # clean stop word.
-                    area_keyword = format_keyword_string(area_keyword)
-
-                # allow only input stop word in keyword fields.
-                # for keyword#2 to select all.
-                if len(area_keyword) > 0:
+                if len(area_keyword_list) > 0:
                     # must match keyword.
-                    if area_keyword in row_text:
-                        is_append_this_row = True
+                    is_append_this_row = True
+                    area_keyword_array = area_keyword_list.split(' ')
+                    for area_keyword in area_keyword_array:
+                        area_keyword = format_keyword_string(area_keyword)
+                        if not area_keyword in row_text:
+                            is_append_this_row = False
+                            break
                 else:
                     # without keyword.
                     is_append_this_row = True
@@ -1975,16 +1976,9 @@ def tixcraft_area_auto_select(driver, url, config_dict):
         show_debug_message = True
 
     # read config.
-    area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
-    area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
-    area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
-    area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
-    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-    area_keyword_exclude = config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"]
-
-    area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
-    area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
-    area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
 
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
     # disable pass 1 seat remaining when target ticket number is 1.
@@ -1993,8 +1987,8 @@ def tixcraft_area_auto_select(driver, url, config_dict):
         pass_1_seat_remaining_enable = False
 
     if show_debug_message:
-        print("area_keyword_1, area_keyword_2:", area_keyword_1, area_keyword_2)
-        print("area_keyword_3, area_keyword_4:", area_keyword_3, area_keyword_4)
+        print("area_keyword:", area_keyword)
+        print("area_keyword_exclude:", area_keyword_exclude)
 
     if '/ticket/area/' in url:
         #driver.switch_to.default_content()
@@ -2006,45 +2000,20 @@ def tixcraft_area_auto_select(driver, url, config_dict):
             print("find .zone fail, do nothing.")
 
         if el is not None:
-            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_1, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
-            if show_debug_message:
-                print("is_need_refresh for keyword1:", is_need_refresh)
+            is_need_refresh = False
+            areas = None
 
-            if is_need_refresh:
-                if areas is None:
-                    if show_debug_message:
-                        print("use area keyword #2", area_keyword_2)
-
-                    # only when keyword#2 filled to query.
-                    if area_keyword_2_enable:
-                        if area_keyword_1 != area_keyword_2:
-                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_2, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
-                            if show_debug_message:
-                                print("is_need_refresh for keyword2:", is_need_refresh)
-
-            if is_need_refresh:
-                if areas is None:
-                    if show_debug_message:
-                        print("use area keyword #3", area_keyword_3)
-
-                    # only when keyword#3 filled to query.
-                    if area_keyword_3_enable:
-                        if area_keyword_1 != area_keyword_3:
-                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_3, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
-                            if show_debug_message:
-                                print("is_need_refresh for keyword3:", is_need_refresh)
-
-            if is_need_refresh:
-                if areas is None:
-                    if show_debug_message:
-                        print("use area keyword #4", area_keyword_4)
-
-                    # only when keyword#4 filled to query.
-                    if area_keyword_4_enable:
-                        if area_keyword_1 != area_keyword_4:
-                            is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_4, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
-                            if show_debug_message:
-                                print("is_need_refresh for keyword4:", is_need_refresh)
+            if len(area_keyword) > 0:
+                    area_keyword_array = json.loads("["+ area_keyword +"]")
+                    for area_keyword_item in area_keyword_array:
+                        is_need_refresh, areas = get_tixcraft_target_area(el, area_keyword_item, area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
+                        if not is_need_refresh:
+                            break
+                        else:
+                            print("is_need_refresh for keyword:", area_keyword_item)
+            else:
+                # empty keyword, match all.
+                is_need_refresh, areas = get_tixcraft_target_area(el, "", area_auto_select_mode, pass_1_seat_remaining_enable, area_keyword_exclude)
 
             area_target = None
             if areas is not None:
@@ -2843,7 +2812,7 @@ def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string,
 
     return is_cpatcha_sent
 
-def kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2881,6 +2850,12 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_are
     if price_list_count > 0:
         areas = []
 
+        kktix_area_keyword_array = kktix_area_keyword.split(' ')
+        kktix_area_keyword_1 = kktix_area_keyword_array[0]
+        kktix_area_keyword_1_and = ""
+        if len(kktix_area_keyword_array) > 1:
+            kktix_area_keyword_1_and = kktix_area_keyword_array[1]
+
         # clean stop word.
         kktix_area_keyword_1 = format_keyword_string(kktix_area_keyword_1)
         kktix_area_keyword_1_and = format_keyword_string(kktix_area_keyword_1_and)
@@ -2914,6 +2889,14 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_are
 
             if '完売' in row_text:
                 row_text = ""
+
+            if len(row_text) > 0:
+                area_keyword_exclude_list = config_dict["area_auto_select"]["area_keyword_exclude"]
+                if len(area_keyword_exclude_list) > 0:
+                    area_keyword_exclude_array = json.loads("["+ area_keyword_exclude_list +"]")
+                    for area_keyword_exclude in area_keyword_exclude_array:
+                        if area_keyword_exclude in row_text:
+                            row_text = ""
             
             if len(row_text) > 0:
                 # clean stop word.
@@ -3012,7 +2995,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_are
 
     return is_ticket_number_assigned, areas
 
-def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and):
+def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -3025,9 +3008,9 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_1, kktix_
     ticket_number = config_dict["ticket_number"]
     if ticket_number == 1:
         pass_1_seat_remaining_enable = False
-    kktix_area_auto_select_mode = config_dict["kktix"]["area_mode"]
+    kktix_area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and)
+    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_keyword)
 
     is_need_refresh = False
 
@@ -3873,6 +3856,11 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # read config.
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+
     # part 1: check div.
     registrationsNewApp_div = None
     try:
@@ -3884,22 +3872,23 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
     # part 2: assign ticket number
     is_ticket_number_assigned = False
     if not registrationsNewApp_div is None:
-        kktix_area_keyword_1 = config_dict["kktix"]["area_keyword_1"].strip()
-        kktix_area_keyword_1_and = config_dict["kktix"]["area_keyword_1_and"].strip()
-        kktix_area_keyword_2 = config_dict["kktix"]["area_keyword_2"].strip()
-        kktix_area_keyword_2_and = config_dict["kktix"]["area_keyword_2_and"].strip()
-        kktix_area_keyword_2_enable = config_dict["kktix"]["area_keyword_2_enable"]
-
         is_need_refresh = False
-        for retry_index in range(2):
-            if not is_ticket_number_assigned:
-                is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_1, kktix_area_keyword_1_and)
-                #PS: keyword_2 not input, means all rows are match.
-                if not is_ticket_number_assigned:
-                    if kktix_area_keyword_2_enable:
-                        is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword_2, kktix_area_keyword_2_and)
-            if is_ticket_number_assigned:
-                break
+
+        if len(area_keyword) > 0:
+            for retry_index in range(2):
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+                for area_keyword_item in area_keyword_array:
+                    is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
+                    if is_ticket_number_assigned:
+                        break
+                    else:
+                        print("is_need_refresh for keyword:", area_keyword_item)
+
+                if is_ticket_number_assigned:
+                    break
+        else:
+            # empty keyword, match all.
+            is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, "")
 
         # part 3: captcha
         if is_ticket_number_assigned:
@@ -3966,15 +3955,11 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
 # PURPOSE: get target area list.
 # PS: this is main block, use keyword to get rows.
 # PS: it seems use date_auto_select_mode instead of area_auto_select_mode
-def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode, area_keyword_exclude):
+def get_fami_target_area(driver, date_keyword, area_keyword_list, area_auto_select_mode, area_keyword_exclude_list):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     date_keyword = format_keyword_string(date_keyword)
-    area_keyword_1 = format_keyword_string(area_keyword_1)
-    area_keyword_2 = format_keyword_string(area_keyword_2)
-    area_keyword_3 = format_keyword_string(area_keyword_3)
-    area_keyword_4 = format_keyword_string(area_keyword_4)
 
     if show_debug_message:
         print("try to find area block by keywords...")
@@ -4024,7 +4009,7 @@ def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, a
         if len(formated_area_list) > 0:
             matched_blocks = []
 
-            if len(date_keyword)==0 and len(area_keyword_1)==0 and len(area_keyword_2) == 0:
+            if len(date_keyword)==0 and len(area_keyword_list)==0:
                 # select all.
                 matched_blocks = formated_area_list
             else:
@@ -4060,9 +4045,11 @@ def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, a
                         row_text = ""
 
                     if len(row_text) > 0:
-                        if len(area_keyword_exclude) > 0:
-                            if area_keyword_exclude in row_text:
-                                row_text = ""
+                        if len(area_keyword_exclude_list) > 0:
+                            area_keyword_exclude_array = json.loads("["+ area_keyword_exclude_list +"]")
+                            for area_keyword_exclude in area_keyword_exclude_array:
+                                if area_keyword_exclude in row_text:
+                                    row_text = ""
 
                     if len(row_text) > 0:
                         # check date.
@@ -4076,29 +4063,18 @@ def get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, a
 
                         # check area.
                         is_match_area = False
-                        if len(area_keyword_1) > 0:
-                            if area_keyword_1 in area_html_text:
-                                #print("is_match_area area_keyword_1")
-                                is_match_area = True
 
-                            # check keyword 2
-                            if len(area_keyword_2) > 0:
-                                if area_keyword_2 in area_html_text:
-                                    #print("is_match_area area_keyword_2")
-                                    is_match_area = True
-
-                            # check keyword 3
-                            if len(area_keyword_3) > 0:
-                                if area_keyword_3 in area_html_text:
-                                    #print("is_match_area area_keyword_3")
-                                    is_match_area = True
-
-                            # check keyword 4
-                            if len(area_keyword_4) > 0:
-                                if area_keyword_4 in area_html_text:
-                                    #print("is_match_area area_keyword_4")
-                                    is_match_area = True
+                        if len(area_keyword_list) > 0:
+                            # must match keyword.
+                            is_match_area = True
+                            area_keyword_array = area_keyword_list.split(' ')
+                            for area_keyword in area_keyword_array:
+                                area_keyword = format_keyword_string(area_keyword)
+                                if not area_keyword in row_text:
+                                    is_match_area = False
+                                    break
                         else:
+                            # without keyword.
                             is_match_area = True
 
                         if is_match_date and is_match_area:
@@ -4161,16 +4137,10 @@ def fami_home(driver, url, config_dict):
 
     ticket_number = str(config_dict["ticket_number"])
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
-    area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
-    area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
-    area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
-    area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
-    area_keyword_exclude = config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"]
 
-    area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
-    area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
-    area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
 
     #---------------------------
     # part 3: fill ticket number.
@@ -4262,7 +4232,19 @@ def fami_home(driver, url, config_dict):
         #---------------------------
         # part 2: select keywords
         #---------------------------
-        areas = get_fami_target_area(driver, date_keyword, area_keyword_1, area_keyword_2, area_keyword_3, area_keyword_4, area_auto_select_mode, area_keyword_exclude)
+
+        if len(area_keyword) > 0:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+            for area_keyword_item in area_keyword_array:
+                areas = get_fami_target_area(driver, date_keyword, area_keyword_item, area_auto_select_mode, area_keyword_exclude)
+                if not areas is None:
+                    break
+                else:
+                    print("is_need_refresh for keyword:", area_keyword_item)
+        else:
+            # empty keyword, match all.
+            areas = get_fami_target_area(driver, date_keyword, "", area_auto_select_mode, area_keyword_exclude)
+            
 
         area_target = None
         if areas is not None:
@@ -5654,23 +5636,19 @@ def ibon_date_auto_select(driver, config_dict):
                         pass
     return ret
 
-def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, area_keyword_exclude):
+def ibon_area_auto_select(driver, config_dict, area_keyword_list, area_keyword_exclude_list):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    area_auto_select_mode = config_dict["tixcraft"]["area_auto_select"]["mode"]
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     is_price_assign_by_bot = False
     is_need_refresh = False
 
     matched_blocks = None
-
-    # clean stop word.
-    area_keyword_1 = format_keyword_string(area_keyword_1)
-    area_keyword_1_and = format_keyword_string(area_keyword_1_and)
 
     area_list = None
     try:
@@ -5695,14 +5673,28 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
                 row_index += 1
                 row_is_enabled=True
 
+                row_text = ""
                 if row_is_enabled:
-                    row_text = ""
                     try:
                         row_text = row.text
                     except Exception as exc:
                         pass
-                    if '已售完' in row_text:
-                        row_is_enabled=False
+
+                if row_text is None:
+                    row_text = ""
+
+                if '已售完' in row_text:
+                    row_is_enabled=False
+
+                if len(row_text) > 0:
+                    if len(area_keyword_exclude_list) > 0:
+                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude_list +"]")
+                        for area_keyword_exclude in area_keyword_exclude_array:
+                            if area_keyword_exclude in row_text:
+                                row_text = ""
+
+                if row_text == "":
+                    row_is_enabled=False
 
                 if row_is_enabled:
                     try:
@@ -5750,13 +5742,9 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
             print("formated_area_list count:", area_list_count)
 
         if area_list_count > 0:
-            if len(area_keyword_1) == 0:
+            if len(area_keyword_list) == 0:
                 matched_blocks = formated_area_list
             else:
-                # match keyword.
-                if show_debug_message:
-                    print("start to match keyword:", area_keyword_1)
-                    print("keyword and:", area_keyword_1_and)
                 matched_blocks = []
 
                 row_index = 0
@@ -5775,35 +5763,24 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
                             row_text = ""
 
                         if len(row_text) > 0:
-                            if len(area_keyword_exclude) > 0:
-                                if area_keyword_exclude in row_text:
-                                    row_text = ""
-
-                        if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
 
                             is_match_area = False
-                            match_area_code = 0
 
-                            if area_keyword_1 in row_text:
-                                if len(area_keyword_1_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if area_keyword_1_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
+                            if len(area_keyword_list) > 0:
+                                # must match keyword.
+                                is_match_area = True
+                                area_keyword_array = area_keyword_list.split(' ')
+                                for area_keyword in area_keyword_array:
+                                    area_keyword = format_keyword_string(area_keyword)
+                                    if not area_keyword in row_text:
+                                        is_match_area = False
+                                        break
+                            else:
+                                # without keyword.
+                                is_match_area = True
 
                             if is_match_area:
                                 matched_blocks.append(row)
@@ -5854,6 +5831,56 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_an
 
     return is_need_refresh, is_price_assign_by_bot
 
+def ibon_uncheck_adjacent_seat(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_finish_checkbox_click = False
+
+    agree_checkbox = None
+    try:
+        my_css_selector = 'div.not-consecutive > div.custom-control > span > input[type="checkbox"]'
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find ibon seat checkbox Exception")
+        if show_debug_message:
+            print(exc)
+        pass
+
+    if agree_checkbox is not None:
+        is_visible = False
+        try:
+            if agree_checkbox.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            is_checkbox_checked = False
+            try:
+                if agree_checkbox.is_selected():
+                    is_checkbox_checked = True
+            except Exception as exc:
+                pass
+
+            if not is_checkbox_checked:
+                #print('send check to checkbox')
+                try:
+                    agree_checkbox.click()
+                    is_finish_checkbox_click = True
+                except Exception as exc:
+                    try:
+                        driver.execute_script("arguments[0].click();", agree_checkbox)
+                        is_finish_checkbox_click = True
+                    except Exception as exc:
+                        pass
+            else:
+                is_finish_checkbox_click = True
+
+    return is_finish_checkbox_click
 
 def ibon_performance(driver, config_dict):
     show_debug_message = True       # debug.
@@ -5868,29 +5895,28 @@ def ibon_performance(driver, config_dict):
     auto_fill_ticket_number = True
     if auto_fill_ticket_number:
         # click price row.
-        area_keyword_1 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_1"].strip()
-        area_keyword_2 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2"].strip()
-        area_keyword_3 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3"].strip()
-        area_keyword_4 = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4"].strip()
-        area_keyword_1_and = ""
-        area_keyword_2_and = ""
-        area_keyword_3_and = ""
-        area_keyword_4_and = ""
-
-        area_keyword_exclude = config_dict["tixcraft"]["area_auto_select"]["area_keyword_exclude"]
-
-        area_keyword_2_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_2_enable"]
-        area_keyword_3_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_3_enable"]
-        area_keyword_4_enable = config_dict["tixcraft"]["area_auto_select"]["area_keyword_4_enable"]
+        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+        area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"].strip()
 
         if show_debug_message:
-            print("area_keyword_1:", area_keyword_1)
-            #print("area_keyword_1_and:", area_keyword_1_and)
-            print("area_keyword_2:", area_keyword_2)
-            #print("area_keyword_2_and:", area_keyword_2_and)
+            print("area_keyword:", area_keyword)
+            print("area_keyword_exclude:", area_keyword_exclude)
 
         is_need_refresh = False
-        is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_1, area_keyword_1_and, area_keyword_exclude)
+
+        if len(area_keyword) > 0:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+            for area_keyword_item in area_keyword_array:
+                is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_item, area_keyword_exclude)
+                if not is_need_refresh:
+                    break
+                else:
+                    print("is_need_refresh for keyword:", area_keyword_item)
+        else:
+            # empty keyword, match all.
+            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword, area_keyword_exclude)
+
+        
 
         if is_need_refresh:
             if area_keyword_2_enable:
@@ -6540,7 +6566,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     if '/ticket/area/' in url:
         domain_name = url.split('/')[2]
         if not 'ticketmaster' in domain_name:
-            area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
+            area_auto_select_enable = config_dict["area_auto_select"]["enable"]
             if area_auto_select_enable:
                 tixcraft_area_auto_select(driver, url, config_dict)
         else:
@@ -7542,8 +7568,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                 is_event_page = True
 
             if is_event_page:
-                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-                if date_auto_select_enable:
+                if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                     is_match_target_feature = True
                     is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
 
@@ -7564,8 +7589,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                 is_event_page = True
 
             if is_event_page:
-                area_auto_select_enable = config_dict["tixcraft"]["area_auto_select"]["enable"]
-                if area_auto_select_enable:
+                if config_dict["area_auto_select"]["enable"]:
                     is_do_ibon_performance_with_ticket_number = False
 
                     if 'PRODUCT_ID=' in url:
@@ -7579,8 +7603,10 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                         is_do_ibon_performance_with_ticket_number = True
 
                     if is_do_ibon_performance_with_ticket_number:
+                        if config_dict["advanced"]["disable_adjacent_seat"]:
+                            is_finish_checkbox_click = ibon_uncheck_adjacent_seat(driver, config_dict)
+                        
                         # captcha
-
                         domain_name = url.split('/')[2]
                         model_name = url.split('/')[5]
                         if len(model_name) > 7:
@@ -9905,8 +9931,7 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
         is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict)
         if is_price_assign_by_bot:
             if config_dict["ocr_captcha"]["enable"]:
-                # OCR alway guess wrong answer, disable for now.
-                # ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
+                ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
                 pass
 
 def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
@@ -9981,6 +10006,8 @@ function svgUrlToPng(svgUrl, callback) {
     canvas.width = svgImage.clientWidth;
     canvas.height = svgImage.clientHeight;
     const canvasCtx = canvas.getContext('2d');
+    canvasCtx.fillStyle = 'white';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
     canvasCtx.drawImage(svgImage, 0, 0);
     const imgData = canvas.toDataURL('image/png');
     callback(imgData);
