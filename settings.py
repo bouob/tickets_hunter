@@ -2284,11 +2284,11 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 530
-    GUI_SIZE_HEIGHT = 600
+    GUI_SIZE_WIDTH = 540
+    GUI_SIZE_HEIGHT = 630
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-55)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-65)
 
     GUI_SIZE =GUI_SIZE_MACOS
 
