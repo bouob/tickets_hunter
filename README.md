@@ -8,6 +8,18 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-05-22)：遠大售票系統
+
+https://youtu.be/mlc7_5O_nwg
+
+Max搶票機器人 (2023-05-22)：年代售票系統 / 新的關鍵字格式
+
+https://youtu.be/gJo8rGQsyzY
+
+Max搶票機器人 (2023-05-22)：HKTicketing 快達票
+
+https://youtu.be/U-Rx5RIMFOg
+
 Max搶票機器人 (2023-05-19)：優化ibon, 示範 ibonqware 登入
 
 https://youtu.be/37arVXrq5uM
