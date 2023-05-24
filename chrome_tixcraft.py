@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.22)"
+CONST_APP_VERSION = u"MaxBot (2023.05.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1856,7 +1856,6 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_list):
 
     # read config.
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
 
     is_need_refresh = False
@@ -1901,6 +1900,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_list):
                 row_text = ""
 
             if len(row_text) > 0:
+                area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
                 if len(area_keyword_exclude) > 0:
                     area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
                     for exclude_item in area_keyword_exclude_array:
@@ -1986,7 +1986,6 @@ def tixcraft_area_auto_select(driver, url, config_dict):
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
 
     pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
     # disable pass 1 seat remaining when target ticket number is 1.
@@ -1996,7 +1995,6 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 
     if show_debug_message:
         print("area_keyword:", area_keyword)
-        print("area_keyword_exclude:", area_keyword_exclude)
 
     if '/ticket/area/' in url:
         #driver.switch_to.default_content()
@@ -5631,7 +5629,6 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
         show_debug_message = True
 
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"].strip()
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -5676,10 +5673,11 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
                     row_is_enabled=False
 
                 if len(row_text) > 0:
-                    if len(area_keyword_exclude_list) > 0:
-                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude_list +"]")
-                        for area_keyword_exclude in area_keyword_exclude_array:
-                            if area_keyword_exclude in row_text:
+                    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+                    if len(area_keyword_exclude) > 0:
+                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+                        for exclude_item in area_keyword_exclude_array:
+                            if exclude_item in row_text:
                                 row_text = ""
 
                 if row_text == "":
