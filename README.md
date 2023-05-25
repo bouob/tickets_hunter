@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-05-23)：ibon 允許不連續座位
+
+https://youtu.be/A9EU7vgWBiQ
+
 Max搶票機器人 (2023-05-22)：遠大售票系統
 
 https://youtu.be/mlc7_5O_nwg
@@ -19,10 +23,6 @@ https://youtu.be/gJo8rGQsyzY
 Max搶票機器人 (2023-05-22)：HKTicketing 快達票
 
 https://youtu.be/U-Rx5RIMFOg
-
-Max搶票機器人 (2023-05-19)：優化ibon, 示範 ibonqware 登入
-
-https://youtu.be/37arVXrq5uM
 
 Max搶票機器人 (2023-04-24)：優化KKTIX 推論驗證問題/示範多開.
 
