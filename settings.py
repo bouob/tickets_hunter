@@ -11,6 +11,7 @@ except ImportError:
     # for Python3
     from tkinter import *
     from tkinter import ttk
+    import tkinter.font as tkfont
     from tkinter import messagebox
     from tkinter.filedialog import asksaveasfilename
 import os
@@ -1291,6 +1292,12 @@ def showHideAreaBlocks():
 
         lbl_area_keyword_usage.grid_forget()
 
+def on_homepage_configure(event):
+    font = tkfont.nametofont(str(event.widget.cget('font')))
+    width = font.measure(CONST_SUPPORTED_SITES[len(CONST_SUPPORTED_SITES)-1] + "0") - event.width
+    style = ttk.Style()
+    style.configure('TCombobox', postoffset=(0,0,width,0))
+
 def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # output config:
     print("setting app version", CONST_APP_VERSION)
@@ -1321,10 +1328,11 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_homepage.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_homepage
-    combo_homepage = ttk.Combobox(frame_group_header)
+    combo_homepage = ttk.Combobox(frame_group_header, width=30)
     combo_homepage['values'] = CONST_SUPPORTED_SITES
     combo_homepage.set(config_dict["homepage"])
     combo_homepage.bind("<<ComboboxSelected>>", callbackHomepageOnChange)
+    #combo_homepage.bind('<Configure>', on_homepage_configure)
     combo_homepage.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
@@ -1338,10 +1346,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     '''
     global combo_ticket_number_value
     combo_ticket_number_value = StringVar(frame_group_header, value=ticket_number)
-    combo_ticket_number = Entry(frame_group_header, width=20, textvariable = combo_ticket_number_value)
+    combo_ticket_number = Entry(frame_group_header, width=30, textvariable = combo_ticket_number_value)
     combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
     '''
-    combo_ticket_number = ttk.Combobox(frame_group_header, state="readonly")
+    combo_ticket_number = ttk.Combobox(frame_group_header, state="readonly", width=30)
     combo_ticket_number['values']= ("1","2","3","4","5","6","7","8","9","10","11","12")
     #combo_ticket_number.current(0)
     combo_ticket_number.set(str(config_dict["ticket_number"]))
@@ -1425,7 +1433,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kktix_user_guess_string
     txt_kktix_user_guess_string_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["user_guess_string"].strip())
-    txt_kktix_user_guess_string = Entry(frame_group_kktix, width=20, textvariable = txt_kktix_user_guess_string_value)
+    txt_kktix_user_guess_string = Entry(frame_group_kktix, width=30, textvariable = txt_kktix_user_guess_string_value)
     txt_kktix_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
 
 
@@ -1466,7 +1474,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_date_auto_select_mode.grid(column=0, row=date_auto_select_mode_index, sticky = E)
 
     global combo_date_auto_select_mode
-    combo_date_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly")
+    combo_date_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly", width=30)
     combo_date_auto_select_mode['values']= (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP)
     combo_date_auto_select_mode.set(config_dict["tixcraft"]["date_auto_select"]["mode"])
     combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
@@ -1482,7 +1490,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_date_keyword
     txt_date_keyword_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip())
-    txt_date_keyword = Entry(frame_group_tixcraft, width=20, textvariable = txt_date_keyword_value)
+    txt_date_keyword = Entry(frame_group_tixcraft, width=30, textvariable = txt_date_keyword_value)
     txt_date_keyword.grid(column=1, row=date_keyword_index, sticky = W)
 
     group_row_count+=1
@@ -1527,7 +1535,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_presale_code
     txt_presale_code_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code"])
-    txt_presale_code = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_value)
+    txt_presale_code = Entry(frame_group_tixcraft, width=30, textvariable = txt_presale_code_value)
     txt_presale_code.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
@@ -1538,7 +1546,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_presale_code_delimiter
     txt_presale_code_delemiter_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code_delimiter"])
-    txt_presale_code_delimiter = Entry(frame_group_tixcraft, width=20, textvariable = txt_presale_code_delemiter_value)
+    txt_presale_code_delimiter = Entry(frame_group_tixcraft, width=30, textvariable = txt_presale_code_delemiter_value)
     txt_presale_code_delimiter.grid(column=1, row=group_row_count, sticky = W)
 
     # final flush.
@@ -1578,7 +1586,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_auto_select_mode.grid(column=0, row=area_auto_select_mode_index, sticky = E)
 
     global combo_area_auto_select_mode
-    combo_area_auto_select_mode = ttk.Combobox(frame_group_area, state="readonly")
+    combo_area_auto_select_mode = ttk.Combobox(frame_group_area, state="readonly", width=30)
     combo_area_auto_select_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
     combo_area_auto_select_mode.set(config_dict["area_auto_select"]["mode"])
     combo_area_auto_select_mode.grid(column=1, row=area_auto_select_mode_index, sticky = W)
@@ -1642,7 +1650,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_browser.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_browser
-    combo_browser = ttk.Combobox(frame_group_header, state="readonly")
+    combo_browser = ttk.Combobox(frame_group_header, state="readonly", width=30)
     combo_browser['values']= ("chrome","firefox","edge","safari")
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
@@ -1654,7 +1662,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_language.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_language
-    combo_language = ttk.Combobox(frame_group_header, state="readonly")
+    combo_language = ttk.Combobox(frame_group_header, state="readonly", width=30)
     combo_language['values']= ("English","繁體中文","簡体中文","日本語")
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
@@ -1667,7 +1675,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_ocr_captcha_image_source.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_ocr_captcha_image_source
-    combo_ocr_captcha_image_source = ttk.Combobox(frame_group_header, state="readonly")
+    combo_ocr_captcha_image_source = ttk.Combobox(frame_group_header, state="readonly", width=30)
     combo_ocr_captcha_image_source['values']= (CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER, CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS)
     combo_ocr_captcha_image_source.set(config_dict["ocr_captcha"]["image_source"])
     combo_ocr_captcha_image_source.grid(column=1, row=group_row_count, sticky = W)
@@ -1679,7 +1687,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_webdriver_type.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_webdriver_type
-    combo_webdriver_type = ttk.Combobox(frame_group_header, state="readonly")
+    combo_webdriver_type = ttk.Combobox(frame_group_header, state="readonly", width=30)
     combo_webdriver_type['values']= (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
     combo_webdriver_type.set(config_dict["webdriver_type"])
     combo_webdriver_type.grid(column=1, row=group_row_count, sticky = W)
@@ -1707,7 +1715,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     #print("captcha_sound_filename:", captcha_sound_filename)
     global txt_captcha_sound_filename
     txt_captcha_sound_filename_value = StringVar(frame_group_header, value=captcha_sound_filename)
-    txt_captcha_sound_filename = Entry(frame_group_header, width=20, textvariable = txt_captcha_sound_filename_value)
+    txt_captcha_sound_filename = Entry(frame_group_header, width=30, textvariable = txt_captcha_sound_filename_value)
     txt_captcha_sound_filename.grid(column=1, row=group_row_count, sticky = W)
 
     icon_play_filename = "icon_play_1.gif"
@@ -1862,7 +1870,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_tixcraft_sid
     txt_tixcraft_sid_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["tixcraft_sid"].strip()))
-    txt_tixcraft_sid = Entry(frame_group_header, width=20, textvariable = txt_tixcraft_sid_value, show="*")
+    txt_tixcraft_sid = Entry(frame_group_header, width=30, textvariable = txt_tixcraft_sid_value, show="*")
     txt_tixcraft_sid.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1873,7 +1881,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_ibon_ibonqware
     txt_ibon_ibonqware_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ibonqware"].strip()))
-    txt_ibon_ibonqware = Entry(frame_group_header, width=20, textvariable = txt_ibon_ibonqware_value, show="*")
+    txt_ibon_ibonqware = Entry(frame_group_header, width=30, textvariable = txt_ibon_ibonqware_value, show="*")
     txt_ibon_ibonqware.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1884,7 +1892,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_facebook_account
     txt_facebook_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["facebook_account"].strip())
-    txt_facebook_account = Entry(frame_group_header, width=20, textvariable = txt_facebook_account_value)
+    txt_facebook_account = Entry(frame_group_header, width=30, textvariable = txt_facebook_account_value)
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1895,7 +1903,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_facebook_password
     txt_facebook_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["facebook_password"].strip()))
-    txt_facebook_password = Entry(frame_group_header, width=20, textvariable = txt_facebook_password_value, show="*")
+    txt_facebook_password = Entry(frame_group_header, width=30, textvariable = txt_facebook_password_value, show="*")
     txt_facebook_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1906,7 +1914,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kktix_account
     txt_kktix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kktix_account"].strip())
-    txt_kktix_account = Entry(frame_group_header, width=20, textvariable = txt_kktix_account_value)
+    txt_kktix_account = Entry(frame_group_header, width=30, textvariable = txt_kktix_account_value)
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1917,7 +1925,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kktix_password
     txt_kktix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kktix_password"].strip()))
-    txt_kktix_password = Entry(frame_group_header, width=20, textvariable = txt_kktix_password_value, show="*")
+    txt_kktix_password = Entry(frame_group_header, width=30, textvariable = txt_kktix_password_value, show="*")
     txt_kktix_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1928,7 +1936,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_cityline_account
     txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
-    txt_cityline_account = Entry(frame_group_header, width=20, textvariable = txt_cityline_account_value)
+    txt_cityline_account = Entry(frame_group_header, width=30, textvariable = txt_cityline_account_value)
     txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1939,7 +1947,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_cityline_password
     txt_cityline_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["cityline_password"].strip()))
-    txt_cityline_password = Entry(frame_group_header, width=20, textvariable = txt_cityline_password_value, show="*")
+    txt_cityline_password = Entry(frame_group_header, width=30, textvariable = txt_cityline_password_value, show="*")
     txt_cityline_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1950,7 +1958,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_urbtix_account
     txt_urbtix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["urbtix_account"].strip())
-    txt_urbtix_account = Entry(frame_group_header, width=20, textvariable = txt_urbtix_account_value)
+    txt_urbtix_account = Entry(frame_group_header, width=30, textvariable = txt_urbtix_account_value)
     txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1961,7 +1969,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_urbtix_password
     txt_urbtix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
-    txt_urbtix_password = Entry(frame_group_header, width=20, textvariable = txt_urbtix_password_value, show="*")
+    txt_urbtix_password = Entry(frame_group_header, width=30, textvariable = txt_urbtix_password_value, show="*")
     txt_urbtix_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1972,7 +1980,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_hkticketing_account
     txt_hkticketing_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["hkticketing_account"].strip())
-    txt_hkticketing_account = Entry(frame_group_header, width=20, textvariable = txt_hkticketing_account_value)
+    txt_hkticketing_account = Entry(frame_group_header, width=30, textvariable = txt_hkticketing_account_value)
     txt_hkticketing_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1983,7 +1991,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_hkticketing_password
     txt_hkticketing_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
-    txt_hkticketing_password = Entry(frame_group_header, width=20, textvariable = txt_hkticketing_password_value, show="*")
+    txt_hkticketing_password = Entry(frame_group_header, width=30, textvariable = txt_hkticketing_password_value, show="*")
     txt_hkticketing_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -1994,7 +2002,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kham_account
     txt_kham_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kham_account"].strip())
-    txt_kham_account = Entry(frame_group_header, width=20, textvariable = txt_kham_account_value)
+    txt_kham_account = Entry(frame_group_header, width=30, textvariable = txt_kham_account_value)
     txt_kham_account.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -2005,7 +2013,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kham_password
     txt_kham_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kham_password"].strip()))
-    txt_kham_password = Entry(frame_group_header, width=20, textvariable = txt_kham_password_value, show="*")
+    txt_kham_password = Entry(frame_group_header, width=30, textvariable = txt_kham_password_value, show="*")
     txt_kham_password.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
@@ -2288,7 +2296,7 @@ def main():
     GUI_SIZE_HEIGHT = 630
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-65)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-80) + 'x' + str(GUI_SIZE_HEIGHT-80)
 
     GUI_SIZE =GUI_SIZE_MACOS
 
