@@ -684,6 +684,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_auto_reload_coming_soon_page
     global txt_presale_code
     global txt_presale_code_delimiter
+    global txt_auto_reload_page_interval
 
     global txt_tixcraft_sid
     global txt_ibon_ibonqware
@@ -765,10 +766,19 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["tixcraft"]["presale_code"] = txt_presale_code.get().strip()
         config_dict["tixcraft"]["presale_code_delimiter"] = txt_presale_code_delimiter.get().strip()
 
+        area_keyword = txt_area_keyword.get("1.0",END).strip()
+        if len(area_keyword) > 0:
+            if not ('\"' in area_keyword):
+                area_keyword = '"' + area_keyword + '"'
+        area_keyword_exclude = txt_area_keyword_exclude.get("1.0",END).strip()
+        if len(area_keyword_exclude) > 0:
+            if not ('\"' in area_keyword_exclude):
+                area_keyword_exclude = '"' + area_keyword_exclude + '"'
+
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
-        config_dict["area_auto_select"]["area_keyword"] = txt_area_keyword.get("1.0",END)
-        config_dict["area_auto_select"]["area_keyword_exclude"] = txt_area_keyword_exclude.get("1.0",END)
+        config_dict["area_auto_select"]["area_keyword"] = area_keyword
+        config_dict["area_auto_select"]["area_keyword_exclude"] = area_keyword_exclude
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
@@ -809,6 +819,9 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
+
+        config_dict["advanced"]["auto_reload_page_interval"] = txt_auto_reload_page_interval.get().strip()
+
 
     # save config.
     if is_all_data_correct:
