@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.23)"
+CONST_APP_VERSION = u"MaxBot (2023.05.24)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6943,13 +6943,13 @@ def urbtix_main(driver, url, config_dict):
     waiting_for_access_url = ['/session/landing-timer/','msg.urbtix.hk','busy.urbtix.hk']
     for waiting_url in waiting_for_access_url:
         if waiting_url in url:
-            # delay to avoid ip block.
-            time.sleep(1.0)
             try:
                 driver.get('https://www.urbtix.hk/')
             except Exception as exec1:
                 pass
             pass
+            # 刷太快, 會被封IP?
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     if '/logout?' in url:
         try:
@@ -7065,10 +7065,11 @@ def cityline_main(driver, url, config_dict):
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         try:
             driver.execute_script("goEvent();")
-            time.sleep(0.1)
         except Exception as exec1:
             pass
         pass
+        # 刷太快, 會被封IP?
+        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     try:
         window_handles_count = len(driver.window_handles)
@@ -8416,6 +8417,8 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
             driver.get(entry_url)
         except Exception as exc:
             pass
+        # 刷太快, 會被封IP?
+        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     # PS: share function with galaxymacau, but memeber is not shared.
     if 'hkticketing.com/Membership/Login.aspx' in url:
