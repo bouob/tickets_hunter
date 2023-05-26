@@ -25,7 +25,7 @@ import time
 import threading
 import subprocess
 
-CONST_APP_VERSION = u"MaxBot (2023.05.23)"
+CONST_APP_VERSION = u"MaxBot (2023.05.24)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -108,6 +108,7 @@ def load_translate():
     en_us["date_keyword"] = 'Date Keyword'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
+    en_us["auto_reload_page_interval"] = 'Reload page interval (second)'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -197,6 +198,7 @@ def load_translate():
     zh_tw["date_keyword"] = '日期關鍵字'
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
+    zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
 
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
@@ -285,6 +287,7 @@ def load_translate():
     zh_cn["date_keyword"] = '日期关键字'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
+    zh_cn["auto_reload_page_interval"] = '重新加载页面间隔（秒）'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -374,6 +377,7 @@ def load_translate():
     ja_jp["date_keyword"] = '日付キーワード'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
+    ja_jp["auto_reload_page_interval"] = 'ページのリロード間隔 (秒)'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -538,6 +542,8 @@ def get_default_config():
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
+
+    config_dict["advanced"]["auto_reload_page_interval"] = 0.2
 
     return config_dict
 
@@ -1009,6 +1015,7 @@ def applyNewLanguage():
     global lbl_adblock_plus_memo
     global lbl_adblock_plus_settings
     global lbl_adjacent_seat
+    global lbl_auto_reload_page_interval
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -1038,6 +1045,8 @@ def applyNewLanguage():
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
+    lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
@@ -1629,10 +1638,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_header = Frame(root)
     group_row_count = 0
 
-    play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
-    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
-
     # for advanced
     print("==[advanced]==")
     print("browser", config_dict['browser'])
@@ -1640,6 +1645,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     print(config_dict["advanced"])
 
     # assign default value.
+    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
     if captcha_sound_filename is None:
         captcha_sound_filename = ""
     if len(captcha_sound_filename)==0:
@@ -1700,7 +1706,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_play_captcha_sound
     chk_state_play_captcha_sound = BooleanVar()
-    chk_state_play_captcha_sound.set(play_captcha_sound)
+    chk_state_play_captcha_sound.set(config_dict["advanced"]["play_captcha_sound"]["enable"])
 
     global chk_play_captcha_sound
     chk_play_captcha_sound = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_play_captcha_sound)
@@ -1712,7 +1718,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_captcha_sound_filename = Label(frame_group_header, text=translate[language_code]['captcha_sound_filename'])
     lbl_captcha_sound_filename.grid(column=0, row=group_row_count, sticky = E)
 
-    #print("captcha_sound_filename:", captcha_sound_filename)
     global txt_captcha_sound_filename
     txt_captcha_sound_filename_value = StringVar(frame_group_header, value=captcha_sound_filename)
     txt_captcha_sound_filename = Entry(frame_group_header, width=30, textvariable = txt_captcha_sound_filename_value)
@@ -1734,7 +1739,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_adblock_plus
     chk_state_adblock_plus = BooleanVar()
-    chk_state_adblock_plus.set(adblock_plus_enable)
+    chk_state_adblock_plus.set(config_dict["advanced"]["adblock_plus_enable"])
 
     global chk_adblock_plus
     chk_adblock_plus = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_adblock_plus)
@@ -1766,6 +1771,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_icon_copy.image = icon_copy_img
     lbl_icon_copy.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
+
+    group_row_count +=1
+
+    global lbl_auto_reload_page_interval
+    lbl_auto_reload_page_interval = Label(frame_group_header, text=translate[language_code]['auto_reload_page_interval'])
+    lbl_auto_reload_page_interval.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_auto_reload_page_interval
+    txt_auto_reload_page_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["auto_reload_page_interval"])
+    txt_auto_reload_page_interval = Entry(frame_group_header, width=30, textvariable = txt_auto_reload_page_interval_value)
+    txt_auto_reload_page_interval.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
