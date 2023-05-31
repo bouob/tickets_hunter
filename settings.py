@@ -26,7 +26,7 @@ import threading
 import subprocess
 import json
 
-CONST_APP_VERSION = u"MaxBot (2023.05.25)"
+CONST_APP_VERSION = u"MaxBot (2023.05.26)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -544,7 +544,7 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.2
+    config_dict["advanced"]["auto_reload_page_interval"] = 2.0
 
     return config_dict
 
