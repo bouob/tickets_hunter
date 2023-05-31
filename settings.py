@@ -24,8 +24,9 @@ import base64
 import time
 import threading
 import subprocess
+import json
 
-CONST_APP_VERSION = u"MaxBot (2023.05.24)"
+CONST_APP_VERSION = u"MaxBot (2023.05.25)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -820,13 +821,31 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
-        config_dict["advanced"]["auto_reload_page_interval"] = txt_auto_reload_page_interval.get().strip()
+        config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
 
+    # test keyword format.
+    if is_all_data_correct:
+        area_keyword = config_dict["area_auto_select"]["area_keyword"]
+        if len(area_keyword) > 0:
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword"])
+                is_all_data_correct = False
+                pass
+
+    if is_all_data_correct:
+        area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+        if len(area_keyword_exclude) > 0:
+            try:
+                area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+            except Exception as exc:
+                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword_exclude"])
+                is_all_data_correct = False
+                pass
 
     # save config.
     if is_all_data_correct:
-        import json
-
         if not slience_mode:
             #messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
             file_to_save = asksaveasfilename(initialdir=app_root , initialfile=CONST_MAXBOT_CONFIG_FILE, defaultextension=".json", filetypes=[("json Documents","*.json"),("All Files","*.*")])
