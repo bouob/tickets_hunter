@@ -17,7 +17,6 @@ except ImportError:
 import os
 import sys
 import platform
-import json
 import webbrowser
 import pyperclip
 import base64
@@ -862,8 +861,6 @@ def btn_save_act(language_code, slience_mode=False):
 
     return is_all_data_correct
 
-
-
 def btn_run_clicked(language_code):
     print('run button pressed.')
     Root_Dir = ""
@@ -874,6 +871,7 @@ def btn_run_clicked(language_code):
 
 def launch_maxbot():
     working_dir = os.path.dirname(os.path.realpath(__file__))
+    print("working_dir:", working_dir)
     if hasattr(sys, 'frozen'):
         print("execute in frozen mode")
 
