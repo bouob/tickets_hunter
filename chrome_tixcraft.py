@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.26)"
+CONST_APP_VERSION = u"MaxBot (2023.05.27)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2505,13 +2505,15 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     var img = document.getElementById('%s');
+                    if(img!=null) {
                     canvas.height = img.naturalHeight;
                     canvas.width = img.naturalWidth;
                     context.drawImage(img, 0, 0);
                     callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL());
+                    callback(canvas.toDataURL()); }
                     """ % (image_id))
-                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                if not form_verifyCode_base64 is None:
+                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
 
                 if img_base64 is None:
                     if not Captcha_Browser is None:
@@ -5236,14 +5238,46 @@ def cityline_ticket_number_auto_select(driver, ticket_number):
     by_method = By.CSS_SELECTOR
     return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
 
-def ibon_ticket_number_auto_select(driver, ticket_number):
-    selector_string = 'table.table > tbody > tr > td > select'
-    by_method = By.CSS_SELECTOR
-    return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
-
-def assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string):
+def ibon_ticket_number_appear(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    selector_string = 'table.table > tbody > tr > td > select'
+    by_method = By.CSS_SELECTOR
+
+    form_select = None
+    try:
+        form_select = driver.find_element(by_method, selector_string)
+    except Exception as exc:
+        if show_debug_message:
+            print("find ticket_number select fail")
+            print(exc)
+        pass
+
+    is_visible = False
+    if form_select is not None:
+        try:
+            is_visible = form_select.is_enabled()
+        except Exception as exc:
+            pass
+    return is_visible
+
+def ibon_ticket_number_auto_select(driver, config_dict):
+    selector_string = 'table.table > tbody > tr > td > select'
+    by_method = By.CSS_SELECTOR
+    return assign_ticket_number_by_select(driver, config_dict, by_method, selector_string)
+
+def assign_ticket_number_by_select(driver, config_dict, by_method, selector_string):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    ticket_number = str(config_dict["ticket_number"])
 
     form_select = None
     try:
@@ -5291,6 +5325,9 @@ def assign_ticket_number_by_select(driver, ticket_number, by_method, selector_st
 def cityline_purchase_button_press(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
     ret = False
 
@@ -5628,6 +5665,10 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
         show_debug_message = True
 
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    ticket_number = config_dict["ticket_number"]
+
+    # when avaiable seat under this count, check seat text content.
+    CONST_DETECT_SEAT_ATTRIBUTE_UNDER_ROW_COUNT = 20
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -5637,7 +5678,8 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.col-md-5 > table > tbody > tr[onclick=\"onTicketArea(this.id)\"]"
+        #my_css_selector = "div.col-md-5 > table > tbody > tr[onclick=\"onTicketArea(this.id)\"]"
+        my_css_selector = "div.col-md-5 > table > tbody > tr:not(.disabled)"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -5678,6 +5720,35 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
                         for exclude_item in area_keyword_exclude_array:
                             if exclude_item in row_text:
                                 row_text = ""
+
+                if len(row_text) > 0:
+                    if row_text == "座位已被選擇":
+                        row_text=""
+                    if row_text == "座位已售出":
+                        row_text=""
+                    if row_text == "舞台區域":
+                        row_text=""
+
+                # check ticket count when amount is few, because of it spent a lot of time at parsing element.
+                if len(row_text) > 0:
+                    if area_list_count <= CONST_DETECT_SEAT_ATTRIBUTE_UNDER_ROW_COUNT:
+                        try:
+                            area_seat_el = row.find_element(By.CSS_SELECTOR, 'td.action')
+                            if not area_seat_el is None:
+                                seat_text = area_seat_el.text
+                                if seat_text is None:
+                                    seat_text = ""
+                                if seat_text.isdigit():
+                                    seat_int = int(seat_text)
+                                    if seat_int < ticket_number:
+                                        # skip this row.
+                                        if show_debug_message:
+                                            print("skip not enought ticket number area at row_text:", row_text)
+                                        row_text = ""
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(exc)
+                            pass
 
                 if row_text == "":
                     row_is_enabled=False
@@ -7402,13 +7473,15 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     var img = document.getElementById('%s');
+                    if(img!=null) {
                     canvas.height = img.naturalHeight;
                     canvas.width = img.naturalWidth;
                     context.drawImage(img, 0, 0);
                     callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL());
+                    callback(canvas.toDataURL()); }
                     """ % (image_id))
-                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                if not form_verifyCode_base64 is None:
+                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
             except Exception as exc:
                 if show_debug_message:
                     print("canvas exception:", str(exc))
@@ -7551,7 +7624,9 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                         is_match_target_feature = True
                         is_price_assign_by_bot = ibon_performance(driver, config_dict)
                         if not is_price_assign_by_bot:
-                            is_do_ibon_performance_with_ticket_number = True
+                            # this case show captcha and ticket-number in this page.
+                            if ibon_ticket_number_appear(driver, config_dict):
+                                is_do_ibon_performance_with_ticket_number = True
 
                     if 'PERFORMANCE_PRICE_AREA_ID=' in url:
                         is_do_ibon_performance_with_ticket_number = True
@@ -7574,8 +7649,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
                         # step 2: assign ticket number.
                         is_match_target_feature = True
-                        ticket_number = str(config_dict["ticket_number"])
-                        is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, ticket_number)
+                        is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
                         if is_ticket_number_assigned:
                             click_ret = ibon_purchase_button_press(driver)
                         else:
@@ -9155,13 +9229,15 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     var img = document.getElementById('%s');
+                    if(img!=null) {
                     canvas.height = img.naturalHeight;
                     canvas.width = img.naturalWidth;
                     context.drawImage(img, 0, 0);
                     callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL());
+                    callback(canvas.toDataURL()); }
                     """ % (image_id))
-                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                if not form_verifyCode_base64 is None:
+                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
             except Exception as exc:
                 if show_debug_message:
                     print("canvas exception:", str(exc))
@@ -9925,7 +10001,8 @@ svgToPng(svg, (imgData) => {
   callback(imgData);
 });
                     """ % (image_id))
-                img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                if not form_verifyCode_base64 is None:
+                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
             except Exception as exc:
                 if show_debug_message:
                     print("canvas exception:", str(exc))
