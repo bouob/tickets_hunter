@@ -467,6 +467,12 @@ def encryptMe(s):
         data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
     return data
 
+def is_arm():
+    ret = False
+    if "-arm" in platform.platform():
+        ret = True
+    return ret
+
 def get_app_root():
     # 讀取檔案裡的參數值
     basis = ""
@@ -492,6 +498,9 @@ def get_default_config():
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
 
+    if is_arm():
+        config_dict["ocr_captcha"]["enable"] = False
+        config_dict["ocr_captcha"]["force_submit"] = False
 
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
@@ -815,6 +824,11 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
+
+        if is_arm():
+            config_dict["ocr_captcha"]["enable"] = False
+            config_dict["ocr_captcha"]["force_submit"] = False
+
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
