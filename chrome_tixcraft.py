@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.27)"
+CONST_APP_VERSION = u"MaxBot (2023.05.28)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2647,7 +2647,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
         # must wait select object ready to assign ticket number.
         if not is_ticket_number_assigned:
-            # only this case: "ticket number changed by bot" to play sound!
+            # only this case: "ticket number not changed by bot" to play sound!
             # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
             check_and_play_sound_for_captcha(config_dict)
 
@@ -3786,6 +3786,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
                     if len(inputed_captcha_text) == 0:
                         try:
                             #print("focus() captcha to input.")
+                            # only this case: "ticket number not changed by bot" to play sound!
                             check_and_play_sound_for_captcha(config_dict)
                             captcha_password_input_tag.click()
                             time.sleep(1)
@@ -6352,13 +6353,10 @@ def hkticketing_login(driver, account, password):
 
     return ret
 
-
 def check_and_play_sound_for_captcha(config_dict):
-    play_captcha_sound = config_dict["advanced"]["play_captcha_sound"]["enable"]
-    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-    if play_captcha_sound:
+    if config_dict["advanced"]["play_captcha_sound"]["enable"]:
         app_root = get_app_root()
-        captcha_sound_filename = os.path.join(app_root, captcha_sound_filename)
+        captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_captcha_sound"]["filename"].strip())
         play_mp3_async(captcha_sound_filename)
 
 def play_mp3_async(sound_filename):
@@ -7039,6 +7037,12 @@ def urbtix_main(driver, url, config_dict):
         if len(urbtix_account) > 2:
             urbtix_login(driver, urbtix_account, decryptMe(config_dict["advanced"]["urbtix_password"]))
 
+    is_ready_to_buy_from_queue = False
+    # Q: How to know ready to buy ticket from queue?
+    if is_ready_to_buy_from_queue:
+        # play sound when ready to buy ticket.
+        check_and_play_sound_for_captcha(config_dict)
+
     # https://www.urbtix.hk/event-detail/00000/
     if '/event-detail/' in url:
         if config_dict["tixcraft"]["date_auto_select"]["enable"]:
@@ -7150,6 +7154,12 @@ def cityline_main(driver, url, config_dict):
             time.sleep(0.2)
     except Exception as excSwithFail:
         pass
+
+    is_ready_to_buy_from_queue = False
+    # Q: How to know ready to buy ticket from queue?
+    if is_ready_to_buy_from_queue:
+        # play sound when ready to buy ticket.
+        check_and_play_sound_for_captcha(config_dict)
 
     if '/eventDetail?' in url:
         is_modal_dialog_popup = check_modal_dialog_popup(driver)
@@ -7355,7 +7365,6 @@ def ibon_ticket_agree(driver):
 def ibon_check_sold_out(driver):
     is_sold_out = False
 
-    # check agree
     div_ticket_info = None
     try:
         div_ticket_info = driver.find_element(By.CSS_SELECTOR, '#ticket-info')
@@ -7553,7 +7562,8 @@ def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
         # TODO: must ensure the answer is corrent...
-        is_cpatcha_sent = True
+        if not is_need_redo_ocr:
+            is_cpatcha_sent = True
 
         if is_form_sumbited:
             break
@@ -7636,22 +7646,29 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                             is_finish_checkbox_click = ibon_uncheck_adjacent_seat(driver, config_dict)
                         
                         # captcha
-                        domain_name = url.split('/')[2]
-                        model_name = url.split('/')[5]
-                        if len(model_name) > 7:
-                            model_name=model_name[:7]
-                        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-                        #PS: need set cookies once, if user change domain.
-                        if not Captcha_Browser is None:
-                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                        is_cpatcha_sent = False
+                        if config_dict["ocr_captcha"]["enable"]:
+                            domain_name = url.split('/')[2]
+                            model_name = url.split('/')[5]
+                            if len(model_name) > 7:
+                                model_name=model_name[:7]
+                            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+                            #PS: need set cookies once, if user change domain.
+                            if not Captcha_Browser is None:
+                                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
 
-                        is_cpatcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+                            is_cpatcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
-                        # step 2: assign ticket number.
+                        # assign ticket number.
                         is_match_target_feature = True
                         is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
                         if is_ticket_number_assigned:
                             click_ret = ibon_purchase_button_press(driver)
+
+                            if click_ret:
+                                # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
+                                if is_cpatcha_sent:
+                                    check_and_play_sound_for_captcha(config_dict)
                         else:
                             is_sold_out = ibon_check_sold_out(driver)
                             if is_sold_out:
@@ -8498,6 +8515,12 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
         account = config_dict["advanced"]["hkticketing_account"].strip()
         if len(account) > 4:
             hkticketing_login(driver, account, decryptMe(config_dict["advanced"]["hkticketing_password"]))
+
+    is_ready_to_buy_from_queue = False
+    # Q: How to know ready to buy ticket from queue?
+    if is_ready_to_buy_from_queue:
+        # play sound when ready to buy ticket.
+        check_and_play_sound_for_captcha(config_dict)
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
     if 'shows/show.aspx?' in url:
@@ -9995,11 +10018,12 @@ function svgUrlToPng(svgUrl, callback) {
   svgImage.src = svgUrl;
 }
 const img=document.querySelector('%s');
+if(img!=null) {
 const svg=img.innerHTML;
 svgToPng(svg, (imgData) => {
   callback = arguments[arguments.length - 1];
   callback(imgData);
-});
+}); }
                     """ % (image_id))
                 if not form_verifyCode_base64 is None:
                     img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])

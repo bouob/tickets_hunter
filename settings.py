@@ -25,7 +25,7 @@ import threading
 import subprocess
 import json
 
-CONST_APP_VERSION = u"MaxBot (2023.05.27)"
+CONST_APP_VERSION = u"MaxBot (2023.05.28)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
