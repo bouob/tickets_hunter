@@ -8536,8 +8536,9 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
 
         # 刷太快, 會被封IP?
         delay_second = config_dict["advanced"]["auto_reload_page_interval"]
-        if delay_second <= 4.0:
-            delay_second = 4.0
+        galaxymacau_mini_interval = 3.0
+        if delay_second <= galaxymacau_mini_interval:
+            delay_second = galaxymacau_mini_interval
         time.sleep(delay_second)
 
     return hkticketing_dict
