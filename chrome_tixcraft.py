@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.6.6)"
+CONST_APP_VERSION = u"MaxBot (2023.6.7)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8525,10 +8525,20 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
         print("redirecting to url:", new_url)
         try:
             # web server is too busy to reponse.
-            driver.execute_script("retryIn=0;document.location.href = \"/default.aspx\";")
+            driver.execute_script("document.location.href = \"/default.aspx\";")
         except Exception as exc:
             pass
-        driver.get(new_url)
+
+        try:
+            driver.get(new_url)
+        except Exception as exc:
+            pass
+
+        # 刷太快, 會被封IP?
+        delay_second = config_dict["advanced"]["auto_reload_page_interval"]
+        if delay_second <= 4.0:
+            delay_second = 4.0
+        time.sleep(delay_second)
 
     return hkticketing_dict
 
