@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.05.28)"
+CONST_APP_VERSION = u"MaxBot (2023.6.6)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2098,43 +2098,24 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 print("find submitSeat fail")
 '''
 
-def tixcraft_ticket_agree(driver):
-    click_plan = "A"
-    #click_plan = "B"
+def tixcraft_ticket_agree(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
 
-    # check agree
-    form_checkbox = None
-    if click_plan == "A":
-        try:
-            form_checkbox = driver.find_element(By.ID, 'TicketForm_agree')
-        except Exception as exc:
-            print("find TicketForm_agree fail")
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
 
-    is_finish_checkbox_click = False
-    if form_checkbox is not None:
-        try:
-            # TODO: check the status: checked.
-            if form_checkbox.is_enabled():
-                if not form_checkbox.is_selected():
-                    form_checkbox.click()
-                is_finish_checkbox_click = True
-        except Exception as exc:
-            print("click TicketForm_agree fail")
-            pass
-
-    # 使用 plan B.
-    #if not is_finish_checkbox_click:
-    # alway not use Plan B.
-    if False:
-        try:
-            print("use plan_b to check TicketForm_agree.")
-            driver.execute_script("$(\"input[type='checkbox']\").prop('checked', true);")
-            #driver.execute_script("document.getElementById(\"TicketForm_agree\").checked;")
-            is_finish_checkbox_click = True
-        except Exception as exc:
-            print("javascript check TicketForm_agree fail")
+    agree_checkbox = None
+    try:
+        my_css_selector = '#TicketForm_agree'
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find TicketForm_agree fail")
+        if show_debug_message:
             print(exc)
-            pass
+        pass
+
+    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
 
     return is_finish_checkbox_click
 
@@ -2591,10 +2572,9 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main_agree(driver, config_dict):
-    auto_check_agree = config_dict["auto_check_agree"]
-    if auto_check_agree:
+    if config_dict["auto_check_agree"]:
         for i in range(3):
-            is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+            is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
             if is_finish_checkbox_click:
                 break
 
@@ -3152,51 +3132,29 @@ def kktix_hide_blocks(driver):
                 except Exception as exc:
                     pass
 
-def kktix_check_agree_checkbox(driver):
+def kktix_check_agree_checkbox(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_need_refresh = False
     is_finish_checkbox_click = False
 
     kktix_hide_blocks(driver)
 
-    person_agree_terms_checkbox = None
+    agree_checkbox = None
     try:
-        person_agree_terms_checkbox = driver.find_element(By.ID, 'person_agree_terms')
+        agree_checkbox = driver.find_element(By.ID, 'person_agree_terms')
     except Exception as exc:
         print("find person_agree_terms checkbox Exception")
+        if show_debug_message:
+            print(exc)
         pass
 
-    if person_agree_terms_checkbox is not None:
-        is_visible = False
-        try:
-            if person_agree_terms_checkbox.is_enabled():
-                is_visible = True
-        except Exception as exc:
-            pass
-
-        if is_visible:
-            is_checkbox_checked = False
-            try:
-                if person_agree_terms_checkbox.is_selected():
-                    is_checkbox_checked = True
-            except Exception as exc:
-                pass
-
-            if not is_checkbox_checked:
-                #print('send check to checkbox')
-                try:
-                    person_agree_terms_checkbox.click()
-                    is_finish_checkbox_click = True
-                except Exception as exc:
-                    try:
-                        driver.execute_script("arguments[0].click();", person_agree_terms_checkbox)
-                        is_finish_checkbox_click = True
-                    except Exception as exc:
-                        pass
-            else:
-                #print('checked')
-                is_finish_checkbox_click = True
-        else:
-            is_need_refresh = True
+    if agree_checkbox is not None:
+        is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
     else:
         is_need_refresh = True
 
@@ -3204,6 +3162,41 @@ def kktix_check_agree_checkbox(driver):
         print("find person_agree_terms checkbox fail, do refresh page.")
 
     return is_need_refresh, is_finish_checkbox_click
+
+
+def force_check_checkbox(driver, agree_checkbox):
+    is_finish_checkbox_click = False
+    if agree_checkbox is not None:
+        is_visible = False
+        try:
+            if agree_checkbox.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            is_checkbox_checked = False
+            try:
+                if agree_checkbox.is_selected():
+                    is_checkbox_checked = True
+            except Exception as exc:
+                pass
+
+            if not is_checkbox_checked:
+                #print('send check to checkbox')
+                try:
+                    agree_checkbox.click()
+                    is_finish_checkbox_click = True
+                except Exception as exc:
+                    try:
+                        driver.execute_script("arguments[0].click();", agree_checkbox)
+                        is_finish_checkbox_click = True
+                    except Exception as exc:
+                        pass
+            else:
+                is_finish_checkbox_click = True
+    return is_finish_checkbox_click
+
 
 def kktix_check_register_status(driver, url):
     #ex: https://xxx.kktix.cc/events/xxx
@@ -3800,9 +3793,8 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
 
     # retry check agree checkbox again.
     if not is_finish_checkbox_click:
-        auto_check_agree = config_dict["auto_check_agree"]
-        if auto_check_agree:
-            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
+        if config_dict["auto_check_agree"]:
+            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
 
     is_do_press_next_button = False
     auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
@@ -3928,15 +3920,12 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
                 if registerStatus != 'IN_STOCK':
                     is_need_refresh = True
 
-    auto_check_agree = config_dict["auto_check_agree"]
-    if auto_check_agree:
+    if config_dict["auto_check_agree"]:
         if not is_need_refresh:
-            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
-        if not is_need_refresh:
-            if not is_finish_checkbox_click:
-                # retry again.
-                is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver)
-    #print('check agree_terms_checkbox, is_need_refresh:',is_need_refresh)
+            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
+        if not is_finish_checkbox_click:
+            # retry again.
+            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
 
     if is_need_refresh:
         try:
@@ -3951,8 +3940,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
         registerStatus = None
     else:
         # check is able to buy.
-        auto_fill_ticket_number = config_dict["kktix"]["auto_fill_ticket_number"]
-        if auto_fill_ticket_number:
+        if config_dict["kktix"]["auto_fill_ticket_number"]:
             answer_index = kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_click)
 
     return answer_index, registerStatus
@@ -5887,14 +5875,12 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
 
     return is_need_refresh, is_price_assign_by_bot
 
-def ibon_uncheck_adjacent_seat(driver, config_dict):
+def ibon_allow_not_adjacent_seat(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
-
-    is_finish_checkbox_click = False
 
     agree_checkbox = None
     try:
@@ -5906,35 +5892,7 @@ def ibon_uncheck_adjacent_seat(driver, config_dict):
             print(exc)
         pass
 
-    if agree_checkbox is not None:
-        is_visible = False
-        try:
-            if agree_checkbox.is_enabled():
-                is_visible = True
-        except Exception as exc:
-            pass
-
-        if is_visible:
-            is_checkbox_checked = False
-            try:
-                if agree_checkbox.is_selected():
-                    is_checkbox_checked = True
-            except Exception as exc:
-                pass
-
-            if not is_checkbox_checked:
-                #print('send check to checkbox')
-                try:
-                    agree_checkbox.click()
-                    is_finish_checkbox_click = True
-                except Exception as exc:
-                    try:
-                        driver.execute_script("arguments[0].click();", agree_checkbox)
-                        is_finish_checkbox_click = True
-                    except Exception as exc:
-                        pass
-            else:
-                is_finish_checkbox_click = True
+    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
 
     return is_finish_checkbox_click
 
@@ -6523,16 +6481,14 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    auto_check_agree = config_dict["auto_check_agree"]
-
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
-    if auto_check_agree:
+    if config_dict["auto_check_agree"]:
         for i in range(3):
-            is_finish_checkbox_click = tixcraft_ticket_agree(driver)
+            is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
             if is_finish_checkbox_click:
                 break
 
@@ -7643,7 +7599,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
                     if is_do_ibon_performance_with_ticket_number:
                         if config_dict["advanced"]["disable_adjacent_seat"]:
-                            is_finish_checkbox_click = ibon_uncheck_adjacent_seat(driver, config_dict)
+                            is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
                         
                         # captcha
                         is_cpatcha_sent = False
@@ -9170,53 +9126,46 @@ def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
         except Exception as exc:
             pass
 
+    is_start_to_input_answer = False
     if form_verifyCode is not None:
-        inputed_value = None
-        try:
-            inputed_value = form_verifyCode.get_attribute('value')
-        except Exception as exc:
-            print("find verify code fail")
-            pass
+        if len(answer) > 0:
+            inputed_value = None
+            try:
+                inputed_value = form_verifyCode.get_attribute('value')
+            except Exception as exc:
+                print("find verify code fail")
+                pass
 
-        if inputed_value is None:
-            inputed_value = ""
+            if inputed_value is None:
+                inputed_value = ""
 
-        if inputed_value == "驗證碼":
+            if inputed_value == "驗證碼":
+                try:
+                    form_verifyCode.clear()
+                except Exception as exc:
+                    print("clear verify code fail")
+                    pass
+            else:
+                if len(inputed_value) > 0:
+                    print("captcha text inputed:", inputed_value, "target answer:", answer)
+                    is_verifyCode_editing = True
+                else:
+                    is_start_to_input_answer = True
+        else:
             try:
                 form_verifyCode.clear()
             except Exception as exc:
                 print("clear verify code fail")
                 pass
-        else:
-            if len(inputed_value) > 0:
-                print("captcha text inputed.")
-                form_verifyCode = None
-                is_verifyCode_editing = True
 
-    if form_verifyCode is not None:
-        if len(answer) > 0:
-            answer=answer.upper()
-    
-            is_visible = False
-            try:
-                if form_verifyCode.is_enabled():
-                    is_visible = True
-            except Exception as exc:
-                pass
-
-            if is_visible:
-                try:
-                    form_verifyCode.click()
-                    is_verifyCode_editing = True
-                except Exception as exc:
-                    pass
-
-                #print("start to fill answer.")
-                try:
-                    form_verifyCode.clear()
-                    form_verifyCode.send_keys(answer)
-                except Exception as exc:
-                    print("send_keys ocr answer fail.")
+    if is_start_to_input_answer:
+        answer=answer.upper()
+        #print("start to fill answer.")
+        try:
+            form_verifyCode.clear()
+            form_verifyCode.send_keys(answer)
+        except Exception as exc:
+            print("send_keys ocr answer fail:", answer)
 
     return is_verifyCode_editing
 
@@ -9345,6 +9294,54 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     return is_cpatcha_sent
 
+def kham_check_captcha_text_error(driver, config_dict):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_reset_password_text = False
+    el_message = None
+    try:
+        my_css_selector = 'div.ui-dialog > div#dialog-message.ui-dialog-content'
+        el_message = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not el_message is None:
+            el_message_text = el_message.text
+            if show_debug_message:
+                print("el_message_text", el_message_text)
+            if el_message_text is None:
+                el_message_text = ""
+            if "【驗證碼】輸入錯誤" in el_message_text:
+                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+                is_reset_password_text = True
+                kham_keyin_captcha_code(driver)
+    except Exception as exc:
+        pass
+
+    return is_reset_password_text
+
+def kham_allow_not_adjacent_seat(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    agree_checkbox = None
+    try:
+        my_css_selector = 'table.eventTABLE > tbody > tr > td > input[type="checkbox"]'
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find ibon adjacent_seat checkbox Exception")
+        if show_debug_message:
+            print(exc)
+        pass
+
+    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
+
+    return is_finish_checkbox_click
+
 def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
@@ -9392,40 +9389,57 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
     # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
     if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
+        domain_name = url.split('/')[2]
+        model_name = url.split('/')[5]
+        if len(model_name) > 7:
+            model_name=model_name[:7]
+        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+        #PS: need set cookies once, if user change domain.
+        if not Captcha_Browser is None:
+            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+        if config_dict["ocr_captcha"]["enable"]:
+            is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
+            if is_reset_password_text:
+                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["area_auto_select"]["enable"]:
-            domain_name = url.split('/')[2]
-            model_name = url.split('/')[5]
-            if len(model_name) > 7:
-                model_name=model_name[:7]
-            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-            #PS: need set cookies once, if user change domain.
-            if not Captcha_Browser is None:
-                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
-
             is_switch_to_auto_seat = kham_choice_auto_seat(driver)
             is_price_assign_by_bot = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
 
     #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
     if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
+        domain_name = url.split('/')[2]
+        model_name = url.split('/')[5]
+        if len(model_name) > 7:
+            model_name=model_name[:7]
+        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+        #PS: need set cookies once, if user change domain.
+        if not Captcha_Browser is None:
+            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+        is_captcha_sent = False
+        if config_dict["ocr_captcha"]["enable"]:
+            is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
+            if is_reset_password_text:
+                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+        if config_dict["advanced"]["disable_adjacent_seat"]:
+            is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
+
+
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["ocr_captcha"]["enable"]:
-            domain_name = url.split('/')[2]
-            model_name = url.split('/')[5]
-            if len(model_name) > 7:
-                model_name=model_name[:7]
-            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-            #PS: need set cookies once, if user change domain.
-            if not Captcha_Browser is None:
-                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+            if not is_captcha_sent:
+                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
             is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
             if is_ticket_number_assigned:
-                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
                 if is_captcha_sent:
                     el_btn = None
+                    my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
                     try:
-                        my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
                         el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
                         if not el_btn is None:
                             el_btn.click()
