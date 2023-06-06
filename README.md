@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人 (2023-06-06)：寬宏-允許不連續座位/針對驗證碼錯誤時做處理
+
+https://youtu.be/vCadxG-7yhk
+
 Max搶票機器人 (2023-05-27)：ibon 在自動選擇區域時, 支援檢查剩餘張數要大於等於要搶的張數. 
 
 https://youtu.be/gsAXIRI7uj0
