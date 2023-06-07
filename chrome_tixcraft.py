@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.6.7)"
+CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 2"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8519,7 +8519,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 hkticketing_go_to_payment(driver)
 
     # for ticketing.galaxymacau
-    if "/busy_galaxy.htm" in url:
+    if "/busy_galaxy." in url:
         domain_name = url.split('/')[2]
         new_url = "https://%s/default.aspx" % (domain_name)
         print("redirecting to url:", new_url)
@@ -8536,6 +8536,30 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
 
         # 刷太快, 會被封IP?
         time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+    
+    is_check_access_deined = False
+    if "galaxymacau.com/default.aspx" in url:
+        is_check_access_deined = True
+    if "galaxymacau.com/shows/show.aspx?sh=" in url:
+        is_check_access_deined = True
+    if is_check_access_deined:
+        domain_name = url.split('/')[2]
+        new_url = "https://%s/default.aspx" % (domain_name)
+
+        macau_h1 = None
+        try:
+            my_css_selector = "h1"
+            macau_h1 = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not macau_h1 is None:
+                if "Access Denied" in macau_h1.text:
+                    print("Access Denied on macau, redirect to ", new_url)
+                    try:
+                        driver.get(new_url)
+                    except Exception as exc:
+                        pass
+        except Exception as exc:
+            pass
 
     return hkticketing_dict
 
