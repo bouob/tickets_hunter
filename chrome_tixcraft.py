@@ -10379,15 +10379,16 @@ def main(args):
             if len(str_exc)==0:
                 str_exc = repr(exc)
 
-            exit_bot_error_strings = [u'Max retries exceeded'
-            , u'chrome not reachable'
-            , u'unable to connect to renderer'
-            , u'failed to check if window was closed'
-            , u'Failed to establish a new connection'
-            , u'Connection refused'
-            , u'disconnected'
-            , u'without establishing a connection'
-            , u'web view not found'
+            exit_bot_error_strings = ['Max retries exceeded'
+            , 'chrome not reachable'
+            , 'unable to connect to renderer'
+            , 'failed to check if window was closed'
+            , 'Failed to establish a new connection'
+            , 'Connection refused'
+            , 'disconnected'
+            , 'without establishing a connection'
+            , 'web view not found'
+            , 'invalid session id'
             ]
             for each_error_string in exit_bot_error_strings:
                 if isinstance(str_exc, str):
