@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 3"
+CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 10"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8208,10 +8208,10 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_list):
 
     return is_need_refresh, is_price_assign_by_bot
 
-def hkticketing_ticket_number_auto_select(driver, ticket_number):
+def hkticketing_ticket_number_auto_select(driver, config_dict):
     selector_string = 'select.shortSelect'
     by_method = By.CSS_SELECTOR
-    return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
+    return assign_ticket_number_by_select(driver, config_dict, by_method, selector_string)
 
 def hkticketing_nav_to_footer(driver):
     try:
@@ -8387,10 +8387,8 @@ def hkticketing_performance(driver, config_dict, domain_name):
         hkticketing_nav_to_footer(driver)
 
         # choose ticket.
-        ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = hkticketing_ticket_number_auto_select(driver, ticket_number)
+        is_ticket_number_assigned = hkticketing_ticket_number_auto_select(driver, config_dict)
         if show_debug_message:
-            print("ticket_number:", ticket_number)
             print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
         # Select a delivery option
@@ -8538,7 +8536,6 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
         time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     
-    
     is_check_access_deined = False
     macau_url_list = ["galaxymacau.com/default.aspx"
     , "galaxymacau.com/shows/show.aspx?sh="
@@ -8553,7 +8550,9 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
     macau_retry_string_list = [ "Access Denied"
     , "Service Unavailable"
     , "service is unavailable"
-    , "HTTP Error 503"]
+    , "HTTP Error 503"
+    , "The network path was not found"
+    , "Could not open a connection to SQL Server"]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
         new_url = "https://%s/default.aspx" % (domain_name)
