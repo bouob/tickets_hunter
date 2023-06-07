@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 2"
+CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 3"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8538,28 +8538,45 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
         time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     
+    
     is_check_access_deined = False
-    if "galaxymacau.com/default.aspx" in url:
+    macau_url_list = ["galaxymacau.com/default.aspx"
+    , "galaxymacau.com/shows/show.aspx?sh="
+    , "galaxymacau.com/detection.aspx"]
+    for macau_url in macau_url_list:
+        if macau_url in url:
+            is_check_access_deined = True
+            break
+    if "https://www.ticketing.galaxymacau.com/" == url:
         is_check_access_deined = True
-    if "galaxymacau.com/shows/show.aspx?sh=" in url:
-        is_check_access_deined = True
+
+    macau_retry_string_list = [ "Access Denied"
+    , "Service Unavailable"
+    , "service is unavailable"
+    , "HTTP Error 503"]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
         new_url = "https://%s/default.aspx" % (domain_name)
 
-        macau_h1 = None
+        is_need_refresh = False
+        macau_body = None
         try:
-            my_css_selector = "h1"
-            macau_h1 = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-            if not macau_h1 is None:
-                if "Access Denied" in macau_h1.text:
-                    print("Access Denied on macau, redirect to ", new_url)
-                    try:
-                        driver.get(new_url)
-                    except Exception as exc:
-                        pass
+            my_css_selector = "body"
+            macau_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not macau_body is None:
+                for macau_retry_string in macau_retry_string_list:
+                    if macau_retry_string in macau_body.text:
+                        is_need_refresh = True
+                        break
         except Exception as exc:
             pass
+
+        if is_need_refresh:
+            print("Start to automatically refresh page for galaxymacau.")
+            try:
+                driver.get(new_url)
+            except Exception as exc:
+                pass
 
     return hkticketing_dict
 
