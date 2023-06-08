@@ -266,6 +266,14 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 * 想組一台新的電腦，是不是可以給我一些建議呢？
 
 
-# Donate (贊助Max)
+# Supporting the Project (贊助Max)
 
-如果你覺得這篇文章或MaxBot寫的很好，想打賞Max，贊助方式如下： https://max-everyday.com/about/#donate
+如果你覺得這篇文章或MaxBot寫的很好，想打賞Max，目前支援的贊助方式：
+* 台灣的ATM匯款: 中國信託 (代碼：822) 帳號：071512949756
+* 7-11 ATM的無卡存款
+* 街口支付： 901643378
+* 悠遊付
+* PayPal： weng.32002@gmail.com
+* 支付寶: 13717075071
+
+詳細的圖文贊助教學如下： https://max-everyday.com/about/#donate
