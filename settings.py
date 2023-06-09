@@ -517,7 +517,7 @@ def get_default_config():
     config_dict["area_auto_select"]["enable"] = True
     config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["area_auto_select"]["area_keyword"] = ""
-    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\",\"身心障礙\""
+    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\",\"身心 障礙\""
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True

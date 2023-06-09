@@ -357,10 +357,23 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
 
     return chrome_options, caps
 
-def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless):
+def load_chromdriver_normal(config_dict, driver_type):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     driver = None
 
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+
+    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+    headless = config_dict["advanced"]["headless"]
+
     chromedriver_path = get_chromedriver_path(webdriver_path)
+    
     if not os.path.exists(chromedriver_path):
         print("Please download chromedriver and extract zip to webdriver folder from this url:")
         print("請下在面的網址下載與你chrome瀏覽器相同版本的chromedriver,解壓縮後放到webdriver目錄裡：")
@@ -373,6 +386,8 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, he
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
         except Exception as exc:
             error_message = str(exc)
+            if show_debug_message:
+                print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -397,7 +412,18 @@ def load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, he
 
     return driver
 
-def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
+def load_chromdriver_uc(config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
+    headless = config_dict["advanced"]["headless"]
+
     import undetected_chromedriver as uc
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
@@ -443,7 +469,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps)
         except Exception as exc:
             error_message = str(exc)
-            #print(exc)
+            if show_debug_message:
+                print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -460,7 +487,8 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             driver = uc.Chrome(options=options, desired_capabilities=caps)
         except Exception as exc:
             error_message = str(exc)
-            #print(exc)
+            if show_debug_message:
+                print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -478,7 +506,7 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
             print("Unable to use undetected_chromedriver, ")
             print("try to use local chromedriver to launch chrome browser.")
             driver_type = "selenium"
-            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
+            driver = load_chromdriver_normal(config_dict, driver_type)
         else:
             print("建議您自行下載 ChromeDriver 到 webdriver 的資料夾下")
             print("you need manually download ChromeDriver to webdriver folder.")
@@ -538,7 +566,7 @@ def get_driver_by_config(config_dict):
     if browser == "chrome":
         # method 6: Selenium Stealth
         if driver_type != CONST_WEBDRIVER_TYPE_UC:
-            driver = load_chromdriver_normal(webdriver_path, driver_type, adblock_plus_enable, headless)
+            driver = load_chromdriver_normal(config_dict, driver_type)
         else:
             # method 5: uc
             # multiprocessing not work bug.
@@ -546,7 +574,7 @@ def get_driver_by_config(config_dict):
                 if hasattr(sys, 'frozen'):
                     from multiprocessing import freeze_support
                     freeze_support()
-            driver = load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless)
+            driver = load_chromdriver_uc(config_dict)
 
     if browser == "firefox":
         # default os is linux/mac
