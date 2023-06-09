@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = u"MaxBot (2023.6.7) ver 10"
+CONST_APP_VERSION = "MaxBot (2023.6.8)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -438,26 +438,29 @@ def load_chromdriver_uc(webdriver_path, adblock_plus_enable, headless):
     caps["unhandledPromptBehavior"] = u"accept"
 
     driver = None
-    try:
-        driver = uc.Chrome(executable_path=chromedriver_path, options=options, desired_capabilities=caps, suppress_welcome=False)
-    except Exception as exc:
-        error_message = str(exc)
-        left_part = None
-        if "Stacktrace:" in error_message:
-            left_part = error_message.split("Stacktrace:")[0]
-            print(left_part)
+    if os.path.exists(chromedriver_path):
+        try:
+            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps)
+        except Exception as exc:
+            error_message = str(exc)
+            #print(exc)
+            left_part = None
+            if "Stacktrace:" in error_message:
+                left_part = error_message.split("Stacktrace:")[0]
+                print(left_part)
 
-        if "This version of ChromeDriver only supports Chrome version" in error_message:
-            print(CONST_CHROME_VERSION_NOT_MATCH_EN)
-            print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+            if "This version of ChromeDriver only supports Chrome version" in error_message:
+                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
-    else:
+    if driver is None:
         #print("Oops! web driver not on path:",chromedriver_path )
         print('undetected_chromedriver automatically download chromedriver.')
         try:
-            driver = uc.Chrome(options=options, desired_capabilities=caps, suppress_welcome=False)
+            driver = uc.Chrome(options=options, desired_capabilities=caps)
         except Exception as exc:
             error_message = str(exc)
+            #print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -10249,7 +10252,7 @@ def main(args):
 
     driver = None
     if not config_dict is None:
-        for i in range(50):
+        for i in range(3):
             driver = get_driver_by_config(config_dict)
             if not driver is None:
                 break
