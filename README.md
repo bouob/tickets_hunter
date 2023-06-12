@@ -255,11 +255,14 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 詳全文：https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/
 
 整理大家在搶票時常遇到的問題：
+* 使用搶票程式有違法嗎？
 * 沒講清楚成功後的報酬
 * 買到太多票
 * 如何處理多的票？
 * 使用搶票程式會讓自己的帳號被鎖住嗎？
 * 拓元的搶票，要多少的網路頻寬才夠？
+* 使用VPN/代理伺服器(Proxy)來搶票會有用嗎？
+* Firefox和chrome搶票上有差距嗎？我看大家基本上都用chrome 很少用Firefox.
 * 為什麼要設計搶票的機制？
 * 為什麼網頁會有驗證碼？
 * 你的硬體設備該不該升級？
