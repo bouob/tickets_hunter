@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.8)"
+CONST_APP_VERSION = "MaxBot (2023.6.9)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1872,6 +1872,30 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     return is_date_clicked
 
+def reset_row_text_if_match_area_keyword_exclude(config_dict, row_text):
+    # clean stop word.
+    row_text = format_keyword_string(row_text)
+
+    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+    if len(area_keyword_exclude) > 0:
+        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+        for exclude_item_list in area_keyword_exclude_array:
+            if len(row_text) > 0:
+                if ' ' in exclude_item_list:
+                    area_keyword_array = exclude_item_list.split(' ')
+                    is_match_all_exclude = True
+                    for exclude_item in area_keyword_array:
+                        exclude_item = format_keyword_string(exclude_item)
+                        if not exclude_item in row_text:
+                            is_match_all_exclude = False
+                    if is_match_all_exclude:
+                        row_text = ""
+                else:
+                    exclude_item = format_keyword_string(exclude_item_list)
+                    if exclude_item in row_text:
+                        row_text = ""
+    return row_text
+
 # PURPOSE: get target area list.
 # RETURN:
 #   is_need_refresh
@@ -1930,12 +1954,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_list):
                 row_text = ""
 
             if len(row_text) > 0:
-                area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                if len(area_keyword_exclude) > 0:
-                    area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                    for exclude_item in area_keyword_exclude_array:
-                        if exclude_item in row_text:
-                            row_text = ""
+                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -2909,12 +2928,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                 row_text = ""
 
             if len(row_text) > 0:
-                area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                if len(area_keyword_exclude) > 0:
-                    area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                    for exclude_item in area_keyword_exclude_array:
-                        if exclude_item in row_text:
-                            row_text = ""
+                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
             
             if len(row_text) > 0:
                 # clean stop word.
@@ -4073,12 +4087,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_list):
                         row_text = ""
 
                     if len(row_text) > 0:
-                        area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                        if len(area_keyword_exclude) > 0:
-                            area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                            for exclude_item in area_keyword_exclude_array:
-                                if exclude_item in row_text:
-                                    row_text = ""
+                        row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                     if len(row_text) > 0:
                         # check date.
@@ -4567,12 +4576,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_list):
                     row_text = ""
 
                 if len(row_text) > 0:
-                    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                    if len(area_keyword_exclude) > 0:
-                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                        for exclude_item in area_keyword_exclude_array:
-                            if exclude_item in row_text:
-                                row_text = ""
+                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                 if row_text == "":
                     row_is_enabled=False
@@ -5172,12 +5176,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_list):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                            if len(area_keyword_exclude) > 0:
-                                area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                                for exclude_item in area_keyword_exclude_array:
-                                    if exclude_item in row_text:
-                                        row_text = ""
+                            row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -5734,20 +5733,15 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_list):
                     row_is_enabled=False
 
                 if len(row_text) > 0:
-                    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                    if len(area_keyword_exclude) > 0:
-                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                        for exclude_item in area_keyword_exclude_array:
-                            if exclude_item in row_text:
-                                row_text = ""
-
-                if len(row_text) > 0:
                     if row_text == "座位已被選擇":
                         row_text=""
                     if row_text == "座位已售出":
                         row_text=""
                     if row_text == "舞台區域":
                         row_text=""
+
+                if len(row_text) > 0:
+                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                 # check ticket count when amount is few, because of it spent a lot of time at parsing element.
                 if len(row_text) > 0:
@@ -8167,12 +8161,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_list):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                            if len(area_keyword_exclude) > 0:
-                                area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                                for exclude_item in area_keyword_exclude_array:
-                                    if exclude_item in row_text:
-                                        row_text = ""
+                            row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -8903,16 +8892,11 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_list):
                 if row_text is None:
                     row_text = ""
 
-                if len(row_text) > 0:
-                    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                    if len(area_keyword_exclude) > 0:
-                        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                        for exclude_item in area_keyword_exclude_array:
-                            if exclude_item in row_text:
-                                row_text = ""
-
                 if '售完' in row_text:
-                    row_is_enabled = False
+                    row_text = ""
+
+                if len(row_text) > 0:
+                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                 if len(row_text) == 0:
                     row_is_enabled = False
@@ -9788,15 +9772,10 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_lis
                         row_text = ""
 
                     if '剩餘：0' in row_text:
-                        row_is_enabled=False
+                        row_text = ""
 
                     if len(row_text) > 0:
-                        area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-                        if len(area_keyword_exclude) > 0:
-                            area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-                            for exclude_item in area_keyword_exclude_array:
-                                if exclude_item in row_text:
-                                    row_text = ""
+                        row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
 
                     if row_text == "":
                         row_is_enabled=False
