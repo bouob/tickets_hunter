@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.11)"
+CONST_APP_VERSION = "MaxBot (2023.6.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -87,6 +87,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 #CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
+CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 
 
 def t_or_f(arg):
@@ -320,7 +321,7 @@ def get_brave_bin_path():
             brave_path = "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
         if not os.path.exists(brave_path):
             brave_path = "D:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-    
+
     if platform.system() == 'Linux':
         brave_path = "/usr/bin/brave-browser"
 
@@ -394,7 +395,7 @@ def load_chromdriver_normal(config_dict, driver_type):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
-    
+
     if not os.path.exists(chromedriver_path):
         print("Please download chromedriver and extract zip to webdriver folder from this url:")
         print("請下在面的網址下載與你chrome瀏覽器相同版本的chromedriver,解壓縮後放到webdriver目錄裡：")
@@ -1343,7 +1344,7 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
         if is_match_factorial:
             new_array = permutations(return_list, mutiple)
             #print("new_array:", new_array)
-            
+
             return_list = []
             for item_tuple in new_array:
                 return_list.append(''.join(item_tuple))
@@ -1545,7 +1546,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 try:
                     if not row.is_enabled():
                         row_is_enabled=False
-                    
+
                     row_text = ""
                     # check buy button.
                     if row_is_enabled:
@@ -1705,6 +1706,9 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         except Exception as exc:
                             pass
 
+                        if config_dict["advanced"]["auto_reload_random_delay"]:
+                            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
     return is_date_clicked
 
 def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
@@ -1749,7 +1753,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                 try:
                     if not row.is_enabled():
                         row_is_enabled=False
-                    
+
                     row_text = ""
                     # check buy button.
                     if row_is_enabled:
@@ -2130,6 +2134,9 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 except Exception as exc:
                     pass
 
+                if config_dict["advanced"]["auto_reload_random_delay"]:
+                    time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
 '''
         el_selectSeat_iframe = None
         try:
@@ -2477,10 +2484,10 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
         except Exception as exc:
             print("find verify code fail")
             pass
-        
+
         if inputed_value is None:
             inputed_value = ""
-        
+
         if answer==inputed_value:
             # no need to send key.
             is_visible = False
@@ -2504,7 +2511,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 try:
                     form_verifyCode.clear()
                     form_verifyCode.send_keys(answer)
-    
+
                     if auto_submit:
                         form_verifyCode.send_keys(Keys.ENTER)
                         is_verifyCode_editing = False
@@ -2950,7 +2957,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
 
             if len(row_text) > 0:
                 row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
-            
+
             if len(row_text) > 0:
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
@@ -3966,6 +3973,9 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
                     #print("refresh fail")
                     pass
 
+                if config_dict["advanced"]["auto_reload_random_delay"]:
+                    time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
     return answer_index
 
 def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_dict):
@@ -4000,6 +4010,9 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
         except Exception as exc:
             #print("refresh fail")
             pass
+
+        if config_dict["advanced"]["auto_reload_random_delay"]:
+            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
         # reset answer_index
         answer_index = -1
@@ -4306,7 +4319,7 @@ def fami_home(driver, url, config_dict):
         else:
             # empty keyword, match all.
             areas = get_fami_target_area(driver, config_dict, "")
-            
+
 
         area_target = None
         if areas is not None:
@@ -4786,7 +4799,7 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
             el_ticket_count = driver.find_element(By.CSS_SELECTOR, my_css_selector)
             if not el_ticket_count is None:
                 tmp_ticket_count = el_ticket_count.text
-                if len(tmp_ticket_count) > 0: 
+                if len(tmp_ticket_count) > 0:
                     if tmp_ticket_count.isdigit():
                         ticket_count = int(tmp_ticket_count)
         except Exception as exc:
@@ -5692,9 +5705,13 @@ def ibon_date_auto_select(driver, config_dict):
                 if len(formated_area_list) == 0:
                     try:
                         driver.refresh()
-                        time.sleep(0.4)
+                        time.sleep(0.3)
                     except Exception as exc:
                         pass
+
+                    if config_dict["advanced"]["auto_reload_random_delay"]:
+                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
     return ret
 
 def ibon_area_auto_select(driver, config_dict, area_keyword_list):
@@ -5979,6 +5996,10 @@ def ibon_performance(driver, config_dict):
                 driver.refresh()
             except Exception as exc:
                 pass
+
+            if config_dict["advanced"]["auto_reload_random_delay"]:
+                time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
 
     return is_price_assign_by_bot
 
@@ -6557,7 +6578,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     tixcraft_home_close_window(driver)
-    
+
     home_url_list = ['https://tixcraft.com/'
     ,'https://www.tixcraft.com/'
     ,'https://indievox.com/'
@@ -6800,7 +6821,7 @@ def get_urbtix_survey_answer_by_question(question_text):
 
     question_answer_char = ""
     option_text_string = find_continuous_text(question_text_formated)
-    
+
 
     if show_debug_message:
         print("option_text_string:", option_text_string)
@@ -6978,7 +6999,7 @@ def urbtix_auto_survey(driver, config_dict):
         if show_debug_message:
             #print("questions_remain_text:", questions_remain_text)
             pass
-        
+
         if questions_remain_text == "0" or questions_remain_text == "":
             is_button_clicked = False
             #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div')
@@ -7646,7 +7667,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                     if is_do_ibon_performance_with_ticket_number:
                         if config_dict["advanced"]["disable_adjacent_seat"]:
                             is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
-                        
+
                         # captcha
                         is_cpatcha_sent = False
                         if config_dict["ocr_captcha"]["enable"]:
@@ -8487,7 +8508,7 @@ def hkticketing_escape_robot_detection(driver, url):
 def hkticketing_url_redirect(driver, url, config_dict):
     is_redirected = False
     redirect_url_list = [ 'queue.hkticketing.com/hotshow.html'
-    , '.com/detection.aspx?rt=' 
+    , '.com/detection.aspx?rt='
     , '/busy_galaxy.'
     ]
     for redirect_url in redirect_url_list:
@@ -8501,7 +8522,7 @@ def hkticketing_url_redirect(driver, url, config_dict):
                 is_redirected = True
             except Exception as exc:
                 pass
-            
+
             # 刷太快, 會被封IP?
             time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
@@ -8523,7 +8544,7 @@ def hkticketing_content_refresh(driver, url, config_dict):
         if current_url in url:
             is_check_access_deined = True
             break
-    
+
     check_full_url_list = [ "https://premier.hkticketing.com/"
     , "https://www.ticketing.galaxymacau.com/"
     ]
@@ -8969,7 +8990,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_list):
             row_index = 0
             for row in area_list:
                 row_index += 1
-                
+
                 row_is_enabled=True
 
                 row_text = ""
@@ -9499,7 +9520,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
-   
+
     home_url_list = ['https://kham.com.tw/'
     ,'https://kham.com.tw/application/utk01/utk0101_.aspx'
     ,'https://kham.com.tw/application/utk01/utk0101_03.aspx'
@@ -9660,7 +9681,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                 try:
                     if not row.is_enabled():
                         row_is_enabled=False
-                    
+
                     row_text = ""
                     # check buy button.
                     if row_is_enabled:
@@ -10127,7 +10148,7 @@ def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Brows
 
     # check ocr inputed.
     is_verifyCode_editing, is_form_sumbited = ticketplus_keyin_captcha_code(driver)
-    
+
     is_do_ocr = False
     if not ocr is None:
         if not is_verifyCode_editing:
@@ -10278,7 +10299,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
     if form_verifyCode is not None:
         if len(answer) > 0:
             answer=answer.upper()
-            
+
             is_visible = False
             try:
                 if form_verifyCode.is_enabled():
@@ -10296,7 +10317,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 try:
                     form_verifyCode.clear()
                     form_verifyCode.send_keys(answer)
-                
+
                     if auto_submit:
                         form_verifyCode.send_keys(Keys.ENTER)
                         is_verifyCode_editing = False
