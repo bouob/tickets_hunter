@@ -25,7 +25,7 @@ import threading
 import subprocess
 import json
 
-CONST_APP_VERSION = "MaxBot (2023.6.10)"
+CONST_APP_VERSION = "MaxBot (2023.6.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1701,7 +1701,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_browser
     combo_browser = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_browser['values']= ("chrome","firefox","edge","safari")
+    combo_browser['values']= ("chrome","firefox","edge","safari","brave")
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
 
