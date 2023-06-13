@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.10)"
+CONST_APP_VERSION = "MaxBot (2023.6.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -310,6 +310,25 @@ def get_chromedriver_path(webdriver_path):
         chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
     return chromedriver_path
 
+def get_brave_bin_path():
+    brave_path = ""
+    if platform.system() == 'Windows':
+        brave_path = "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+        if not os.path.exists(brave_path):
+            brave_path = os.path.expanduser('~') + "\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+        if not os.path.exists(brave_path):
+            brave_path = "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+        if not os.path.exists(brave_path):
+            brave_path = "D:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+    
+    if platform.system() == 'Linux':
+        brave_path = "/usr/bin/brave-browser"
+
+    if platform.system() == 'Darwin':
+        brave_path = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
+
+    return brave_path
+
 def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", headless = False):
     chrome_options = webdriver.ChromeOptions()
     if browser=="edge":
@@ -343,6 +362,11 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     #chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
 
+    if browser=="brave":
+        brave_path = get_brave_bin_path()
+        if os.path.exists(brave_path):
+            chrome_options.binary_location = brave_path
+
     #caps = DesiredCapabilities().CHROME
     caps = chrome_options.to_capabilities()
 
@@ -369,9 +393,6 @@ def load_chromdriver_normal(config_dict, driver_type):
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
 
-    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
-    headless = config_dict["advanced"]["headless"]
-
     chromedriver_path = get_chromedriver_path(webdriver_path)
     
     if not os.path.exists(chromedriver_path):
@@ -380,7 +401,7 @@ def load_chromdriver_normal(config_dict, driver_type):
         print(URL_CHROME_DRIVER)
     else:
         chrome_service = Service(chromedriver_path)
-        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, headless=headless)
+        chrome_options, caps = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
         try:
             # method 6: Selenium Stealth
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
@@ -421,8 +442,6 @@ def load_chromdriver_uc(config_dict):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
-    headless = config_dict["advanced"]["headless"]
 
     import undetected_chromedriver as uc
 
@@ -433,7 +452,7 @@ def load_chromdriver_uc(config_dict):
 
     #print("strategy", options.page_load_strategy)
 
-    if adblock_plus_enable:
+    if config_dict["advanced"]["adblock_plus_enable"]:
         no_google_analytics_path, no_ad_path, buster_path = get_favoriate_extension_path(webdriver_path)
         no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
         no_ad_folder_path = no_ad_path.replace('.crx','')
@@ -448,7 +467,7 @@ def load_chromdriver_uc(config_dict):
         if len(load_extension_path) > 0:
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
-    if headless:
+    if config_dict["advanced"]["headless"]:
         #options.add_argument('--headless')
         options.add_argument('--headless=new')
     options.add_argument('--disable-features=TranslateUI')
@@ -459,6 +478,11 @@ def load_chromdriver_uc(config_dict):
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
+
+    if config_dict["browser"]=="brave":
+        brave_path = get_brave_bin_path()
+        if os.path.exists(brave_path):
+            options.binary_location = brave_path
 
     caps = options.to_capabilities()
     caps["unhandledPromptBehavior"] = u"accept"
@@ -560,10 +584,7 @@ def get_driver_by_config(config_dict):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     print("platform.system().lower():", platform.system().lower())
 
-    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"]
-    headless = config_dict["advanced"]["headless"]
-
-    if browser == "chrome":
+    if browser in ["chrome","brave"]:
         # method 6: Selenium Stealth
         if driver_type != CONST_WEBDRIVER_TYPE_UC:
             driver = load_chromdriver_normal(config_dict, driver_type)
@@ -592,7 +613,7 @@ def get_driver_by_config(config_dict):
         try:
             from selenium.webdriver.firefox.options import Options
             options = Options()
-            if headless:
+            if config_dict["advanced"]["headless"]:
                 options.add_argument('--headless')
                 #options.add_argument('--headless=new')
             if platform.system().lower()=="windows":
@@ -616,7 +637,7 @@ def get_driver_by_config(config_dict):
             chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
 
         webdriver_service = Service(chromedriver_path)
-        chrome_options, caps = get_chrome_options(webdriver_path, adblock_plus_enable, browser="edge", headless=headless)
+        chrome_options, caps = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser="edge", headless=config_dict["advanced"]["headless"])
 
         driver = None
         try:
