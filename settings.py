@@ -25,7 +25,7 @@ import threading
 import subprocess
 import json
 
-CONST_APP_VERSION = "MaxBot (2023.6.11)"
+CONST_APP_VERSION = "MaxBot (2023.6.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -109,6 +109,7 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval (second)'
+    en_us["auto_reload_random_delay"] = 'Reload with random delay'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -199,6 +200,7 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
+    zh_tw["auto_reload_random_delay"] = '自動刷新時隨機延遲'
 
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
@@ -288,6 +290,7 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载页面间隔（秒）'
+    zh_cn["auto_reload_random_delay"] = '重新加载时随机延迟'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -378,6 +381,7 @@ def load_translate():
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
     ja_jp["auto_reload_page_interval"] = 'ページのリロード間隔 (秒)'
+    ja_jp["auto_reload_random_delay"] = 'リロード時のランダムな遅延'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -553,6 +557,7 @@ def get_default_config():
     config_dict["advanced"]["auto_guess_options"] = False
 
     config_dict["advanced"]["auto_reload_page_interval"] = 2.0
+    config_dict["advanced"]["auto_reload_random_delay"] = False
 
     return config_dict
 
@@ -694,6 +699,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_presale_code
     global txt_presale_code_delimiter
     global txt_auto_reload_page_interval
+    global chk_state_auto_reload_random_delay
 
     global txt_tixcraft_sid
     global txt_ibon_ibonqware
@@ -835,6 +841,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
+        config_dict["advanced"]["auto_reload_random_delay"] = bool(chk_state_auto_reload_random_delay.get())
 
     # test keyword format.
     if is_all_data_correct:
@@ -1047,6 +1054,7 @@ def applyNewLanguage():
     global chk_headless
     global chk_verbose
     global chk_auto_guess_options
+    global chk_auto_reload_random_delay
 
     global tabControl
 
@@ -1060,6 +1068,7 @@ def applyNewLanguage():
     global lbl_adblock_plus_settings
     global lbl_adjacent_seat
     global lbl_auto_reload_page_interval
+    global lbl_auto_reload_random_delay
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -1090,6 +1099,7 @@ def applyNewLanguage():
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+    lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
 
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
@@ -1114,6 +1124,7 @@ def applyNewLanguage():
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
+    chk_auto_reload_random_delay.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -1826,6 +1837,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_auto_reload_page_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["auto_reload_page_interval"])
     txt_auto_reload_page_interval = Entry(frame_group_header, width=30, textvariable = txt_auto_reload_page_interval_value)
     txt_auto_reload_page_interval.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_auto_reload_random_delay
+    lbl_auto_reload_random_delay = Label(frame_group_header, text=translate[language_code]['auto_reload_random_delay'])
+    lbl_auto_reload_random_delay.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_reload_random_delay
+    chk_state_auto_reload_random_delay = BooleanVar()
+    chk_state_auto_reload_random_delay.set(config_dict["advanced"]["auto_reload_random_delay"])
+
+    global chk_auto_reload_random_delay
+    chk_auto_reload_random_delay = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_reload_random_delay)
+    chk_auto_reload_random_delay.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
