@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.9)"
+CONST_APP_VERSION = "MaxBot (2023.6.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7644,11 +7644,11 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                         is_match_target_feature = True
                         is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
                         if is_ticket_number_assigned:
-                            click_ret = ibon_purchase_button_press(driver)
+                            if is_cpatcha_sent:
+                                click_ret = ibon_purchase_button_press(driver)
 
-                            if click_ret:
                                 # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
-                                if is_cpatcha_sent:
+                                if click_ret:
                                     check_and_play_sound_for_captcha(config_dict)
                         else:
                             is_sold_out = ibon_check_sold_out(driver)
@@ -8435,7 +8435,7 @@ def hkticketing_performance(driver, config_dict, domain_name):
     return is_price_assign_by_bot
 
 
-def hkticketing_escape_robot_detection(driver):
+def hkticketing_escape_robot_detection(driver, url):
     ret = False
 
     el_main_iframe = None
@@ -8450,6 +8450,10 @@ def hkticketing_escape_robot_detection(driver):
         print("we have been detected..., found el_main_iframe")
         #entry_url="https://queue.hkticketing.com/hotshow.html"
         entry_url="https://premier.hkticketing.com/"
+        if 'galaxymacau.com' in url:
+            domain_name = url.split('/')[2]
+            entry_url = "https://%s/default.aspx" % (domain_name)
+
         try:
             #print("start to escape..")
             #driver.get(entry_url)
@@ -8459,6 +8463,134 @@ def hkticketing_escape_robot_detection(driver):
 
     return ret
 
+def hkticketing_url_redirect(driver, url, config_dict):
+    is_redirected = False
+    redirect_url_list = [ 'queue.hkticketing.com/hotshow.html'
+    , '.com/detection.aspx?rt=' 
+    , '/busy_galaxy.'
+    ]
+    for redirect_url in redirect_url_list:
+        if redirect_url in url:
+            entry_url = 'http://entry-hotshow.hkticketing.com/'
+            if 'galaxymacau.com' in url:
+                domain_name = url.split('/')[2]
+                entry_url = "https://%s/default.aspx" % (domain_name)
+            try:
+                driver.get(entry_url)
+                is_redirected = True
+            except Exception as exc:
+                pass
+            
+            # 刷太快, 會被封IP?
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+            if is_redirected:
+                break
+    return is_redirected
+
+def hkticketing_content_refresh(driver, url, config_dict):
+    is_redirected = False
+
+    is_check_access_deined = False
+    check_url_list = [".com/default.aspx"
+    , ".com/shows/show.aspx?sh="
+    , ".com/detection.aspx"
+    , "/entry-hotshow."
+    , ".com/_Incapsula_Resource?"
+    ]
+    for current_url in check_url_list:
+        if current_url in url:
+            is_check_access_deined = True
+            break
+    
+    check_full_url_list = [ "https://premier.hkticketing.com/"
+    , "https://www.ticketing.galaxymacau.com/"
+    ]
+    for current_url in check_full_url_list:
+        if current_url == url:
+            is_check_access_deined = True
+
+    content_retry_string_list = [ "Access Denied"
+    , "Service Unavailable"
+    , "service is unavailable"
+    , "HTTP Error 503"
+    , "The network path was not found"
+    , "Could not open a connection to SQL Server"
+    , "Hi fans, you’re in the queue to"
+    , "We will check for the next available purchase slot"
+    , "please stay on this page and do not refresh"
+    , "Please be patient and wait a few minutes before trying again"
+    ]
+    if is_check_access_deined:
+        domain_name = url.split('/')[2]
+        new_url = "https://%s/default.aspx" % (domain_name)
+
+        is_need_refresh = False
+        html_body = None
+        try:
+            my_css_selector = "body"
+            html_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not html_body is None:
+                for each_retry_string in content_retry_string_list:
+                    if each_retry_string in html_body.text:
+                        is_need_refresh = True
+                        break
+        except Exception as exc:
+            pass
+
+        if is_need_refresh:
+            print("Start to automatically refresh page.")
+            try:
+                driver.switch_to.default_content()
+                driver.get(new_url)
+                is_redirected = True
+            except Exception as exc:
+                pass
+
+            # 刷太快, 會被封IP?
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+    return is_redirected
+
+def hkticketing_travel_iframe(driver, config_dict):
+    is_redirected = False
+
+    iframes = None
+    try:
+        iframes = driver.find_elements(By.TAG_NAME, "iframe")
+    except Exception as exc:
+        pass
+
+    if iframes is None:
+        iframes = []
+
+    #print('start to travel iframes...')
+    idx_iframe=0
+    for iframe in iframes:
+        iframe_url = ""
+        try:
+            iframe_url = str(iframe.get_attribute('src'))
+            print("url:", iframe_url)
+        except Exception as exc:
+            print("get iframe url fail.")
+            #print(exc)
+            pass
+
+        idx_iframe += 1
+        try:
+            print("switch to #", idx_iframe, ":", iframe_url)
+            driver.switch_to.frame(iframe)
+            is_redirected = hkticketing_content_refresh(driver, iframe_url, config_dict)
+        except Exception as exc:
+            pass
+
+        if not is_redirected:
+            try:
+                driver.switch_to.default_content()
+            except Exception as exc:
+                pass
+
+    return is_redirected
 
 def hkticketing_main(driver, url, config_dict, hkticketing_dict):
     home_url_list = ['https://premier.hkticketing.com/'
@@ -8475,14 +8607,11 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
 
     hkticketing_accept_cookie(driver)
 
-    if 'queue.hkticketing.com/hotshow.html' in url:
-        entry_url = 'http://entry-hotshow.hkticketing.com/'
-        try:
-            driver.get(entry_url)
-        except Exception as exc:
-            pass
-        # 刷太快, 會被封IP?
-        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+    is_redirected = hkticketing_url_redirect(driver, url, config_dict)
+    if not is_redirected:
+        is_redirected = hkticketing_content_refresh(driver, url, config_dict)
+    if not is_redirected:
+        is_redirected = hkticketing_travel_iframe(driver, config_dict)
 
     # PS: share function with galaxymacau, but memeber is not shared.
     if 'hkticketing.com/Membership/Login.aspx' in url:
@@ -8491,9 +8620,9 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
             hkticketing_login(driver, account, decryptMe(config_dict["advanced"]["hkticketing_password"]))
 
     is_ready_to_buy_from_queue = False
+    # TODO: play sound when ready to buy ticket.
     # Q: How to know ready to buy ticket from queue?
     if is_ready_to_buy_from_queue:
-        # play sound when ready to buy ticket.
         check_and_play_sound_for_captcha(config_dict)
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
@@ -8519,7 +8648,7 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
-        robot_detection = hkticketing_escape_robot_detection(driver)
+        robot_detection = hkticketing_escape_robot_detection(driver, url)
 
         is_modal_dialog_popup = check_modal_dialog_popup(driver)
         if is_modal_dialog_popup:
@@ -8535,67 +8664,6 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
                 # goto bottom.
                 hkticketing_nav_to_footer(driver)
                 hkticketing_go_to_payment(driver)
-
-    # for ticketing.galaxymacau
-    if "/busy_galaxy." in url:
-        domain_name = url.split('/')[2]
-        new_url = "https://%s/default.aspx" % (domain_name)
-        print("redirecting to url:", new_url)
-        try:
-            # web server is too busy to reponse.
-            driver.execute_script("document.location.href = \"/default.aspx\";")
-        except Exception as exc:
-            pass
-
-        try:
-            driver.get(new_url)
-        except Exception as exc:
-            pass
-
-        # 刷太快, 會被封IP?
-        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
-
-    
-    is_check_access_deined = False
-    macau_url_list = ["galaxymacau.com/default.aspx"
-    , "galaxymacau.com/shows/show.aspx?sh="
-    , "galaxymacau.com/detection.aspx"]
-    for macau_url in macau_url_list:
-        if macau_url in url:
-            is_check_access_deined = True
-            break
-    if "https://www.ticketing.galaxymacau.com/" == url:
-        is_check_access_deined = True
-
-    macau_retry_string_list = [ "Access Denied"
-    , "Service Unavailable"
-    , "service is unavailable"
-    , "HTTP Error 503"
-    , "The network path was not found"
-    , "Could not open a connection to SQL Server"]
-    if is_check_access_deined:
-        domain_name = url.split('/')[2]
-        new_url = "https://%s/default.aspx" % (domain_name)
-
-        is_need_refresh = False
-        macau_body = None
-        try:
-            my_css_selector = "body"
-            macau_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-            if not macau_body is None:
-                for macau_retry_string in macau_retry_string_list:
-                    if macau_retry_string in macau_body.text:
-                        is_need_refresh = True
-                        break
-        except Exception as exc:
-            pass
-
-        if is_need_refresh:
-            print("Start to automatically refresh page for galaxymacau.")
-            try:
-                driver.get(new_url)
-            except Exception as exc:
-                pass
 
     return hkticketing_dict
 
