@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.13)"
+CONST_APP_VERSION = "MaxBot (2023.6.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2038,9 +2038,6 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_list):
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         print("only need first item, break area list loop.")
                         break
-                    if show_debug_message:
-                        print("row_text:" + row_text)
-                        print("match:" + area_keyword)
 
         if len(matched_blocks) == 0:
             matched_blocks = None
