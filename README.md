@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-14：支援brave瀏覽器/示範無視窗模式搶票/刷新時隨機延遲
+
+https://youtu.be/QMX6Fo0fRfo
+
 Max搶票機器人 (2023-06-06)：寬宏-允許不連續座位/針對驗證碼錯誤時做處理
 
 https://youtu.be/vCadxG-7yhk
