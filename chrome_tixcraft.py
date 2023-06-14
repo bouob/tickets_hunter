@@ -54,7 +54,7 @@ import itertools
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.12)"
+CONST_APP_VERSION = "MaxBot (2023.6.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -491,7 +491,7 @@ def load_chromdriver_uc(config_dict):
     driver = None
     if os.path.exists(chromedriver_path):
         try:
-            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps)
+            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             error_message = str(exc)
             if show_debug_message:
@@ -509,7 +509,7 @@ def load_chromdriver_uc(config_dict):
         #print("Oops! web driver not on path:",chromedriver_path )
         print('undetected_chromedriver automatically download chromedriver.')
         try:
-            driver = uc.Chrome(options=options, desired_capabilities=caps)
+            driver = uc.Chrome(options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             error_message = str(exc)
             if show_debug_message:
