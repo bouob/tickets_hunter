@@ -37,6 +37,8 @@ import requests
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 warnings.simplefilter('ignore',InsecureRequestWarning)
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # ocr
 import base64
@@ -51,14 +53,12 @@ import webbrowser
 import argparse
 import itertools
 
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
-
 CONST_APP_VERSION = "MaxBot (2023.6.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
+CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
@@ -2318,25 +2318,25 @@ def tixcraft_verify(driver, config_dict, answer_index):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    inferred_answer_string = None
+    inferred_answer_string = ""
     answer_list = []
 
     is_retry_user_single_answer = False
 
-    presale_code = config_dict["tixcraft"]["presale_code"]
-    presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
+    presale_code = config_dict["advanced"]["user_guess_string"]
+
+    # load from internet.
+    if len(presale_code) == 0:
+        if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
+            if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+                with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+                    presale_code = text_file.readline()
 
     if len(presale_code) > 0:
-        if len(presale_code_delimiter) > 0:
-            if presale_code_delimiter in presale_code:
-                answer_list = presale_code.split(presale_code_delimiter)
-                if len(answer_list) > 0:
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_string = answer_list[answer_index+1]
-        else:
-            is_retry_user_single_answer = True
-            if answer_index < 2:
-                inferred_answer_string = presale_code
+        answer_list = json.loads("["+ presale_code +"]")
+        if len(answer_list) > 0:
+            if answer_index < len(answer_list)-1:
+                inferred_answer_string = answer_list[answer_index+1]
 
     if inferred_answer_string is None:
         if config_dict["advanced"]["auto_guess_options"]:
@@ -2838,17 +2838,17 @@ def kktix_captcha_text_value(captcha_inner_div):
 
     return ret
 
-def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string, force_overwrite = False):
+def kktix_input_captcha_text(captcha_password_input_element, inferred_answer_string, force_overwrite = False):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     is_cpatcha_sent = False
     inputed_captcha_text = ""
 
-    if not captcha_password_input_tag is None:
+    if not captcha_password_input_element is None:
         if force_overwrite:
             try:
-                captcha_password_input_tag.send_keys(inferred_answer_string)
+                captcha_password_input_element.send_keys(inferred_answer_string)
                 print("send captcha keys:" + inferred_answer_string)
                 is_cpatcha_sent = True
                 inputed_captcha_text = inferred_answer_string
@@ -2858,7 +2858,7 @@ def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string,
             # not force overwrite:
             inputed_captcha_text = None
             try:
-                inputed_captcha_text = captcha_password_input_tag.get_attribute('value')
+                inputed_captcha_text = captcha_password_input_element.get_attribute('value')
             except Exception as exc:
                 pass
             if inputed_captcha_text is None:
@@ -2866,7 +2866,7 @@ def kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string,
 
             if len(inputed_captcha_text) == 0:
                 try:
-                    captcha_password_input_tag.send_keys(inferred_answer_string)
+                    captcha_password_input_element.send_keys(inferred_answer_string)
                     print("send captcha keys:" + inferred_answer_string)
                     is_cpatcha_sent = True
                 except Exception as exc:
@@ -3326,9 +3326,8 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
         #print('event_code:',event_code)
         #print("url:", url)
 
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
-
         try:
             html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
         except Exception as exc:
@@ -3340,11 +3339,9 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
     if not html_result is None:
         status_code = html_result.status_code
         #print("status_code:",status_code)
-
         if status_code == 200:
             html_text = html_result.text
             #print("html_text:", html_text)
-
             try:
                 jsLoads = json.loads(html_text)
                 if 'inventory' in jsLoads:
@@ -3802,31 +3799,44 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
     except Exception as exc:
         pass
 
-    captcha_password_input_tag = None
+    captcha_password_input_element = None
     if not captcha_inner_div is None:
         try:
-            captcha_password_input_tag = captcha_inner_div.find_element(By.TAG_NAME, "input")
+            captcha_password_input_element = captcha_inner_div.find_element(By.TAG_NAME, "input")
             if show_debug_message:
                 print("found captcha input field")
         except Exception as exc:
             pass
 
-    if not captcha_password_input_tag is None:
-        inferred_answer_string = None
+    if not captcha_password_input_element is None:
+        inferred_answer_string = ""
         if captcha_inner_div is not None:
             is_captcha_appear = True
             if show_debug_message:
                 print("found captcha_inner_div layor.")
 
-            if len(config_dict["kktix"]["user_guess_string"]) > 0:
-                inferred_answer_string = config_dict["kktix"]["user_guess_string"]
-            else:
+            user_guess_string = ""
+            if len(config_dict["advanced"]["user_guess_string"]) > 0:
+                user_guess_string = config_dict["advanced"]["user_guess_string"]
+            if len(user_guess_string) == 0:
+                if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
+                    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+                        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+                            user_guess_string = text_file.readline()
+            if len(user_guess_string) > 0:
+                answer_list = json.loads("["+ user_guess_string +"]")
+                if len(answer_list) == 1:
+                    inferred_answer_string = answer_list[0]
+
+            if len(user_guess_string) == 0:
                 if config_dict["advanced"]["auto_guess_options"]:
                     inferred_answer_string, answer_list = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div)
+                    if inferred_answer_string is None:
+                        inferred_answer_string = ""
 
-            if inferred_answer_string is not None:
+            if len(inferred_answer_string) > 0:
                 # password is not None, try to send.
-                is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_tag, inferred_answer_string)
+                is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_element, inferred_answer_string)
                 if is_cpatcha_sent:
                     is_captcha_appear_and_filled_password = True
             else:
@@ -3841,7 +3851,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
                     # password is None, focus to input, and play sound.
                     inputed_captcha_text = None
                     try:
-                        inputed_captcha_text = captcha_password_input_tag.get_attribute('value')
+                        inputed_captcha_text = captcha_password_input_element.get_attribute('value')
                     except Exception as exc:
                         pass
                     if inputed_captcha_text is None:
@@ -3851,8 +3861,8 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
                             #print("focus() captcha to input.")
                             # only this case: "ticket number not changed by bot" to play sound!
                             check_and_play_sound_for_captcha(config_dict)
-                            captcha_password_input_tag.click()
-                            time.sleep(1)
+                            captcha_password_input_element.click()
+                            time.sleep(1.0)
                             # let user to input answer, bot sleep 1 second.
                         except Exception as exc:
                             pass
@@ -3907,7 +3917,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
 
                                 if len(answer_string) > 0:
                                     print("send answer:" + answer_string)
-                                    is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_tag, answer_string)
+                                    is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_element, answer_string)
                                     if is_cpatcha_sent:
                                         kktix_press_next_button(driver)
                         else:
