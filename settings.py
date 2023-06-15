@@ -25,11 +25,19 @@ import threading
 import subprocess
 import json
 
+import requests
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+warnings.simplefilter('ignore',InsecureRequestWarning)
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 CONST_APP_VERSION = "MaxBot (2023.6.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
+CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -99,9 +107,10 @@ def load_translate():
     en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
     en_us["and"] = 'And with'
+
+    en_us["online_dictionary_url"] = 'Online Dictionary URL'
     en_us["auto_guess_options"] = 'Guess Options in Question'
-    en_us["user_guess_string"] = 'Fill This Answer in Question'
-    en_us["presale_code_delimiter"] = 'Answer delimiter'
+    en_us["user_guess_string"] = 'Fill Answers in Question'
 
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
@@ -190,9 +199,10 @@ def load_translate():
     zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
     zh_tw["and"] = '而且（同列）'
+
+    zh_tw["online_dictionary_url"] = '線上字典檔網址'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
-    zh_tw["user_guess_string"] = '在驗證問題中填寫此答案'
-    zh_tw["presale_code_delimiter"] = '答案中的分隔符號'
+    zh_tw["user_guess_string"] = '驗證問題中的答案清單'
 
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
@@ -280,9 +290,10 @@ def load_translate():
     zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
     zh_cn["and"] = '而且（同列）'
+
+    zh_cn["online_dictionary_url"] = '在线词典网址'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
-    zh_cn["user_guess_string"] = '在验证问题中填写此答案'
-    zh_cn["presale_code_delimiter"] = '答案中的分隔符号'
+    zh_cn["user_guess_string"] = '验证问题的答案列表'
 
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
@@ -371,9 +382,10 @@ def load_translate():
     ja_jp["auto_press_next_step_button"] = '次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
     ja_jp["and"] = 'そして（同列）'
+
+    ja_jp["online_dictionary_url"] = 'オンライン辞書のURL'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
-    ja_jp["user_guess_string"] = '質問に回答を記入'
-    ja_jp["presale_code_delimiter"] = '回答区切り'
+    ja_jp["user_guess_string"] = '検証用の質問の回答リスト'
 
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
@@ -509,7 +521,6 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["user_guess_string"] = ""
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["date_auto_select"] = {}
@@ -525,8 +536,6 @@ def get_default_config():
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
-    config_dict["tixcraft"]["presale_code"] = ""
-    config_dict["tixcraft"]["presale_code_delimiter"] = ""
 
     config_dict['advanced']={}
 
@@ -555,8 +564,10 @@ def get_default_config():
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
+    config_dict["advanced"]["user_guess_string"] = ""
+    config_dict["advanced"]["online_dictionary_url"] = ""
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 2.0
+    config_dict["advanced"]["auto_reload_page_interval"] = 1.5
     config_dict["advanced"]["auto_reload_random_delay"] = False
 
     return config_dict
@@ -683,7 +694,7 @@ def btn_save_act(language_code, slience_mode=False):
 
     global chk_state_auto_press_next_step_button
     global chk_state_auto_fill_ticket_number
-    global txt_kktix_user_guess_string
+    global txt_user_guess_string
 
     global chk_state_date_auto_select
     global txt_date_keyword
@@ -696,8 +707,6 @@ def btn_save_act(language_code, slience_mode=False):
 
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
-    global txt_presale_code
-    global txt_presale_code_delimiter
     global txt_auto_reload_page_interval
     global chk_state_auto_reload_random_delay
 
@@ -770,7 +779,6 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
-        config_dict["kktix"]["user_guess_string"] = txt_kktix_user_guess_string.get().strip()
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
@@ -778,8 +786,6 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
-        config_dict["tixcraft"]["presale_code"] = txt_presale_code.get().strip()
-        config_dict["tixcraft"]["presale_code_delimiter"] = txt_presale_code_delimiter.get().strip()
 
         area_keyword = txt_area_keyword.get("1.0",END).strip()
         if len(area_keyword) > 0:
@@ -789,6 +795,10 @@ def btn_save_act(language_code, slience_mode=False):
         if len(area_keyword_exclude) > 0:
             if not ('\"' in area_keyword_exclude):
                 area_keyword_exclude = '"' + area_keyword_exclude + '"'
+        user_guess_string = txt_user_guess_string.get("1.0",END).strip()
+        if len(user_guess_string) > 0:
+            if not ('\"' in user_guess_string):
+                user_guess_string = '"' + user_guess_string + '"'
 
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
@@ -838,6 +848,9 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
+
+        config_dict["advanced"]["user_guess_string"] = user_guess_string
+        config_dict["advanced"]["online_dictionary_url"] = txt_online_dictionary_url.get().strip()
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
@@ -861,6 +874,16 @@ def btn_save_act(language_code, slience_mode=False):
                 area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
             except Exception as exc:
                 messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword_exclude"])
+                is_all_data_correct = False
+                pass
+
+    if is_all_data_correct:
+        user_guess_string = config_dict["advanced"]["user_guess_string"]
+        if len(user_guess_string) > 0:
+            try:
+                user_guess_string_array = json.loads("["+ user_guess_string +"]")
+            except Exception as exc:
+                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["user_guess_string"])
                 is_all_data_correct = False
                 pass
 
@@ -933,6 +956,50 @@ def launch_maxbot():
                 print("exeption:", msg)
                 #messagebox.showinfo(title="Debug2", message=msg)
                 pass
+
+def show_preview_text():
+    app_root = get_app_root()
+    preview_text_filenpath = os.path.join(app_root, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+
+    text = ""
+    if os.path.exists(preview_text_filenpath):
+        with open(preview_text_filenpath, "r") as text_file:
+            text = text_file.readline()
+        try:
+            global lbl_online_dictionary_preview
+            lbl_online_dictionary_preview.config(text=text)
+        except Exception as exc:
+            pass
+
+def save_url_to_file(new_online_dictionary_url):
+    if len(new_online_dictionary_url) > 0:
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
+        html_result = None
+        try:
+            html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.7, allow_redirects=False)
+        except Exception as exc:
+            html_result = None
+            print(exc)
+        if not html_result is None:
+            status_code = html_result.status_code
+            print("status_code:", status_code)
+            if status_code == 200:
+                html_text = html_result.text
+                if len(html_text) > 0:
+                    with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
+                        text_file.write("%s" % html_text)
+    else:
+        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
+            text_file.write("")
+
+def btn_preview_text_clicked():
+    global txt_online_dictionary_url
+    new_online_dictionary_url = txt_online_dictionary_url.get().strip()
+    print("new_online_dictionary_url:", new_online_dictionary_url)
+    save_url_to_file(new_online_dictionary_url)
+    show_preview_text()
+
 
 def btn_preview_sound_clicked():
     global txt_captcha_sound_filename
@@ -1023,8 +1090,6 @@ def applyNewLanguage():
 
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
-    global lbl_presale_code
-    global lbl_presale_code_delimiter
     global lbl_ocr_captcha
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
@@ -1053,6 +1118,7 @@ def applyNewLanguage():
     global chk_adjacent_seat
     global chk_headless
     global chk_verbose
+    global lbl_online_dictionary_url
     global chk_auto_guess_options
     global chk_auto_reload_random_delay
 
@@ -1091,8 +1157,6 @@ def applyNewLanguage():
     lbl_area_keyword_usage.config(text=translate[language_code]["area_keyword_usage"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
-    lbl_presale_code.config(text=translate[language_code]["user_guess_string"])
-    lbl_presale_code_delimiter.config(text=translate[language_code]["presale_code_delimiter"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
@@ -1103,6 +1167,8 @@ def applyNewLanguage():
 
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
+
+    lbl_online_dictionary_url.config(text=translate[language_code]["online_dictionary_url"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
 
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
@@ -1320,14 +1386,12 @@ def showHideAreaBlocks():
 
     area_keyword_index = area_auto_select_mode_index + 1
     area_keyword_exclude_index = area_auto_select_mode_index + 2
-    area_keyword_usage_index = area_auto_select_mode_index + 3
 
     global lbl_area_keyword
     global txt_area_keyword
 
     global lbl_area_keyword_exclude
     global txt_area_keyword_exclude
-    global lbl_area_keyword_usage
 
     is_area_set_to_enable = bool(chk_state_area_auto_select.get())
 
@@ -1342,7 +1406,6 @@ def showHideAreaBlocks():
         lbl_area_keyword_exclude.grid(column=0, row=area_keyword_exclude_index, sticky = E+N)
         txt_area_keyword_exclude.grid(column=1, row=area_keyword_exclude_index, sticky = W)
 
-        lbl_area_keyword_usage.grid(column=1, row=area_keyword_usage_index, sticky = E)
     else:
         # hide
         lbl_area_auto_select_mode.grid_forget()
@@ -1354,7 +1417,6 @@ def showHideAreaBlocks():
         lbl_area_keyword_exclude.grid_forget()
         txt_area_keyword_exclude.grid_forget()
 
-        lbl_area_keyword_usage.grid_forget()
 
 def on_homepage_configure(event):
     font = tkfont.nametofont(str(event.widget.cget('font')))
@@ -1489,18 +1551,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     chk_auto_fill_ticket_number = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_fill_ticket_number)
     chk_auto_fill_ticket_number.grid(column=1, row=group_row_count, sticky = W)
 
-    group_row_count+=1
-
-    global lbl_user_guess_string
-    lbl_user_guess_string = Label(frame_group_kktix, text=translate[language_code]['user_guess_string'])
-    lbl_user_guess_string.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_kktix_user_guess_string
-    txt_kktix_user_guess_string_value = StringVar(frame_group_kktix, value=config_dict["kktix"]["user_guess_string"].strip())
-    txt_kktix_user_guess_string = Entry(frame_group_kktix, width=30, textvariable = txt_kktix_user_guess_string_value)
-    txt_kktix_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
-
-
     global frame_group_kktix_index
     frame_group_kktix_index = row_count
     #PS: don't need show when onload(), because show/hide block will load again.
@@ -1585,34 +1635,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     chk_auto_reload_coming_soon_page = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_auto_reload_coming_soon_page)
     chk_auto_reload_coming_soon_page.grid(column=1, row=group_row_count, sticky = W)
 
-    group_row_count+=1
-
-    global lbl_date_hr
-    lbl_date_hr = Label(frame_group_tixcraft, text='')
-    lbl_date_hr.grid(column=0, row=group_row_count, sticky = E, columnspan=2)
-
-    group_row_count+=1
-
-    global lbl_presale_code
-    lbl_presale_code = Label(frame_group_tixcraft, text=translate[language_code]['user_guess_string'])
-    lbl_presale_code.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_presale_code
-    txt_presale_code_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code"])
-    txt_presale_code = Entry(frame_group_tixcraft, width=30, textvariable = txt_presale_code_value)
-    txt_presale_code.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_presale_code_delimiter
-    lbl_presale_code_delimiter = Label(frame_group_tixcraft, text=translate[language_code]['presale_code_delimiter'])
-    lbl_presale_code_delimiter.grid(column=0, row=group_row_count, sticky = E)
-
-    global txt_presale_code_delimiter
-    txt_presale_code_delemiter_value = StringVar(frame_group_tixcraft, value=config_dict['tixcraft']["presale_code_delimiter"])
-    txt_presale_code_delimiter = Entry(frame_group_tixcraft, width=30, textvariable = txt_presale_code_delemiter_value)
-    txt_presale_code_delimiter.grid(column=1, row=group_row_count, sticky = W)
-
     # final flush.
     global frame_group_tixcraft_index
     frame_group_tixcraft_index = row_count
@@ -1666,23 +1688,35 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_area_keyword.grid(column=1, row=group_row_count, sticky = W)
     txt_area_keyword.insert("1.0", config_dict["area_auto_select"]["area_keyword"].strip())
 
-    row_count+=1
+    group_row_count+=1
 
     global lbl_area_keyword_exclude
     lbl_area_keyword_exclude = Label(frame_group_area, text=translate[language_code]['area_keyword_exclude'])
-    lbl_area_keyword_exclude.grid(column=0, row=row_count, sticky = E+N)
+    lbl_area_keyword_exclude.grid(column=0, row=group_row_count, sticky = E+N)
 
     global txt_area_keyword_exclude
     txt_area_keyword_exclude = Text(frame_group_area, width=30, height=4)
-    txt_area_keyword_exclude.grid(column=1, row=row_count, sticky = W)
+    txt_area_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
     txt_area_keyword_exclude.insert("1.0", config_dict["area_auto_select"]["area_keyword_exclude"].strip())
 
-    row_count+=1
+    group_row_count+=1
+
+    global lbl_user_guess_string
+    lbl_user_guess_string = Label(frame_group_area, text=translate[language_code]['user_guess_string'])
+    lbl_user_guess_string.grid(column=0, row=group_row_count, sticky =  E+N)
+
+    global txt_user_guess_string
+    txt_user_guess_string = Text(frame_group_area, width=30, height=4)
+    txt_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
+    txt_user_guess_string.insert("1.0", config_dict["advanced"]["user_guess_string"].strip())
+
+    group_row_count+=1
 
     global lbl_area_keyword_usage
     lbl_area_keyword_usage = Label(frame_group_area, text=translate[language_code]['area_keyword_usage'])
-    lbl_area_keyword_usage.grid(column=1, row=row_count, sticky = W)
+    lbl_area_keyword_usage.grid(column=1, row=group_row_count, sticky = W)
 
+    # flush
     frame_group_area.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
     showHideAreaBlocks()
@@ -1893,6 +1927,23 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_verbose
     chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
     chk_verbose.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_online_dictionary_url
+    lbl_online_dictionary_url = Label(frame_group_header, text=translate[language_code]['online_dictionary_url'])
+    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_online_dictionary_url
+    txt_online_dictionary_url_value = StringVar(frame_group_header, value=config_dict['advanced']["online_dictionary_url"])
+    txt_online_dictionary_url = Entry(frame_group_header, width=30, textvariable = txt_online_dictionary_url_value)
+    txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_online_dictionary_preview
+    lbl_online_dictionary_preview = Label(frame_group_header, text="")
+    lbl_online_dictionary_preview.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -2112,6 +2163,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 def settings_timer():
     while True:
         update_maxbot_runtime_status()
+        btn_preview_text_clicked()
         time.sleep(0.5)
 
 def update_maxbot_runtime_status():
