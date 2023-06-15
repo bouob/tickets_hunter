@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.14)"
+CONST_APP_VERSION = "MaxBot (2023.6.15)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -117,7 +117,7 @@ def load_translate():
     en_us["date_keyword"] = 'Date Keyword'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
-    en_us["auto_reload_page_interval"] = 'Reload page interval (second)'
+    en_us["auto_reload_page_interval"] = 'Reload page interval (sec.)'
     en_us["auto_reload_random_delay"] = 'Reload with random delay'
 
     en_us["area_select_order"] = 'Area select order'
@@ -627,54 +627,13 @@ def btn_resume_clicked(language_code):
     update_maxbot_runtime_status()
 
 def btn_launcher_clicked(language_code):
-    import subprocess
-
     print('run button pressed.')
     Root_Dir = ""
     save_ret = btn_save_act(language_code, slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-        if hasattr(sys, 'frozen'):
-            print("execute in frozen mode")
+        run_python_script("config_launcher")
 
-            # check platform here.
-            if platform.system() == 'Darwin':
-                print("execute MacOS python script")
-                subprocess.Popen("./config_launcher", shell=True, cwd=working_dir)
-            if platform.system() == 'Linux':
-                print("execute linux binary")
-                subprocess.Popen("./config_launcher", shell=True, cwd=working_dir)
-            if platform.system() == 'Windows':
-                print("execute .exe binary.")
-                subprocess.Popen("config_launcher.exe", shell=True, cwd=working_dir)
-        else:
-            interpreter_binary = 'python'
-            interpreter_binary_alt = 'python3'
-            if platform.system() == 'Darwin':
-                # try python3 before python.
-                interpreter_binary = 'python3'
-                interpreter_binary_alt = 'python'
-            print("execute in shell mode.")
-            #print("script path:", working_dir)
-            #messagebox.showinfo(title="Debug0", message=working_dir)
-
-            # some python3 binary, running in 'python' command.
-            try:
-                print('try', interpreter_binary)
-                s=subprocess.Popen([interpreter_binary, 'config_launcher.py'], cwd=working_dir)
-                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-                #messagebox.showinfo(title="Debug1", message=str(s))
-            except Exception as exc:
-                print('try', interpreter_binary_alt)
-                try:
-                    s=subprocess.Popen([interpreter_binary_alt, 'config_launcher.py'], cwd=working_dir)
-                except Exception as exc:
-                    msg=str(exc)
-                    print("exeption:", msg)
-                    #messagebox.showinfo(title="Debug2", message=msg)
-                    pass
 def btn_save_clicked(language_code):
     btn_save_act(language_code)
 
@@ -914,48 +873,7 @@ def btn_run_clicked(language_code):
         threading.Thread(target=launch_maxbot).start()
 
 def launch_maxbot():
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    print("working_dir:", working_dir)
-    if hasattr(sys, 'frozen'):
-        print("execute in frozen mode")
-
-        # check platform here.
-        if platform.system() == 'Darwin':
-            print("execute MacOS python script")
-            subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
-        if platform.system() == 'Linux':
-            print("execute linux binary")
-            subprocess.Popen("./chrome_tixcraft", shell=True, cwd=working_dir)
-        if platform.system() == 'Windows':
-            print("execute .exe binary.")
-            subprocess.Popen("chrome_tixcraft.exe", shell=True, cwd=working_dir)
-    else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() == 'Darwin':
-            # try python3 before python.
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
-        print("execute in shell mode.")
-        #print("script path:", working_dir)
-        #messagebox.showinfo(title="Debug0", message=working_dir)
-
-        # some python3 binary, running in 'python' command.
-        try:
-            print('try', interpreter_binary)
-            s=subprocess.Popen([interpreter_binary, 'chrome_tixcraft.py'], cwd=working_dir)
-            #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-            #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-            #messagebox.showinfo(title="Debug1", message=str(s))
-        except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                s=subprocess.Popen([interpreter_binary_alt, 'chrome_tixcraft.py'], cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                #messagebox.showinfo(title="Debug2", message=msg)
-                pass
+    run_python_script("chrome_tixcraft")
 
 def show_preview_text():
     app_root = get_app_root()
@@ -980,10 +898,10 @@ def save_url_to_file(new_online_dictionary_url):
             html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.7, allow_redirects=False)
         except Exception as exc:
             html_result = None
-            print(exc)
+            #print(exc)
         if not html_result is None:
             status_code = html_result.status_code
-            print("status_code:", status_code)
+            #print("status_code:", status_code)
             if status_code == 200:
                 html_text = html_result.text
                 if len(html_text) > 0:
@@ -996,10 +914,55 @@ def save_url_to_file(new_online_dictionary_url):
 def btn_preview_text_clicked():
     global txt_online_dictionary_url
     new_online_dictionary_url = txt_online_dictionary_url.get().strip()
-    print("new_online_dictionary_url:", new_online_dictionary_url)
+    #print("new_online_dictionary_url:", new_online_dictionary_url)
     save_url_to_file(new_online_dictionary_url)
     show_preview_text()
 
+def run_python_script(script_name):
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    if hasattr(sys, 'frozen'):
+        print("execute in frozen mode")
+
+        # check platform here.
+        if platform.system() == 'Darwin':
+            print("execute MacOS python script")
+            subprocess.Popen("./" + script_name, shell=True, cwd=working_dir)
+        if platform.system() == 'Linux':
+            print("execute linux binary")
+            subprocess.Popen("./" + script_name, shell=True, cwd=working_dir)
+        if platform.system() == 'Windows':
+            print("execute .exe binary.")
+            subprocess.Popen(script_name + ".exe", shell=True, cwd=working_dir)
+    else:
+        interpreter_binary = 'python'
+        interpreter_binary_alt = 'python3'
+        if platform.system() == 'Darwin':
+            # try python3 before python.
+            interpreter_binary = 'python3'
+            interpreter_binary_alt = 'python'
+        print("execute in shell mode.")
+        #print("script path:", working_dir)
+        #messagebox.showinfo(title="Debug0", message=working_dir)
+
+        # some python3 binary, running in 'python' command.
+        try:
+            print('try', interpreter_binary)
+            s=subprocess.Popen([interpreter_binary, script_name + '.py'], cwd=working_dir)
+            #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
+            #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
+            #messagebox.showinfo(title="Debug1", message=str(s))
+        except Exception as exc:
+            print('try', interpreter_binary_alt)
+            try:
+                s=subprocess.Popen([interpreter_binary_alt, script_name + '.py'], cwd=working_dir)
+            except Exception as exc:
+                msg=str(exc)
+                print("exeption:", msg)
+                #messagebox.showinfo(title="Debug2", message=msg)
+                pass
+
+def btn_open_text_server_clicked():
+    run_python_script("text_server")
 
 def btn_preview_sound_clicked():
     global txt_captcha_sound_filename
@@ -1939,6 +1902,14 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_online_dictionary_url = Entry(frame_group_header, width=30, textvariable = txt_online_dictionary_url_value)
     txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
 
+    icon_preview_text_filename = "icon_chrome_4.gif"
+    icon_preview_text_img = PhotoImage(file=icon_preview_text_filename)
+
+    lbl_icon_preview_text = Label(frame_group_header, image=icon_preview_text_img, cursor="hand2")
+    lbl_icon_preview_text.image = icon_preview_text_img
+    lbl_icon_preview_text.grid(column=2, row=group_row_count)
+    lbl_icon_preview_text.bind("<Button-1>", lambda e: btn_open_text_server_clicked())
+
     group_row_count+=1
 
     global lbl_online_dictionary_preview
@@ -2429,7 +2400,7 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 540
+    GUI_SIZE_WIDTH = 550
     GUI_SIZE_HEIGHT = 630
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)

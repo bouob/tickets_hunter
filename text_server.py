@@ -16,585 +16,81 @@ except ImportError:
 import os
 import sys
 import platform
-import json
-import webbrowser
+import pyperclip
 import base64
+import socket
 import threading
-import subprocess
 
-CONST_APP_VERSION = "MaxBot (2023.6.15)"
-
-CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
-CONST_MAXBOT_CONFIG_FILE = "settings.json"
-
-translate={}
-
-URL_DONATE = 'https://max-everyday.com/about/#donate'
-URL_HELP = 'https://max-everyday.com/2018/08/max-auto-reg-bot/'
-URL_RELEASE = 'https://github.com/max32002/joint_bot/releases'
-URL_FB = 'https://www.facebook.com/maxbot.ticket'
-URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
-URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
-URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
-
-
-def load_translate():
-    translate = {}
-    en_us={}
-    en_us["language"] = 'Language'
-    en_us["enable"] = 'Enable'
-
-
-    en_us["config_list"] = 'Config List'
-    en_us["advanced"] = 'Advanced'
-    en_us["about"] = 'About'
-
-    en_us["run"] = 'Run'
-    en_us["browse"] = 'Browse...'
-    en_us["save"] = 'Save'
-    en_us["exit"] = 'Close'
-    en_us["copy"] = 'Copy'
-    en_us["restore_defaults"] = 'Restore Defaults'
-    en_us["done"] = 'Done'
-
-    en_us["maxbot_slogan"] = 'MaxRegBot is a FREE and open source bot program. Wish you good luck.'
-    en_us["donate"] = 'Donate'
-    en_us["help"] = 'Help'
-    en_us["release"] = 'Release'
-
-    zh_tw={}
-    zh_tw["language"] = '語言'
-    zh_tw["enable"] = '啟用'
-
-    zh_tw["config_list"] = '設定檔管理'
-    zh_tw["advanced"] = '進階設定'
-    zh_tw["autofill"] = '自動填表單'
-    zh_tw["about"] = '關於'
-
-    zh_tw["run"] = '搶票'
-    zh_tw["browse"] = '開啟...'
-    zh_tw["save"] = '存檔'
-    zh_tw["exit"] = '關閉'
-    zh_tw["copy"] = '複製'
-    zh_tw["restore_defaults"] = '恢復預設值'
-    zh_tw["done"] = '完成'
-
-    zh_tw["maxbot_slogan"] = 'MaxRegBot是一個免費、開放原始碼的搶票機器人。\n祝您掛號成功。'
-    zh_tw["donate"] = '打賞'
-    zh_tw["release"] = '所有可用版本'
-    zh_tw["help"] = '使用教學'
-
-    zh_cn={}
-    zh_cn["language"] = '语言'
-    zh_cn["enable"] = '启用'
-
-    zh_cn["config_list"] = '设定档管理'
-    zh_cn["advanced"] = '進階設定'
-    zh_cn["autofill"] = '自动填表单'
-    zh_cn["about"] = '关于'
-    zh_cn["copy"] = '复制'
-
-    zh_cn["run"] = '抢票'
-    zh_cn["browse"] = '开启...'
-    zh_cn["save"] = '存档'
-    zh_cn["exit"] = '关闭'
-    zh_cn["copy"] = '复制'
-    zh_cn["restore_defaults"] = '恢复默认值'
-    zh_cn["done"] = '完成'
-
-    zh_cn["maxbot_slogan"] = 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。'
-    zh_cn["donate"] = '打赏'
-    zh_cn["help"] = '使用教学'
-    zh_cn["release"] = '所有可用版本'
-
-    ja_jp={}
-    ja_jp["language"] = '言語'
-    ja_jp["enable"] = '有効'
-
-    ja_jp["config_list"] = 'Config List'
-    ja_jp["advanced"] = '高度な設定'
-    ja_jp["autofill"] = 'オートフィル'
-    ja_jp["about"] = '情報'
-
-    ja_jp["run"] = 'チケットを取る'
-    ja_jp["browse"] = '開ける...'
-    ja_jp["save"] = '保存'
-    ja_jp["exit"] = '閉じる'
-    ja_jp["copy"] = 'コピー'
-    ja_jp["restore_defaults"] = 'デフォルトに戻す'
-    ja_jp["done"] = '終わり'
-
-    ja_jp["maxbot_slogan"] = 'MaxRegBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
-    ja_jp["donate"] = '寄付'
-    ja_jp["help"] = '利用方法'
-    ja_jp["release"] = 'リリース'
-
-    translate['en_us']=en_us
-    translate['zh_tw']=zh_tw
-    translate['zh_cn']=zh_cn
-    translate['ja_jp']=ja_jp
-    return translate
-
-def get_app_root():
-    # 讀取檔案裡的參數值
-    basis = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-    else:
-        basis = sys.argv[0]
-    app_root = os.path.dirname(basis)
-    return app_root
-
-
-def get_default_config():
-    config_dict={}
-
-    config_dict["list"] = [CONST_MAXBOT_CONFIG_FILE]
-
-    config_dict["advanced"] = {}
-    config_dict["advanced"]["language"] = "English"
-
-    return config_dict
-
-
-def load_json():
-    app_root = get_app_root()
-
-    # overwrite config path.
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
-
-    config_dict = None
-    if os.path.isfile(config_filepath):
-        with open(config_filepath) as json_data:
-            config_dict = json.load(json_data)
-    else:
-        config_dict = get_default_config()
-    return config_filepath, config_dict
-
-def btn_restore_defaults_clicked(language_code):
-    app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
-
-    config_dict = get_default_config()
-    import json
-    with open(config_filepath, 'w') as outfile:
-        json.dump(config_dict, outfile)
-    messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
-
-    global root
-    load_GUI(root, config_dict)
-
-def btn_save_clicked(language_code):
-    btn_save_act(language_code)
-
-def btn_save_act(language_code, slience_mode=True):
-    app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
-
-    config_dict = get_default_config()
-
-    global combo_language
-
-    is_all_data_correct = True
-
-
-    global txt_file_name
-    filelist = []
-    for i in range(15):
-        filelist.append(txt_file_name[i].get().strip())
-
-
-    if is_all_data_correct:
-        config_dict["list"]=filelist
-        config_dict["advanced"]["language"] = combo_language.get().strip()
-        # display as new language.
-        language_code = get_language_code_by_name(config_dict["advanced"]["language"])
-
-
-    # save config.
-    if is_all_data_correct:
-        import json
-        with open(config_filepath, 'w') as outfile:
-            json.dump(config_dict, outfile)
-
-        if not slience_mode:
-            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
-
-    return is_all_data_correct
-
-
-def open_url(url):
-    webbrowser.open_new(url)
-
-def btn_exit_clicked():
-    root.destroy()
-
-def btn_donate_clicked():
-    open_url.open(URL_DONATE)
-
-def btn_help_clicked():
-    open_url.open(URL_HELP)
-
-def callbackLanguageOnChange(event):
-    applyNewLanguage()
-
-def get_language_code_by_name(new_language):
-    language_code = "en_us"
-    if u'繁體中文' in new_language:
-        language_code = 'zh_tw'
-    if u'簡体中文' in new_language:
-        language_code = 'zh_cn'
-    if u'日本語' in new_language:
-        language_code = 'ja_jp'
-    #print("new language code:", language_code)
-
-    return language_code
-
-def applyNewLanguage():
-    global combo_language
-    new_language = combo_language.get().strip()
-    #print("new language value:", new_language)
-
-    language_code=get_language_code_by_name(new_language)
-
-    global lbl_language
-
-    lbl_language.config(text=translate[language_code]["language"])
-
-    global tabControl
-
-    tabControl.tab(0, text=translate[language_code]["config_list"])
-    tabControl.tab(1, text=translate[language_code]["advanced"])
-    tabControl.tab(2, text=translate[language_code]["about"])
-
-    global lbl_slogan
-    global lbl_help
-    global lbl_donate
-    global lbl_release
-
-    lbl_slogan.config(text=translate[language_code]["maxbot_slogan"])
-    lbl_help.config(text=translate[language_code]["help"])
-    lbl_donate.config(text=translate[language_code]["donate"])
-    lbl_release.config(text=translate[language_code]["release"])
-
-    global btn_browse
-    for i in range(15):
-        btn_browse[i].config(text=translate[language_code]['browse'] + " " + str(i+1))
-
-    global btn_run
-    for i in range(15):
-        btn_run[i].config(text=translate[language_code]['run'] + " " + str(i+1))
-
-    global btn_save
-    global btn_restore_defaults
-
-    btn_save.config(text=translate[language_code]["save"])
-    btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
-
-# PS: nothing need to do, at current process.
-def callbackHomepageOnChange(event):
-    showHideBlocks()
-
-def showHideBlocks(all_layout_visible=False):
-    pass
-
-def btn_items_browse_event(event):
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    btn_index = int(str(event.widget['text']).split(" ")[1])
-    global txt_file_name_value
-    file_path = filedialog.askopenfilename(initialdir=working_dir, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
-    if not file_path is None:
-        display_path = file_path
-        if len(file_path) > len(working_dir):
-            if file_path[:len(working_dir)]==working_dir:
-                display_path = file_path[len(working_dir)+1:]
-        #print("json file path:", file_path)
-        txt_file_name_value[btn_index-1].set(display_path)
-        #print("new json file path:", txt_file_name[btn_index-1].get().strip())
-
-def btn_items_run_event(event):
-    btn_index = int(str(event.widget['text']).split(" ")[1])
-    global txt_file_name
-    filename=txt_file_name[btn_index-1].get().strip()
-    threading.Thread(target=launch_maxbot, args=(filename,)).start()
-
-def launch_maxbot(filename):
-    if True:
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-        if hasattr(sys, 'frozen'):
-            print("execute in frozen mode")
-
-            # check platform here.
-            if platform.system() == 'Darwin':
-                print("execute MacOS python script")
-                subprocess.Popen("./chrome_tixcraft --input %s" % (filename), shell=True, cwd=working_dir)
-            if platform.system() == 'Linux':
-                print("execute linux binary")
-                subprocess.Popen("./chrome_tixcraft --input %s" % (filename), shell=True, cwd=working_dir)
-            if platform.system() == 'Windows':
-                print("execute .exe binary.")
-                subprocess.Popen("chrome_tixcraft.exe --input %s" % (filename), shell=True, cwd=working_dir)
-        else:
-            interpreter_binary = 'python'
-            interpreter_binary_alt = 'python3'
-            if platform.system() == 'Darwin':
-                # try python3 before python.
-                interpreter_binary = 'python3'
-                interpreter_binary_alt = 'python'
-            print("execute in shell mode.")
-            #print("script path:", working_dir)
-            #messagebox.showinfo(title="Debug0", message=working_dir)
-
-            # some python3 binary, running in 'python' command.
-            try:
-                print('try', interpreter_binary)
-                s=subprocess.Popen([interpreter_binary, "chrome_tixcraft.py","--input", "%s" % (filename)], cwd=working_dir)
-                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-                #messagebox.showinfo(title="Debug1", message=str(s))
-            except Exception as exc:
-                print('try', interpreter_binary_alt)
-                try:
-                    s=subprocess.Popen([interpreter_binary_alt, "chrome_tixcraft.py","--input", "%s" % (filename)], cwd=working_dir)
-                except Exception as exc:
-                    msg=str(exc)
-                    print("exeption:", msg)
-                    #messagebox.showinfo(title="Debug2", message=msg)
-                    pass
-
-
-def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
-
-    # output to GUI.
+import asyncio
+import tornado
+from tornado.web import Application
+
+CONST_APP_VERSION = "MaxBot (2023.6.14)"
+CONST_SERVER_PORT = 8888
+
+def get_ip_address():
+    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] 
+        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), 
+        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, 
+        socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    return ip
+
+def btn_copy_clicked():
+    local_ip = get_ip_address()
+    ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
+    pyperclip.copy(ip_address)
+
+def TextInput(root, UI_PADDING_X):
     row_count = 0
 
     frame_group_header = Frame(root)
     group_row_count = 0
 
-    global lbl_file_name
-    global txt_file_name
-    global txt_file_name_value
-    global btn_browse
-    global btn_run
-    lbl_file_name = {}
-    txt_file_name = {}
-    txt_file_name_value = {}
-    btn_browse = {}
-    btn_run = {}
+    global lbl_ip
+    lbl_ip = Label(frame_group_header, text="IP")
+    lbl_ip.grid(column=0, row=group_row_count, sticky = E)
 
-    print("config_dict[list]:",config_dict["list"])
-    print("config_dict[list]:",len(config_dict["list"]))
-    for i in range(15):
-        filename = ""
-        if i <= len(config_dict["list"])-1:
-            filename = config_dict["list"][i]
-        lbl_file_name[i] = Label(frame_group_header, text=str(i+1))
-        lbl_file_name[i].grid(column=0, row=group_row_count, sticky = E)
+    local_ip = get_ip_address()
+    ip_address = "http://%s:8888/" % (local_ip)
+    global lbl_ip_address
+    lbl_ip_address = Label(frame_group_header, text=ip_address)
+    lbl_ip_address.grid(column=1, row=group_row_count, sticky = W)
 
-        txt_file_name_value[i] = StringVar(frame_group_header, value=filename)
-        txt_file_name[i] = Entry(frame_group_header, width=20, textvariable = txt_file_name_value[i])
-        txt_file_name[i].grid(column=1, row=group_row_count, sticky = W)
+    icon_copy_filename = "icon_copy_2.gif"
+    icon_copy_img = PhotoImage(file=icon_copy_filename)
 
-        btn_browse[i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
-        btn_browse[i].grid(column=2, row=group_row_count, sticky = W)
-        btn_browse[i].bind('<Button-1>', btn_items_browse_event)
+    lbl_icon_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy.image = icon_copy_img
+    lbl_icon_copy.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
 
-        btn_run[i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
-        btn_run[i].grid(column=3, row=group_row_count, sticky = W)
-        btn_run[i].bind('<Button-1>', btn_items_run_event)
+    group_row_count += 1
 
-        group_row_count+=1
+    global lbl_text
+    lbl_text = Label(frame_group_header, text="Text")
+    lbl_text.grid(column=0, row=group_row_count, sticky = E)
 
+    global txt_keyword
+    txt_keyword_value = StringVar(frame_group_header, value="")
+    txt_keyword = Entry(frame_group_header, width=30, textvariable = txt_keyword_value)
+    txt_keyword.grid(column=1, row=group_row_count, sticky = W)
 
-    # add first block to UI.
-    frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X, pady=15)
 
+    
 
-def AboutTab(root, language_code):
-    row_count = 0
-
-    frame_group_header = Frame(root)
-    group_row_count = 0
-
-    logo_filename = "maxbot_logo2_single.ppm"
-    logo_img = PhotoImage(file=logo_filename)
-
-    lbl_logo = Label(frame_group_header, image=logo_img)
-    lbl_logo.image = logo_img
-    lbl_logo.grid(column=0, row=group_row_count, columnspan=2)
-
-    group_row_count +=1
-
-    global lbl_slogan
-    global lbl_help
-    global lbl_donate
-    global lbl_release
-
-    lbl_slogan = Label(frame_group_header, text=translate[language_code]['maxbot_slogan'], wraplength=400, justify="center")
-    lbl_slogan.grid(column=0, row=group_row_count, columnspan=2)
-
-    group_row_count +=1
-
-    lbl_help = Label(frame_group_header, text=translate[language_code]['help'])
-    lbl_help.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_help_url = Label(frame_group_header, text=URL_HELP, fg="blue", cursor="hand2")
-    lbl_help_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_help_url.bind("<Button-1>", lambda e: open_url(URL_HELP))
-
-    group_row_count +=1
-
-    lbl_donate = Label(frame_group_header, text=translate[language_code]['donate'])
-    lbl_donate.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_donate_url = Label(frame_group_header, text=URL_DONATE, fg="blue", cursor="hand2")
-    lbl_donate_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_donate_url.bind("<Button-1>", lambda e: open_url(URL_DONATE))
-
-    group_row_count +=1
-
-    lbl_release = Label(frame_group_header, text=translate[language_code]['release'])
-    lbl_release.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_release_url = Label(frame_group_header, text=URL_RELEASE, fg="blue", cursor="hand2")
-    lbl_release_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_release_url.bind("<Button-1>", lambda e: open_url(URL_RELEASE))
-
-    group_row_count +=1
-
-    lbl_fb_fans = Label(frame_group_header, text=u'Facebook')
-    lbl_fb_fans.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_fb_fans_url = Label(frame_group_header, text=URL_FB, fg="blue", cursor="hand2")
-    lbl_fb_fans_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_fb_fans_url.bind("<Button-1>", lambda e: open_url(URL_FB))
-
-
-    group_row_count +=1
-
-    lbl_chrome_driver = Label(frame_group_header, text=u'Chrome Driver')
-    lbl_chrome_driver.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_chrome_driver_url = Label(frame_group_header, text=URL_CHROME_DRIVER, fg="blue", cursor="hand2")
-    lbl_chrome_driver_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_chrome_driver_url.bind("<Button-1>", lambda e: open_url(URL_CHROME_DRIVER))
-
-    group_row_count +=1
-
-    lbl_firefox_driver = Label(frame_group_header, text=u'Firefox Driver')
-    lbl_firefox_driver.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_firefox_driver_url = Label(frame_group_header, text=URL_FIREFOX_DRIVER, fg="blue", cursor="hand2")
-    lbl_firefox_driver_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_firefox_driver_url.bind("<Button-1>", lambda e: open_url(URL_FIREFOX_DRIVER))
-
-    group_row_count +=1
-
-    lbl_edge_driver = Label(frame_group_header, text=u'Edge Driver')
-    lbl_edge_driver.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_edge_driver_url = Label(frame_group_header, text=URL_EDGE_DRIVER, fg="blue", cursor="hand2")
-    lbl_edge_driver_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_edge_driver_url.bind("<Button-1>", lambda e: open_url(URL_EDGE_DRIVER))
-
-    frame_group_header.grid(column=0, row=row_count)
-
-def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
-    row_count = 0
-
-    frame_group_header = Frame(root)
-    group_row_count = 0
-
-    # for kktix
-    print("==[advanced]==")
-    print(config_dict["advanced"])
-
-    global lbl_language
-    lbl_language = Label(frame_group_header, text=translate[language_code]['language'])
-    lbl_language.grid(column=0, row=group_row_count, sticky = E)
-
-    global combo_language
-    combo_language = ttk.Combobox(frame_group_header, state="readonly")
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
-    combo_language.set(config_dict["advanced"]['language'])
-    combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
-    combo_language.grid(column=1, row=group_row_count, sticky = W)
-
-
-    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
-
-
-def get_action_bar(root, language_code):
-    frame_action = Frame(root)
-
-    global btn_save
-    global btn_restore_defaults
-
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked(language_code) )
-    btn_save.grid(column=1, row=0)
-
-    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
-    btn_restore_defaults.grid(column=2, row=0)
-
-    return frame_action
-
-def clearFrame(frame):
-    # destroy all widgets from frame
-    for widget in frame.winfo_children():
-       widget.destroy()
-
-def load_GUI(root, config_dict):
-    clearFrame(root)
-
-    language_code="en_us"
-    language_code = get_language_code_by_name(config_dict["advanced"]["language"])
-
-    row_count = 0
-
-    global tabControl
-    tabControl = ttk.Notebook(root)
-    tab1 = Frame(tabControl)
-    tabControl.add(tab1, text=translate[language_code]['config_list'])
-
-    tab2 = Frame(tabControl)
-    tabControl.add(tab2, text=translate[language_code]['advanced'])
-
-    tab3 = Frame(tabControl)
-    tabControl.add(tab3, text=translate[language_code]['about'])
-    tabControl.grid(column=0, row=row_count)
-    tabControl.select(tab1)
-
-    row_count+=1
-
-    frame_action = get_action_bar(root, language_code)
-    frame_action.grid(column=0, row=row_count)
-
-    global UI_PADDING_X
-    ConfigListTab(tab1, config_dict, language_code, UI_PADDING_X)
-    AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab3, language_code)
-
-def main():
-    global translate
-    # only need to load translate once.
-    translate = load_translate()
-
-    global config_filepath
-    global config_dict
-    # only need to load json file once.
-    config_filepath, config_dict = load_json()
-
+def main_ui():
     global root
     root = Tk()
     root.title(CONST_APP_VERSION)
 
     global UI_PADDING_X
-    UI_PADDING_X = 15
+    UI_PADDING_X = 20
 
-    load_GUI(root, config_dict)
+    TextInput(root, UI_PADDING_X)
 
-    GUI_SIZE_WIDTH = 580
-    GUI_SIZE_HEIGHT = 580
+    GUI_SIZE_WIDTH = 400
+    GUI_SIZE_HEIGHT = 140
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-55)
@@ -632,5 +128,22 @@ def main():
 
     root.mainloop()
 
+class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+        global txt_keyword
+        self.write(txt_keyword.get().strip())
+
+async def main_server():
+    app = Application([
+        (r"/", MainHandler),
+    ])
+    app.listen(CONST_SERVER_PORT)
+    await asyncio.Event().wait()
+
+def web_server():
+    asyncio.run(main_server())
+
 if __name__ == "__main__":
-    main()
+    threading.Thread(target=web_server, daemon=True).start()
+    main_ui()
+
