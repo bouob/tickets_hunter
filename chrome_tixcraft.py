@@ -103,12 +103,12 @@ def format_config_keyword_for_json(user_input):
     if len(user_input) > 0:
         if not ('\"' in user_input):
             user_input = '"' + user_input + '"'
-        if user_input[:1]=="{" and user_input[-1:]=="}"
+        if user_input[:1]=="{" and user_input[-1:]=="}":
             user_input=user_input[1:]
-            user_input=user_input[:-]
-        if user_input[:1]=="[" and user_input[-1:]=="]"
+            user_input=user_input[:-1]
+        if user_input[:1]=="[" and user_input[-1:]=="]":
             user_input=user_input[1:]
-            user_input=user_input[:-]
+            user_input=user_input[:-1]
     return user_input
 
 def sx(s1):
