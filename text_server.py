@@ -25,7 +25,8 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.14)"
+CONST_APP_VERSION = "MaxBot (2023.6.15)"
+
 CONST_SERVER_PORT = 8888
 
 def get_ip_address():

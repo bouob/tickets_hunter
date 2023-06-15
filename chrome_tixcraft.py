@@ -99,6 +99,18 @@ def t_or_f(arg):
         ret = True
     return ret
 
+def format_config_keyword_for_json(user_input):
+    if len(user_input) > 0:
+        if not ('\"' in user_input):
+            user_input = '"' + user_input + '"'
+        if user_input[:1]=="{" and user_input[-1:]=="}"
+            user_input=user_input[1:]
+            user_input=user_input[:-]
+        if user_input[:1]=="[" and user_input[-1:]=="]"
+            user_input=user_input[1:]
+            user_input=user_input[:-]
+    return user_input
+
 def sx(s1):
     key=18
     return ''.join(chr(ord(a) ^ key) for a in s1)
@@ -2333,6 +2345,7 @@ def tixcraft_verify(driver, config_dict, answer_index):
                     presale_code = text_file.readline()
 
     if len(presale_code) > 0:
+        presale_code = format_config_keyword_for_json(presale_code)
         answer_list = json.loads("["+ presale_code +"]")
         if len(answer_list) > 0:
             if answer_index < len(answer_list)-1:
@@ -3818,12 +3831,16 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
             user_guess_string = ""
             if len(config_dict["advanced"]["user_guess_string"]) > 0:
                 user_guess_string = config_dict["advanced"]["user_guess_string"]
+            
+            # load from internet.
             if len(user_guess_string) == 0:
                 if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
                     if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
                         with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
                             user_guess_string = text_file.readline()
+            
             if len(user_guess_string) > 0:
+                user_guess_string = format_config_keyword_for_json(user_guess_string)
                 answer_list = json.loads("["+ user_guess_string +"]")
                 if len(answer_list) == 1:
                     inferred_answer_string = answer_list[0]

@@ -467,6 +467,18 @@ def load_translate():
     translate['ja_jp']=ja_jp
     return translate
 
+def format_config_keyword_for_json(user_input):
+    if len(user_input) > 0:
+        if not ('\"' in user_input):
+            user_input = '"' + user_input + '"'
+        if user_input[:1]=="{" and user_input[-1:]=="}"
+            user_input=user_input[1:]
+            user_input=user_input[:-]
+        if user_input[:1]=="[" and user_input[-1:]=="]"
+            user_input=user_input[1:]
+            user_input=user_input[:-]
+    return user_input
+
 def sx(s1):
     key=18
     return ''.join(chr(ord(a) ^ key) for a in s1)
@@ -747,17 +759,13 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
 
         area_keyword = txt_area_keyword.get("1.0",END).strip()
-        if len(area_keyword) > 0:
-            if not ('\"' in area_keyword):
-                area_keyword = '"' + area_keyword + '"'
+        area_keyword = format_config_keyword_for_json(area_keyword)
+
         area_keyword_exclude = txt_area_keyword_exclude.get("1.0",END).strip()
-        if len(area_keyword_exclude) > 0:
-            if not ('\"' in area_keyword_exclude):
-                area_keyword_exclude = '"' + area_keyword_exclude + '"'
+        area_keyword_exclude = format_config_keyword_for_json(area_keyword_exclude)
+
         user_guess_string = txt_user_guess_string.get("1.0",END).strip()
-        if len(user_guess_string) > 0:
-            if not ('\"' in user_guess_string):
-                user_guess_string = '"' + user_guess_string + '"'
+        user_guess_string = format_config_keyword_for_json(user_guess_string)
 
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
