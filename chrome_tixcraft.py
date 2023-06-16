@@ -53,12 +53,13 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.15)"
+CONST_APP_VERSION = "MaxBot (2023.6.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
+CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
@@ -194,6 +195,11 @@ def get_config_dict(args):
                 config_dict["ocr_captcha"]["enable"] = True
                 config_dict["ocr_captcha"]["force_submit"] = True
     return config_dict
+
+def write_question_to_file(question_text):
+    print("write_question_to_file:", question_text)
+    with open(CONST_MAXBOT_QUESTION_FILE, "w") as text_file:
+        text_file.write("%s" % question_text)
 
 def write_last_url_to_file(url):
     with open(CONST_MAXBOT_LAST_URL_FILE, "w") as text_file:
@@ -1915,7 +1921,11 @@ def reset_row_text_if_match_area_keyword_exclude(config_dict, row_text):
 
     area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
     if len(area_keyword_exclude) > 0:
-        area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+        area_keyword_exclude_array = []
+        try:
+            area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+        except Exception as exc:
+            area_keyword_exclude_array = []
         for exclude_item_list in area_keyword_exclude_array:
             if len(row_text) > 0:
                 if ' ' in exclude_item_list:
@@ -2093,13 +2103,17 @@ def tixcraft_area_auto_select(driver, url, config_dict):
             areas = None
 
             if len(area_keyword) > 0:
+                area_keyword_array = []
+                try:
                     area_keyword_array = json.loads("["+ area_keyword +"]")
-                    for area_keyword_item in area_keyword_array:
-                        is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, area_keyword_item)
-                        if not is_need_refresh:
-                            break
-                        else:
-                            print("is_need_refresh for keyword:", area_keyword_item)
+                except Exception as exc:
+                    area_keyword_array = []
+                for area_keyword_item in area_keyword_array:
+                    is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, area_keyword_item)
+                    if not is_need_refresh:
+                        break
+                    else:
+                        print("is_need_refresh for keyword:", area_keyword_item)
             else:
                 # empty keyword, match all.
                 is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, "")
@@ -2279,6 +2293,7 @@ def guess_tixcraft_question(driver):
     formated_html_text = ""
     if question_text is not None:
         if len(question_text) > 0:
+            write_question_to_file(question_text)
             # format question text.
             formated_html_text = question_text
             formated_html_text = formated_html_text.replace(u'「',u'【')
@@ -2346,7 +2361,11 @@ def tixcraft_verify(driver, config_dict, answer_index):
 
     if len(presale_code) > 0:
         presale_code = format_config_keyword_for_json(presale_code)
-        answer_list = json.loads("["+ presale_code +"]")
+        answer_list = []
+        try:
+            answer_list = json.loads("["+ presale_code +"]")
+        except Exception as exc:
+            answer_list = []
         if len(answer_list) > 0:
             if answer_index < len(answer_list)-1:
                 inferred_answer_string = answer_list[answer_index+1]
@@ -2834,9 +2853,8 @@ def kktix_press_next_button(driver):
                     pass
     return ret
 
-def kktix_captcha_text_value(captcha_inner_div):
+def kktix_captcha_inputed_text(captcha_inner_div):
     ret = ""
-
     if captcha_inner_div is not None:
         try:
             captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
@@ -2864,7 +2882,6 @@ def kktix_input_captcha_text(captcha_password_input_element, inferred_answer_str
                 captcha_password_input_element.send_keys(inferred_answer_string)
                 print("send captcha keys:" + inferred_answer_string)
                 is_cpatcha_sent = True
-                inputed_captcha_text = inferred_answer_string
             except Exception as exc:
                 pass
         else:
@@ -2884,6 +2901,9 @@ def kktix_input_captcha_text(captcha_password_input_element, inferred_answer_str
                     is_cpatcha_sent = True
                 except Exception as exc:
                     pass
+            else:
+                if inputed_captcha_text == inferred_answer_string:
+                    is_cpatcha_sent = True
 
     return is_cpatcha_sent
 
@@ -3728,10 +3748,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     return inferred_answer_string, answer_list
 
-def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
+def kktix_reg_captcha_question_text(captcha_inner_div):
     captcha_text_div = None
     try:
         captcha_text_div = captcha_inner_div.find_element(By.TAG_NAME, "p")
@@ -3740,21 +3757,29 @@ def kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div):
         print("find p tag(captcha_text_div) fail")
         print(exc)
 
-    captcha_text_div_text = None
+    question_text = None
     if captcha_text_div is not None:
         try:
-            captcha_text_div_text = captcha_text_div.text
+            question_text = captcha_text_div.text
         except Exception as exc:
             pass
 
-    # try to auto answer options.
+    if question_text is None:
+        question_text = ""
+
+    return question_text
+
+def kktix_reg_new_captcha(registrationsNewApp_div, question_text):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
     answer_list = None
     inferred_answer_string = None
 
-    if not captcha_text_div_text is None:
+    if len(question_text) > 0:
         if show_debug_message:
-            print("captcha_text_div_text:", captcha_text_div_text)
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_div_text)
+            print("question_text:", question_text)
+        inferred_answer_string, answer_list = get_answer_list_from_question_string(registrationsNewApp_div, question_text)
 
     return inferred_answer_string, answer_list
 
@@ -3813,6 +3838,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
         pass
 
     captcha_password_input_element = None
+    question_text = ""
     if not captcha_inner_div is None:
         try:
             captcha_password_input_element = captcha_inner_div.find_element(By.TAG_NAME, "input")
@@ -3820,6 +3846,9 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
                 print("found captcha input field")
         except Exception as exc:
             pass
+
+        question_text = kktix_reg_captcha_question_text(captcha_inner_div)
+        write_question_to_file(question_text)
 
     if not captcha_password_input_element is None:
         inferred_answer_string = ""
@@ -3841,13 +3870,19 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
             
             if len(user_guess_string) > 0:
                 user_guess_string = format_config_keyword_for_json(user_guess_string)
-                answer_list = json.loads("["+ user_guess_string +"]")
+                
+                answer_list = []
+                try:
+                    answer_list = json.loads("["+ user_guess_string +"]")
+                except Exception as exc:
+                    answer_list = []
+
                 if len(answer_list) == 1:
                     inferred_answer_string = answer_list[0]
 
             if len(user_guess_string) == 0:
                 if config_dict["advanced"]["auto_guess_options"]:
-                    inferred_answer_string, answer_list = kktix_reg_new_captcha(registrationsNewApp_div, captcha_inner_div)
+                    inferred_answer_string, answer_list = kktix_reg_new_captcha(registrationsNewApp_div, question_text)
                     if inferred_answer_string is None:
                         inferred_answer_string = ""
 
@@ -3928,7 +3963,7 @@ def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_clic
                     # for popular event
                     if len(answer_list) > 0:
                         if answer_index < len(answer_list)-1:
-                            if kktix_captcha_text_value(captcha_inner_div) == "":
+                            if kktix_captcha_inputed_text(captcha_inner_div) == "":
                                 answer_index += 1
                                 answer_string = answer_list[answer_index]
 
@@ -3971,7 +4006,12 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
 
         if len(area_keyword) > 0:
             for retry_index in range(2):
-                area_keyword_array = json.loads("["+ area_keyword +"]")
+                area_keyword_array = []
+                try:
+                    area_keyword_array = json.loads("["+ area_keyword +"]")
+                except Exception as exc:
+                    area_keyword_array = []
+
                 for area_keyword_item in area_keyword_array:
                     is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
                     if is_ticket_number_assigned:
@@ -4333,7 +4373,12 @@ def fami_home(driver, url, config_dict):
         area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 areas = get_fami_target_area(driver, config_dict, area_keyword_item)
                 if not areas is None:
@@ -4956,7 +5001,12 @@ def urbtix_performance(driver, config_dict):
             print("area_keyword:", area_keyword)
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 print("area_keyword_item for keyword:", area_keyword_item)
                 is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, config_dict, area_keyword_item)
@@ -5499,7 +5549,12 @@ def cityline_performance(driver, config_dict):
             print("area_keyword:", area_keyword)
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 is_need_refresh, is_price_assign_by_bot = cityline_area_auto_select(driver, config_dict, area_keyword_item)
                 if not is_need_refresh:
@@ -6004,7 +6059,12 @@ def ibon_performance(driver, config_dict):
         is_need_refresh = False
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_item)
                 if not is_need_refresh:
@@ -6418,7 +6478,7 @@ def play_mp3(sound_filename):
         playsound(sound_filename)
     except Exception as exc:
         msg=str(exc)
-        print("play sound exeption:", msg)
+        #print("play sound exeption:", msg)
         if platform.system() == 'Windows':
             import winsound
             try:
@@ -8447,7 +8507,12 @@ def hkticketing_performance(driver, config_dict, domain_name):
             print("area_keyword:", area_keyword)
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 is_need_refresh, is_price_assign_by_bot = hkticketing_area_auto_select(driver, config_dict, area_keyword_item)
                 if not is_need_refresh:
@@ -9283,7 +9348,12 @@ def kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, mod
         is_need_refresh = False
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 is_need_refresh, is_price_assign_by_bot = kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item)
                 if not is_need_refresh:
@@ -10089,7 +10159,12 @@ def ticketplus_order_expansion_panel(driver, config_dict):
         is_need_refresh = False
 
         if len(area_keyword) > 0:
-            area_keyword_array = json.loads("["+ area_keyword +"]")
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
+                area_keyword_array = []
+
             for area_keyword_item in area_keyword_array:
                 is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item)
                 if not is_need_refresh:
