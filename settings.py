@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.16)"
+CONST_APP_VERSION = "MaxBot (2023.6.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -468,9 +468,17 @@ def format_config_keyword_for_json(user_input):
     if len(user_input) > 0:
         if not ('\"' in user_input):
             user_input = '"' + user_input + '"'
+
         if user_input[:1]=="{" and user_input[-1:]=="}":
-            user_input=user_input[1:]
-            user_input=user_input[:-1]
+            tmp_json = {}
+            try:
+                tmp_json = json.loads(user_input)
+                key=list(tmp_json.keys())[0]
+                first_item=tmp_json[key]
+                user_input=json.dumps(first_item)
+            except Exception as exc:
+                pass
+
         if user_input[:1]=="[" and user_input[-1:]=="]":
             user_input=user_input[1:]
             user_input=user_input[:-1]
@@ -889,9 +897,18 @@ def show_preview_text():
         answer_text = ""
         with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
             answer_text = text_file.readline()
+
+        answer_text = format_config_keyword_for_json(answer_text)
+
+        date_array = []
         try:
-            global lbl_online_dictionary_preview
-            lbl_online_dictionary_preview.config(text=answer_text)
+            date_array = json.loads("["+ answer_text +"]")
+        except Exception as exc:
+            date_array = []
+
+        global lbl_online_dictionary_preview
+        try:
+            lbl_online_dictionary_preview.config(text=','.join(date_array))
         except Exception as exc:
             pass
 
@@ -902,7 +919,7 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
         html_result = None
         try:
-            html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.7, allow_redirects=False)
+            html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.5, allow_redirects=False)
         except Exception as exc:
             html_result = None
             #print(exc)
@@ -911,6 +928,7 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
             #print("status_code:", status_code)
             if status_code == 200:
                 html_text = html_result.text
+                #print("html_text:", html_text)
 
     is_write_to_file = False
     if force_write:
@@ -919,13 +937,18 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
         is_write_to_file = True
 
     if is_write_to_file:
+        html_text = format_config_keyword_for_json(html_text)
         with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
             text_file.write("%s" % html_text)
     return is_write_to_file
 
 def btn_preview_text_clicked():
     global txt_online_dictionary_url
-    online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+    online_dictionary_url = ""
+    try:
+        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+    except Exception as exc:
+        pass
     online_dictionary_url = format_config_keyword_for_json(online_dictionary_url)
     if len(online_dictionary_url) > 0:
         url_array = []
@@ -2146,11 +2169,15 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
+def resetful_api_timer():
+    while True:
+        btn_preview_text_clicked()
+        time.sleep(0.2)
+
 def settings_timer():
     while True:
         update_maxbot_runtime_status()
-        btn_preview_text_clicked()
-        time.sleep(0.2)
+        time.sleep(0.6)
 
 def update_maxbot_runtime_status():
     is_paused = False
@@ -2472,5 +2499,6 @@ def clean_tmp_file():
         force_remove_file(filepath)
 
 if __name__ == "__main__":
+    threading.Thread(target=resetful_api_timer, daemon=True).start()
     clean_tmp_file()
     main()

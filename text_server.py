@@ -27,7 +27,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.16)"
+CONST_APP_VERSION = "MaxBot (2023.6.17)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
@@ -50,6 +50,9 @@ def btn_copy_question_clicked():
     global txt_question
     question_text = txt_question.get("1.0",END).strip()
     pyperclip.copy(question_text)
+
+def btn_paste_answer_by_user():
+    print("btn_paste_answer_by_user")
 
 def TextInput(root, UI_PADDING_X):
     row_count = 0
@@ -97,11 +100,12 @@ def TextInput(root, UI_PADDING_X):
     lbl_answer = Label(frame_group_header, text="Answer")
     lbl_answer.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_keyword
-    txt_keyword_value = StringVar(frame_group_header, value="")
-    txt_keyword = Entry(frame_group_header, width=30, textvariable = txt_keyword_value)
-    txt_keyword.grid(column=1, row=group_row_count, sticky = W)
-
+    global txt_answer
+    global txt_answer_value
+    txt_answer_value = StringVar(frame_group_header, value="")
+    txt_answer = Entry(frame_group_header, width=30, textvariable = txt_answer_value)
+    txt_answer.grid(column=1, row=group_row_count, sticky = W)
+    txt_answer.bind('<Control-v>', lambda e: btn_paste_answer_by_user())
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X, pady=15)
 
@@ -155,10 +159,28 @@ def main_ui():
 
     root.mainloop()
 
+
 class MainHandler(tornado.web.RequestHandler):
+    def format_config_keyword_for_json(self, user_input):
+        if len(user_input) > 0:
+            if not ('\"' in user_input):
+                user_input = '"' + user_input + '"'
+        return user_input
+
+    def compose_as_json(self, user_input):
+        user_input = self.format_config_keyword_for_json(user_input)
+        return "{\"data\":[%s]}" % user_input
+
     def get(self):
-        global txt_keyword
-        self.write(txt_keyword.get().strip())
+        global txt_answer_value
+        answer_text = ""
+        try:
+            answer_text = txt_answer_value.get().strip()
+        except Exception as exc:
+            pass
+        answer_text_output = self.compose_as_json(answer_text)
+        #print("answer_text_output:", answer_text_output)
+        self.write(answer_text_output)
 
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
@@ -183,13 +205,14 @@ def preview_question_text_file():
         with open(CONST_MAXBOT_QUESTION_FILE, "r") as text_file:
             question_text = text_file.readline()
         
+        global txt_question
         try:
-            global txt_question
-            inputed_question_text = txt_question.get("1.0",END).strip()
-            if inputed_question_text != question_text:
+            displayed_question_text = txt_question.get("1.0",END).strip()
+            if displayed_question_text != question_text:
                 # start to refresh
                 txt_question.delete("1.0","end")
-                txt_question.insert("1.0", question_text)
+                if len(question_text) > 0:
+                    txt_question.insert("1.0", question_text)
         except Exception as exc:
             pass
 

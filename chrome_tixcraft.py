@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.16)"
+CONST_APP_VERSION = "MaxBot (2023.6.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -197,7 +197,6 @@ def get_config_dict(args):
     return config_dict
 
 def write_question_to_file(question_text):
-    print("write_question_to_file:", question_text)
     with open(CONST_MAXBOT_QUESTION_FILE, "w") as text_file:
         text_file.write("%s" % question_text)
 
@@ -1379,7 +1378,7 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
     return return_list
 
-def force_press_button(driver, select_by, select_query, force_by_js=True):
+def force_press_button(driver, select_by, select_query, force_submit=True):
     ret = False
     next_step_button = None
     try:
@@ -1393,7 +1392,7 @@ def force_press_button(driver, select_by, select_query, force_by_js=True):
         #print(exc)
         pass
 
-        if force_by_js:
+        if force_submit:
             if not next_step_button is None:
                 is_visible = False
                 try:
@@ -2269,13 +2268,7 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
 
     return is_ticket_number_assigned
 
-def guess_tixcraft_question(driver):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    inferred_answer_string = None
-    answer_list = []
-
+def get_tixcraft_question_text(driver):
     form_select = None
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, '.zone-verify')
@@ -2283,40 +2276,48 @@ def guess_tixcraft_question(driver):
         print("find verify textbox fail")
         pass
 
-    question_text = None
+    question_text = ""
     if form_select is not None:
         try:
             question_text = form_select.text
         except Exception as exc:
             print("get text fail")
 
+    if question_text is None:
+        question_text = ""
+
+    return question_text
+
+def guess_tixcraft_question(driver, question_text):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    inferred_answer_string = None
+    answer_list = []
+
     formated_html_text = ""
-    if question_text is not None:
-        if len(question_text) > 0:
-            write_question_to_file(question_text)
-            # format question text.
-            formated_html_text = question_text
-            formated_html_text = formated_html_text.replace(u'「',u'【')
-            formated_html_text = formated_html_text.replace(u'〔',u'【')
-            formated_html_text = formated_html_text.replace(u'［',u'【')
-            formated_html_text = formated_html_text.replace(u'〖',u'【')
-            formated_html_text = formated_html_text.replace(u'[',u'【')
+    if len(question_text) > 0:
+        # format question text.
+        formated_html_text = question_text
+        formated_html_text = formated_html_text.replace(u'「',u'【')
+        formated_html_text = formated_html_text.replace(u'〔',u'【')
+        formated_html_text = formated_html_text.replace(u'［',u'【')
+        formated_html_text = formated_html_text.replace(u'〖',u'【')
+        formated_html_text = formated_html_text.replace(u'[',u'【')
 
-            formated_html_text = formated_html_text.replace(u'」',u'】')
-            formated_html_text = formated_html_text.replace(u'〕',u'】')
-            formated_html_text = formated_html_text.replace(u'］',u'】')
-            formated_html_text = formated_html_text.replace(u'〗',u'】')
-            formated_html_text = formated_html_text.replace(u']',u'】')
+        formated_html_text = formated_html_text.replace(u'」',u'】')
+        formated_html_text = formated_html_text.replace(u'〕',u'】')
+        formated_html_text = formated_html_text.replace(u'］',u'】')
+        formated_html_text = formated_html_text.replace(u'〗',u'】')
+        formated_html_text = formated_html_text.replace(u']',u'】')
 
-            if u'【' in formated_html_text and u'】' in formated_html_text:
-                # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
-                #inferred_answer_string = find_between(formated_html_text, u"【", u"】")
-                pass
+        if u'【' in formated_html_text and u'】' in formated_html_text:
+            # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
+            #inferred_answer_string = find_between(formated_html_text, u"【", u"】")
+            pass
 
     if show_debug_message:
         print("formated_html_text:", formated_html_text)
-
-    is_options_in_question = False
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
@@ -2332,13 +2333,99 @@ def guess_tixcraft_question(driver):
                 if '輸入【同意】' in formated_html_text:
                     inferred_answer_string = '同意'
 
-    if inferred_answer_string is None:
-        if not question_text is None:
-            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+    if len(question_text) > 0:
+        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
 
     return inferred_answer_string, answer_list
 
-def tixcraft_verify(driver, config_dict, answer_index):
+def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    form_input_list = []
+    try:
+        form_input_list = driver.find_elements(By.CSS_SELECTOR, input_text_css)
+    except Exception as exc:
+        if show_debug_message:
+            print("find verify code input textbox fail")
+        pass
+    if form_input_list is None:
+        form_input_list = []
+
+    form_input_count = len(form_input_list)
+    if show_debug_message:
+        print("input textbox count:", form_input_count)
+
+    is_do_press_next_button = False
+    
+    form_input = None
+    if form_input_count > 0:
+        form_input = form_input_list[0]
+
+    if form_input_count == 1:
+        is_do_press_next_button = True
+
+    inputed_value = None
+    if form_input is not None:
+        try:
+            inputed_value = form_input.get_attribute('value')
+        except Exception as exc:
+            if show_debug_message:
+                print("get_attribute of verify code fail")
+            pass
+
+    if inputed_value is None:
+        inputed_value = ""
+
+    is_answer_sent = False
+    if form_input is not None:
+        if len(inferred_answer_string) > 0:
+            try:
+                # PS: sometime may send key twice...
+                form_input.clear()
+                form_input.send_keys(inferred_answer_string)
+                is_button_clicked = False
+                if is_do_press_next_button:
+                    if submit_by_enter:
+                        form_input.send_keys(Keys.ENTER)
+                        is_button_clicked = True
+                    if len(next_step_button_css) > 0:
+                        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                
+                if is_button_clicked:
+                    is_answer_sent = True
+                    fail_list.append(inferred_answer_string)
+                    if show_debug_message:
+                        print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+            except Exception as exc:
+                if show_debug_message:
+                    print(exc)
+                pass
+
+            if is_answer_sent:
+                for i in range(3):
+                    time.sleep(0.1)
+
+                    alert_ret = check_pop_alert(driver)
+                    if alert_ret:
+                        if show_debug_message:
+                            print("press accept button at time #", i+1)
+                        break
+        else:
+            # no answer to fill.
+            if len(inputed_value)==0:
+                try:
+                    form_input.click()
+                    time.sleep(0.1)
+                except Exception as exc:
+                    pass
+
+    return is_answer_sent, fail_list
+
+def tixcraft_verify(driver, config_dict, fail_list):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2348,7 +2435,8 @@ def tixcraft_verify(driver, config_dict, answer_index):
     inferred_answer_string = ""
     answer_list = []
 
-    is_retry_user_single_answer = False
+    question_text = get_tixcraft_question_text(driver)
+    write_question_to_file(question_text)
 
     presale_code = config_dict["advanced"]["user_guess_string"]
 
@@ -2366,110 +2454,27 @@ def tixcraft_verify(driver, config_dict, answer_index):
             answer_list = json.loads("["+ presale_code +"]")
         except Exception as exc:
             answer_list = []
-        if len(answer_list) > 0:
-            if answer_index < len(answer_list)-1:
-                inferred_answer_string = answer_list[answer_index+1]
 
-    if inferred_answer_string is None:
+    if len(inferred_answer_string)==0:
         if config_dict["advanced"]["auto_guess_options"]:
-            inferred_answer_string, answer_list = guess_tixcraft_question(driver)
-            if inferred_answer_string is None:
-                if not answer_list is None:
-                    if len(answer_list) > 0:
-                        if answer_index < len(answer_list)-1:
-                            inferred_answer_string = answer_list[answer_index+1]
+            inferred_answer_string, answer_list = guess_tixcraft_question(driver, question_text)
+
+    for answer_item in answer_list:
+        if not answer_item in fail_list:
+            inferred_answer_string = answer_item
+            break
 
     if show_debug_message:
         print("answer_index:", answer_index)
         print("inferred_answer_string:", inferred_answer_string)
-        print("answer_index:", answer_index)
-        print("is_retry_user_single_answer:", is_retry_user_single_answer)
+        print("answer_list:", answer_list)
 
-    form_input = None
-    try:
-        form_input = driver.find_element(By.CSS_SELECTOR, "input[name='checkCode']")
-    except Exception as exc:
-        print("find verify code fail")
-        pass
+    input_text_css = "input[name='checkCode']"
+    next_step_button_css = ""
+    submit_by_enter = True
+    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
 
-    inputed_value = None
-    if form_input is not None:
-        try:
-            inputed_value = form_input.get_attribute('value')
-        except Exception as exc:
-            print("find verify code fail")
-            pass
-
-    if inputed_value is None:
-        inputed_value = ""
-
-    if not inferred_answer_string is None:
-        is_password_sent = False
-        if len(inputed_value)==0:
-            try:
-                # PS: sometime may send key twice...
-                form_input.clear()
-                form_input.send_keys(inferred_answer_string)
-                form_input.send_keys(Keys.ENTER)
-                is_password_sent = True
-
-                # guess answer mode.
-                answer_index += 1
-
-                if show_debug_message:
-                    print("sent password by bot:", inferred_answer_string)
-            except Exception as exc:
-                pass
-        else:
-            if inputed_value == inferred_answer_string:
-                if show_debug_message:
-                    print("sent password by previous time.")
-                is_password_sent = True
-                try:
-                    form_input.send_keys(Keys.ENTER)
-                except Exception as exc:
-                    pass
-
-            if is_retry_user_single_answer:
-                # increase counter for waiting for stop retry.
-                answer_index += 1
-            else:
-                # guess answer mode.
-                if answer_index > -1:
-                    # here not is first option.
-                    inferred_answer_previous = None
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_previous = answer_list[answer_index]
-                    if inputed_value == inferred_answer_previous:
-                        try:
-                            form_input.clear()
-                            form_input.send_keys(inferred_answer_string)
-                            form_input.send_keys(Keys.ENTER)
-                            is_password_sent = True
-                            if show_debug_message:
-                                print("sent password by bot:", inferred_answer_string, "at index:", answer_index+2)
-
-                            answer_index += 1
-                        except Exception as exc:
-                            pass
-
-        if is_password_sent:
-            for i in range(3):
-                time.sleep(0.1)
-
-                alert_ret = check_pop_alert(driver)
-                if alert_ret:
-                    if show_debug_message:
-                        print("press accept button at time #", i+1)
-                    break
-    else:
-        if len(inputed_value)==0:
-            try:
-                form_input.click()
-            except Exception as exc:
-                pass
-
-    return answer_index
+    return fail_list
 
 def tixcraft_change_captcha(driver,url):
     try:
@@ -6714,9 +6719,9 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
 
     if '/ticket/verify/' in url:
-        tixcraft_dict["answer_index"] = tixcraft_verify(driver, config_dict, tixcraft_dict["answer_index"])
+        tixcraft_dict["fail_list"] = tixcraft_verify(driver, config_dict, tixcraft_dict["fail_list"])
     else:
-        tixcraft_dict["answer_index"] = -1
+        tixcraft_dict["fail_list"] = []
 
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
@@ -7289,13 +7294,7 @@ def cityline_main(driver, url, config_dict):
             if len(url.split('/'))>=5:
                 cityline_shows_goto_cta(driver)
 
-def guess_ibon_question(driver):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    inferred_answer_string = None
-    answer_list = []
-
+def get_ibon_question_text(driver):
     form_select = None
     try:
         form_select = driver.find_element(By.CSS_SELECTOR, 'div.editor-box > div > div.form-group > label')
@@ -7303,148 +7302,80 @@ def guess_ibon_question(driver):
         print("find verify textbox fail")
         pass
 
-    question_text = None
+    question_text = ""
     if form_select is not None:
         try:
             question_text = form_select.text
         except Exception as exc:
             print("get text fail")
 
-    is_options_in_question = False
+    if question_text is None:
+        question_text = ""
 
-    if inferred_answer_string is None:
-        if not question_text is None:
-            inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+    return question_text
+
+def guess_ibon_question(driver, question_text):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    inferred_answer_string = None
+    answer_list = []
+
+    if len(question_text) > 0:
+        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
 
     return inferred_answer_string, answer_list
 
-def ibon_verification_question(driver, answer_index, config_dict):
+def ibon_verification_question(driver, fail_list, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    presale_code = config_dict["tixcraft"]["presale_code"]
-    presale_code_delimiter = config_dict["tixcraft"]["presale_code_delimiter"]
-
-    inferred_answer_string = None
+    inferred_answer_string = ""
     answer_list = []
 
-    is_retry_user_single_answer = False
+    question_text = get_ibon_question_text(driver)
+    write_question_to_file(question_text)
+
+    presale_code = config_dict["advanced"]["user_guess_string"]
+
+    # load from internet.
+    if len(presale_code) == 0:
+        if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
+            if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+                with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+                    presale_code = text_file.readline()
 
     if len(presale_code) > 0:
-        if len(presale_code_delimiter) > 0:
-            if presale_code_delimiter in presale_code:
-                answer_list = presale_code.split(presale_code_delimiter)
-                if len(answer_list) > 0:
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_string = answer_list[answer_index+1]
-        else:
-            is_retry_user_single_answer = True
-            if answer_index < 2:
-                inferred_answer_string = presale_code
+        presale_code = format_config_keyword_for_json(presale_code)
+        answer_list = []
+        try:
+            answer_list = json.loads("["+ presale_code +"]")
+        except Exception as exc:
+            answer_list = []
 
-    if inferred_answer_string is None:
-        inferred_answer_string, answer_list = guess_ibon_question(driver)
-        if inferred_answer_string is None:
-            if not answer_list is None:
-                if len(answer_list) > 0:
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_string = answer_list[answer_index+1]
+    if len(inferred_answer_string)==0:
+        if config_dict["advanced"]["auto_guess_options"]:
+            inferred_answer_string, answer_list = guess_ibon_question(driver, question_text)
+
+    for answer_item in answer_list:
+        if not answer_item in fail_list:
+            inferred_answer_string = answer_item
+            break
 
     if show_debug_message:
-        print("answer_index:", answer_index)
         print("inferred_answer_string:", inferred_answer_string)
-        print("answer_index:", answer_index)
-        print("is_retry_user_single_answer:", is_retry_user_single_answer)
+        print("answer_list:", answer_list)
+        print("fail_list:", fail_list)
 
-    form_input = None
-    try:
-        form_input = driver.find_element(By.CSS_SELECTOR, 'div.editor-box > div > div.form-group > input')
-    except Exception as exc:
-        print("find verify code fail")
-        pass
+    input_text_css = 'div.editor-box > div > div.form-group > input'
+    next_step_button_css = 'div.editor-box > div > a.btn'
+    submit_by_enter = False
+    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
 
-    inputed_value = None
-    if form_input is not None:
-        try:
-            inputed_value = form_input.get_attribute('value')
-        except Exception as exc:
-            print("find verify code fail")
-            pass
-
-    if inputed_value is None:
-        inputed_value = ""
-
-    if not inferred_answer_string is None:
-        is_password_sent = False
-        if len(inputed_value)==0:
-            try:
-                # PS: sometime may send key twice...
-                form_input.clear()
-                form_input.send_keys(inferred_answer_string)
-                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.editor-box > div > div.form-group > a.btn')
-                if is_button_clicked:
-                    is_password_sent = True
-
-                # guess answer mode.
-                answer_index += 1
-
-                if show_debug_message:
-                    print("sent password by bot:", inferred_answer_string)
-            except Exception as exc:
-                pass
-        else:
-            if inputed_value == inferred_answer_string:
-                if show_debug_message:
-                    print("sent password by previous time.")
-                is_password_sent = True
-                try:
-                    form_input.send_keys(Keys.ENTER)
-                except Exception as exc:
-                    pass
-
-            if is_retry_user_single_answer:
-                # increase counter for waiting for stop retry.
-                answer_index += 1
-            else:
-                # guess answer mode.
-                if answer_index > -1:
-                    # here not is first option.
-                    inferred_answer_previous = None
-                    if answer_index < len(answer_list)-1:
-                        inferred_answer_previous = answer_list[answer_index]
-                    if inputed_value == inferred_answer_previous:
-                        try:
-                            form_input.clear()
-                            form_input.send_keys(inferred_answer_string)
-                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.editor-box > div > div.form-group > a.btn')
-                            is_password_sent = True
-                            if show_debug_message:
-                                print("sent password by bot:", inferred_answer_string, "at index:", answer_index+2)
-
-                            answer_index += 1
-                        except Exception as exc:
-                            pass
-
-        if is_password_sent:
-            for i in range(3):
-                time.sleep(0.1)
-
-                alert_ret = check_pop_alert(driver)
-                if alert_ret:
-                    if show_debug_message:
-                        print("press accept button at time #", i+1)
-                    break
-    else:
-        if len(inputed_value)==0:
-            try:
-                form_input.click()
-            except Exception as exc:
-                pass
-
-    return answer_index
+    return fail_list
 
 
 def ibon_ticket_agree(driver):
@@ -7716,14 +7647,23 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                     is_match_target_feature = True
                     is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
 
+    if 'ibon.com.tw/error.html?' in url:
+        try:
+            driver.back()
+        except Exception as exc:
+            pass
+
+    is_enter_verify_mode = False
     if not is_match_target_feature:
         # validation question url:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
-        if '/application/UTK02/' in url and '.aspx?rn=' in url:
+        if '/application/UTK02/' in url and '.aspx?rn=' in url and '&PERFORMANCE_ID=' in url:
             is_match_target_feature = True
-            ibon_dict["answer_index"] = ibon_verification_question(driver, ibon_dict["answer_index"], config_dict)
-        else:
-            ibon_dict["answer_index"] = -1
+            is_enter_verify_mode = True
+            ibon_dict["fail_list"] = ibon_verification_question(driver, ibon_dict["fail_list"], config_dict)
+
+    if not is_enter_verify_mode:
+        ibon_dict["fail_list"] = []
 
     if not is_match_target_feature:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
@@ -7783,8 +7723,12 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                                 # plan-A
                                 #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
                                 # plan-B, easy and better than plan-A
-                                driver.back()
-                                driver.refresh()
+                                try:
+                                    driver.back()
+                                    driver.refresh()
+                                except Exception as exc:
+                                    pass
+
 
     if not is_match_target_feature:
         #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
@@ -10483,7 +10427,7 @@ def main(args):
 
     # for tixcraft
     tixcraft_dict = {}
-    tixcraft_dict["answer_index"]=-1
+    tixcraft_dict["fail_list"]=[]
     tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
@@ -10493,7 +10437,7 @@ def main(args):
     kktix_dict["is_popup_checkout"] = False
 
     ibon_dict = {}
-    ibon_dict["answer_index"]=-1
+    ibon_dict["fail_list"]=[]
 
     hkticketing_dict = {}
     hkticketing_dict["is_date_submiting"] = False
