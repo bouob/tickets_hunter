@@ -18,16 +18,21 @@ import sys
 import platform
 import pyperclip
 import base64
-import socket
+import time
 import threading
+
+import socket
 
 import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.15)"
+CONST_APP_VERSION = "MaxBot (2023.6.16)"
 
-CONST_SERVER_PORT = 8888
+CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+
+CONST_SERVER_PORT_DEFAULT = 8888
+CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
 
 def get_ip_address():
     ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] 
@@ -36,10 +41,15 @@ def get_ip_address():
         socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
     return ip
 
-def btn_copy_clicked():
+def btn_copy_ip_clicked():
     local_ip = get_ip_address()
     ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
     pyperclip.copy(ip_address)
+
+def btn_copy_question_clicked():
+    global txt_question
+    question_text = txt_question.get("1.0",END).strip()
+    pyperclip.copy(question_text)
 
 def TextInput(root, UI_PADDING_X):
     row_count = 0
@@ -60,25 +70,41 @@ def TextInput(root, UI_PADDING_X):
     icon_copy_filename = "icon_copy_2.gif"
     icon_copy_img = PhotoImage(file=icon_copy_filename)
 
-    lbl_icon_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
-    lbl_icon_copy.image = icon_copy_img
-    lbl_icon_copy.grid(column=2, row=group_row_count, sticky = W+N)
-    lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
+    lbl_icon_copy_ip = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy_ip.image = icon_copy_img
+    lbl_icon_copy_ip.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_copy_ip.bind("<Button-1>", lambda e: btn_copy_ip_clicked())
 
     group_row_count += 1
 
-    global lbl_text
-    lbl_text = Label(frame_group_header, text="Text")
-    lbl_text.grid(column=0, row=group_row_count, sticky = E)
+    global lbl_question
+    lbl_question = Label(frame_group_header, text="Question")
+    lbl_question.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_question
+    txt_question = Text(frame_group_header, width=50, height=15)
+    txt_question.grid(column=1, row=group_row_count, sticky = W)
+    txt_question.insert("1.0", "")
+
+    lbl_icon_copy_question = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy_question.image = icon_copy_img
+    lbl_icon_copy_question.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_copy_question.bind("<Button-1>", lambda e: btn_copy_question_clicked())
+
+    group_row_count += 1
+
+    global lbl_answer
+    lbl_answer = Label(frame_group_header, text="Answer")
+    lbl_answer.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_keyword
     txt_keyword_value = StringVar(frame_group_header, value="")
     txt_keyword = Entry(frame_group_header, width=30, textvariable = txt_keyword_value)
     txt_keyword.grid(column=1, row=group_row_count, sticky = W)
 
+
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X, pady=15)
 
-    
 
 def main_ui():
     global root
@@ -90,11 +116,11 @@ def main_ui():
 
     TextInput(root, UI_PADDING_X)
 
-    GUI_SIZE_WIDTH = 400
-    GUI_SIZE_HEIGHT = 140
+    GUI_SIZE_WIDTH = 530
+    GUI_SIZE_HEIGHT = 360
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-55)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-55)
 
     GUI_SIZE =GUI_SIZE_MACOS
 
@@ -134,9 +160,16 @@ class MainHandler(tornado.web.RequestHandler):
         global txt_keyword
         self.write(txt_keyword.get().strip())
 
+class QuestionHandler(tornado.web.RequestHandler):
+    def get(self):
+        global txt_question
+        txt_question.insert("1.0", "")
+
 async def main_server():
     app = Application([
         (r"/", MainHandler),
+        (r"/query", MainHandler),
+        (r"/question", QuestionHandler),
     ])
     app.listen(CONST_SERVER_PORT)
     await asyncio.Event().wait()
@@ -144,7 +177,29 @@ async def main_server():
 def web_server():
     asyncio.run(main_server())
 
+def preview_question_text_file():
+    if os.path.exists(CONST_MAXBOT_QUESTION_FILE):
+        question_text = ""
+        with open(CONST_MAXBOT_QUESTION_FILE, "r") as text_file:
+            question_text = text_file.readline()
+        
+        try:
+            global txt_question
+            inputed_question_text = txt_question.get("1.0",END).strip()
+            if inputed_question_text != question_text:
+                # start to refresh
+                txt_question.delete("1.0","end")
+                txt_question.insert("1.0", question_text)
+        except Exception as exc:
+            pass
+
+def text_server_timer():
+    while True:
+        preview_question_text_file()
+        time.sleep(0.2)
+
 if __name__ == "__main__":
+    threading.Thread(target=text_server_timer, daemon=True).start()
     threading.Thread(target=web_server, daemon=True).start()
     main_ui()
 
