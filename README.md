@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-16：允許多位線上槍手的答案支援/在App中顯示與輸入驗證問題與答案
+
+https://youtu.be/7kEyZI3Xark
+
 Max搶票機器人2023-06-15：從網路取得驗證問題答案清單
 
 https://youtu.be/wHCNsyud54U
