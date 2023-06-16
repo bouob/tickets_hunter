@@ -32,12 +32,13 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.15)"
+CONST_APP_VERSION = "MaxBot (2023.6.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
+CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -178,7 +179,6 @@ def load_translate():
     en_us["play_captcha_sound"] = 'Play sound when captcha'
     en_us["captcha_sound_filename"] = 'captcha sound filename'
     en_us["adblock_plus_enable"] = 'Browser Extension'
-    en_us["adblock_plus_memo"] = 'Default adblock is disable'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
 
@@ -269,7 +269,6 @@ def load_translate():
     zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
     zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
     zh_tw["adblock_plus_enable"] = '瀏覽器擴充功能'
-    zh_tw["adblock_plus_memo"] = 'Adblock 功能預設關閉'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
 
@@ -361,7 +360,6 @@ def load_translate():
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
     zh_cn["adblock_plus_enable"] = '浏览器扩充功能'
-    zh_cn["adblock_plus_memo"] = 'Adblock 功能预设关闭'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
 
@@ -452,7 +450,6 @@ def load_translate():
     ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
     ja_jp["adblock_plus_enable"] = '拡張機能'
-    ja_jp["adblock_plus_memo"] = 'Adblock デフォルトは無効です'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
 
@@ -586,8 +583,9 @@ def get_default_config():
 
 def read_last_url_from_file():
     ret = ""
-    with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
-        ret = text_file.readline()
+    if os.path.exists(CONST_MAXBOT_LAST_URL_FILE):
+        with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
+            ret = text_file.readline()
     return ret
 
 def load_json():
@@ -628,14 +626,7 @@ def btn_resume_clicked(language_code):
     app_root = get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     for i in range(10):
-        if os.path.exists(idle_filepath):
-            try:
-                os.remove(idle_filepath)
-                break
-            except Exception as exc:
-                pass
-        else:
-            break
+        force_remove_file(idle_filepath)
     update_maxbot_runtime_status()
 
 def btn_launcher_clicked(language_code):
@@ -672,6 +663,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_area_auto_select
     global txt_area_keyword
     global txt_area_keyword_exclude
+    global txt_online_dictionary_url
 
     global combo_date_auto_select_mode
     global combo_area_auto_select_mode
@@ -767,10 +759,51 @@ def btn_save_act(language_code, slience_mode=False):
         user_guess_string = txt_user_guess_string.get("1.0",END).strip()
         user_guess_string = format_config_keyword_for_json(user_guess_string)
 
+        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+        online_dictionary_url = format_config_keyword_for_json(online_dictionary_url)
+
+        # test keyword format.
+        if is_all_data_correct:
+            if len(area_keyword) > 0:
+                try:
+                    test_array = json.loads("["+ area_keyword +"]")
+                except Exception as exc:
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(area_keyword_exclude) > 0:
+                try:
+                    test_array = json.loads("["+ area_keyword_exclude +"]")
+                except Exception as exc:
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword_exclude"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(user_guess_string) > 0:
+                try:
+                    test_array = json.loads("["+ user_guess_string +"]")
+                except Exception as exc:
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["user_guess_string"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(online_dictionary_url) > 0:
+                try:
+                    test_array = json.loads("["+ online_dictionary_url +"]")
+                except Exception as exc:
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["online_dictionary_url"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            config_dict["area_auto_select"]["area_keyword"] = area_keyword
+            config_dict["area_auto_select"]["area_keyword_exclude"] = area_keyword_exclude
+            config_dict["advanced"]["user_guess_string"] = user_guess_string
+            config_dict["advanced"]["online_dictionary_url"] = online_dictionary_url
+
+    if is_all_data_correct:
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
-        config_dict["area_auto_select"]["area_keyword"] = area_keyword
-        config_dict["area_auto_select"]["area_keyword_exclude"] = area_keyword_exclude
 
         config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
         config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
@@ -816,43 +849,11 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
 
-        config_dict["advanced"]["user_guess_string"] = user_guess_string
-        config_dict["advanced"]["online_dictionary_url"] = txt_online_dictionary_url.get().strip()
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
         config_dict["advanced"]["auto_reload_random_delay"] = bool(chk_state_auto_reload_random_delay.get())
 
-    # test keyword format.
-    if is_all_data_correct:
-        area_keyword = config_dict["area_auto_select"]["area_keyword"]
-        if len(area_keyword) > 0:
-            try:
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword"])
-                is_all_data_correct = False
-                pass
-
-    if is_all_data_correct:
-        area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-        if len(area_keyword_exclude) > 0:
-            try:
-                area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
-            except Exception as exc:
-                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword_exclude"])
-                is_all_data_correct = False
-                pass
-
-    if is_all_data_correct:
-        user_guess_string = config_dict["advanced"]["user_guess_string"]
-        if len(user_guess_string) > 0:
-            try:
-                user_guess_string_array = json.loads("["+ user_guess_string +"]")
-            except Exception as exc:
-                messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["user_guess_string"])
-                is_all_data_correct = False
-                pass
 
     # save config.
     if is_all_data_correct:
@@ -884,20 +885,18 @@ def launch_maxbot():
     run_python_script("chrome_tixcraft")
 
 def show_preview_text():
-    app_root = get_app_root()
-    preview_text_filenpath = os.path.join(app_root, CONST_MAXBOT_ANSWER_ONLINE_FILE)
-
-    text = ""
-    if os.path.exists(preview_text_filenpath):
-        with open(preview_text_filenpath, "r") as text_file:
-            text = text_file.readline()
+    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+        answer_text = ""
+        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+            answer_text = text_file.readline()
         try:
             global lbl_online_dictionary_preview
-            lbl_online_dictionary_preview.config(text=text)
+            lbl_online_dictionary_preview.config(text=answer_text)
         except Exception as exc:
             pass
 
-def save_url_to_file(new_online_dictionary_url):
+def save_url_to_file(new_online_dictionary_url, force_write = False):
+    html_text = ""
     if len(new_online_dictionary_url) > 0:
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
@@ -912,18 +911,37 @@ def save_url_to_file(new_online_dictionary_url):
             #print("status_code:", status_code)
             if status_code == 200:
                 html_text = html_result.text
-                if len(html_text) > 0:
-                    with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
-                        text_file.write("%s" % html_text)
-    else:
+
+    is_write_to_file = False
+    if force_write:
+        is_write_to_file = True
+    if len(html_text) > 0:
+        is_write_to_file = True
+
+    if is_write_to_file:
         with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
-            text_file.write("")
+            text_file.write("%s" % html_text)
+    return is_write_to_file
 
 def btn_preview_text_clicked():
     global txt_online_dictionary_url
-    new_online_dictionary_url = txt_online_dictionary_url.get().strip()
-    #print("new_online_dictionary_url:", new_online_dictionary_url)
-    save_url_to_file(new_online_dictionary_url)
+    online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+    online_dictionary_url = format_config_keyword_for_json(online_dictionary_url)
+    if len(online_dictionary_url) > 0:
+        url_array = []
+        try:
+            url_array = json.loads("["+ online_dictionary_url +"]")
+        except Exception as exc:
+            url_array = []
+
+        force_write = False
+        if len(url_array)==1:
+            force_write = True
+        for each_url in url_array:
+            #print("new_online_dictionary_url:", new_online_dictionary_url)
+            is_write_to_file = save_url_to_file(each_url, force_write=force_write)
+            if is_write_to_file:
+                break
     show_preview_text()
 
 def run_python_script(script_name):
@@ -1101,7 +1119,6 @@ def applyNewLanguage():
     global lbl_release
 
     global lbl_adblock_plus
-    global lbl_adblock_plus_memo
     global lbl_adblock_plus_settings
     global lbl_adjacent_seat
     global lbl_auto_reload_page_interval
@@ -1217,7 +1234,6 @@ def applyNewLanguage():
     lbl_release.config(text=translate[language_code]["release"])
 
     lbl_adblock_plus.config(text=translate[language_code]["adblock_plus_enable"])
-    lbl_adblock_plus_memo.config(text=translate[language_code]["adblock_plus_memo"])
     lbl_adblock_plus_settings.config(text=translate[language_code]["adblock_plus_settings"])
 
     global btn_run
@@ -1807,15 +1823,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
-    lbl_adblock_plus_ps = Label(frame_group_header, text='')
-    lbl_adblock_plus_ps.grid(column=0, row=group_row_count, sticky = E)
-
-    global lbl_adblock_plus_memo
-    lbl_adblock_plus_memo = Label(frame_group_header, text=translate[language_code]['adblock_plus_memo'])
-    lbl_adblock_plus_memo.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
     global lbl_adblock_plus_settings
     lbl_adblock_plus_settings = Label(frame_group_header, text=translate[language_code]['adblock_plus_settings'])
     lbl_adblock_plus_settings.grid(column=0, row=group_row_count, sticky = E+N)
@@ -1903,19 +1910,19 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global lbl_online_dictionary_url
     lbl_online_dictionary_url = Label(frame_group_header, text=translate[language_code]['online_dictionary_url'])
-    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E)
+    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E+N)
 
     global txt_online_dictionary_url
-    txt_online_dictionary_url_value = StringVar(frame_group_header, value=config_dict['advanced']["online_dictionary_url"])
-    txt_online_dictionary_url = Entry(frame_group_header, width=30, textvariable = txt_online_dictionary_url_value)
+    txt_online_dictionary_url = Text(frame_group_header, width=30, height=3)
     txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
+    txt_online_dictionary_url.insert("1.0", config_dict['advanced']["online_dictionary_url"].strip())
 
     icon_preview_text_filename = "icon_chrome_4.gif"
     icon_preview_text_img = PhotoImage(file=icon_preview_text_filename)
 
     lbl_icon_preview_text = Label(frame_group_header, image=icon_preview_text_img, cursor="hand2")
     lbl_icon_preview_text.image = icon_preview_text_img
-    lbl_icon_preview_text.grid(column=2, row=group_row_count)
+    lbl_icon_preview_text.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_preview_text.bind("<Button-1>", lambda e: btn_open_text_server_clicked())
 
     group_row_count+=1
@@ -2143,7 +2150,7 @@ def settings_timer():
     while True:
         update_maxbot_runtime_status()
         btn_preview_text_clicked()
-        time.sleep(0.5)
+        time.sleep(0.2)
 
 def update_maxbot_runtime_status():
     is_paused = False
@@ -2448,5 +2455,22 @@ def main():
     threading.Thread(target=settings_timer, daemon=True).start()
     root.mainloop()
 
+def force_remove_file(filepath):
+    if os.path.exists(filepath):
+        try:
+            os.remove(filepath)
+        except Exception as exc:
+            pass
+
+def clean_tmp_file():
+    remove_file_list = [CONST_MAXBOT_LAST_URL_FILE
+        ,CONST_MAXBOT_INT28_FILE
+        ,CONST_MAXBOT_ANSWER_ONLINE_FILE
+        ,CONST_MAXBOT_QUESTION_FILE
+    ]
+    for filepath in remove_file_list:
+        force_remove_file(filepath)
+
 if __name__ == "__main__":
+    clean_tmp_file()
     main()
