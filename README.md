@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-17：KKTIX/ibon/拓元 合併本地字典與線上字典檔
+
+https://youtu.be/LnJbZokIyOY
+
 Max搶票機器人2023-06-17：ibon 檢示與輸入驗證問題與答案/線上JSON代管
 
 https://youtu.be/ues16dHB7UI
