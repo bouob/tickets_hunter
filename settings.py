@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.17)"
+CONST_APP_VERSION = "MaxBot (2023.6.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -118,8 +118,8 @@ def load_translate():
     en_us["date_keyword"] = 'Date Keyword'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
-    en_us["auto_reload_page_interval"] = 'Reload page interval (sec.)'
-    en_us["auto_reload_random_delay"] = 'Reload with random delay'
+    en_us["auto_reload_page_interval"] = 'Reload page interval sec.(HK)'
+    en_us["auto_reload_random_delay"] = 'Reload with random delay(TW)'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -209,8 +209,8 @@ def load_translate():
     zh_tw["date_keyword"] = '日期關鍵字'
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
-    zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
-    zh_tw["auto_reload_random_delay"] = '自動刷新時隨機延遲'
+    zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)(香港)'
+    zh_tw["auto_reload_random_delay"] = '自動刷新時隨機延遲(台灣)'
 
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
@@ -299,8 +299,8 @@ def load_translate():
     zh_cn["date_keyword"] = '日期关键字'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
-    zh_cn["auto_reload_page_interval"] = '重新加载页面间隔（秒）'
-    zh_cn["auto_reload_random_delay"] = '重新加载时随机延迟'
+    zh_cn["auto_reload_page_interval"] = '重新加载页面间隔（秒）(香港)'
+    zh_cn["auto_reload_random_delay"] = '重新加载时随机延迟(台灣)'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -390,8 +390,8 @@ def load_translate():
     ja_jp["date_keyword"] = '日付キーワード'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
-    ja_jp["auto_reload_page_interval"] = 'ページのリロード間隔 (秒)'
-    ja_jp["auto_reload_random_delay"] = 'リロード時のランダムな遅延'
+    ja_jp["auto_reload_page_interval"] = 'ページのリロード間隔 (秒)(香港)'
+    ja_jp["auto_reload_random_delay"] = 'リロード時のランダムな遅延(台灣)'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -580,7 +580,7 @@ def get_default_config():
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
-    config_dict["advanced"]["auto_guess_options"] = False
+    config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["online_dictionary_url"] = ""
 

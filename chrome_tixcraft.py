@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.17)"
+CONST_APP_VERSION = "MaxBot (2023.6.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -805,68 +805,68 @@ def guess_answer_list_from_multi_options(tmp_text):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
-    options_list = None
+    options_list = []
     matched_pattern = ""
-    if options_list is None:
+    if len(options_list) == 0:
         if u'【' in tmp_text and u'】' in tmp_text:
             pattern = '【.{1,4}】'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if u'(' in tmp_text and u')' in tmp_text:
             pattern = '\(.{1,4}\)'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if u'[' in tmp_text and u']' in tmp_text:
             pattern = '\[.{1,4}\]'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if "\n" in tmp_text and u')' in tmp_text:
             pattern = "\\n.{1,4}\)"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if "\n" in tmp_text and u']' in tmp_text:
             pattern = "\\n.{1,4}\]"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if "\n" in tmp_text and u'】' in tmp_text:
             pattern = "\\n.{1,4}】"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
-    if options_list is None:
+    if len(options_list) == 0:
         if "\n" in tmp_text and u':' in tmp_text:
             pattern = "\\n.{1,4}:"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
-                options_list = None
+                options_list = []
             else:
                 matched_pattern = pattern
 
@@ -878,8 +878,8 @@ def guess_answer_list_from_multi_options(tmp_text):
     if show_debug_message:
         print("is_trim_quota:", is_trim_quota)
 
-    return_list = None
-    if not options_list is None:
+    return_list = []
+    if len(options_list) > 0:
         options_list_length = len(options_list)
         if show_debug_message:
             print("options_list_length:", options_list_length)
@@ -928,13 +928,12 @@ def guess_answer_list_from_multi_options(tmp_text):
                                 else:
                                     return_list.append(each_option)
 
-    # something is wrong, give up those options.
-    if not return_list is None:
-        if len(return_list) <= 2:
-            return_list = None
+    # something is wrong, give up when option equal 2 options.
+    if len(return_list) <= 2:
+        return_list = []
 
     # remove chinese work options.
-    if not return_list is None:
+    if len(options_list) > 0:
         new_list = []
         for item in return_list:
             if is_all_alpha_or_numeric(item):
@@ -946,7 +945,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
 #PS: this may get a wrong answer list. XD
 def guess_answer_list_from_symbols(captcha_text_div_text):
-    return_list = None
+    return_list = []
     # need replace to space to get first options.
     tmp_text = captcha_text_div_text
     tmp_text = tmp_text.replace(u'?',u' ')
@@ -973,7 +972,7 @@ def guess_answer_list_from_symbols(captcha_text_div_text):
                             if len(my_anwser) > 0:
                                 return_list.append(my_anwser)
 
-        if not return_list is None:
+        if len(return_list) > 0:
             break
     return return_list
 
@@ -1021,8 +1020,6 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
 def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
-
-    return_list = None
 
     tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
@@ -1212,6 +1209,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     if show_debug_message:
         print("is_trim_quota:", is_trim_quota)
 
+    return_list = []
     if len(my_anwser_formated) > 0:
         new_pattern = my_anwser_formated
         if len(my_answer_delimitor) > 0:
@@ -1242,6 +1240,9 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                             return_list[idx]=return_list[idx].replace(my_answer_delimitor,'')
                 if show_debug_message:
                     print("cleaned return_list:" , return_list)
+        
+        if return_list is None:
+            return_list = []
 
     return return_list, offical_hint_string_anwser
 
@@ -1321,20 +1322,20 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
-    return_list = None
+    return_list = []
 
     tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
     # guess answer list from multi-options: 【】() []
-    if return_list is None:
+    if len(return_list)==0:
         return_list = guess_answer_list_from_multi_options(tmp_text)
     if show_debug_message:
         print("captcha_text_div_text:", captcha_text_div_text)
-        if not return_list is None:
+        if len(return_list) > 0:
             print("found, guess_answer_list_from_multi_options:", return_list)
 
     offical_hint_string_anwser = ""
-    if return_list is None:
+    if len(return_list)==0:
         return_list, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
     else:
         is_match_factorial = False
@@ -1366,15 +1367,15 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             for item_tuple in new_array:
                 return_list.append(''.join(item_tuple))
 
-    if show_debug_message:
-        if not return_list is None:
-            print("found, guess_answer_list_from_hint:", return_list)
+        if show_debug_message:
+            if len(return_list) > 0:
+                print("found, guess_answer_list_from_hint:", return_list)
 
-    if return_list is None:
+    if len(return_list)==0:
         return_list = guess_answer_list_from_symbols(captcha_text_div_text)
-    if show_debug_message:
-        if not return_list is None:
-            print("found, guess_answer_list_from_symbols:", return_list)
+        if show_debug_message:
+            if len(return_list) > 0:
+                print("found, guess_answer_list_from_symbols:", return_list)
 
     return return_list
 
@@ -2292,7 +2293,6 @@ def guess_tixcraft_question(driver, question_text):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    inferred_answer_string = None
     answer_list = []
 
     formated_html_text = ""
@@ -2318,6 +2318,9 @@ def guess_tixcraft_question(driver, question_text):
 
     if show_debug_message:
         print("formated_html_text:", formated_html_text)
+    
+    # start to guess answer
+    inferred_answer_string = None
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
@@ -2333,12 +2336,15 @@ def guess_tixcraft_question(driver, question_text):
                 if '輸入【同意】' in formated_html_text:
                     inferred_answer_string = '同意'
 
-    if len(question_text) > 0:
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
+    if inferred_answer_string is None:
+        if len(question_text) > 0:
+            answer_list = get_answer_list_from_question_string(None, question_text)
+    else:
+        answer_list = [answer_list]
 
-    return inferred_answer_string, answer_list
+    return answer_list
 
-def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter):
+def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2383,27 +2389,28 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
     is_answer_sent = False
     if form_input is not None:
         if len(inferred_answer_string) > 0:
-            try:
-                # PS: sometime may send key twice...
-                form_input.clear()
-                form_input.send_keys(inferred_answer_string)
-                is_button_clicked = False
-                if is_do_press_next_button:
-                    if submit_by_enter:
-                        form_input.send_keys(Keys.ENTER)
-                        is_button_clicked = True
-                    if len(next_step_button_css) > 0:
-                        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
-                
-                if is_button_clicked:
-                    is_answer_sent = True
-                    fail_list.append(inferred_answer_string)
+            if inputed_value != inferred_answer_string:
+                try:
+                    # PS: sometime may send key twice...
+                    form_input.clear()
+                    form_input.send_keys(inferred_answer_string)
+                    is_button_clicked = False
+                    if is_do_press_next_button:
+                        if submit_by_enter:
+                            form_input.send_keys(Keys.ENTER)
+                            is_button_clicked = True
+                        if len(next_step_button_css) > 0:
+                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                    
+                    if is_button_clicked:
+                        is_answer_sent = True
+                        fail_list.append(inferred_answer_string)
+                        if show_debug_message:
+                            print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+                except Exception as exc:
                     if show_debug_message:
-                        print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
-            except Exception as exc:
-                if show_debug_message:
-                    print(exc)
-                pass
+                        print(exc)
+                    pass
 
             if is_answer_sent:
                 for i in range(3):
@@ -2418,12 +2425,42 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
             # no answer to fill.
             if len(inputed_value)==0:
                 try:
-                    form_input.click()
-                    time.sleep(0.1)
+                    # solution 1: js.
+                    driver.execute_script("if(!(document.activeElement === arguments[0])){arguments[0].focus();}", form_input)
+                    # solution 2: selenium.
+                    #form_input.click()
+                    time.sleep(check_input_interval)
                 except Exception as exc:
                     pass
 
     return is_answer_sent, fail_list
+
+def get_answer_list_from_user_guess_string(config_dict):
+    local_array = []
+    online_array = []
+
+    user_guess_string = config_dict["advanced"]["user_guess_string"]
+    if len(user_guess_string) > 0:
+        user_guess_string = format_config_keyword_for_json(user_guess_string)
+        try:
+            local_array = json.loads("["+ user_guess_string +"]")
+        except Exception as exc:
+            local_array = []
+
+    # load from internet.
+    user_guess_string = ""
+    if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
+        if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+            with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+                user_guess_string = text_file.readline()
+    if len(user_guess_string) > 0:
+        user_guess_string = format_config_keyword_for_json(user_guess_string)
+        try:
+            online_array = json.loads("["+ user_guess_string +"]")
+        except Exception as exc:
+            online_array = []
+
+    return local_array + online_array
 
 def tixcraft_verify(driver, config_dict, fail_list):
     show_debug_message = True       # debug.
@@ -2432,47 +2469,34 @@ def tixcraft_verify(driver, config_dict, fail_list):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    inferred_answer_string = ""
     answer_list = []
 
     question_text = get_tixcraft_question_text(driver)
-    write_question_to_file(question_text)
+    if len(question_text) > 0:
+        write_question_to_file(question_text)
 
-    presale_code = config_dict["advanced"]["user_guess_string"]
+        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        if len(answer_list)==0:
+            if config_dict["advanced"]["auto_guess_options"]:
+                answer_list = guess_tixcraft_question(driver, question_text)
 
-    # load from internet.
-    if len(presale_code) == 0:
-        if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
-            if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
-                with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-                    presale_code = text_file.readline()
+        inferred_answer_string = ""
+        for answer_item in answer_list:
+            if not answer_item in fail_list:
+                inferred_answer_string = answer_item
+                break
 
-    if len(presale_code) > 0:
-        presale_code = format_config_keyword_for_json(presale_code)
-        answer_list = []
-        try:
-            answer_list = json.loads("["+ presale_code +"]")
-        except Exception as exc:
-            answer_list = []
+        if show_debug_message:
+            print("answer_index:", answer_index)
+            print("inferred_answer_string:", inferred_answer_string)
+            print("answer_list:", answer_list)
 
-    if len(inferred_answer_string)==0:
-        if config_dict["advanced"]["auto_guess_options"]:
-            inferred_answer_string, answer_list = guess_tixcraft_question(driver, question_text)
-
-    for answer_item in answer_list:
-        if not answer_item in fail_list:
-            inferred_answer_string = answer_item
-            break
-
-    if show_debug_message:
-        print("answer_index:", answer_index)
-        print("inferred_answer_string:", inferred_answer_string)
-        print("answer_list:", answer_list)
-
-    input_text_css = "input[name='checkCode']"
-    next_step_button_css = ""
-    submit_by_enter = True
-    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
+        # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
+        input_text_css = "input[name='checkCode']"
+        next_step_button_css = ""
+        submit_by_enter = True
+        check_input_interval = 0.2
+        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
 
     return fail_list
 
@@ -3658,7 +3682,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     show_debug_message = False      # online
 
     inferred_answer_string = None
-    answer_list = None
+    answer_list = []
 
     CONST_EXAMPLE_SYMBOL = "範例"
     CONST_INPUT_SYMBOL = "輸入"
@@ -3667,17 +3691,22 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         captcha_text_div_text = ""
 
     # 請在下方空白處輸入引號內文字：
+    # 請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）
     if inferred_answer_string is None:
         is_use_quota_message = False
         if u"「" in captcha_text_div_text and u"」" in captcha_text_div_text:
-            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            # test for rule#1, it's seem very easy conflict...
+            match_quota_text_items = ["下方","空白","輸入","引號","文字"]
+            is_match_quota_text = True
+            for each_quota_text in match_quota_text_items:
+                if not each_quota_text in captcha_text_div_text:
+                    is_match_quota_text = False
+            if is_match_quota_text:
                 is_use_quota_message = True
-            if u'半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
-                is_use_quota_message = True
-        #print("is_use_quota_message:" , is_use_quota_message)
+        print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
             inferred_answer_string = find_between(captcha_text_div_text, u"「", u"」")
-            #print("find captcha text:" , inferred_answer_string)
+            print("find captcha text:" , inferred_answer_string)
 
     if inferred_answer_string is None:
         is_use_quota_message = False
@@ -3735,7 +3764,6 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         inferred_answer_string = None
     #print("is_combine_two_question:", is_combine_two_question)
 
-
     # still no answer.
     if inferred_answer_string is None:
         if not is_combine_two_question:
@@ -3749,9 +3777,9 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     else:
         if show_debug_message:
             print("got an inferred_answer_string:", inferred_answer_string)
+        answer_list = [inferred_answer_string]
 
-
-    return inferred_answer_string, answer_list
+    return answer_list
 
 def kktix_reg_captcha_question_text(captcha_inner_div):
     captcha_text_div = None
@@ -3773,20 +3801,6 @@ def kktix_reg_captcha_question_text(captcha_inner_div):
         question_text = ""
 
     return question_text
-
-def kktix_reg_new_captcha(registrationsNewApp_div, question_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    answer_list = None
-    inferred_answer_string = None
-
-    if len(question_text) > 0:
-        if show_debug_message:
-            print("question_text:", question_text)
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(registrationsNewApp_div, question_text)
-
-    return inferred_answer_string, answer_list
 
 def kktix_double_check_all_text_value(driver, ticket_number):
     is_do_press_next_button = False
@@ -3824,169 +3838,70 @@ def kktix_double_check_all_text_value(driver, ticket_number):
 
     return is_do_press_next_button
 
-def kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_click, registrationsNewApp_div):
+def get_kktix_question_text(driver):
+    question_text = ""
+
+    captcha_inner_div = None
+    try:
+        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div.custom-captcha-inner')
+    except Exception as exc:
+        pass
+
+    if not captcha_inner_div is None:
+        question_text = kktix_reg_captcha_question_text(captcha_inner_div)
+    return question_text
+
+def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    is_captcha_appear = False
-    is_captcha_appear_and_filled_password = False
-    answer_list = None
+    answer_list = []
 
-    # TODO: in guess options mode, no need to travel div again.
-    captcha_inner_div = None
-    try:
-        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, '.custom-captcha-inner')
-    except Exception as exc:
-        pass
-
-    captcha_password_input_element = None
-    question_text = ""
-    if not captcha_inner_div is None:
-        try:
-            captcha_password_input_element = captcha_inner_div.find_element(By.TAG_NAME, "input")
-            if show_debug_message:
-                print("found captcha input field")
-        except Exception as exc:
-            pass
-
-        question_text = kktix_reg_captcha_question_text(captcha_inner_div)
+    question_text = get_kktix_question_text(driver)
+    if len(question_text) > 0:
         write_question_to_file(question_text)
 
-    if not captcha_password_input_element is None:
-        inferred_answer_string = ""
-        if captcha_inner_div is not None:
-            is_captcha_appear = True
-            if show_debug_message:
-                print("found captcha_inner_div layor.")
-
-            user_guess_string = ""
-            if len(config_dict["advanced"]["user_guess_string"]) > 0:
-                user_guess_string = config_dict["advanced"]["user_guess_string"]
-            
-            # load from internet.
-            if len(user_guess_string) == 0:
-                if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
-                    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
-                        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-                            user_guess_string = text_file.readline()
-            
-            if len(user_guess_string) > 0:
-                user_guess_string = format_config_keyword_for_json(user_guess_string)
-                
-                answer_list = []
+        if len(fail_list)==0:
+            # only play sound once.
+            if not captcha_sound_played:
+                captcha_sound_played = True
                 try:
-                    answer_list = json.loads("["+ user_guess_string +"]")
+                    check_and_play_sound_for_captcha(config_dict)
                 except Exception as exc:
-                    answer_list = []
-
-                if len(answer_list) == 1:
-                    inferred_answer_string = answer_list[0]
-
-            if len(user_guess_string) == 0:
-                if config_dict["advanced"]["auto_guess_options"]:
-                    inferred_answer_string, answer_list = kktix_reg_new_captcha(registrationsNewApp_div, question_text)
-                    if inferred_answer_string is None:
-                        inferred_answer_string = ""
-
-            if len(inferred_answer_string) > 0:
-                # password is not None, try to send.
-                is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_element, inferred_answer_string)
-                if is_cpatcha_sent:
-                    is_captcha_appear_and_filled_password = True
-            else:
-                is_try_to_focus = False
-                if answer_list is None:
-                    is_try_to_focus = True
-                else:
-                    if len(answer_list)==0:
-                        is_try_to_focus = True
-
-                if is_try_to_focus:
-                    # password is None, focus to input, and play sound.
-                    inputed_captcha_text = None
-                    try:
-                        inputed_captcha_text = captcha_password_input_element.get_attribute('value')
-                    except Exception as exc:
-                        pass
-                    if inputed_captcha_text is None:
-                        inputed_captcha_text = ""
-                    if len(inputed_captcha_text) == 0:
-                        try:
-                            #print("focus() captcha to input.")
-                            # only this case: "ticket number not changed by bot" to play sound!
-                            check_and_play_sound_for_captcha(config_dict)
-                            captcha_password_input_element.click()
-                            time.sleep(1.0)
-                            # let user to input answer, bot sleep 1 second.
-                        except Exception as exc:
-                            pass
-
-        if show_debug_message:
-            print("is_captcha_appear:", is_captcha_appear)
-            print("is_captcha_appear_and_filled_password:", is_captcha_appear_and_filled_password)
-
-    # retry check agree checkbox again.
-    if not is_finish_checkbox_click:
-        if config_dict["auto_check_agree"]:
-            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
-
-    is_do_press_next_button = False
-    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
-    if auto_press_next_step_button:
-        if is_finish_checkbox_click:
-            is_do_press_next_button = kktix_double_check_all_text_value(driver, config_dict["ticket_number"])
-        else:
-            print("still unable to assign checkbox as selected.")
-
-    if show_debug_message:
-        print("is_do_press_next_button:", is_do_press_next_button)
-
-    if is_do_press_next_button:
-        if not is_captcha_appear:
-            click_ret = kktix_press_next_button(driver)
-        else:
-            if is_captcha_appear_and_filled_password:
-                # for easy guest mode, we can fill the password correct.
-                #print("for easy guest mode, we can fill the password correct.")
-                click_ret = kktix_press_next_button(driver)
-            else:
-                # not is easy guest mode.
-                #print("# not is easy guest mode.")
-
-                # merge with password dictionary, so need remove duplicate list
-                # PS: now, there are no password dictionary.
-                if not answer_list is None:
-                    if len(answer_list) > 1:
-                        unique = [x for i, x in enumerate(answer_list) if answer_list.index(x) == i]
-                        answer_list = unique
-
-                # start to try answers.
-                if not answer_list is None:
-                    # for popular event
-                    if len(answer_list) > 0:
-                        if answer_index < len(answer_list)-1:
-                            if kktix_captcha_inputed_text(captcha_inner_div) == "":
-                                answer_index += 1
-                                answer_string = answer_list[answer_index]
-
-                                if len(answer_string) > 0:
-                                    print("send answer:" + answer_string)
-                                    is_cpatcha_sent = kktix_input_captcha_text(captcha_password_input_element, answer_string)
-                                    if is_cpatcha_sent:
-                                        kktix_press_next_button(driver)
-                        else:
-                            # exceed index, do nothing.
-                            pass
-                else:
-                    # captcha appeared, but we don't have answer list.
                     pass
 
-    return answer_index
+        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        if len(answer_list)==0:
+            if config_dict["advanced"]["auto_guess_options"]:
+                answer_list = get_answer_list_from_question_string(registrationsNewApp_div, question_text)
 
-def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_click):
+        inferred_answer_string = ""
+        for answer_item in answer_list:
+            if not answer_item in fail_list:
+                inferred_answer_string = answer_item
+                break
+
+        if show_debug_message:
+            print("inferred_answer_string:", inferred_answer_string)
+            print("answer_list:", answer_list)
+            print("fail_list:", fail_list)
+
+        # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
+        input_text_css = 'div.custom-captcha-inner > div > div > input'
+        next_step_button_css = '#registrationsNewApp div.form-actions button.btn-primary'
+        submit_by_enter = False
+        check_input_interval = 0.2
+        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+    else:
+        # no captcha text popup, goto next page.
+        click_ret = kktix_press_next_button(driver)
+
+    return fail_list, captcha_sound_played
+
+def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -4032,7 +3947,7 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
 
         # part 3: captcha
         if is_ticket_number_assigned:
-            answer_index = kktix_reg_captcha(driver, config_dict, answer_index, is_finish_checkbox_click, registrationsNewApp_div)
+            fail_list, captcha_sound_played = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
         else:
             if is_need_refresh:
                 try:
@@ -4045,14 +3960,13 @@ def kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_cli
                 if config_dict["advanced"]["auto_reload_random_delay"]:
                     time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-    return answer_index
+    return fail_list, captcha_sound_played
 
-def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_dict):
+def kktix_reg_auto_reload(driver, url, config_dict, kktix_register_status_last):
     registerStatus = kktix_register_status_last
 
     # auto refresh for area list page.
     is_need_refresh = False
-    is_finish_checkbox_click = False
 
     if not is_need_refresh:
         if registerStatus is None:
@@ -4065,6 +3979,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
                 if registerStatus != 'IN_STOCK':
                     is_need_refresh = True
 
+    is_finish_checkbox_click = False
     if config_dict["auto_check_agree"]:
         if not is_need_refresh:
             is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
@@ -4083,15 +3998,7 @@ def kktix_reg_new(driver, url, answer_index, kktix_register_status_last, config_
         if config_dict["advanced"]["auto_reload_random_delay"]:
             time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-        # reset answer_index
-        answer_index = -1
-        registerStatus = None
-    else:
-        # check is able to buy.
-        if config_dict["kktix"]["auto_fill_ticket_number"]:
-            answer_index = kktix_reg_new_main(driver, config_dict, answer_index, is_finish_checkbox_click)
-
-    return answer_index, registerStatus
+    return is_need_refresh, is_finish_checkbox_click
 
 
 # PURPOSE: get target area list.
@@ -6742,7 +6649,6 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     return tixcraft_dict
 
 def kktix_main(driver, url, config_dict, kktix_dict):
-    auto_press_next_step_button = config_dict["kktix"]["auto_press_next_step_button"]
     kktix_account = config_dict["advanced"]["kktix_account"]
 
     is_url_contain_sign_in = False
@@ -6754,7 +6660,17 @@ def kktix_main(driver, url, config_dict, kktix_dict):
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
-            kktix_dict["answer_index"], kktix_dict["kktix_register_status_last"] = kktix_reg_new(driver, url, kktix_dict["answer_index"], kktix_dict["kktix_register_status_last"], config_dict)
+            is_need_refresh, is_finish_checkbox_click = kktix_reg_auto_reload(driver, url, config_dict, kktix_dict["kktix_register_status_last"])
+
+            if is_need_refresh:
+                # reset answer fail list.
+                kktix_dict["fail_list"] = []
+                kktix_dict["captcha_sound_played"] = False
+                kktix_dict["kktix_register_status_last"] = None
+            else:
+                # check is able to buy.
+                if config_dict["kktix"]["auto_fill_ticket_number"]:
+                    kktix_dict["fail_list"], kktix_dict["captcha_sound_played"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["captcha_sound_played"], is_finish_checkbox_click)
         else:
             is_event_page = False
             if '/events/' in url:
@@ -6763,12 +6679,14 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     is_event_page = True
 
             if is_event_page:
-                if auto_press_next_step_button:
+                if config_dict["kktix"]["auto_press_next_step_button"]:
                     # pass switch check.
                     #print("should press next here.")
                     kktix_events_press_next_button(driver)
 
-            kktix_dict["answer_index"] = -1
+            # reset answer fail list.
+            kktix_dict["fail_list"] = []
+            kktix_dict["captcha_sound_played"] = False
             kktix_dict["kktix_register_status_last"] = None
 
     if '/events/' in url and '/registrations/' in url and "-" in url:
@@ -7314,18 +7232,6 @@ def get_ibon_question_text(driver):
 
     return question_text
 
-def guess_ibon_question(driver, question_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    inferred_answer_string = None
-    answer_list = []
-
-    if len(question_text) > 0:
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, question_text)
-
-    return inferred_answer_string, answer_list
-
 def ibon_verification_question(driver, fail_list, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -7333,47 +7239,35 @@ def ibon_verification_question(driver, fail_list, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    inferred_answer_string = ""
     answer_list = []
 
     question_text = get_ibon_question_text(driver)
-    write_question_to_file(question_text)
+    if len(question_text) > 0:
+        write_question_to_file(question_text)
 
-    presale_code = config_dict["advanced"]["user_guess_string"]
+        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        if len(answer_list)==0:
+            if config_dict["advanced"]["auto_guess_options"]:
+                answer_list = get_answer_list_from_question_string(None, question_text)
 
-    # load from internet.
-    if len(presale_code) == 0:
-        if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
-            if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
-                with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-                    presale_code = text_file.readline()
+        inferred_answer_string = ""
+        if len(answer_list) > 0:
+            for answer_item in answer_list:
+                if not answer_item in fail_list:
+                    inferred_answer_string = answer_item
+                    break
 
-    if len(presale_code) > 0:
-        presale_code = format_config_keyword_for_json(presale_code)
-        answer_list = []
-        try:
-            answer_list = json.loads("["+ presale_code +"]")
-        except Exception as exc:
-            answer_list = []
+        if show_debug_message:
+            print("inferred_answer_string:", inferred_answer_string)
+            print("answer_list:", answer_list)
+            print("fail_list:", fail_list)
 
-    if len(inferred_answer_string)==0:
-        if config_dict["advanced"]["auto_guess_options"]:
-            inferred_answer_string, answer_list = guess_ibon_question(driver, question_text)
-
-    for answer_item in answer_list:
-        if not answer_item in fail_list:
-            inferred_answer_string = answer_item
-            break
-
-    if show_debug_message:
-        print("inferred_answer_string:", inferred_answer_string)
-        print("answer_list:", answer_list)
-        print("fail_list:", fail_list)
-
-    input_text_css = 'div.editor-box > div > div.form-group > input'
-    next_step_button_css = 'div.editor-box > div > a.btn'
-    submit_by_enter = False
-    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
+        # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
+        input_text_css = 'div.editor-box > div > div.form-group > input'
+        next_step_button_css = 'div.editor-box > div > a.btn'
+        submit_by_enter = False
+        check_input_interval = 0.2
+        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
     return fail_list
 
@@ -10432,7 +10326,8 @@ def main(args):
 
     # for kktix
     kktix_dict = {}
-    kktix_dict["answer_index"]=-1
+    kktix_dict["fail_list"]=[]
+    kktix_dict["captcha_sound_played"] = False
     kktix_dict["kktix_register_status_last"] = None
     kktix_dict["is_popup_checkout"] = False
 
@@ -10716,11 +10611,10 @@ if __name__ == "__main__":
         #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
         #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
         #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
-        captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
+        #captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
         #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
         #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
-        inferred_answer_string, answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
-        print("inferred_answer_string:", inferred_answer_string)
+        answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
         print("answer_list:", answer_list)
 
         ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
@@ -10732,10 +10626,11 @@ if __name__ == "__main__":
             print(res)
 
         # for urbtix survey.
+        # PS: urttix use "open-end" qustion, must use external database to answer...
         question_text = "「6- -V- -U - n--s- -z - j」由右起第三個數字/字母是甚麼?"
         question_text = "「6---2 - 3 _ 8- -8 _ 4 - 1--4 _ 7」中有多少個「二」?"
         question_answer_char, question_direction = get_urbtix_survey_answer_by_question(question_text)
-        print("question_text:", question_text)
-        print("question_answer_char:", question_answer_char)
-        print("question_text:", question_direction)
+        #print("question_text:", question_text)
+        #print("question_answer_char:", question_answer_char)
+        #print("question_text:", question_direction)
 
