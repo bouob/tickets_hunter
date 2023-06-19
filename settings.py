@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.18)"
+CONST_APP_VERSION = "MaxBot (2023.6.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -109,9 +109,11 @@ def load_translate():
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
     en_us["and"] = 'And with'
 
+    en_us["local_dictionary"] = 'Local Dictionary'
     en_us["online_dictionary_url"] = 'Online Dictionary URL'
     en_us["auto_guess_options"] = 'Guess Options in Question'
     en_us["user_guess_string"] = 'Fill Answers in Question'
+    en_us["preview"] = 'Preview'
 
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
@@ -147,6 +149,7 @@ def load_translate():
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
+    en_us["verification_word"] = "Verification code"
     en_us["autofill"] = 'Autofill'
     en_us["runtime"] = 'Runtime'
     en_us["about"] = 'About'
@@ -200,9 +203,11 @@ def load_translate():
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
     zh_tw["and"] = '而且（同列）'
 
+    zh_tw["local_dictionary"] = '使用者自定字典'
     zh_tw["online_dictionary_url"] = '線上字典檔網址'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
     zh_tw["user_guess_string"] = '驗證問題中的答案清單'
+    zh_tw["preview"] = '預覽'
 
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
@@ -237,6 +242,7 @@ def load_translate():
 
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
+    zh_tw["verification_word"] = "驗證問題"
     zh_tw["autofill"] = '自動填表單'
     zh_tw["runtime"] = '執行階段'
     zh_tw["about"] = '關於'
@@ -290,9 +296,11 @@ def load_translate():
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
     zh_cn["and"] = '而且（同列）'
 
+    zh_cn["local_dictionary"] = '本地字典'
     zh_cn["online_dictionary_url"] = '在线词典网址'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
     zh_cn["user_guess_string"] = '验证问题的答案列表'
+    zh_cn["preview"] = '预览'
 
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
@@ -327,6 +335,7 @@ def load_translate():
 
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '進階設定'
+    zh_cn["verification_word"] = "验证字"
     zh_cn["autofill"] = '自动填表单'
     zh_cn["runtime"] = '运行'
     zh_cn["about"] = '关于'
@@ -381,9 +390,11 @@ def load_translate():
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
     ja_jp["and"] = 'そして（同列）'
 
+    ja_jp["local_dictionary"] = 'ローカル辞書'
     ja_jp["online_dictionary_url"] = 'オンライン辞書のURL'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
     ja_jp["user_guess_string"] = '検証用の質問の回答リスト'
+    ja_jp["preview"] = 'プレビュー'
 
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
@@ -418,6 +429,7 @@ def load_translate():
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
+    ja_jp["verification_word"] = "確認の言葉"
     ja_jp["autofill"] = 'オートフィル'
     ja_jp["runtime"] = 'ランタイム'
     ja_jp["about"] = '情報'
@@ -906,9 +918,9 @@ def show_preview_text():
         except Exception as exc:
             date_array = []
 
-        global lbl_online_dictionary_preview
+        global lbl_online_dictionary_preview_data
         try:
-            lbl_online_dictionary_preview.config(text=','.join(date_array))
+            lbl_online_dictionary_preview_data.config(text=','.join(date_array))
         except Exception as exc:
             pass
 
@@ -1045,10 +1057,10 @@ def btn_exit_clicked():
     root.destroy()
 
 def btn_donate_clicked():
-    open_url.open(URL_DONATE)
+    webbrowser.open(URL_DONATE)
 
 def btn_help_clicked():
-    open_url.open(URL_HELP)
+    webbrowser.open(URL_HELP)
 
 def btn_copy_clicked():
     pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
@@ -1088,6 +1100,7 @@ def applyNewLanguage():
     # for kktix
     global lbl_auto_press_next_step_button
     global lbl_auto_fill_ticket_number
+    global lbl_user_guess_string_description
     global lbl_user_guess_string
 
     # for tixcraft
@@ -1131,6 +1144,7 @@ def applyNewLanguage():
     global chk_headless
     global chk_verbose
     global lbl_online_dictionary_url
+    global lbl_online_dictionary_preview
     global chk_auto_guess_options
     global chk_auto_reload_random_delay
 
@@ -1156,7 +1170,8 @@ def applyNewLanguage():
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
-    lbl_user_guess_string.config(text=translate[language_code]["user_guess_string"])
+    lbl_user_guess_string_description.config(text=translate[language_code]["user_guess_string"])
+    lbl_user_guess_string.config(text=translate[language_code]["local_dictionary"])
 
     lbl_date_auto_select.config(text=translate[language_code]["date_auto_select"])
     lbl_date_auto_select_mode.config(text=translate[language_code]["date_select_order"])
@@ -1180,6 +1195,7 @@ def applyNewLanguage():
     lbl_verbose.config(text=translate[language_code]["verbose"])
 
     lbl_online_dictionary_url.config(text=translate[language_code]["online_dictionary_url"])
+    lbl_online_dictionary_preview.config(text=translate[language_code]["preview"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
 
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
@@ -1205,9 +1221,10 @@ def applyNewLanguage():
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
-    tabControl.tab(2, text=translate[language_code]["autofill"])
-    tabControl.tab(3, text=translate[language_code]["runtime"])
-    tabControl.tab(4, text=translate[language_code]["about"])
+    tabControl.tab(2, text=translate[language_code]["verification_word"])
+    tabControl.tab(3, text=translate[language_code]["autofill"])
+    tabControl.tab(4, text=translate[language_code]["runtime"])
+    tabControl.tab(5, text=translate[language_code]["about"])
 
     global lbl_tixcraft_sid
     global lbl_ibon_ibonqware
@@ -1711,17 +1728,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    global lbl_user_guess_string
-    lbl_user_guess_string = Label(frame_group_area, text=translate[language_code]['user_guess_string'])
-    lbl_user_guess_string.grid(column=0, row=group_row_count, sticky =  E+N)
-
-    global txt_user_guess_string
-    txt_user_guess_string = Text(frame_group_area, width=30, height=4)
-    txt_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
-    txt_user_guess_string.insert("1.0", config_dict["advanced"]["user_guess_string"].strip())
-
-    group_row_count+=1
-
     global lbl_area_keyword_usage
     lbl_area_keyword_usage = Label(frame_group_area, text=translate[language_code]['area_keyword_usage'])
     lbl_area_keyword_usage.grid(column=1, row=group_row_count, sticky = W)
@@ -1931,45 +1937,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
-    global lbl_online_dictionary_url
-    lbl_online_dictionary_url = Label(frame_group_header, text=translate[language_code]['online_dictionary_url'])
-    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E+N)
-
-    global txt_online_dictionary_url
-    txt_online_dictionary_url = Text(frame_group_header, width=30, height=3)
-    txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
-    txt_online_dictionary_url.insert("1.0", config_dict['advanced']["online_dictionary_url"].strip())
-
-    icon_preview_text_filename = "icon_chrome_4.gif"
-    icon_preview_text_img = PhotoImage(file=icon_preview_text_filename)
-
-    lbl_icon_preview_text = Label(frame_group_header, image=icon_preview_text_img, cursor="hand2")
-    lbl_icon_preview_text.image = icon_preview_text_img
-    lbl_icon_preview_text.grid(column=2, row=group_row_count, sticky = W+N)
-    lbl_icon_preview_text.bind("<Button-1>", lambda e: btn_open_text_server_clicked())
-
-    group_row_count+=1
-
-    global lbl_online_dictionary_preview
-    lbl_online_dictionary_preview = Label(frame_group_header, text="")
-    lbl_online_dictionary_preview.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_auto_guess_options
-    lbl_auto_guess_options = Label(frame_group_header, text=translate[language_code]['auto_guess_options'])
-    lbl_auto_guess_options.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_auto_guess_options
-    chk_state_auto_guess_options = BooleanVar()
-    chk_state_auto_guess_options.set(config_dict["advanced"]["auto_guess_options"])
-
-    global chk_auto_guess_options
-    chk_auto_guess_options = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_guess_options)
-    chk_auto_guess_options.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
     global lbl_ocr_captcha
     lbl_ocr_captcha = Label(frame_group_header, text=translate[language_code]['ocr_captcha'])
     lbl_ocr_captcha.grid(column=0, row=group_row_count, sticky = E)
@@ -2002,6 +1969,74 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
     showHideOcrCaptchaWithSubmit()
+
+def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
+    row_count = 0
+
+    frame_group_header = Frame(root)
+    group_row_count = 0
+
+    global lbl_user_guess_string_description
+    lbl_user_guess_string_description = Label(frame_group_header, text=translate[language_code]['user_guess_string'])
+    lbl_user_guess_string_description.grid(column=1, row=group_row_count, sticky =  W)
+
+    group_row_count+=1
+
+    global lbl_user_guess_string
+    lbl_user_guess_string = Label(frame_group_header, text=translate[language_code]['local_dictionary'])
+    lbl_user_guess_string.grid(column=0, row=group_row_count, sticky =  E+N)
+
+    global txt_user_guess_string
+    txt_user_guess_string = Text(frame_group_header, width=30, height=4)
+    txt_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
+    txt_user_guess_string.insert("1.0", config_dict["advanced"]["user_guess_string"].strip())
+
+    group_row_count+=1
+
+    global lbl_online_dictionary_url
+    lbl_online_dictionary_url = Label(frame_group_header, text=translate[language_code]['online_dictionary_url'])
+    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_online_dictionary_url
+    txt_online_dictionary_url = Text(frame_group_header, width=30, height=4)
+    txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
+    txt_online_dictionary_url.insert("1.0", config_dict['advanced']["online_dictionary_url"].strip())
+
+    icon_preview_text_filename = "icon_chrome_4.gif"
+    icon_preview_text_img = PhotoImage(file=icon_preview_text_filename)
+
+    lbl_icon_preview_text = Label(frame_group_header, image=icon_preview_text_img, cursor="hand2")
+    lbl_icon_preview_text.image = icon_preview_text_img
+    lbl_icon_preview_text.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_preview_text.bind("<Button-1>", lambda e: btn_open_text_server_clicked())
+
+    group_row_count+=1
+
+    global lbl_online_dictionary_preview
+    lbl_online_dictionary_preview = Label(frame_group_header, text=translate[language_code]['preview'])
+    lbl_online_dictionary_preview.grid(column=0, row=group_row_count, sticky = E)
+
+    global lbl_online_dictionary_preview_data
+    lbl_online_dictionary_preview_data = Label(frame_group_header, text="")
+    lbl_online_dictionary_preview_data.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    global lbl_auto_guess_options
+    lbl_auto_guess_options = Label(frame_group_header, text=translate[language_code]['auto_guess_options'])
+    lbl_auto_guess_options.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_auto_guess_options
+    chk_state_auto_guess_options = BooleanVar()
+    chk_state_auto_guess_options.set(config_dict["advanced"]["auto_guess_options"])
+
+    global chk_auto_guess_options
+    chk_auto_guess_options = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_guess_options)
+    chk_auto_guess_options.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count+=1
+
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
 def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0
@@ -2215,7 +2250,6 @@ def update_maxbot_runtime_status():
         pass
 
 
-
 def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0
 
@@ -2399,13 +2433,16 @@ def load_GUI(root, config_dict):
     tabControl.add(tab2, text=translate[language_code]['advanced'])
 
     tab3 = Frame(tabControl)
-    tabControl.add(tab3, text=translate[language_code]['autofill'])
+    tabControl.add(tab3, text=translate[language_code]['verification_word'])
 
     tab4 = Frame(tabControl)
-    tabControl.add(tab4, text=translate[language_code]['runtime'])
+    tabControl.add(tab4, text=translate[language_code]['autofill'])
 
     tab5 = Frame(tabControl)
-    tabControl.add(tab5, text=translate[language_code]['about'])
+    tabControl.add(tab5, text=translate[language_code]['runtime'])
+
+    tab6 = Frame(tabControl)
+    tabControl.add(tab6, text=translate[language_code]['about'])
 
     tabControl.grid(column=0, row=row_count)
     tabControl.select(tab1)
@@ -2418,9 +2455,10 @@ def load_GUI(root, config_dict):
     global UI_PADDING_X
     PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
-    AutofillTab(tab3, config_dict, language_code, UI_PADDING_X)
-    RuntimeTab(tab4, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab5, language_code)
+    VerificationTab(tab3, config_dict, language_code, UI_PADDING_X)
+    AutofillTab(tab4, config_dict, language_code, UI_PADDING_X)
+    RuntimeTab(tab5, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab6, language_code)
 
 
 def main():
@@ -2443,7 +2481,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 550
-    GUI_SIZE_HEIGHT = 630
+    GUI_SIZE_HEIGHT = 600
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-80) + 'x' + str(GUI_SIZE_HEIGHT-80)
