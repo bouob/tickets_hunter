@@ -16,6 +16,7 @@ except ImportError:
 import os
 import sys
 import platform
+import webbrowser
 import pyperclip
 import base64
 import time
@@ -27,7 +28,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.18)"
+CONST_APP_VERSION = "MaxBot (2023.6.19)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
@@ -49,7 +50,14 @@ def btn_copy_ip_clicked():
 def btn_copy_question_clicked():
     global txt_question
     question_text = txt_question.get("1.0",END).strip()
-    pyperclip.copy(question_text)
+    if len(question_text) > 0:
+        pyperclip.copy(question_text)
+
+def btn_query_question_clicked():
+    global txt_question
+    question_text = txt_question.get("1.0",END).strip()
+    if len(question_text) > 0:
+        webbrowser.open("https://www.google.com/search?q="+question_text)
 
 def btn_paste_answer_by_user():
     print("btn_paste_answer_by_user")
@@ -85,7 +93,7 @@ def TextInput(root, UI_PADDING_X):
     lbl_question.grid(column=0, row=group_row_count, sticky = E+N)
 
     global txt_question
-    txt_question = Text(frame_group_header, width=50, height=15)
+    txt_question = Text(frame_group_header, width=50, height=22)
     txt_question.grid(column=1, row=group_row_count, sticky = W)
     txt_question.insert("1.0", "")
 
@@ -93,6 +101,14 @@ def TextInput(root, UI_PADDING_X):
     lbl_icon_copy_question.image = icon_copy_img
     lbl_icon_copy_question.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_copy_question.bind("<Button-1>", lambda e: btn_copy_question_clicked())
+
+    icon_query_filename = "icon_query_5.gif"
+    icon_query_img = PhotoImage(file=icon_query_filename)
+
+    lbl_icon_query_question = Label(frame_group_header, image=icon_query_img, cursor="hand2")
+    lbl_icon_query_question.image = icon_query_img
+    lbl_icon_query_question.grid(column=3, row=group_row_count, sticky = W+N)
+    lbl_icon_query_question.bind("<Button-1>", lambda e: btn_query_question_clicked())
 
     group_row_count += 1
 
@@ -120,8 +136,8 @@ def main_ui():
 
     TextInput(root, UI_PADDING_X)
 
-    GUI_SIZE_WIDTH = 530
-    GUI_SIZE_HEIGHT = 360
+    GUI_SIZE_WIDTH = 550
+    GUI_SIZE_HEIGHT = 440
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-55)
