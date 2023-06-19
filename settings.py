@@ -32,13 +32,18 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.6.19)"
+import socket
+
+CONST_APP_VERSION = "MaxBot (2023.6.19) v.2"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+
+CONST_SERVER_PORT_DEFAULT = 8888
+CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -121,7 +126,7 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval sec.(HK)'
-    en_us["auto_reload_random_delay"] = 'Reload with random delay(TW)'
+    en_us["auto_reload_random_delay"] = 'Reload random delay(TW)'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -307,8 +312,8 @@ def load_translate():
     zh_cn["date_keyword"] = '日期关键字'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
-    zh_cn["auto_reload_page_interval"] = '重新加载页面间隔（秒）(香港)'
-    zh_cn["auto_reload_random_delay"] = '重新加载时随机延迟(台灣)'
+    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)(香港)'
+    zh_cn["auto_reload_random_delay"] = '重新加载随机延迟(台灣)'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -401,8 +406,8 @@ def load_translate():
     ja_jp["date_keyword"] = '日付キーワード'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
-    ja_jp["auto_reload_page_interval"] = 'ページのリロード間隔 (秒)(香港)'
-    ja_jp["auto_reload_random_delay"] = 'リロード時のランダムな遅延(台灣)'
+    ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)(HK)'
+    ja_jp["auto_reload_random_delay"] = 'ランダムなリロード遅延(TW)'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -475,6 +480,13 @@ def load_translate():
     translate['zh_cn']=zh_cn
     translate['ja_jp']=ja_jp
     return translate
+
+def get_ip_address():
+    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] 
+        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), 
+        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, 
+        socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    return ip
 
 def format_config_keyword_for_json(user_input):
     if len(user_input) > 0:
@@ -1023,6 +1035,18 @@ def run_python_script(script_name):
                 pass
 
 def btn_open_text_server_clicked():
+    global txt_online_dictionary_url
+    online_dictionary_url = ""
+    try:
+        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+    except Exception as exc:
+        pass
+
+    if online_dictionary_url=="":
+        local_ip = get_ip_address()
+        ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
+        txt_online_dictionary_url.insert("1.0", ip_address)
+
     run_python_script("text_server")
 
 def btn_preview_sound_clicked():
@@ -2480,11 +2504,11 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 550
-    GUI_SIZE_HEIGHT = 600
+    GUI_SIZE_WIDTH = 570
+    GUI_SIZE_HEIGHT = 580
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-80) + 'x' + str(GUI_SIZE_HEIGHT-80)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
 
     GUI_SIZE =GUI_SIZE_MACOS
 

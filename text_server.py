@@ -28,7 +28,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.19)"
+CONST_APP_VERSION = "MaxBot (2023.6.19) v.2"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
@@ -136,11 +136,11 @@ def main_ui():
 
     TextInput(root, UI_PADDING_X)
 
-    GUI_SIZE_WIDTH = 550
-    GUI_SIZE_HEIGHT = 440
+    GUI_SIZE_WIDTH = 520
+    GUI_SIZE_HEIGHT = 420
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-50) + 'x' + str(GUI_SIZE_HEIGHT-55)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-30) + 'x' + str(GUI_SIZE_HEIGHT-35)
 
     GUI_SIZE =GUI_SIZE_MACOS
 
