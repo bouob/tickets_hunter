@@ -3703,10 +3703,10 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                     is_match_quota_text = False
             if is_match_quota_text:
                 is_use_quota_message = True
-        print("is_use_quota_message:" , is_use_quota_message)
+        #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
             inferred_answer_string = find_between(captcha_text_div_text, u"「", u"」")
-            print("find captcha text:" , inferred_answer_string)
+            #print("find captcha text:" , inferred_answer_string)
 
     if inferred_answer_string is None:
         is_use_quota_message = False
