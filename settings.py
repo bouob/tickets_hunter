@@ -82,7 +82,7 @@ CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"===[以下為香港的系統]==="
     ,"http://www.urbtix.hk/ (城市)"
     ,"https://www.cityline.com/ (買飛)"
-    ,"https://premier.hkticketing.com/ (快達票)"
+    ,"https://hotshow.hkticketing.com/ (快達票)"
     ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
     ]
 # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
