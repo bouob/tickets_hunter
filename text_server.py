@@ -99,7 +99,7 @@ def TextInput(root, UI_PADDING_X):
 
     lbl_icon_copy_question = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
     lbl_icon_copy_question.image = icon_copy_img
-    lbl_icon_copy_question.grid(column=2, row=group_row_count, sticky = W+N)
+    #lbl_icon_copy_question.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_copy_question.bind("<Button-1>", lambda e: btn_copy_question_clicked())
 
     icon_query_filename = "icon_query_5.gif"
@@ -107,7 +107,7 @@ def TextInput(root, UI_PADDING_X):
 
     lbl_icon_query_question = Label(frame_group_header, image=icon_query_img, cursor="hand2")
     lbl_icon_query_question.image = icon_query_img
-    lbl_icon_query_question.grid(column=3, row=group_row_count, sticky = W+N)
+    lbl_icon_query_question.grid(column=2, row=group_row_count, sticky = W+N)
     lbl_icon_query_question.bind("<Button-1>", lambda e: btn_query_question_clicked())
 
     group_row_count += 1
