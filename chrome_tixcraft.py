@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.19) v.2"
+CONST_APP_VERSION = "MaxBot (2023.6.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -635,7 +635,14 @@ def get_driver_by_config(config_dict):
                 options.add_argument('--headless')
                 #options.add_argument('--headless=new')
             if platform.system().lower()=="windows":
-                options.binary_location = r'C:\\Program Files\\Mozilla Firefox\\firefox.exe'
+                binary_path = "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+                if not os.path.exists(binary_path):
+                    binary_path = os.path.expanduser('~') + "\\AppData\\Local\\Mozilla Firefox\\firefox.exe"
+                if not os.path.exists(binary_path):
+                    binary_path = "C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe"
+                if not os.path.exists(binary_path):
+                    binary_path = "D:\\Program Files\\Mozilla Firefox\\firefox.exe"
+                options.binary_location = binary_path
 
             driver = webdriver.Firefox(service=webdriver_service, options=options)
         except Exception as exc:
@@ -2067,6 +2074,94 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_list):
 
     return is_need_refresh, matched_blocks
 
+
+def get_ticketmaster_target_area(config_dict, area_keyword_list, zone_info):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    # read config.
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
+
+    is_need_refresh = False
+    matched_blocks = None
+
+    area_list_count = len(zone_info)
+    if show_debug_message:
+        print("area_list_count:", area_list_count)
+    if area_list_count > 0:
+        matched_blocks = []
+        for row in zone_info:
+            row_is_enabled=False
+
+            if zone_info[row]["areaStatus"] != "UNAVAILABLE":
+                row_is_enabled = True
+
+            if zone_info[row]["areaStatus"] == "SINGLE SEATS":
+                row_is_enabled = True
+                if config_dict["ticket_number"] > 1:
+                    row_is_enabled = False
+
+            row_text = ""
+            if row_is_enabled:
+                try:
+                    row_text = zone_info[row]["groupName"] 
+                    row_text += " " + zone_info[row]["description"]
+                    if "price" in zone_info[row]:
+                        row_text += " " + zone_info[row]["price"][0]["ticketPrice"]
+                except Exception as exc:
+                    if show_debug_message:
+                        print("get text fail:", exc, zone_info[row])
+                    pass
+
+            if row_text is None:
+                row_text = ""
+
+            if len(row_text) > 0:
+                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+
+            if len(row_text) > 0:
+                # clean stop word.
+                row_text = format_keyword_string(row_text)
+                if show_debug_message:
+                    #print("row_text:", row_text)
+                    pass
+
+                is_append_this_row = False
+
+                if len(area_keyword_list) > 0:
+                    # must match keyword.
+                    is_append_this_row = True
+                    area_keyword_array = area_keyword_list.split(' ')
+                    for area_keyword in area_keyword_array:
+                        area_keyword = format_keyword_string(area_keyword)
+                        if not area_keyword in row_text:
+                            is_append_this_row = False
+                            break
+                else:
+                    # without keyword.
+                    is_append_this_row = True
+
+                if show_debug_message:
+                    #print("is_append_this_row:", is_append_this_row)
+                    pass
+
+                if is_append_this_row:
+                    matched_blocks.append(row)
+
+                    if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        print("only need first item, break area list loop.")
+                        break
+
+        if len(matched_blocks) == 0:
+            matched_blocks = None
+            is_need_refresh = True
+
+    return is_need_refresh, matched_blocks
+
 # PS: auto refresh condition 1: no keyword + no hyperlink.
 # PS: auto refresh condition 2: with keyword + no hyperlink.
 def tixcraft_area_auto_select(driver, url, config_dict):
@@ -2160,44 +2255,85 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 if config_dict["advanced"]["auto_reload_random_delay"]:
                     time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-'''
-        el_selectSeat_iframe = None
+def ticketmaster_area_auto_select(driver, config_dict, zone_info):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    # read config.
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+
+    if show_debug_message:
+        print("area_keyword:", area_keyword)
+
+    is_need_refresh = False
+    areas = None
+
+    if len(area_keyword) > 0:
+        area_keyword_array = []
         try:
-            el_selectSeat_iframe = driver.find_element_by_xpath("//iframe[contains(@src,'/ticket/selectSeat/')]")
+            area_keyword_array = json.loads("["+ area_keyword +"]")
         except Exception as exc:
-            #print("find seat iframe fail")
+            area_keyword_array = []
+        for area_keyword_item in area_keyword_array:
+            is_need_refresh, areas = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
+            if not is_need_refresh:
+                break
+            else:
+                print("is_need_refresh for keyword:", area_keyword_item)
+    else:
+        # empty keyword, match all.
+        is_need_refresh, areas = get_ticketmaster_target_area(config_dict, "", zone_info)
+
+    area_target = None
+    if areas is not None:
+        #print("area_auto_select_mode", area_auto_select_mode)
+        if show_debug_message:
+            print("len(areas)", len(areas))
+        if len(areas) > 0:
+            target_row_index = 0
+
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(areas)-1
+
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(areas)-1)
+
+            #print("target_row_index", target_row_index)
+            area_target = areas[target_row_index]
+
+    if area_target is not None:
+        if show_debug_message:
+            #print("area_target:", area_target)
+            pass
+        try:
+            #print("area text:", area_target.text)
+            click_area_javascript = 'areaTicket("%s", "map");' % area_target
+            if show_debug_message:
+                #print("click_area_javascript:", click_area_javascript)
+                pass
+            driver.execute_script(click_area_javascript)
+        except Exception as exc:
+            if show_debug_message:
+                print(exc)
             pass
 
-        if el_selectSeat_iframe is not None:
-            driver.switch_to.frame(el_selectSeat_iframe)
+    # auto refresh for area list page.
+    if is_need_refresh:
+        try:
+            driver.refresh()
+        except Exception as exc:
+            pass
 
-            # click one seat
-            el_seat = None
-            try:
-                el_seat = driver.find_element(By.CSS_SELECTOR, '.empty')
-                if el_seat is not None:
-                    try:
-                        el_seat.click()
-                    except Exception as exc:
-                        #print("click area button fail")
-                        pass
-            except Exception as exc:
-                print("find empty seat fail")
+        if config_dict["advanced"]["auto_reload_random_delay"]:
+            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-
-            # click submit button
-            el_confirm_seat = None
-            try:
-                el_confirm_seat = driver.find_element(By.ID, 'submitSeat')
-                if el_confirm_seat is not None:
-                    try:
-                        el_confirm_seat.click()
-                    except Exception as exc:
-                        #print("click area button fail")
-                        pass
-            except Exception as exc:
-                print("find submitSeat fail")
-'''
 
 def tixcraft_ticket_agree(driver, config_dict):
     show_debug_message = True       # debug.
@@ -6489,6 +6625,23 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
                 print('my_css_selector:', my_css_selector)
                 print("find form-select fail", exc)
             pass
+    else:
+        #print('not found table, start click area')
+        zone_info = {}        
+
+        try:
+            zone_info = driver.execute_async_script("""
+                if (!(typeof zone === 'undefined')) {
+                callback = arguments[arguments.length - 1];
+                callback(zone); }
+                """)
+            if not zone_info is None:
+                #print("zone_info", zone_info)
+                ticketmaster_area_auto_select(driver, config_dict, zone_info)
+        except Exception as exc:
+            if show_debug_message:
+                print(exc)
+        
 
     select_obj = None
     if form_select is not None:
@@ -6612,12 +6765,13 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     # choose area
     if '/ticket/area/' in url:
         domain_name = url.split('/')[2]
-        if not 'ticketmaster' in domain_name:
-            if config_dict["area_auto_select"]["enable"]:
+        if config_dict["area_auto_select"]["enable"]:
+            if not 'ticketmaster' in domain_name:
+                # for tixcraft
                 tixcraft_area_auto_select(driver, url, config_dict)
-        else:
-            # area auto select is too difficult, skip in this version.
-            ticketmaster_assign_ticket_number(driver, config_dict)
+            else:
+                # area auto select is too difficult, skip in this version.
+                ticketmaster_assign_ticket_number(driver, config_dict)
 
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
     if '/ticket/check-captcha/' in url:

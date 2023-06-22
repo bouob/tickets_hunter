@@ -34,7 +34,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import socket
 
-CONST_APP_VERSION = "MaxBot (2023.6.19) v.2"
+CONST_APP_VERSION = "MaxBot (2023.6.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -573,7 +573,7 @@ def get_default_config():
     config_dict["area_auto_select"]["enable"] = True
     config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["area_auto_select"]["area_keyword"] = ""
-    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\",\"身心 障礙\""
+    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\""
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
