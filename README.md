@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-20：ticketmaster 支援區域自動點擊
+
+https://youtu.be/vUKWy79ZeP0
+ 
 Max搶票機器人2023-06-18：KKTIX/ibon/拓元 合併本地字典與線上字典檔
 
 https://youtu.be/LnJbZokIyOY
