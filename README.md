@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-20：ticketmaster 支援區域自動點擊
+
+https://youtu.be/vUKWy79ZeP0
+ 
 Max搶票機器人2023-06-18：KKTIX/ibon/拓元 合併本地字典與線上字典檔
 
 https://youtu.be/LnJbZokIyOY
@@ -213,7 +217,7 @@ Max搶票機器人 (2022-03-24):
 https://youtu.be/AmOYg8Oj0qM
 
 # How to use (如何使用)
-* tixcraft: https://max-everyday.com/2018/03/tixcraft-bot/
+* tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
 * kktix: https://max-everyday.com/2018/12/kktix-bot/
 * FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
 * ibon: https://max-everyday.com/2023/01/ibon-bot/
