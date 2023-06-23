@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.20)"
+CONST_APP_VERSION = "MaxBot (2023.6.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6595,6 +6595,62 @@ def set_non_browser_cookies(driver, url, Captcha_Browser):
             Captcha_Browser.Set_cookies(driver.get_cookies())
             Captcha_Browser.Set_Domain(domain_name)
 
+def ticketmaster_parse_zone_info(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    mapSelectArea = None
+    try:
+        my_css_selector = '#mapSelectArea'
+        mapSelectArea = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        if show_debug_message:
+            print('fail to find my_css_selector:', my_css_selector)
+            #print("find table#ticketPriceList fail", exc)
+
+    if not mapSelectArea is None:
+        mapSelectArea_html = ""
+        try:
+            mapSelectArea_html = mapSelectArea.get_attribute('innerHTML')
+        except Exception as exc:
+            mapSelectArea_html = ""
+            if show_debug_message:
+                print(exc)
+
+        zone_string = ""
+        tag_start = "var zone ="
+        tag_end = "fieldImageType"
+        if tag_start in mapSelectArea_html and tag_end in mapSelectArea_html:
+            if show_debug_message:
+                print('found zone info!')
+            zone_string = mapSelectArea_html.split(tag_start)[1]
+            zone_string = zone_string.split(tag_end)[0]
+            zone_string = zone_string.strip()
+            if zone_string[-1:] == "\n":
+                zone_string=zone_string[:-1]
+            zone_string = zone_string.strip()
+            if zone_string[-1:] == ",":
+                zone_string=zone_string[:-1]
+            if show_debug_message:
+                #print('found zone info string:', zone_string)
+                pass
+
+        if len(zone_string) > 0:
+            zone_info = {}        
+            try:
+                zone_info = json.loads(zone_string)
+                if show_debug_message:
+                    #print("zone_info", zone_info)
+                    pass
+                if not zone_info is None:
+                    ticketmaster_area_auto_select(driver, config_dict, zone_info)
+            except Exception as exc:
+                if show_debug_message:
+                    print(exc)
+
 def ticketmaster_assign_ticket_number(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -6610,7 +6666,8 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
         if show_debug_message:
             print('fail to find my_css_selector:', my_css_selector)
             #print("find table#ticketPriceList fail", exc)
-        pass
+        ticketmaster_parse_zone_info(driver, config_dict)
+
 
     form_select = None
     if not table_select is None:
@@ -6625,23 +6682,6 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
                 print('my_css_selector:', my_css_selector)
                 print("find form-select fail", exc)
             pass
-    else:
-        #print('not found table, start click area')
-        zone_info = {}        
-
-        try:
-            zone_info = driver.execute_async_script("""
-                if (!(typeof zone === 'undefined')) {
-                callback = arguments[arguments.length - 1];
-                callback(zone); }
-                """)
-            if not zone_info is None:
-                #print("zone_info", zone_info)
-                ticketmaster_area_auto_select(driver, config_dict, zone_info)
-        except Exception as exc:
-            if show_debug_message:
-                print(exc)
-        
 
     select_obj = None
     if form_select is not None:
