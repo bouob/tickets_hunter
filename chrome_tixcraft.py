@@ -2682,9 +2682,6 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
         if inputed_value is None:
             inputed_value = ""
-
-        if answer==inputed_value:
-            # no need to send key.
             is_visible = False
 
         if is_visible:
