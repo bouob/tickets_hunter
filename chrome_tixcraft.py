@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.22)"
+CONST_APP_VERSION = "MaxBot (2023.6.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7985,16 +7985,28 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
             if '/UTK02/UTK0207_.aspx' in url:
                 is_event_page = False
 
+            is_finish_checkbox_click = False
             if is_event_page:
                 auto_check_agree = config_dict["auto_check_agree"]
                 if auto_check_agree:
-                    is_finish_checkbox_click = False
                     for i in range(3):
                         is_finish_checkbox_click = ibon_ticket_agree(driver)
                         if is_finish_checkbox_click:
                             break
-                    if is_finish_checkbox_click:
-                        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
+
+            if is_finish_checkbox_click:
+                is_name_based = False
+                try:
+                    my_css_selector = "body"
+                    html_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                    if not html_body is None:
+                        if '實名制' in html_body.text:
+                            is_name_based = True
+                except Exception as exc:
+                    pass
+
+                if not is_name_based:
+                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
 
     return ibon_dict
 
