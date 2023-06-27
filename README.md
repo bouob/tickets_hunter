@@ -12,6 +12,10 @@ Max搶票機器人2023-06-25：hkticketing 本地端字典檔自動輸入信用�
 
 https://youtu.be/BlIRYkd296Y
 
+Max搶票機器人2023-06-22：indievox 支援「區域關鍵字」用在票種與數量的頁面
+
+https://youtu.be/rnYr5CSovGE
+
 Max搶票機器人2023-06-20：ticketmaster 支援區域自動點擊
 
 https://youtu.be/vUKWy79ZeP0
