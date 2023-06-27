@@ -34,7 +34,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import socket
 
-CONST_APP_VERSION = "MaxBot (2023.6.23)"
+CONST_APP_VERSION = "MaxBot (2023.6.24)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -608,7 +608,7 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["online_dictionary_url"] = ""
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 1.5
+    config_dict["advanced"]["auto_reload_page_interval"] = 1.0
     config_dict["advanced"]["auto_reload_random_delay"] = False
 
     return config_dict
