@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.24)"
+CONST_APP_VERSION = "MaxBot (2023.6.25)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8114,9 +8114,18 @@ def hkticketing_date_buy_button_press(driver):
             '''
     return is_date_submiting
 
-def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
+def hkticketing_date_assign(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+
+    if show_debug_message:
+        print("date_keyword:", date_keyword)
 
     matched_blocks = None
 
@@ -8314,47 +8323,113 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
             except Exception as exc:
                 print("click target_area link fail")
                 print(exc)
-                # use plan B
-                '''
-                try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", target_area)
-                    is_date_assigned = True
-                except Exception as exc:
-                    pass
-                '''
 
-    # alway, auto submit
-    is_date_submiting = False
-    el_btn = None
+    return is_date_assigned, is_page_ready, formated_area_list
+
+def hkticketing_date_password_input(driver, config_dict, fail_list):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_password_appear = False
+
+    el_password_input = None
     try:
-        my_css_selector = "#buyButton > input"
-        el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        my_css_selector = "#entitlementPassword > div > div > div > div > input[type='password']"
+        el_password_input = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         pass
-
-    if el_btn is not None:
+    
+    inputed_value = ""
+    if el_password_input is not None:
         try:
-            if el_btn.is_enabled() and el_btn.is_displayed():
-                el_btn.click()
-                print("buy button pressed.")
-                is_date_submiting = True
+            inputed_value = el_password_input.get_attribute('value')
         except Exception as exc:
+            print("get_attribute value fail")
             pass
-            # use plan B
-            '''
-            try:
-                print("force to click by js.")
-                driver.execute_script("arguments[0].click();", el_btn)
-                ret = True
-            except Exception as exc:
-                pass
-            '''
-    else:
-        if auto_reload_coming_soon_page_enable:
-            # auto refresh for date list page.
-            is_need_refresh = True
+        if not inputed_value is None:
+            is_password_appear = True
+            if inputed_value == "":
+                # only this case to auto-fill local dictional value.
+                local_array = []
+                user_guess_string = config_dict["advanced"]["user_guess_string"]
+                if len(user_guess_string) > 0:
+                    user_guess_string = format_config_keyword_for_json(user_guess_string)
+                    try:
+                        local_array = json.loads("["+ user_guess_string +"]")
+                    except Exception as exc:
+                        local_array = []
+                answer_list = local_array
 
+                inferred_answer_string = ""
+                for answer_item in answer_list:
+                    if not answer_item in fail_list:
+                        inferred_answer_string = answer_item
+                        break
+
+                if len(inferred_answer_string) > 0:
+                    try:
+                        el_password_input.click()
+                        el_password_input.send_keys(inferred_answer_string)
+                        el_password_input.send_keys(Keys.ENTER)
+
+                        print("input dictionary answer:", inferred_answer_string)
+                        fail_list.append(inferred_answer_string)
+                    except Exception as exc:
+                        print("set_attribute value fail")
+                        pass
+
+    return is_password_appear, fail_list
+
+def hkticketing_date_auto_select(driver, config_dict, fail_list):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
+    is_page_ready = True
+    is_date_assigned, is_page_ready, formated_area_list = hkticketing_date_assign(driver, config_dict)
+
+    # NOT alway, auto submit
+    is_date_submiting = False
+
+    is_auto_submit = True
+    is_password_sent = False
+    is_password_appear, fail_list = hkticketing_date_password_input(driver, config_dict, fail_list)
+    if is_password_appear:
+        is_auto_submit = False
+
+    if show_debug_message:
+        print("is_auto_submit:", is_auto_submit)
+
+    el_btn = None
+    if is_auto_submit:
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buyButton > input')
+        if show_debug_message:
+            print("is_button_clicked:", is_button_clicked)
+
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+    if show_debug_message:
+        print("is_password_appear:", is_password_appear)
+        print("is_date_assigned:", is_date_assigned)
+        print("is_page_ready:", is_page_ready)
+        print("formated_area_list:", formated_area_list)
+        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
+    
+    if auto_reload_coming_soon_page_enable:
+        # auto refresh for date list page.
+        is_need_refresh = True
+
+        if is_need_refresh:
+            if is_password_appear:
+                is_need_refresh = False
+
+        if is_need_refresh:
             if is_date_assigned:
                 # if select box assign.
                 is_need_refresh = False
@@ -8364,35 +8439,34 @@ def hkticketing_date_auto_select(driver, auto_select_mode, date_keyword, auto_re
                         # option waiting to assign at next loop.
                         is_need_refresh = False
 
-            # due to select option not generated by server side.
-            if is_need_refresh:
-                if not is_page_ready:
-                    is_need_refresh = False
+        # due to select option not generated by server side.
+        if is_need_refresh:
+            if not is_page_ready:
+                is_need_refresh = False
 
-            if is_need_refresh:
-                try:
-                    print("is_need_refresh...")
-                    driver.refresh()
-                    time.sleep(0.3)
-                except Exception as exc:
-                    pass
+        # check next button exist.
+        if is_need_refresh:
+            el_btn = None
+            try:
+                my_css_selector = "#buyButton > input"
+                el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                pass
+            if el_btn is not None:
+                if show_debug_message:
+                    print("next button appear.")
+                is_need_refresh = False
 
-    return is_date_submiting
+        # finally...
+        if is_need_refresh:
+            try:
+                print("is_need_refresh...")
+                driver.refresh()
+                time.sleep(0.2)
+            except Exception as exc:
+                pass
 
-def hkticketing_show(driver, config_dict):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
-
-    if show_debug_message:
-        print("date_keyword:", date_keyword)
-        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
-    is_date_submiting = hkticketing_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
-
-    return is_date_submiting
+    return is_date_submiting, fail_list
 
 def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
     show_debug_message = True       # debug.
@@ -8898,7 +8972,7 @@ def hkticketing_travel_iframe(driver, config_dict):
         iframe_url = ""
         try:
             iframe_url = str(iframe.get_attribute('src'))
-            print("url:", iframe_url)
+            #print("url:", iframe_url)
         except Exception as exc:
             print("get iframe url fail.")
             #print(exc)
@@ -8906,7 +8980,7 @@ def hkticketing_travel_iframe(driver, config_dict):
 
         idx_iframe += 1
         try:
-            print("switch to #", idx_iframe, ":", iframe_url)
+            #print("switch to #", idx_iframe, ":", iframe_url)
             driver.switch_to.frame(iframe)
             is_redirected = hkticketing_content_refresh(driver, iframe_url, config_dict)
         except Exception as exc:
@@ -8966,13 +9040,14 @@ def hkticketing_main(driver, url, config_dict, hkticketing_dict):
             if is_event_page:
                 if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                     if not hkticketing_dict["is_date_submiting"]:
-                        hkticketing_dict["is_date_submiting"] = hkticketing_show(driver, config_dict)
+                        hkticketing_dict["is_date_submiting"], hkticketing_dict["fail_list"] = hkticketing_date_auto_select(driver, config_dict, hkticketing_dict["fail_list"])
                         pass
                     else:
                         #print('double check buy button status.')
                         hkticketing_date_buy_button_press(driver)
     else:
         hkticketing_dict["is_date_submiting"] = False
+        hkticketing_dict["fail_list"] = []
 
     # https://premier.hkticketing.com/events/XXX/venues/KSH/performances/XXX/tickets
     if '/events/' in url and '/performances/' in url:
@@ -10695,6 +10770,8 @@ def main(args):
 
     hkticketing_dict = {}
     hkticketing_dict["is_date_submiting"] = False
+    hkticketing_dict["fail_list"]=[]
+
 
     ocr = None
     Captcha_Browser = None
