@@ -8,7 +8,11 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
-Max搶票機器人2023-06-25：遠大驗證碼自動重試
+Max搶票機器人2023-06-27：遠大支援第二種購票的網頁框架
+
+https://youtu.be/tveqM0-cmCc
+
+Max搶票機器人2023-06-26：遠大驗證碼自動重試
 
 https://youtu.be/2qC1HBMbAUU
 
