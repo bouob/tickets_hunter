@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-06-25：遠大驗證碼自動重試
+
+https://youtu.be/2qC1HBMbAUU
+
 Max搶票機器人2023-06-25：hkticketing 本地端字典檔自動輸入信用卡前6碼
 
 https://youtu.be/BlIRYkd296Y
