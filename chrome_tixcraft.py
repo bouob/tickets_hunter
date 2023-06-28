@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.25)"
+CONST_APP_VERSION = "MaxBot (2023.6.26)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -10208,7 +10208,6 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    is_price_assign_by_bot = False
     is_need_refresh = False
 
     matched_blocks = None
@@ -10216,7 +10215,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.v-expansion-panels > div.v-expansion-panel"
+        my_css_selector = "div.rwd-margin > div.text-title"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find .v-expansion-panel date list fail")
@@ -10247,7 +10246,10 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     if row_text is None:
                         row_text = ""
 
-                    if '剩餘：0' in row_text:
+                    if '剩餘 0' in row_text:
+                        row_text = ""
+
+                    if '已售完' in row_text:
                         row_text = ""
 
                     if len(row_text) > 0:
@@ -10266,9 +10268,6 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         if show_debug_message:
             print("area_list_count is None.")
         pass
-
-    if is_price_assign_by_bot:
-        formated_area_list = None
 
     if formated_area_list is not None:
         area_list_count = len(formated_area_list)
@@ -10346,23 +10345,8 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             if show_debug_message:
                 print("matched_blocks is empty, is_need_refresh")
 
+    is_price_assign_by_bot = False
     if target_area is not None:
-        try:
-            if target_area.is_enabled():
-                target_area.click()
-                is_price_assign_by_bot = True
-        except Exception as exc:
-            print("click target_area link fail")
-            print(exc)
-            # use plan B
-            try:
-                print("force to click by js.")
-                driver.execute_script("arguments[0].click();", target_area)
-                is_price_assign_by_bot = True
-            except Exception as exc:
-                pass
-
-    if is_price_assign_by_bot:
         ticket_number_div = None
         try:
             ticket_number_div = target_area.find_element(By.CSS_SELECTOR, 'div.count-button > div')
@@ -10405,6 +10389,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                             try:
                                 if ticket_number_plus.is_enabled():
                                     ticket_number_plus.click()
+                                    is_price_assign_by_bot = True
                                     time.sleep(0.1)
                             except Exception as exc:
                                 pass
@@ -10459,7 +10444,7 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
     next_step_button = None
     is_button_disabled = False
     try:
-        my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
+        my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
         next_step_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         if not next_step_button is None:
             if not next_step_button.is_enabled():
@@ -10487,7 +10472,21 @@ def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Browser)
 
         # TODO: must ensure the answer is corrent...
-        is_cpatcha_sent = True
+        if is_form_sumbited:
+            # re-new captcha, if message popup.
+            is_messages_popup = False
+            for double_check_message in range(5):
+                is_messages_popup = ticketplus_check_and_renew_captcha(driver)
+                if is_messages_popup:
+                    break
+                time.sleep(0.2)
+
+            if not is_messages_popup:
+                # still no error
+                is_cpatcha_sent = True
+            else:
+                is_form_sumbited = False
+                is_need_redo_ocr = True
 
         if is_form_sumbited:
             break
@@ -10609,16 +10608,9 @@ svgToPng(svg, (imgData) => {
                 if previous_answer != ocr_answer:
                     previous_answer = ocr_answer
                     print("refresh captcha...")
-                    refresh_btn = None
-                    try:
-                        my_css_selector = 'i.v-icon.mdi.mdi-refresh'
-                        refresh_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if not refresh_btn is None:
-                            refresh_btn.click()
-                            time.sleep(0.3)
-                    except Exception as exc:
-                        print("find refresh_btn fail")
-
+                    my_css_selector = "div.recaptcha-area > div > div > span > i"
+                    is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    time.sleep(0.4)
     else:
         print("ocr_answer is None")
         print("previous_answer:", previous_answer)
@@ -10631,6 +10623,28 @@ svgToPng(svg, (imgData) => {
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
+def ticketplus_check_and_renew_captcha(driver):
+    is_messages_popup = False
+
+    v_messages_div = None
+    try:
+        my_css_selector = 'div.v-messages > div.v-messages__wrapper > div.v-messages__message'
+        v_messages_div = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find messages__message div fail")
+    if v_messages_div is not None:
+        try:
+            v_messages_string = v_messages_div.text
+            if not v_messages_string is None:
+                if len(v_messages_string) > 0:
+                    is_messages_popup = True
+                    print("error message popup, refresh captcha images.")
+
+                    my_css_selector = "div.recaptcha-area > div > div > span > i"
+                    is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+    return is_messages_popup
 
 def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
@@ -10667,6 +10681,14 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 form_verifyCode = None
                 is_verifyCode_editing = True
 
+    # check wrong answer.
+    if is_verifyCode_editing:
+        # re-new captcha, if message popup.
+        is_messages_popup = ticketplus_check_and_renew_captcha(driver)
+        if is_messages_popup:
+            is_verifyCode_editing = False
+            is_form_sumbited = False
+
     if form_verifyCode is not None:
         if len(answer) > 0:
             answer=answer.upper()
@@ -10690,9 +10712,12 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
                     form_verifyCode.send_keys(answer)
 
                     if auto_submit:
-                        form_verifyCode.send_keys(Keys.ENTER)
+                        # ticketplus not able to send enter key.
+                        #form_verifyCode.send_keys(Keys.ENTER)
+
+                        my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
+                        is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
                         is_verifyCode_editing = False
-                        is_form_sumbited = True
                     else:
                         print("select all captcha text")
                         driver.execute_script("arguments[0].select();", form_verifyCode)
