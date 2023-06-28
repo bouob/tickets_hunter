@@ -34,7 +34,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import socket
 
-CONST_APP_VERSION = "MaxBot (2023.6.26)"
+CONST_APP_VERSION = "MaxBot (2023.6.27)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -136,6 +136,7 @@ def load_translate():
 
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
+    en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
     en_us["ocr_captcha_image_source"] = 'OCR image source'
     en_us["webdriver_type"] = 'WebDriver type'
@@ -230,6 +231,7 @@ def load_translate():
 
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
+    zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
     zh_tw["webdriver_type"] = 'WebDriver類別'
@@ -323,6 +325,7 @@ def load_translate():
 
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
+    zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
     zh_cn["webdriver_type"] = 'WebDriver类别'
@@ -417,6 +420,7 @@ def load_translate():
 
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
+    ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
@@ -551,6 +555,7 @@ def get_default_config():
     config_dict["auto_check_agree"] = True
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
+    config_dict["ocr_captcha"]["beta"] = True
     config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
@@ -725,6 +730,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_captcha_sound_filename
     global chk_state_adblock_plus
     global chk_state_ocr_captcha
+    global chk_state_ocr_captcha_ddddocr_beta
     global chk_state_ocr_captcha_force_submit
     global chk_state_adjacent_seat
     global chk_state_headless
@@ -870,6 +876,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
+        config_dict["ocr_captcha"]["beta"] = bool(chk_state_ocr_captcha_ddddocr_beta.get())
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
 
@@ -1140,6 +1147,7 @@ def applyNewLanguage():
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
     global lbl_ocr_captcha
+    global lbl_ocr_captcha_ddddocr_beta
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
     global lbl_webdriver_type
@@ -1163,6 +1171,7 @@ def applyNewLanguage():
     global chk_play_captcha_sound
     global chk_adblock_plus
     global chk_ocr_captcha
+    global chk_ocr_captcha_ddddocr_beta
     global chk_ocr_captcha_force_submit
     global chk_adjacent_seat
     global chk_headless
@@ -1208,6 +1217,7 @@ def applyNewLanguage():
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
+    lbl_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["ocr_captcha_ddddocr_beta"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
@@ -1236,6 +1246,7 @@ def applyNewLanguage():
     chk_play_captcha_sound.config(text=translate[language_code]["enable"])
     chk_adblock_plus.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
+    chk_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_adjacent_seat.config(text=translate[language_code]["enable"])
     chk_headless.config(text=translate[language_code]["enable"])
@@ -1369,14 +1380,23 @@ def showHideOcrCaptchaWithSubmit():
     global lbl_ocr_captcha_force_submit
     global chk_ocr_captcha_force_submit
 
+    global lbl_ocr_captcha_ddddocr_beta
+    global chk_ocr_captcha_ddddocr_beta
+
     if is_ocr_captcha_enable:
         # show.
         lbl_ocr_captcha_force_submit.grid(column=0, row=ocr_captcha_force_submit_index, sticky = E)
         chk_ocr_captcha_force_submit.grid(column=1, row=ocr_captcha_force_submit_index, sticky = W)
+
+        lbl_ocr_captcha_ddddocr_beta.grid(column=0, row=ocr_captcha_force_submit_index-1, sticky = E)
+        chk_ocr_captcha_ddddocr_beta.grid(column=1, row=ocr_captcha_force_submit_index-1, sticky = W)
     else:
         # hide
         lbl_ocr_captcha_force_submit.grid_forget()
         chk_ocr_captcha_force_submit.grid_forget()
+
+        lbl_ocr_captcha_ddddocr_beta.grid_forget()
+        chk_ocr_captcha_ddddocr_beta.grid_forget()
 
 def showHidePass1SeatRemaining():
     global combo_ticket_number
@@ -1972,6 +1992,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_ocr_captcha
     chk_ocr_captcha = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
     chk_ocr_captcha.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_ocr_captcha_ddddocr_beta
+    lbl_ocr_captcha_ddddocr_beta = Label(frame_group_header, text=translate[language_code]['ocr_captcha_ddddocr_beta'])
+    lbl_ocr_captcha_ddddocr_beta.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_ocr_captcha_ddddocr_beta
+    chk_state_ocr_captcha_ddddocr_beta = BooleanVar()
+    chk_state_ocr_captcha_ddddocr_beta.set(config_dict['ocr_captcha']["beta"])
+
+    global chk_ocr_captcha_ddddocr_beta
+    chk_ocr_captcha_ddddocr_beta = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_ddddocr_beta)
+    chk_ocr_captcha_ddddocr_beta.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
