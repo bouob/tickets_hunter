@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.27)"
+CONST_APP_VERSION = "MaxBot (2023.6.28)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -10199,6 +10199,69 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     return is_date_clicked
 
+def ticketplus_assign_ticket_number(target_area, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_price_assign_by_bot = False
+    
+    ticket_number_div = None
+    try:
+        my_css_selector = 'div.count-button > div'
+        ticket_number_div = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find ticket_number_div fail")
+
+    if ticket_number_div is not None:
+        ticket_number = config_dict["ticket_number"]
+
+        ticket_number_text_int = 0
+        ticket_number_text = ""
+        try:
+            ticket_number_text = ticket_number_div.text
+        except Exception as exc:
+            print("get ticket_number_text fail")
+            pass
+
+        if ticket_number_text is None:
+            ticket_number_text = ""
+        if len(ticket_number_text) > 0:
+            ticket_number_text_int = int(ticket_number_text)
+            if show_debug_message:
+                print("ticket_number_text_int:", ticket_number_text_int)
+
+            if ticket_number_text_int < ticket_number:
+                ticket_number_plus = None
+                try:
+                    my_css_selector = 'button > span > i.mdi-plus'
+                    ticket_number_plus = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+                except Exception as exc:
+                    if show_debug_message:
+                        print("find ticket_number_plus fail")
+
+                if not ticket_number_plus is None:
+                    # add
+                    add_count = ticket_number - ticket_number_text_int
+                    if show_debug_message:
+                        print("add_count:", add_count)
+                    for i in range(add_count):
+                        if show_debug_message:
+                            print("click on plus button #",i)
+                        try:
+                            if ticket_number_plus.is_enabled():
+                                ticket_number_plus.click()
+                                is_price_assign_by_bot = True
+                                time.sleep(0.2)
+                        except Exception as exc:
+                            pass
+            else:
+                # match target ticket number.
+                is_price_assign_by_bot = True
+    return is_price_assign_by_bot
+
 def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -10375,55 +10438,12 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     pass
 
     is_price_assign_by_bot = False
-    if target_area is not None:
-        ticket_number_div = None
-        try:
-            ticket_number_div = target_area.find_element(By.CSS_SELECTOR, 'div.count-button > div')
-        except Exception as exc:
-            print("find ticket_number_div fail")
-
-        ticket_number = config_dict["ticket_number"]
-        if not ticket_number_div is None:
-            ticket_number_text = ""
-            ticket_number_text_int = 0
-            try:
-                ticket_number_text = ticket_number_div.text
-            except Exception as exc:
-                print("get ticket_number_text fail")
-                pass
-
-            if ticket_number_text is None:
-                ticket_number_text = ""
-            if len(ticket_number_text) > 0:
-                ticket_number_text_int = int(ticket_number_text)
-
-                if show_debug_message:
-                    print("ticket_number_text_int:", ticket_number_text_int)
-
-                if ticket_number_text_int < ticket_number:
-                    ticket_number_plus = None
-                    try:
-                        ticket_number_plus = target_area.find_element(By.CSS_SELECTOR, 'button > span > i.mdi-plus')
-                    except Exception as exc:
-                        print("find ticket_number_plus fail")
-
-                    if not ticket_number_plus is None:
-                        # add
-                        add_count = ticket_number - ticket_number_text_int
-                        if show_debug_message:
-                            print("add_count:", add_count)
-                        for i in range(add_count):
-                            if show_debug_message:
-                                print("click on plus button #",i)
-                            try:
-                                if ticket_number_plus.is_enabled():
-                                    ticket_number_plus.click()
-                                    is_price_assign_by_bot = True
-                                    time.sleep(0.1)
-                            except Exception as exc:
-                                pass
+    if not target_area is None:
+        for retry_index in range(2):
+            is_price_assign_by_bot = ticketplus_assign_ticket_number(target_area, config_dict)
 
     return is_need_refresh, is_price_assign_by_bot
+
 
 def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
     show_debug_message = True       # debug.
@@ -10665,6 +10685,7 @@ svgToPng(svg, (imgData) => {
                     print("refresh captcha...")
                     my_css_selector = "div.recaptcha-area > div > div > span > i"
                     is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    # must have time to load captcha image.
                     time.sleep(0.4)
     else:
         print("ocr_answer is None")
@@ -10696,7 +10717,8 @@ def ticketplus_check_and_renew_captcha(driver):
                     print("error message popup, refresh captcha images.")
                     my_css_selector = "div.recaptcha-area > div > div > span > i"
                     is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
-
+                    # must have time to load captcha image.
+                    time.sleep(0.4)
         except Exception as exc:
             pass
     return is_messages_popup
@@ -10789,7 +10811,19 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
     return is_verifyCode_editing, is_form_sumbited
 
-def ticketplus_account_auto_focus(driver, config_dict):
+def ticketplus_account_auto_fill(driver, config_dict):
+    # auto fill account info.
+    if len(config_dict["advanced"]["ticketplus_account"]) > 0:
+        sign_in_btn = None
+        try:
+            my_css_selector = 'button.v-btn > span.v-btn__content > i.mdi-account'
+            sign_in_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if not sign_in_btn is None:
+                sign_in_btn.click()
+                time.sleep(0.2)
+        except Exception as exc:
+            pass
+
     # manually keyin verify code.
     form_account = None
     try:
@@ -10799,6 +10833,7 @@ def ticketplus_account_auto_focus(driver, config_dict):
         pass
         #print("find account input fail")
 
+    is_account_sent = False
     if form_account is not None:
         #print("found account field")
         inputed_value = None
@@ -10824,17 +10859,61 @@ def ticketplus_account_auto_focus(driver, config_dict):
                 #print("account text inputed.")
                 pass
             else:
-                try:
-                    # solution 1: js.
-                    driver.execute_script("if(!(document.activeElement === arguments[0])){arguments[0].focus();}", form_account)
-                    # solution 2: selenium.
-                    #form_account.click()
+                if len(config_dict["advanced"]["ticketplus_account"]) == 0:
+                    try:
+                        # solution 1: js.
+                        driver.execute_script("if(!(document.activeElement === arguments[0])){arguments[0].focus();}", form_account)
+                        # solution 2: selenium.
+                        #form_account.click()
 
-                    #wait user input.
-                    time.sleep(0.2)
-                except Exception as exc:
-                    print("auto-focus account fail")
-                    pass
+                        #wait user input.
+                        time.sleep(0.2)
+                    except Exception as exc:
+                        print("auto-focus account fail")
+                        pass
+                else:
+                    try:
+                        form_account.click()
+                        form_account.send_keys(config_dict["advanced"]["ticketplus_account"])
+                        time.sleep(0.2)
+                        is_account_sent = True
+                    except Exception as exc:
+                        print("auto fill account fail")
+                        pass
+
+    is_password_sent = False
+    if is_account_sent:
+        el_pass = None
+        try:
+            my_css_selector = 'input[type="password"]'
+            el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+        if el_pass is not None:
+            try:
+                if el_pass.is_enabled():
+                    inputed_text = el_pass.get_attribute('value')
+                    if inputed_text is not None:
+                        password = decryptMe(config_dict["advanced"]["ticketplus_password"])
+                        if len(inputed_text) == 0:
+                            el_pass.click()
+                            if(len(password)>0):
+                                el_pass.send_keys(password)
+                                el_pass.send_keys(Keys.ENTER)
+                                is_password_sent = True
+                        else:
+                            if(len(password)>0):
+                                if inputed_text == password:
+                                    el_pass.click()
+                                    el_pass.send_keys(Keys.ENTER)
+                                    is_password_sent = True
+                        
+                        time.sleep(0.2)
+            except Exception as exc:
+                pass
+    return is_account_sent, is_password_sent
+
 
 def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
     home_url_list = ['https://ticketplus.com.tw/']
@@ -10846,7 +10925,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
             
-            ticketplus_account_auto_focus(driver, config_dict)
+            ticketplus_account_auto_fill(driver, config_dict)
             break
 
     # https://ticketplus.com.tw/activity/XXX
