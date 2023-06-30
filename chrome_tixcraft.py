@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.28)"
+CONST_APP_VERSION = "MaxBot (2023.6.29)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8870,13 +8870,24 @@ def hkticketing_url_redirect(driver, url, config_dict):
     redirect_url_list = [ 'queue.hkticketing.com/hotshow.html'
     , '.com/detection.aspx?rt='
     , '/busy_galaxy.'
+    , '/hot1.ticketek.com.au/'
+    ]
+
+    redirect_to_home_list = [ 'galaxymacau.com'
+    , 'ticketek.com'
     ]
     for redirect_url in redirect_url_list:
         if redirect_url in url:
+            # for hkticketing.
             entry_url = 'http://entry-hotshow.hkticketing.com/'
-            if 'galaxymacau.com' in url:
-                domain_name = url.split('/')[2]
-                entry_url = "https://%s/default.aspx" % (domain_name)
+            
+            # for macau
+            # for ticketek.com
+            for target_site in redirect_to_home_list:
+                if target_site  in url:
+                    domain_name = url.split('/')[2]
+                    entry_url = "https://%s/default.aspx" % (domain_name)
+                    break
             try:
                 driver.get(entry_url)
                 is_redirected = True
@@ -8944,6 +8955,7 @@ def hkticketing_content_refresh(driver, url, config_dict):
             print("Start to automatically refresh page.")
             try:
                 driver.switch_to.default_content()
+                print("redirect to new url:", new_url)
                 driver.get(new_url)
                 is_redirected = True
             except Exception as exc:
@@ -8994,7 +9006,7 @@ def hkticketing_travel_iframe(driver, config_dict):
 
     return is_redirected
 
-def hkticketing_main(driver, url, config_dict, hkticketing_dict):
+def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
     home_url_list = ['https://premier.hkticketing.com/'
     ,'https://hotshow.hkticketing.com/'
     ,'https://premier.hkticketing.com/default.aspx'
@@ -11168,11 +11180,15 @@ def main(args):
         if 'cityline.com' in url:
             cityline_main(driver, url, config_dict)
 
+        softix_family = False
         if 'hkticketing.com' in url:
-            hkticketing_dict = hkticketing_main(driver, url, config_dict, hkticketing_dict)
-
+            softix_family = True
         if 'galaxymacau.com' in url:
-            hkticketing_dict = hkticketing_main(driver, url, config_dict, hkticketing_dict)
+            softix_family = True
+        if 'ticketek.com' in url:
+            softix_family = True
+        if softix_family:
+            hkticketing_dict = softix_powerweb_main(driver, url, config_dict, hkticketing_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
