@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.29)"
+CONST_APP_VERSION = "MaxBot (2023.6.29) ver3"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8870,8 +8870,10 @@ def hkticketing_url_redirect(driver, url, config_dict):
     redirect_url_list = [ 'queue.hkticketing.com/hotshow.html'
     , '.com/detection.aspx?rt='
     , '/busy_galaxy.'
-    , '/hot1.ticketek.com.au/'
     ]
+    for idx in range(20):
+        redirect_url_list.append('/hot%d.ticketek.com.au/' % (idx))
+
 
     redirect_to_home_list = [ 'galaxymacau.com'
     , 'ticketek.com'
