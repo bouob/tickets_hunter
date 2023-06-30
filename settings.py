@@ -34,7 +34,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import socket
 
-CONST_APP_VERSION = "MaxBot (2023.6.29)"
+CONST_APP_VERSION = "MaxBot (2023.6.29) ver3"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -84,7 +84,7 @@ CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://www.cityline.com/ (買飛)"
     ,"https://hotshow.hkticketing.com/ (快達票)"
     ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
-    ,"https://hot1.ticketek.com.au/"
+    ,"http://premier.ticketek.com.au"
     ]
 # 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
 '''
