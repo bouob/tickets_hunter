@@ -28,17 +28,17 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.6.29)"
-    
+CONST_APP_VERSION = "MaxBot (2023.6.30)"
+
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
 CONST_SERVER_PORT_DEFAULT = 8888
 CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
 
 def get_ip_address():
-    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] 
-        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), 
-        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, 
+    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]
+        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
+        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
         socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
     return ip
 
@@ -220,7 +220,7 @@ def preview_question_text_file():
         question_text = ""
         with open(CONST_MAXBOT_QUESTION_FILE, "r") as text_file:
             question_text = text_file.readline()
-        
+
         global txt_question
         try:
             displayed_question_text = txt_question.get("1.0",END).strip()

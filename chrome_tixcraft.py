@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.29) ver3"
+CONST_APP_VERSION = "MaxBot (2023.6.30)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1247,7 +1247,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                             return_list[idx]=return_list[idx].replace(my_answer_delimitor,'')
                 if show_debug_message:
                     print("cleaned return_list:" , return_list)
-        
+
         if return_list is None:
             return_list = []
 
@@ -2109,7 +2109,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
             row_text = ""
             if row_is_enabled:
                 try:
-                    row_text = zone_info[row]["groupName"] 
+                    row_text = zone_info[row]["groupName"]
                     row_text += " " + zone_info[row]["description"]
                     if "price" in zone_info[row]:
                         row_text += " " + zone_info[row]["price"][0]["ticketPrice"]
@@ -2455,7 +2455,7 @@ def guess_tixcraft_question(driver, question_text):
 
     if show_debug_message:
         print("formated_html_text:", formated_html_text)
-    
+
     # start to guess answer
     inferred_answer_string = None
 
@@ -2503,7 +2503,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
         print("input textbox count:", form_input_count)
 
     is_do_press_next_button = False
-    
+
     form_input = None
     if form_input_count > 0:
         form_input = form_input_list[0]
@@ -2538,7 +2538,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                             is_button_clicked = True
                         if len(next_step_button_css) > 0:
                             is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
-                    
+
                     if is_button_clicked:
                         is_answer_sent = True
                         fail_list.append(inferred_answer_string)
@@ -2748,32 +2748,40 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
 
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'TicketForm_verifyCode-image'
-            if 'indievox.com' in domain_name:
-                #image_id = 'TicketForm_verifyCode-image'
-                pass
+            image_element = None
             try:
-                form_verifyCode_base64 = driver.execute_async_script("""
-                    var canvas = document.createElement('canvas');
-                    var context = canvas.getContext('2d');
-                    var img = document.getElementById('%s');
-                    if(img!=null) {
-                    canvas.height = img.naturalHeight;
-                    canvas.width = img.naturalWidth;
-                    context.drawImage(img, 0, 0);
-                    callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL()); }
-                    """ % (image_id))
-                if not form_verifyCode_base64 is None:
-                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
-
-                if img_base64 is None:
-                    if not Captcha_Browser is None:
-                        print("canvas get image fail, use plan_b: NonBrowser")
-                        img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                my_css_selector = "#" + image_id
+                image_element = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
-                if show_debug_message:
-                    print("canvas exception:", str(exc))
                 pass
+
+            if not image_element is None:
+                if 'indievox.com' in domain_name:
+                    #image_id = 'TicketForm_verifyCode-image'
+                    pass
+                try:
+                    form_verifyCode_base64 = driver.execute_async_script("""
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        var img = document.getElementById('%s');
+                        if(img!=null) {
+                        canvas.height = img.naturalHeight;
+                        canvas.width = img.naturalWidth;
+                        context.drawImage(img, 0, 0);
+                        callback = arguments[arguments.length - 1];
+                        callback(canvas.toDataURL()); }
+                        """ % (image_id))
+                    if not form_verifyCode_base64 is None:
+                        img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+
+                    if img_base64 is None:
+                        if not Captcha_Browser is None:
+                            print("canvas get image fail, use plan_b: NonBrowser")
+                            img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                except Exception as exc:
+                    if show_debug_message:
+                        print("canvas exception:", str(exc))
+                    pass
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
@@ -2986,7 +2994,7 @@ def get_tixcraft_ticket_select(driver, config_dict):
             form_select = None
             pass
 
-    return form_select 
+    return form_select
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     tixcraft_ticket_main_agree(driver, config_dict)
@@ -6792,7 +6800,7 @@ def ticketmaster_parse_zone_info(driver, config_dict):
                 pass
 
         if len(zone_string) > 0:
-            zone_info = {}        
+            zone_info = {}
             try:
                 zone_info = json.loads(zone_string)
                 if show_debug_message:
@@ -7756,24 +7764,32 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'chk_pic'
+            image_element = None
             try:
-                form_verifyCode_base64 = driver.execute_async_script("""
-                    var canvas = document.createElement('canvas');
-                    var context = canvas.getContext('2d');
-                    var img = document.getElementById('%s');
-                    if(img!=null) {
-                    canvas.height = img.naturalHeight;
-                    canvas.width = img.naturalWidth;
-                    context.drawImage(img, 0, 0);
-                    callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL()); }
-                    """ % (image_id))
-                if not form_verifyCode_base64 is None:
-                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                my_css_selector = "#" + image_id
+                image_element = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
-                if show_debug_message:
-                    print("canvas exception:", str(exc))
                 pass
+
+            if not image_element is None:
+                try:
+                    form_verifyCode_base64 = driver.execute_async_script("""
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        var img = document.getElementById('%s');
+                        if(img!=null) {
+                        canvas.height = img.naturalHeight;
+                        canvas.width = img.naturalWidth;
+                        context.drawImage(img, 0, 0);
+                        callback = arguments[arguments.length - 1];
+                        callback(canvas.toDataURL()); }
+                        """ % (image_id))
+                    if not form_verifyCode_base64 is None:
+                        img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                except Exception as exc:
+                    if show_debug_message:
+                        print("canvas exception:", str(exc))
+                    pass
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
@@ -8341,7 +8357,7 @@ def hkticketing_date_password_input(driver, config_dict, fail_list):
         el_password_input = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         pass
-    
+
     inputed_value = ""
     if el_password_input is not None:
         try:
@@ -8420,7 +8436,7 @@ def hkticketing_date_auto_select(driver, config_dict, fail_list):
         print("is_page_ready:", is_page_ready)
         print("formated_area_list:", formated_area_list)
         print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
-    
+
     if auto_reload_coming_soon_page_enable:
         # auto refresh for date list page.
         is_need_refresh = True
@@ -8882,7 +8898,7 @@ def hkticketing_url_redirect(driver, url, config_dict):
         if redirect_url in url:
             # for hkticketing.
             entry_url = 'http://entry-hotshow.hkticketing.com/'
-            
+
             # for macau
             # for ticketek.com
             for target_site in redirect_to_home_list:
@@ -9748,24 +9764,32 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'chk_pic'
+            image_element = None
             try:
-                form_verifyCode_base64 = driver.execute_async_script("""
-                    var canvas = document.createElement('canvas');
-                    var context = canvas.getContext('2d');
-                    var img = document.getElementById('%s');
-                    if(img!=null) {
-                    canvas.height = img.naturalHeight;
-                    canvas.width = img.naturalWidth;
-                    context.drawImage(img, 0, 0);
-                    callback = arguments[arguments.length - 1];
-                    callback(canvas.toDataURL()); }
-                    """ % (image_id))
-                if not form_verifyCode_base64 is None:
-                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                my_css_selector = "#" + image_id
+                image_element = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
-                if show_debug_message:
-                    print("canvas exception:", str(exc))
                 pass
+
+            if not image_element is None:
+                try:
+                    form_verifyCode_base64 = driver.execute_async_script("""
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        var img = document.getElementById('%s');
+                        if(img!=null) {
+                        canvas.height = img.naturalHeight;
+                        canvas.width = img.naturalWidth;
+                        context.drawImage(img, 0, 0);
+                        callback = arguments[arguments.length - 1];
+                        callback(canvas.toDataURL()); }
+                        """ % (image_id))
+                    if not form_verifyCode_base64 is None:
+                        img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                except Exception as exc:
+                    if show_debug_message:
+                        print("canvas exception:", str(exc))
+                    pass
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
@@ -10221,7 +10245,7 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
         show_debug_message = True
 
     is_price_assign_by_bot = False
-    
+
     ticket_number_div = None
     try:
         my_css_selector = 'div.count-button > div'
@@ -10526,7 +10550,7 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser):
             print("find next_step_button (style_2) fail")
             #print(exc)
             pass
-        
+
         # for style_1
         try:
             my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
@@ -10627,8 +10651,16 @@ def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Brows
                 img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'span.captcha-img'
+            image_element = None
             try:
-                form_verifyCode_base64 = driver.execute_async_script("""
+                my_css_selector = image_id
+                image_element = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                pass
+
+            if not image_element is None:
+                try:
+                    form_verifyCode_base64 = driver.execute_async_script("""
 function svgToPng(svg, callback) {
   const url = getSvgUrl(svg);
   svgUrlToPng(url, (imgData) => {
@@ -10664,13 +10696,13 @@ svgToPng(svg, (imgData) => {
   callback = arguments[arguments.length - 1];
   callback(imgData);
 }); }
-                    """ % (image_id))
-                if not form_verifyCode_base64 is None:
-                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
-            except Exception as exc:
-                if show_debug_message:
-                    print("canvas exception:", str(exc))
-                pass
+                        """ % (image_id))
+                    if not form_verifyCode_base64 is None:
+                        img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                except Exception as exc:
+                    if show_debug_message:
+                        print("canvas exception:", str(exc))
+                    pass
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
@@ -10922,7 +10954,7 @@ def ticketplus_account_auto_fill(driver, config_dict):
                                     el_pass.click()
                                     el_pass.send_keys(Keys.ENTER)
                                     is_password_sent = True
-                        
+
                         time.sleep(0.2)
             except Exception as exc:
                 pass
@@ -10938,7 +10970,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if not Captcha_Browser is None:
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
-            
+
             ticketplus_account_auto_fill(driver, config_dict)
             break
 

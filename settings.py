@@ -34,7 +34,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 import socket
 
-CONST_APP_VERSION = "MaxBot (2023.6.29) ver3"
+CONST_APP_VERSION = "MaxBot (2023.6.30)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -495,9 +495,9 @@ def load_translate():
     return translate
 
 def get_ip_address():
-    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] 
-        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), 
-        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, 
+    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]
+        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
+        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
         socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
     return ip
 
