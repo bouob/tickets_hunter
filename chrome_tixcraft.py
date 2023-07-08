@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.6.30)"
+CONST_APP_VERSION = "MaxBot (2023.07.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2406,18 +2406,18 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
 
     return is_ticket_number_assigned
 
-def get_tixcraft_question_text(driver):
-    form_select = None
+def get_div_text_by_selector(driver, my_css_selector):
+    div_element = None
     try:
-        form_select = driver.find_element(By.CSS_SELECTOR, '.zone-verify')
+        div_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find verify textbox fail")
         pass
 
     question_text = ""
-    if form_select is not None:
+    if div_element is not None:
         try:
-            question_text = form_select.text
+            question_text = div_element.text
         except Exception as exc:
             print("get text fail")
 
@@ -2599,7 +2599,15 @@ def get_answer_list_from_user_guess_string(config_dict):
 
     return local_array + online_array
 
+def ticketmaster_promo(driver, config_dict, fail_list):
+    question_selector = '#promoBox'
+    return tixcraft_input_check_code(driver, config_dict, fail_list, question_selector)
+
 def tixcraft_verify(driver, config_dict, fail_list):
+    question_selector = '.zone-verify'
+    return tixcraft_input_check_code(driver, config_dict, fail_list, question_selector)
+
+def tixcraft_input_check_code(driver, config_dict, fail_list, question_selector):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -2608,7 +2616,7 @@ def tixcraft_verify(driver, config_dict, fail_list):
 
     answer_list = []
 
-    question_text = get_tixcraft_question_text(driver)
+    question_text = get_div_text_by_selector(driver, question_selector)
     if len(question_text) > 0:
         write_question_to_file(question_text)
 
@@ -2624,7 +2632,6 @@ def tixcraft_verify(driver, config_dict, fail_list):
                 break
 
         if show_debug_message:
-            print("answer_index:", answer_index)
             print("inferred_answer_string:", inferred_answer_string)
             print("answer_list:", answer_list)
 
@@ -2633,7 +2640,7 @@ def tixcraft_verify(driver, config_dict, fail_list):
         next_step_button_css = ""
         submit_by_enter = True
         check_input_interval = 0.2
-        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter)
+        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
     return fail_list
 
@@ -6829,7 +6836,6 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
             #print("find table#ticketPriceList fail", exc)
         ticketmaster_parse_zone_info(driver, config_dict)
 
-
     form_select = None
     if not table_select is None:
         if show_debug_message:
@@ -6972,7 +6978,11 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 tixcraft_area_auto_select(driver, url, config_dict)
             else:
                 # area auto select is too difficult, skip in this version.
+                tixcraft_dict["fail_promo_list"] = ticketmaster_promo(driver, config_dict, tixcraft_dict["fail_promo_list"])
                 ticketmaster_assign_ticket_number(driver, config_dict)
+
+    else:
+        tixcraft_dict["fail_promo_list"] = []
 
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
     if '/ticket/check-captcha/' in url:
@@ -11015,6 +11025,7 @@ def main(args):
     # for tixcraft
     tixcraft_dict = {}
     tixcraft_dict["fail_list"]=[]
+    tixcraft_dict["fail_promo_list"]=[]
     tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
