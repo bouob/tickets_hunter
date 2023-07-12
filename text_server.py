@@ -28,7 +28,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.07.01)"
+CONST_APP_VERSION = "MaxBot (2023.07.02)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
@@ -36,10 +36,20 @@ CONST_SERVER_PORT_DEFAULT = 8888
 CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
 
 def get_ip_address():
-    ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]
-        if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
-        s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
-        socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    default_ip = "127.0.0.1"
+    ip = default_ip
+    try:
+        ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]
+            if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
+            s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
+            socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    except Exception as exc:
+        print(exc)
+        try:
+            ip = socket.gethostname()
+        except Exception as exc2:
+            print(exc2)
+            ip = default_ip
     return ip
 
 def btn_copy_ip_clicked():
