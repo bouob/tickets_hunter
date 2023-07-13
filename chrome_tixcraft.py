@@ -2767,6 +2767,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                     #image_id = 'TicketForm_verifyCode-image'
                     pass
                 try:
+                    driver.set_script_timeout(3)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -7783,6 +7784,7 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
 
             if not image_element is None:
                 try:
+                    driver.set_script_timeout(3)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -9783,6 +9785,7 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
 
             if not image_element is None:
                 try:
+                    driver.set_script_timeout(3)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -10670,6 +10673,7 @@ def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Brows
 
             if not image_element is None:
                 try:
+                    driver.set_script_timeout(3)
                     form_verifyCode_base64 = driver.execute_async_script("""
 function svgToPng(svg, callback) {
   const url = getSvgUrl(svg);
