@@ -1529,12 +1529,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("python version", platform.python_version())
     print("platform", platform.platform())
 
-    # for kktix
-    print("==[kktix]==")
-    print(config_dict["kktix"])
-
     # for tixcraft
-    print("==[tixcraft]==")
     print(config_dict["tixcraft"])
 
     global lbl_homepage
