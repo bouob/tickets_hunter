@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-07-04：ticketmaster 支援無區域地圖的購票表單
+
+https://youtu.be/Jj2vca2kNZE
+
 Max搶票機器人2023-06-27：遠大支援第二種購票的網頁框架
 
 https://youtu.be/tveqM0-cmCc
