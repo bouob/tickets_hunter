@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.05)"
+CONST_APP_VERSION = "MaxBot (2023.07.06)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -510,9 +510,8 @@ def load_chromdriver_uc(config_dict):
         try:
             driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
+            print(exc)
             error_message = str(exc)
-            if show_debug_message:
-                print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -528,9 +527,8 @@ def load_chromdriver_uc(config_dict):
         try:
             driver = uc.Chrome(options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
+            print(exc)
             error_message = str(exc)
-            if show_debug_message:
-                print(exc)
             left_part = None
             if "Stacktrace:" in error_message:
                 left_part = error_message.split("Stacktrace:")[0]
@@ -576,21 +574,17 @@ def get_driver_by_config(config_dict):
     driver_type = config_dict["webdriver_type"]
 
     # output config:
-    print("maxbot app version", CONST_APP_VERSION)
-    print("python version", platform.python_version())
-    print("platform", platform.platform())
-    print("homepage", homepage)
-    print("browser", browser)
-    print("ticket_number", str(config_dict["ticket_number"]))
-    print("pass_1_seat_remaining", config_dict["pass_1_seat_remaining"])
+    print("maxbot app version:", CONST_APP_VERSION)
+    print("python version:", platform.python_version())
+    print("platform:", platform.platform())
+    print("homepage:", homepage)
+    print("browser:", browser)
+    print("ticket_number:", str(config_dict["ticket_number"]))
 
-    print("==[kktix]==")
-    print(config_dict["kktix"])
-    print("==[tixcraft]==")
     print(config_dict["tixcraft"])
-    print("==[advanced]==")
+    print("==[advanced config]==")
     print(config_dict["advanced"])
-    print("webdriver_type", driver_type)
+    print("webdriver_type:", driver_type)
 
     # entry point
     if homepage is None:
@@ -1576,9 +1570,6 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 row_index += 1
                 row_is_enabled=True
                 try:
-                    if not row.is_enabled():
-                        row_is_enabled=False
-
                     row_text = ""
                     # check buy button.
                     if row_is_enabled:
@@ -1587,7 +1578,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
 
                         row_is_enabled=False
                         if len(row_text) > 0:
@@ -1690,6 +1682,11 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                # only need first row.
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
+
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1887,6 +1884,9 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+                                
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1944,6 +1944,8 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
     return is_date_clicked
 
 def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+    reset_flag = False
+
     # clean stop word.
     row_text = format_keyword_string(row_text)
 
@@ -1965,11 +1967,15 @@ def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             is_match_all_exclude = False
                     if is_match_all_exclude:
                         row_text = ""
+                        reset_flag = True
+                        break
                 else:
                     exclude_item = format_keyword_string(exclude_item_list)
                     if exclude_item in row_text:
                         row_text = ""
-    return row_text
+                        reset_flag = True
+                        break
+    return reset_flag
 
 # PURPOSE: get target area list.
 # RETURN:
@@ -1985,7 +1991,6 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
 
     # read config.
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
 
     is_need_refresh = False
     matched_blocks = None
@@ -2029,7 +2034,8 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -2051,9 +2057,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                     is_append_this_row = True
 
                 if is_append_this_row:
-                    if show_debug_message:
-                        print("pass_1_seat_remaining_enable:", pass_1_seat_remaining_enable)
-                    if pass_1_seat_remaining_enable:
+                    if config_dict["ticket_number"] > 1:
                         area_item_font_el = None
                         try:
                             #print('try to find font tag at row:', row_text)
@@ -2105,7 +2109,6 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
 
     # read config.
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
 
     is_need_refresh = False
     matched_blocks = None
@@ -2142,7 +2145,8 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -2196,11 +2200,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
-    # disable pass 1 seat remaining when target ticket number is 1.
     ticket_number = config_dict["ticket_number"]
-    if ticket_number == 1:
-        pass_1_seat_remaining_enable = False
 
     if show_debug_message:
         print("area_keyword:", area_keyword)
@@ -2949,7 +2949,8 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -3286,11 +3287,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
-    # disable pass 1 seat remaining when target ticket number is 1.
     ticket_number = config_dict["ticket_number"]
-    if ticket_number == 1:
-        pass_1_seat_remaining_enable = False
 
     areas = None
     is_ticket_number_assigned = False
@@ -3358,7 +3355,8 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -3401,9 +3399,9 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                             pass
 
                         if is_danger_notice:
-                            # skip this row, because assign will fail, or fill ticket number as 1.
-                            if pass_1_seat_remaining_enable:
-                                continue
+                            # PS: not ALL danger notice are "only 1 seat remaining"...
+                            # TODO: check real remaining value instead of check css style.
+                            continue
 
                     if is_visible:
                         is_match_area = False
@@ -3465,11 +3463,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
         show_debug_message = True
 
     ticket_number_str = str(config_dict["ticket_number"])
-    pass_1_seat_remaining_enable = config_dict["pass_1_seat_remaining"]
-    # disable pass 1 seat remaining when target ticket number is 1.
     ticket_number = config_dict["ticket_number"]
-    if ticket_number == 1:
-        pass_1_seat_remaining_enable = False
     kktix_area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_keyword)
@@ -4440,7 +4434,8 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                         row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                            row_text = ""
 
                     if len(row_text) > 0:
                         # check date.
@@ -4799,6 +4794,11 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                             if is_match_area:
                                 matched_blocks.append(row)
 
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    print("only need first item, break area list loop.")
+                                    break
+
+
                 if show_debug_message:
                     if not matched_blocks is None:
                         print("after match keyword, found count:", len(matched_blocks))
@@ -4934,7 +4934,8 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     row_text = ""
 
                 if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        row_text = ""
 
                 if row_text == "":
                     row_is_enabled=False
@@ -5021,6 +5022,10 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
+
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -5393,6 +5398,9 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                             if is_match_area:
                                 matched_blocks.append(row)
 
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
+
                 if show_debug_message:
                     if not matched_blocks is None:
                         print("after match keyword, found count:", len(matched_blocks))
@@ -5539,7 +5547,8 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -5563,6 +5572,9 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -5946,7 +5958,8 @@ def ibon_date_auto_select(driver, config_dict):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -5976,6 +5989,9 @@ def ibon_date_auto_select(driver, config_dict):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -6116,7 +6132,8 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                         row_text=""
 
                 if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        row_text = ""
 
                 # check ticket count when amount is few, because of it spent a lot of time at parsing element.
                 if len(row_text) > 0:
@@ -6229,6 +6246,10 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
+
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -8418,6 +8439,9 @@ def hkticketing_date_assign(driver, config_dict):
                                 if is_match_area:
                                     matched_blocks.append(row)
 
+                                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                        break
+
                     if show_debug_message:
                         if not matched_blocks is None:
                             print("after match keyword, found count:", len(matched_blocks))
@@ -8687,7 +8711,8 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -8712,6 +8737,9 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+                                
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -9283,7 +9311,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                         row_text=""
 
                     if len(row_text) > 0:
-                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                            row_text = ""
 
                     if '立即訂購' in row_text:
                         try:
@@ -9364,6 +9393,9 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
 
                                 if is_match_area:
                                     matched_blocks.append(row)
+                                    
+                                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                        break
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -9464,7 +9496,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
     area_list = None
     try:
         # for kham.com
-        my_css_selector = "table#salesTable > tbody > tr.status_tr"
+        my_css_selector = "table#salesTable > tbody > tr[class='status_tr']"
         if "ticket.com.tw" in domain_name:
             my_css_selector = "li.main"
             print("my_css_selector:",my_css_selector)
@@ -9497,44 +9529,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
             row_index = 0
             for row in area_list:
                 row_index += 1
-
-                row_is_enabled=True
-
-                row_text = ""
-                try:
-                    row_text = row.text
-                except Exception as exc:
-                    pass
-
-                if row_text is None:
-                    row_text = ""
-
-                if '售完' in row_text:
-                    row_text = ""
-
-                if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
-
-                if len(row_text) == 0:
-                    row_is_enabled = False
-
-                if row_is_enabled:
-                    pass
-                    # too many rows, too slow, disable to check.
-                    '''
-                    try:
-                        is_row_with_id = False
-                        tr_id_string = str(row.get_attribute('id'))
-                        if len(tr_id_string) > 1:
-                            is_row_with_id = True
-                        if is_row_with_id:
-                            row_is_enabled=True
-                    except Exception as exc:
-                        pass
-                    '''
-
-                if row_is_enabled:
-                    formated_area_list.append(row)
+                formated_area_list.append(row)
         else:
             if show_debug_message:
                 print("area_list_count is empty.")
@@ -9551,47 +9546,77 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
         if area_list_count > 0:
             matched_blocks = []
-            if len(area_keyword_item) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # match keyword.
-                row_index = 0
-                for row in formated_area_list:
-                    row_index += 1
-                    row_is_enabled=True
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
 
-                        if row_text is None:
+            row_index = 0
+            for row in formated_area_list:
+                row_index += 1
+                row_is_enabled=True
+                if row_is_enabled:
+                    row_text = ""
+                    try:
+                        row_text = row.text
+                    except Exception as exc:
+                        print("get text fail")
+                        break
+
+                    if row_text is None:
+                        row_text = ""
+
+                    if '售完' in row_text:
+                        row_text = ""
+
+                    if len(row_text) > 0:
+                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
-                        if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
-                            if show_debug_message:
-                                print("row_text:", row_text)
+                    # check ticket_number and available count.
+                    if len(row_text) > 0:
+                        if config_dict["ticket_number"] > 1:
+                            maybe_ticket_count = row_text[-1:]
+                            if maybe_ticket_count.isdigit():
+                                ticket_count_element = None
+                                try:
+                                    my_css_selector = "td:nth-child(4)"
+                                    ticket_count_element = row.find_element(By.CSS_SELECTOR, my_css_selector)
+                                    if not ticket_count_element is None:
+                                        ticket_count_text = ticket_count_element.text
+                                        if ticket_count_text.isdigit():
+                                            if int(ticket_count_text) < config_dict["ticket_number"]:
+                                                if show_debug_message:
+                                                    print("skip this row, because ticket_count available only:", ticket_count_text)
+                                                # skip this row.
+                                                row_text = ""
+                                except Exception as exc:
+                                    if show_debug_message:
+                                        print(exc)
 
-                            is_match_area = False
 
-                            if len(area_keyword_item) > 0:
-                                # must match keyword.
-                                is_match_area = True
-                                area_keyword_array = area_keyword_item.split(' ')
-                                for area_keyword in area_keyword_array:
-                                    area_keyword = format_keyword_string(area_keyword)
-                                    if not area_keyword in row_text:
-                                        is_match_area = False
-                                        break
-                            else:
-                                # without keyword.
-                                is_match_area = True
+                    if len(row_text) > 0:
+                        row_text = format_keyword_string(row_text)
+                        if show_debug_message:
+                            print("row_text:", row_text)
 
-                            if is_match_area:
-                                matched_blocks.append(row)
+                        # default add row.
+                        is_match_area = True
+                        if len(area_keyword_item) == 0:
+                            # without keyword.
+                            pass
+                        else:
+                            # match keyword.
+                            area_keyword_array = area_keyword_item.split(' ')
+                            for area_keyword in area_keyword_array:
+                                area_keyword = format_keyword_string(area_keyword)
+                                if not area_keyword in row_text:
+                                    is_match_area = False
+                                    break
+
+                        if is_match_area:
+                            matched_blocks.append(row)
+
+                            # only need first row.
+                            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                break
+
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -10207,7 +10232,7 @@ def ticketplus_date_auto_select(driver, config_dict):
     try:
         area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item')
     except Exception as exc:
-        print("find #gameList fail")
+        print("find #buyTicket fail")
 
     find_ticket_text_list = ['立即購票']
     sold_out_text_list = ['銷售一空','尚未開賣']
@@ -10238,7 +10263,8 @@ def ticketplus_date_auto_select(driver, config_dict):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
                         
                         row_is_enabled=False
                         if len(row_text) > 0:
@@ -10324,6 +10350,9 @@ def ticketplus_date_auto_select(driver, config_dict):
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -10516,7 +10545,8 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                         row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                            row_text = ""
 
                     if row_text == "":
                         row_is_enabled=False
@@ -10580,6 +10610,9 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
                             if is_match_area:
                                 matched_blocks.append(row)
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
@@ -11250,12 +11283,7 @@ def main(args):
 
     driver = None
     if not config_dict is None:
-        for i in range(3):
-            driver = get_driver_by_config(config_dict)
-            if not driver is None:
-                break
-            else:
-                time.sleep(0.05)
+        driver = get_driver_by_config(config_dict)
     else:
         print("Load config error!")
 
@@ -11485,13 +11513,3 @@ if __name__ == "__main__":
                 image_bytes = f.read()
             res = ocr.classification(image_bytes)
             print(res)
-
-        # for urbtix survey.
-        # PS: urttix use "open-end" qustion, must use external database to answer...
-        question_text = "「6- -V- -U - n--s- -z - j」由右起第三個數字/字母是甚麼?"
-        question_text = "「6---2 - 3 _ 8- -8 _ 4 - 1--4 _ 7」中有多少個「二」?"
-        question_answer_char, question_direction = get_urbtix_survey_answer_by_question(question_text)
-        #print("question_text:", question_text)
-        #print("question_answer_char:", question_answer_char)
-        #print("question_text:", question_direction)
-

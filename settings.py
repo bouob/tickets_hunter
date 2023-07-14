@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.05)"
+CONST_APP_VERSION = "MaxBot (2023.07.06)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -133,7 +133,6 @@ def load_translate():
     en_us["area_keyword_exclude"] = 'Date/Area Keyword Exclude'
     en_us["area_keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
 
-    en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
@@ -230,7 +229,6 @@ def load_translate():
     zh_tw["area_keyword_exclude"] = '排除日期/區域關鍵字'
     zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。.\n加入 ,\"\" 代表符合所有關鍵字'
 
-    zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
@@ -326,7 +324,6 @@ def load_translate():
     zh_cn["area_keyword_exclude"] = '排除日期/区域关键字'
     zh_cn["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n附加 ,\"\" 以匹配所有結果。'
 
-    zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
@@ -423,7 +420,6 @@ def load_translate():
     ja_jp["area_keyword_exclude"] = '除外日付/エリア キーワード'
     ja_jp["area_keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
 
-    ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
@@ -568,7 +564,6 @@ def get_default_config():
     config_dict["browser"] = "chrome"
     config_dict["language"] = "English"
     config_dict["ticket_number"] = 2
-    config_dict["pass_1_seat_remaining"] = True
     config_dict["auto_check_agree"] = True
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
@@ -707,7 +702,6 @@ def btn_save_act(language_code, slience_mode=False):
     global combo_browser
     global combo_language
     global combo_ticket_number
-    global chk_state_pass_1_seat_remaining
     global chk_state_auto_check_agree
 
     global chk_state_auto_press_next_step_button
@@ -796,7 +790,6 @@ def btn_save_act(language_code, slience_mode=False):
             config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
 
     if is_all_data_correct:
-        config_dict["pass_1_seat_remaining"] = bool(chk_state_pass_1_seat_remaining.get())
         config_dict["auto_check_agree"] = bool(chk_state_auto_check_agree.get())
 
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
@@ -1120,9 +1113,6 @@ def btn_help_clicked():
 def btn_copy_clicked():
     pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
-def callbackTicketNumberOnChange(event):
-    showHidePass1SeatRemaining()
-
 def callbackLanguageOnChange(event):
     applyNewLanguage()
 
@@ -1149,7 +1139,6 @@ def applyNewLanguage():
     global lbl_browser
     global lbl_language
     global lbl_ticket_number
-    global lbl_pass_1_seat_remaining
     global lbl_auto_check_agree
 
     # for kktix
@@ -1183,7 +1172,6 @@ def applyNewLanguage():
     global lbl_maxbot_last_url
 
     # for checkbox
-    global chk_pass_1_seat_remaining
     global chk_auto_check_agree
 
     global chk_auto_press_next_step_button
@@ -1222,7 +1210,6 @@ def applyNewLanguage():
     lbl_browser.config(text=translate[language_code]["browser"])
     lbl_language.config(text=translate[language_code]["language"])
     lbl_ticket_number.config(text=translate[language_code]["ticket_number"])
-    lbl_pass_1_seat_remaining.config(text=translate[language_code]["pass_1_seat_remaining"])
     lbl_auto_check_agree.config(text=translate[language_code]["auto_check_agree"])
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
@@ -1259,7 +1246,6 @@ def applyNewLanguage():
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
     lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
 
-    chk_pass_1_seat_remaining.config(text=translate[language_code]["enable"])
     chk_auto_check_agree.config(text=translate[language_code]["enable"])
     chk_auto_press_next_step_button.config(text=translate[language_code]["enable"])
     chk_auto_fill_ticket_number.config(text=translate[language_code]["enable"])
@@ -1398,7 +1384,6 @@ def showHideBlocks():
         frame_group_kktix.grid_forget()
 
     showHideTixcraftBlocks()
-    showHidePass1SeatRemaining()
 
 def showHideOcrCaptchaWithSubmit():
     global chk_state_ocr_captcha
@@ -1425,23 +1410,6 @@ def showHideOcrCaptchaWithSubmit():
 
         lbl_ocr_captcha_ddddocr_beta.grid_forget()
         chk_ocr_captcha_ddddocr_beta.grid_forget()
-
-def showHidePass1SeatRemaining():
-    global combo_ticket_number
-    ticket_number_int = int(combo_ticket_number.get().strip())
-
-    global pass_1_seat_remaining_index
-    global lbl_pass_1_seat_remaining
-    global chk_pass_1_seat_remaining
-
-    if ticket_number_int > 1:
-        # show.
-        lbl_pass_1_seat_remaining.grid(column=0, row=pass_1_seat_remaining_index, sticky = E)
-        chk_pass_1_seat_remaining.grid(column=1, row=pass_1_seat_remaining_index, sticky = W)
-    else:
-        # hide
-        lbl_pass_1_seat_remaining.grid_forget()
-        chk_pass_1_seat_remaining.grid_forget()
 
 # purpose: show detail blocks if master field is enable.
 def showHideTixcraftBlocks():
@@ -1573,25 +1541,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_ticket_number['values']= ("1","2","3","4","5","6","7","8","9","10","11","12")
     #combo_ticket_number.current(0)
     combo_ticket_number.set(str(config_dict["ticket_number"]))
-    combo_ticket_number.bind("<<ComboboxSelected>>", callbackTicketNumberOnChange)
     combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global pass_1_seat_remaining_index
-    pass_1_seat_remaining_index = group_row_count
-
-    global lbl_pass_1_seat_remaining
-    lbl_pass_1_seat_remaining = Label(frame_group_header, text=translate[language_code]['pass_1_seat_remaining'])
-    lbl_pass_1_seat_remaining.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_pass_1_seat_remaining
-    chk_state_pass_1_seat_remaining = BooleanVar()
-    chk_state_pass_1_seat_remaining.set(config_dict["pass_1_seat_remaining"])
-
-    global chk_pass_1_seat_remaining
-    chk_pass_1_seat_remaining = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_pass_1_seat_remaining)
-    chk_pass_1_seat_remaining.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -1809,12 +1759,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header = Frame(root)
     group_row_count = 0
-
-    # for advanced
-    print("==[advanced]==")
-    print("browser", config_dict['browser'])
-    print("language", config_dict['language'])
-    print(config_dict["advanced"])
 
     # assign default value.
     captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
