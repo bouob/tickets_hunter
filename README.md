@@ -8,7 +8,7 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
-Max搶票機器人2023-07-06：ticketmaster 寬宏檢查剩餘票數/日期關鍵字做排除
+Max搶票機器人2023-07-06：寬宏檢查剩餘票數/日期關鍵字做排除
 
 https://youtu.be/nV34M4JysBg
 
