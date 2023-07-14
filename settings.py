@@ -32,7 +32,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.04)"
+CONST_APP_VERSION = "MaxBot (2023.07.05)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -130,7 +130,7 @@ def load_translate():
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
-    en_us["area_keyword_exclude"] = 'Area Keyword Exclude'
+    en_us["area_keyword_exclude"] = 'Date/Area Keyword Exclude'
     en_us["area_keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
 
     en_us["pass_1_seat_remaining"] = 'Pass 1 seat remaining'
@@ -227,7 +227,7 @@ def load_translate():
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
-    zh_tw["area_keyword_exclude"] = '排除區域關鍵字'
+    zh_tw["area_keyword_exclude"] = '排除日期/區域關鍵字'
     zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。.\n加入 ,\"\" 代表符合所有關鍵字'
 
     zh_tw["pass_1_seat_remaining"] = '避開「剩餘 1」的區域'
@@ -323,7 +323,7 @@ def load_translate():
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
     zh_cn["area_auto_select"] = '区域自动点选'
-    zh_cn["area_keyword_exclude"] = '排除区域关键字'
+    zh_cn["area_keyword_exclude"] = '排除日期/区域关键字'
     zh_cn["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n附加 ,\"\" 以匹配所有結果。'
 
     zh_cn["pass_1_seat_remaining"] = '避开“剩余 1”的区域'
@@ -420,7 +420,7 @@ def load_translate():
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
-    ja_jp["area_keyword_exclude"] = '除外エリア キーワード'
+    ja_jp["area_keyword_exclude"] = '除外日付/エリア キーワード'
     ja_jp["area_keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
 
     ja_jp["pass_1_seat_remaining"] = '「1 席残り」エリアは避ける'
