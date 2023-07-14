@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.04)"
+CONST_APP_VERSION = "MaxBot (2023.07.05)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1547,10 +1547,16 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     area_list = None
     if check_game_detail:
+        if show_debug_message:
+            print("start to query #gameList info.")
+        my_css_selector = '#gameList > table > tbody > tr'
         try:
-            area_list = driver.find_elements(By.CSS_SELECTOR, '#gameList > table > tbody > tr')
+            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
             print("find #gameList fail")
+
+        if show_debug_message:
+            print("end of query #gameList info.")
 
     is_coming_soon = False
     coming_soon_condictions_list_tw = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
@@ -1580,6 +1586,14 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         if row_text is None:
                             row_text = ""
 
+                        if len(row_text) > 0:
+                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+
+                        row_is_enabled=False
+                        if len(row_text) > 0:
+                            row_is_enabled=True
+
+                    if row_is_enabled:
                         row_is_enabled=False
                         for text_item in find_ticket_text_list:
                             if text_item in row_text:
@@ -1705,8 +1719,14 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     is_date_clicked = False
     if target_area is not None:
+        if show_debug_message:
+            print("target_area got, start to press button.")
+
         is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'button')
         if not is_date_clicked:
+            if show_debug_message:
+                print("target_area got, start to press hyperlink.")
+
             # for: ticketmaster.sg
             is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
 
@@ -1923,7 +1943,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     return is_date_clicked
 
-def reset_row_text_if_match_area_keyword_exclude(config_dict, row_text):
+def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
     # clean stop word.
     row_text = format_keyword_string(row_text)
 
@@ -2009,7 +2029,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -2122,7 +2142,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -2929,7 +2949,7 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -3338,7 +3358,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                 row_text = ""
 
             if len(row_text) > 0:
-                row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
             if len(row_text) > 0:
                 # clean stop word.
@@ -4420,7 +4440,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                         row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                     if len(row_text) > 0:
                         # check date.
@@ -4914,7 +4934,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     row_text = ""
 
                 if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                 if row_text == "":
                     row_is_enabled=False
@@ -5519,7 +5539,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -5926,6 +5946,9 @@ def ibon_date_auto_select(driver, config_dict):
                             row_text = ""
 
                         if len(row_text) > 0:
+                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+
+                        if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
@@ -6093,7 +6116,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                         row_text=""
 
                 if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                 # check ticket count when amount is few, because of it spent a lot of time at parsing element.
                 if len(row_text) > 0:
@@ -6992,8 +7015,21 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
             if current_url != last_url:
                 break
 
+def tixcraft_ad_footer(driver):
+    ad_div = None
+    try:
+        ad_div = driver.find_element(By.ID, 'ad-footer')
+        driver.execute_script("arguments[0].innerHTML='';", ad_div)
+    except Exception as exc:
+        pass
+    try:
+        ad_div = driver.find_element(By.CSS_SELECTOR, 'footer.footer')
+        driver.execute_script("arguments[0].innerHTML='';", ad_div)
+    except Exception as exc:
+        pass
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
+    tixcraft_ad_footer(driver)
     tixcraft_home_close_window(driver)
 
     home_url_list = ['https://tixcraft.com/'
@@ -8651,7 +8687,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -9246,6 +9282,9 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     if row_text is None:
                         row_text=""
 
+                    if len(row_text) > 0:
+                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+
                     if '立即訂購' in row_text:
                         try:
                             # for kham.com
@@ -9474,7 +9513,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                     row_text = ""
 
                 if len(row_text) > 0:
-                    row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                    row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                 if len(row_text) == 0:
                     row_is_enabled = False
@@ -10198,6 +10237,14 @@ def ticketplus_date_auto_select(driver, config_dict):
                         if row_text is None:
                             row_text = ""
 
+                        if len(row_text) > 0:
+                            row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
+                        
+                        row_is_enabled=False
+                        if len(row_text) > 0:
+                            row_is_enabled=True
+
+                    if row_is_enabled:
                         row_is_enabled=False
                         for text_item in find_ticket_text_list:
                             if text_item in row_text:
@@ -10469,7 +10516,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                         row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = reset_row_text_if_match_area_keyword_exclude(config_dict, row_text)
+                        row_text = reset_row_text_if_match_keyword_exclude(config_dict, row_text)
 
                     if row_text == "":
                         row_is_enabled=False
