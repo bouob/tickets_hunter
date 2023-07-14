@@ -8,6 +8,10 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-07-06：ticketmaster 寬宏檢查剩餘票數/日期關鍵字做排除
+
+https://youtu.be/nV34M4JysBg
+
 Max搶票機器人2023-07-04：ticketmaster 支援無區域地圖的購票表單
 
 https://youtu.be/Jj2vca2kNZE
