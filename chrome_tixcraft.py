@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.03)"
+CONST_APP_VERSION = "MaxBot (2023.07.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2696,7 +2696,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 form_verifyCode.click()
                 is_verifyCode_editing = True
             except Exception as exc:
-                print("click form_verifyCode fail, tring to use javascript.")
+                print("click form_verifyCode fail, trying to use javascript.")
                 # plan B
                 try:
                     driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
@@ -2767,7 +2767,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                     #image_id = 'TicketForm_verifyCode-image'
                     pass
                 try:
-                    driver.set_script_timeout(3)
+                    driver.set_script_timeout(1)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -2790,6 +2790,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                     if show_debug_message:
                         print("canvas exception:", str(exc))
                     pass
+
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
@@ -2797,6 +2798,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                 pass
 
     return ocr_answer
+
 #PS: credit to LinShihJhang's share
 def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name):
     show_debug_message = True       # debug.
@@ -2806,7 +2808,18 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     is_need_redo_ocr = False
     is_form_sumbited = False
 
+    is_input_box_exist = False
     if not ocr is None:
+        form_verifyCode = None
+        try:
+            form_verifyCode = driver.find_element(By.ID, 'TicketForm_verifyCode')
+            is_input_box_exist = True
+        except Exception as exc:
+            pass
+    else:
+        print("ddddocr component is not able to use, you may running in arm environment.")
+
+    if is_input_box_exist:
         if show_debug_message:
             print("away_from_keyboard_enable:", away_from_keyboard_enable)
             print("previous_answer:", previous_answer)
@@ -2853,7 +2866,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                                 if new_captcha_url != "":
                                     tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
     else:
-        print("ddddocr component is not able to use, you may running in arm environment.")
+        print("input box not exist, quit ocr...")
 
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
@@ -3089,6 +3102,7 @@ def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_n
         tixcraft_keyin_captcha_code(driver)
     else:
         previous_answer = None
+        last_url, is_quit_bot = get_current_url(driver)
         for redo_ocr in range(999):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
@@ -3099,6 +3113,10 @@ def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_n
                 break
 
             if not is_need_redo_ocr:
+                break
+
+            current_url, is_quit_bot = get_current_url(driver)
+            if current_url != last_url:
                 break
 
 def kktix_confirm_order_button(driver):
@@ -6820,6 +6838,52 @@ def ticketmaster_parse_zone_info(driver, config_dict):
                 if show_debug_message:
                     print(exc)
 
+def ticketmaster_get_ticketPriceList(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    div_mapContainer = None
+    try:
+        my_css_selector = '#mapContainer'
+        div_mapContainer = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        if show_debug_message:
+            print('fail to find my_css_selector:', my_css_selector)
+            #print("find table#ticketPriceList fail", exc)
+
+    table_select = None
+    if not div_mapContainer is None:
+        is_loading = False
+        
+        # check is loading.
+        div_loadingmap = None
+        try:
+            my_css_selector = '#loadingmap'
+            div_loadingmap = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if  not div_loadingmap is None:
+                is_loading = True
+        except Exception as exc:
+            if show_debug_message:
+                print('fail to find my_css_selector:', my_css_selector)
+                #print("find table#ticketPriceList fail", exc)
+
+        if not is_loading:
+            try:
+                my_css_selector = '#ticketPriceList'
+                table_select = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                if show_debug_message:
+                    print('fail to find my_css_selector:', my_css_selector)
+                    #print("find table#ticketPriceList fail", exc)
+
+            if table_select is None:
+                ticketmaster_parse_zone_info(driver, config_dict)
+
+    return table_select
+
 def ticketmaster_assign_ticket_number(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -6827,21 +6891,13 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    table_select = None
-    try:
-        my_css_selector = 'table#ticketPriceList'
-        table_select = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-    except Exception as exc:
-        if show_debug_message:
-            print('fail to find my_css_selector:', my_css_selector)
-            #print("find table#ticketPriceList fail", exc)
-        ticketmaster_parse_zone_info(driver, config_dict)
-
-    form_select = None
+    table_select = ticketmaster_get_ticketPriceList(driver, config_dict)
+    
+    select_obj = None
     if not table_select is None:
+        form_select = None
         if show_debug_message:
-            print('found table, start find select')
-
+            print('found table#ticketPriceList, start find select')
         try:
             my_css_selector = 'select'
             form_select = table_select.find_element(By.CSS_SELECTOR, my_css_selector)
@@ -6851,22 +6907,21 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
                 print("find form-select fail", exc)
             pass
 
-    select_obj = None
-    if form_select is not None:
-        if show_debug_message:
-            print('found select.')
+        if form_select is not None:
+            if show_debug_message:
+                print('found ticket number select.')
 
-        is_visible = False
-        try:
-            if form_select.is_enabled():
-                is_visible = True
-        except Exception as exc:
-            pass
-        if is_visible:
+            is_visible = False
             try:
-                select_obj = Select(form_select)
+                if form_select.is_enabled():
+                    is_visible = True
             except Exception as exc:
                 pass
+            if is_visible:
+                try:
+                    select_obj = Select(form_select)
+                except Exception as exc:
+                    pass
 
     is_ticket_number_assigned = False
     if not select_obj is None:
@@ -6920,6 +6975,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_keyin_captcha_code(driver)
     else:
         previous_answer = None
+        last_url, is_quit_bot = get_current_url(driver)
         for redo_ocr in range(999):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
@@ -6930,6 +6986,10 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
                 break
 
             if not is_need_redo_ocr:
+                break
+
+            current_url, is_quit_bot = get_current_url(driver)
+            if current_url != last_url:
                 break
 
 
@@ -7784,7 +7844,7 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
 
             if not image_element is None:
                 try:
-                    driver.set_script_timeout(3)
+                    driver.set_script_timeout(1)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -7865,6 +7925,7 @@ def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     is_cpatcha_sent = False
     previous_answer = None
+    last_url, is_quit_bot = get_current_url(driver)
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
@@ -7879,6 +7940,10 @@ def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
             break
 
         if not is_need_redo_ocr:
+            break
+
+        current_url, is_quit_bot = get_current_url(driver)
+        if current_url != last_url:
             break
 
     return is_cpatcha_sent
@@ -9786,7 +9851,7 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
 
             if not image_element is None:
                 try:
-                    driver.set_script_timeout(3)
+                    driver.set_script_timeout(1)
                     form_verifyCode_base64 = driver.execute_async_script("""
                         var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
@@ -9867,6 +9932,7 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
     is_cpatcha_sent = False
     previous_answer = None
+    last_url, is_quit_bot = get_current_url(driver)
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
@@ -9880,6 +9946,10 @@ def kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
             break
 
         if not is_need_redo_ocr:
+            break
+
+        current_url, is_quit_bot = get_current_url(driver)
+        if current_url != last_url:
             break
 
     return is_cpatcha_sent
@@ -10616,6 +10686,7 @@ def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
 
     is_cpatcha_sent = False
     previous_answer = None
+    last_url, is_quit_bot = get_current_url(driver)
     for redo_ocr in range(999):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Browser)
 
@@ -10643,6 +10714,10 @@ def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
             break
 
         if not is_need_redo_ocr:
+            break
+
+        current_url, is_quit_bot = get_current_url(driver)
+        if current_url != last_url:
             break
 
 def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Browser):
@@ -10695,7 +10770,7 @@ def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Brows
 
             if not image_element is None:
                 try:
-                    driver.set_script_timeout(3)
+                    driver.set_script_timeout(1)
                     form_verifyCode_base64 = driver.execute_async_script("""
 function svgToPng(svg, callback) {
   const url = getSvgUrl(svg);
@@ -11029,6 +11104,99 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
         if is_event_page:
             ticketplus_order(driver, config_dict, ocr, Captcha_Browser)
 
+def get_current_url(driver):
+    DISCONNECTED_MSG = ': target window already closed'
+
+    url = ""
+    is_quit_bot = False
+
+    try:
+        url = driver.current_url
+    except NoSuchWindowException:
+        print('NoSuchWindowException at this url:', url )
+        #print("last_url:", last_url)
+        #print("get_log:", driver.get_log('driver'))
+        window_handles_count = 0
+        try:
+            window_handles_count = len(driver.window_handles)
+            #print("window_handles_count:", window_handles_count)
+            if window_handles_count >= 1:
+                driver.switch_to.window(driver.window_handles[0])
+                driver.switch_to.default_content()
+                time.sleep(0.2)
+        except Exception as excSwithFail:
+            #print("excSwithFail:", excSwithFail)
+            pass
+        if window_handles_count==0:
+            try:
+                driver_log = driver.get_log('driver')[-1]['message']
+                print("get_log:", driver_log)
+                if DISCONNECTED_MSG in driver_log:
+                    print('quit bot by NoSuchWindowException')
+                    is_quit_bot = True
+                    driver.quit()
+                    sys.exit()
+            except Exception as excGetDriverMessageFail:
+                #print("excGetDriverMessageFail:", excGetDriverMessageFail)
+                except_string = str(excGetDriverMessageFail)
+                if 'HTTP method not allowed' in except_string:
+                    print('quit bot by close browser')
+                    is_quit_bot = True
+                    driver.quit()
+                    sys.exit()
+
+    except UnexpectedAlertPresentException as exc1:
+        print('UnexpectedAlertPresentException at this url:', url )
+        # PS: do nothing...
+        # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
+        # raise exception at selenium/webdriver/remote/errorhandler.py
+        # after dialog disappear new excpetion: unhandled inspector error: Not attached to an active page
+        is_pass_alert = False
+        is_pass_alert = True
+        if is_pass_alert:
+            try:
+                driver.switch_to.alert.accept()
+            except Exception as exc:
+                pass
+
+    except Exception as exc:
+        logger.error('Maxbot URL Exception')
+        logger.error(exc, exc_info=True)
+
+        #UnicodeEncodeError: 'ascii' codec can't encode characters in position 63-72: ordinal not in range(128)
+        str_exc = ""
+        try:
+            str_exc = str(exc)
+        except Exception as exc2:
+            pass
+
+        if len(str_exc)==0:
+            str_exc = repr(exc)
+
+        exit_bot_error_strings = ['Max retries exceeded'
+        , 'chrome not reachable'
+        , 'unable to connect to renderer'
+        , 'failed to check if window was closed'
+        , 'Failed to establish a new connection'
+        , 'Connection refused'
+        , 'disconnected'
+        , 'without establishing a connection'
+        , 'web view not found'
+        , 'invalid session id'
+        ]
+        for each_error_string in exit_bot_error_strings:
+            if isinstance(str_exc, str):
+                if each_error_string in str_exc:
+                    print('quit bot by error:', each_error_string)
+                    is_quit_bot = True
+                    driver.quit()
+                    sys.exit()
+
+        # not is above case, print exception.
+        print("Exception:", str_exc)
+        pass
+
+    return url, is_quit_bot
 
 def main(args):
     config_dict = get_config_dict(args)
@@ -11068,7 +11236,6 @@ def main(args):
     hkticketing_dict["is_date_submiting"] = False
     hkticketing_dict["fail_list"]=[]
 
-
     ocr = None
     Captcha_Browser = None
     try:
@@ -11081,8 +11248,6 @@ def main(args):
     except Exception as exc:
         print(exc)
         pass
-
-    DISCONNECTED_MSG = ': target window already closed'
 
     while True:
         time.sleep(0.05)
@@ -11101,92 +11266,9 @@ def main(args):
         if is_alert_popup:
             continue
 
-        url = ""
-        try:
-            url = driver.current_url
-        except NoSuchWindowException:
-            print('NoSuchWindowException at this url:', url )
-            #print("last_url:", last_url)
-            #print("get_log:", driver.get_log('driver'))
-            window_handles_count = 0
-            try:
-                window_handles_count = len(driver.window_handles)
-                #print("window_handles_count:", window_handles_count)
-                if window_handles_count >= 1:
-                    driver.switch_to.window(driver.window_handles[0])
-                    driver.switch_to.default_content()
-                    time.sleep(0.2)
-            except Exception as excSwithFail:
-                #print("excSwithFail:", excSwithFail)
-                pass
-            if window_handles_count==0:
-                try:
-                    driver_log = driver.get_log('driver')[-1]['message']
-                    print("get_log:", driver_log)
-                    if DISCONNECTED_MSG in driver_log:
-                        print('quit bot by NoSuchWindowException')
-                        driver.quit()
-                        sys.exit()
-                        break
-                except Exception as excGetDriverMessageFail:
-                    #print("excGetDriverMessageFail:", excGetDriverMessageFail)
-                    except_string = str(excGetDriverMessageFail)
-                    if 'HTTP method not allowed' in except_string:
-                        print('quit bot by close browser')
-                        driver.quit()
-                        sys.exit()
-                        break
-
-        except UnexpectedAlertPresentException as exc1:
-            print('UnexpectedAlertPresentException at this url:', url )
-            # PS: do nothing...
-            # PS: current chrome-driver + chrome call current_url cause alert/prompt dialog disappear!
-            # raise exception at selenium/webdriver/remote/errorhandler.py
-            # after dialog disappear new excpetion: unhandled inspector error: Not attached to an active page
-            is_pass_alert = False
-            is_pass_alert = True
-            if is_pass_alert:
-                try:
-                    driver.switch_to.alert.accept()
-                except Exception as exc:
-                    pass
-
-        except Exception as exc:
-            logger.error('Maxbot URL Exception')
-            logger.error(exc, exc_info=True)
-
-            #UnicodeEncodeError: 'ascii' codec can't encode characters in position 63-72: ordinal not in range(128)
-            str_exc = ""
-            try:
-                str_exc = str(exc)
-            except Exception as exc2:
-                pass
-
-            if len(str_exc)==0:
-                str_exc = repr(exc)
-
-            exit_bot_error_strings = ['Max retries exceeded'
-            , 'chrome not reachable'
-            , 'unable to connect to renderer'
-            , 'failed to check if window was closed'
-            , 'Failed to establish a new connection'
-            , 'Connection refused'
-            , 'disconnected'
-            , 'without establishing a connection'
-            , 'web view not found'
-            , 'invalid session id'
-            ]
-            for each_error_string in exit_bot_error_strings:
-                if isinstance(str_exc, str):
-                    if each_error_string in str_exc:
-                        print('quit bot by error:', each_error_string)
-                        driver.quit()
-                        sys.exit()
-                        break
-
-            # not is above case, print exception.
-            print("Exception:", str_exc)
-            pass
+        url, is_quit_bot = get_current_url(driver)
+        if is_quit_bot:
+            break
 
         if url is None:
             continue
