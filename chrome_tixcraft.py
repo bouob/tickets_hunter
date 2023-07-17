@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.06)"
+CONST_APP_VERSION = "MaxBot (2023.07.07)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -71,7 +71,7 @@ CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
-CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Membership/Login.aspx"
+CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
 
 CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
@@ -9172,6 +9172,7 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
     ,'https://hotshow.hkticketing.com/default.aspx'
     ,'https://premier.hkticketing.com/Membership/Login.aspx'
     ,'https://hotshow.hkticketing.com/Membership/Login.aspx'
+    ,'https://premier.hkticketing.com/Secure/ShowLogin.aspx'
     ]
     for each_url in home_url_list:
         if each_url == url:
@@ -9186,8 +9187,13 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
     if not is_redirected:
         is_redirected = hkticketing_travel_iframe(driver, config_dict)
 
-    # PS: share function with galaxymacau, but memeber is not shared.
+    # https://premier.hkticketing.com/Membership/UpdateAccount_Default.aspx
+    is_hkticketing_sign_in_page = False
+    if 'hkticketing.com/Secure/ShowLogin.aspx' in url:
+        is_hkticketing_sign_in_page = True
     if 'hkticketing.com/Membership/Login.aspx' in url:
+        is_hkticketing_sign_in_page = True
+    if is_hkticketing_sign_in_page:
         account = config_dict["advanced"]["hkticketing_account"].strip()
         if len(account) > 4:
             hkticketing_login(driver, account, decryptMe(config_dict["advanced"]["hkticketing_password"]))
