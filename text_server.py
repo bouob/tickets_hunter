@@ -28,7 +28,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.07.08)"
+CONST_APP_VERSION = "MaxBot (2023.07.09)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
@@ -227,20 +227,25 @@ def web_server():
 
 def preview_question_text_file():
     if os.path.exists(CONST_MAXBOT_QUESTION_FILE):
-        question_text = ""
-        with open(CONST_MAXBOT_QUESTION_FILE, "r") as text_file:
-            question_text = text_file.readline()
+        infile = None
+        if platform.system() == 'Windows':
+            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r', encoding='UTF-8')
+        else:
+            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r')
 
-        global txt_question
-        try:
-            displayed_question_text = txt_question.get("1.0",END).strip()
-            if displayed_question_text != question_text:
-                # start to refresh
-                txt_question.delete("1.0","end")
-                if len(question_text) > 0:
-                    txt_question.insert("1.0", question_text)
-        except Exception as exc:
-            pass
+        if not infile is None:
+            question_text = infile.readline()
+
+            global txt_question
+            try:
+                displayed_question_text = txt_question.get("1.0",END).strip()
+                if displayed_question_text != question_text:
+                    # start to refresh
+                    txt_question.delete("1.0","end")
+                    if len(question_text) > 0:
+                        txt_question.insert("1.0", question_text)
+            except Exception as exc:
+                pass
 
 def text_server_timer():
     while True:
