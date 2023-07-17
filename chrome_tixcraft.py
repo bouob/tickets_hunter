@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.07)"
+CONST_APP_VERSION = "MaxBot (2023.07.08)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
