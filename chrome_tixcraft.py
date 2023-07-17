@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.08)"
+CONST_APP_VERSION = "MaxBot (2023.07.09)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -197,12 +197,24 @@ def get_config_dict(args):
     return config_dict
 
 def write_question_to_file(question_text):
-    with open(CONST_MAXBOT_QUESTION_FILE, "w") as text_file:
-        text_file.write("%s" % question_text)
+    outfile = None
+    if platform.system() == 'Windows':
+        outfile = open(CONST_MAXBOT_QUESTION_FILE, 'w', encoding='UTF-8')
+    else:
+        outfile = open(CONST_MAXBOT_QUESTION_FILE, 'w')
+
+    if not outfile is None:
+        outfile.write("%s" % question_text)
 
 def write_last_url_to_file(url):
-    with open(CONST_MAXBOT_LAST_URL_FILE, "w") as text_file:
-        text_file.write("%s" % url)
+    outfile = None
+    if platform.system() == 'Windows':
+        outfile = open(CONST_MAXBOT_LAST_URL_FILE, 'w', encoding='UTF-8')
+    else:
+        outfile = open(CONST_MAXBOT_LAST_URL_FILE, 'w')
+
+    if not outfile is None:
+        outfile.write("%s" % url)
 
 def read_last_url_from_file():
     ret = ""
@@ -1507,8 +1519,6 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     # read config.
     auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
-    # TODO: implement this feature.
-    date_keyword_and = ""
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -1634,7 +1644,6 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                date_keyword = format_keyword_string(date_keyword)
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
                 matched_blocks = []
@@ -1655,38 +1664,19 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
+
+                        if len(row_text) > 0:
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
 
                                 # only need first row.
                                 if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     break
-
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1857,31 +1847,9 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
                                 
@@ -1943,17 +1911,15 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     return is_date_clicked
 
-def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-    reset_flag = False
-
+def is_row_match_keyword(keyword_string, row_text):
     # clean stop word.
     row_text = format_keyword_string(row_text)
 
-    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
-    if len(area_keyword_exclude) > 0:
+    is_match_keyword = False
+    if len(keyword_string) > 0:
         area_keyword_exclude_array = []
         try:
-            area_keyword_exclude_array = json.loads("["+ area_keyword_exclude +"]")
+            area_keyword_exclude_array = json.loads("["+ keyword_string +"]")
         except Exception as exc:
             area_keyword_exclude_array = []
         for exclude_item_list in area_keyword_exclude_array:
@@ -1967,15 +1933,19 @@ def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             is_match_all_exclude = False
                     if is_match_all_exclude:
                         row_text = ""
-                        reset_flag = True
+                        is_match_keyword = True
                         break
                 else:
                     exclude_item = format_keyword_string(exclude_item_list)
                     if exclude_item in row_text:
                         row_text = ""
-                        reset_flag = True
+                        is_match_keyword = True
                         break
-    return reset_flag
+    return is_match_keyword
+
+def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+    return is_row_match_keyword(area_keyword_exclude, row_text)
 
 # PURPOSE: get target area list.
 # RETURN:
@@ -4690,10 +4660,6 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
     ret = False
     matched_blocks = None
 
-    # clean stop word.
-    date_keyword = format_keyword_string(date_keyword)
-    date_keyword_and = ""
-
     area_list = None
     try:
         #print("try to find cityline area block")
@@ -4766,31 +4732,9 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
 
@@ -5306,10 +5250,6 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
     ret = False
     matched_blocks = None
 
-    # clean stop word.
-    date_keyword = format_keyword_string(date_keyword)
-    date_keyword_and = ""
-
     area_list = None
     try:
         #print("try to find cityline area block")
@@ -5370,31 +5310,9 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
 
@@ -5884,10 +5802,6 @@ def ibon_date_auto_select(driver, config_dict):
     ret = False
     matched_blocks = None
 
-    # clean stop word.
-    date_keyword = format_keyword_string(date_keyword)
-    date_keyword_and = ""
-
     area_list = None
     try:
         #print("try to find cityline area block")
@@ -5962,31 +5876,9 @@ def ibon_date_auto_select(driver, config_dict):
                                 row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
 
@@ -8411,31 +8303,13 @@ def hkticketing_date_assign(driver, config_dict):
                                 row_text = ""
 
                             if len(row_text) > 0:
-                                row_text = format_keyword_string(row_text)
+                                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                    row_text = ""
+
+                            if len(row_text) > 0:
                                 if show_debug_message:
                                     print("row_text:", row_text)
-
-                                is_match_area = False
-                                match_area_code = 0
-
-                                if date_keyword in row_text:
-                                    if len(date_keyword_and) == 0:
-                                        if show_debug_message:
-                                            print('keyword_and # is empty, directly match.')
-                                        # keyword #2 is empty, direct append.
-                                        is_match_area = True
-                                        match_area_code = 2
-                                    else:
-                                        if date_keyword_and in row_text:
-                                            if show_debug_message:
-                                                print('match keyword_and')
-                                            is_match_area = True
-                                            match_area_code = 3
-                                        else:
-                                            if show_debug_message:
-                                                print('not match keyword_and')
-                                            pass
-
+                                is_match_area = is_row_match_keyword(date_keyword, row_text)
                                 if is_match_area:
                                     matched_blocks.append(row)
 
@@ -9269,10 +9143,6 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
     ret = False
     matched_blocks = None
 
-    # clean stop word.
-    date_keyword = format_keyword_string(date_keyword)
-    date_keyword_and = ""
-
     # default not selected.
     is_date_assigned = False
     if not is_date_assigned:
@@ -9372,34 +9242,16 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                                 row_text = ""
 
                             if len(row_text) > 0:
-                                row_text = format_keyword_string(row_text)
+                                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                    row_text = ""
+
+                            if len(row_text) > 0:
                                 if show_debug_message:
                                     print("row_text:", row_text)
-
-                                is_match_area = False
-                                match_area_code = 0
-
-                                if date_keyword in row_text:
-                                    if len(date_keyword_and) == 0:
-                                        if show_debug_message:
-                                            print('keyword_and # is empty, directly match.')
-                                        # keyword #2 is empty, direct append.
-                                        is_match_area = True
-                                        match_area_code = 2
-                                    else:
-                                        if date_keyword_and in row_text:
-                                            if show_debug_message:
-                                                print('match keyword_and')
-                                            is_match_area = True
-                                            match_area_code = 3
-                                        else:
-                                            if show_debug_message:
-                                                print('not match keyword_and')
-                                            pass
-
+                                is_match_area = is_row_match_keyword(date_keyword, row_text)
                                 if is_match_area:
                                     matched_blocks.append(row)
-                                    
+
                                     if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                         break
 
@@ -10329,31 +10181,13 @@ def ticketplus_date_auto_select(driver, config_dict):
                             row_text = ""
 
                         if len(row_text) > 0:
-                            row_text = format_keyword_string(row_text)
+                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                                row_text = ""
+
+                        if len(row_text) > 0:
                             if show_debug_message:
                                 print("row_text:", row_text)
-
-                            is_match_area = False
-                            match_area_code = 0
-
-                            if date_keyword in row_text:
-                                if len(date_keyword_and) == 0:
-                                    if show_debug_message:
-                                        print('keyword_and # is empty, directly match.')
-                                    # keyword #2 is empty, direct append.
-                                    is_match_area = True
-                                    match_area_code = 2
-                                else:
-                                    if date_keyword_and in row_text:
-                                        if show_debug_message:
-                                            print('match keyword_and')
-                                        is_match_area = True
-                                        match_area_code = 3
-                                    else:
-                                        if show_debug_message:
-                                            print('not match keyword_and')
-                                        pass
-
+                            is_match_area = is_row_match_keyword(date_keyword, row_text)
                             if is_match_area:
                                 matched_blocks.append(row)
 
