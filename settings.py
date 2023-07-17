@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.08)"
+CONST_APP_VERSION = "MaxBot (2023.07.09)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -229,7 +229,7 @@ def load_translate():
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
     zh_tw["area_keyword_exclude"] = '排除日期/區域關鍵字'
-    zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。.\n加入 ,\"\" 代表符合所有關鍵字'
+    zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n加入 ,\"\" 代表符合所有關鍵字'
 
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -799,7 +799,10 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
-        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = txt_date_keyword.get().strip()
+        
+        date_keyword = txt_date_keyword.get("1.0",END).strip()
+        date_keyword = format_config_keyword_for_json(date_keyword)
+        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = date_keyword
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
@@ -1433,7 +1436,7 @@ def showHideTixcraftBlocks():
         lbl_date_auto_select_mode.grid(column=0, row=date_auto_select_mode_index, sticky = E)
         combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
 
-        lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E)
+        lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E+N)
         txt_date_keyword.grid(column=1, row=date_keyword_index, sticky = W)
     else:
         # hide
@@ -1646,12 +1649,12 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global lbl_date_keyword
     lbl_date_keyword = Label(frame_group_tixcraft, text=translate[language_code]['date_keyword'])
-    lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E)
+    lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E+N)
 
     global txt_date_keyword
-    txt_date_keyword_value = StringVar(frame_group_tixcraft, value=config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip())
-    txt_date_keyword = Entry(frame_group_tixcraft, width=30, textvariable = txt_date_keyword_value)
-    txt_date_keyword.grid(column=1, row=date_keyword_index, sticky = W)
+    txt_date_keyword = Text(frame_group_tixcraft, width=30, height=4)
+    txt_date_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_date_keyword.insert("1.0", config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip())
 
     group_row_count+=1
 
