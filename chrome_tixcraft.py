@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.11)"
+CONST_APP_VERSION = "MaxBot (2023.07.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1635,37 +1635,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 # match keyword.
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
-                matched_blocks = []
 
-                row_index = 0
-                for row in formated_area_list:
-                    row_index += 1
-                    row_is_enabled=True
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
-
-                        if row_text is None:
-                            row_text = ""
-
-                        if len(row_text) > 0:
-                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                                row_text = ""
-
-                        if len(row_text) > 0:
-                            if show_debug_message:
-                                print("row_text:", row_text)
-                            is_match_area = is_row_match_keyword(date_keyword, row_text)
-                            if is_match_area:
-                                matched_blocks.append(row)
-
-                                # only need first row.
-                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                    break
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1701,7 +1672,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'button')
         if not is_date_clicked:
             if show_debug_message:
-                print("target_area got, start to press hyperlink.")
+                print("press button fail, try to click hyperlink.")
 
             # for: ticketmaster.sg
             is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
@@ -1818,32 +1789,8 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                 date_keyword = format_keyword_string(date_keyword)
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
-                matched_blocks = []
 
-                row_index = 0
-                for row in formated_area_list:
-                    row_index += 1
-                    row_is_enabled=True
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
-
-                        if row_text is None:
-                            row_text = ""
-
-                        if len(row_text) > 0:
-                            if show_debug_message:
-                                print("row_text:", row_text)
-                            is_match_area = is_row_match_keyword(date_keyword, row_text)
-                            if is_match_area:
-                                matched_blocks.append(row)
-                                
-                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                    break
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1899,6 +1846,64 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                         pass
 
     return is_date_clicked
+
+def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keyword_item_set, formated_area_list):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    matched_blocks = []
+    for row in formated_area_list:
+        row_text = ""
+        try:
+            row_text = row.text
+        except Exception as exc:
+            pass
+        if row_text is None:
+            row_text = ""
+        if len(row_text) > 0:
+            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                row_text = ""
+        if len(row_text) > 0:
+            if show_debug_message:
+                print("row_text:", row_text)
+
+            is_match_all = False
+            if ' ' in keyword_item_set:
+                keyword_item_array = keyword_item_set.split(' ')
+                is_match_all = True
+                for keyword_item in keyword_item_array:
+                    keyword_item = format_keyword_string(keyword_item)
+                    if not keyword_item in row_text:
+                        is_match_all = False
+            else:
+                exclude_item = format_keyword_string(keyword_item_set)
+                if exclude_item in row_text:
+                    is_match_all = True
+
+            if is_match_all:
+                matched_blocks.append(row)
+
+                # only need first row.
+                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                    break
+    return matched_blocks
+
+def get_matched_blocks_by_keyword(config_dict, auto_select_mode, keyword_string, formated_area_list):
+    keyword_array = []
+    try:
+        keyword_array = json.loads("["+ keyword_string +"]")
+    except Exception as exc:
+        keyword_array = []
+
+    matched_blocks = []
+    for keyword_item_set in keyword_array:
+        matched_blocks = get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keyword_item_set, formated_area_list)
+        if len(matched_blocks) > 0:
+            break
+    return matched_blocks
 
 def is_row_match_keyword(keyword_string, row_text):
     # clean stop word.
@@ -4429,7 +4434,6 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                                 print("only need first item, break area list loop.")
                                 break
 
-
     return_row_count = 0
     if not matched_blocks is None:
         return_row_count = len(matched_blocks)
@@ -5843,36 +5847,8 @@ def ibon_date_auto_select(driver, config_dict):
                 # match keyword.
                 if show_debug_message:
                     print("start to match keyword:", date_keyword)
-                matched_blocks = []
 
-                row_index = 0
-                for row in formated_area_list:
-                    row_index += 1
-                    row_is_enabled=True
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
-
-                        if row_text is None:
-                            row_text = ""
-
-                        if len(row_text) > 0:
-                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                                row_text = ""
-
-                        if len(row_text) > 0:
-                            if show_debug_message:
-                                print("row_text:", row_text)
-                            is_match_area = is_row_match_keyword(date_keyword, row_text)
-                            if is_match_area:
-                                matched_blocks.append(row)
-
-                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                    break
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -8274,36 +8250,8 @@ def hkticketing_date_assign(driver, config_dict):
                     # match keyword.
                     if show_debug_message:
                         print("start to match keyword:", date_keyword)
-                    matched_blocks = []
 
-                    row_index = 0
-                    for row in formated_area_list:
-                        row_index += 1
-                        row_is_enabled=True
-                        if row_is_enabled:
-                            row_text = ""
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
-
-                            if row_text is None:
-                                row_text = ""
-
-                            if len(row_text) > 0:
-                                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                                    row_text = ""
-
-                            if len(row_text) > 0:
-                                if show_debug_message:
-                                    print("row_text:", row_text)
-                                is_match_area = is_row_match_keyword(date_keyword, row_text)
-                                if is_match_area:
-                                    matched_blocks.append(row)
-
-                                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                        break
+                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -9213,36 +9161,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     # match keyword.
                     if show_debug_message:
                         print("start to match keyword:", date_keyword)
-                    matched_blocks = []
 
-                    row_index = 0
-                    for row in formated_area_list:
-                        row_index += 1
-                        row_is_enabled=True
-                        if row_is_enabled:
-                            row_text = ""
-                            try:
-                                row_text = row.text
-                            except Exception as exc:
-                                print("get text fail")
-                                break
-
-                            if row_text is None:
-                                row_text = ""
-
-                            if len(row_text) > 0:
-                                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                                    row_text = ""
-
-                            if len(row_text) > 0:
-                                if show_debug_message:
-                                    print("row_text:", row_text)
-                                is_match_area = is_row_match_keyword(date_keyword, row_text)
-                                if is_match_area:
-                                    matched_blocks.append(row)
-
-                                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                        break
+                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -10152,36 +10072,8 @@ def ticketplus_date_auto_select(driver, config_dict):
                 date_keyword = format_keyword_string(date_keyword)
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
-                matched_blocks = []
 
-                row_index = 0
-                for row in formated_area_list:
-                    row_index += 1
-                    row_is_enabled=True
-                    if row_is_enabled:
-                        row_text = ""
-                        try:
-                            row_text = row.text
-                        except Exception as exc:
-                            print("get text fail")
-                            break
-
-                        if row_text is None:
-                            row_text = ""
-
-                        if len(row_text) > 0:
-                            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                                row_text = ""
-
-                        if len(row_text) > 0:
-                            if show_debug_message:
-                                print("row_text:", row_text)
-                            is_match_area = is_row_match_keyword(date_keyword, row_text)
-                            if is_match_area:
-                                matched_blocks.append(row)
-
-                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                    break
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
 
                 if show_debug_message:
                     if not matched_blocks is None:
