@@ -53,7 +53,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.10)"
+CONST_APP_VERSION = "MaxBot (2023.07.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -395,19 +395,11 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
         if os.path.exists(brave_path):
             chrome_options.binary_location = brave_path
 
-    #caps = DesiredCapabilities().CHROME
-    caps = chrome_options.to_capabilities()
+    chrome_options.page_load_strategy = 'eager'
+    #chrome_options.page_load_strategy = 'none'
+    chrome_options.unhandled_prompt_behavior = "accept"
 
-    #caps["pageLoadStrategy"] = u"normal"  #  complete
-    caps["pageLoadStrategy"] = u"eager"  #  interactive
-    #caps["pageLoadStrategy"] = u"none"
-
-    #caps["unhandledPromptBehavior"] = u"dismiss and notify"  #  default
-    #caps["unhandledPromptBehavior"] = u"ignore"
-    #caps["unhandledPromptBehavior"] = u"dismiss"
-    caps["unhandledPromptBehavior"] = u"accept"
-
-    return chrome_options, caps
+    return chrome_options
 
 def load_chromdriver_normal(config_dict, driver_type):
     show_debug_message = True       # debug.
@@ -429,10 +421,10 @@ def load_chromdriver_normal(config_dict, driver_type):
         print(URL_CHROME_DRIVER)
     else:
         chrome_service = Service(chromedriver_path)
-        chrome_options, caps = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
+        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
         try:
             # method 6: Selenium Stealth
-            driver = webdriver.Chrome(service=chrome_service, options=chrome_options, desired_capabilities=caps)
+            driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
         except Exception as exc:
             error_message = str(exc)
             if show_debug_message:
@@ -476,7 +468,9 @@ def load_chromdriver_uc(config_dict):
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
     options = uc.ChromeOptions()
-    options.page_load_strategy="eager"
+    options.page_load_strategy = 'eager'
+    #options.page_load_strategy = 'none'
+    options.unhandled_prompt_behavior = "accept"
 
     #print("strategy", options.page_load_strategy)
 
@@ -512,13 +506,10 @@ def load_chromdriver_uc(config_dict):
         if os.path.exists(brave_path):
             options.binary_location = brave_path
 
-    caps = options.to_capabilities()
-    caps["unhandledPromptBehavior"] = u"accept"
-
     driver = None
     if os.path.exists(chromedriver_path):
         try:
-            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
+            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             print(exc)
             error_message = str(exc)
@@ -535,7 +526,7 @@ def load_chromdriver_uc(config_dict):
         #print("Oops! web driver not on path:",chromedriver_path )
         print('undetected_chromedriver automatically download chromedriver.')
         try:
-            driver = uc.Chrome(options=options, desired_capabilities=caps, headless=config_dict["advanced"]["headless"])
+            driver = uc.Chrome(options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             print(exc)
             error_message = str(exc)
@@ -666,7 +657,7 @@ def get_driver_by_config(config_dict):
             chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
 
         webdriver_service = Service(chromedriver_path)
-        chrome_options, caps = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser="edge", headless=config_dict["advanced"]["headless"])
+        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser="edge", headless=config_dict["advanced"]["headless"])
 
         driver = None
         try:
