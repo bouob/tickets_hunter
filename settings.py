@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.09)"
+CONST_APP_VERSION = "MaxBot (2023.07.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -50,7 +50,6 @@ CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
 CONST_RANDOM = u"random"
 CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM)
-CONST_SELECT_OPTIONS_ARRAY = [CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_RANDOM]
 CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT = '''tixcraft.com###topAlert
 tixcraft.com##.col-md-7.col-xs-12.mgt-16.text-center
 tixcraft.com##.col-md-7.col-xs-12.mgt-16.mx-auto
@@ -1638,7 +1637,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_date_auto_select_mode
     combo_date_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly", width=30)
-    combo_date_auto_select_mode['values']= (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP)
+    combo_date_auto_select_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
     combo_date_auto_select_mode.set(config_dict["tixcraft"]["date_auto_select"]["mode"])
     combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
 
