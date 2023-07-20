@@ -4,6 +4,7 @@
 # PS: python 2.x will be removed in future.
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 import os
+import pathlib
 import sys
 import platform
 import json
@@ -53,7 +54,7 @@ import webbrowser
 import argparse
 import itertools
 
-CONST_APP_VERSION = "MaxBot (2023.07.12)"
+CONST_APP_VERSION = "MaxBot (2023.07.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -453,6 +454,44 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     return driver
 
+def clean_uc_exe_cache():
+    is_cache_exist = False
+    exe_name = "chromedriver%s"
+
+    platform = sys.platform
+    if platform.endswith("win32"):
+        exe_name %= ".exe"
+    if platform.endswith(("linux", "linux2")):
+        exe_name %= ""
+    if platform.endswith("darwin"):
+        exe_name %= ""
+
+    if platform.endswith("win32"):
+        d = "~/appdata/roaming/undetected_chromedriver"
+    elif "LAMBDA_TASK_ROOT" in os.environ:
+        d = "/tmp/undetected_chromedriver"
+    elif platform.startswith(("linux", "linux2")):
+        d = "~/.local/share/undetected_chromedriver"
+    elif platform.endswith("darwin"):
+        d = "~/Library/Application Support/undetected_chromedriver"
+    else:
+        d = "~/.undetected_chromedriver"
+    data_path = os.path.abspath(os.path.expanduser(d))
+
+    p = pathlib.Path(data_path)
+    files = list(p.rglob("*chromedriver*?"))
+    for file in files:
+        is_cache_exist = True
+        try:
+            os.unlink(str(file))
+        except PermissionError:
+            pass
+        except FileNotFoundError:
+            pass
+
+    return is_cache_exist
+
+
 def load_chromdriver_uc(config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -521,6 +560,13 @@ def load_chromdriver_uc(config_dict):
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+
+            is_cache_exist = clean_uc_exe_cache()
+            if is_cache_exist:
+                try:
+                    driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+                except Exception as exc:
+                    pass
 
     if driver is None:
         #print("Oops! web driver not on path:",chromedriver_path )
