@@ -53,8 +53,9 @@ except Exception as exc:
 import webbrowser
 import argparse
 import itertools
+import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.07.13)"
+CONST_APP_VERSION = "MaxBot (2023.07.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -69,7 +70,6 @@ CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to matc
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
 
 CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
-CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
@@ -413,6 +413,7 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
+    chromedriver_autoinstaller.install(path=webdriver_path)
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -424,7 +425,6 @@ def load_chromdriver_normal(config_dict, driver_type):
         chrome_service = Service(chromedriver_path)
         chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
         try:
-            # method 6: Selenium Stealth
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
         except Exception as exc:
             error_message = str(exc)
@@ -438,6 +438,21 @@ def load_chromdriver_normal(config_dict, driver_type):
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+
+                # remove exist download again.
+                try:
+                    os.unlink(chromedriver_path)
+                except PermissionError:
+                    pass
+                except FileNotFoundError:
+                    pass
+                chromedriver_autoinstaller.install(path=webdriver_path)
+                chrome_service = Service(chromedriver_path)
+                try:
+                    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+                except Exception as exc2:
+                    pass
+
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
@@ -493,6 +508,8 @@ def clean_uc_exe_cache():
 
 
 def load_chromdriver_uc(config_dict):
+    import undetected_chromedriver as uc
+
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -501,8 +518,7 @@ def load_chromdriver_uc(config_dict):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-
-    import undetected_chromedriver as uc
+    chromedriver_autoinstaller.install(path=webdriver_path)
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -566,6 +582,19 @@ def load_chromdriver_uc(config_dict):
                 try:
                     driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
                 except Exception as exc:
+                    pass
+            else:
+                # remove exist download again.
+                try:
+                    os.unlink(chromedriver_path)
+                except PermissionError:
+                    pass
+                except FileNotFoundError:
+                    pass
+                chromedriver_path = get_chromedriver_path(webdriver_path)
+                try:
+                    driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+                except Exception as exc2:
                     pass
 
     if driver is None:
@@ -750,10 +779,6 @@ def get_driver_by_config(config_dict):
             if 'urbtix.hk' in homepage:
                 if len(config_dict["advanced"]["urbtix_account"])>0:
                     homepage = CONST_URBTIX_SIGN_IN_URL
-
-            if 'cityline.com' in homepage:
-                if len(config_dict["advanced"]["cityline_account"])>0:
-                    homepage = CONST_CITYLINE_SIGN_IN_URL
 
             if 'hkticketing.com' in homepage:
                 if len(config_dict["advanced"]["hkticketing_account"])>0:
@@ -5433,7 +5458,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = ".form-check"
+        my_css_selector = "div.form-check"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -5584,10 +5609,10 @@ def cityline_area_selected_text(driver):
 
     return ret
 
-def cityline_ticket_number_auto_select(driver, ticket_number):
+def cityline_ticket_number_auto_select(driver, config_dict):
     selector_string = 'select.select-num'
     by_method = By.CSS_SELECTOR
-    return assign_ticket_number_by_select(driver, ticket_number, by_method, selector_string)
+    return assign_ticket_number_by_select(driver, config_dict, by_method, selector_string)
 
 def ibon_ticket_number_appear(driver, config_dict):
     show_debug_message = True       # debug.
@@ -5680,7 +5705,6 @@ def cityline_purchase_button_press(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    ret = False
 
     date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
@@ -5690,32 +5714,11 @@ def cityline_purchase_button_press(driver, config_dict):
         print("date_keyword:", date_keyword)
     is_date_assign_by_bot = cityline_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
 
-    el_btn = None
-    try:
-        el_btn = driver.find_element(By.CSS_SELECTOR, 'button.purchase-btn')
-    except Exception as exc:
-        print("find next button fail")
-        #print(exc)
-        pass
+    is_button_clicked = False
+    if is_date_assign_by_bot:
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'button.purchase-btn')
 
-    if el_btn is not None:
-        print("bingo, found next button")
-        try:
-            if el_btn.is_enabled():
-                el_btn.click()
-                ret = True
-        except Exception as exc:
-            print("press next button fail")
-            print(exc)
-            # use plan B
-            try:
-                print("force to click by js.")
-                driver.execute_script("arguments[0].click();", el_btn)
-                ret = True
-            except Exception as exc:
-                pass
-
-    return ret
+    return is_button_clicked
 
 
 def cityline_next_button_press(driver):
@@ -5801,11 +5804,10 @@ def cityline_performance(driver, config_dict):
                 pass
 
         # choose ticket.
-        ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = cityline_ticket_number_auto_select(driver, ticket_number)
+        is_ticket_number_assigned = cityline_ticket_number_auto_select(driver, config_dict)
 
         if show_debug_message:
-            print("ticket_number:", ticket_number)
+            print("ticket_number:", config_dict["ticket_number"])
             print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
         if is_ticket_number_assigned:
@@ -7529,28 +7531,8 @@ def cityline_shows_goto_cta(driver):
 
     return ret
 
-def cityline_home_close_window(driver):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    close_styles_list = ['.anticon-close', '.cookieWrapper_closeBtn']
-
-    for close_styles in close_styles_list:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,  close_styles)
 
 def cityline_main(driver, url, config_dict):
-    #https://www.cityline.com/Events.html
-    if 'cityline.com/Events.html' in url:
-        cityline_home_close_window(driver)
-
-    # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
-    # ignore url redirect
-    if '/Login.html' in url:
-        cityline_account = config_dict["advanced"]["cityline_account"]
-        if len(cityline_account) > 2:
-            cityline_login(driver, cityline_account, decryptMe(config_dict["advanced"]["cityline_password"]))
-        return
-
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         try:
