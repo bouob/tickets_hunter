@@ -413,7 +413,7 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    chromedriver_autoinstaller.install(path=webdriver_path)
+    chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -446,7 +446,7 @@ def load_chromdriver_normal(config_dict, driver_type):
                     pass
                 except FileNotFoundError:
                     pass
-                chromedriver_autoinstaller.install(path=webdriver_path)
+                chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
                 chrome_service = Service(chromedriver_path)
                 try:
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
@@ -518,7 +518,7 @@ def load_chromdriver_uc(config_dict):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    chromedriver_autoinstaller.install(path=webdriver_path)
+    chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -591,7 +591,7 @@ def load_chromdriver_uc(config_dict):
                     pass
                 except FileNotFoundError:
                     pass
-                chromedriver_path = get_chromedriver_path(webdriver_path)
+                chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
                 try:
                     driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
                 except Exception as exc2:
