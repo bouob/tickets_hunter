@@ -55,7 +55,7 @@ import argparse
 import itertools
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.07.20)"
+CONST_APP_VERSION = "MaxBot (2023.07.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -328,10 +328,13 @@ def is_all_alpha_or_numeric(text):
 
 def get_favoriate_extension_path(webdriver_path):
     print("webdriver_path:", webdriver_path)
-    no_google_analytics_path = os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx")
-    no_ad_path = os.path.join(webdriver_path,"Adblock_3.16.1.0.crx")
-    buster_path = os.path.join(webdriver_path,"Buster_2.0.1.0.crx")
-    return no_google_analytics_path, no_ad_path, buster_path
+    extension_list = []
+    extension_list.append(os.path.join(webdriver_path,"Adblock_3.18.1.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"Buster_2.0.1.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"no_google_analytics_1.1.0.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"proxy-switchyomega_2.5.21.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"tampermonkey_4.19.0.0.crx"))
+    return extension_list
 
 def get_chromedriver_path(webdriver_path):
     chromedriver_path = os.path.join(webdriver_path,"chromedriver")
@@ -368,14 +371,10 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     # some windows cause: timed out receiving message from renderer
     if adblock_plus_enable:
         # PS: this is ocx version.
-        no_google_analytics_path, no_ad_path, buster_path = get_favoriate_extension_path(webdriver_path)
-
-        if os.path.exists(no_google_analytics_path):
-            chrome_options.add_extension(no_google_analytics_path)
-        if os.path.exists(no_ad_path):
-            chrome_options.add_extension(no_ad_path)
-        if os.path.exists(buster_path):
-            chrome_options.add_extension(buster_path)
+        extension_list = get_favoriate_extension_path(webdriver_path)
+        for ext in extension_list:
+            if os.path.exists(ext):
+                chrome_options.add_extension(ext)
     if headless:
         #chrome_options.add_argument('--headless')
         chrome_options.add_argument('--headless=new')
@@ -413,9 +412,11 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
-
     chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    if not os.path.exists(chromedriver_path):
+        print("WebDriver not exist, automatically download...")
+        chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     if not os.path.exists(chromedriver_path):
         print("Please download chromedriver and extract zip to webdriver folder from this url:")
@@ -518,9 +519,11 @@ def load_chromdriver_uc(config_dict):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
-
     chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    if not os.path.exists(chromedriver_path):
+        print("WebDriver not exist, automatically download...")
+        chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     options = uc.ChromeOptions()
     options.page_load_strategy = 'eager'
@@ -530,18 +533,14 @@ def load_chromdriver_uc(config_dict):
     #print("strategy", options.page_load_strategy)
 
     if config_dict["advanced"]["adblock_plus_enable"]:
-        no_google_analytics_path, no_ad_path, buster_path = get_favoriate_extension_path(webdriver_path)
-        no_google_analytics_folder_path = no_google_analytics_path.replace('.crx','')
-        no_ad_folder_path = no_ad_path.replace('.crx','')
-        buster_path = buster_path.replace('.crx','')
         load_extension_path = ""
-        if os.path.exists(no_google_analytics_folder_path):
-            load_extension_path += "," + no_google_analytics_folder_path
-        if os.path.exists(no_ad_folder_path):
-            load_extension_path += "," + no_ad_folder_path
-        if os.path.exists(buster_path):
-            load_extension_path += "," + buster_path
+        extension_list = get_favoriate_extension_path(webdriver_path)
+        for ext in extension_list:
+            ext = ext.replace('.crx','')
+            if os.path.exists(ext):
+                load_extension_path += ("," + os.path.abspath(ext))
         if len(load_extension_path) > 0:
+            print('load-extension:', load_extension_path[1:])
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
     if config_dict["advanced"]["headless"]:
@@ -596,10 +595,11 @@ def load_chromdriver_uc(config_dict):
                     driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
                 except Exception as exc2:
                     pass
+    else:
+        print("WebDriver not found at path:", chromedriver_path)
 
     if driver is None:
-        #print("Oops! web driver not on path:",chromedriver_path )
-        print('undetected_chromedriver automatically download chromedriver.')
+        print('WebDriver object is None..., try again..')
         try:
             driver = uc.Chrome(options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
