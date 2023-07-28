@@ -55,7 +55,7 @@ import argparse
 import itertools
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.07.21)"
+CONST_APP_VERSION = "MaxBot (2023.07.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -415,7 +415,7 @@ def load_chromdriver_normal(config_dict, driver_type):
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
     if not os.path.exists(chromedriver_path):
-        print("WebDriver not exist, automatically download...")
+        print("WebDriver not exist, try to download...")
         chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     if not os.path.exists(chromedriver_path):
@@ -522,7 +522,7 @@ def load_chromdriver_uc(config_dict):
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
     if not os.path.exists(chromedriver_path):
-        print("WebDriver not exist, automatically download...")
+        print("WebDriver not exist, try to download...")
         chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
 
     options = uc.ChromeOptions()
