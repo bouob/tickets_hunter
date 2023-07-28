@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.20)"
+CONST_APP_VERSION = "MaxBot (2023.07.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1478,12 +1478,9 @@ def on_homepage_configure(event):
 
 def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     # output config:
-    print("setting app version", CONST_APP_VERSION)
-    print("python version", platform.python_version())
-    print("platform", platform.platform())
-
-    # for tixcraft
-    print(config_dict["tixcraft"])
+    print("setting app version:", CONST_APP_VERSION)
+    print("python version:", platform.python_version())
+    print("platform:", platform.platform())
 
     global lbl_homepage
     global lbl_ticket_number
