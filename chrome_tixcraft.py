@@ -55,7 +55,7 @@ import argparse
 import itertools
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.07.22)"
+CONST_APP_VERSION = "MaxBot (2023.07.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -562,6 +562,9 @@ def load_chromdriver_uc(config_dict):
 
     driver = None
     if os.path.exists(chromedriver_path):
+        # use chromedriver_autodownload instead of uc auto download.
+        is_cache_exist = clean_uc_exe_cache()
+
         try:
             driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
@@ -576,25 +579,19 @@ def load_chromdriver_uc(config_dict):
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
-            is_cache_exist = clean_uc_exe_cache()
-            if is_cache_exist:
-                try:
-                    driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
-                except Exception as exc:
-                    pass
-            else:
-                # remove exist download again.
-                try:
-                    os.unlink(chromedriver_path)
-                except PermissionError:
-                    pass
-                except FileNotFoundError:
-                    pass
-                chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
-                try:
-                    driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
-                except Exception as exc2:
-                    pass
+            # remove exist chromedriver, download again.
+            try:
+                os.unlink(chromedriver_path)
+            except PermissionError:
+                pass
+            except FileNotFoundError:
+                pass
+
+            chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
+            try:
+                driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+            except Exception as exc2:
+                pass
     else:
         print("WebDriver not found at path:", chromedriver_path)
 
