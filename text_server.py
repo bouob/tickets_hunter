@@ -28,7 +28,7 @@ import asyncio
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.07.22)"
+CONST_APP_VERSION = "MaxBot (2023.07.23)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
