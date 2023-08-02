@@ -414,6 +414,9 @@ def load_chromdriver_normal(config_dict, driver_type):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
+    if not os.path.exists(webdriver_path):
+        os.mkdir(webdriver_path)
+
     if not os.path.exists(chromedriver_path):
         print("WebDriver not exist, try to download...")
         chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
@@ -520,6 +523,9 @@ def load_chromdriver_uc(config_dict):
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    if not os.path.exists(webdriver_path):
+        os.mkdir(webdriver_path)
 
     if not os.path.exists(chromedriver_path):
         print("WebDriver not exist, try to download...")
