@@ -11088,15 +11088,19 @@ def main(args):
             if len(url) == 0:
                 continue
 
+        is_maxbot_paused = False
+        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+            is_maxbot_paused = True
+
         if len(url) > 0 :
             if url != last_url:
                 print(url)
                 write_last_url_to_file(url)
-                if os.path.exists(CONST_MAXBOT_INT28_FILE):
+                if is_maxbot_paused:
                     print("MAXBOT Paused.")
             last_url = url
 
-        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        if is_maxbot_paused:
             time.sleep(0.2)
             continue
 
