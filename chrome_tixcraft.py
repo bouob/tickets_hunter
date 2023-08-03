@@ -1474,6 +1474,7 @@ def force_press_button(driver, select_by, select_query, force_submit=True):
 
                 if is_visible:
                     try:
+                        driver.set_script_timeout(1)
                         driver.execute_script("arguments[0].click();", next_step_button)
                         ret = True
                     except Exception as exc:
@@ -6323,6 +6324,7 @@ def facebook_login(driver, account, password):
                             is_password_sent = True
                         time.sleep(0.1)
         except Exception as exc:
+            print(exc)
             pass
 
     ret = is_password_sent
