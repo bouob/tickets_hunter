@@ -52,7 +52,6 @@ except Exception as exc:
 
 import webbrowser
 import argparse
-import itertools
 import chromedriver_autoinstaller
 
 CONST_APP_VERSION = "MaxBot (2023.07.23)"
@@ -85,7 +84,6 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
-#CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 
@@ -510,7 +508,6 @@ def clean_uc_exe_cache():
 
     return is_cache_exist
 
-
 def load_chromdriver_uc(config_dict):
     import undetected_chromedriver as uc
 
@@ -648,22 +645,19 @@ def get_driver_by_config(config_dict):
 
     # read config.
     homepage = config_dict["homepage"]
-    browser = config_dict["browser"]
-
-    driver_type = config_dict["webdriver_type"]
 
     # output config:
     print("maxbot app version:", CONST_APP_VERSION)
     print("python version:", platform.python_version())
     print("platform:", platform.platform())
     print("homepage:", homepage)
-    print("browser:", browser)
+    print("browser:", config_dict["browser"])
     print("ticket_number:", str(config_dict["ticket_number"]))
 
     print(config_dict["tixcraft"])
     print("==[advanced config]==")
     print(config_dict["advanced"])
-    print("webdriver_type:", driver_type)
+    print("webdriver_type:", config_dict["webdriver_type"])
 
     # entry point
     if homepage is None:
@@ -675,10 +669,10 @@ def get_driver_by_config(config_dict):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     print("platform.system().lower():", platform.system().lower())
 
-    if browser in ["chrome","brave"]:
+    if config_dict["browser"] in ["chrome","brave"]:
         # method 6: Selenium Stealth
-        if driver_type != CONST_WEBDRIVER_TYPE_UC:
-            driver = load_chromdriver_normal(config_dict, driver_type)
+        if config_dict["webdriver_type"] != CONST_WEBDRIVER_TYPE_UC:
+            driver = load_chromdriver_normal(config_dict, config_dict["webdriver_type"])
         else:
             # method 5: uc
             # multiprocessing not work bug.
@@ -688,7 +682,7 @@ def get_driver_by_config(config_dict):
                     freeze_support()
             driver = load_chromdriver_uc(config_dict)
 
-    if browser == "firefox":
+    if config_dict["browser"] == "firefox":
         # default os is linux/mac
         # download url: https://github.com/mozilla/geckodriver/releases
         chromedriver_path = os.path.join(webdriver_path,"geckodriver")
@@ -727,7 +721,7 @@ def get_driver_by_config(config_dict):
             else:
                 print(exc)
 
-    if browser == "edge":
+    if config_dict["browser"] == "edge":
         # default os is linux/mac
         # download url: https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/
         chromedriver_path = os.path.join(webdriver_path,"msedgedriver")
@@ -748,7 +742,7 @@ def get_driver_by_config(config_dict):
                 left_part = error_message.split("Stacktrace:")[0]
                 print(left_part)
 
-    if browser == "safari":
+    if config_dict["browser"] == "safari":
         driver = None
         try:
             driver = webdriver.Safari()
@@ -11079,19 +11073,10 @@ def main(args):
     while True:
         time.sleep(0.05)
 
-        is_alert_popup = False
-
         # pass if driver not loaded.
         if driver is None:
             print("web driver not accessible!")
             break
-
-        #is_alert_popup = check_pop_alert(driver)
-
-        #MUST "do nothing: if alert popup.
-        #print("is_alert_popup:", is_alert_popup)
-        if is_alert_popup:
-            continue
 
         url, is_quit_bot = get_current_url(driver)
         if is_quit_bot:
@@ -11102,9 +11087,6 @@ def main(args):
         else:
             if len(url) == 0:
                 continue
-
-        # 說明：輸出目前網址，覺得吵的話，請註解掉這行。
-        #print("url:", url)
 
         if len(url) > 0 :
             if url != last_url:
@@ -11179,7 +11161,7 @@ def main(args):
 
 def cli():
     parser = argparse.ArgumentParser(
-            description="resize image to new width")
+            description="MaxBot Aggument Parser")
 
     parser.add_argument("--input",
         help="config file path",
@@ -11217,51 +11199,53 @@ def cli():
     parser.add_argument("--browser",
         help="overwrite browser setting",
         default='',
-        choices=['chrome','firefox','edge','safari'],
+        choices=['chrome','firefox','edge','safari','brave'],
         type=str)
 
     args = parser.parse_args()
     main(args)
 
-if __name__ == "__main__":
-    CONST_MODE_GUI = 0
-    CONST_MODE_CLI = 1
-    mode = CONST_MODE_GUI
-    #mode = CONST_MODE_CLI
+def test_captcha_model():
+    #for test kktix answer.
+    captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
+    #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
+    #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
+    #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
+    #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
+    #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
+    #captcha_text_div_text = "以下為選擇題：請問 「OHM NANON 1st Fan Meeting in Hong Kong」 舉行日期是？請以半形細楷英文於下方輸入答案 (例如：a)  a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
+    #captcha_text_div_text = "以下哪個「不是」正確的林俊傑與其他藝人合唱的歌曲組合？（選項為歌名/合作藝人 ，請以半形輸入法作答選項，大小寫需要一模一樣，範例:jju） 選項： (jja)小酒窩/A-Sa蔡卓妍 (jjb)被風吹過的夏天/金莎 (jjc)友人說/張懷秋 (jjd)全面開戰/五月天阿信 (jje)小說/阿杜"
+    #captcha_text_div_text = "請問《龍的傳人2060》演唱會是以下哪位藝人的演出？（請以半形輸入法作答，大小寫需要一模一樣，範例：B2）A1.周杰倫 B2.林俊傑 C3.張學友 D4.王力宏"
+    #captcha_text_div_text = "王力宏何時發行第一張專輯?（請以半形輸入法作答，大小寫需要一模一樣，範例:B2） A1.1985 B2.2005 C3.2015 D4.1995"
+    #captcha_text_div_text = "朴寶劍三月以歌手出道的日期和單曲名為？ Answer the single’s name & the debut date. *以半形輸入，大小寫/符號須都相同。例:(E1) Please use the same format given in the options.ex:(E1) (A1)20/Bloomin'(B1)2/Blossom(C1)2/Bloomin'(D1)20/Blossom"
+    #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
+    #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
+    #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
+    #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
+    #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
+    #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
+    #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
+    #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
+    #captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
+    #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
+    #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
+    answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
+    print("answer_list:", answer_list)
 
-    if mode == CONST_MODE_GUI:
+    ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+    image_file = 'captcha-xxxx.png'
+    if os.path.exists(image_file):
+        with open(image_file, 'rb') as f:
+            image_bytes = f.read()
+        res = ocr.classification(image_bytes)
+        print(res)
+
+if __name__ == "__main__":
+    debug_captcha_model_flag = False    # online mode
+    # for debug purpose.
+    #debug_captcha_model_flag = True
+
+    if not debug_captcha_model_flag:
         cli()
     else:
-        #for test kktix infer answer.
-        captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
-        #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
-        #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
-        #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
-        #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
-        #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
-        #captcha_text_div_text = "以下為選擇題：請問 「OHM NANON 1st Fan Meeting in Hong Kong」 舉行日期是？請以半形細楷英文於下方輸入答案 (例如：a)  a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
-        #captcha_text_div_text = "以下哪個「不是」正確的林俊傑與其他藝人合唱的歌曲組合？（選項為歌名/合作藝人 ，請以半形輸入法作答選項，大小寫需要一模一樣，範例:jju） 選項： (jja)小酒窩/A-Sa蔡卓妍 (jjb)被風吹過的夏天/金莎 (jjc)友人說/張懷秋 (jjd)全面開戰/五月天阿信 (jje)小說/阿杜"
-        #captcha_text_div_text = "請問《龍的傳人2060》演唱會是以下哪位藝人的演出？（請以半形輸入法作答，大小寫需要一模一樣，範例：B2）A1.周杰倫 B2.林俊傑 C3.張學友 D4.王力宏"
-        #captcha_text_div_text = "王力宏何時發行第一張專輯?（請以半形輸入法作答，大小寫需要一模一樣，範例:B2） A1.1985 B2.2005 C3.2015 D4.1995"
-        #captcha_text_div_text = "朴寶劍三月以歌手出道的日期和單曲名為？ Answer the single’s name & the debut date. *以半形輸入，大小寫/符號須都相同。例:(E1) Please use the same format given in the options.ex:(E1) (A1)20/Bloomin'(B1)2/Blossom(C1)2/Bloomin'(D1)20/Blossom"
-        #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
-        #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
-        #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
-        #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
-        #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
-        #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
-        #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
-        #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
-        #captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
-        #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
-        #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
-        answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
-        print("answer_list:", answer_list)
-
-        ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
-        image_file = 'captcha-xxxx.png'
-        if os.path.exists(image_file):
-            with open(image_file, 'rb') as f:
-                image_bytes = f.read()
-            res = ocr.classification(image_bytes)
-            print(res)
+        test_captcha_model()
