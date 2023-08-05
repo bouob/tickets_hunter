@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.01)"
+CONST_APP_VERSION = "MaxBot (2023.08.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1451,6 +1451,30 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 print("found, guess_answer_list_from_symbols:", return_list)
 
     return return_list
+
+def force_press_button_iframe(driver, f, select_by, select_query, force_submit=True):
+    if not f:
+        # ensure we are on main content frame
+        try:
+            driver.switch_to.default_content()
+        except Exception as exc:
+            pass
+    else:
+        try:
+            driver.switch_to.frame(f)
+        except Exception as exc:
+            pass
+
+    is_clicked = force_press_button(driver, select_by, select_query, force_submit)
+
+    if f:
+        # switch back to main content, otherwise we will get StaleElementReferenceException
+        try:
+            driver.switch_to.default_content()
+        except Exception as exc:
+            pass
+
+    return is_clicked
 
 def force_press_button(driver, select_by, select_query, force_submit=True):
     ret = False
@@ -3126,7 +3150,8 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
         is_ticket_number_assigned = False
         row_text = None
         try:
-            row_text = select_obj.first_selected_option.text
+            selected_option = select_obj.first_selected_option
+            row_text = selected_option.text
         except Exception as exc:
             pass
         if not row_text is None:
@@ -5630,7 +5655,7 @@ def ibon_ticket_number_appear(driver, config_dict):
         form_select = driver.find_element(by_method, selector_string)
     except Exception as exc:
         if show_debug_message:
-            print("find ticket_number select fail")
+            print("find ticket_number select fail:")
             print(exc)
         pass
 
@@ -5988,7 +6013,6 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
     is_price_assign_by_bot = False
     is_need_refresh = False
 
-    matched_blocks = None
 
     area_list = None
     try:
@@ -6104,13 +6128,13 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
     if is_price_assign_by_bot:
         formated_area_list = None
 
+    matched_blocks = []
     if formated_area_list is not None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
 
         if area_list_count > 0:
-            matched_blocks = []
             if len(area_keyword_item) == 0:
                 matched_blocks = formated_area_list
             else:
@@ -6158,10 +6182,6 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
-
-            if len(matched_blocks) == 0:
-                matched_blocks = None
-                is_need_refresh = True
 
     target_area = None
     if matched_blocks is not None:
@@ -6259,6 +6279,9 @@ def ibon_performance(driver, config_dict):
             # empty keyword, match all.
             is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword)
 
+        if show_debug_message:
+            print("is_need_refresh:", is_need_refresh)
+
         if is_need_refresh:
             try:
                 driver.refresh()
@@ -6267,7 +6290,6 @@ def ibon_performance(driver, config_dict):
 
             if config_dict["advanced"]["auto_reload_random_delay"]:
                 time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
-
 
     return is_price_assign_by_bot
 
