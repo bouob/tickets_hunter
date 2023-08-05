@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.07.23)"
+CONST_APP_VERSION = "MaxBot (2023.08.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -483,6 +483,7 @@ def clean_uc_exe_cache():
     if platform.endswith("darwin"):
         exe_name %= ""
 
+    d = ""
     if platform.endswith("win32"):
         d = "~/appdata/roaming/undetected_chromedriver"
     elif "LAMBDA_TASK_ROOT" in os.environ:
@@ -499,12 +500,13 @@ def clean_uc_exe_cache():
     files = list(p.rglob("*chromedriver*?"))
     for file in files:
         is_cache_exist = True
-        try:
-            os.unlink(str(file))
-        except PermissionError:
-            pass
-        except FileNotFoundError:
-            pass
+        if os.path.exists(str(file)):
+            try:
+                os.unlink(str(file))
+            except PermissionError:
+                pass
+            except FileNotFoundError:
+                pass
 
     return is_cache_exist
 
@@ -594,6 +596,7 @@ def load_chromdriver_uc(config_dict):
             try:
                 driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
             except Exception as exc2:
+                print(exc2)
                 pass
     else:
         print("WebDriver not found at path:", chromedriver_path)
@@ -2007,7 +2010,7 @@ def is_row_match_keyword(keyword_string, row_text):
     return is_match_keyword
 
 def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-    area_keyword_exclude = config_dict["area_auto_select"]["area_keyword_exclude"]
+    area_keyword_exclude = config_dict["keyword_exclude"]
     return is_row_match_keyword(area_keyword_exclude, row_text)
 
 # PURPOSE: get target area list.
@@ -5838,12 +5841,10 @@ def ibon_date_auto_select(driver, config_dict):
         print("date_keyword:", date_keyword)
         print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
 
-    ret = False
     matched_blocks = None
 
     area_list = None
     try:
-        #print("try to find cityline area block")
         my_css_selector = "div.single-content > div > div.row > div > div.tr"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
@@ -5922,6 +5923,7 @@ def ibon_date_auto_select(driver, config_dict):
 
             target_area = matched_blocks[target_row_index]
 
+    is_date_assign_by_bot = False
     if target_area is not None:
         is_button_clicked = False
         for i in range(3):
@@ -5951,7 +5953,7 @@ def ibon_date_auto_select(driver, config_dict):
                     '''
             if is_button_clicked:
                 break
-        ret = is_button_clicked
+        is_date_assign_by_bot = is_button_clicked
 
     else:
         # no target to click.
@@ -5968,7 +5970,7 @@ def ibon_date_auto_select(driver, config_dict):
                     if config_dict["advanced"]["auto_reload_random_delay"]:
                         time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-    return ret
+    return is_date_assign_by_bot
 
 def ibon_area_auto_select(driver, config_dict, area_keyword_item):
     show_debug_message = True       # debug.

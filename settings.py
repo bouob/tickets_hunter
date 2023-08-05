@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.07.23)"
+CONST_APP_VERSION = "MaxBot (2023.08.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -131,8 +131,8 @@ def load_translate():
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
-    en_us["area_keyword_exclude"] = 'Date/Area Keyword Exclude'
-    en_us["area_keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
+    en_us["keyword_exclude"] = 'Keyword Exclude'
+    en_us["keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
 
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -225,8 +225,8 @@ def load_translate():
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
-    zh_tw["area_keyword_exclude"] = '排除日期/區域關鍵字'
-    zh_tw["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n加入 ,\"\" 代表符合所有關鍵字'
+    zh_tw["keyword_exclude"] = '排除關鍵字'
+    zh_tw["keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n加入 ,\"\" 代表符合所有關鍵字'
 
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -313,13 +313,13 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)(香港)'
-    zh_cn["auto_reload_random_delay"] = '重新加载随机延迟(台灣)'
+    zh_cn["auto_reload_random_delay"] = '重新加载随机延迟(台湾)'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
     zh_cn["area_auto_select"] = '区域自动点选'
-    zh_cn["area_keyword_exclude"] = '排除日期/区域关键字'
-    zh_cn["area_keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n附加 ,\"\" 以匹配所有結果。'
+    zh_cn["keyword_exclude"] = '排除关键字'
+    zh_cn["keyword_usage"] = '每组关键字需要双引号, 用逗号分隔, \n在关键字中使用空格作为 AND 逻辑。\n附加 ,\"\" 以匹配所有结果。'
 
     zh_cn["ocr_captcha"] = '猜测验证码'
     zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -328,18 +328,18 @@ def load_translate():
     zh_cn["webdriver_type"] = 'WebDriver类别'
     zh_cn["headless"] = '无图形界面模式'
     zh_cn["verbose"] = '输出详细除错讯息'
-    zh_cn["running_status"] = '執行狀態'
-    zh_cn["running_url"] = '執行網址'
-    zh_cn["status_idle"] = '閒置中'
-    zh_cn["status_paused"] = '已暫停'
+    zh_cn["running_status"] = '执行状态'
+    zh_cn["running_url"] = '执行网址'
+    zh_cn["status_idle"] = '闲置中'
+    zh_cn["status_paused"] = '已暂停'
     zh_cn["status_enabled"] = '已启用'
-    zh_cn["status_running"] = '執行中'
+    zh_cn["status_running"] = '执行中'
 
     zh_cn["idle"] = '暂停抢票'
     zh_cn["resume"] = '接续抢票'
 
     zh_cn["preference"] = '偏好设定'
-    zh_cn["advanced"] = '進階設定'
+    zh_cn["advanced"] = '进阶设定'
     zh_cn["verification_word"] = "验证字"
     zh_cn["autofill"] = '自动填表单'
     zh_cn["runtime"] = '运行'
@@ -361,15 +361,15 @@ def load_translate():
     zh_cn["urbtix_account"] = 'URBTIX 帐号'
     zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
     zh_cn["kham_account"] = '宽宏 帐号'
-    zh_cn["ticketplus_account"] = '遠大 帐号'
+    zh_cn["ticketplus_account"] = '远大 帐号'
 
     zh_cn["facebook_password"] = 'Facebook 密码'
     zh_cn["kktix_password"] = 'KKTIX 密码'
     zh_cn["urbtix_password"] = 'URBTIX 密码'
     zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
     zh_cn["kham_password"] = '宽宏 密码'
-    zh_cn["ticketplus_password"] = '遠大 密码'
-    zh_cn["save_password_alert"] = '將密碼保存到文件中可能會暴露您的密碼。'
+    zh_cn["ticketplus_password"] = '远大 密码'
+    zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
 
     zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
     zh_cn["captcha_sound_filename"] = '验证码用音效档'
@@ -412,8 +412,8 @@ def load_translate():
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
-    ja_jp["area_keyword_exclude"] = '除外日付/エリア キーワード'
-    ja_jp["area_keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
+    ja_jp["keyword_exclude"] = '除外キーワード'
+    ja_jp["keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
 
     ja_jp["ocr_captcha"] = 'キャプチャを推測する'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -583,7 +583,7 @@ def get_default_config():
     config_dict["area_auto_select"]["enable"] = True
     config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["area_auto_select"]["area_keyword"] = ""
-    config_dict["area_auto_select"]["area_keyword_exclude"] = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\""
+    config_dict["keyword_exclude"] = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\""
 
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
@@ -649,7 +649,6 @@ def btn_restore_defaults_clicked(language_code):
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = get_default_config()
-    import json
     with open(config_filepath, 'w') as outfile:
         json.dump(config_dict, outfile)
     messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
@@ -703,7 +702,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_date_keyword
     global chk_state_area_auto_select
     global txt_area_keyword
-    global txt_area_keyword_exclude
+    global txt_keyword_exclude
     global txt_online_dictionary_url
 
     global combo_date_auto_select_mode
@@ -797,8 +796,8 @@ def btn_save_act(language_code, slience_mode=False):
         area_keyword = txt_area_keyword.get("1.0",END).strip()
         area_keyword = format_config_keyword_for_json(area_keyword)
 
-        area_keyword_exclude = txt_area_keyword_exclude.get("1.0",END).strip()
-        area_keyword_exclude = format_config_keyword_for_json(area_keyword_exclude)
+        keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
+        keyword_exclude = format_config_keyword_for_json(keyword_exclude)
 
         user_guess_string = txt_user_guess_string.get("1.0",END).strip()
         user_guess_string = format_config_keyword_for_json(user_guess_string)
@@ -812,15 +811,17 @@ def btn_save_act(language_code, slience_mode=False):
                 try:
                     test_array = json.loads("["+ area_keyword +"]")
                 except Exception as exc:
+                    print(exc)
                     messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword"])
                     is_all_data_correct = False
 
         if is_all_data_correct:
-            if len(area_keyword_exclude) > 0:
+            if len(keyword_exclude) > 0:
                 try:
-                    test_array = json.loads("["+ area_keyword_exclude +"]")
+                    test_array = json.loads("["+ keyword_exclude +"]")
                 except Exception as exc:
-                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["area_keyword_exclude"])
+                    print(exc)
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["keyword_exclude"])
                     is_all_data_correct = False
 
         if is_all_data_correct:
@@ -828,6 +829,7 @@ def btn_save_act(language_code, slience_mode=False):
                 try:
                     test_array = json.loads("["+ user_guess_string +"]")
                 except Exception as exc:
+                    print(exc)
                     messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["user_guess_string"])
                     is_all_data_correct = False
 
@@ -836,12 +838,13 @@ def btn_save_act(language_code, slience_mode=False):
                 try:
                     test_array = json.loads("["+ online_dictionary_url +"]")
                 except Exception as exc:
+                    print(exc)
                     messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["online_dictionary_url"])
                     is_all_data_correct = False
 
         if is_all_data_correct:
             config_dict["area_auto_select"]["area_keyword"] = area_keyword
-            config_dict["area_auto_select"]["area_keyword_exclude"] = area_keyword_exclude
+            config_dict["keyword_exclude"] = keyword_exclude
             config_dict["advanced"]["user_guess_string"] = user_guess_string
             config_dict["advanced"]["online_dictionary_url"] = online_dictionary_url
 
@@ -1143,8 +1146,8 @@ def applyNewLanguage():
     global lbl_area_auto_select
     global lbl_area_auto_select_mode
     global lbl_area_keyword
-    global lbl_area_keyword_exclude
-    global lbl_area_keyword_usage
+    global lbl_keyword_exclude
+    global lbl_keyword_usage
 
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
@@ -1212,8 +1215,8 @@ def applyNewLanguage():
     lbl_area_auto_select.config(text=translate[language_code]["area_auto_select"])
     lbl_area_auto_select_mode.config(text=translate[language_code]["area_select_order"])
     lbl_area_keyword.config(text=translate[language_code]["area_keyword"])
-    lbl_area_keyword_exclude.config(text=translate[language_code]["area_keyword_exclude"])
-    lbl_area_keyword_usage.config(text=translate[language_code]["area_keyword_usage"])
+    lbl_keyword_exclude.config(text=translate[language_code]["keyword_exclude"])
+    lbl_keyword_usage.config(text=translate[language_code]["keyword_usage"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
@@ -1437,13 +1440,13 @@ def showHideAreaBlocks():
     global combo_area_auto_select_mode
 
     area_keyword_index = area_auto_select_mode_index + 1
-    area_keyword_exclude_index = area_auto_select_mode_index + 2
+    keyword_exclude_index = area_auto_select_mode_index + 2
 
     global lbl_area_keyword
     global txt_area_keyword
 
-    global lbl_area_keyword_exclude
-    global txt_area_keyword_exclude
+    global lbl_keyword_exclude
+    global txt_keyword_exclude
 
     is_area_set_to_enable = bool(chk_state_area_auto_select.get())
 
@@ -1455,8 +1458,8 @@ def showHideAreaBlocks():
         lbl_area_keyword.grid(column=0, row=area_keyword_index, sticky = E+N)
         txt_area_keyword.grid(column=1, row=area_keyword_index, sticky = W)
 
-        lbl_area_keyword_exclude.grid(column=0, row=area_keyword_exclude_index, sticky = E+N)
-        txt_area_keyword_exclude.grid(column=1, row=area_keyword_exclude_index, sticky = W)
+        lbl_keyword_exclude.grid(column=0, row=keyword_exclude_index, sticky = E+N)
+        txt_keyword_exclude.grid(column=1, row=keyword_exclude_index, sticky = W)
 
     else:
         # hide
@@ -1466,8 +1469,8 @@ def showHideAreaBlocks():
         lbl_area_keyword.grid_forget()
         txt_area_keyword.grid_forget()
 
-        lbl_area_keyword_exclude.grid_forget()
-        txt_area_keyword_exclude.grid_forget()
+        lbl_keyword_exclude.grid_forget()
+        txt_keyword_exclude.grid_forget()
 
 
 def on_homepage_configure(event):
@@ -1716,20 +1719,20 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    global lbl_area_keyword_exclude
-    lbl_area_keyword_exclude = Label(frame_group_area, text=translate[language_code]['area_keyword_exclude'])
-    lbl_area_keyword_exclude.grid(column=0, row=group_row_count, sticky = E+N)
+    global lbl_keyword_exclude
+    lbl_keyword_exclude = Label(frame_group_area, text=translate[language_code]['keyword_exclude'])
+    lbl_keyword_exclude.grid(column=0, row=group_row_count, sticky = E+N)
 
-    global txt_area_keyword_exclude
-    txt_area_keyword_exclude = Text(frame_group_area, width=30, height=4)
-    txt_area_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
-    txt_area_keyword_exclude.insert("1.0", config_dict["area_auto_select"]["area_keyword_exclude"].strip())
+    global txt_keyword_exclude
+    txt_keyword_exclude = Text(frame_group_area, width=30, height=4)
+    txt_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
+    txt_keyword_exclude.insert("1.0", config_dict["keyword_exclude"].strip())
 
     group_row_count+=1
 
-    global lbl_area_keyword_usage
-    lbl_area_keyword_usage = Label(frame_group_area, text=translate[language_code]['area_keyword_usage'])
-    lbl_area_keyword_usage.grid(column=1, row=group_row_count, sticky = W)
+    global lbl_keyword_usage
+    lbl_keyword_usage = Label(frame_group_area, text=translate[language_code]['keyword_usage'])
+    lbl_keyword_usage.grid(column=1, row=group_row_count, sticky = W)
 
     # flush
     frame_group_area.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
