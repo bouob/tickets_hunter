@@ -3694,6 +3694,22 @@ def kktix_check_agree_checkbox(driver, config_dict):
 
     return is_need_refresh, is_finish_checkbox_click
 
+def check_checkbox(driver, by, query):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    agree_checkbox = None
+    try:
+        agree_checkbox = driver.find_element(by, query)
+    except Exception as exc:
+        if show_debug_message:
+            print(exc)
+        pass
+    is_checkbox_checked = False
+    if agree_checkbox is not None:
+        is_checkbox_checked = force_check_checkbox(driver, agree_checkbox)
+    return is_checkbox_checked
+
 
 def force_check_checkbox(driver, agree_checkbox):
     is_finish_checkbox_click = False
@@ -6298,63 +6314,68 @@ def ibon_purchase_button_press(driver):
     is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#ticket-wrap > a.btn')
     return is_button_clicked
 
-def facebook_login(driver, account, password):
-    ret = False
-    el_email = None
-    try:
-        el_email = driver.find_element(By.CSS_SELECTOR, '#email')
-    except Exception as exc:
-        pass
+def assign_text(driver, by, query, val, overwrite = False, submit=False):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if val is None:
+        val = ""
 
     is_visible = False
-    if el_email is not None:
+
+    if len(val) > 0:
+        el_text = None
         try:
-            if el_email.is_enabled():
-                is_visible = True
+            el_text = driver.find_element(by, query)
         except Exception as exc:
+            if show_debug_message:
+                print(exc)
             pass
 
-    is_email_sent = False
+        if el_text is not None:
+            try:
+                if el_text.is_enabled() and el_text.is_displayed():
+                    is_visible = True
+            except Exception as exc:
+                if show_debug_message:
+                    print(exc)
+                pass
+
+    is_text_sent = False
     if is_visible:
         try:
-            inputed_text = el_email.get_attribute('value')
+            inputed_text = el_text.get_attribute('value')
             if inputed_text is not None:
+                is_do_keyin = False
                 if len(inputed_text) == 0:
-                    el_email.send_keys(account)
-                    is_email_sent = True
+                    is_do_keyin = True
                 else:
-                    if inputed_text == account:
-                        is_email_sent = True
-        except Exception as exc:
-            pass
+                    if inputed_text == val:
+                        is_text_sent = True
+                    else:
+                        if overwrite:
+                            el_text.clear()
+                            is_do_keyin = True
 
-    el_pass = None
-    if is_email_sent:
-        try:
-            el_pass = driver.find_element(By.CSS_SELECTOR, '#pass')
+                if is_do_keyin:
+                    el_text.click()
+                    el_text.send_keys(val)
+                    if submit:
+                        el_text.send_keys(Keys.ENTER)
+                    is_text_sent = True
         except Exception as exc:
+            if show_debug_message:
+                print(exc)
             pass
+            
+    return is_text_sent
 
+def facebook_login(driver, account, password):
+    is_email_sent = assign_text(driver, By.CSS_SELECTOR, '#email', account)
     is_password_sent = False
-    if el_pass is not None:
-        try:
-            if el_pass.is_enabled():
-                inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
-                    if len(inputed_text) == 0:
-                        el_pass.click()
-                        if(len(password)>0):
-                            el_pass.send_keys(password)
-                            el_pass.send_keys(Keys.ENTER)
-                            is_password_sent = True
-                        time.sleep(0.1)
-        except Exception as exc:
-            print(exc)
-            pass
-
-    ret = is_password_sent
-
-    return ret
+    if is_email_sent:
+        is_password_sent = assign_text(driver, By.CSS_SELECTOR, '#pass', password, submit=True)
+    return is_password_sent
 
 def kktix_login(driver, account, password):
     ret = False
