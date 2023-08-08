@@ -441,14 +441,15 @@ def load_chromdriver_normal(config_dict, driver_type):
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
 
-                # remove exist download again.
+                # remove exist chromedriver, download again.
                 try:
+                    print("Deleting exist and download ChromeDriver again.")
                     os.unlink(chromedriver_path)
-                except PermissionError:
+                except Exception as exc2:
+                    print(exc2)
                     pass
-                except FileNotFoundError:
-                    pass
-                chromedriver_autoinstaller.install(path="webdriver", make_version_dir=False)
+
+                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
                 chrome_service = Service(chromedriver_path)
                 try:
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
