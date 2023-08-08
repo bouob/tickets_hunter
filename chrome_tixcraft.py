@@ -454,7 +454,12 @@ def load_chromdriver_normal(config_dict, driver_type):
                 try:
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
                 except Exception as exc2:
-                    pass
+                    print("Selenium 4.11.0 Release with Chrome For Testing Browser.")
+                    try:
+                        driver = webdriver.Chrome(service=Service(), options=chrome_options)
+                    except Exception as exc3:
+                        print(exc3)
+                        pass
 
 
     if driver_type=="stealth":
