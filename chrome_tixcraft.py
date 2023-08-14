@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.10)"
+CONST_APP_VERSION = "MaxBot (2023.08.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -452,10 +452,12 @@ def load_chromdriver_normal(config_dict, driver_type):
                 chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
                 chrome_service = Service(chromedriver_path)
                 try:
+                    chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
                 except Exception as exc2:
                     print("Selenium 4.11.0 Release with Chrome For Testing Browser.")
                     try:
+                        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
                         driver = webdriver.Chrome(service=Service(), options=chrome_options)
                     except Exception as exc3:
                         print(exc3)
@@ -7613,6 +7615,7 @@ def cityline_main(driver, url, config_dict):
             pass
 
     if 'cityline.com/queue?' in url:
+        # show HTTP ERROR 400
         pass
 
 
