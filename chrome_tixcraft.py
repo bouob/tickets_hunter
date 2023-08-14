@@ -517,28 +517,7 @@ def clean_uc_exe_cache():
 
     return is_cache_exist
 
-def load_chromdriver_uc(config_dict):
-    import undetected_chromedriver as uc
-
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    Root_Dir = get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
-    chromedriver_path = get_chromedriver_path(webdriver_path)
-
-    if not os.path.exists(webdriver_path):
-        os.mkdir(webdriver_path)
-
-    if not os.path.exists(chromedriver_path):
-        print("ChromeDriver not exist, try to download to:", webdriver_path)
-        chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
-    else:
-        print("ChromeDriver exist:", chromedriver_path)
-
+def get_uc_options(uc, config_dict, webdriver_path):
     options = uc.ChromeOptions()
     options.page_load_strategy = 'eager'
     #options.page_load_strategy = 'none'
@@ -574,12 +553,38 @@ def load_chromdriver_uc(config_dict):
         if os.path.exists(brave_path):
             options.binary_location = brave_path
 
+    return options
+
+def load_chromdriver_uc(config_dict):
+    import undetected_chromedriver as uc
+
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    chromedriver_path = get_chromedriver_path(webdriver_path)
+
+    if not os.path.exists(webdriver_path):
+        os.mkdir(webdriver_path)
+
+    if not os.path.exists(chromedriver_path):
+        print("ChromeDriver not exist, try to download to:", webdriver_path)
+        chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+    else:
+        print("ChromeDriver exist:", chromedriver_path)
+
+
     driver = None
     if os.path.exists(chromedriver_path):
         # use chromedriver_autodownload instead of uc auto download.
         is_cache_exist = clean_uc_exe_cache()
 
         try:
+            options = get_uc_options(uc, config_dict, webdriver_path)
             driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             print(exc)
@@ -603,6 +608,7 @@ def load_chromdriver_uc(config_dict):
 
             chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
             try:
+                options = get_uc_options(uc, config_dict, webdriver_path)
                 driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
             except Exception as exc2:
                 print(exc2)
@@ -7585,6 +7591,9 @@ def cityline_shows_goto_cta(driver):
     return ret
 
 
+def cityline_cookie_accept(driver):
+    is_btn_click = force_press_button(driver, By.CSS_SELECTOR,'.cookieWrapper_closeBtn')
+
 def cityline_main(driver, url, config_dict):
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
@@ -7607,6 +7616,9 @@ def cityline_main(driver, url, config_dict):
     except Exception as excSwithFail:
         pass
 
+    if '.cityline.com/Events.html' in url:
+        cityline_cookie_accept(driver)
+
     if 'https://shows.cityline.com/' == url:
         try:
             driver.set_script_timeout(1)
@@ -7617,7 +7629,6 @@ def cityline_main(driver, url, config_dict):
     if 'cityline.com/queue?' in url:
         # show HTTP ERROR 400
         pass
-
 
     is_ready_to_buy_from_queue = False
     # Q: How to know ready to buy ticket from queue?
