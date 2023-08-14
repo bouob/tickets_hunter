@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.07)"
+CONST_APP_VERSION = "MaxBot (2023.08.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7587,7 +7587,8 @@ def cityline_main(driver, url, config_dict):
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         try:
-            driver.execute_script("goEvent();")
+            driver.set_script_timeout(1)
+            driver.execute_script("retry();")
         except Exception as exec1:
             pass
         pass
@@ -7603,6 +7604,17 @@ def cityline_main(driver, url, config_dict):
             time.sleep(0.2)
     except Exception as excSwithFail:
         pass
+
+    if 'https://shows.cityline.com/' == url:
+        try:
+            driver.set_script_timeout(1)
+            driver.execute_script("go_venue('TW');")
+        except Exception as exc:
+            pass
+
+    if 'cityline.com/queue?' in url:
+        pass
+
 
     is_ready_to_buy_from_queue = False
     # Q: How to know ready to buy ticket from queue?
