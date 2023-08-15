@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.11)"
+CONST_APP_VERSION = "MaxBot (2023.08.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7594,17 +7594,31 @@ def cityline_shows_goto_cta(driver):
 def cityline_cookie_accept(driver):
     is_btn_click = force_press_button(driver, By.CSS_SELECTOR,'.cookieWrapper_closeBtn')
 
+def cityline_auto_retry_access(driver, config_dict):
+    btn_retry = None
+    try:
+        btn_retry = driver.find_element(By.CSS_SELECTOR, 'button')
+        if not btn_retry is None:
+            js = btn_retry.get_attribute('onclick')
+            driver.set_script_timeout(1)
+            driver.execute_script(js)
+    except Exception as exc:
+        pass
+
+    # 刷太快, 會被封IP?
+    time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+def cityline_go_venue(driver):
+    try:
+        driver.set_script_timeout(1)
+        driver.execute_script("go_venue('TW');")
+    except Exception as exc:
+        pass
+
 def cityline_main(driver, url, config_dict):
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
-        try:
-            driver.set_script_timeout(1)
-            driver.execute_script("retry();")
-        except Exception as exec1:
-            pass
-        pass
-        # 刷太快, 會被封IP?
-        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+        cityline_auto_retry_access(driver, config_dict)
 
     try:
         window_handles_count = len(driver.window_handles)
@@ -7619,12 +7633,13 @@ def cityline_main(driver, url, config_dict):
     if '.cityline.com/Events.html' in url:
         cityline_cookie_accept(driver)
 
+
+    if 'https://priority.cityline.com/' == url:
+        cityline_go_venue(driver)
+
+
     if 'https://shows.cityline.com/' == url:
-        try:
-            driver.set_script_timeout(1)
-            driver.execute_script("go_venue('TW');")
-        except Exception as exc:
-            pass
+        cityline_go_venue(driver)
 
     if 'cityline.com/queue?' in url:
         # show HTTP ERROR 400
