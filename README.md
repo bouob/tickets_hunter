@@ -251,7 +251,11 @@ https://youtu.be/AmOYg8Oj0qM
 * ibon: https://max-everyday.com/2023/01/ibon-bot/
 * cityline: https://max-everyday.com/2019/03/cityline-bot/
 * urbtix: https://max-everyday.com/2019/02/urbtix-bot/
-* hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/ 
+* hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
+
+如果你想在 interpark 上搶票, 你需要去下載另一個專門為 interpark 量身定制的 Max Interpark Bot:
+
+https://max-everyday.com/2023/08/interpark-bot/
 
 # How to execute source code (透過原始碼的執行方法)
 1: download chromedrive to "webdriver" folder:
