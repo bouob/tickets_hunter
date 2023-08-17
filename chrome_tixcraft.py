@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.13)"
+CONST_APP_VERSION = "MaxBot (2023.08.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7608,10 +7608,37 @@ def cityline_auto_retry_access(driver, config_dict):
     # 刷太快, 會被封IP?
     time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
-def cityline_go_venue(driver):
+def cityline_go_venue(driver, url):
+    url_https = url.replace("http://","https://")
+    url_https_array = url_https.split("/")
+
+    is_match_venue_url = False
+    if url[-1:] == "/":
+        if len(url_https_array)==4:
+            domain_array = url_https_array[2].split(".")
+            if len(domain_array)==3:
+                is_match_venue_url = True
+    
+    if is_match_venue_url:
+        try:
+            btn_next = driver.find_element(By.CSS_SELECTOR, 'div#eventDetail > div#btnDiv > a')
+            if not btn_next is None:
+                driver.set_script_timeout(1)
+                driver.execute_script("go_venue('TW');")
+        except Exception as exc:
+            pass
+
+def cityline_clean_ads(driver):
+    ad_query_list = [
+        'ats-overlay-bottom-wrapper-rendered',
+        '.insert_ads',
+    ]
     try:
-        driver.set_script_timeout(1)
-        driver.execute_script("go_venue('TW');")
+        for ad_query in ad_query_list:
+            ad_div = driver.find_element(By.CSS_SELECTOR, ad_query)
+            if not ad_div is None:
+                driver.set_script_timeout(1)
+                driver.execute_script("arguments[0].outerHTML='';", ad_div);
     except Exception as exc:
         pass
 
@@ -7633,19 +7660,8 @@ def cityline_main(driver, url, config_dict):
     if '.cityline.com/Events.html' in url:
         cityline_cookie_accept(driver)
 
-
-    go_venue_url_list = [
-        'https://priority.cityline.com/',
-        'https://shows.cityline.com/',
-        'https://special.cityline.com/',
-        'https://fans.cityline.com/',
-        'https://prioritybooking.cityline.com/',
-    ]
-    for each_venus in go_venue_url_list:
-        url_https = url.replace("http://","https://")
-        if each_venus == url:
-            cityline_go_venue(driver)
-            break
+    cityline_go_venue(driver, url)
+    cityline_clean_ads(driver)
 
     if 'cityline.com/queue?' in url:
         # show HTTP ERROR 400
