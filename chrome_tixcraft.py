@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.12)"
+CONST_APP_VERSION = "MaxBot (2023.08.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7634,12 +7634,18 @@ def cityline_main(driver, url, config_dict):
         cityline_cookie_accept(driver)
 
 
-    if 'https://priority.cityline.com/' == url:
-        cityline_go_venue(driver)
-
-
-    if 'https://shows.cityline.com/' == url:
-        cityline_go_venue(driver)
+    go_venue_url_list = [
+        'https://priority.cityline.com/',
+        'https://shows.cityline.com/',
+        'https://special.cityline.com/',
+        'https://fans.cityline.com/',
+        'https://prioritybooking.cityline.com/',
+    ]
+    for each_venus in go_venue_url_list:
+        url_https = url.replace("http://","https://")
+        if each_venus == url:
+            cityline_go_venue(driver)
+            break
 
     if 'cityline.com/queue?' in url:
         # show HTTP ERROR 400
