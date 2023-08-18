@@ -22,7 +22,7 @@ import base64
 import threading
 import subprocess
 
-CONST_APP_VERSION = "MaxBot (2023.08.07)"
+CONST_APP_VERSION = "MaxBot (2023.08.15)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -37,13 +37,11 @@ URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
 
-
 def load_translate():
     translate = {}
     en_us={}
     en_us["language"] = 'Language'
     en_us["enable"] = 'Enable'
-
 
     en_us["config_list"] = 'Config List'
     en_us["advanced"] = 'Advanced'
