@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.15)"
+CONST_APP_VERSION = "MaxBot (2023.08.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -69,6 +69,7 @@ CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to matc
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
 
 CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
+CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
@@ -245,17 +246,16 @@ def full2half(keyword):
 
 def get_chinese_numeric():
     my_dict = {}
-    my_dict['0']=['zero','零']
-    my_dict['1']=['one','一','壹','①','❶','⑴']
-    my_dict['2']=['two','二','貳','②','❷','⑵']
-    my_dict['3']=['three','三','叁','③','❸','⑶']
-    my_dict['4']=['four','四','肆','④','❹','⑷']
-    my_dict['5']=['five','五','伍','⑤','❺','⑸']
-    my_dict['6']=['six','六','陸','⑥','❻','⑹']
-    my_dict['7']=['seven','七','柒','⑦','❼','⑺']
-    my_dict['8']=['eight','八','捌','⑧','❽','⑻']
-    my_dict['9']=['nine','九','玖','⑨','❾','⑼']
-
+    my_dict['0']=['0','０','zero','零']
+    my_dict['1']=['1','１','one','一','壹','①','❶','⑴']
+    my_dict['2']=['2','２','two','二','貳','②','❷','⑵']
+    my_dict['3']=['3','３','three','三','叁','③','❸','⑶']
+    my_dict['4']=['4','４','four','四','肆','④','❹','⑷']
+    my_dict['5']=['5','５','five','五','伍','⑤','❺','⑸']
+    my_dict['6']=['6','６','six','六','陸','⑥','❻','⑹']
+    my_dict['7']=['7','７','seven','七','柒','⑦','❼','⑺']
+    my_dict['8']=['8','８','eight','八','捌','⑧','❽','⑻']
+    my_dict['9']=['9','９','nine','九','玖','⑨','❾','⑼']
     return my_dict
 
 # 同義字
@@ -794,6 +794,10 @@ def get_driver_by_config(config_dict):
                 if len(config_dict["advanced"]["urbtix_account"])>0:
                     homepage = CONST_URBTIX_SIGN_IN_URL
 
+            if 'cityline.com' in homepage:
+                if len(config_dict["advanced"]["cityline_account"])>0:
+                    homepage = CONST_CITYLINE_SIGN_IN_URL
+
             if 'hkticketing.com' in homepage:
                 if len(config_dict["advanced"]["hkticketing_account"])>0:
                     homepage = CONST_HKTICKETING_SIGN_IN_URL
@@ -1197,6 +1201,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 offical_hint_string_anwser = u'A' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -1207,6 +1215,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 offical_hint_string_anwser = u'A' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -1217,6 +1229,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 offical_hint_string_anwser = u'a' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -1227,6 +1243,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 offical_hint_string_anwser = u'a' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -1237,6 +1257,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 my_anwser_formated = u'[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -1247,6 +1271,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(u" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
+                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                if answer_char_count is None:
+                    answer_char_count = '0'
+
                 star_index -= 1
                 my_anwser_formated = u'[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
@@ -6451,7 +6479,7 @@ def cityline_login(driver, account, password):
     ret = False
     el_email = None
     try:
-        el_email = driver.find_element(By.CSS_SELECTOR, 'input.ant-input')
+        el_email = driver.find_element(By.CSS_SELECTOR, 'input[type="text"]')
     except Exception as exc:
         pass
 
@@ -6470,6 +6498,7 @@ def cityline_login(driver, account, password):
             if inputed_text is not None:
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
+                    el_email.send_keys(Keys.ENTER)
                     is_email_sent = True
                 else:
                     if inputed_text == account:
@@ -6477,10 +6506,14 @@ def cityline_login(driver, account, password):
         except Exception as exc:
             pass
 
+    # press password to login.
+    if is_email_sent:
+        is_click_here_pressed = force_press_button(driver, By.CSS_SELECTOR,'.otp-box > ul > li:nth-child(3) > a')
+
     el_pass = None
     if is_email_sent:
         try:
-            el_pass = driver.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+            el_pass = driver.find_element(By.CSS_SELECTOR, 'input[type="password"][aria-label="Password"]')
         except Exception as exc:
             pass
 
@@ -7665,6 +7698,15 @@ def cityline_main(driver, url, config_dict):
     if 'cityline.com/queue?' in url:
         # show HTTP ERROR 400
         pass
+
+
+    # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
+    # ignore url redirect
+    if '/Login.html' in url:
+        cityline_account = config_dict["advanced"]["cityline_account"]
+        if len(cityline_account) > 2:
+            cityline_login(driver, cityline_account, decryptMe(config_dict["advanced"]["cityline_password"]))
+        return
 
     is_ready_to_buy_from_queue = False
     # Q: How to know ready to buy ticket from queue?
