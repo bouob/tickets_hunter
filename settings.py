@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.08.16)"
+CONST_APP_VERSION = "MaxBot (2023.08.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2388,7 +2388,7 @@ def AboutTab(root, language_code):
     lbl_help = Label(frame_group_header, text=translate[language_code]['help'])
     lbl_help.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_help_url = Label(frame_group_header, text=URL_HELP, fg="blue", cursor="hand2")
+    lbl_help_url = Label(frame_group_header, text=URL_HELP, fg="blue", bg="gray", cursor="hand2")
     lbl_help_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_help_url.bind("<Button-1>", lambda e: open_url(URL_HELP))
 
@@ -2397,7 +2397,7 @@ def AboutTab(root, language_code):
     lbl_donate = Label(frame_group_header, text=translate[language_code]['donate'])
     lbl_donate.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_donate_url = Label(frame_group_header, text=URL_DONATE, fg="blue", cursor="hand2")
+    lbl_donate_url = Label(frame_group_header, text=URL_DONATE, fg="blue", bg="gray", cursor="hand2")
     lbl_donate_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_donate_url.bind("<Button-1>", lambda e: open_url(URL_DONATE))
 
@@ -2406,7 +2406,7 @@ def AboutTab(root, language_code):
     lbl_release = Label(frame_group_header, text=translate[language_code]['release'])
     lbl_release.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_release_url = Label(frame_group_header, text=URL_RELEASE, fg="blue", cursor="hand2")
+    lbl_release_url = Label(frame_group_header, text=URL_RELEASE, fg="blue", bg="gray", cursor="hand2")
     lbl_release_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_release_url.bind("<Button-1>", lambda e: open_url(URL_RELEASE))
 
@@ -2415,7 +2415,7 @@ def AboutTab(root, language_code):
     lbl_fb_fans = Label(frame_group_header, text=u'Facebook')
     lbl_fb_fans.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_fb_fans_url = Label(frame_group_header, text=URL_FB, fg="blue", cursor="hand2")
+    lbl_fb_fans_url = Label(frame_group_header, text=URL_FB, fg="blue", bg="gray", cursor="hand2")
     lbl_fb_fans_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_fb_fans_url.bind("<Button-1>", lambda e: open_url(URL_FB))
 
@@ -2425,7 +2425,7 @@ def AboutTab(root, language_code):
     lbl_chrome_driver = Label(frame_group_header, text=u'Chrome Driver')
     lbl_chrome_driver.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_chrome_driver_url = Label(frame_group_header, text=URL_CHROME_DRIVER, fg="blue", cursor="hand2")
+    lbl_chrome_driver_url = Label(frame_group_header, text=URL_CHROME_DRIVER, fg="blue", bg="gray", cursor="hand2")
     lbl_chrome_driver_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_chrome_driver_url.bind("<Button-1>", lambda e: open_url(URL_CHROME_DRIVER))
 
@@ -2434,7 +2434,7 @@ def AboutTab(root, language_code):
     lbl_firefox_driver = Label(frame_group_header, text=u'Firefox Driver')
     lbl_firefox_driver.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_firefox_driver_url = Label(frame_group_header, text=URL_FIREFOX_DRIVER, fg="blue", cursor="hand2")
+    lbl_firefox_driver_url = Label(frame_group_header, text=URL_FIREFOX_DRIVER, fg="blue", bg="gray", cursor="hand2")
     lbl_firefox_driver_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_firefox_driver_url.bind("<Button-1>", lambda e: open_url(URL_FIREFOX_DRIVER))
 
@@ -2443,7 +2443,7 @@ def AboutTab(root, language_code):
     lbl_edge_driver = Label(frame_group_header, text=u'Edge Driver')
     lbl_edge_driver.grid(column=0, row=group_row_count, sticky = E)
 
-    lbl_edge_driver_url = Label(frame_group_header, text=URL_EDGE_DRIVER, fg="blue", cursor="hand2")
+    lbl_edge_driver_url = Label(frame_group_header, text=URL_EDGE_DRIVER, fg="blue", bg="gray", cursor="hand2")
     lbl_edge_driver_url.grid(column=1, row=group_row_count, sticky = W)
     lbl_edge_driver_url.bind("<Button-1>", lambda e: open_url(URL_EDGE_DRIVER))
 

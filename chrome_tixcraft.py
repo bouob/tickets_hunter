@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.16)"
+CONST_APP_VERSION = "MaxBot (2023.08.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -6476,67 +6476,17 @@ def kktix_login(driver, account, password):
     return ret
 
 def cityline_login(driver, account, password):
-    ret = False
-    el_email = None
-    try:
-        el_email = driver.find_element(By.CSS_SELECTOR, 'input[type="text"]')
-    except Exception as exc:
-        pass
+    is_email_sent = assign_text(driver, By.CSS_SELECTOR, 'input[type="text"]', account, submit=True)
 
-    is_visible = False
-    if el_email is not None:
-        try:
-            if el_email.is_enabled():
-                is_visible = True
-        except Exception as exc:
-            pass
-
-    is_email_sent = False
-    if is_visible:
-        try:
-            inputed_text = el_email.get_attribute('value')
-            if inputed_text is not None:
-                if len(inputed_text) == 0:
-                    el_email.send_keys(account)
-                    el_email.send_keys(Keys.ENTER)
-                    is_email_sent = True
-                else:
-                    if inputed_text == account:
-                        is_email_sent = True
-        except Exception as exc:
-            pass
-
-    # press password to login.
+    # press "click here" use password to login.
     if is_email_sent:
         is_click_here_pressed = force_press_button(driver, By.CSS_SELECTOR,'.otp-box > ul > li:nth-child(3) > a')
 
-    el_pass = None
-    if is_email_sent:
-        try:
-            el_pass = driver.find_element(By.CSS_SELECTOR, 'input[type="password"][aria-label="Password"]')
-        except Exception as exc:
-            pass
-
-
     is_password_sent = False
-    if el_pass is not None:
-        try:
-            if el_pass.is_enabled():
-                inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
-                    if len(inputed_text) == 0:
-                        el_pass.click()
-                        if(len(password)>0):
-                            el_pass.send_keys(password)
-                            el_pass.send_keys(Keys.ENTER)
-                            is_password_sent = True
-                        time.sleep(0.1)
-        except Exception as exc:
-            pass
+    if is_email_sent:
+        is_password_sent = assign_text(driver, By.CSS_SELECTOR, 'div > input[type="password"]', password, submit=True)
 
-    ret = is_password_sent
-
-    return ret
+    return is_password_sent
 
 def urbtix_login(driver, account, password):
     ret = False
