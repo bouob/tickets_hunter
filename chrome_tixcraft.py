@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.19)"
+CONST_APP_VERSION = "MaxBot (2023.08.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9042,6 +9042,9 @@ def hkticketing_content_refresh(driver, url, config_dict):
     , "We will check for the next available purchase slot"
     , "please stay on this page and do not refresh"
     , "Please be patient and wait a few minutes before trying again"
+    , "Server Error in '/' Application"
+    , "The target principal name is incorrect"
+    , "Cannot generate SSPI context"
     ]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
