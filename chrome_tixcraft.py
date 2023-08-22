@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.18)"
+CONST_APP_VERSION = "MaxBot (2023.08.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9021,6 +9021,8 @@ def hkticketing_content_refresh(driver, url, config_dict):
 
     check_full_url_list = [ "https://premier.hkticketing.com/"
     , "https://www.ticketing.galaxymacau.com/"
+    , "https://ticketing.galaxymacau.com/"
+    , "https://ticketing.galaxymacau.com/default.aspx"
     ]
     for current_url in check_full_url_list:
         if current_url == url:
@@ -9028,11 +9030,11 @@ def hkticketing_content_refresh(driver, url, config_dict):
 
     content_retry_string_list = [ "Access Denied"
     , "Service Unavailable"
-    , "service is unavailable"
+    , "The service is unavailable"
     , "HTTP Error 500"
     , "HTTP Error 503"
-    , "HTTP Error 504"
     , "504 Gateway Time-out"
+    , "502 Bad Gateway"
     , "An error occurred while processing your request"
     , "The network path was not found"
     , "Could not open a connection to SQL Server"
@@ -9048,14 +9050,14 @@ def hkticketing_content_refresh(driver, url, config_dict):
         is_need_refresh = False
         html_body = None
         try:
-            my_css_selector = "body"
-            html_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            html_body = driver.page_source
             if not html_body is None:
                 for each_retry_string in content_retry_string_list:
-                    if each_retry_string in html_body.text:
+                    if each_retry_string in html_body:
                         is_need_refresh = True
                         break
         except Exception as exc:
+            #print(exc)
             pass
 
         if is_need_refresh:
@@ -9066,6 +9068,7 @@ def hkticketing_content_refresh(driver, url, config_dict):
                 driver.get(new_url)
                 is_redirected = True
             except Exception as exc:
+                #print(exc)
                 pass
 
             # 刷太快, 會被封IP?
