@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.17)"
+CONST_APP_VERSION = "MaxBot (2023.08.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9029,7 +9029,11 @@ def hkticketing_content_refresh(driver, url, config_dict):
     content_retry_string_list = [ "Access Denied"
     , "Service Unavailable"
     , "service is unavailable"
+    , "HTTP Error 500"
     , "HTTP Error 503"
+    , "HTTP Error 504"
+    , "504 Gateway Time-out"
+    , "An error occurred while processing your request"
     , "The network path was not found"
     , "Could not open a connection to SQL Server"
     , "Hi fans, you’re in the queue to"
