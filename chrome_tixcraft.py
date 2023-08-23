@@ -9045,6 +9045,8 @@ def hkticketing_content_refresh(driver, url, config_dict):
     , "Server Error in '/' Application"
     , "The target principal name is incorrect"
     , "Cannot generate SSPI context"
+    , "System.Data.SqlClient.Sql"
+    , "System.ComponentModel.Win32Exception"
     ]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
