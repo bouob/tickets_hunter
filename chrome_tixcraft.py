@@ -54,7 +54,7 @@ import webbrowser
 import argparse
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.08.20)"
+CONST_APP_VERSION = "MaxBot (2023.08.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -74,12 +74,12 @@ CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
 
-CONST_FROM_TOP_TO_BOTTOM = u"from top to bottom"
-CONST_FROM_BOTTOM_TO_TOP = u"from bottom to top"
-CONST_RANDOM = u"random"
+CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
+CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
+CONST_RANDOM = "random"
 CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 
-CONT_STRING_1_SEATS_REMAINING = [u'@1 seat(s) remaining',u'剩餘 1@',u'@1 席残り']
+CONT_STRING_1_SEATS_REMAINING = ['@1 seat(s) remaining','剩餘 1@','@1 席残り']
 
 CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
@@ -1563,7 +1563,7 @@ def tixcraft_home_close_window(driver):
             print("find accept_all_cookies_btn fail")
         pass
 
-    if accept_all_cookies_btn is not None:
+    if not accept_all_cookies_btn is None:
         is_visible = False
         try:
             if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
@@ -1592,7 +1592,7 @@ def tixcraft_home_close_window(driver):
     except Exception as exc:
         print("find close_all_alert_btns fail")
 
-    if close_all_alert_btns is not None:
+    if not close_all_alert_btns is None:
         #print('alert count:', len(close_all_alert_btns))
         for alert_btn in close_all_alert_btns:
             # fix bug: Message: stale element reference: element is not attached to the page document
@@ -1695,7 +1695,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     matched_blocks = None
     formated_area_list = None
 
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -1787,7 +1787,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -1803,7 +1803,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             target_area = matched_blocks[target_row_index]
 
     is_date_clicked = False
-    if target_area is not None:
+    if not target_area is None:
         if show_debug_message:
             print("target_area got, start to press button.")
 
@@ -1870,7 +1870,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
     matched_blocks = None
     formated_area_list = None
 
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -1941,7 +1941,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -1957,7 +1957,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
             target_area = matched_blocks[target_row_index]
 
     is_date_clicked = False
-    if target_area is not None:
+    if not target_area is None:
         is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
         if is_date_clicked:
             try:
@@ -2099,14 +2099,14 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
 
     area_list = None
     area_list_count = 0
-    if el is not None:
+    if not el is None:
         try:
             area_list = el.find_elements(By.TAG_NAME, 'a')
         except Exception as exc:
             #print("find area list a tag fail")
             pass
 
-        if area_list is not None:
+        if not area_list is None:
             area_list_count = len(area_list)
             if area_list_count == 0:
                 print("area list is empty, do refresh!")
@@ -2316,7 +2316,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
         except Exception as exc:
             print("find .zone fail, do nothing.")
 
-        if el is not None:
+        if not el is None:
             is_need_refresh = False
             areas = None
 
@@ -2337,7 +2337,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                 is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, "")
 
             area_target = None
-            if areas is not None:
+            if not areas is None:
                 #print("area_auto_select_mode", area_auto_select_mode)
                 #print("len(areas)", len(areas))
                 if len(areas) > 0:
@@ -2355,7 +2355,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
                     #print("target_row_index", target_row_index)
                     area_target = areas[target_row_index]
 
-            if area_target is not None:
+            if not area_target is None:
                 try:
                     #print("area text:", area_target.text)
                     area_target.click()
@@ -2412,7 +2412,7 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
         is_need_refresh, areas = get_ticketmaster_target_area(config_dict, "", zone_info)
 
     area_target = None
-    if areas is not None:
+    if not areas is None:
         #print("area_auto_select_mode", area_auto_select_mode)
         if show_debug_message:
             print("len(areas)", len(areas))
@@ -2431,7 +2431,7 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
             #print("target_row_index", target_row_index)
             area_target = areas[target_row_index]
 
-    if area_target is not None:
+    if not area_target is None:
         if show_debug_message:
             #print("area_target:", area_target)
             pass
@@ -2481,7 +2481,7 @@ def tixcraft_ticket_agree(driver, config_dict):
 
 def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
     is_ticket_number_assigned = False
-    if select_obj is not None:
+    if not select_obj is None:
         try:
             # target ticket number
             select_obj.select_by_visible_text(ticket_number)
@@ -2515,7 +2515,7 @@ def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
     # Plan B.
     # if not is_ticket_number_assigned:
     if False:
-        if select is not None:
+        if not select is None:
             try:
                 # target ticket number
                 #select.select_by_visible_text(ticket_number)
@@ -2537,7 +2537,7 @@ def get_div_text_by_selector(driver, my_css_selector):
         pass
 
     question_text = ""
-    if div_element is not None:
+    if not div_element is None:
         try:
             question_text = div_element.text
         except Exception as exc:
@@ -2634,7 +2634,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
         is_do_press_next_button = True
 
     inputed_value = None
-    if form_input is not None:
+    if not form_input is None:
         try:
             inputed_value = form_input.get_attribute('value')
         except Exception as exc:
@@ -2646,7 +2646,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
         inputed_value = ""
 
     is_answer_sent = False
-    if form_input is not None:
+    if not form_input is None:
         if len(inferred_answer_string) > 0:
             if inputed_value != inferred_answer_string:
                 try:
@@ -2794,7 +2794,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
     except Exception as exc:
         print("find form_verifyCode fail")
 
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         is_visible = False
         try:
             if form_verifyCode.is_enabled():
@@ -3021,7 +3021,7 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
         #print("find area list a tag fail")
         pass
 
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if area_list_count == 0:
             print("area list is empty, do refresh!")
@@ -3112,7 +3112,7 @@ def get_tixcraft_ticket_select(driver, config_dict):
 
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_target = None
-    if areas is not None:
+    if not areas is None:
         #print("area_auto_select_mode", area_auto_select_mode)
         #print("len(areas)", len(areas))
         if len(areas) > 0:
@@ -3130,7 +3130,7 @@ def get_tixcraft_ticket_select(driver, config_dict):
             #print("target_row_index", target_row_index)
             area_target = areas[target_row_index]
 
-    if area_target is not None:
+    if not area_target is None:
         try:
             form_select = area_target.find_element(By.TAG_NAME, 'select')
         except Exception as exc:
@@ -3175,7 +3175,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
             pass
 
     select_obj = None
-    if form_select is not None:
+    if not form_select is None:
         is_visible = False
         try:
             if form_select.is_enabled():
@@ -3331,7 +3331,7 @@ def kktix_press_next_button(driver):
 
 def kktix_captcha_inputed_text(captcha_inner_div):
     ret = ""
-    if captcha_inner_div is not None:
+    if not captcha_inner_div is None:
         try:
             captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
             if not captcha_password_text is None:
@@ -3405,7 +3405,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
         pass
 
     price_list_count = 0
-    if ticket_price_list is not None:
+    if not ticket_price_list is None:
         price_list_count = len(ticket_price_list)
         if show_debug_message:
             print("found price count:", price_list_count)
@@ -3472,7 +3472,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                 except Exception as exc:
                     pass
 
-                if ticket_price_input is not None:
+                if not ticket_price_input is None:
                     current_ticket_number = ""
                     is_visible = False
 
@@ -3575,7 +3575,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
     ticket_price_input = None
     if not is_ticket_number_assigned:
-        if areas is not None:
+        if not areas is None:
             if len(areas) > 0:
                 target_row_index = 0
 
@@ -3596,7 +3596,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
     current_ticket_number = ""
     is_visible = False
-    if ticket_price_input is not None:
+    if not ticket_price_input is None:
         if show_debug_message:
             print("try to get input box value.")
         try:
@@ -3649,7 +3649,7 @@ def kktix_get_web_datetime(registrationsNewApp_div):
             pass
         #print("is_found_web_datetime", is_found_web_datetime)
 
-    if el_web_datetime_list is not None:
+    if not el_web_datetime_list is None:
         el_web_datetime_list_count = len(el_web_datetime_list)
         if el_web_datetime_list_count > 0:
             el_web_datetime = None
@@ -3665,7 +3665,7 @@ def kktix_get_web_datetime(registrationsNewApp_div):
                         print(exc)
                     pass
 
-                if el_web_datetime_text is not None:
+                if not el_web_datetime_text is None:
                     if len(el_web_datetime_text) > 0:
                         now = datetime.now()
                         #print("now:", now)
@@ -3696,9 +3696,9 @@ def kktix_hide_blocks(driver):
         print("find person_agree_terms checkbox Exception")
         pass
 
-    if elements is not None:
+    if not elements is None:
         for element in elements:
-            if element is not None:
+            if not element is None:
                 try:
                     driver.execute_script("arguments[0].innerHTML='';", element);
                 except Exception as exc:
@@ -3725,7 +3725,7 @@ def kktix_check_agree_checkbox(driver, config_dict):
             print(exc)
         pass
 
-    if agree_checkbox is not None:
+    if not agree_checkbox is None:
         is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
     else:
         is_need_refresh = True
@@ -3747,14 +3747,14 @@ def check_checkbox(driver, by, query):
             print(exc)
         pass
     is_checkbox_checked = False
-    if agree_checkbox is not None:
+    if not agree_checkbox is None:
         is_checkbox_checked = force_check_checkbox(driver, agree_checkbox)
     return is_checkbox_checked
 
 
 def force_check_checkbox(driver, agree_checkbox):
     is_finish_checkbox_click = False
-    if agree_checkbox is not None:
+    if not agree_checkbox is None:
         is_visible = False
         try:
             if agree_checkbox.is_enabled():
@@ -4247,7 +4247,7 @@ def kktix_reg_captcha_question_text(captcha_inner_div):
         print(exc)
 
     question_text = None
-    if captcha_text_div is not None:
+    if not captcha_text_div is None:
         try:
             question_text = captcha_text_div.text
         except Exception as exc:
@@ -4271,7 +4271,7 @@ def kktix_double_check_all_text_value(driver, ticket_number):
     except Exception as exc:
         pass
 
-    if ticket_price_input_list is not None:
+    if not ticket_price_input_list is None:
         #print("bingo, found one of ticket number textbox.")
         row_index = 0
         for ticket_price_input in ticket_price_input_list:
@@ -4483,7 +4483,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
 
     #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_length = len(area_list)
         if show_debug_message:
             print("lenth of area rows:", area_list_length)
@@ -4500,7 +4500,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                 try:
                     my_css_selector = "button"
                     el_btn = row.find_element(By.TAG_NAME, my_css_selector)
-                    if el_btn is not None:
+                    if not el_btn is None:
                         if not el_btn.is_enabled():
                             #print("row's button disabled!")
                             row_is_enabled=False
@@ -4534,13 +4534,13 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                     try:
                         my_css_selector = "td:nth-child(1)"
                         td_date = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if td_date is not None:
+                        if not td_date is None:
                             #print("date:", td_date.text)
                             date_html_text = format_keyword_string(td_date.text)
 
                         my_css_selector = "td:nth-child(2)"
                         td_area = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if td_area is not None:
+                        if not td_area is None:
                             #print("area:", td_area.text)
                             area_html_text = format_keyword_string(td_area.text)
 
@@ -4614,7 +4614,7 @@ def fami_activity(driver):
         pass
 
     is_visible = False
-    if fami_start_to_buy_button is not None:
+    if not fami_start_to_buy_button is None:
         try:
             if fami_start_to_buy_button.is_enabled():
                 is_visible = True
@@ -4658,7 +4658,7 @@ def fami_home(driver, url, config_dict):
         #print(exc)
 
     is_select_box_visible = False
-    if ticket_el is not None:
+    if not ticket_el is None:
         try:
             if ticket_el.is_enabled():
                 is_select_box_visible = True
@@ -4673,7 +4673,7 @@ def fami_home(driver, url, config_dict):
         except Exception as exc:
             pass
 
-        if ticket_number_select is not None:
+        if not ticket_number_select is None:
             try:
                 #print("get select ticket value:" + Select(ticket_number_select).first_selected_option.text)
                 if ticket_number_select.first_selected_option.text=="0" or ticket_number_select.first_selected_option.text=="選擇張數":
@@ -4711,7 +4711,7 @@ def fami_home(driver, url, config_dict):
         except Exception as exc:
             pass
 
-        if fami_assign_site_button is not None:
+        if not fami_assign_site_button is None:
             is_visible = False
             try:
                 if fami_assign_site_button.is_enabled():
@@ -4759,7 +4759,7 @@ def fami_home(driver, url, config_dict):
 
 
         area_target = None
-        if areas is not None:
+        if not areas is None:
             #print("area_auto_select_mode", area_auto_select_mode)
             #print("len(areas)", len(areas))
             if len(areas) > 0:
@@ -4777,13 +4777,13 @@ def fami_home(driver, url, config_dict):
                 #print("target_row_index", target_row_index)
                 area_target = areas[target_row_index]
 
-        if area_target is not None:
+        if not area_target is None:
             el_btn = None
             is_visible = False
             try:
                 my_css_selector = "button"
                 el_btn = area_target.find_element(By.TAG_NAME, my_css_selector)
-                if el_btn is not None:
+                if not el_btn is None:
                     if el_btn.is_enabled():
                         is_visible = True
             except Exception as exc:
@@ -4820,7 +4820,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
     #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
 
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -4837,7 +4837,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                 try:
                     my_css_selector = "div.buy-icon"
                     el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                    if el_btn is not None:
+                    if not el_btn is None:
                         button_class_string = str(el_btn.get_attribute('class'))
                         if len(button_class_string) > 1:
                             if 'disabled' in button_class_string:
@@ -4902,7 +4902,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -4917,7 +4917,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
 
             target_area = matched_blocks[target_row_index]
 
-    if target_area is not None:
+    if not target_area is None:
         el_btn = None
         try:
             #print("target_area text", target_area.text)
@@ -4925,7 +4925,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
             el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
             pass
-        if el_btn is not None:
+        if not el_btn is None:
             is_button_enable = True
             try:
                 if not el_btn.is_enabled():
@@ -5001,7 +5001,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
         print(exc)
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -5065,7 +5065,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
     if is_price_assign_by_bot:
         formated_area_list = None
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -5127,7 +5127,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 is_need_refresh = True
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -5142,7 +5142,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
 
             target_area = matched_blocks[target_row_index]
 
-    if target_area is not None:
+    if not target_area is None:
         try:
             if target_area.is_enabled():
                 target_area.click()
@@ -5180,7 +5180,7 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
     except Exception as exc:
         pass
 
-    if ticket_price_input is not None:
+    if not ticket_price_input is None:
         current_ticket_number = ""
         is_visible = False
 
@@ -5235,7 +5235,7 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
         except Exception as exc:
             pass
 
-        if el_btn is not None:
+        if not el_btn is None:
             try:
                 if el_btn.is_enabled():
                     el_btn.click()
@@ -5267,7 +5267,7 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
         except Exception as exc:
             pass
 
-        if el_btn is not None:
+        if not el_btn is None:
             try:
                 if el_btn.is_enabled():
                     el_btn.click()
@@ -5408,7 +5408,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         print(exc)
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -5478,7 +5478,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -5493,7 +5493,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
 
             target_area = matched_blocks[target_row_index]
 
-    if target_area is not None:
+    if not target_area is None:
         try:
             if target_area.is_enabled():
                 target_area.click()
@@ -5549,7 +5549,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
         print(exc)
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -5585,7 +5585,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
             print("area_list_count is None.")
         pass
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -5650,7 +5650,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                 is_need_refresh = True
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -5665,13 +5665,13 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
 
             target_area = matched_blocks[target_row_index]
 
-    if target_area is not None:
+    if not target_area is None:
         el_btn = None
         try:
             #print("target_area text", target_area.text)
             my_css_selector = "input[type=radio]"
             el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
-            if el_btn is not None:
+            if not el_btn is None:
                 if el_btn.is_enabled():
                     if not el_btn.is_selected():
                         el_btn.click()
@@ -5718,7 +5718,7 @@ def ibon_ticket_number_appear(driver, config_dict):
         pass
 
     is_visible = False
-    if form_select is not None:
+    if not form_select is None:
         try:
             is_visible = form_select.is_enabled()
         except Exception as exc:
@@ -5749,7 +5749,7 @@ def assign_ticket_number_by_select(driver, config_dict, by_method, selector_stri
         pass
 
     select_obj = None
-    if form_select is not None:
+    if not form_select is None:
         is_visible = False
         try:
             is_visible = form_select.is_enabled()
@@ -5817,7 +5817,7 @@ def cityline_next_button_press(driver):
         print("find next button fail...")
         print(exc)
 
-    if el_btn is not None and el_nav is not None:
+    if not el_btn is None and not el_nav is None:
         print("bingo, found next button, start to press")
         try:
             if el_btn.is_enabled():
@@ -5936,7 +5936,7 @@ def ibon_date_auto_select(driver, config_dict):
 
     #PS: some blocks are generate by ajax, not appear at first time.
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -5954,7 +5954,7 @@ def ibon_date_auto_select(driver, config_dict):
                 try:
                     my_css_selector = "button"
                     el_btn = row.find_element(By.TAG_NAME, my_css_selector)
-                    if el_btn is not None:
+                    if not el_btn is None:
                         if not el_btn.is_enabled():
                             #print("row's button disabled!")
                             row_is_enabled=False
@@ -5966,7 +5966,7 @@ def ibon_date_auto_select(driver, config_dict):
                 if row_is_enabled:
                     formated_area_list.append(row)
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -5991,7 +5991,7 @@ def ibon_date_auto_select(driver, config_dict):
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -6007,7 +6007,7 @@ def ibon_date_auto_select(driver, config_dict):
             target_area = matched_blocks[target_row_index]
 
     is_date_assign_by_bot = False
-    if target_area is not None:
+    if not target_area is None:
         is_button_clicked = False
         for i in range(3):
             el_btn = None
@@ -6017,7 +6017,7 @@ def ibon_date_auto_select(driver, config_dict):
             except Exception as exc:
                 pass
 
-            if el_btn is not None:
+            if not el_btn is None:
                 try:
                     if el_btn.is_enabled():
                         el_btn.click()
@@ -6063,14 +6063,13 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
         show_debug_message = True
 
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    ticket_number = config_dict["ticket_number"]
+    #print("area_auto_select_mode:", area_auto_select_mode)
 
     # when avaiable seat under this count, check seat text content.
     CONST_DETECT_SEAT_ATTRIBUTE_UNDER_ROW_COUNT = 20
 
     is_price_assign_by_bot = False
     is_need_refresh = False
-
 
     area_list = None
     try:
@@ -6083,7 +6082,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
         print(exc)
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -6124,7 +6123,17 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
                 # check ticket count when amount is few, because of it spent a lot of time at parsing element.
                 if len(row_text) > 0:
+                    is_seat_remaining_checking = False
+                    # PS: when user query with keyword, but when selected row is too many, not every row to check remaing.
+                    #     may cause the matched keyword row ticket seat under user target ticket number.
+                    if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        if len(formated_area_list)==0:
+                            is_seat_remaining_checking = True
+
                     if area_list_count <= CONST_DETECT_SEAT_ATTRIBUTE_UNDER_ROW_COUNT:
+                        is_seat_remaining_checking = True
+                    
+                    if is_seat_remaining_checking:
                         try:
                             area_seat_el = row.find_element(By.CSS_SELECTOR, 'td.action')
                             if not area_seat_el is None:
@@ -6133,7 +6142,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                                     seat_text = ""
                                 if seat_text.isdigit():
                                     seat_int = int(seat_text)
-                                    if seat_int < ticket_number:
+                                    if seat_int < config_dict["ticket_number"]:
                                         # skip this row.
                                         if show_debug_message:
                                             print("skip not enought ticket number area at row_text:", row_text)
@@ -6187,7 +6196,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
         formated_area_list = None
 
     matched_blocks = []
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -6242,7 +6251,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                 print("after match keyword, found count:", len(matched_blocks))
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -6261,7 +6270,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
             if show_debug_message:
                 print("matched_blocks is empty, is_need_refresh")
 
-    if target_area is not None:
+    if not target_area is None:
         try:
             if target_area.is_enabled():
                 target_area.click()
@@ -6310,44 +6319,42 @@ def ibon_performance(driver, config_dict):
     is_price_assign_by_bot = False
     is_need_refresh = False
 
-    auto_fill_ticket_number = True
-    if auto_fill_ticket_number:
-        # click price row.
-        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    # click price row.
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
-        if show_debug_message:
-            print("area_keyword:", area_keyword)
+    if show_debug_message:
+        print("area_keyword:", area_keyword)
 
-        is_need_refresh = False
+    is_need_refresh = False
 
-        if len(area_keyword) > 0:
+    if len(area_keyword) > 0:
+        area_keyword_array = []
+        try:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+        except Exception as exc:
             area_keyword_array = []
-            try:
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                area_keyword_array = []
 
-            for area_keyword_item in area_keyword_array:
-                is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_item)
-                if not is_need_refresh:
-                    break
-                else:
-                    print("is_need_refresh for keyword:", area_keyword_item)
-        else:
-            # empty keyword, match all.
-            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword)
+        for area_keyword_item in area_keyword_array:
+            is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword_item)
+            if not is_need_refresh:
+                break
+            else:
+                print("is_need_refresh for keyword:", area_keyword_item)
+    else:
+        # empty keyword, match all.
+        is_need_refresh, is_price_assign_by_bot = ibon_area_auto_select(driver, config_dict, area_keyword)
 
-        if show_debug_message:
-            print("is_need_refresh:", is_need_refresh)
+    if show_debug_message:
+        print("is_need_refresh:", is_need_refresh)
 
-        if is_need_refresh:
-            try:
-                driver.refresh()
-            except Exception as exc:
-                pass
+    if is_need_refresh:
+        try:
+            driver.refresh()
+        except Exception as exc:
+            pass
 
-            if config_dict["advanced"]["auto_reload_random_delay"]:
-                time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+        if config_dict["advanced"]["auto_reload_random_delay"]:
+            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
     return is_price_assign_by_bot
 
@@ -6373,7 +6380,7 @@ def assign_text(driver, by, query, val, overwrite = False, submit=False):
                 print(exc)
             pass
 
-        if el_text is not None:
+        if not el_text is None:
             try:
                 if el_text.is_enabled() and el_text.is_displayed():
                     is_visible = True
@@ -6386,7 +6393,7 @@ def assign_text(driver, by, query, val, overwrite = False, submit=False):
     if is_visible:
         try:
             inputed_text = el_text.get_attribute('value')
-            if inputed_text is not None:
+            if not inputed_text is None:
                 is_do_keyin = False
                 if len(inputed_text) == 0:
                     is_do_keyin = True
@@ -6427,7 +6434,7 @@ def kktix_login(driver, account, password):
         pass
 
     is_visible = False
-    if el_email is not None:
+    if not el_email is None:
         try:
             if el_email.is_enabled():
                 is_visible = True
@@ -6438,7 +6445,7 @@ def kktix_login(driver, account, password):
     if is_visible:
         try:
             inputed_text = el_email.get_attribute('value')
-            if inputed_text is not None:
+            if not inputed_text is None:
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
@@ -6456,11 +6463,11 @@ def kktix_login(driver, account, password):
             pass
 
     is_password_sent = False
-    if el_pass is not None:
+    if not el_pass is None:
         try:
             if el_pass.is_enabled():
                 inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
+                if not inputed_text is None:
                     if len(inputed_text) == 0:
                         el_pass.click()
                         if(len(password)>0):
@@ -6499,7 +6506,7 @@ def urbtix_login(driver, account, password):
         pass
 
     is_visible = False
-    if el_email is not None:
+    if not el_email is None:
         try:
             if el_email.is_enabled():
                 is_visible = True
@@ -6510,7 +6517,7 @@ def urbtix_login(driver, account, password):
     if is_visible:
         try:
             inputed_text = el_email.get_attribute('value')
-            if inputed_text is not None:
+            if not inputed_text is None:
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
@@ -6528,11 +6535,11 @@ def urbtix_login(driver, account, password):
             pass
 
     is_password_sent = False
-    if el_pass is not None:
+    if not el_pass is None:
         try:
             if el_pass.is_enabled():
                 inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
+                if not inputed_text is None:
                     if len(inputed_text) == 0:
                         el_pass.click()
                         if(len(password)>0):
@@ -6562,7 +6569,7 @@ def kham_login(driver, account, password):
         pass
 
     is_visible = False
-    if el_email is not None:
+    if not el_email is None:
         try:
             if el_email.is_enabled():
                 is_visible = True
@@ -6573,7 +6580,7 @@ def kham_login(driver, account, password):
     if is_visible:
         try:
             inputed_text = el_email.get_attribute('value')
-            if inputed_text is not None:
+            if not inputed_text is None:
                 if len(inputed_text) == 0:
                     el_email.send_keys(account)
                     is_email_sent = True
@@ -6592,11 +6599,11 @@ def kham_login(driver, account, password):
             pass
 
     is_password_sent = False
-    if el_pass is not None:
+    if not el_pass is None:
         try:
             if el_pass.is_enabled():
                 inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
+                if not inputed_text is None:
                     if len(inputed_text) == 0:
                         el_pass.click()
                         if(len(password)>0):
@@ -6625,7 +6632,7 @@ def hkticketing_login(driver, account, password):
         pass
 
     is_visible = False
-    if el_email is not None:
+    if not el_email is None:
         try:
             if el_email.is_enabled():
                 is_visible = True
@@ -6644,7 +6651,7 @@ def hkticketing_login(driver, account, password):
             el_email.click()
 
             inputed_text = el_email.get_attribute('value')
-            if inputed_text is not None:
+            if not inputed_text is None:
                 if len(inputed_text) == 0:
                     #print("send account text:", account)
                     el_email.send_keys(account)
@@ -6664,12 +6671,12 @@ def hkticketing_login(driver, account, password):
             pass
 
     is_password_sent = False
-    if el_pass is not None:
+    if not el_pass is None:
         try:
             if el_pass.is_enabled():
                 el_pass.click()
                 inputed_text = el_pass.get_attribute('value')
-                if inputed_text is not None:
+                if not inputed_text is None:
                     if len(inputed_text) == 0:
                         el_pass.click()
                         if(len(password)>0):
@@ -6698,8 +6705,8 @@ def play_mp3_async(sound_filename):
     threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
 
 def play_mp3(sound_filename):
-    from playsound import playsound
     try:
+        from playsound import playsound
         playsound(sound_filename)
     except Exception as exc:
         msg=str(exc)
@@ -6897,7 +6904,7 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
                 print("find form-select fail", exc)
             pass
 
-        if form_select is not None:
+        if not form_select is None:
             if show_debug_message:
                 print('found ticket number select.')
 
@@ -7163,7 +7170,7 @@ def urbtix_performance_confirm_dialog_popup(driver):
         #print(exc)
         pass
 
-    if el_div is not None:
+    if not el_div is None:
         print("bingo, found notification-confirm-btn")
         is_visible = False
         try:
@@ -7319,7 +7326,7 @@ def urbtix_auto_survey(driver, config_dict):
     is_radio_clicked = False
     fill_question_count = 0
 
-    if questions_div is not None:
+    if not questions_div is None:
         quetions_count = len(questions_div)
         if show_debug_message:
             print("quetions_count:", quetions_count)
@@ -7537,7 +7544,7 @@ def check_modal_dialog_popup(driver):
         #print(exc)
         pass
 
-    if el_div is not None:
+    if not el_div is None:
         #print("bingo, found modal-dialog")
         try:
             if el_div.is_enabled():
@@ -7560,7 +7567,7 @@ def cityline_shows_goto_cta(driver):
         #print(exc)
         pass
 
-    if el_btn is not None:
+    if not el_btn is None:
         #print("bingo, found next button, start to press")
         try:
             if el_btn.is_enabled() and el_btn.is_displayed():
@@ -7694,7 +7701,7 @@ def get_ibon_question_text(driver):
         pass
 
     question_text = ""
-    if form_select is not None:
+    if not form_select is None:
         try:
             question_text = form_select.text
         except Exception as exc:
@@ -7755,7 +7762,7 @@ def ibon_ticket_agree(driver):
         pass
 
     is_finish_checkbox_click = False
-    if form_checkbox is not None:
+    if not form_checkbox is None:
         try:
             if form_checkbox.is_enabled():
                 if not form_checkbox.is_selected():
@@ -7776,7 +7783,7 @@ def ibon_check_sold_out(driver):
     except Exception as exc:
         print("find #ticket-info fail")
 
-    if div_ticket_info is not None:
+    if not div_ticket_info is None:
         try:
             div_ticket_info_text = div_ticket_info.text
             if not div_ticket_info_text is None:
@@ -7806,7 +7813,7 @@ def ibon_keyin_captcha_code(driver, answer = "", auto_submit = False):
         except Exception as exc:
             pass
 
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         inputed_value = None
         try:
             inputed_value = form_verifyCode.get_attribute('value')
@@ -7829,7 +7836,7 @@ def ibon_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 form_verifyCode = None
                 is_verifyCode_editing = True
 
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         if len(answer) > 0:
             answer=answer.upper()
             is_visible = False
@@ -7997,16 +8004,16 @@ def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
 
 def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
     home_url_list = ['https://ticket.ibon.com.tw/'
-    ,'https://ticket.ibon.com.tw/Index/entertainment'
+    ,'https://ticket.ibon.com.tw/index/entertainment'
     ]
     for each_url in home_url_list:
-        if each_url == url:
+        if each_url == url.lower():
             if config_dict["ocr_captcha"]["enable"]:
                 set_non_browser_cookies(driver, url, Captcha_Browser)
             break
 
     # https://tour.ibon.com.tw/event/e23010000300mxu
-    if 'tour' in url and '/event/' in url:
+    if 'tour' in url.lower() and '/event/' in url.lower():
         is_event_page = False
         if len(url.split('/'))==5:
             is_event_page = True
@@ -8016,9 +8023,10 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
     is_match_target_feature = False
 
+    #PS: ibon some utk is upper case, some is lower.
     if not is_match_target_feature:
         #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
-        if '/ActivityInfo/Details/' in url:
+        if '/activityinfo/details/' in url.lower():
             is_event_page = False
             if len(url.split('/'))==6:
                 is_event_page = True
@@ -8028,7 +8036,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                     is_match_target_feature = True
                     is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
 
-    if 'ibon.com.tw/error.html?' in url:
+    if 'ibon.com.tw/error.html?' in url.lower():
         try:
             driver.back()
         except Exception as exc:
@@ -8038,90 +8046,107 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
     if not is_match_target_feature:
         # validation question url:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
-        if '/application/UTK02/' in url and '.aspx?rn=' in url and '&PERFORMANCE_ID=' in url:
-            is_match_target_feature = True
+        is_event_page = False
+        if '/UTK02/UTK0201_0.' in url.upper():
+            if '.aspx?' in url.lower(): 
+                if 'rn=' in url.lower(): 
+                    if 'PERFORMANCE_ID=' in url.upper():
+                        if "PRODUCT_ID=" in url.upper():
+                            is_event_page = True
+
+        if is_event_page:
             is_enter_verify_mode = True
             ibon_dict["fail_list"] = ibon_verification_question(driver, ibon_dict["fail_list"], config_dict)
+            is_match_target_feature = True
 
     if not is_enter_verify_mode:
         ibon_dict["fail_list"] = []
 
     if not is_match_target_feature:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
-        if '/application/UTK02/' in url and '.aspx?PERFORMANCE_ID=' in url:
-            is_event_page = False
-            if len(url.split('/'))==6:
-                is_event_page = True
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?rn=1111&PERFORMANCE_ID=2222&PRODUCT_ID=BBBB
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=2222&GROUP_ID=4&PERFORMANCE_PRICE_AREA_ID=3333
 
-            if is_event_page:
-                if config_dict["area_auto_select"]["enable"]:
-                    is_do_ibon_performance_with_ticket_number = False
+        is_event_page = False
+        if '/UTK02/UTK0201_00' in url.upper():
+            if '.aspx?' in url.lower():
+                if 'PERFORMANCE_ID=' in url.upper():
+                    if len(url.split('/'))==6:
+                        is_event_page = True
 
-                    if 'PRODUCT_ID=' in url:
-                        # step 1: select area.
-                        is_match_target_feature = True
-                        is_price_assign_by_bot = ibon_performance(driver, config_dict)
-                        if not is_price_assign_by_bot:
-                            # this case show captcha and ticket-number in this page.
-                            if ibon_ticket_number_appear(driver, config_dict):
-                                is_do_ibon_performance_with_ticket_number = True
+        if is_event_page:
+            if config_dict["area_auto_select"]["enable"]:
+                is_do_ibon_performance_with_ticket_number = False
 
-                    if 'PERFORMANCE_PRICE_AREA_ID=' in url:
-                        is_do_ibon_performance_with_ticket_number = True
+                if 'PRODUCT_ID=' in url.upper():
+                    # step 1: select area.
+                    is_match_target_feature = True
+                    is_price_assign_by_bot = ibon_performance(driver, config_dict)
+                    #print("is_price_assign_by_bot:", is_price_assign_by_bot)
+                    if not is_price_assign_by_bot:
+                        # this case show captcha and ticket-number in this page.
+                        if ibon_ticket_number_appear(driver, config_dict):
+                            is_do_ibon_performance_with_ticket_number = True
 
-                    if is_do_ibon_performance_with_ticket_number:
-                        if config_dict["advanced"]["disable_adjacent_seat"]:
-                            is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
+                if 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
+                    is_do_ibon_performance_with_ticket_number = True
 
-                        # captcha
-                        is_cpatcha_sent = False
-                        if config_dict["ocr_captcha"]["enable"]:
-                            domain_name = url.split('/')[2]
-                            model_name = url.split('/')[5]
-                            if len(model_name) > 7:
-                                model_name=model_name[:7]
-                            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-                            #PS: need set cookies once, if user change domain.
-                            if not Captcha_Browser is None:
-                                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                if is_do_ibon_performance_with_ticket_number:
+                    if config_dict["advanced"]["disable_adjacent_seat"]:
+                        is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
 
-                            is_cpatcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+                    # captcha
+                    is_cpatcha_sent = False
+                    if config_dict["ocr_captcha"]["enable"]:
+                        domain_name = url.split('/')[2]
+                        model_name = url.split('/')[5]
+                        if len(model_name) > 7:
+                            model_name=model_name[:7]
+                        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+                        #PS: need set cookies once, if user change domain.
+                        if not Captcha_Browser is None:
+                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
 
-                        # assign ticket number.
-                        is_match_target_feature = True
-                        is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
-                        if is_ticket_number_assigned:
-                            if is_cpatcha_sent:
-                                click_ret = ibon_purchase_button_press(driver)
+                        is_cpatcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
-                                # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
-                                if click_ret:
-                                    check_and_play_sound_for_captcha(config_dict)
-                        else:
-                            is_sold_out = ibon_check_sold_out(driver)
-                            if is_sold_out:
-                                print("is_sold_out, go back , and refresh.")
-                                # plan-A
-                                #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
-                                # plan-B, easy and better than plan-A
-                                try:
-                                    driver.back()
-                                    driver.refresh()
-                                except Exception as exc:
-                                    pass
+                    # assign ticket number.
+                    is_match_target_feature = True
+                    is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
+                    #print("is_ticket_number_assigned:", is_ticket_number_assigned)
+                    if is_ticket_number_assigned:
+                        if is_cpatcha_sent:
+                            click_ret = ibon_purchase_button_press(driver)
+
+                            # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
+                            if click_ret:
+                                check_and_play_sound_for_captcha(config_dict)
+                    else:
+                        is_sold_out = ibon_check_sold_out(driver)
+                        if is_sold_out:
+                            print("is_sold_out, go back , and refresh.")
+                            # plan-A
+                            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                            # plan-B, easy and better than plan-A
+                            try:
+                                driver.back()
+                                driver.refresh()
+                            except Exception as exc:
+                                pass
 
 
     if not is_match_target_feature:
         #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
-        if 'orders.ibon.com.tw/application/UTK02/UTK020' in url and '.aspx' in url:
+        is_event_page = False
+        if '/UTK02/UTK020' in url.upper():
+            if '.aspx' in url.lower():
+                if len(url.split('/'))==6:
+                    is_event_page = True
+
+        # ignore "pay money" step.
+        if '/UTK02/UTK0207_.ASPX' in url.upper():
             is_event_page = False
-            if len(url.split('/'))==6:
-                is_event_page = True
 
-            # it's pay money page.
-            if '/UTK02/UTK0207_.aspx' in url:
-                is_event_page = False
-
+        if is_event_page:
             is_finish_checkbox_click = False
             if is_event_page:
                 auto_check_agree = config_dict["auto_check_agree"]
@@ -8139,6 +8164,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                     if not html_body is None:
                         if '實名制' in html_body.text:
                             is_name_based = True
+                            is_match_target_feature = True
                 except Exception as exc:
                     pass
 
@@ -8170,7 +8196,7 @@ def hkticketing_home(driver):
             try:
                 driver.switch_to.frame(each_iframe)
                 hotshow_btn = driver.find_element(By.CSS_SELECTOR, 'div.hotshow > a.btn')
-                if hotshow_btn is not None:
+                if not hotshow_btn is None:
                     if hotshow_btn.is_enabled() and hotshow_btn.is_displayed():
                         hotshow_btn.click()
             except Exception as exc:
@@ -8192,7 +8218,7 @@ def hkticketing_accept_cookie(driver):
             print("find closepolicy_new fail")
         pass
 
-    if accept_all_cookies_btn is not None:
+    if not accept_all_cookies_btn is None:
         is_visible = False
         try:
             if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
@@ -8227,7 +8253,7 @@ def hkticketing_date_buy_button_press(driver):
     except Exception as exc:
         pass
 
-    if el_btn is not None:
+    if not el_btn is None:
         try:
             if el_btn.is_enabled() and el_btn.is_displayed():
                 el_btn.click()
@@ -8281,7 +8307,7 @@ def hkticketing_date_assign(driver, config_dict):
         pass
 
     select_obj = None
-    if form_select is not None:
+    if not form_select is None:
         is_visible = False
         try:
             if form_select.is_enabled():
@@ -8322,7 +8348,7 @@ def hkticketing_date_assign(driver, config_dict):
             print("find #p options date list fail")
             print(exc)
 
-        if area_list is not None:
+        if not area_list is None:
             area_list_count = len(area_list)
             if show_debug_message:
                 print("date_list_count:", area_list_count)
@@ -8371,7 +8397,7 @@ def hkticketing_date_assign(driver, config_dict):
                     if row_is_enabled:
                         formated_area_list.append(row)
 
-        if formated_area_list is not None:
+        if not formated_area_list is None:
             area_list_count = len(formated_area_list)
             if show_debug_message:
                 print("formated_area_list count:", area_list_count)
@@ -8397,7 +8423,7 @@ def hkticketing_date_assign(driver, config_dict):
             pass
 
         target_area = None
-        if matched_blocks is not None:
+        if not matched_blocks is None:
             if len(matched_blocks) > 0:
                 target_row_index = 0
 
@@ -8412,7 +8438,7 @@ def hkticketing_date_assign(driver, config_dict):
 
                 target_area = matched_blocks[target_row_index]
 
-        if target_area is not None:
+        if not target_area is None:
             try:
                 if target_area.is_enabled():
                     target_area.click()
@@ -8440,7 +8466,7 @@ def hkticketing_date_password_input(driver, config_dict, fail_list):
         pass
 
     inputed_value = ""
-    if el_password_input is not None:
+    if not el_password_input is None:
         try:
             inputed_value = el_password_input.get_attribute('value')
         except Exception as exc:
@@ -8549,7 +8575,7 @@ def hkticketing_date_auto_select(driver, config_dict, fail_list):
                 el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
                 pass
-            if el_btn is not None:
+            if not el_btn is None:
                 if show_debug_message:
                     print("next button appear.")
                 is_need_refresh = False
@@ -8588,7 +8614,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
         print(exc)
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -8628,7 +8654,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
     if is_price_assign_by_bot:
         formated_area_list = None
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -8693,7 +8719,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                 is_need_refresh = True
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -8708,7 +8734,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
 
             target_area = matched_blocks[target_row_index]
 
-    if target_area is not None:
+    if not target_area is None:
         try:
             if target_area.is_enabled():
                 target_area.click()
@@ -8753,7 +8779,7 @@ def hkticketing_next_button_press(driver):
         print("find next button fail...")
         print(exc)
 
-    if el_btn is not None:
+    if not el_btn is None:
         print("bingo, found next button, start to press")
         hkticketing_nav_to_footer(driver)
         try:
@@ -8776,7 +8802,7 @@ def hkticketing_go_to_payment(driver):
         print("find next button fail...")
         print(exc)
 
-    if el_btn is not None:
+    if not el_btn is None:
         print("bingo, found next button, start to press")
         try:
             if el_btn.is_enabled() and el_btn.is_displayed():
@@ -8805,7 +8831,7 @@ def hkticketing_ticket_delivery_option(driver):
         pass
 
     select_obj = None
-    if form_select is not None:
+    if not form_select is None:
         is_visible = False
         try:
             is_visible = form_select.is_enabled()
@@ -8817,7 +8843,7 @@ def hkticketing_ticket_delivery_option(driver):
             except Exception as exc:
                 pass
 
-    if select_obj is not None:
+    if not select_obj is None:
         try:
             select_obj.select_by_value("1")
             is_delivery_option_assigned = True
@@ -8949,7 +8975,7 @@ def hkticketing_escape_robot_detection(driver, url):
         #print(exc)
         pass
 
-    if el_main_iframe is not None:
+    if not el_main_iframe is None:
         print("we have been detected..., found el_main_iframe")
         #entry_url="https://queue.hkticketing.com/hotshow.html"
         entry_url="https://premier.hkticketing.com/"
@@ -9242,7 +9268,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
 
         #PS: some blocks are generate by ajax, not appear at first time.
         formated_area_list = None
-        if area_list is not None:
+        if not area_list is None:
             area_list_count = len(area_list)
             if show_debug_message:
                 print("date_list_count:", area_list_count)
@@ -9280,7 +9306,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                                 my_css_selector = "td > button.btn"
 
                             el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                            if el_btn is not None:
+                            if not el_btn is None:
                                 if el_btn.is_enabled():
                                     #print("row's button enabled.")
                                     row_is_enabled=True
@@ -9295,7 +9321,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                 if show_debug_message:
                     print("area_list is None...")
 
-        if formated_area_list is not None:
+        if not formated_area_list is None:
             area_list_count = len(formated_area_list)
             if show_debug_message:
                 print("formated_area_list count:", area_list_count)
@@ -9320,7 +9346,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
             pass
 
         target_area = None
-        if matched_blocks is not None:
+        if not matched_blocks is None:
             if len(matched_blocks) > 0:
                 target_row_index = 0
 
@@ -9335,7 +9361,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
 
                 target_area = matched_blocks[target_row_index]
 
-        if target_area is not None:
+        if not target_area is None:
             el_btn = None
             try:
                 # for kham.com
@@ -9346,7 +9372,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
             except Exception as exc:
                 pass
 
-            if el_btn is not None:
+            if not el_btn is None:
                 try:
                     if el_btn.is_enabled() and el_btn.is_displayed():
                         el_btn.click()
@@ -9429,7 +9455,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
         pass
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -9451,7 +9477,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
             print("area_list_count is None.")
         pass
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -9538,7 +9564,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 is_need_refresh = True
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -9556,7 +9582,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
         if show_debug_message:
             print("matched_blocks is None.")
 
-    if target_area is not None:
+    if not target_area is None:
         try:
             if target_area.is_enabled():
                 target_area.click()
@@ -9602,7 +9628,7 @@ def kham_performance_ticket_number(driver, config_dict):
         pass
 
     inputed_value = None
-    if form_input is not None:
+    if not form_input is None:
         try:
             inputed_value = form_input.get_attribute('value')
         except Exception as exc:
@@ -9655,7 +9681,7 @@ def kham_switch_to_auto_seat(driver):
         #print("find BUY_TYPE_2 input fail")
         pass
 
-    if btn_switch_to_auto_seat is not None:
+    if not btn_switch_to_auto_seat is None:
         button_class_string = None
         try:
             button_class_string = form_verifyCode.get_attribute('class')
@@ -9749,7 +9775,7 @@ def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
             pass
 
     is_start_to_input_answer = False
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         if len(answer) > 0:
             inputed_value = None
             try:
@@ -10152,7 +10178,7 @@ def ticketplus_date_auto_select(driver, config_dict):
     matched_blocks = None
     formated_area_list = None
 
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("date_list_count:", area_list_count)
@@ -10231,7 +10257,7 @@ def ticketplus_date_auto_select(driver, config_dict):
         pass
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -10247,7 +10273,7 @@ def ticketplus_date_auto_select(driver, config_dict):
             target_area = matched_blocks[target_row_index]
 
     is_date_clicked = False
-    if target_area is not None:
+    if not target_area is None:
         target_button = None
         try:
             target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
@@ -10300,7 +10326,7 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
     except Exception as exc:
         print("find ticket_number_div fail")
 
-    if ticket_number_div is not None:
+    if not ticket_number_div is None:
         ticket_number = config_dict["ticket_number"]
 
         ticket_number_text_int = 0
@@ -10375,7 +10401,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             print("find .text-title date list fail")
 
     formated_area_list = None
-    if area_list is not None:
+    if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -10428,7 +10454,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             print("area_list_count is None.")
         pass
 
-    if formated_area_list is not None:
+    if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
             print("formated_area_list count:", area_list_count)
@@ -10488,7 +10514,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 is_need_refresh = True
 
     target_area = None
-    if matched_blocks is not None:
+    if not matched_blocks is None:
         if len(matched_blocks) > 0:
             target_row_index = 0
 
@@ -10512,7 +10538,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         print("current_layout_style:", current_layout_style)
 
     if current_layout_style==1:
-        if target_area is not None:
+        if not target_area is None:
             try:
                 if target_area.is_enabled():
                     target_area.click()
@@ -10811,7 +10837,7 @@ def ticketplus_check_and_renew_captcha(driver):
         v_messages_div = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find messages__message div fail")
-    if v_messages_div is not None:
+    if not v_messages_div is None:
         try:
             v_messages_string = v_messages_div.text
             if not v_messages_string is None:
@@ -10838,7 +10864,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
     except Exception as exc:
         print("find captcha input fail")
 
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         inputed_value = None
         try:
             inputed_value = form_verifyCode.get_attribute('value')
@@ -10869,7 +10895,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
             is_verifyCode_editing = False
             is_form_sumbited = False
 
-    if form_verifyCode is not None:
+    if not form_verifyCode is None:
         if len(answer) > 0:
             answer=answer.upper()
 
@@ -10937,7 +10963,7 @@ def ticketplus_account_auto_fill(driver, config_dict):
         #print("find account input fail")
 
     is_account_sent = False
-    if form_account is not None:
+    if not form_account is None:
         #print("found account field")
         inputed_value = None
         try:
@@ -10993,11 +11019,11 @@ def ticketplus_account_auto_fill(driver, config_dict):
         except Exception as exc:
             pass
 
-        if el_pass is not None:
+        if not el_pass is None:
             try:
                 if el_pass.is_enabled():
                     inputed_text = el_pass.get_attribute('value')
-                    if inputed_text is not None:
+                    if not inputed_text is None:
                         password = decryptMe(config_dict["advanced"]["ticketplus_password"])
                         if len(inputed_text) == 0:
                             el_pass.click()
