@@ -34,7 +34,7 @@ warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.08.21)"
+CONST_APP_VERSION = "MaxBot (2023.08.31)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -56,7 +56,10 @@ tixcraft.com##.col-md-7.col-xs-12.mgt-16.mx-auto
 tixcraft.com##.topBar.alert-box.emergency
 tixcraft.com##.footer.clearfix
 tixcraft.com##.page-info.row.line-btm.mg-0
-tixcraft.com##.row.justify-content-start.navbar-location'''
+tixcraft.com##.row.justify-content-start.navbar-location
+||www.google-analytics.com^
+||www.googletagmanager.com^
+'''
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
