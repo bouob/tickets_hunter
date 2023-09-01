@@ -380,6 +380,8 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     chrome_options.add_argument('--lang=zh-TW')
     chrome_options.add_argument('--disable-web-security')
     chrome_options.add_argument("--no-sandbox");
+    chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--disable-notifications")
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -543,6 +545,8 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.add_argument('--lang=zh-TW')
     options.add_argument('--disable-web-security')
     options.add_argument("--no-sandbox");
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--disable-notifications")
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
