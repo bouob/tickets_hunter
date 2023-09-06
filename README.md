@@ -296,7 +296,7 @@ please run this source code with high performance hardware computer and high spe
 https://github.com/sml2h3/ddddocr
 
 附註：
-* macOS 新的電腦 arm 系列, 暫時沒有提供自動輸入驗證碼功能, 使用上的限制和 ddddocr 相同. 
+* macOS 新的電腦 arm 系列, 暫時沒有提供自動輸入驗證碼功能, 使用上的限制和 ddddocr 相同. 暫時的解法是透過Rosetta來模擬 Intel CPU 環境. 請參考: https://github.com/max32002/tixcraft_bot/issues/82
 * macOS 舊款intel CPU 的電腦裡的 python 版本要降到低於等於 3.9版 或 3.10版, 例如:
   https://www.python.org/ftp/python/3.9.13/python-3.9.13-macosx10.9.pkg
   https://www.python.org/ftp/python/3.9.13/python-3.9.13-macos11.pkg
