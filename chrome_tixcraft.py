@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.02)"
+CONST_APP_VERSION = "MaxBot (2023.09.03)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -4278,6 +4278,19 @@ def kktix_double_check_all_text_value(driver, ticket_number):
 
     return is_do_press_next_button
 
+# 本票券需要符合以下任一資格才可以購買
+def get_kktix_control_label_text(driver):
+    question_text = ""
+
+    captcha_inner_div = None
+    try:
+        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div.ticket-unit > div.code-input > div.control-group > label.control-label')
+        if not captcha_inner_div is None:
+            question_text = captcha_inner_div.text
+    except Exception as exc:
+        pass
+    return question_text
+
 def get_kktix_question_text(driver):
     question_text = ""
 
@@ -4337,7 +4350,11 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
         is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
     else:
         # no captcha text popup, goto next page.
-        click_ret = kktix_press_next_button(driver)
+        control_text = get_kktix_control_label_text(driver)
+        if show_debug_message:
+            print("control_text:", control_text)
+        if control_text == "":
+            click_ret = kktix_press_next_button(driver)
 
     return fail_list, captcha_sound_played
 
