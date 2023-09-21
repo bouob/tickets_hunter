@@ -1,60 +1,61 @@
 #!/usr/bin/env python3
 #encoding=utf-8
-# 'seleniumwire' and 'selenium 4' raise error when running python 2.x
-# PS: python 2.x will be removed in future.
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
+import json
+import logging
 import os
 import pathlib
-import sys
 import platform
-import json
 import random
+import re
+import sys
+import time
+from datetime import datetime
 
 from selenium import webdriver
-# for close tab.
-from selenium.common.exceptions import NoSuchWindowException
-from selenium.common.exceptions import UnexpectedAlertPresentException
-from selenium.common.exceptions import NoAlertPresentException
-from selenium.common.exceptions import WebDriverException
-# for alert 2
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-# for selenium 4
+from selenium.common.exceptions import (NoAlertPresentException,
+                                        NoSuchWindowException,
+                                        UnexpectedAlertPresentException,
+                                        WebDriverException)
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
-# for wait #1
-import time
-import re
-from datetime import datetime
-# for error output
-import logging
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
+
+#from DrissionPage import ChromiumPage
+
 logging.basicConfig()
 logger = logging.getLogger('logger')
-# for check reg_info
-import requests
 import warnings
+
+# for check kktix reg_info
+import requests
 from urllib3.exceptions import InsecureRequestWarning
+
 warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # ocr
 import base64
+
 try:
     import ddddocr
+
     #PS: python 3.11.1 raise PIL conflict.
     from NonBrowser import NonBrowser
 except Exception as exc:
     pass
 
-import webbrowser
 import argparse
+import webbrowser
+
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.01)"
+CONST_APP_VERSION = "MaxBot (2023.09.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -86,6 +87,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
+CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 
 
@@ -464,6 +466,7 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     if driver_type=="stealth":
         from selenium_stealth import stealth
+
         # Selenium Stealth settings
         stealth(driver,
               languages=["zh-TW", "zh"],
@@ -689,9 +692,9 @@ def get_driver_by_config(config_dict):
 
     if config_dict["browser"] in ["chrome","brave"]:
         # method 6: Selenium Stealth
-        if config_dict["webdriver_type"] != CONST_WEBDRIVER_TYPE_UC:
+        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_SELENIUM:
             driver = load_chromdriver_normal(config_dict, config_dict["webdriver_type"])
-        else:
+        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_UC:
             # method 5: uc
             # multiprocessing not work bug.
             if platform.system().lower()=="windows":
@@ -699,6 +702,9 @@ def get_driver_by_config(config_dict):
                     from multiprocessing import freeze_support
                     freeze_support()
             driver = load_chromdriver_uc(config_dict)
+        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_DP:
+            #driver = ChromiumPage()
+            pass
 
     if config_dict["browser"] == "firefox":
         # default os is linux/mac
@@ -1552,14 +1558,15 @@ def force_press_button(driver, select_by, select_query, force_submit=True):
     return ret
 
 # close some div on home url.
-def tixcraft_home_close_window(driver):
+def tixcraft_home_close_window(driver, config_dict):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
     accept_all_cookies_btn = None
     try:
-        accept_all_cookies_btn = driver.find_element(By.ID, 'onetrust-accept-btn-handler')
+        accept_all_cookies_btn = driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler')
     except Exception as exc:
+        print(exc)
         if show_debug_message:
             print("find accept_all_cookies_btn fail")
         pass
@@ -1570,6 +1577,7 @@ def tixcraft_home_close_window(driver):
             if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
                 is_visible = True
         except Exception as exc:
+            print(exc)
             pass
 
         if is_visible:
@@ -1578,6 +1586,7 @@ def tixcraft_home_close_window(driver):
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
+                print(exc)
                 print("try to click accept_all_cookies_btn fail, force click by js.")
                 try:
                     driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
@@ -1587,32 +1596,6 @@ def tixcraft_home_close_window(driver):
             if show_debug_message:
                 print("accept_all_cookies_btn invisible.")
 
-    close_all_alert_btns = None
-    try:
-        close_all_alert_btns = driver.find_elements(By.CSS_SELECTOR, "[class='close-alert']")
-    except Exception as exc:
-        print("find close_all_alert_btns fail")
-
-    if not close_all_alert_btns is None:
-        #print('alert count:', len(close_all_alert_btns))
-        for alert_btn in close_all_alert_btns:
-            # fix bug: Message: stale element reference: element is not attached to the page document
-            is_visible = False
-            try:
-                if alert_btn.is_enabled() and alert_btn.is_displayed():
-                    is_visible = True
-            except Exception as exc:
-                pass
-
-            if is_visible:
-                try:
-                    alert_btn.click()
-                except Exception as exc:
-                    print("try to click alert_btn fail, force click by js.")
-                    try:
-                        driver.execute_script("arguments[0].click();", alert_btn)
-                    except Exception as exc:
-                        pass
 
 # from detail to game
 def tixcraft_redirect(driver, url):
@@ -1775,7 +1758,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -1929,7 +1912,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -2791,7 +2774,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
     # start to input verify code.
     form_verifyCode = None
     try:
-        form_verifyCode = driver.find_element(By.ID, 'TicketForm_verifyCode')
+        form_verifyCode = driver.find_element(By.CSS_SELECTOR, '#TicketForm_verifyCode')
     except Exception as exc:
         print("find form_verifyCode fail")
 
@@ -2855,7 +2838,7 @@ def tixcraft_reload_captcha(driver, domain_name):
         image_id = 'TicketForm_verifyCode-image'
         if 'indievox.com' in domain_name:
             image_id = 'TicketForm_verifyCode-image'
-        form_captcha = driver.find_element(By.ID, image_id)
+        form_captcha = driver.find_element(By.CSS_SELECTOR, "#" + image_id)
         if not form_captcha is None:
             form_captcha.click()
             ret = True
@@ -2935,7 +2918,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     if not ocr is None:
         form_verifyCode = None
         try:
-            form_verifyCode = driver.find_element(By.ID, 'TicketForm_verifyCode')
+            form_verifyCode = driver.find_element(By.CSS_SELECTOR, '#TicketForm_verifyCode')
             is_input_box_exist = True
         except Exception as exc:
             pass
@@ -3296,7 +3279,7 @@ def kktix_press_next_button(driver):
     try:
         # method #1
         #form_actions_div = None
-        #form_actions_div = driver.find_element(By.ID, 'registrationsNewApp')
+        #form_actions_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
         #next_step_button = form_actions_div.find_element(By.CSS_SELECTOR, 'div.form-actions button.btn-primary')
 
         # method #2
@@ -3719,7 +3702,7 @@ def kktix_check_agree_checkbox(driver, config_dict):
 
     agree_checkbox = None
     try:
-        agree_checkbox = driver.find_element(By.ID, 'person_agree_terms')
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, '#person_agree_terms')
     except Exception as exc:
         print("find person_agree_terms checkbox Exception")
         if show_debug_message:
@@ -4610,7 +4593,7 @@ def fami_activity(driver):
     #---------------------------
     fami_start_to_buy_button = None
     try:
-        fami_start_to_buy_button = driver.find_element(By.ID, 'buyWaiting')
+        fami_start_to_buy_button = driver.find_element(By.CSS_SELECTOR, '#buyWaiting')
     except Exception as exc:
         pass
 
@@ -5979,7 +5962,7 @@ def ibon_date_auto_select(driver, config_dict):
                 if show_debug_message:
                     print("start to match keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -6133,7 +6116,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
                     if area_list_count <= CONST_DETECT_SEAT_ATTRIBUTE_UNDER_ROW_COUNT:
                         is_seat_remaining_checking = True
-                    
+
                     if is_seat_remaining_checking:
                         try:
                             area_seat_el = row.find_element(By.CSS_SELECTOR, 'td.action')
@@ -6416,7 +6399,7 @@ def assign_text(driver, by, query, val, overwrite = False, submit=False):
             if show_debug_message:
                 print(exc)
             pass
-            
+
     return is_text_sent
 
 def facebook_login(driver, account, password):
@@ -6855,7 +6838,7 @@ def ticketmaster_get_ticketPriceList(driver, config_dict):
     table_select = None
     if not div_mapContainer is None:
         is_loading = False
-        
+
         # check is loading.
         div_loadingmap = None
         try:
@@ -6890,7 +6873,7 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
         show_debug_message = True
 
     table_select = ticketmaster_get_ticketPriceList(driver, config_dict)
-    
+
     select_obj = None
     if not table_select is None:
         form_select = None
@@ -6990,22 +6973,26 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
             if current_url != last_url:
                 break
 
-def tixcraft_ad_footer(driver):
+def tixcraft_ad_footer(driver, config_dict):
     ad_div = None
     try:
-        ad_div = driver.find_element(By.ID, 'ad-footer')
-        driver.execute_script("arguments[0].innerHTML='';", ad_div)
+        ad_div = driver.find_element(By.CSS_SELECTOR, '#ad-footer')
+        if not ad_div is None:
+            driver.execute_script("arguments[0].innerHTML='';", ad_div)
     except Exception as exc:
+        #print(exc)
         pass
     try:
         ad_div = driver.find_element(By.CSS_SELECTOR, 'footer.footer')
-        driver.execute_script("arguments[0].innerHTML='';", ad_div)
+        if not ad_div is None:
+            driver.execute_script("arguments[0].innerHTML='';", ad_div)
     except Exception as exc:
+        #print(exc)
         pass
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
-    tixcraft_ad_footer(driver)
-    tixcraft_home_close_window(driver)
+    tixcraft_ad_footer(driver, config_dict)
+    tixcraft_home_close_window(driver, config_dict)
 
     home_url_list = ['https://tixcraft.com/'
     ,'https://www.tixcraft.com/'
@@ -7019,6 +7006,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         if each_url == url:
             if config_dict["ocr_captcha"]["enable"]:
                 set_non_browser_cookies(driver, url, Captcha_Browser)
+                pass
             break
 
     if "/activity/detail/" in url:
@@ -7608,7 +7596,7 @@ def cityline_go_venue(driver, url):
             domain_array = url_https_array[2].split(".")
             if len(domain_array)==3:
                 is_match_venue_url = True
-    
+
     if is_match_venue_url:
         try:
             btn_next = driver.find_element(By.CSS_SELECTOR, 'div#eventDetail > div#btnDiv > a')
@@ -7757,7 +7745,7 @@ def ibon_ticket_agree(driver):
     # check agree
     form_checkbox = None
     try:
-        form_checkbox = driver.find_element(By.ID, 'agreen')
+        form_checkbox = driver.find_element(By.CSS_SELECTOR, '#agreen')
     except Exception as exc:
         #print("find #agreen fail")
         pass
@@ -8049,8 +8037,8 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
         is_event_page = False
         if '/UTK02/UTK0201_0.' in url.upper():
-            if '.aspx?' in url.lower(): 
-                if 'rn=' in url.lower(): 
+            if '.aspx?' in url.lower():
+                if 'rn=' in url.lower():
                     if 'PERFORMANCE_ID=' in url.upper():
                         if "PRODUCT_ID=" in url.upper():
                             is_event_page = True
@@ -8213,7 +8201,7 @@ def hkticketing_accept_cookie(driver):
 
     accept_all_cookies_btn = None
     try:
-        accept_all_cookies_btn = driver.find_element(By.ID, 'closepolicy_new')
+        accept_all_cookies_btn = driver.find_element(By.CSS_SELECTOR, '#closepolicy_new')
     except Exception as exc:
         if show_debug_message:
             print("find closepolicy_new fail")
@@ -8411,7 +8399,7 @@ def hkticketing_date_assign(driver, config_dict):
                     if show_debug_message:
                         print("start to match keyword:", date_keyword)
 
-                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -8708,7 +8696,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
 
                             if is_match_area:
                                 matched_blocks.append(row)
-                                
+
                                 if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     break
 
@@ -8970,7 +8958,7 @@ def hkticketing_escape_robot_detection(driver, url):
 
     el_main_iframe = None
     try:
-        el_main_iframe = driver.find_element(By.ID, 'main-iframe')
+        el_main_iframe = driver.find_element(By.CSS_SELECTOR, '#main-iframe')
     except Exception as exc:
         #print("find el_main_iframe fail...")
         #print(exc)
@@ -9334,7 +9322,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     if show_debug_message:
                         print("start to match keyword:", date_keyword)
 
-                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -10204,7 +10192,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                         if len(row_text) > 0:
                             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                                 row_text = ""
-                        
+
                         row_is_enabled=False
                         if len(row_text) > 0:
                             row_is_enabled=True
@@ -10245,7 +10233,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)                
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
