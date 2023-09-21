@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 #encoding=utf-8
-# 'seleniumwire' and 'selenium 4' raise error when running python 2.x
-# PS: python 2.x will be removed in future.
 try:
     # for Python2
-    from Tkinter import *
-    import ttk
     import tkMessageBox as messagebox
+    import ttk
+    from Tkinter import *
 except ImportError:
     # for Python3
     from tkinter import *
@@ -14,27 +12,29 @@ except ImportError:
     import tkinter.font as tkfont
     from tkinter import messagebox
     from tkinter.filedialog import asksaveasfilename
-import os
-import sys
-import platform
-import webbrowser
-import pyperclip
+
 import base64
-import time
-import threading
-import subprocess
 import json
-
+import os
+import platform
 import socket
-
-import requests
+import subprocess
+import sys
+import threading
+import time
 import warnings
+import webbrowser
+
+import pyperclip
+import requests
 from urllib3.exceptions import InsecureRequestWarning
+
 warnings.simplefilter('ignore',InsecureRequestWarning)
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.09.01)"
+CONST_APP_VERSION = "MaxBot (2023.09.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -69,6 +69,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 #CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
+#CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
