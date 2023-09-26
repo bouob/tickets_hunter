@@ -330,7 +330,9 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 
 # Supporting the Project (贊助Max)
 
-如果你覺得這篇文章或MaxBot寫的很好，想打賞Max，目前支援的贊助方式：
+如果這個項目對您有幫助，不妨請作者我喝杯咖啡 ：）
+
+目前支援的贊助方式：
 * 台灣的ATM匯款: 中國信託 (代碼：822) 帳號：071512949756
 * 7-11 ATM的無卡存款
 * 街口支付： 901643378
