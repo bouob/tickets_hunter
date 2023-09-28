@@ -1566,7 +1566,7 @@ def tixcraft_home_close_window(driver, config_dict):
     try:
         accept_all_cookies_btn = driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler')
     except Exception as exc:
-        print(exc)
+        #print(exc)
         if show_debug_message:
             print("find accept_all_cookies_btn fail")
         pass
@@ -1577,7 +1577,7 @@ def tixcraft_home_close_window(driver, config_dict):
             if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
                 is_visible = True
         except Exception as exc:
-            print(exc)
+            #print(exc)
             pass
 
         if is_visible:
@@ -1586,7 +1586,7 @@ def tixcraft_home_close_window(driver, config_dict):
             try:
                 accept_all_cookies_btn.click()
             except Exception as exc:
-                print(exc)
+                #print(exc)
                 print("try to click accept_all_cookies_btn fail, force click by js.")
                 try:
                     driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
