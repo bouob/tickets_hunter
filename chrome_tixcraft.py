@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.06)"
+CONST_APP_VERSION = "MaxBot (2023.09.07)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9745,6 +9745,44 @@ def kham_switch_to_auto_seat(driver):
 
     return is_switch_to_auto_seat
 
+def ticket_switch_to_auto_seat(driver):
+    is_switch_to_auto_seat = False
+
+    btn_switch_to_auto_seat = None
+    try:
+        my_css_selector = 'input[value="BUY_TYPE_2"]'
+        btn_switch_to_auto_seat = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        #print("find BUY_TYPE_2 input fail")
+        pass
+
+    if not btn_switch_to_auto_seat is None:
+        button_class_string = None
+        try:
+            button_class_string = form_verifyCode.get_attribute('checked')
+        except Exception as exc:
+            #print("get_attribute('class') fail")
+            pass
+
+        if button_class_string is None:
+            button_class_string = ""
+
+        if button_class_string == "":
+            try:
+                btn_switch_to_auto_seat.click()
+                is_switch_to_auto_seat = True
+            except Exception as exc:
+                try:
+                    driver.execute_script("arguments[0].click();", btn_switch_to_auto_seat)
+                    ret = True
+                except Exception as exc:
+                    pass
+
+        if button_class_string == "red":
+            is_switch_to_auto_seat = True
+
+    return is_switch_to_auto_seat
+
 
 def kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name):
     show_debug_message = True       # debug.
@@ -10106,6 +10144,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["area_auto_select"]["enable"]:
             is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
+            if not is_switch_to_auto_seat:
+                is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
             is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
 
             # this is a special case, not performance_price_area_id, directly input ticket_nubmer in #amount.
