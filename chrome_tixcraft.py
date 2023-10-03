@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.05)"
+CONST_APP_VERSION = "MaxBot (2023.09.06)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -861,42 +861,42 @@ def convert_string_to_pattern(my_str, dynamic_length=True):
     my_hint_anwser_length = len(my_str)
     my_formated = ""
     if my_hint_anwser_length > 0:
-        my_anwser_symbols = u"()[]<>{}-"
+        my_anwser_symbols = "()[]<>{}-"
         for idx in range(my_hint_anwser_length):
             char = my_str[idx:idx+1]
 
             if char in my_anwser_symbols:
-                my_formated += (u'\\' + char)
+                my_formated += ('\\' + char)
                 continue
 
-            pattern = re.compile(u"[A-Z]")
+            pattern = re.compile("[A-Z]")
             match_result = pattern.match(char)
             #print("match_result A:", match_result)
             if not match_result is None:
-                my_formated += u"[A-Z]"
+                my_formated += "[A-Z]"
 
-            pattern = re.compile(u"[a-z]")
+            pattern = re.compile("[a-z]")
             match_result = pattern.match(char)
             #print("match_result a:", match_result)
             if not match_result is None:
-                my_formated += u"[a-z]"
+                my_formated += "[a-z]"
 
-            pattern = re.compile(u"[\d]")
+            pattern = re.compile("[\d]")
             match_result = pattern.match(char)
             #print("match_result d:", match_result)
             if not match_result is None:
-                my_formated += u"[\d]"
+                my_formated += "[\d]"
 
         # for dynamic length
         if dynamic_length:
             for i in range(10):
-                my_formated = my_formated.replace(u"[A-Z][A-Z]",u"[A-Z]")
-                my_formated = my_formated.replace(u"[a-z][a-z]",u"[a-z]")
-                my_formated = my_formated.replace(u"[\d][\d]",u"[\d]")
+                my_formated = my_formated.replace("[A-Z][A-Z]","[A-Z]")
+                my_formated = my_formated.replace("[a-z][a-z]","[a-z]")
+                my_formated = my_formated.replace("[\d][\d]","[\d]")
 
-            my_formated = my_formated.replace(u"[A-Z]",u"[A-Z]+")
-            my_formated = my_formated.replace(u"[a-z]",u"[a-z]+")
-            my_formated = my_formated.replace(u"[\d]",u"[\d]+")
+            my_formated = my_formated.replace("[A-Z]","[A-Z]+")
+            my_formated = my_formated.replace("[a-z]","[a-z]+")
+            my_formated = my_formated.replace("[\d]","[\d]+")
     return my_formated
 
 def guess_answer_list_from_multi_options(tmp_text):
@@ -906,7 +906,7 @@ def guess_answer_list_from_multi_options(tmp_text):
     options_list = []
     matched_pattern = ""
     if len(options_list) == 0:
-        if u'【' in tmp_text and u'】' in tmp_text:
+        if '【' in tmp_text and '】' in tmp_text:
             pattern = '【.{1,4}】'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -915,7 +915,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if u'(' in tmp_text and u')' in tmp_text:
+        if '(' in tmp_text and ')' in tmp_text:
             pattern = '\(.{1,4}\)'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -924,7 +924,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if u'[' in tmp_text and u']' in tmp_text:
+        if '[' in tmp_text and ']' in tmp_text:
             pattern = '\[.{1,4}\]'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -933,7 +933,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if "\n" in tmp_text and u')' in tmp_text:
+        if "\n" in tmp_text and ')' in tmp_text:
             pattern = "\\n.{1,4}\)"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -942,7 +942,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if "\n" in tmp_text and u']' in tmp_text:
+        if "\n" in tmp_text and ']' in tmp_text:
             pattern = "\\n.{1,4}\]"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -951,7 +951,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if "\n" in tmp_text and u'】' in tmp_text:
+        if "\n" in tmp_text and '】' in tmp_text:
             pattern = "\\n.{1,4}】"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
@@ -960,13 +960,41 @@ def guess_answer_list_from_multi_options(tmp_text):
                 matched_pattern = pattern
 
     if len(options_list) == 0:
-        if "\n" in tmp_text and u':' in tmp_text:
+        if "\n" in tmp_text and ':' in tmp_text:
             pattern = "\\n.{1,4}:"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
             else:
                 matched_pattern = pattern
+
+    if len(options_list) == 0:
+        if " " in tmp_text and '?' in tmp_text:
+            if ('.' in tmp_text or ':' in tmp_text or ')' in tmp_text or ']' in tmp_text or '>' in tmp_text):
+                pattern = "[ /\n\|;\.\?]{1}.{1}[\.:)\]>]{1}.{2,3}"
+                options_list = re.findall(pattern, tmp_text)
+                if len(options_list) <= 2:
+                    options_list = []
+                else:
+                    formated_list = []
+                    for new_item in options_list:
+                        new_item = new_item.strip()
+                        if new_item[:1] == ".":
+                            new_item = new_item[1:]
+                        if new_item[:1] == "?":
+                            new_item = new_item[1:]
+                        if new_item[:1] == "|":
+                            new_item = new_item[1:]
+                        if new_item[:1] == ";":
+                            new_item = new_item[1:]
+                        if new_item[:1] == "/":
+                            new_item = new_item[1:]
+                        new_item = new_item.strip()
+                        new_item = new_item[:1]
+                        formated_list.append(new_item)
+                    options_list = formated_list
+
+                    matched_pattern = pattern
 
     if show_debug_message:
         print("matched pattern:", matched_pattern)
@@ -1001,8 +1029,11 @@ def guess_answer_list_from_multi_options(tmp_text):
             if is_all_options_same_length:
                 return_list = []
                 for each_option in options_list:
-                    if is_trim_quota:
-                        return_list.append(each_option[1:-1])
+                    if len(each_option) > 2:
+                        if is_trim_quota:
+                            return_list.append(each_option[1:-1])
+                        else:
+                            return_list.append(each_option)
                     else:
                         return_list.append(each_option)
             else:
@@ -1046,18 +1077,18 @@ def guess_answer_list_from_symbols(captcha_text_div_text):
     return_list = []
     # need replace to space to get first options.
     tmp_text = captcha_text_div_text
-    tmp_text = tmp_text.replace(u'?',u' ')
-    tmp_text = tmp_text.replace(u'？',u' ')
-    tmp_text = tmp_text.replace(u'。',u' ')
+    tmp_text = tmp_text.replace('?',' ')
+    tmp_text = tmp_text.replace('？',' ')
+    tmp_text = tmp_text.replace('。',' ')
 
-    delimitor_symbols_left = [u"(",u"[",u"{", " ", " ", " ", " "]
-    delimitor_symbols_right = [u")",u"]",u"}", ":", ".", ")", "-"]
+    delimitor_symbols_left = [u"(","[","{", " ", " ", " ", " "]
+    delimitor_symbols_right = [u")","]","}", ":", ".", ")", "-"]
     idx = -1
     for idx in range(len(delimitor_symbols_left)):
         symbol_left = delimitor_symbols_left[idx]
         symbol_right = delimitor_symbols_right[idx]
-        if symbol_left in tmp_text and symbol_right in tmp_text and u'半形' in tmp_text:
-            hint_list = re.findall(u'\\'+ symbol_left + u'[\\w]+\\'+ symbol_right , tmp_text)
+        if symbol_left in tmp_text and symbol_right in tmp_text and '半形' in tmp_text:
+            hint_list = re.findall('\\'+ symbol_left + '[\\w]+\\'+ symbol_right , tmp_text)
             #print("hint_list:", hint_list)
             if not hint_list is None:
                 if len(hint_list) > 1:
@@ -1082,8 +1113,8 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
     if symbol in tmp_text:
         # start to guess offical hint
         if offical_hint_string == "":
-            if u'【' in tmp_text and u'】' in tmp_text:
-                hint_list = re.findall(u'【.*?】', tmp_text)
+            if '【' in tmp_text and '】' in tmp_text:
+                hint_list = re.findall('【.*?】', tmp_text)
                 if not hint_list is None:
                     if show_debug_message:
                         print("【.*?】hint_list:", hint_list)
@@ -1092,8 +1123,8 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
                             offical_hint_string = hint[1:-1]
                             break
         if offical_hint_string == "":
-            if u'(' in tmp_text and u')' in tmp_text:
-                hint_list = re.findall(u'\(.*?\)', tmp_text)
+            if '(' in tmp_text and ')' in tmp_text:
+                hint_list = re.findall('\(.*?\)', tmp_text)
                 if not hint_list is None:
                     if show_debug_message:
                         print("\(.*?\)hint_list:", hint_list)
@@ -1102,8 +1133,8 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
                             offical_hint_string = hint[1:-1]
                             break
         if offical_hint_string == "":
-            if u'[' in tmp_text and u']' in tmp_text:
-                hint_list = re.findall(u'[.*?]', tmp_text)
+            if '[' in tmp_text and ']' in tmp_text:
+                hint_list = re.findall('[.*?]', tmp_text)
                 if not hint_list is None:
                     if show_debug_message:
                         print("[.*?]hint_list:", hint_list)
@@ -1129,16 +1160,16 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     my_answer_delimitor = ""
 
     if my_question == "":
-        if u"?" in tmp_text:
-            question_index = tmp_text.find(u"?")
+        if "?" in tmp_text:
+            question_index = tmp_text.find("?")
             my_question = tmp_text[:question_index+1]
     if my_question == "":
-        if u"。" in tmp_text:
-            question_index = tmp_text.find(u"。")
+        if "。" in tmp_text:
+            question_index = tmp_text.find("。")
             my_question = tmp_text[:question_index+1]
     if my_question == "":
         my_question = tmp_text
-    #print(u"my_question:", my_question)
+    #print("my_question:", my_question)
 
     # ps: hint_list is not options list
 
@@ -1155,7 +1186,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             new_hint = find_continuous_text(right_part)
             if len(new_hint) > 0:
                 # TODO: 答案為B需填入Bb)
-                #if u'答案' in offical_hint_string and CONST_INPUT_SYMBOL in offical_hint_string:
+                #if '答案' in offical_hint_string and CONST_INPUT_SYMBOL in offical_hint_string:
                 offical_hint_string_anwser = new_hint
 
 
@@ -1182,10 +1213,10 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     # try rule4:
     # get hint from rule 3: without '(' & '), but use "*"
     if len(offical_hint_string) == 0:
-        target_symbol = u"*"
+        target_symbol = "*"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index + len(target_symbol))
+            space_index = tmp_text.find(" ", star_index + len(target_symbol))
             offical_hint_string = tmp_text[star_index: space_index]
 
     # is need to merge next block
@@ -1194,18 +1225,18 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
             next_block_index = star_index + len(target_symbol)
-            space_index = tmp_text.find(u" ", next_block_index)
+            space_index = tmp_text.find(" ", next_block_index)
             next_block = tmp_text[next_block_index: space_index]
             if CONST_EXAMPLE_SYMBOL in next_block:
-                offical_hint_string += u' ' + next_block
+                offical_hint_string += ' ' + next_block
 
     # try rule5:
     # get hint from rule 3: n個半形英文大寫
     if len(offical_hint_string) == 0:
-        target_symbol = u"個半形英文大寫"
+        target_symbol = "個半形英文大寫"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1213,13 +1244,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                offical_hint_string_anwser = u'A' * int(answer_char_count)
+                offical_hint_string_anwser = 'A' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
-        target_symbol = u"個英文大寫"
+        target_symbol = "個英文大寫"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1227,13 +1258,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                offical_hint_string_anwser = u'A' * int(answer_char_count)
+                offical_hint_string_anwser = 'A' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
-        target_symbol = u"個半形英文小寫"
+        target_symbol = "個半形英文小寫"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1241,13 +1272,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                offical_hint_string_anwser = u'a' * int(answer_char_count)
+                offical_hint_string_anwser = 'a' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
-        target_symbol = u"個英文小寫"
+        target_symbol = "個英文小寫"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1255,13 +1286,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                offical_hint_string_anwser = u'a' * int(answer_char_count)
+                offical_hint_string_anwser = 'a' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
-        target_symbol = u"個英數半形字"
+        target_symbol = "個英數半形字"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1269,13 +1300,13 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                my_anwser_formated = u'[A-Za-z\d]' * int(answer_char_count)
+                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
-        target_symbol = u"個半形"
+        target_symbol = "個半形"
         if target_symbol in tmp_text :
             star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(u" ", star_index)
+            space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
                 answer_char_count = normalize_chinese_numeric(answer_char_count)
@@ -1283,7 +1314,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                my_anwser_formated = u'[A-Za-z\d]' * int(answer_char_count)
+                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
     if len(offical_hint_string) > 0:
@@ -1293,16 +1324,16 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
     my_options = tmp_text
     if len(my_question) < len(tmp_text):
-        my_options = my_options.replace(my_question,u"")
-    my_options = my_options.replace(offical_hint_string,u"")
+        my_options = my_options.replace(my_question,"")
+    my_options = my_options.replace(offical_hint_string,"")
 
     # try rule7:
     # check is chinese/english in question, if match, apply my_options rule.
     if len(offical_hint_string) > 0:
         tmp_text_org = captcha_text_div_text
         if CONST_EXAMPLE_SYMBOL in tmp_text:
-            tmp_text_org = tmp_text_org.replace(u'Ex:','ex:')
-            target_symbol = u"ex:"
+            tmp_text_org = tmp_text_org.replace('Ex:','ex:')
+            target_symbol = "ex:"
             if target_symbol in tmp_text_org :
                 star_index = tmp_text_org.find(target_symbol)
                 my_options = tmp_text_org[star_index-1:]
@@ -1324,7 +1355,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 my_answer_delimitor = maybe_delimitor
 
     if show_debug_message:
-        print(u"my_answer_delimitor:", my_answer_delimitor)
+        print("my_answer_delimitor:", my_answer_delimitor)
 
     # default remove quota
     is_trim_quota = not check_answer_keep_symbol(tmp_text)
@@ -1335,7 +1366,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     if len(my_anwser_formated) > 0:
         new_pattern = my_anwser_formated
         if len(my_answer_delimitor) > 0:
-            new_pattern = my_anwser_formated + u'\\' + my_answer_delimitor
+            new_pattern = my_anwser_formated + '\\' + my_answer_delimitor
 
         return_list = re.findall(new_pattern, my_options)
         if show_debug_message:
@@ -1370,31 +1401,31 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
 def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
     tmp_text = captcha_text_div_text
-    tmp_text = tmp_text.replace(u'  ',u' ')
-    tmp_text = tmp_text.replace(u'：',u':')
+    tmp_text = tmp_text.replace('  ',' ')
+    tmp_text = tmp_text.replace('：',':')
     # for hint
-    tmp_text = tmp_text.replace(u'*',u'*')
+    tmp_text = tmp_text.replace('*','*')
 
     # stop word.
-    tmp_text = tmp_text.replace(u'輸入法',u'')
-    tmp_text = tmp_text.replace(u'請問',u'')
-    tmp_text = tmp_text.replace(u'請將',u'')
-    tmp_text = tmp_text.replace(u'請在',u'')
-    tmp_text = tmp_text.replace(u'請以',u'')
-    tmp_text = tmp_text.replace(u'請回答',u'')
-    tmp_text = tmp_text.replace(u'請',u'')
+    tmp_text = tmp_text.replace('輸入法','')
+    tmp_text = tmp_text.replace('請問','')
+    tmp_text = tmp_text.replace('請將','')
+    tmp_text = tmp_text.replace('請在','')
+    tmp_text = tmp_text.replace('請以','')
+    tmp_text = tmp_text.replace('請回答','')
+    tmp_text = tmp_text.replace('請','')
 
     # replace ex.
-    tmp_text = tmp_text.replace(u'例如', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace(u'如:', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace(u'如為', CONST_EXAMPLE_SYMBOL+'為')
+    tmp_text = tmp_text.replace('例如', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace('如:', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace('如為', CONST_EXAMPLE_SYMBOL+'為')
 
-    tmp_text = tmp_text.replace(u'舉例', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace('舉例', CONST_EXAMPLE_SYMBOL)
     if not CONST_EXAMPLE_SYMBOL in tmp_text:
-        tmp_text = tmp_text.replace(u'例', CONST_EXAMPLE_SYMBOL)
+        tmp_text = tmp_text.replace('例', CONST_EXAMPLE_SYMBOL)
     # important, maybe 例 & ex occurs at same time.
-    tmp_text = tmp_text.replace(u'ex:', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace(u'Ex:', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace('ex:', CONST_EXAMPLE_SYMBOL)
+    tmp_text = tmp_text.replace('Ex:', CONST_EXAMPLE_SYMBOL)
 
     #若你覺得
     #PS:這個，可能會造成更多問題，呵呵。
@@ -1406,14 +1437,14 @@ def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_tex
             tmp_text = tmp_text.replace(symbol_if + '你答案', CONST_EXAMPLE_SYMBOL + '答案')
             tmp_text = tmp_text.replace(symbol_if + '答案', CONST_EXAMPLE_SYMBOL + '答案')
 
-    tmp_text = tmp_text.replace(u'填入', CONST_INPUT_SYMBOL)
+    tmp_text = tmp_text.replace('填入', CONST_INPUT_SYMBOL)
 
-    #tmp_text = tmp_text.replace(u'[',u'(')
-    #tmp_text = tmp_text.replace(u']',u')')
-    tmp_text = tmp_text.replace(u'？',u'?')
+    #tmp_text = tmp_text.replace('[','(')
+    #tmp_text = tmp_text.replace(']',')')
+    tmp_text = tmp_text.replace('？','?')
 
-    tmp_text = tmp_text.replace(u'（',u'(')
-    tmp_text = tmp_text.replace(u'）',u')')
+    tmp_text = tmp_text.replace('（','(')
+    tmp_text = tmp_text.replace('）',')')
 
     return tmp_text
 
@@ -2542,21 +2573,21 @@ def guess_tixcraft_question(driver, question_text):
     if len(question_text) > 0:
         # format question text.
         formated_html_text = question_text
-        formated_html_text = formated_html_text.replace(u'「',u'【')
-        formated_html_text = formated_html_text.replace(u'〔',u'【')
-        formated_html_text = formated_html_text.replace(u'［',u'【')
-        formated_html_text = formated_html_text.replace(u'〖',u'【')
-        formated_html_text = formated_html_text.replace(u'[',u'【')
+        formated_html_text = formated_html_text.replace('「','【')
+        formated_html_text = formated_html_text.replace('〔','【')
+        formated_html_text = formated_html_text.replace('［','【')
+        formated_html_text = formated_html_text.replace('〖','【')
+        formated_html_text = formated_html_text.replace('[','【')
 
-        formated_html_text = formated_html_text.replace(u'」',u'】')
-        formated_html_text = formated_html_text.replace(u'〕',u'】')
-        formated_html_text = formated_html_text.replace(u'］',u'】')
-        formated_html_text = formated_html_text.replace(u'〗',u'】')
-        formated_html_text = formated_html_text.replace(u']',u'】')
+        formated_html_text = formated_html_text.replace('」','】')
+        formated_html_text = formated_html_text.replace('〕','】')
+        formated_html_text = formated_html_text.replace('］','】')
+        formated_html_text = formated_html_text.replace('〗','】')
+        formated_html_text = formated_html_text.replace(']','】')
 
-        if u'【' in formated_html_text and u'】' in formated_html_text:
+        if '【' in formated_html_text and '】' in formated_html_text:
             # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
-            #inferred_answer_string = find_between(formated_html_text, u"【", u"】")
+            #inferred_answer_string = find_between(formated_html_text, "【", "】")
             pass
 
     if show_debug_message:
@@ -2567,9 +2598,9 @@ def guess_tixcraft_question(driver, question_text):
 
     # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
-        if u'輸入"YES"' in formated_html_text:
-            if u'已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
-                if u'同意' in formated_html_text:
+        if '輸入"YES"' in formated_html_text:
+            if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
+                if '同意' in formated_html_text:
                     inferred_answer_string = 'YES'
 
     # 購票前請詳閱注意事項，並於驗證碼欄位輸入【同意】繼續購票流程。
@@ -3656,7 +3687,7 @@ def kktix_get_web_datetime(registrationsNewApp_div):
                         for guess_year in range(now.year,now.year+3):
                             current_year = str(guess_year)
                             if current_year in el_web_datetime_text:
-                                if u'/' in el_web_datetime_text:
+                                if '/' in el_web_datetime_text:
                                     web_datetime = el_web_datetime_text
                                     is_found_web_datetime = True
                                     break
@@ -3865,22 +3896,22 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
     is_need_parse_web_datetime = False
     # '半形阿拉伯數字' & '半形數字'
-    if u'半形' in captcha_text_div_text and u'字' in captcha_text_div_text:
-        if u'演出日期' in captcha_text_div_text:
+    if '半形' in captcha_text_div_text and '字' in captcha_text_div_text:
+        if '演出日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'活動日期' in captcha_text_div_text:
+        if '活動日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'表演日期' in captcha_text_div_text:
+        if '表演日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'開始日期' in captcha_text_div_text:
+        if '開始日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'演唱會日期' in captcha_text_div_text:
+        if '演唱會日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'展覽日期' in captcha_text_div_text:
+        if '展覽日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-        if u'音樂會日期' in captcha_text_div_text:
+        if '音樂會日期' in captcha_text_div_text:
             is_need_parse_web_datetime = True
-    if u'the date of the show you purchased' in captcha_text_div_text:
+    if 'the date of the show you purchased' in captcha_text_div_text:
         is_need_parse_web_datetime = True
 
     if show_debug_message:
@@ -3900,7 +3931,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
             # MMDD
             if my_datetime_foramted is None:
-                if u'4位半形' in captcha_text_formatted:
+                if '4位半形' in captcha_text_formatted:
                     my_datetime_foramted = "%m%d"
 
             # for "如為2月30日，請輸入0230"
@@ -3914,9 +3945,9 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                     number_text = find_continuous_number(right_part)
 
                     my_anwser_formated = convert_string_to_pattern(number_text, dynamic_length=False)
-                    if my_anwser_formated == u"[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
+                    if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
                         my_datetime_foramted = "%Y%m%d"
-                    if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
+                    if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
                         my_datetime_foramted = "%m%d"
                     #print("my_datetime_foramted:", my_datetime_foramted)
 
@@ -3938,16 +3969,16 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                             my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
                         #print("my_hint_anwser:", my_hint_anwser)
                         # get before.
-                        my_delimitor_symbol = u'，'
+                        my_delimitor_symbol = '，'
                         if my_delimitor_symbol in my_hint_anwser:
                             my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                             my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                        my_delimitor_symbol = u'。'
+                        my_delimitor_symbol = '。'
                         if my_delimitor_symbol in my_hint_anwser:
                             my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                             my_hint_anwser = my_hint_anwser[:my_delimitor_index]
                         # PS: space may not is delimitor...
-                        my_delimitor_symbol = u' '
+                        my_delimitor_symbol = ' '
                         if my_delimitor_symbol in my_hint_anwser:
                             my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                             my_hint_anwser = my_hint_anwser[:my_delimitor_index]
@@ -3958,9 +3989,9 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                                 my_hint_anwser = my_hint_anwser[:-1]
 
                         my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
-                        if my_anwser_formated == u"[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
+                        if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
                             my_datetime_foramted = "%Y%m%d"
-                        if my_anwser_formated == u"[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
+                        if my_anwser_formated == "[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
                             my_datetime_foramted = "%Y/%m/%d"
 
                         if show_debug_message:
@@ -3973,7 +4004,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                 my_delimitor_symbol = ' '
                 if my_delimitor_symbol in web_datetime:
                     web_datetime = web_datetime[:web_datetime.find(my_delimitor_symbol)]
-                date_time = datetime.strptime(web_datetime,u"%Y/%m/%d")
+                date_time = datetime.strptime(web_datetime,"%Y/%m/%d")
                 if show_debug_message:
                     print("our web date_time:", date_time)
                 ans = None
@@ -3996,20 +4027,20 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
     # parse '演出時間'
     is_need_parse_web_time = False
-    if u'半形' in captcha_text_div_text:
-        if u'演出時間' in captcha_text_div_text:
+    if '半形' in captcha_text_div_text:
+        if '演出時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'表演時間' in captcha_text_div_text:
+        if '表演時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'開始時間' in captcha_text_div_text:
+        if '開始時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'演唱會時間' in captcha_text_div_text:
+        if '演唱會時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'展覽時間' in captcha_text_div_text:
+        if '展覽時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'音樂會時間' in captcha_text_div_text:
+        if '音樂會時間' in captcha_text_div_text:
             is_need_parse_web_time = True
-        if u'the time of the show you purchased' in captcha_text_div_text:
+        if 'the time of the show you purchased' in captcha_text_div_text:
             is_need_parse_web_time = True
 
     #print("is_need_parse_web_time", is_need_parse_web_time)
@@ -4031,39 +4062,39 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                     my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
                 #print("my_hint_anwser:", my_hint_anwser)
                 # get before.
-                my_delimitor_symbol = u'，'
+                my_delimitor_symbol = '，'
                 if my_delimitor_symbol in my_hint_anwser:
                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                     my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                my_delimitor_symbol = u'。'
+                my_delimitor_symbol = '。'
                 if my_delimitor_symbol in my_hint_anwser:
                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                     my_hint_anwser = my_hint_anwser[:my_delimitor_index]
                 # PS: space may not is delimitor...
-                my_delimitor_symbol = u' '
+                my_delimitor_symbol = ' '
                 if my_delimitor_symbol in my_hint_anwser:
                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                     my_hint_anwser = my_hint_anwser[:my_delimitor_index]
                 my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
                 #print("my_hint_anwser:", my_hint_anwser)
-                #print(u"my_anwser_formated:", my_anwser_formated)
-                if my_anwser_formated == u"[\\d][\\d][\\d][\\d]":
+                #print("my_anwser_formated:", my_anwser_formated)
+                if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
                     my_datetime_foramted = "%H%M"
-                    if u'12小時' in tmp_text:
+                    if '12小時' in tmp_text:
                         my_datetime_foramted = "%I%M"
 
-                if my_anwser_formated == u"[\\d][\\d]:[\\d][\\d]":
+                if my_anwser_formated == "[\\d][\\d]:[\\d][\\d]":
                     my_datetime_foramted = "%H:%M"
-                    if u'12小時' in tmp_text:
+                    if '12小時' in tmp_text:
                         my_datetime_foramted = "%I:%M"
 
             if not my_datetime_foramted is None:
-                date_delimitor_symbol = u'('
+                date_delimitor_symbol = '('
                 if date_delimitor_symbol in web_datetime:
                     date_delimitor_symbol_index = web_datetime.find(date_delimitor_symbol)
                     if date_delimitor_symbol_index > 8:
                         web_datetime = web_datetime[:date_delimitor_symbol_index-1]
-                date_time = datetime.strptime(web_datetime,u"%Y/%m/%d %H:%M")
+                date_time = datetime.strptime(web_datetime,"%Y/%m/%d %H:%M")
                 #print("date_time:", date_time)
                 ans = None
                 try:
@@ -4071,7 +4102,7 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                 except Exception as exc:
                     pass
                 inferred_answer_string = ans
-                #print(u"my_anwser:", ans)
+                #print("my_anwser:", ans)
 
     return inferred_answer_string
 
@@ -4080,37 +4111,37 @@ def check_answer_keep_symbol(captcha_text_div_text):
 
     # format text
     keep_symbol_tmp = captcha_text_div_text
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'也',u'須')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'必須',u'須')
+    keep_symbol_tmp = keep_symbol_tmp.replace('也','須')
+    keep_symbol_tmp = keep_symbol_tmp.replace('必須','須')
 
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'全都',u'都')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'全部都',u'都')
+    keep_symbol_tmp = keep_symbol_tmp.replace('全都','都')
+    keep_symbol_tmp = keep_symbol_tmp.replace('全部都','都')
 
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'一致',u'相同')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'一樣',u'相同')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'相等',u'相同')
+    keep_symbol_tmp = keep_symbol_tmp.replace('一致','相同')
+    keep_symbol_tmp = keep_symbol_tmp.replace('一樣','相同')
+    keep_symbol_tmp = keep_symbol_tmp.replace('相等','相同')
 
-    if u'符號須都相同' in keep_symbol_tmp:
+    if '符號須都相同' in keep_symbol_tmp:
         is_need_keep_symbol = True
 
-    if u'符號都相同' in keep_symbol_tmp:
+    if '符號都相同' in keep_symbol_tmp:
         is_need_keep_symbol = True
 
-    if u'符號須相同' in keep_symbol_tmp:
+    if '符號須相同' in keep_symbol_tmp:
         is_need_keep_symbol = True
 
     # for: 大小寫含括號需一模一樣
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'含', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'和', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'與', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'還有', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'及', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'以及', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'需', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'必須', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'而且', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'且', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace(u'一模', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('含', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('和', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('與', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('還有', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('及', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('以及', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('需', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('必須', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('而且', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('且', '')
+    keep_symbol_tmp = keep_symbol_tmp.replace('一模', '')
     #print("keep_symbol_tmp:", keep_symbol_tmp)
     if '大小寫括號相同' in keep_symbol_tmp:
         is_need_keep_symbol = True
@@ -4134,7 +4165,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     # 請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）
     if inferred_answer_string is None:
         is_use_quota_message = False
-        if u"「" in captcha_text_div_text and u"」" in captcha_text_div_text:
+        if "「" in captcha_text_div_text and "」" in captcha_text_div_text:
             # test for rule#1, it's seem very easy conflict...
             match_quota_text_items = ["下方","空白","輸入","引號","文字"]
             is_match_quota_text = True
@@ -4145,19 +4176,19 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
-            inferred_answer_string = find_between(captcha_text_div_text, u"「", u"」")
+            inferred_answer_string = find_between(captcha_text_div_text, "「", "」")
             #print("find captcha text:" , inferred_answer_string)
 
     if inferred_answer_string is None:
         is_use_quota_message = False
-        if u"【" in captcha_text_div_text and u"】" in captcha_text_div_text:
-            if u'下' in captcha_text_div_text and u'空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+        if "【" in captcha_text_div_text and "】" in captcha_text_div_text:
+            if '下' in captcha_text_div_text and '空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and '引號' in captcha_text_div_text and '字' in captcha_text_div_text:
                 is_use_quota_message = True
-            if u'半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and u'引號' in captcha_text_div_text and u'字' in captcha_text_div_text:
+            if '半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and '引號' in captcha_text_div_text and '字' in captcha_text_div_text:
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
-            inferred_answer_string = find_between(captcha_text_div_text, u"【", u"】")
+            inferred_answer_string = find_between(captcha_text_div_text, "【", "】")
             #print("find captcha text:" , inferred_answer_string)
 
     # parse '演出日期'
@@ -4170,35 +4201,35 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     # name of event.
     if inferred_answer_string is None:
-        if u"name of event" in captcha_text_div_text:
-            if u'(' in captcha_text_div_text and u')' in captcha_text_div_text and u'ans:' in captcha_text_div_text.lower():
-                target_symbol = u"("
+        if "name of event" in captcha_text_div_text:
+            if '(' in captcha_text_div_text and ')' in captcha_text_div_text and 'ans:' in captcha_text_div_text.lower():
+                target_symbol = "("
                 star_index = captcha_text_div_text.find(target_symbol)
-                target_symbol = u":"
+                target_symbol = ":"
                 star_index = captcha_text_div_text.find(target_symbol, star_index)
-                target_symbol = u")"
+                target_symbol = ")"
                 end_index = captcha_text_div_text.find(target_symbol, star_index)
                 inferred_answer_string = captcha_text_div_text[star_index+1:end_index]
                 #print("inferred_answer_string:", inferred_answer_string)
 
     # 二題式，組合問題。
     is_combine_two_question = False
-    if u"第一題" in captcha_text_div_text and u"第二題" in captcha_text_div_text:
+    if "第一題" in captcha_text_div_text and "第二題" in captcha_text_div_text:
         is_combine_two_question = True
-    if u"Q1." in captcha_text_div_text and u"Q2." in captcha_text_div_text:
-        if u"二題" in captcha_text_div_text:
+    if "Q1." in captcha_text_div_text and "Q2." in captcha_text_div_text:
+        if "二題" in captcha_text_div_text:
             is_combine_two_question = True
-        if u"2題" in captcha_text_div_text:
+        if "2題" in captcha_text_div_text:
             is_combine_two_question = True
-    if u"Q1:" in captcha_text_div_text and u"Q2:" in captcha_text_div_text:
-        if u"二題" in captcha_text_div_text:
+    if "Q1:" in captcha_text_div_text and "Q2:" in captcha_text_div_text:
+        if "二題" in captcha_text_div_text:
             is_combine_two_question = True
-        if u"2題" in captcha_text_div_text:
+        if "2題" in captcha_text_div_text:
             is_combine_two_question = True
-    if u"Q1 " in captcha_text_div_text and u"Q2 " in captcha_text_div_text:
-        if u"二題" in captcha_text_div_text:
+    if "Q1 " in captcha_text_div_text and "Q2 " in captcha_text_div_text:
+        if "二題" in captcha_text_div_text:
             is_combine_two_question = True
-        if u"2題" in captcha_text_div_text:
+        if "2題" in captcha_text_div_text:
             is_combine_two_question = True
     if is_combine_two_question:
         inferred_answer_string = None
@@ -11363,9 +11394,9 @@ def cli():
 
 def test_captcha_model():
     #for test kktix answer.
-    captcha_text_div_text = u"請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
-    #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「abc」"
-    #captcha_text_div_text = u"請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
+    captcha_text_div_text = "請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
+    #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
+    #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
     #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
     #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
     #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
@@ -11385,6 +11416,8 @@ def test_captcha_model():
     #captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
     #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
     #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
+    #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   1. PET / 2. PAN / 3. PENCIL / 4. PEN （請填寫選項「純數字」/ Please only enter the number）"
+    #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   A. PET / B. PAN / C. PENCIL / D. PEN （請填寫選項「純數字」/ Please only enter the number）"
     answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
     print("answer_list:", answer_list)
 
