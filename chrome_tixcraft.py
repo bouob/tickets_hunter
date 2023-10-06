@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.07)"
+CONST_APP_VERSION = "MaxBot (2023.09.08)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -576,7 +576,10 @@ def load_chromdriver_uc(config_dict):
 
     if not os.path.exists(chromedriver_path):
         print("ChromeDriver not exist, try to download to:", webdriver_path)
-        chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+        try:
+            chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+        except Exception as exc:
+            print(exc)
     else:
         print("ChromeDriver exist:", chromedriver_path)
 
@@ -609,8 +612,8 @@ def load_chromdriver_uc(config_dict):
                 print(exc2)
                 pass
 
-            chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
             try:
+                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
                 options = get_uc_options(uc, config_dict, webdriver_path)
                 driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
             except Exception as exc2:
@@ -622,6 +625,7 @@ def load_chromdriver_uc(config_dict):
     if driver is None:
         print('WebDriver object is None..., try again..')
         try:
+            options = get_uc_options(uc, config_dict, webdriver_path)
             driver = uc.Chrome(options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             print(exc)
@@ -8105,7 +8109,13 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=2222&GROUP_ID=4&PERFORMANCE_PRICE_AREA_ID=3333
 
         is_event_page = False
-        if '/UTK02/UTK0201_00' in url.upper():
+        if '/UTK02/UTK0201_' in url.upper():
+            if '.aspx?' in url.lower():
+                if 'PERFORMANCE_ID=' in url.upper():
+                    if len(url.split('/'))==6:
+                        is_event_page = True
+
+        if '/UTK02/UTK0202_' in url.upper():
             if '.aspx?' in url.lower():
                 if 'PERFORMANCE_ID=' in url.upper():
                     if len(url.split('/'))==6:
