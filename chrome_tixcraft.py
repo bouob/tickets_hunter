@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.09)"
+CONST_APP_VERSION = "MaxBot (2023.09.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -112,6 +112,10 @@ def format_config_keyword_for_json(user_input):
             user_input=user_input[1:]
             user_input=user_input[:-1]
     return user_input
+
+def remove_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
 
 def sx(s1):
     key=18
@@ -10334,7 +10338,15 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     area_list = None
     try:
-        area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item')
+        for retry_index in range(4):
+            area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item > div.row')
+            if not area_list is None:
+                area_list_count = len(area_list)
+                if area_list_count > 0:
+                    break
+                else:
+                    print("empty date item, delay 0.25 to retry.")
+                    time.sleep(0.25)
     except Exception as exc:
         print("find #buyTicket fail")
 
@@ -10356,13 +10368,22 @@ def ticketplus_date_auto_select(driver, config_dict):
                 row_index += 1
                 row_is_enabled=True
                 try:
+                    # skip to check enable, due to modal dialog popup.
+                    '''
                     if not row.is_enabled():
                         row_is_enabled=False
+                    '''
 
                     row_text = ""
                     # check buy button.
                     if row_is_enabled:
-                        row_text = row.text
+                        # text is failed.
+                        #row_text = row.text
+                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        #print("row_text1:", row_text)
+                        #print("innerHTML:", row.get_attribute('innerHTML'))
+                        #print("innerTEXT:", remove_html_tags(row.get_attribute('innerHTML')))
+
                         if row_text is None:
                             row_text = ""
 
@@ -11209,6 +11230,40 @@ def ticketplus_account_auto_fill(driver, config_dict):
                 pass
     return is_account_sent, is_password_sent
 
+def ticketplus_accept_realname_card(driver):
+    show_debug_message = True    # debug.
+    #show_debug_message = False   # online
+
+    is_button_pressed = False
+    accept_realname_btn = None
+    try:
+        accept_realname_btn = driver.find_element(By.CSS_SELECTOR, 'div.v-dialog__content > div > div > div > div.row > div > button.primary')
+    except Exception as exc:
+        #print(exc)
+        if show_debug_message:
+            print("find accept btn fail")
+        pass
+
+    if not accept_realname_btn is None:
+        is_visible = False
+        try:
+            if accept_realname_btn.is_enabled() and accept_realname_btn.is_displayed():
+                is_visible = True
+        except Exception as exc:
+            #print(exc)
+            pass
+
+        if is_visible:
+            try:
+                accept_realname_btn.click()
+                is_button_pressed = True
+            except Exception as exc:
+                #print(exc)
+                try:
+                    driver.execute_script("arguments[0].click();", accept_realname_btn)
+                except Exception as exc:
+                    pass
+    return is_button_pressed
 
 def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
     home_url_list = ['https://ticketplus.com.tw/']
@@ -11230,6 +11285,9 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
+            is_button_pressed = ticketplus_accept_realname_card(driver)
+            #print("realname is_button_pressed:", is_button_pressed)
+
             if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                 ticketplus_date_auto_select(driver, config_dict)
 
