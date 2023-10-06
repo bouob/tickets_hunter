@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.08)"
+CONST_APP_VERSION = "MaxBot (2023.09.09)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -73,6 +73,7 @@ CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
+CONST_TICKET_SIGN_IN_URL = "https://ticket.com.tw/application/utk13/utk1306_.aspx"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
@@ -800,6 +801,10 @@ def get_driver_by_config(config_dict):
             if 'kham.com' in homepage:
                 if len(config_dict["advanced"]["kham_account"])>0:
                     homepage = CONST_KHAM_SIGN_IN_URL
+
+            if 'ticket.com.tw' in homepage:
+                if len(config_dict["advanced"]["ticket_account"])>0:
+                    homepage = CONST_TICKET_SIGN_IN_URL
 
             if 'urbtix.hk' in homepage:
                 if len(config_dict["advanced"]["urbtix_account"])>0:
@@ -6656,6 +6661,67 @@ def kham_login(driver, account, password):
 
     return ret
 
+def ticket_login(driver, account, password):
+    ret = False
+    el_email = None
+    try:
+        my_css_selector = 'input[cname="帳號"]'
+        el_email = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        pass
+
+    is_visible = False
+    if not el_email is None:
+        try:
+            if el_email.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+    is_email_sent = False
+    if is_visible:
+        try:
+            inputed_text = el_email.get_attribute('value')
+            if not inputed_text is None:
+                if len(inputed_text) == 0:
+                    el_email.send_keys(account)
+                    is_email_sent = True
+                else:
+                    if inputed_text == account:
+                        is_email_sent = True
+        except Exception as exc:
+            pass
+
+    el_pass = None
+    if is_email_sent:
+        try:
+            my_css_selector = 'input[cname="密碼"]'
+            el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
+            pass
+
+    is_password_sent = False
+    if not el_pass is None:
+        try:
+            if el_pass.is_enabled():
+                inputed_text = el_pass.get_attribute('value')
+                if not inputed_text is None:
+                    if len(inputed_text) == 0:
+                        el_pass.click()
+                        if(len(password)>0):
+                            el_pass.send_keys(password)
+                            is_password_sent = True
+                        time.sleep(0.1)
+        except Exception as exc:
+            pass
+
+    if is_password_sent:
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'input[value="登入"]')
+
+    ret = is_password_sent
+
+    return ret
+
 def hkticketing_login(driver, account, password):
     ret = False
     el_email = None
@@ -9857,7 +9923,16 @@ def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
             my_css_selector = 'input[placeholder="驗證碼"]'
             form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
-            pass
+            try:
+                my_css_selector = 'input[placeholder="請輸入圖片上符號"]'
+                form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                try:
+                    my_css_selector = 'input[type="text"][maxlength="4"]'
+                    form_verifyCode = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                except Exception as exc:
+                    pass
+
 
     is_start_to_input_answer = False
     if not form_verifyCode is None:
@@ -10233,6 +10308,10 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             account = config_dict["advanced"]["kham_account"]
             if len(account) > 4:
                 kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
+
+            account = config_dict["advanced"]["ticket_account"]
+            if len(account) > 4:
+                ticket_login(driver, account, decryptMe(config_dict["advanced"]["ticket_password"]))
 
 def ticketplus_date_auto_select(driver, config_dict):
     show_debug_message = True    # debug.
