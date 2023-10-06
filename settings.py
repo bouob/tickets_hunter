@@ -57,6 +57,7 @@ tixcraft.com##.topBar.alert-box.emergency
 tixcraft.com##.footer.clearfix
 tixcraft.com##.page-info.row.line-btm.mg-0
 tixcraft.com##.row.justify-content-start.navbar-location
+||googletagservices.com^
 ||www.google-analytics.com^
 ||www.googletagmanager.com^
 '''
