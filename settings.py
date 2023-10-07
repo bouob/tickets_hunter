@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.09.10)"
+CONST_APP_VERSION = "MaxBot (2023.09.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -184,6 +184,7 @@ def load_translate():
     en_us["ticket_account"] = 'TICKET account'
     en_us["ticketplus_account"] = 'TicketPlus account'
 
+    en_us["password"] = 'Password'
     en_us["facebook_password"] = 'Facebook password'
     en_us["kktix_password"] = 'KKTIX password'
     en_us["cityline_password"] = 'cityline password'
@@ -282,6 +283,7 @@ def load_translate():
     zh_tw["ticket_account"] = '年代 帳號'
     zh_tw["ticketplus_account"] = '遠大 帳號'
 
+    zh_tw["password"] = '密碼'
     zh_tw["facebook_password"] = 'Facebook 密碼'
     zh_tw["kktix_password"] = 'KKTIX 密碼'
     zh_tw["cityline_password"] = 'cityline 密碼'
@@ -381,6 +383,7 @@ def load_translate():
     zh_cn["ticket_account"] = '年代 帐号'
     zh_cn["ticketplus_account"] = '远大 帐号'
 
+    zh_cn["password"] = '密码'
     zh_cn["facebook_password"] = 'Facebook 密码'
     zh_cn["kktix_password"] = 'KKTIX 密码'
     zh_cn["cityline_password"] = 'cityline 密码'
@@ -479,6 +482,7 @@ def load_translate():
     ja_jp["ticket_account"] = 'TICKETのアカウント'
     ja_jp["ticketplus_account"] = '遠大のアカウント'
 
+    ja_jp["password"] = 'パスワード'
     ja_jp["facebook_password"] = 'Facebookのパスワード'
     ja_jp["kktix_password"] = 'KKTIXのパスワード'
     ja_jp["cityline_password"] = 'citylineのパスワード'
@@ -1315,6 +1319,7 @@ def applyNewLanguage():
     global lbl_ticket_account
     global lbl_ticketplus_account
 
+    global lbl_password
     global lbl_facebook_password
     global lbl_kktix_password
     global lbl_cityline_password
@@ -1340,14 +1345,15 @@ def applyNewLanguage():
     lbl_ticket_account.config(text=translate[language_code]["ticket_account"])
     lbl_ticketplus_account.config(text=translate[language_code]["ticketplus_account"])
 
-    lbl_facebook_password.config(text=translate[language_code]["facebook_password"])
-    lbl_kktix_password.config(text=translate[language_code]["kktix_password"])
-    lbl_cityline_password.config(text=translate[language_code]["cityline_password"])
-    lbl_urbtix_password.config(text=translate[language_code]["urbtix_password"])
-    lbl_hkticketing_password.config(text=translate[language_code]["hkticketing_password"])
-    lbl_kham_password.config(text=translate[language_code]["kham_password"])
-    lbl_ticket_password.config(text=translate[language_code]["ticket_password"])
-    lbl_ticketplus_password.config(text=translate[language_code]["ticketplus_password"])
+    lbl_password.config(text=translate[language_code]["password"])
+    #lbl_facebook_password.config(text=translate[language_code]["facebook_password"])
+    #lbl_kktix_password.config(text=translate[language_code]["kktix_password"])
+    #lbl_cityline_password.config(text=translate[language_code]["cityline_password"])
+    #lbl_urbtix_password.config(text=translate[language_code]["urbtix_password"])
+    #lbl_hkticketing_password.config(text=translate[language_code]["hkticketing_password"])
+    #lbl_kham_password.config(text=translate[language_code]["kham_password"])
+    #lbl_ticket_password.config(text=translate[language_code]["ticket_password"])
+    #lbl_ticketplus_password.config(text=translate[language_code]["ticketplus_password"])
 
     lbl_save_password_alert.config(text=translate[language_code]["save_password_alert"])
 
@@ -2119,7 +2125,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_tixcraft_sid
     txt_tixcraft_sid_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["tixcraft_sid"].strip()))
     txt_tixcraft_sid = Entry(frame_group_header, width=30, textvariable = txt_tixcraft_sid_value, show="*")
-    txt_tixcraft_sid.grid(column=1, row=group_row_count, sticky = W)
+    txt_tixcraft_sid.grid(column=1, row=group_row_count, columnspan=2, sticky = W)
 
     group_row_count +=1
 
@@ -2130,7 +2136,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_ibon_ibonqware
     txt_ibon_ibonqware_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ibonqware"].strip()))
     txt_ibon_ibonqware = Entry(frame_group_header, width=30, textvariable = txt_ibon_ibonqware_value, show="*")
-    txt_ibon_ibonqware.grid(column=1, row=group_row_count, sticky = W)
+    txt_ibon_ibonqware.grid(column=1, row=group_row_count, columnspan=2, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_password
+    lbl_password = Label(frame_group_header, text=translate[language_code]['password'])
+    lbl_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2140,19 +2152,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_facebook_account
     txt_facebook_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["facebook_account"].strip())
-    txt_facebook_account = Entry(frame_group_header, width=30, textvariable = txt_facebook_account_value)
+    txt_facebook_account = Entry(frame_group_header, width=15, textvariable = txt_facebook_account_value)
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_facebook_password
-    lbl_facebook_password = Label(frame_group_header, text=translate[language_code]['facebook_password'])
-    lbl_facebook_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_facebook_password
     txt_facebook_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["facebook_password"].strip()))
-    txt_facebook_password = Entry(frame_group_header, width=30, textvariable = txt_facebook_password_value, show="*")
-    txt_facebook_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_facebook_password = Entry(frame_group_header, width=15, textvariable = txt_facebook_password_value, show="*")
+    txt_facebook_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2162,19 +2168,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kktix_account
     txt_kktix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kktix_account"].strip())
-    txt_kktix_account = Entry(frame_group_header, width=30, textvariable = txt_kktix_account_value)
+    txt_kktix_account = Entry(frame_group_header, width=15, textvariable = txt_kktix_account_value)
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_kktix_password
-    lbl_kktix_password = Label(frame_group_header, text=translate[language_code]['kktix_password'])
-    lbl_kktix_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kktix_password
     txt_kktix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kktix_password"].strip()))
-    txt_kktix_password = Entry(frame_group_header, width=30, textvariable = txt_kktix_password_value, show="*")
-    txt_kktix_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_kktix_password = Entry(frame_group_header, width=15, textvariable = txt_kktix_password_value, show="*")
+    txt_kktix_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2184,19 +2184,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_cityline_account
     txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
-    txt_cityline_account = Entry(frame_group_header, width=30, textvariable = txt_cityline_account_value)
+    txt_cityline_account = Entry(frame_group_header, width=15, textvariable = txt_cityline_account_value)
     txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_cityline_password
-    lbl_cityline_password = Label(frame_group_header, text=translate[language_code]['cityline_password'])
-    lbl_cityline_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_cityline_password
     txt_cityline_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["cityline_password"].strip()))
-    txt_cityline_password = Entry(frame_group_header, width=30, textvariable = txt_cityline_password_value, show="*")
-    txt_cityline_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_cityline_password = Entry(frame_group_header, width=15, textvariable = txt_cityline_password_value, show="*")
+    txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
     
@@ -2206,19 +2200,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_urbtix_account
     txt_urbtix_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["urbtix_account"].strip())
-    txt_urbtix_account = Entry(frame_group_header, width=30, textvariable = txt_urbtix_account_value)
+    txt_urbtix_account = Entry(frame_group_header, width=15, textvariable = txt_urbtix_account_value)
     txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_urbtix_password
-    lbl_urbtix_password = Label(frame_group_header, text=translate[language_code]['urbtix_password'])
-    lbl_urbtix_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_urbtix_password
     txt_urbtix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
-    txt_urbtix_password = Entry(frame_group_header, width=30, textvariable = txt_urbtix_password_value, show="*")
-    txt_urbtix_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_urbtix_password = Entry(frame_group_header, width=15, textvariable = txt_urbtix_password_value, show="*")
+    txt_urbtix_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2228,19 +2216,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_hkticketing_account
     txt_hkticketing_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["hkticketing_account"].strip())
-    txt_hkticketing_account = Entry(frame_group_header, width=30, textvariable = txt_hkticketing_account_value)
+    txt_hkticketing_account = Entry(frame_group_header, width=15, textvariable = txt_hkticketing_account_value)
     txt_hkticketing_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_hkticketing_password
-    lbl_hkticketing_password = Label(frame_group_header, text=translate[language_code]['hkticketing_password'])
-    lbl_hkticketing_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_hkticketing_password
     txt_hkticketing_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
-    txt_hkticketing_password = Entry(frame_group_header, width=30, textvariable = txt_hkticketing_password_value, show="*")
-    txt_hkticketing_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_hkticketing_password = Entry(frame_group_header, width=15, textvariable = txt_hkticketing_password_value, show="*")
+    txt_hkticketing_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2250,19 +2232,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_kham_account
     txt_kham_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["kham_account"].strip())
-    txt_kham_account = Entry(frame_group_header, width=30, textvariable = txt_kham_account_value)
+    txt_kham_account = Entry(frame_group_header, width=15, textvariable = txt_kham_account_value)
     txt_kham_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_kham_password
-    lbl_kham_password = Label(frame_group_header, text=translate[language_code]['kham_password'])
-    lbl_kham_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_kham_password
     txt_kham_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kham_password"].strip()))
-    txt_kham_password = Entry(frame_group_header, width=30, textvariable = txt_kham_password_value, show="*")
-    txt_kham_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_kham_password = Entry(frame_group_header, width=15, textvariable = txt_kham_password_value, show="*")
+    txt_kham_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2272,19 +2248,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_ticket_account
     txt_ticket_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["ticket_account"].strip())
-    txt_ticket_account = Entry(frame_group_header, width=30, textvariable = txt_ticket_account_value)
+    txt_ticket_account = Entry(frame_group_header, width=15, textvariable = txt_ticket_account_value)
     txt_ticket_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_ticket_password
-    lbl_ticket_password = Label(frame_group_header, text=translate[language_code]['ticket_password'])
-    lbl_ticket_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_ticket_password
     txt_ticket_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ticket_password"].strip()))
-    txt_ticket_password = Entry(frame_group_header, width=30, textvariable = txt_ticket_password_value, show="*")
-    txt_ticket_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_ticket_password = Entry(frame_group_header, width=15, textvariable = txt_ticket_password_value, show="*")
+    txt_ticket_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2294,19 +2264,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_ticketplus_account
     txt_ticketplus_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["ticketplus_account"].strip())
-    txt_ticketplus_account = Entry(frame_group_header, width=30, textvariable = txt_ticketplus_account_value)
+    txt_ticketplus_account = Entry(frame_group_header, width=15, textvariable = txt_ticketplus_account_value)
     txt_ticketplus_account.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_ticketplus_password
-    lbl_ticketplus_password = Label(frame_group_header, text=translate[language_code]['ticketplus_password'])
-    lbl_ticketplus_password.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_ticketplus_password
     txt_ticketplus_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ticketplus_password"].strip()))
-    txt_ticketplus_password = Entry(frame_group_header, width=30, textvariable = txt_ticketplus_password_value, show="*")
-    txt_ticketplus_password.grid(column=1, row=group_row_count, sticky = W)
+    txt_ticketplus_password = Entry(frame_group_header, width=15, textvariable = txt_ticketplus_password_value, show="*")
+    txt_ticketplus_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
