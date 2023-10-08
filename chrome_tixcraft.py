@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.11)"
+CONST_APP_VERSION = "MaxBot (2023.09.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2654,72 +2654,119 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
 
     is_do_press_next_button = False
 
-    form_input = None
+    form_input_1 = None
+    form_input_2 = None
     if form_input_count > 0:
-        form_input = form_input_list[0]
+        form_input_1 = form_input_list[0]
+        if form_input_count > 1:
+            form_input_2 = form_input_list[1]
 
+    is_multi_question_mode = False
+    answer_list = get_answer_list_from_user_guess_string(config_dict)
     if form_input_count == 1:
         is_do_press_next_button = True
+    else:
+        if form_input_count == 2:
+            if not form_input_2 is None:
+                if len(answer_list) >= 2:
+                    if(len(answer_list[0]) > 0):
+                        if(len(answer_list[1]) > 0):
+                            is_multi_question_mode = True
 
-    inputed_value = None
-    if not form_input is None:
+    inputed_value_1 = None
+    if not form_input_1 is None:
         try:
-            inputed_value = form_input.get_attribute('value')
+            inputed_value_1 = form_input_1.get_attribute('value')
         except Exception as exc:
             if show_debug_message:
                 print("get_attribute of verify code fail")
             pass
+    if inputed_value_1 is None:
+        inputed_value_1 = ""
 
-    if inputed_value is None:
-        inputed_value = ""
+    inputed_value_2 = None
+    if not form_input_2 is None:
+        try:
+            inputed_value_2 = form_input_2.get_attribute('value')
+        except Exception as exc:
+            if show_debug_message:
+                print("get_attribute of verify code fail")
+            pass
+    if inputed_value_2 is None:
+        inputed_value_2 = ""
 
     is_answer_sent = False
-    if not form_input is None:
-        if len(inferred_answer_string) > 0:
-            if inputed_value != inferred_answer_string:
-                try:
-                    # PS: sometime may send key twice...
-                    form_input.clear()
-                    form_input.send_keys(inferred_answer_string)
-                    is_button_clicked = False
-                    if is_do_press_next_button:
-                        if submit_by_enter:
-                            form_input.send_keys(Keys.ENTER)
-                            is_button_clicked = True
-                        if len(next_step_button_css) > 0:
-                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+    if not is_multi_question_mode:
+        if not form_input_1 is None:
+            if len(inferred_answer_string) > 0:
+                if inputed_value_1 != inferred_answer_string:
+                    try:
+                        # PS: sometime may send key twice...
+                        form_input_1.clear()
+                        form_input_1.send_keys(inferred_answer_string)
+                        is_button_clicked = False
+                        if is_do_press_next_button:
+                            if submit_by_enter:
+                                form_input_1.send_keys(Keys.ENTER)
+                                is_button_clicked = True
+                            if len(next_step_button_css) > 0:
+                                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
 
-                    if is_button_clicked:
-                        is_answer_sent = True
-                        fail_list.append(inferred_answer_string)
+                        if is_button_clicked:
+                            is_answer_sent = True
+                            fail_list.append(inferred_answer_string)
+                            if show_debug_message:
+                                print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+                    except Exception as exc:
                         if show_debug_message:
-                            print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
-                except Exception as exc:
-                    if show_debug_message:
-                        print(exc)
-                    pass
+                            print(exc)
+                        pass
 
-            if is_answer_sent:
-                for i in range(3):
-                    time.sleep(0.1)
+                if is_answer_sent:
+                    for i in range(3):
+                        time.sleep(0.1)
 
-                    alert_ret = check_pop_alert(driver)
-                    if alert_ret:
-                        if show_debug_message:
-                            print("press accept button at time #", i+1)
-                        break
-        else:
-            # no answer to fill.
-            if len(inputed_value)==0:
-                try:
-                    # solution 1: js.
-                    driver.execute_script("if(!(document.activeElement === arguments[0])){arguments[0].focus();}", form_input)
-                    # solution 2: selenium.
-                    #form_input.click()
-                    time.sleep(check_input_interval)
-                except Exception as exc:
-                    pass
+                        alert_ret = check_pop_alert(driver)
+                        if alert_ret:
+                            if show_debug_message:
+                                print("press accept button at time #", i+1)
+                            break
+            else:
+                # no answer to fill.
+                if len(inputed_value_1)==0:
+                    try:
+                        # solution 1: js.
+                        driver.execute_script("if(!(document.activeElement === arguments[0])){arguments[0].focus();}", form_input_1)
+                        # solution 2: selenium.
+                        #form_input_1.click()
+                        time.sleep(check_input_interval)
+                    except Exception as exc:
+                        pass
+    else:
+        # multi question mode.
+        try:
+            if inputed_value_1 != answer_list[0]:
+                form_input_1.clear()
+                form_input_1.send_keys(answer_list[0])
 
+            if inputed_value_2 != answer_list[1]:
+                form_input_2.clear()
+                form_input_2.send_keys(answer_list[1])
+
+            is_button_clicked = False
+            form_input_2.send_keys(Keys.ENTER)
+            if len(next_step_button_css) > 0:
+                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+
+            if is_button_clicked:
+                is_answer_sent = True
+                fail_list.append(answer_list[0])
+                fail_list.append(answer_list[1])
+                if show_debug_message:
+                    print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+        except Exception as exc:
+            pass
+    
     return is_answer_sent, fail_list
 
 def get_answer_list_from_user_guess_string(config_dict):

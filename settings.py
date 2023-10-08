@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 #encoding=utf-8
 try:
@@ -34,7 +35,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.09.11)"
+CONST_APP_VERSION = "MaxBot (2023.09.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
