@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.12)"
+CONST_APP_VERSION = "MaxBot (2023.09.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9817,22 +9817,98 @@ def kham_performance_ticket_number(driver, config_dict):
                 form_input.send_keys(str(ticket_number))
                 is_ticket_number_assigned = True
             except Exception as exc:
-                # use plan B
-                '''
                 try:
                     print("force to click by js.")
                     driver.execute_script("arguments[0].click();", el_div)
                     ret = True
                 except Exception as exc:
                     pass
-                '''
-                pass
 
     if len(inputed_value) > 0:
         if not inputed_value=="0":
             is_ticket_number_assigned = True
 
     return is_ticket_number_assigned
+
+def ticket_performance_ticket_number(driver, config_dict):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_ticket_number_assigned = False
+
+    ticket_number = config_dict["ticket_number"]
+
+    form_input = None
+    try:
+        form_input = driver.find_element(By.CSS_SELECTOR, 'input[type="text"][value="0"]')
+    except Exception as exc:
+        if show_debug_message:
+            print("find #AMOUNT fail")
+            print(exc)
+        pass
+
+    inputed_value = None
+    if not form_input is None:
+        try:
+            inputed_value = form_input.get_attribute('value')
+        except Exception as exc:
+            print("get_attribute value fail")
+            pass
+
+    if inputed_value is None:
+        inputed_value = ""
+
+    if inputed_value == "" or inputed_value == "0":
+        is_visible = False
+        try:
+            if form_input.is_enabled():
+                is_visible = True
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            try:
+                form_input.click()
+                form_input.clear()
+                form_input.send_keys(str(ticket_number))
+                is_ticket_number_assigned = True
+            except Exception as exc:
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_div)
+                    ret = True
+                except Exception as exc:
+                    pass
+
+    if len(inputed_value) > 0:
+        if not inputed_value=="0":
+            is_ticket_number_assigned = True
+
+    return is_ticket_number_assigned
+
+def ticket_allow_not_adjacent_seat(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    agree_checkbox = None
+    try:
+        my_css_selector = 'div.panel > span > input[type="checkbox"]'
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find ibon seat checkbox Exception")
+        if show_debug_message:
+            print(exc)
+        pass
+
+    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
+
+    return is_finish_checkbox_click
 
 def kham_switch_to_auto_seat(driver):
     is_switch_to_auto_seat = False
@@ -10279,13 +10355,22 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["area_auto_select"]["enable"]:
-            is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
-            if not is_switch_to_auto_seat:
+            if "ticket.com.tw" in url:
                 is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
+            else:
+                is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
             is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
 
             # this is a special case, not performance_price_area_id, directly input ticket_nubmer in #amount.
-            is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
+            is_ticket_number_assigned = False
+            if "ticket.com.tw" in url:
+                is_ticket_number_assigned = ticket_performance_ticket_number(driver, config_dict)
+            else:
+                is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
+
+            if config_dict["advanced"]["disable_adjacent_seat"]:
+                is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+
             if show_debug_message:
                 print("is_ticket_number_assigned:", is_ticket_number_assigned)
                 print("is_captcha_sent:", is_captcha_sent)
@@ -10293,6 +10378,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if is_captcha_sent:
                     el_btn = None
                     my_css_selector = '#addcart'
+                    if "ticket.com.tw" in url:
+                        my_css_selector = 'a[onclick="return chkCart();"]'
                     try:
                         el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
                         if not el_btn is None:
