@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.14)"
+CONST_APP_VERSION = "MaxBot (2023.09.15)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9237,6 +9237,9 @@ def hkticketing_content_refresh(driver, url, config_dict):
     , "Cannot generate SSPI context"
     , "System.Data.SqlClient.Sql"
     , "System.ComponentModel.Win32Exception"
+    , "Access Denied"
+    , "Your attempt to access the web site has been blocked by"
+    , "This requset was blocked by"
     ]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
