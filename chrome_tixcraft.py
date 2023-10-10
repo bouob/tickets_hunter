@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.13)"
+CONST_APP_VERSION = "MaxBot (2023.09.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9843,10 +9843,10 @@ def ticket_performance_ticket_number(driver, config_dict):
 
     form_input = None
     try:
-        form_input = driver.find_element(By.CSS_SELECTOR, 'input[type="text"][value="0"]')
+        form_input = driver.find_element(By.CSS_SELECTOR, 'div.qty-select input[type="text"]')
     except Exception as exc:
         if show_debug_message:
-            print("find #AMOUNT fail")
+            print("find qty-select input fail")
             print(exc)
         pass
 
@@ -9877,8 +9877,7 @@ def ticket_performance_ticket_number(driver, config_dict):
                 is_ticket_number_assigned = True
             except Exception as exc:
                 try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", el_div)
+                    driver.execute_script("arguments[0].value='"+ str(ticket_number) +"'';", form_input)
                     ret = True
                 except Exception as exc:
                     pass
@@ -10369,7 +10368,10 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
 
             if config_dict["advanced"]["disable_adjacent_seat"]:
-                is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+                if "ticket.com.tw" in url:
+                    is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+                else:
+                    is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
 
             if show_debug_message:
                 print("is_ticket_number_assigned:", is_ticket_number_assigned)
@@ -10409,19 +10411,29 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
         if config_dict["advanced"]["disable_adjacent_seat"]:
-            is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
-
+            if "ticket.com.tw" in url:
+                is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+            else:
+                is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
 
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         if config_dict["ocr_captcha"]["enable"]:
             if not is_captcha_sent:
                 is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
-            is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
+            is_ticket_number_assigned = False
+            if "ticket.com.tw" in url:
+                is_ticket_number_assigned = ticket_performance_ticket_number(driver, config_dict)
+            else:
+                is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
+
             if is_ticket_number_assigned:
                 if is_captcha_sent:
                     el_btn = None
+                    # for kham
                     my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
+                    if "ticket.com.tw" in url:
+                        my_css_selector = 'a[onclick="return chkCart();"]'
                     try:
                         el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
                         if not el_btn is None:
