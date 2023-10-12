@@ -8,6 +8,12 @@ https://github.com/max32002/tixcraft_bot/releases
 
 # Demo (示範影片)
 
+Max搶票機器人2023-09-16： 更新 adblock plus extension 的filiter
+
+強烈建議搶票時勾選啟用 adblock plus 的擴充工具, 因為售票網站都會使用第三方網站資源或廣告, 會拖慢搶票的效率.
+
+https://youtu.be/Zm0EjPUqolI
+
 Max搶票機器人2023-07-09：日期關鍵字支援多組與順位
 
 https://youtu.be/IgX4viS1Eq0
