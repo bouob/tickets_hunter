@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.09.15)"
+CONST_APP_VERSION = "MaxBot (2023.09.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -334,7 +334,7 @@ def is_all_alpha_or_numeric(text):
 def get_favoriate_extension_path(webdriver_path):
     print("webdriver_path:", webdriver_path)
     extension_list = []
-    extension_list.append(os.path.join(webdriver_path,"Adblock_3.18.1.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"Adblock_3.19.0.0.crx"))
     return extension_list
 
 def get_chromedriver_path(webdriver_path):
