@@ -8010,7 +8010,7 @@ def ibon_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
     if not form_verifyCode is None:
         if len(answer) > 0:
-            answer=answer.upper()
+            #answer=answer.upper()
             is_visible = False
             try:
                 if form_verifyCode.is_enabled():
@@ -10114,7 +10114,7 @@ def kham_keyin_captcha_code(driver, answer = "", auto_submit = False):
                 pass
 
     if is_start_to_input_answer:
-        answer=answer.upper()
+        #answer=answer.upper()
         #print("start to fill answer.")
         try:
             form_verifyCode.clear()
@@ -11298,7 +11298,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
     if not form_verifyCode is None:
         if len(answer) > 0:
-            answer=answer.upper()
+            #answer=answer.upper()
 
             is_visible = False
             try:
