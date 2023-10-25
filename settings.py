@@ -35,7 +35,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.10.02)"
+CONST_APP_VERSION = "MaxBot (2023.10.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -138,6 +138,7 @@ def load_translate():
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval sec.(HK)'
     en_us["auto_reload_random_delay"] = 'Reload random delay(TW)'
+    en_us["proxy_server_port"] = 'Proxy IP:PORT'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -238,6 +239,7 @@ def load_translate():
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)(香港)'
     zh_tw["auto_reload_random_delay"] = '自動刷新時隨機延遲(台灣)'
+    zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
@@ -337,6 +339,7 @@ def load_translate():
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)(香港)'
     zh_cn["auto_reload_random_delay"] = '重新加载随机延迟(台湾)'
+    zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -437,6 +440,7 @@ def load_translate():
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)(HK)'
     ja_jp["auto_reload_random_delay"] = 'ランダムなリロード遅延(TW)'
+    ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -659,6 +663,7 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 1.0
     config_dict["advanced"]["auto_reload_random_delay"] = False
+    config_dict["advanced"]["proxy_server_port"] = ""
 
     return config_dict
 
@@ -750,6 +755,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
     global txt_auto_reload_page_interval
+    global txt_proxy_server_port
     global chk_state_auto_reload_random_delay
 
     global txt_tixcraft_sid
@@ -950,6 +956,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
         config_dict["advanced"]["auto_reload_random_delay"] = bool(chk_state_auto_reload_random_delay.get())
+        config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
 
 
     # save config.
@@ -1246,6 +1253,7 @@ def applyNewLanguage():
     global lbl_adblock_plus_settings
     global lbl_adjacent_seat
     global lbl_auto_reload_page_interval
+    global lbl_proxy_server_port
     global lbl_auto_reload_random_delay
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
@@ -1277,6 +1285,7 @@ def applyNewLanguage():
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+    lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
 
     lbl_headless.config(text=translate[language_code]["headless"])
@@ -1949,6 +1958,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_auto_reload_random_delay
     chk_auto_reload_random_delay = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_reload_random_delay)
     chk_auto_reload_random_delay.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_proxy_server_port
+    lbl_proxy_server_port = Label(frame_group_header, text=translate[language_code]['proxy_server_port'])
+    lbl_proxy_server_port.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_proxy_server_port
+    txt_proxy_server_port_value = StringVar(frame_group_header, value=config_dict["advanced"]["proxy_server_port"])
+    txt_proxy_server_port = Entry(frame_group_header, width=30, textvariable = txt_proxy_server_port_value)
+    txt_proxy_server_port.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
