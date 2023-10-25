@@ -6,7 +6,13 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 # Download (搶票程式下載)
 https://github.com/max32002/tixcraft_bot/releases
 
+附註: 如果你是 macOS, 且安裝的 python 版本是 3.12.x 版, 會無法執行, 請移除後並降低版本為 python 3.10.x 版, 原因是使用的第三方套件undetected-chromedriver 暫時無法相容於 python 3.12.x 版.
+
 # Demo (示範影片)
+
+MaxBot 2023-10-10: 支援設定代理伺服器(Proxy)
+
+https://youtu.be/sao9k_PnC0w
 
 Max搶票機器人2023-09-16： 更新 adblock plus extension 的filiter
 
