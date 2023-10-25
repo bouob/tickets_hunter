@@ -185,6 +185,10 @@ def get_config_dict(args):
             if not args.ibonqware is None:
                 if len(args.ibonqware) > 0:
                     config_dict["advanced"]["ibonqware"] = encryptMe(args.ibonqware)
+            if not args.proxy_server is None:
+                if len(args.proxy_server) > 2:
+                    config_dict["advanced"]["proxy_server_port"] = args.proxy_server
+
 
 
             # special case for headless to enable away from keyboard mode.
@@ -11804,6 +11808,10 @@ def cli():
         help="overwrite browser setting",
         default='',
         choices=['chrome','firefox','edge','safari','brave'],
+        type=str)
+
+    parser.add_argument("--proxy_server",
+        help="overwrite proxy server, format: ip:port",
         type=str)
 
     args = parser.parse_args()
