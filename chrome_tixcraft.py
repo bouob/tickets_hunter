@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.01)"
+CONST_APP_VERSION = "MaxBot (2023.10.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -362,7 +362,11 @@ def get_brave_bin_path():
 
     return brave_path
 
-def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", headless = False):
+def get_chrome_options(webdriver_path, config_dict):
+    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"] 
+    browser=config_dict["browser"]
+    headless=config_dict["advanced"]["headless"]
+
     chrome_options = webdriver.ChromeOptions()
     if browser=="edge":
         chrome_options = webdriver.EdgeOptions()
@@ -392,6 +396,9 @@ def get_chrome_options(webdriver_path, adblock_plus_enable, browser="chrome", he
     # Deprecated chrome option is ignored: useAutomationExtension
     #chrome_options.add_experimental_option('useAutomationExtension', False)
     chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
+
+    if len(config_dict["advanced"]["proxy_server_port"]) > 2:
+        chrome_options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
     if browser=="brave":
         brave_path = get_brave_bin_path()
@@ -430,7 +437,7 @@ def load_chromdriver_normal(config_dict, driver_type):
         print(URL_CHROME_DRIVER)
     else:
         chrome_service = Service(chromedriver_path)
-        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
+        chrome_options = get_chrome_options(webdriver_path, config_dict)
         try:
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
         except Exception as exc:
@@ -457,12 +464,12 @@ def load_chromdriver_normal(config_dict, driver_type):
                 chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
                 chrome_service = Service(chromedriver_path)
                 try:
-                    chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
+                    chrome_options = get_chrome_options(webdriver_path, config_dict)
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
                 except Exception as exc2:
                     print("Selenium 4.11.0 Release with Chrome For Testing Browser.")
                     try:
-                        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser=config_dict["browser"], headless=config_dict["advanced"]["headless"])
+                        chrome_options = get_chrome_options(webdriver_path, config_dict)
                         driver = webdriver.Chrome(service=Service(), options=chrome_options)
                     except Exception as exc3:
                         print(exc3)
@@ -555,6 +562,9 @@ def get_uc_options(uc, config_dict, webdriver_path):
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
+
+    if len(config_dict["advanced"]["proxy_server_port"]) > 2:
+        options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
     if config_dict["browser"]=="brave":
         brave_path = get_brave_bin_path()
@@ -762,7 +772,7 @@ def get_driver_by_config(config_dict):
             chromedriver_path = os.path.join(webdriver_path,"msedgedriver.exe")
 
         webdriver_service = Service(chromedriver_path)
-        chrome_options = get_chrome_options(webdriver_path, config_dict["advanced"]["adblock_plus_enable"], browser="edge", headless=config_dict["advanced"]["headless"])
+        chrome_options = get_chrome_options(webdriver_path, config_dict)
 
         driver = None
         try:
@@ -10971,6 +10981,7 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
 
     question_selector = ".exclusive-code > form > div"
     question_text = get_div_text_by_selector(driver, question_selector)
+    is_answer_sent = False
     if len(question_text) > 0:
         write_question_to_file(question_text)
 
