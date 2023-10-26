@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.11)"
+CONST_APP_VERSION = "MaxBot (2023.10.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -4397,7 +4397,7 @@ def get_kktix_control_label_text(driver):
     try:
         captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div.ticket-unit > div.code-input > div.control-group > label.control-label')
         if not captcha_inner_div is None:
-            question_text = captcha_inner_div.text
+            question_text = remove_html_tags(captcha_inner_div.get_attribute('innerHTML'))
     except Exception as exc:
         pass
     return question_text
@@ -4424,8 +4424,10 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
 
     answer_list = []
 
+    is_question_popup = False
     question_text = get_kktix_question_text(driver)
     if len(question_text) > 0:
+        is_question_popup = True
         write_question_to_file(question_text)
 
         if len(fail_list)==0:
@@ -4459,15 +4461,8 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
         submit_by_enter = False
         check_input_interval = 0.2
         is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
-    else:
-        # no captcha text popup, goto next page.
-        control_text = get_kktix_control_label_text(driver)
-        if show_debug_message:
-            print("control_text:", control_text)
-        if control_text == "":
-            click_ret = kktix_press_next_button(driver)
 
-    return fail_list, captcha_sound_played
+    return fail_list, captcha_sound_played, is_question_popup
 
 def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click):
     show_debug_message = True       # debug.
@@ -4515,7 +4510,14 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
 
         # part 3: captcha
         if is_ticket_number_assigned:
-            fail_list, captcha_sound_played = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
+            fail_list, captcha_sound_played, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
+            if not is_question_popup:
+                # no captcha text popup, goto next page.
+                control_text = get_kktix_control_label_text(driver)
+                if show_debug_message:
+                    print("control_text:", control_text)
+                if len(control_text) == 0:
+                    click_ret = kktix_press_next_button(driver)
         else:
             if is_need_refresh:
                 try:
@@ -10986,7 +10988,9 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
     question_selector = ".exclusive-code > form > div"
     question_text = get_div_text_by_selector(driver, question_selector)
     is_answer_sent = False
+    is_question_popup = False
     if len(question_text) > 0:
+        is_question_popup = True
         write_question_to_file(question_text)
 
         answer_list = get_answer_list_from_user_guess_string(config_dict)
@@ -11012,7 +11016,7 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
         check_input_interval = 0.2
         is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
-    return is_answer_sent, fail_list
+    return is_answer_sent, fail_list, is_question_popup
 
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
@@ -11058,12 +11062,21 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
     is_captcha_sent = False
     if is_button_disabled:
         is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict, current_layout_style)
+        
+        is_question_popup = False
+        is_answer_sent = False
         if is_price_assign_by_bot:
-            is_answer_sent, ticketplus_dict["fail_list"] = ticketplus_order_exclusive_code(driver, config_dict, ticketplus_dict["fail_list"])
+            is_answer_sent, ticketplus_dict["fail_list"], is_question_popup = ticketplus_order_exclusive_code(driver, config_dict, ticketplus_dict["fail_list"])
+        
         if is_price_assign_by_bot:
             if config_dict["ocr_captcha"]["enable"]:
                 is_captcha_sent =  ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
-                pass
+                
+                if is_captcha_sent:
+                    # after submit captcha, due to exclusive code not correct, should not auto press next button.
+                    if is_question_popup:
+                        if not is_answer_sent:
+                            is_captcha_sent = False
 
     return is_captcha_sent, ticketplus_dict
 
@@ -11470,6 +11483,30 @@ def ticketplus_accept_other_activity(driver):
     select_query = 'div[role="dialog"] > div.v-dialog > button.primary-1 > span > i.v-icon'
     return force_press_button(driver, By.CSS_SELECTOR, select_query)
 
+def ticketplus_ticket_agree(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    agree_checkbox = None
+    try:
+        my_css_selector = 'div.v-input__slot > div > input[type="checkbox"]'
+        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find agree checkbox fail")
+        if show_debug_message:
+            print(exc)
+        pass
+
+    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
+
+    return is_finish_checkbox_click
+
+def ticketplus_confirm(driver, config_dict):
+    is_checkbox_checked = ticketplus_ticket_agree(driver, config_dict)
+
 def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     home_url_list = ['https://ticketplus.com.tw/']
     for each_url in home_url_list:
@@ -11505,6 +11542,15 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
 
         if is_event_page:
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+
+    #https://ticketplus.com.tw/confirm/xx/oo
+    if '/confirm/' in url.lower():
+        is_event_page = False
+        if len(url.split('/'))==6:
+            is_event_page = True
+
+        if is_event_page:
+            ticketplus_confirm(driver, config_dict)
 
     return ticketplus_dict
 
