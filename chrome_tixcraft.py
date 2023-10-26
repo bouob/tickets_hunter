@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.10)"
+CONST_APP_VERSION = "MaxBot (2023.10.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11459,40 +11459,16 @@ def ticketplus_account_auto_fill(driver, config_dict):
                 pass
     return is_account_sent, is_password_sent
 
+
+# 實名制
 def ticketplus_accept_realname_card(driver):
-    show_debug_message = True    # debug.
-    #show_debug_message = False   # online
+    select_query = 'div.v-dialog__content > div > div > div > div.row > div > button.primary'
+    return force_press_button(driver, By.CSS_SELECTOR, select_query)
 
-    is_button_pressed = False
-    accept_realname_btn = None
-    try:
-        accept_realname_btn = driver.find_element(By.CSS_SELECTOR, 'div.v-dialog__content > div > div > div > div.row > div > button.primary')
-    except Exception as exc:
-        #print(exc)
-        if show_debug_message:
-            print("find accept btn fail")
-        pass
-
-    if not accept_realname_btn is None:
-        is_visible = False
-        try:
-            if accept_realname_btn.is_enabled() and accept_realname_btn.is_displayed():
-                is_visible = True
-        except Exception as exc:
-            #print(exc)
-            pass
-
-        if is_visible:
-            try:
-                accept_realname_btn.click()
-                is_button_pressed = True
-            except Exception as exc:
-                #print(exc)
-                try:
-                    driver.execute_script("arguments[0].click();", accept_realname_btn)
-                except Exception as exc:
-                    pass
-    return is_button_pressed
+# 好玩其他活動
+def ticketplus_accept_other_activity(driver):
+    select_query = 'div[role="dialog"] > div.v-dialog > button.primary-1 > span > i.v-icon'
+    return force_press_button(driver, By.CSS_SELECTOR, select_query)
 
 def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     home_url_list = ['https://ticketplus.com.tw/']
@@ -11515,6 +11491,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
 
         if is_event_page:
             is_button_pressed = ticketplus_accept_realname_card(driver)
+            is_button_pressed = ticketplus_accept_other_activity(driver)
             #print("realname is_button_pressed:", is_button_pressed)
 
             if config_dict["tixcraft"]["date_auto_select"]["enable"]:
