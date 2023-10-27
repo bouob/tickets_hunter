@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.12)"
+CONST_APP_VERSION = "MaxBot (2023.10.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11473,7 +11473,8 @@ def ticketplus_account_auto_fill(driver, config_dict):
     return is_account_sent, is_password_sent
 
 
-# 實名制
+# 實名制 (activity)
+# 未結帳訂單 (order)
 def ticketplus_accept_realname_card(driver):
     select_query = 'div.v-dialog__content > div > div > div > div.row > div > button.primary'
     return force_press_button(driver, By.CSS_SELECTOR, select_query)
@@ -11541,6 +11542,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_event_page = True
 
         if is_event_page:
+            is_button_pressed = ticketplus_accept_realname_card(driver)
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     #https://ticketplus.com.tw/confirm/xx/oo
