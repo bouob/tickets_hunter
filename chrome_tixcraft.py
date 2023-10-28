@@ -3377,7 +3377,7 @@ def kktix_confirm_order_button(driver):
 #   : 2: /events/xxx/registrations/new
 #   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
-    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.tickets a.btn-point')
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.tickets > a.btn-point')
     return is_button_clicked
 
 #   : This is for case-2 next button.
