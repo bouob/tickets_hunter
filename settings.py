@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.10.13)"
+CONST_APP_VERSION = "MaxBot (2023.10.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -65,6 +65,7 @@ tixcraft.com##.topBar.alert-box.emergency
 ||player.youku.com^
 ||twitter.com^
 ||youtube.com/iframe_api^
+||e2elog.fetnet.net^
 '''
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
