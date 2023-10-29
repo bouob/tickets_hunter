@@ -11551,6 +11551,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_event_page = True
 
         if is_event_page:
+            check_and_play_sound_for_captcha(config_dict)
             ticketplus_confirm(driver, config_dict)
 
     return ticketplus_dict
