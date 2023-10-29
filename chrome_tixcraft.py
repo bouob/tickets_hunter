@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.14)"
+CONST_APP_VERSION = "MaxBot (2023.10.15)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -114,8 +114,11 @@ def format_config_keyword_for_json(user_input):
     return user_input
 
 def remove_html_tags(text):
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', text)
+    ret = ""
+    if not text is None:
+        clean = re.compile('<.*?>')
+        ret = re.sub(clean, '', text)
+    return ret
 
 def sx(s1):
     key=18
@@ -338,7 +341,7 @@ def is_all_alpha_or_numeric(text):
 def get_favoriate_extension_path(webdriver_path):
     print("webdriver_path:", webdriver_path)
     extension_list = []
-    extension_list.append(os.path.join(webdriver_path,"Adblock_3.19.0.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"Adblock_3.20.0.0.crx"))
     return extension_list
 
 def get_chromedriver_path(webdriver_path):
@@ -1750,12 +1753,12 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 row_is_enabled=True
                 try:
                     row_text = ""
+                    row_html = ""
                     # check buy button.
                     if row_is_enabled:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
-                        if row_text is None:
-                            row_text = ""
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
 
                         if len(row_text) > 0:
                             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -1929,12 +1932,12 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                         row_is_enabled=False
 
                     row_text = ""
+                    row_html = ""
                     # check buy button.
                     if row_is_enabled:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
-                        if row_text is None:
-                            row_text = ""
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
 
                         row_is_enabled=False
                         # must contains 'See Tickets'
@@ -2039,13 +2042,14 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
     matched_blocks = []
     for row in formated_area_list:
         row_text = ""
+        row_html = ""
         try:
             #row_text = row.text
-            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+            row_html = row.get_attribute('innerHTML')
+            row_text = remove_html_tags(row_html)
         except Exception as exc:
             pass
-        if row_text is None:
-            row_text = ""
+
         if len(row_text) > 0:
             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                 row_text = ""
@@ -2170,16 +2174,14 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                 pass
 
             row_text = ""
+            row_html = ""
             if row_is_enabled:
                 try:
                     #row_text = row.text
-                    row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                    row_html = row.get_attribute('innerHTML')
+                    row_text = remove_html_tags(row_html)
                 except Exception as exc:
-                    print("get text fail")
                     break
-
-            if row_text is None:
-                row_text = ""
 
             if len(row_text) > 0:
                 if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -3133,16 +3135,14 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                 pass
 
             row_text = ""
+            row_html = ""
             if row_is_enabled:
                 try:
                     #row_text = row.text
-                    row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                    row_html = row.get_attribute('innerHTML')
+                    row_text = remove_html_tags(row_html)
                 except Exception as exc:
-                    print("get text fail")
                     break
-
-            if row_text is None:
-                row_text = ""
 
             if len(row_text) > 0:
                 if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -3377,7 +3377,7 @@ def kktix_confirm_order_button(driver):
 #   : 2: /events/xxx/registrations/new
 #   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
-    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.tickets a.btn-point')
+    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.tickets > a.btn-point')
     return is_button_clicked
 
 #   : This is for case-2 next button.
@@ -3530,18 +3530,14 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
             row_index += 1
 
             row_text = ""
+            row_html = ""
             try:
                 #row_text = row.text
-                row_text = remove_html_tags(row.get_attribute('innerHTML'))
-                if show_debug_message:
-                    print("get text:", row_text, ",at row:", row_index)
+                row_html = row.get_attribute('innerHTML')
+                row_text = remove_html_tags(row_html)
             except Exception as exc:
-                row_text = ""
                 is_travel_interrupted = True
                 print("get text fail.")
-
-            if row_text is None:
-                row_text = ""
 
             if '已售完' in row_text:
                 row_text = ""
@@ -4645,6 +4641,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                     area_html_text = ""
 
                     row_text = ""
+                    row_html = ""
                     try:
                         my_css_selector = "td:nth-child(1)"
                         td_date = row.find_element(By.CSS_SELECTOR, my_css_selector)
@@ -4659,13 +4656,11 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                             area_html_text = format_keyword_string(td_area.text)
 
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
                         print("get row text fail")
                         break
-
-                    if row_text is None:
-                        row_text = ""
 
                     if len(row_text) > 0:
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -4985,15 +4980,14 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             if show_debug_message:
@@ -5132,15 +5126,14 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 row_is_enabled=True
 
                 row_text = ""
+                row_html = ""
                 if row_is_enabled:
                     try:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
                         pass
-
-                if row_text is None:
-                    row_text = ""
 
                 if len(row_text) > 0:
                     if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -5200,15 +5193,14 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -5566,15 +5558,14 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             if show_debug_message:
@@ -5722,15 +5713,14 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -6217,15 +6207,14 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                 row_is_enabled=True
 
                 row_text = ""
+                row_html = ""
                 if row_is_enabled:
                     try:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
                         pass
-
-                if row_text is None:
-                    row_text = ""
 
                 if '已售完' in row_text:
                     row_is_enabled=False
@@ -6332,15 +6321,14 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -8866,15 +8854,14 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
                             print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -9483,16 +9470,13 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     row_is_enabled=False
 
                     row_text = ""
+                    row_html = ""
                     try:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
-                        if show_debug_message:
-                            print(exc)
                         pass
-
-                    if row_text is None:
-                        row_text=""
 
                     if len(row_text) > 0:
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -9691,15 +9675,13 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 row_is_enabled=True
                 if row_is_enabled:
                     row_text = ""
+                    row_html = ""
                     try:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
-                        print("get text fail")
                         break
-
-                    if row_text is None:
-                        row_text = ""
 
                     if '售完' in row_text:
                         row_text = ""
@@ -10558,17 +10540,13 @@ def ticketplus_date_auto_select(driver, config_dict):
                     '''
 
                     row_text = ""
+                    row_html = ""
                     # check buy button.
                     if row_is_enabled:
-                        # text is failed.
+                        # .text is failed. @_@!
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
-                        #print("row_text1:", row_text)
-                        #print("innerHTML:", row.get_attribute('innerHTML'))
-                        #print("innerTEXT:", remove_html_tags(row.get_attribute('innerHTML')))
-
-                        if row_text is None:
-                            row_text = ""
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
 
                         if len(row_text) > 0:
                             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -10781,31 +10759,42 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             formated_area_list = []
             # filter list.
             row_index = 0
+            soldout_count = 0
             for row in area_list:
                 row_index += 1
                 row_is_enabled=True
 
                 if row_is_enabled:
                     row_text = ""
+                    row_html = ""
                     try:
                         #row_text = row.text
-                        row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
                     except Exception as exc:
                         pass
 
-                    if row_text is None:
-                        row_text = ""
-
                     # for style_2
-                    if '剩餘 0' in row_text:
-                        row_text = ""
+                    if len(row_text) > 0:
+                        if '剩餘 0' in row_text:
+                            soldout_count += 1
+                            row_text = ""
 
-                    if '已售完' in row_text:
-                        row_text = ""
+                    if len(row_text) > 0:
+                        if '已售完' in row_text:
+                            soldout_count += 1
+                            row_text = ""
 
                     # for style_1
-                    if '剩餘：0' in row_text:
-                        row_text = ""
+                    if len(row_text) > 0:
+                        if '剩餘：0' in row_text:
+                            soldout_count += 1
+                            row_text = ""
+
+                    if len(row_text) > 0:
+                        if ' soldout"' in row_html:
+                            soldout_count += 1
+                            row_text = ""
 
                     if len(row_text) > 0:
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -10816,6 +10805,13 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
                 if row_is_enabled:
                     formated_area_list.append(row)
+
+            if soldout_count > 0:
+                if show_debug_message:
+                    print("soldout_count:", soldout_count)
+                if area_list_count == soldout_count:
+                    formated_area_list = None
+                    is_need_refresh = True
         else:
             if show_debug_message:
                 print("area_list_count is empty.")
@@ -10842,15 +10838,13 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     row_is_enabled=True
                     if row_is_enabled:
                         row_text = ""
+                        row_html = ""
                         try:
                             #row_text = row.text
-                            row_text = remove_html_tags(row.get_attribute('innerHTML'))
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
                         except Exception as exc:
-                            print("get text fail")
                             break
-
-                        if row_text is None:
-                            row_text = ""
 
                         if len(row_text) > 0:
                             row_text = format_keyword_string(row_text)
@@ -10912,16 +10906,21 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     if current_layout_style==1:
         if not target_area is None:
             try:
-                if target_area.is_enabled():
-                    target_area.click()
+                target_area.click()
             except Exception as exc:
                 print("click target_area link fail")
                 print(exc)
                 # use plan B
                 try:
                     print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", target_area)
+                    js = """let titleBar = document.getElementById("titleBar");
+                    if(titleBar!=null) {titleBar.innerHTML="";}
+                    arguments[0].scrollIntoView();
+                    arguments[0].firstChild.click();
+                    """
+                    driver.execute_script(js, target_area)
                 except Exception as exc:
+                    #print(exc)
                     pass
 
     is_price_assign_by_bot = False
