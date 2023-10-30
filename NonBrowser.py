@@ -1,8 +1,10 @@
-import requests
-import json
 import base64
-from PIL import Image
+import json
 from io import BytesIO
+
+import requests
+from PIL import Image
+
 
 class NonBrowser():
     def __init__(self, domain_name = "tixcraft.com") -> None:

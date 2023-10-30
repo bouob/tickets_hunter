@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.15)"
+CONST_APP_VERSION = "MaxBot (2023.10.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -3301,7 +3301,7 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
         if not is_ticket_number_assigned:
             # only this case: "ticket number not changed by bot" to play sound!
             # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
-            check_and_play_sound_for_captcha(config_dict)
+            play_sound_while_ordering(config_dict)
 
             ticket_number = str(config_dict["ticket_number"])
             is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
@@ -4431,7 +4431,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
             if not captcha_sound_played:
                 captcha_sound_played = True
                 try:
-                    check_and_play_sound_for_captcha(config_dict)
+                    play_sound_while_ordering(config_dict)
                 except Exception as exc:
                     pass
 
@@ -6865,7 +6865,7 @@ def hkticketing_login(driver, account, password):
 
     return ret
 
-def check_and_play_sound_for_captcha(config_dict):
+def play_sound_while_ordering(config_dict):
     if config_dict["advanced"]["play_captcha_sound"]["enable"]:
         app_root = get_app_root()
         captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_captcha_sound"]["filename"].strip())
@@ -7683,7 +7683,7 @@ def urbtix_main(driver, url, config_dict):
     # Q: How to know ready to buy ticket from queue?
     if is_ready_to_buy_from_queue:
         # play sound when ready to buy ticket.
-        check_and_play_sound_for_captcha(config_dict)
+        play_sound_while_ordering(config_dict)
 
     # https://www.urbtix.hk/event-detail/00000/
     if '/event-detail/' in url:
@@ -7845,7 +7845,7 @@ def cityline_main(driver, url, config_dict):
     # Q: How to know ready to buy ticket from queue?
     if is_ready_to_buy_from_queue:
         # play sound when ready to buy ticket.
-        check_and_play_sound_for_captcha(config_dict)
+        play_sound_while_ordering(config_dict)
 
     if '/eventDetail?' in url:
         is_modal_dialog_popup = check_modal_dialog_popup(driver)
@@ -8301,7 +8301,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
                             # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
                             if click_ret:
-                                check_and_play_sound_for_captcha(config_dict)
+                                play_sound_while_ordering(config_dict)
                     else:
                         is_sold_out = ibon_check_sold_out(driver)
                         if is_sold_out:
@@ -9370,7 +9370,7 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
     # TODO: play sound when ready to buy ticket.
     # Q: How to know ready to buy ticket from queue?
     if is_ready_to_buy_from_queue:
-        check_and_play_sound_for_captcha(config_dict)
+        play_sound_while_ordering(config_dict)
 
     #https://premier.hkticketing.com/shows/show.aspx?sh=XXXX
     if 'shows/show.aspx?' in url:
@@ -11545,14 +11545,21 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     #https://ticketplus.com.tw/confirm/xx/oo
-    if '/confirm/' in url.lower():
+    if '/confirm/' in url.lower() or '/confirmseat/' in url.lower():
         is_event_page = False
         if len(url.split('/'))==6:
             is_event_page = True
 
         if is_event_page:
-            check_and_play_sound_for_captcha(config_dict)
+            print("is_popup_confirm",ticketplus_dict["is_popup_confirm"])
+            if not ticketplus_dict["is_popup_confirm"]:
+                ticketplus_dict["is_popup_confirm"] = True
+                play_sound_while_ordering(config_dict)
             ticketplus_confirm(driver, config_dict)
+        else:
+            ticketplus_dict["is_popup_confirm"] = False
+    else:
+        ticketplus_dict["is_popup_confirm"] = False
 
     return ticketplus_dict
 
@@ -11685,6 +11692,7 @@ def main(args):
 
     ticketplus_dict = {}
     ticketplus_dict["fail_list"]=[]
+    ticketplus_dict["is_popup_confirm"] = False
 
     ocr = None
     Captcha_Browser = None

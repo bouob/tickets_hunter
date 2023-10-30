@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.10.15)"
+CONST_APP_VERSION = "MaxBot (2023.10.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -202,8 +202,8 @@ def load_translate():
     en_us["ticketplus_password"] = 'TicketPlus password'
     en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
 
-    en_us["play_captcha_sound"] = 'Play sound when captcha'
-    en_us["captcha_sound_filename"] = 'captcha sound filename'
+    en_us["play_captcha_sound"] = 'Play sound while ordering'
+    en_us["captcha_sound_filename"] = 'sound filename'
     en_us["adblock_plus_enable"] = 'Browser Extension'
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
@@ -302,8 +302,8 @@ def load_translate():
     zh_tw["ticketplus_password"] = '遠大 密碼'
     zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
 
-    zh_tw["play_captcha_sound"] = '輸入驗證碼時播放音效'
-    zh_tw["captcha_sound_filename"] = '驗證碼用音效檔'
+    zh_tw["play_captcha_sound"] = '訂購時播放音效'
+    zh_tw["captcha_sound_filename"] = '音效檔'
     zh_tw["adblock_plus_enable"] = '瀏覽器擴充功能'
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
@@ -403,8 +403,8 @@ def load_translate():
     zh_cn["ticketplus_password"] = '远大 密码'
     zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
 
-    zh_cn["play_captcha_sound"] = '输入验证码时播放音效'
-    zh_cn["captcha_sound_filename"] = '验证码用音效档'
+    zh_cn["play_captcha_sound"] = '订购时播放音效'
+    zh_cn["captcha_sound_filename"] = '音效档'
     zh_cn["adblock_plus_enable"] = '浏览器扩充功能'
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
@@ -503,8 +503,8 @@ def load_translate():
     ja_jp["ticketplus_password"] = '遠大のパスワード'
     ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
 
-    ja_jp["play_captcha_sound"] = 'キャプチャ時に音を鳴らす'
-    ja_jp["captcha_sound_filename"] = 'サウンドファイル名'
+    ja_jp["play_captcha_sound"] = '注文時に音を鳴らす'
+    ja_jp["captcha_sound_filename"] = 'サウンドファイル'
     ja_jp["adblock_plus_enable"] = '拡張機能'
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"

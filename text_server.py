@@ -3,9 +3,9 @@
 
 try:
     # for Python2
-    from Tkinter import *
-    import ttk
     import tkMessageBox as messagebox
+    import ttk
+    from Tkinter import *
 except ImportError:
     # for Python3
     from tkinter import *
@@ -13,22 +13,21 @@ except ImportError:
     from tkinter import messagebox
     from tkinter import filedialog
 
-import os
-import sys
-import platform
-import webbrowser
-import pyperclip
-import base64
-import time
-import threading
-
-import socket
-
 import asyncio
+import base64
+import os
+import platform
+import socket
+import sys
+import threading
+import time
+import webbrowser
+
+import pyperclip
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.10.15)"
+CONST_APP_VERSION = "MaxBot (2023.10.16)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
