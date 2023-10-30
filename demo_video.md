@@ -1,5 +1,10 @@
 # Demo (示範影片)
 
+### 2023-10-13: 
+遠大,自動按"未結帳訂單"的確定
+
+https://youtu.be/da7W2pCEYxg
+
 ### 2023-10-12: 
 遠大,自動按"我已經閱讀並同意"/遇到輸入框停止.
 
@@ -158,7 +163,7 @@ KKTix，無視窗模式，多設定檔管
 https://youtu.be/QgLAHkJbhqQ
 
 ### 2023-02-22:
-拓元，無視窗模式
+拓元，無視窗模式，透過 cookie SID登入
 
 https://youtu.be/fkx0HGqTpTg
 
