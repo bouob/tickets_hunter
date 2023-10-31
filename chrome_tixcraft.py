@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.16)"
+CONST_APP_VERSION = "MaxBot (2023.10.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -10797,6 +10797,11 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                             row_text = ""
 
                     if len(row_text) > 0:
+                        if ' soldout ' in row_html:
+                            soldout_count += 1
+                            row_text = ""
+
+                    if len(row_text) > 0:
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
@@ -11483,6 +11488,11 @@ def ticketplus_accept_other_activity(driver):
     select_query = 'div[role="dialog"] > div.v-dialog > button.primary-1 > span > i.v-icon'
     return force_press_button(driver, By.CSS_SELECTOR, select_query)
 
+# 購票失敗 您選擇的票種已售完或本活動有限制購票總張數，請詳閱 注意事項
+def ticketplus_accept_order_fail(driver):
+    select_query = 'div[role="dialog"] > div.v-dialog > div.v-card > div > div.row > div.col > button.v-btn'
+    return force_press_button(driver, By.CSS_SELECTOR, select_query)
+
 def ticketplus_ticket_agree(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -11542,6 +11552,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
 
         if is_event_page:
             is_button_pressed = ticketplus_accept_realname_card(driver)
+            is_button_pressed = ticketplus_accept_order_fail(driver)
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     #https://ticketplus.com.tw/confirm/xx/oo
