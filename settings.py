@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.10.17)"
+CONST_APP_VERSION = "MaxBot (2023.10.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -184,6 +184,7 @@ def load_translate():
     en_us["ibon_ibonqware"] = 'ibon cookie ibonqware'
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
+    en_us["fami_account"] = 'FamiTicket account'
     en_us["cityline_account"] = 'cityline account'
     en_us["urbtix_account"] = 'URBTIX account'
     en_us["hkticketing_account"] = 'HKTICKETING account'
@@ -194,6 +195,7 @@ def load_translate():
     en_us["password"] = 'Password'
     en_us["facebook_password"] = 'Facebook password'
     en_us["kktix_password"] = 'KKTIX password'
+    en_us["fami_password"] = 'FamiTicket password'
     en_us["cityline_password"] = 'cityline password'
     en_us["urbtix_password"] = 'URBTIX password'
     en_us["hkticketing_password"] = 'HKTICKETING password'
@@ -284,6 +286,7 @@ def load_translate():
     zh_tw["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
+    zh_tw["fami_account"] = 'FamiTicket 帳號'
     zh_tw["cityline_account"] = 'cityline 帳號'
     zh_tw["urbtix_account"] = 'URBTIX 帳號'
     zh_tw["hkticketing_account"] = 'HKTICKETING 帳號'
@@ -294,6 +297,7 @@ def load_translate():
     zh_tw["password"] = '密碼'
     zh_tw["facebook_password"] = 'Facebook 密碼'
     zh_tw["kktix_password"] = 'KKTIX 密碼'
+    zh_tw["fami_password"] = 'FamiTicket 密碼'
     zh_tw["cityline_password"] = 'cityline 密碼'
     zh_tw["urbtix_password"] = 'URBTIX 密碼'
     zh_tw["hkticketing_password"] = 'HKTICKETING 密碼'
@@ -385,6 +389,7 @@ def load_translate():
     zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
+    zh_cn["fami_account"] = 'FamiTicket 帐号'
     zh_cn["cityline_account"] = 'cityline 帐号'
     zh_cn["urbtix_account"] = 'URBTIX 帐号'
     zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
@@ -395,6 +400,7 @@ def load_translate():
     zh_cn["password"] = '密码'
     zh_cn["facebook_password"] = 'Facebook 密码'
     zh_cn["kktix_password"] = 'KKTIX 密码'
+    zh_cn["fami_password"] = 'FamiTicket 密码'
     zh_cn["cityline_password"] = 'cityline 密码'
     zh_cn["urbtix_password"] = 'URBTIX 密码'
     zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
@@ -485,6 +491,7 @@ def load_translate():
     ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
     ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
+    ja_jp["fami_account"] = 'FamiTicketのアカウント'
     ja_jp["cityline_account"] = 'citylineのアカウント'
     ja_jp["urbtix_account"] = 'URBTIXのアカウント'
     ja_jp["hkticketing_account"] = 'HKTICKETINGのアカウント'
@@ -495,6 +502,7 @@ def load_translate():
     ja_jp["password"] = 'パスワード'
     ja_jp["facebook_password"] = 'Facebookのパスワード'
     ja_jp["kktix_password"] = 'KKTIXのパスワード'
+    ja_jp["fami_password"] = 'FamiTicketのパスワード'
     ja_jp["cityline_password"] = 'citylineのパスワード'
     ja_jp["urbtix_password"] = 'URBTIXのパスワード'
     ja_jp["hkticketing_password"] = 'HKTICKETINGのパスワード'
@@ -637,6 +645,7 @@ def get_default_config():
     config_dict["advanced"]["ibonqware"] = ""
     config_dict["advanced"]["facebook_account"] = ""
     config_dict["advanced"]["kktix_account"] = ""
+    config_dict["advanced"]["fami_account"] = ""
     config_dict["advanced"]["cityline_account"] = ""
     config_dict["advanced"]["urbtix_account"] = ""
     config_dict["advanced"]["hkticketing_account"] = ""
@@ -646,6 +655,7 @@ def get_default_config():
 
     config_dict["advanced"]["facebook_password"] = ""
     config_dict["advanced"]["kktix_password"] = ""
+    config_dict["advanced"]["fami_password"] = ""
     config_dict["advanced"]["urbtix_password"] = ""
     config_dict["advanced"]["cityline_password"] = ""
     config_dict["advanced"]["hkticketing_password"] = ""
@@ -762,6 +772,7 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_ibon_ibonqware
     global txt_facebook_account
     global txt_kktix_account
+    global txt_fami_account
     global txt_cityline_account
     global txt_urbtix_account
     global txt_hkticketing_account
@@ -771,6 +782,7 @@ def btn_save_act(language_code, slience_mode=False):
 
     global txt_facebook_password
     global txt_kktix_password
+    global txt_fami_password
     global txt_cityline_password
     global txt_urbtix_password
     global txt_hkticketing_password
@@ -908,6 +920,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["ibonqware"] = txt_ibon_ibonqware.get().strip()
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
+        config_dict["advanced"]["fami_account"] = txt_fami_account.get().strip()
         config_dict["advanced"]["cityline_account"] = txt_cityline_account.get().strip()
         config_dict["advanced"]["urbtix_account"] = txt_urbtix_account.get().strip()
         config_dict["advanced"]["hkticketing_account"] = txt_hkticketing_account.get().strip()
@@ -917,6 +930,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["advanced"]["facebook_password"] = txt_facebook_password.get().strip()
         config_dict["advanced"]["kktix_password"] = txt_kktix_password.get().strip()
+        config_dict["advanced"]["fami_password"] = txt_fami_password.get().strip()
         config_dict["advanced"]["cityline_password"] = txt_cityline_password.get().strip()
         config_dict["advanced"]["urbtix_password"] = txt_urbtix_password.get().strip()
         config_dict["advanced"]["hkticketing_password"] = txt_hkticketing_password.get().strip()
@@ -928,6 +942,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["ibonqware"] = encryptMe(config_dict["advanced"]["ibonqware"])
         config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
         config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
+        config_dict["advanced"]["fami_password"] = encryptMe(config_dict["advanced"]["fami_password"])
         config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
         config_dict["advanced"]["urbtix_password"] = encryptMe(config_dict["advanced"]["urbtix_password"])
         config_dict["advanced"]["hkticketing_password"] = encryptMe(config_dict["advanced"]["hkticketing_password"])
@@ -1327,6 +1342,7 @@ def applyNewLanguage():
     global lbl_ibon_ibonqware
     global lbl_facebook_account
     global lbl_kktix_account
+    global lbl_fami_account
     global lbl_cityline_account
     global lbl_urbtix_account
     global lbl_hkticketing_account
@@ -1337,6 +1353,7 @@ def applyNewLanguage():
     global lbl_password
     global lbl_facebook_password
     global lbl_kktix_password
+    global lbl_fami_password
     global lbl_cityline_password
     global lbl_urbtix_password
     global lbl_hkticketing_password
@@ -1353,6 +1370,7 @@ def applyNewLanguage():
     lbl_ibon_ibonqware.config(text=translate[language_code]["ibon_ibonqware"])
     lbl_facebook_account.config(text=translate[language_code]["facebook_account"])
     lbl_kktix_account.config(text=translate[language_code]["kktix_account"])
+    lbl_fami_account.config(text=translate[language_code]["fami_account"])
     lbl_cityline_account.config(text=translate[language_code]["cityline_account"])
     lbl_urbtix_account.config(text=translate[language_code]["urbtix_account"])
     lbl_hkticketing_account.config(text=translate[language_code]["hkticketing_account"])
@@ -2201,6 +2219,22 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kktix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kktix_password"].strip()))
     txt_kktix_password = Entry(frame_group_header, width=15, textvariable = txt_kktix_password_value, show="*")
     txt_kktix_password.grid(column=2, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_fami_account
+    lbl_fami_account = Label(frame_group_header, text=translate[language_code]['fami_account'])
+    lbl_fami_account.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_fami_account
+    txt_fami_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["fami_account"].strip())
+    txt_fami_account = Entry(frame_group_header, width=15, textvariable = txt_fami_account_value)
+    txt_fami_account.grid(column=1, row=group_row_count, sticky = W)
+
+    global txt_fami_password
+    txt_fami_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["fami_password"].strip()))
+    txt_fami_password = Entry(frame_group_header, width=15, textvariable = txt_fami_password_value, show="*")
+    txt_fami_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
