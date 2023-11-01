@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.17)"
+CONST_APP_VERSION = "MaxBot (2023.10.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -70,6 +70,7 @@ CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to matc
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
 
 CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
+CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
@@ -814,7 +815,8 @@ def get_driver_by_config(config_dict):
                         homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
             if 'famiticket.com' in homepage:
-                pass
+                if len(config_dict["advanced"]["fami_account"])>0:
+                    homepage = CONST_FAMI_SIGN_IN_URL
 
             if 'ibon.com' in homepage:
                 pass
@@ -2053,7 +2055,10 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
         if len(row_text) > 0:
             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                 row_text = ""
+        
         if len(row_text) > 0:
+            # start to compare, normalize all.
+            row_text = format_keyword_string(row_text)
             if show_debug_message:
                 print("row_text:", row_text)
 
@@ -4724,12 +4729,15 @@ def fami_activity(driver):
         pass
 
     is_visible = False
+    is_need_refresh = False
     if not fami_start_to_buy_button is None:
         try:
             if fami_start_to_buy_button.is_enabled():
                 is_visible = True
         except Exception as exc:
             pass
+    else:
+        is_need_refresh = True
 
     if is_visible:
         try:
@@ -4739,12 +4747,402 @@ def fami_activity(driver):
             #print(exc)
             #pass
             try:
-                driver.execute_script("arguments[0].click();", fami_start_to_buy_button)
+                js = """arguments[0].scrollIntoView();
+                arguments[0].firstChild.click();
+                """
+                driver.execute_script(js, fami_start_to_buy_button)
             except Exception as exc:
                 pass
 
+    if is_need_refresh:
+        try:
+            driver.refresh()
+        except Exception as exc:
+            pass
 
-def fami_home(driver, url, config_dict):
+def fami_date_auto_select(driver, config_dict, last_activity_url):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
+    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
+
+    if show_debug_message:
+        print("date_keyword:", date_keyword)
+        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
+
+    matched_blocks = None
+
+    area_list = None
+    try:
+        my_css_selector = ".session__list > tbody > tr"
+        for retry_index in range(2):
+            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+            if not area_list is None:
+                area_list_count = len(area_list)
+                if area_list_count > 0:
+                    break
+                else:
+                    print("empty date item, delay 0.2 to retry.")
+                    time.sleep(0.2)
+    except Exception as exc:
+        print("find date-time rows fail")
+        print(exc)
+
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
+    if not area_list is None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = []
+
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=False
+
+                row_text = ""
+                row_html = ""
+                try:
+                    #row_text = row.text
+                    row_html = row.get_attribute('innerHTML')
+                    row_text = remove_html_tags(row_html)
+                except Exception as exc:
+                    print("get text fail")
+                    break
+
+                if len(row_text) > 0:
+                    if "<button" in row_html:
+                        if "立即購買" in row_html:
+                            row_is_enabled=True
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+
+    if not formated_area_list is None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+        if area_list_count > 0:
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", date_keyword)
+
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = None
+    if not matched_blocks is None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+
+    is_date_assign_by_bot = False
+    if not target_area is None:
+        is_button_clicked = False
+        for i in range(3):
+            el_btn = None
+            try:
+                my_css_selector = "button"
+                el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+            except Exception as exc:
+                pass
+
+            if not el_btn is None:
+                try:
+                    if el_btn.is_enabled():
+                        el_btn.click()
+                        print("buy icon pressed.")
+                        is_button_clicked = True
+                except Exception as exc:
+                    pass
+                    # use plan B
+                    '''
+                    try:
+                        print("force to click by js.")
+                        driver.execute_script("arguments[0].click();", el_btn)
+                        ret = True
+                    except Exception as exc:
+                        pass
+                    '''
+            if is_button_clicked:
+                break
+        is_date_assign_by_bot = is_button_clicked
+
+    else:
+        # no target to click.
+        if auto_reload_coming_soon_page_enable:
+            # auto refresh for date list page.
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
+                    try:
+                        #driver.refresh()
+                        driver.get(last_activity_url)
+                        time.sleep(0.3)
+                    except Exception as exc:
+                        pass
+
+                    if config_dict["advanced"]["auto_reload_random_delay"]:
+                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
+    return is_date_assign_by_bot
+
+def fami_area_auto_select(driver, config_dict, area_keyword_item):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    #print("area_auto_select_mode:", area_auto_select_mode)
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    area_list = None
+    try:
+        my_css_selector = "div > a.area"
+        for retry_index in range(2):
+            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+            if not area_list is None:
+                area_list_count = len(area_list)
+                if area_list_count > 0:
+                    break
+                else:
+                    print("empty area item, delay 0.2 to retry.")
+                    time.sleep(0.2)
+    except Exception as exc:
+        print("find a.area list fail")
+        print(exc)
+
+    formated_area_list = None
+    if not area_list is None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("area_list_count:", area_list_count)
+            print("area_keyword_item:", area_keyword_item)
+
+        if area_list_count > 0:
+            formated_area_list = []
+            # filter list.
+            row_index = 0
+            for row in area_list:
+                row_index += 1
+                row_is_enabled=True
+
+                row_text = ""
+                row_html = ""
+                if row_is_enabled:
+                    try:
+                        #row_text = row.text
+                        row_html = row.get_attribute('innerHTML')
+                        row_text = remove_html_tags(row_html)
+                    except Exception as exc:
+                        pass
+
+                if '售完' in row_text:
+                    row_text = ""
+
+                if '"area disabled"' in row_html:
+                    row_text = ""
+
+                if len(row_text) > 0:
+                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        row_text = ""
+
+                if row_text == "":
+                    row_is_enabled=False
+
+                if row_is_enabled:
+                    formated_area_list.append(row)
+        else:
+            if show_debug_message:
+                print("area_list_count is empty.")
+            pass
+    else:
+        if show_debug_message:
+            print("area_list_count is None.")
+        pass
+
+    if is_price_assign_by_bot:
+        formated_area_list = None
+
+    matched_blocks = []
+    if not formated_area_list is None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+
+        if area_list_count > 0:
+            if len(area_keyword_item) == 0:
+                matched_blocks = formated_area_list
+            else:
+                row_index = 0
+                for row in formated_area_list:
+                    row_index += 1
+                    row_is_enabled=True
+                    if row_is_enabled:
+                        row_text = ""
+                        row_html = ""
+                        try:
+                            #row_text = row.text
+                            row_html = row.get_attribute('innerHTML')
+                            row_text = remove_html_tags(row_html)
+                        except Exception as exc:
+                            print("get text fail")
+                            break
+
+                        if len(row_text) > 0:
+                            row_text = format_keyword_string(row_text)
+                            if show_debug_message:
+                                print("row_text:", row_text)
+
+                            is_match_area = False
+
+                            if len(area_keyword_item) > 0:
+                                # must match keyword.
+                                is_match_area = True
+                                area_keyword_array = area_keyword_item.split(' ')
+                                for area_keyword in area_keyword_array:
+                                    area_keyword = format_keyword_string(area_keyword)
+                                    if not area_keyword in row_text:
+                                        is_match_area = False
+                                        break
+                            else:
+                                # without keyword.
+                                is_match_area = True
+
+                            if is_match_area:
+                                matched_blocks.append(row)
+
+                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                    break
+
+
+            if show_debug_message:
+                print("after match keyword, found count:", len(matched_blocks))
+
+    target_area = None
+    if not matched_blocks is None:
+        if len(matched_blocks) > 0:
+            target_row_index = 0
+
+            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                pass
+
+            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = len(matched_blocks)-1
+
+            if area_auto_select_mode == CONST_RANDOM:
+                target_row_index = random.randint(0,len(matched_blocks)-1)
+
+            target_area = matched_blocks[target_row_index]
+        else:
+            is_need_refresh = True
+            if show_debug_message:
+                print("matched_blocks is empty, is_need_refresh")
+
+    if not target_area is None:
+        try:
+            if target_area.is_enabled():
+                target_area.click()
+                is_price_assign_by_bot = True
+        except Exception as exc:
+            print("click target_area link fail")
+            print(exc)
+            # use plan B
+            try:
+                print("force to click by js.")
+                driver.execute_script("arguments[0].click();", target_area)
+                is_price_assign_by_bot = True
+            except Exception as exc:
+                pass
+
+    return is_need_refresh, is_price_assign_by_bot
+
+def fami_date_to_area(driver, config_dict, last_activity_url):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    # click price row.
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+
+    if show_debug_message:
+        print("area_keyword:", area_keyword)
+
+    is_need_refresh = False
+
+    if len(area_keyword) > 0:
+        area_keyword_array = []
+        try:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+        except Exception as exc:
+            area_keyword_array = []
+
+        for area_keyword_item in area_keyword_array:
+            is_need_refresh, is_price_assign_by_bot = fami_area_auto_select(driver, config_dict, area_keyword_item)
+            if not is_need_refresh:
+                break
+            else:
+                print("is_need_refresh for keyword:", area_keyword_item)
+    else:
+        # empty keyword, match all.
+        is_need_refresh, is_price_assign_by_bot = fami_area_auto_select(driver, config_dict, area_keyword)
+
+    if show_debug_message:
+        print("is_need_refresh:", is_need_refresh)
+
+    if is_need_refresh:
+        try:
+            #driver.refresh()
+            #driver.get(last_activity_url)
+            pass
+        except Exception as exc:
+            pass
+
+        if config_dict["advanced"]["auto_reload_random_delay"]:
+            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+
+    return is_price_assign_by_bot
+
+def fami_home_auto_select(driver, config_dict, last_activity_url):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -4759,13 +5157,20 @@ def fami_home(driver, url, config_dict):
     # part 3: fill ticket number.
     #---------------------------
     ticket_el = None
+    is_date_assign_by_bot = False
+    is_price_assign_by_bot = False
     try:
         my_css_selector = "tr.ticket > td > select"
         ticket_el = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
+        print("find ticket select element")
         pass
-        print("click buyWaiting button fail")
         #print(exc)
+
+    if ticket_el is None:
+        print("try to find datetime table list")
+        is_date_assign_by_bot = fami_date_auto_select(driver, config_dict, last_activity_url)
+        is_price_assign_by_bot = fami_date_to_area(driver, config_dict, last_activity_url)
 
     is_select_box_visible = False
     if not ticket_el is None:
@@ -4909,6 +5314,7 @@ def fami_home(driver, url, config_dict):
                     except Exception as exc:
                         pass
 
+    return is_date_assign_by_bot
 
 # purpose: date auto select
 def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable):
@@ -6217,8 +6623,15 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                         pass
 
                 if '已售完' in row_text:
-                    row_is_enabled=False
+                    row_text = ""
 
+                if 'disabled' in row_html:
+                    row_text = ""
+
+                if 'sold-out' in row_html:
+                    row_text = ""
+
+                # clean the buttom description row.
                 if len(row_text) > 0:
                     if row_text == "座位已被選擇":
                         row_text=""
@@ -6264,32 +6677,6 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
                 if row_text == "":
                     row_is_enabled=False
-
-                if row_is_enabled:
-                    try:
-                        button_class_string = str(row.get_attribute('class'))
-                        if not button_class_string is None:
-                            if len(button_class_string) > 1:
-                                if 'disabled' in button_class_string:
-                                    row_is_enabled=False
-                                if 'sold-out' in button_class_string:
-                                    row_is_enabled=False
-                    except Exception as exc:
-                        pass
-
-                if row_is_enabled:
-                    pass
-                    # each row to check is too slow.
-                    '''
-                    row_is_enabled = False
-                    try:
-                        row_id_string = str(row.get_attribute('id'))
-                        if not row_id_string is None:
-                            if len(row_id_string) > 1:
-                                row_is_enabled = True
-                    except Exception as exc:
-                        pass
-                    '''
 
                 if row_is_enabled:
                     formated_area_list.append(row)
@@ -7320,20 +7707,28 @@ def kktix_main(driver, url, config_dict, kktix_dict):
 
     return kktix_dict
 
-def famiticket_main(driver, url, config_dict):
-    try:
-        window_handles_count = len(driver.window_handles)
-        if window_handles_count > 1:
-            driver.switch_to.window(driver.window_handles[0])
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-    except Exception as excSwithFail:
-        pass
+def fami_login(driver, account, password):
+    is_email_sent = assign_text(driver, By.CSS_SELECTOR, '#usr_act', account)
+    is_password_sent = False
+    if is_email_sent:
+        is_password_sent = assign_text(driver, By.CSS_SELECTOR, '#usr_pwd', password, submit=True)
+    return is_password_sent
+
+def famiticket_main(driver, url, config_dict, fami_dict):
+    if '/Home/User/SignIn' in url:
+        fami_account = config_dict["advanced"]["fami_account"]
+        if len(fami_account) > 4:
+            fami_login(driver, fami_account, decryptMe(config_dict["advanced"]["fami_password"]))
 
     if '/Home/Activity/Info/' in url:
+        fami_dict["last_activity"] = url
         fami_activity(driver)
+
     if '/Sales/Home/Index/' in url:
-        fami_home(driver, url, config_dict)
+        if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+            is_date_assign_by_bot = fami_home_auto_select(driver, config_dict, fami_dict["last_activity"])
+
+    return fami_dict
 
 def urbtix_performance_confirm_dialog_popup(driver):
     ret = False
@@ -9143,7 +9538,6 @@ def hkticketing_performance(driver, config_dict, domain_name):
                         if click_ret:
                             break
 
-
     return is_price_assign_by_bot
 
 
@@ -10503,15 +10897,15 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     area_list = None
     try:
-        for retry_index in range(4):
+        for retry_index in range(6):
             area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item > div.row')
             if not area_list is None:
                 area_list_count = len(area_list)
                 if area_list_count > 0:
                     break
                 else:
-                    print("empty date item, delay 0.25 to retry.")
-                    time.sleep(0.25)
+                    print("empty date item, delay 0.2 to retry.")
+                    time.sleep(0.2)
     except Exception as exc:
         print("find #buyTicket fail")
 
@@ -11694,6 +12088,9 @@ def main(args):
     kktix_dict["kktix_register_status_last"] = None
     kktix_dict["is_popup_checkout"] = False
 
+    fami_dict = {}
+    fami_dict["last_activity"]=""
+
     ibon_dict = {}
     ibon_dict["fail_list"]=[]
 
@@ -11770,7 +12167,7 @@ def main(args):
             kktix_dict = kktix_main(driver, url, config_dict, kktix_dict)
 
         if 'famiticket.com' in url:
-            famiticket_main(driver, url, config_dict)
+            fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
 
         if 'ibon.com' in url:
             ibon_dict = ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser)
