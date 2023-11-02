@@ -119,6 +119,7 @@ def remove_html_tags(text):
     if not text is None:
         clean = re.compile('<.*?>')
         ret = re.sub(clean, '', text)
+        ret = ret.strip()
     return ret
 
 def sx(s1):
@@ -9861,21 +9862,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                             row_text = ""
 
                     if '立即訂購' in row_text or '點此購票' in row_text:
-                        try:
-                            # for kham.com
-                            my_css_selector = "a > button"
-                            if 'ticket.com' in domain_name:
-                                my_css_selector = "td > button.btn"
-
-                            el_btn = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                            if not el_btn is None:
-                                if el_btn.is_enabled():
-                                    #print("row's button enabled.")
-                                    row_is_enabled=True
-                        except Exception as exc:
-                            if show_debug_message:
-                                print(exc)
-                            pass
+                        if "<button" in row_html:
+                            row_is_enabled=True
 
                     if row_is_enabled:
                         formated_area_list.append(row)
@@ -10065,6 +10053,10 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         row_text = ""
 
                     if len(row_text) > 0:
+                        if ' Soldout' in row_html:
+                            row_text = ""
+
+                    if len(row_text) > 0:
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
@@ -10073,22 +10065,18 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         if config_dict["ticket_number"] > 1:
                             maybe_ticket_count = row_text[-1:]
                             if maybe_ticket_count.isdigit():
-                                ticket_count_element = None
-                                try:
-                                    my_css_selector = "td:nth-child(4)"
-                                    ticket_count_element = row.find_element(By.CSS_SELECTOR, my_css_selector)
-                                    if not ticket_count_element is None:
-                                        ticket_count_text = ticket_count_element.text
+                                if "<td" in row_html:
+                                    td_array = row_html.split("<td")
+                                    if len(td_array) > 0:
+                                        td_target = "<td" + td_array[len(td_array)-1]
+                                        ticket_count_text = remove_html_tags(td_target)
+                                        print("ticket_count_text:", ticket_count_text)
                                         if ticket_count_text.isdigit():
                                             if int(ticket_count_text) < config_dict["ticket_number"]:
                                                 if show_debug_message:
                                                     print("skip this row, because ticket_count available only:", ticket_count_text)
                                                 # skip this row.
                                                 row_text = ""
-                                except Exception as exc:
-                                    if show_debug_message:
-                                        print(exc)
-
 
                     if len(row_text) > 0:
                         row_text = format_keyword_string(row_text)
