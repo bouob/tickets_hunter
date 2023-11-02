@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.20)"
+CONST_APP_VERSION = "MaxBot (2023.10.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2307,7 +2307,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
                 if show_debug_message:
-                    #print("row_text:", row_text)
+                    #print("formated row_text:", row_text)
                     pass
 
                 is_append_this_row = False
@@ -4780,15 +4780,7 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
     area_list = None
     try:
         my_css_selector = ".session__list > tbody > tr"
-        for retry_index in range(2):
-            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-            if not area_list is None:
-                area_list_count = len(area_list)
-                if area_list_count > 0:
-                    break
-                else:
-                    print("empty date item, delay 0.2 to retry.")
-                    time.sleep(0.2)
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find date-time rows fail")
         print(exc)
@@ -4933,15 +4925,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
     area_list = None
     try:
         my_css_selector = "div > a.area"
-        for retry_index in range(2):
-            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-            if not area_list is None:
-                area_list_count = len(area_list)
-                if area_list_count > 0:
-                    break
-                else:
-                    print("empty area item, delay 0.2 to retry.")
-                    time.sleep(0.2)
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find a.area list fail")
         print(exc)
