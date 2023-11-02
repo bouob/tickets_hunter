@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.21)"
+CONST_APP_VERSION = "MaxBot (2023.10.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9860,7 +9860,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                         if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
-                    if '立即訂購' in row_text:
+                    if '立即訂購' in row_text or '點此購票' in row_text:
                         try:
                             # for kham.com
                             my_css_selector = "a > button"
@@ -10731,6 +10731,12 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if date_auto_select_enable:
                 domain_name = url.split('/')[2]
                 kham_product(driver, domain_name, config_dict)
+
+    if url.lower() == 'https://kham.com.tw/application/utk01/utk0101_.aspx':
+        date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+        if date_auto_select_enable:
+            domain_name = url.split('/')[2]
+            kham_product(driver, domain_name, config_dict)
 
     # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
     if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
