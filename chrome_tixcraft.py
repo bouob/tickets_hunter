@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.22)"
+CONST_APP_VERSION = "MaxBot (2023.10.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -162,12 +162,6 @@ def get_config_dict(args):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
 
-            # start to overwrite config settings.
-            if not args.headless is None:
-                headless_flag = t_or_f(args.headless)
-                if headless_flag:
-                    config_dict["advanced"]["headless"] = True
-
             if not args.homepage is None:
                 if len(args.homepage) > 0:
                     config_dict["homepage"] = args.homepage
@@ -194,20 +188,6 @@ def get_config_dict(args):
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
 
-
-
-            # special case for headless to enable away from keyboard mode.
-            is_headless_enable = False
-            if config_dict["advanced"]["headless"]:
-                # for tixcraft headless.
-                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    is_headless_enable = True
-                else:
-                    print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
-
-            if is_headless_enable:
-                config_dict["ocr_captcha"]["enable"] = True
-                config_dict["ocr_captcha"]["force_submit"] = True
     return config_dict
 
 def write_question_to_file(question_text):
@@ -374,7 +354,6 @@ def get_brave_bin_path():
 def get_chrome_options(webdriver_path, config_dict):
     adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"] 
     browser=config_dict["browser"]
-    headless=config_dict["advanced"]["headless"]
 
     chrome_options = webdriver.ChromeOptions()
     if browser=="edge":
@@ -389,9 +368,6 @@ def get_chrome_options(webdriver_path, config_dict):
         for ext in extension_list:
             if os.path.exists(ext):
                 chrome_options.add_extension(ext)
-    if headless:
-        #chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
@@ -558,9 +534,6 @@ def get_uc_options(uc, config_dict, webdriver_path):
             print('load-extension:', load_extension_path[1:])
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
-    if config_dict["advanced"]["headless"]:
-        #options.add_argument('--headless')
-        options.add_argument('--headless=new')
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
@@ -615,7 +588,7 @@ def load_chromdriver_uc(config_dict):
 
         try:
             options = get_uc_options(uc, config_dict, webdriver_path)
-            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options)
         except Exception as exc:
             print(exc)
             error_message = str(exc)
@@ -639,7 +612,7 @@ def load_chromdriver_uc(config_dict):
             try:
                 chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
                 options = get_uc_options(uc, config_dict, webdriver_path)
-                driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+                driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options)
             except Exception as exc2:
                 print(exc2)
                 pass
@@ -650,7 +623,7 @@ def load_chromdriver_uc(config_dict):
         print('WebDriver object is None..., try again..')
         try:
             options = get_uc_options(uc, config_dict, webdriver_path)
-            driver = uc.Chrome(options=options, headless=config_dict["advanced"]["headless"])
+            driver = uc.Chrome(options=options)
         except Exception as exc:
             print(exc)
             error_message = str(exc)
@@ -750,9 +723,6 @@ def get_driver_by_config(config_dict):
         try:
             from selenium.webdriver.firefox.options import Options
             options = Options()
-            if config_dict["advanced"]["headless"]:
-                options.add_argument('--headless')
-                #options.add_argument('--headless=new')
             if platform.system().lower()=="windows":
                 binary_path = "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
                 if not os.path.exists(binary_path):
@@ -1588,6 +1558,21 @@ def force_press_button_iframe(driver, f, select_by, select_query, force_submit=T
             pass
 
     return is_clicked
+
+def clean_tag_by_selector(driver, select_query):
+    try:
+        driver.set_script_timeout(1)
+        js = """var selectSoldoutItems = document.querySelectorAll('%s');
+selectSoldoutItems.forEach((userItem) =>
+{
+    userItem.outerHTML="";
+}
+);""" % select_query
+
+        driver.execute_script(js)
+        ret = True
+    except Exception as exc:
+        pass
 
 def force_press_button(driver, select_by, select_query, force_submit=True):
     ret = False
@@ -7619,17 +7604,6 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         domain_name = url.split('/')[2]
         tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
-    if '/ticket/checkout' in url:
-        if config_dict["advanced"]["headless"]:
-            if not tixcraft_dict["is_popup_checkout"]:
-                domain_name = url.split('/')[2]
-                checkout_url = "https://%s/ticket/checkout" % (domain_name)
-                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-                webbrowser.open_new(checkout_url)
-                tixcraft_dict["is_popup_checkout"] = True
-    else:
-        tixcraft_dict["is_popup_checkout"] = False
-
     return tixcraft_dict
 
 def kktix_main(driver, url, config_dict, kktix_dict):
@@ -7672,23 +7646,6 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             kktix_dict["fail_list"] = []
             kktix_dict["captcha_sound_played"] = False
             kktix_dict["kktix_register_status_last"] = None
-
-    if '/events/' in url and '/registrations/' in url and "-" in url:
-        if config_dict["advanced"]["headless"]:
-            if not kktix_dict["is_popup_checkout"]:
-                is_event_page = False
-                if len(url.split('/'))==8:
-                    is_event_page = True
-                if is_event_page:
-                    confirm_clicked = kktix_confirm_order_button(driver)
-                    if confirm_clicked:
-                        domain_name = url.split('/')[2]
-                        checkout_url = "https://%s/account/orders" % (domain_name)
-                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-                        webbrowser.open_new(checkout_url)
-                        tixcraft_dict["is_popup_checkout"] = True
-    else:
-        kktix_dict["is_popup_checkout"] = False
 
     return kktix_dict
 
@@ -8638,6 +8595,11 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             if config_dict["area_auto_select"]["enable"]:
+                select_query = "tr.disbled"
+                clean_tag_by_selector(driver,select_query)
+                select_query = "tr.sold-out"
+                clean_tag_by_selector(driver,select_query)
+
                 is_do_ibon_performance_with_ticket_number = False
 
                 if 'PRODUCT_ID=' in url.upper():
@@ -9937,17 +9899,21 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     except Exception as exc:
                         pass
 
-    '''
+        # PS: auto reload in kham is not used, due to soldout still have clickable button to enter.
+        '''
         if auto_reload_coming_soon_page_enable:
             # auto refresh for date list page.
             if not formated_area_list is None:
                 if len(formated_area_list) == 0:
                     try:
                         driver.refresh()
-                        time.sleep(0.4)
+                        time.sleep(0.3)
                     except Exception as exc:
                         pass
-    '''
+
+                    if config_dict["advanced"]["auto_reload_random_delay"]:
+                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+        '''
 
     return ret
 
@@ -10019,9 +9985,8 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 row_index += 1
                 formated_area_list.append(row)
         else:
-            if show_debug_message:
-                print("area_list_count is empty.")
-            pass
+            print("area list is empty, do refresh!")
+            is_need_refresh = True
     else:
         if show_debug_message:
             print("area_list_count is None.")
@@ -10749,6 +10714,11 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
             else:
                 is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
+            
+            if "kham.com.tw" in url:
+                select_query = "tr.Soldout"
+                clean_tag_by_selector(driver,select_query)
+
             is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
 
             # this is a special case, not performance_price_area_id, directly input ticket_nubmer in #amount.
@@ -12057,14 +12027,12 @@ def main(args):
     tixcraft_dict = {}
     tixcraft_dict["fail_list"]=[]
     tixcraft_dict["fail_promo_list"]=[]
-    tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
     kktix_dict = {}
     kktix_dict["fail_list"]=[]
     kktix_dict["captcha_sound_played"] = False
     kktix_dict["kktix_register_status_last"] = None
-    kktix_dict["is_popup_checkout"] = False
 
     fami_dict = {}
     fami_dict["last_activity"]=""
@@ -12216,11 +12184,6 @@ def cli():
 
     parser.add_argument("--ibonqware",
         help="overwrite ibonqware field",
-        type=str)
-
-    parser.add_argument("--headless",
-        help="headless mode",
-        default='False',
         type=str)
 
     parser.add_argument("--browser",

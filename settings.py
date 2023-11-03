@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.10.22)"
+CONST_APP_VERSION = "MaxBot (2023.10.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -152,7 +152,6 @@ def load_translate():
     en_us["ocr_captcha_image_source"] = 'OCR image source'
     en_us["ocr_captcha_not_support_arm"] = 'ddddocr only supports Intel CPU'
     en_us["webdriver_type"] = 'WebDriver type'
-    en_us["headless"] = 'Headless mode'
     # Make the operation more talkative
     en_us["verbose"] = 'Verbose mode'
     en_us["running_status"] = 'Running Status'
@@ -255,7 +254,6 @@ def load_translate():
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
     zh_tw["ocr_captcha_not_support_arm"] = 'ocr 只支援 Intel CPU'
     zh_tw["webdriver_type"] = 'WebDriver類別'
-    zh_tw["headless"] = '無圖形界面模式'
     zh_tw["verbose"] = '輸出詳細除錯訊息'
     zh_tw["running_status"] = '執行狀態'
     zh_tw["running_url"] = '執行網址'
@@ -357,7 +355,6 @@ def load_translate():
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
     zh_cn["ocr_captcha_not_support_arm"] = 'ddddocr 仅支持 Intel CPU'
     zh_cn["webdriver_type"] = 'WebDriver类别'
-    zh_cn["headless"] = '无图形界面模式'
     zh_cn["verbose"] = '输出详细除错讯息'
     zh_cn["running_status"] = '执行状态'
     zh_cn["running_url"] = '执行网址'
@@ -460,7 +457,6 @@ def load_translate():
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
     ja_jp["ocr_captcha_not_support_arm"] = 'Intel CPU のみをサポートします'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
-    ja_jp["headless"] = 'ヘッドレスモード'
     ja_jp["verbose"] = '詳細モード'
     ja_jp["running_status"] = 'スターテス'
     ja_jp["running_url"] = '現在の URL'
@@ -665,7 +661,6 @@ def get_default_config():
 
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["disable_adjacent_seat"] = False
-    config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
@@ -797,7 +792,6 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha_ddddocr_beta
     global chk_state_ocr_captcha_force_submit
     global chk_state_adjacent_seat
-    global chk_state_headless
     global chk_state_verbose
     global chk_state_auto_guess_options
     global combo_ocr_captcha_image_source
@@ -964,7 +958,6 @@ def btn_save_act(language_code, slience_mode=False):
             config_dict["ocr_captcha"]["force_submit"] = False
 
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
-        config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
 
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
@@ -1228,7 +1221,6 @@ def applyNewLanguage():
     global lbl_ocr_captcha_image_source
     global lbl_ocr_captcha_not_support_arm
     global lbl_webdriver_type
-    global lbl_headless
     global lbl_verbose
     global lbl_auto_guess_options
 
@@ -1250,7 +1242,6 @@ def applyNewLanguage():
     global chk_ocr_captcha_ddddocr_beta
     global chk_ocr_captcha_force_submit
     global chk_adjacent_seat
-    global chk_headless
     global chk_verbose
     global lbl_online_dictionary_url
     global lbl_online_dictionary_preview
@@ -1303,7 +1294,6 @@ def applyNewLanguage():
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
 
-    lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
 
     lbl_online_dictionary_url.config(text=translate[language_code]["online_dictionary_url"])
@@ -1326,7 +1316,6 @@ def applyNewLanguage():
     chk_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_adjacent_seat.config(text=translate[language_code]["enable"])
-    chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
     chk_auto_reload_random_delay.config(text=translate[language_code]["enable"])
@@ -2001,20 +1990,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_adjacent_seat
     chk_adjacent_seat = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_adjacent_seat)
     chk_adjacent_seat.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_headless
-    lbl_headless = Label(frame_group_header, text=translate[language_code]['headless'])
-    lbl_headless.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_headless
-    chk_state_headless = BooleanVar()
-    chk_state_headless.set(config_dict['advanced']["headless"])
-
-    global chk_headless
-    chk_headless = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_headless)
-    chk_headless.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
