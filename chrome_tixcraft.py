@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.10.23)"
+CONST_APP_VERSION = "MaxBot (2023.11.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -780,6 +780,9 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
+            NETWORK_BLOCKED_URLS = ['*woff2','*woff','*google-analytics.*','*googletagmanager.*','*googletagservices.*','*youtube.com*','*player.youku.*','*e2elog.fetnet.net*']
+            driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
+            driver.execute_cdp_cmd('Network.enable', {})
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
                     if not 'https://kktix.com/users/sign_in?' in homepage:
@@ -1559,7 +1562,7 @@ def force_press_button_iframe(driver, f, select_by, select_query, force_submit=T
 
     return is_clicked
 
-def clean_tag_by_selector(driver, select_query):
+def clean_tag_by_selector(driver, select_query, more_script = ""):
     try:
         driver.set_script_timeout(1)
         js = """var selectSoldoutItems = document.querySelectorAll('%s');
@@ -1567,11 +1570,14 @@ selectSoldoutItems.forEach((userItem) =>
 {
     userItem.outerHTML="";
 }
-);""" % select_query
+);
+%s""" % (select_query, more_script)
 
+        #print("javascript:", js)
         driver.execute_script(js)
         ret = True
     except Exception as exc:
+        #print(exc)
         pass
 
 def force_press_button(driver, select_by, select_query, force_submit=True):
@@ -9985,8 +9991,9 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 row_index += 1
                 formated_area_list.append(row)
         else:
-            print("area list is empty, do refresh!")
-            is_need_refresh = True
+            print("area list is empty, do refresh by javascript!")
+            #is_need_refresh = True
+            pass
     else:
         if show_debug_message:
             print("area_list_count is None.")
@@ -10717,7 +10724,10 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             
             if "kham.com.tw" in url:
                 select_query = "tr.Soldout"
-                clean_tag_by_selector(driver,select_query)
+                more_script = """var ticketItems = document.querySelectorAll('tr.status_tr');
+                if(ticketItems.length==0) { location.reload(); }
+                """
+                clean_tag_by_selector(driver, select_query, more_script)
 
             is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
 
