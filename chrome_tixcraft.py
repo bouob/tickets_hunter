@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.01)"
+CONST_APP_VERSION = "MaxBot (2023.11.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -780,7 +780,19 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            NETWORK_BLOCKED_URLS = ['*woff2','*woff','*google-analytics.*','*googletagmanager.*','*googletagservices.*','*youtube.com*','*player.youku.*','*e2elog.fetnet.net*']
+            NETWORK_BLOCKED_URLS = ['*/adblock.js'
+            ,'*google-analytics.*'
+            ,'*googletagmanager.*'
+            ,'*googletagservices.*'
+            ,'*play.google.com/*'
+            ,'*.doubleclick.net/*'
+            ,'*.rollbar.com/*'
+            ,'*.cloudfront.com/*'
+            ,'*.lndata.com/*'
+            ,'*twitter.com/i/*'
+            ,'*youtube.com*'
+            ,'*player.youku.*'
+            ,'*e2elog.fetnet.net*']
             driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
             driver.execute_cdp_cmd('Network.enable', {})
             if 'kktix.c' in homepage:
