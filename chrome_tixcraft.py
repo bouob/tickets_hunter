@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.02)"
+CONST_APP_VERSION = "MaxBot (2023.11.03)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -352,7 +352,6 @@ def get_brave_bin_path():
     return brave_path
 
 def get_chrome_options(webdriver_path, config_dict):
-    adblock_plus_enable = config_dict["advanced"]["adblock_plus_enable"] 
     browser=config_dict["browser"]
 
     chrome_options = webdriver.ChromeOptions()
@@ -362,12 +361,13 @@ def get_chrome_options(webdriver_path, config_dict):
         chrome_options = webdriver.SafariOptions()
 
     # some windows cause: timed out receiving message from renderer
-    if adblock_plus_enable:
+    if config_dict["advanced"]["adblock_plus_enable"]:
         # PS: this is ocx version.
         extension_list = get_favoriate_extension_path(webdriver_path)
         for ext in extension_list:
             if os.path.exists(ext):
                 chrome_options.add_extension(ext)
+
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
@@ -3486,7 +3486,7 @@ def kktix_input_captcha_text(captcha_password_input_element, inferred_answer_str
 
     return is_captcha_sent
 
-def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
+def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -3557,6 +3557,9 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
             if '完売' in row_text:
                 row_text = ""
 
+            if not('<input type=' in row_html):
+                row_text = ""
+
             if len(row_text) > 0:
                 if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                     row_text = ""
@@ -3565,6 +3568,49 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                 # clean stop word.
                 row_text = format_keyword_string(row_text)
 
+            if len(row_text) > 0:
+                if ticket_number > 1:
+                    # start to check danger notice.
+                    # 剩 n 張票 / n Left / 残り n 枚
+                    ticket_count = 999
+                    # for cht.
+                    if ' danger' in row_html and '剩' in row_text and '張' in row_text:
+                        tmp_array = row_html.split('剩')
+                        tmp_array = tmp_array[1].split('張')
+                        if len(tmp_array) > 0:
+                            tmp_ticket_count = tmp_array[0].strip()
+                            if tmp_ticket_count.isdigit():
+                                ticket_count = int(tmp_ticket_count)
+                                if show_debug_message:
+                                    print("found ticket 剩:", tmp_ticket_count)
+                    # for ja.
+                    if ' danger' in row_html and '残り' in row_text and '枚' in row_text:
+                        tmp_array = row_html.split('残り')
+                        tmp_array = tmp_array[1].split('枚')
+                        if len(tmp_array) > 0:
+                            tmp_ticket_count = tmp_array[0].strip()
+                            if tmp_ticket_count.isdigit():
+                                ticket_count = int(tmp_ticket_count)
+                                if show_debug_message:
+                                    print("found ticket 残り:", tmp_ticket_count)
+                    # for en.
+                    if ' danger' in row_html and ' Left ' in row_html:
+                        tmp_array = row_html.split(' Left ')
+                        tmp_array = tmp_array[0].split('>')
+                        if len(tmp_array) > 0:
+                            tmp_ticket_count = tmp_array[len(tmp_array)-1].strip()
+                            if tmp_ticket_count.isdigit():
+                                if show_debug_message:
+                                    print("found ticket left:", tmp_ticket_count)
+                                ticket_count = int(tmp_ticket_count)
+
+                    if ticket_count < ticket_number:
+                        # skip this row, due to no ticket remaining.
+                        if show_debug_message:
+                            print("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
+                        row_text = ""
+
+            if len(row_text) > 0:
                 # check ticket input textbox.
                 ticket_price_input = None
                 try:
@@ -3589,22 +3635,6 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                     if is_ticket_number_assigned:
                         # no need to travel
                         break
-
-                    is_danger_notice = False
-                    if ticket_number > 1:
-                        # start to check danger notice.
-                        span_danger_popup = None
-                        try:
-                            span_danger_popup = row.find_element(By.CSS_SELECTOR, "span.danger")
-                            if span_danger_popup.is_displayed():
-                                is_danger_notice = True
-                        except Exception as exc:
-                            pass
-
-                        if is_danger_notice:
-                            # PS: not ALL danger notice are "only 1 seat remaining"...
-                            # TODO: check real remaining value instead of check css style.
-                            continue
 
                     if is_visible:
                         is_match_area = False
@@ -3644,6 +3674,11 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_keyword):
                         if is_match_area:
                             areas.append(ticket_price_input)
 
+                            # from top to bottom, match first to break.
+                            if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                break
+
+
             if is_travel_interrupted:
                 # not sure to break or continue..., maybe break better.
                 break
@@ -3669,7 +3704,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
     ticket_number = config_dict["ticket_number"]
     kktix_area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_keyword)
+    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword)
 
     is_need_refresh = False
 
@@ -4719,6 +4754,43 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
 
     return matched_blocks
 
+def fami_verify(driver, config_dict, fail_list):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    answer_list = []
+
+    question_text = ""
+    #if len(question_text) > 0:
+    if True:
+        #write_question_to_file(question_text)
+
+        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        if len(answer_list)==0:
+            if config_dict["advanced"]["auto_guess_options"]:
+                answer_list = guess_tixcraft_question(driver, question_text)
+
+        inferred_answer_string = ""
+        for answer_item in answer_list:
+            if not answer_item in fail_list:
+                inferred_answer_string = answer_item
+                break
+
+        if show_debug_message:
+            print("inferred_answer_string:", inferred_answer_string)
+            print("answer_list:", answer_list)
+
+        # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
+        input_text_css = "#verifyPrefAnswer"
+        next_step_button_css = ""
+        submit_by_enter = True
+        check_input_interval = 0.2
+        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+
+    return fail_list
 
 def fami_activity(driver):
     #print("fami_activity bingo")
@@ -7683,6 +7755,9 @@ def famiticket_main(driver, url, config_dict, fami_dict):
     if '/Home/Activity/Info/' in url:
         fami_dict["last_activity"] = url
         fami_activity(driver)
+        fami_dict["fail_list"] = fami_verify(driver, config_dict, fami_dict["fail_list"])
+    else:
+        fami_dict["fail_list"] = []
 
     if '/Sales/Home/Index/' in url:
         if config_dict["tixcraft"]["date_auto_select"]["enable"]:
@@ -12057,6 +12132,7 @@ def main(args):
     kktix_dict["kktix_register_status_last"] = None
 
     fami_dict = {}
+    fami_dict["fail_list"] = []
     fami_dict["last_activity"]=""
 
     ibon_dict = {}
