@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.03)"
+CONST_APP_VERSION = "MaxBot (2023.11.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -79,6 +79,7 @@ CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogi
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
+CONST_CENTER = "center"
 CONST_RANDOM = "random"
 CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 
@@ -780,7 +781,12 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            NETWORK_BLOCKED_URLS = ['*/adblock.js'
+            NETWORK_BLOCKED_URLS = ['*.woff'
+            ,'*.woff2'
+            ,'*.ttf'
+            ,'*.otf'
+            ,'*/adblock.js'
+            ,'*/google_ad_block.js'
             ,'*google-analytics.*'
             ,'*googletagmanager.*'
             ,'*googletagservices.*'
@@ -1843,17 +1849,23 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -1998,17 +2010,23 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -2360,83 +2378,84 @@ def tixcraft_area_auto_select(driver, url, config_dict):
 
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     ticket_number = config_dict["ticket_number"]
 
     if show_debug_message:
         print("area_keyword:", area_keyword)
 
-    if '/ticket/area/' in url:
-        #driver.switch_to.default_content()
+    el = None
+    try:
+        el = driver.find_element(By.CSS_SELECTOR, '.zone')
+    except Exception as exc:
+        print("find .zone fail, do nothing.")
 
-        el = None
-        try:
-            el = driver.find_element(By.CSS_SELECTOR, '.zone')
-        except Exception as exc:
-            print("find .zone fail, do nothing.")
+    if not el is None:
+        is_need_refresh = False
+        matched_blocks = None
 
-        if not el is None:
-            is_need_refresh = False
-            areas = None
-
-            if len(area_keyword) > 0:
+        if len(area_keyword) > 0:
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
                 area_keyword_array = []
-                try:
-                    area_keyword_array = json.loads("["+ area_keyword +"]")
-                except Exception as exc:
-                    area_keyword_array = []
-                for area_keyword_item in area_keyword_array:
-                    is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, area_keyword_item)
-                    if not is_need_refresh:
-                        break
-                    else:
-                        print("is_need_refresh for keyword:", area_keyword_item)
-            else:
-                # empty keyword, match all.
-                is_need_refresh, areas = get_tixcraft_target_area(el, config_dict, "")
+            for area_keyword_item in area_keyword_array:
+                is_need_refresh, matched_blocks = get_tixcraft_target_area(el, config_dict, area_keyword_item)
+                if not is_need_refresh:
+                    break
+                else:
+                    print("is_need_refresh for keyword:", area_keyword_item)
+        else:
+            # empty keyword, match all.
+            is_need_refresh, matched_blocks = get_tixcraft_target_area(el, config_dict, "")
 
-            area_target = None
-            if not areas is None:
-                #print("area_auto_select_mode", area_auto_select_mode)
-                #print("len(areas)", len(areas))
-                if len(areas) > 0:
-                    target_row_index = 0
+        area_target = None
 
-                    if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                        pass
+        target_area = None
+        if not matched_blocks is None:
+            matched_blocks_count = len(matched_blocks)
+            if matched_blocks_count > 0:
+                target_row_index = 0
 
-                    if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                        target_row_index = len(areas)-1
-
-                    if area_auto_select_mode == CONST_RANDOM:
-                        target_row_index = random.randint(0,len(areas)-1)
-
-                    #print("target_row_index", target_row_index)
-                    area_target = areas[target_row_index]
-
-            if not area_target is None:
-                try:
-                    #print("area text:", area_target.text)
-                    area_target.click()
-                except Exception as exc:
-                    print("click area a link fail, start to retry...")
-                    try:
-                        driver.execute_script("arguments[0].click();", area_target)
-                    except Exception as exc:
-                        print("click area a link fail, after reftry still fail.")
-                        print(exc)
-                        pass
-
-            # auto refresh for area list page.
-            if is_need_refresh:
-                try:
-                    driver.refresh()
-                except Exception as exc:
+                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                     pass
 
-                if config_dict["advanced"]["auto_reload_random_delay"]:
-                    time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                    target_row_index = matched_blocks_count - 1
+
+                if auto_select_mode == CONST_RANDOM:
+                    if matched_blocks_count > 1:
+                        target_row_index = random.randint(0,matched_blocks_count-1)
+
+                if auto_select_mode == CONST_CENTER:
+                    if matched_blocks_count > 2:
+                        target_row_index = int(matched_blocks_count/2)
+
+                target_area = matched_blocks[target_row_index]
+
+        if not target_area is None:
+            try:
+                target_area.click()
+            except Exception as exc:
+                print("click area a link fail, start to retry...")
+                try:
+                    driver.execute_script("arguments[0].click();", target_area)
+                except Exception as exc:
+                    print("click area a link fail, after reftry still fail.")
+                    print(exc)
+                    pass
+
+        # auto refresh for area list page.
+        if is_need_refresh:
+            try:
+                driver.refresh()
+            except Exception as exc:
+                pass
+
+            if config_dict["advanced"]["auto_reload_random_delay"]:
+                time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
 def ticketmaster_area_auto_select(driver, config_dict, zone_info):
     show_debug_message = True       # debug.
@@ -2447,13 +2466,12 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
 
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     if show_debug_message:
         print("area_keyword:", area_keyword)
 
     is_need_refresh = False
-    areas = None
+    matched_blocks = None
 
     if len(area_keyword) > 0:
         area_keyword_array = []
@@ -2462,42 +2480,42 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
         except Exception as exc:
             area_keyword_array = []
         for area_keyword_item in area_keyword_array:
-            is_need_refresh, areas = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
+            is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
             if not is_need_refresh:
                 break
             else:
                 print("is_need_refresh for keyword:", area_keyword_item)
     else:
         # empty keyword, match all.
-        is_need_refresh, areas = get_ticketmaster_target_area(config_dict, "", zone_info)
+        is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
 
-    area_target = None
-    if not areas is None:
-        #print("area_auto_select_mode", area_auto_select_mode)
-        if show_debug_message:
-            print("len(areas)", len(areas))
-        if len(areas) > 0:
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    target_area = None
+    if not matched_blocks is None:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(areas)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(areas)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
 
-            #print("target_row_index", target_row_index)
-            area_target = areas[target_row_index]
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
-    if not area_target is None:
-        if show_debug_message:
-            #print("area_target:", area_target)
-            pass
+            target_area = matched_blocks[target_row_index]
+
+    if not target_area is None:
         try:
-            #print("area text:", area_target.text)
-            click_area_javascript = 'areaTicket("%s", "map");' % area_target
+            #print("area text:", target_area.text)
+            click_area_javascript = 'areaTicket("%s", "map");' % target_area
             if show_debug_message:
                 #print("click_area_javascript:", click_area_javascript)
                 pass
@@ -3199,7 +3217,7 @@ def get_tixcraft_ticket_select(driver, config_dict):
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
     form_select = None
-    areas = None
+    matched_blocks = None
     if len(area_keyword) > 0:
         area_keyword_array = []
         try:
@@ -3207,38 +3225,41 @@ def get_tixcraft_ticket_select(driver, config_dict):
         except Exception as exc:
             area_keyword_array = []
         for area_keyword_item in area_keyword_array:
-            is_need_refresh, areas = get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item)
+            is_need_refresh, matched_blocks = get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item)
             if not is_need_refresh:
                 break
             else:
                 print("is_need_refresh for keyword:", area_keyword_item)
     else:
         # empty keyword, match all.
-        is_need_refresh, areas = get_tixcraft_target_area(driver, config_dict, "")
+        is_need_refresh, matched_blocks = get_tixcraft_target_area(driver, config_dict, "")
 
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    area_target = None
-    if not areas is None:
-        #print("area_auto_select_mode", area_auto_select_mode)
-        #print("len(areas)", len(areas))
-        if len(areas) > 0:
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    target_area = None
+    if not matched_blocks is None:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(areas)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(areas)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
 
-            #print("target_row_index", target_row_index)
-            area_target = areas[target_row_index]
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
-    if not area_target is None:
+            target_area = matched_blocks[target_row_index]
+
+    if not target_area is None:
         try:
-            form_select = area_target.find_element(By.TAG_NAME, 'select')
+            form_select = target_area.find_element(By.TAG_NAME, 'select')
         except Exception as exc:
             #print("find area list a tag fail")
             form_select = None
@@ -3704,42 +3725,47 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
         show_debug_message = True
 
     ticket_number_str = str(config_dict["ticket_number"])
-    ticket_number = config_dict["ticket_number"]
-    kktix_area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    is_ticket_number_assigned, areas = kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword)
+    matched_blocks = None
+    is_ticket_number_assigned, matched_blocks = kktix_travel_price_list(driver, config_dict, auto_select_mode, kktix_area_keyword)
 
     is_need_refresh = False
 
-    ticket_price_input = None
+    target_area = None
     if not is_ticket_number_assigned:
-        if not areas is None:
-            if len(areas) > 0:
+        if not matched_blocks is None:
+            matched_blocks_count = len(matched_blocks)
+            if matched_blocks_count > 0:
                 target_row_index = 0
 
-                if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                     pass
 
-                if kktix_area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                    target_row_index = len(areas)-1
+                if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                    target_row_index = matched_blocks_count - 1
 
-                if kktix_area_auto_select_mode == CONST_RANDOM:
-                    target_row_index = random.randint(0,len(areas)-1)
+                if auto_select_mode == CONST_RANDOM:
+                    if matched_blocks_count > 1:
+                        target_row_index = random.randint(0,matched_blocks_count-1)
 
-                if show_debug_message:
-                    print("target_row_index", target_row_index)
-                ticket_price_input = areas[target_row_index]
+                if auto_select_mode == CONST_CENTER:
+                    if matched_blocks_count > 2:
+                        target_row_index = int(matched_blocks_count/2)
+
+                target_area = matched_blocks[target_row_index]
             else:
+                # no matched rows.
                 is_need_refresh = True
 
     current_ticket_number = ""
     is_visible = False
-    if not ticket_price_input is None:
+    if not target_area is None:
         if show_debug_message:
             print("try to get input box value.")
         try:
-            current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
-            is_visible = ticket_price_input.is_enabled()
+            current_ticket_number = str(target_area.get_attribute('value')).strip()
+            is_visible = target_area.is_enabled()
         except Exception as exc:
             pass
 
@@ -3747,16 +3773,16 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
         if current_ticket_number == "0":
             try:
                 print("asssign ticket number:%s" % ticket_number_str)
-                ticket_price_input.clear()
-                ticket_price_input.send_keys(ticket_number_str)
+                target_area.clear()
+                target_area.send_keys(ticket_number_str)
 
                 is_ticket_number_assigned = True
             except Exception as exc:
                 print("asssign ticket number to ticket-price field Exception:")
                 print(exc)
                 try:
-                    ticket_price_input.clear()
-                    ticket_price_input.send_keys("1")
+                    target_area.clear()
+                    target_area.send_keys("1")
                     is_ticket_number_assigned = True
                 except Exception as exc2:
                     pass
@@ -4829,7 +4855,7 @@ def fami_activity(driver):
                 js = """arguments[0].scrollIntoView();
                 arguments[0].firstChild.click();
                 """
-                driver.execute_script(js, fami_start_to_buy_button)
+                #driver.execute_script(js, fami_start_to_buy_button)
             except Exception as exc:
                 pass
 
@@ -4924,17 +4950,23 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -4995,8 +5027,8 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    #print("area_auto_select_mode:", area_auto_select_mode)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    #print("auto_select_mode:", auto_select_mode)
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -5109,7 +5141,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                             if is_match_area:
                                 matched_blocks.append(row)
 
-                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     break
 
 
@@ -5118,17 +5150,23 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
         else:
@@ -5309,15 +5347,13 @@ def fami_home_auto_select(driver, config_dict, last_activity_url):
                         pass
 
 
-    areas = None
+    matched_blocks = None
     if not is_select_box_visible:
         #---------------------------
         # part 2: select keywords
         #---------------------------
 
-        area_auto_select_mode = config_dict["area_auto_select"]["mode"]
         area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-
         if len(area_keyword) > 0:
             area_keyword_array = []
             try:
@@ -5326,41 +5362,44 @@ def fami_home_auto_select(driver, config_dict, last_activity_url):
                 area_keyword_array = []
 
             for area_keyword_item in area_keyword_array:
-                areas = get_fami_target_area(driver, config_dict, area_keyword_item)
-                if not areas is None:
+                matched_blocks = get_fami_target_area(driver, config_dict, area_keyword_item)
+                if not matched_blocks is None:
                     break
                 else:
                     print("is_need_refresh for keyword:", area_keyword_item)
         else:
             # empty keyword, match all.
-            areas = get_fami_target_area(driver, config_dict, "")
+            matched_blocks = get_fami_target_area(driver, config_dict, "")
 
-
-        area_target = None
-        if not areas is None:
-            #print("area_auto_select_mode", area_auto_select_mode)
-            #print("len(areas)", len(areas))
-            if len(areas) > 0:
+        auto_select_mode = config_dict["area_auto_select"]["mode"]
+        target_area = None
+        if not matched_blocks is None:
+            matched_blocks_count = len(matched_blocks)
+            if matched_blocks_count > 0:
                 target_row_index = 0
 
-                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                     pass
 
-                if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                    target_row_index = len(areas)-1
+                if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                    target_row_index = matched_blocks_count - 1
 
-                if area_auto_select_mode == CONST_RANDOM:
-                    target_row_index = random.randint(0,len(areas)-1)
+                if auto_select_mode == CONST_RANDOM:
+                    if matched_blocks_count > 1:
+                        target_row_index = random.randint(0,matched_blocks_count-1)
 
-                #print("target_row_index", target_row_index)
-                area_target = areas[target_row_index]
+                if auto_select_mode == CONST_CENTER:
+                    if matched_blocks_count > 2:
+                        target_row_index = int(matched_blocks_count/2)
 
-        if not area_target is None:
+                target_area = matched_blocks[target_row_index]
+
+        if not target_area is None:
             el_btn = None
             is_visible = False
             try:
                 my_css_selector = "button"
-                el_btn = area_target.find_element(By.TAG_NAME, my_css_selector)
+                el_btn = target_area.find_element(By.TAG_NAME, my_css_selector)
                 if not el_btn is None:
                     if el_btn.is_enabled():
                         is_visible = True
@@ -5482,17 +5521,23 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -5707,17 +5752,23 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -6058,17 +6109,23 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -6230,17 +6287,23 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -6571,17 +6634,23 @@ def ibon_date_auto_select(driver, config_dict):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -6812,17 +6881,23 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
         else:
@@ -9045,17 +9120,23 @@ def hkticketing_date_assign(driver, config_dict):
 
         target_area = None
         if not matched_blocks is None:
-            if len(matched_blocks) > 0:
+            matched_blocks_count = len(matched_blocks)
+            if matched_blocks_count > 0:
                 target_row_index = 0
 
                 if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                     pass
 
                 if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                    target_row_index = len(matched_blocks)-1
+                    target_row_index = matched_blocks_count - 1
 
                 if auto_select_mode == CONST_RANDOM:
-                    target_row_index = random.randint(0,len(matched_blocks)-1)
+                    if matched_blocks_count > 1:
+                        target_row_index = random.randint(0,matched_blocks_count-1)
+
+                if auto_select_mode == CONST_CENTER:
+                    if matched_blocks_count > 2:
+                        target_row_index = int(matched_blocks_count/2)
 
                 target_area = matched_blocks[target_row_index]
 
@@ -9341,17 +9422,23 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -9955,17 +10042,23 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
 
         target_area = None
         if not matched_blocks is None:
-            if len(matched_blocks) > 0:
+            matched_blocks_count = len(matched_blocks)
+            if matched_blocks_count > 0:
                 target_row_index = 0
 
                 if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                     pass
 
                 if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                    target_row_index = len(matched_blocks)-1
+                    target_row_index = matched_blocks_count - 1
 
                 if auto_select_mode == CONST_RANDOM:
-                    target_row_index = random.randint(0,len(matched_blocks)-1)
+                    if matched_blocks_count > 1:
+                        target_row_index = random.randint(0,matched_blocks_count-1)
+
+                if auto_select_mode == CONST_CENTER:
+                    if matched_blocks_count > 2:
+                        target_row_index = int(matched_blocks_count/2)
 
                 target_area = matched_blocks[target_row_index]
 
@@ -10176,17 +10269,23 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
     else:
@@ -11048,17 +11147,23 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
             if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+                target_row_index = matched_blocks_count - 1
 
             if auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
 
@@ -11328,17 +11433,23 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
     target_area = None
     if not matched_blocks is None:
-        if len(matched_blocks) > 0:
+        matched_blocks_count = len(matched_blocks)
+        if matched_blocks_count > 0:
             target_row_index = 0
 
-            if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                 pass
 
-            if area_auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = len(matched_blocks)-1
+            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_row_index = matched_blocks_count - 1
 
-            if area_auto_select_mode == CONST_RANDOM:
-                target_row_index = random.randint(0,len(matched_blocks)-1)
+            if auto_select_mode == CONST_RANDOM:
+                if matched_blocks_count > 1:
+                    target_row_index = random.randint(0,matched_blocks_count-1)
+
+            if auto_select_mode == CONST_CENTER:
+                if matched_blocks_count > 2:
+                    target_row_index = int(matched_blocks_count/2)
 
             target_area = matched_blocks[target_row_index]
         else:
