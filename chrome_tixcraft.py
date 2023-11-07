@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.04)"
+CONST_APP_VERSION = "MaxBot (2023.11.05)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -781,9 +781,7 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            NETWORK_BLOCKED_URLS = ['*.woff'
-            ,'*.woff2'
-            ,'*.ttf'
+            NETWORK_BLOCKED_URLS = ['*.ttf'
             ,'*.otf'
             ,'*/adblock.js'
             ,'*/google_ad_block.js'
@@ -798,7 +796,8 @@ def get_driver_by_config(config_dict):
             ,'*.rollbar.com/*'
             ,'*.cloudfront.com/*'
             ,'*.lndata.com/*'
-            ,'*twitter.com/i/*'
+            ,'*.twitter.com/i/*'
+            ,'*.fbcdn.net/*'
             ,'*youtube.com*'
             ,'*player.youku.*'
             ,'*e2elog.fetnet.net*']
@@ -11275,7 +11274,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     is_need_refresh = False
 
@@ -11421,7 +11420,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                             if is_match_area:
                                 matched_blocks.append(row)
 
-                                if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     break
 
             if show_debug_message:

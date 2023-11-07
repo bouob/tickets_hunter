@@ -22,7 +22,7 @@ import sys
 import threading
 import webbrowser
 
-CONST_APP_VERSION = "MaxBot (2023.11.02)"
+CONST_APP_VERSION = "MaxBot (2023.11.05)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
