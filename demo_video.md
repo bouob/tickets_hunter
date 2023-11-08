@@ -1,5 +1,20 @@
 # Demo (示範影片)
 
+### 2023-11-06: 
+在虛擬主機環境下搶票
+
+https://youtu.be/-LUt7Au03ps
+
+### 2023-11-04: 
+支援新的排序方式：中間選項(center)
+
+https://youtu.be/9fqiQHJmIeM
+
+### 2023-11-04: 
+FamiTicket 填入優惠驗證序號
+
+https://youtu.be/i3BycvHMgPY
+
 ### 2023-10-20: 
 FamiTicket 支援新購票頁面
 
