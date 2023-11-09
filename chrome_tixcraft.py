@@ -772,6 +772,7 @@ def get_driver_by_config(config_dict):
             ,'*googletagmanager.*'
             ,'*googletagservices.*'
             ,'*play.google.com/*'
+            ,'*fonts.googleapis.com/*'
             ,'*.googlesyndication.com/*'
             ,'*fundingchoicesmessages.google.com/*'
             ,'*.doubleclick.net/*'
