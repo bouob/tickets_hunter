@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.06)"
+CONST_APP_VERSION = "MaxBot (2023.11.07)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -461,21 +461,6 @@ def load_chromdriver_normal(config_dict, driver_type):
                         print(exc3)
                         pass
 
-
-    if driver_type=="stealth":
-        from selenium_stealth import stealth
-
-        # Selenium Stealth settings
-        stealth(driver,
-              languages=["zh-TW", "zh"],
-              vendor="Google Inc.",
-              platform="Win32",
-              webgl_vendor="Intel Inc.",
-              renderer="Intel Iris OpenGL Engine",
-              fix_hairline=True,
-          )
-    #print("driver capabilities", driver.capabilities)
-
     return driver
 
 def clean_uc_exe_cache():
@@ -781,10 +766,7 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            NETWORK_BLOCKED_URLS = ['*.ttf'
-            ,'*.otf'
-            ,'*/favicon.ico'
-            ,'*/adblock.js'
+            NETWORK_BLOCKED_URLS = ['*/adblock.js'
             ,'*/google_ad_block.js'
             ,'*google-analytics.*'
             ,'*googletagmanager.*'
@@ -799,7 +781,6 @@ def get_driver_by_config(config_dict):
             ,'*.twitter.com/i/*'
             ,'*platform.twitter.com/*'
             ,'*syndication.twitter.com/*'
-            ,'*.fbcdn.net/*'
             ,'*youtube.com/*'
             ,'*player.youku.*'
             ,'*e2elog.fetnet.net*']
@@ -807,6 +788,9 @@ def get_driver_by_config(config_dict):
             if config_dict["advanced"]["hide_some_image"]:
                 NETWORK_BLOCKED_URLS.append('*.woff')
                 NETWORK_BLOCKED_URLS.append('*.woff2')
+                NETWORK_BLOCKED_URLS.append('*.ttf')
+                NETWORK_BLOCKED_URLS.append('*.otf')
+                NETWORK_BLOCKED_URLS.append('*.ico')
                 NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/*')
                 NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/activity/*')
                 NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/field/*')
@@ -815,6 +799,10 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/activity/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/field/*')
                 NETWORK_BLOCKED_URLS.append('*azureedge.net/QWARE_TICKET//images/*')
+
+            if config_dict["advanced"]["block_facebook_network"]:
+                NETWORK_BLOCKED_URLS.append('*facebook.com/*')
+                NETWORK_BLOCKED_URLS.append('*.fbcdn.net/*')
 
             driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
             driver.execute_cdp_cmd('Network.enable', {})
