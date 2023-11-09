@@ -8,6 +8,8 @@ https://youtu.be/-LUt7Au03ps
 ### 2023-11-04: 
 支援新的排序方式：中間選項(center)
 
+ticketmaster 支援區域自動點擊
+
 https://youtu.be/9fqiQHJmIeM
 
 ### 2023-11-04: 
@@ -36,16 +38,9 @@ https://youtu.be/VQekrSB9Ayk
 https://youtu.be/-CazfZFvoh0
 
 ### 2023-10-10: 
-支援設定代理伺服器(Proxy)
+支援設定代理伺服器(Proxy), 還沒支援 account:password 模式.
 
 https://youtu.be/sao9k_PnC0w
-
-### 2023-09-16:
-更新 adblock plus extension 的filiter
-
-強烈建議搶票時勾選啟用 adblock plus 的擴充工具, 因為售票網站都會使用第三方網站資源或廣告, 會拖慢搶票的效率.
-
-https://youtu.be/Zm0EjPUqolI
 
 ### 2023-07-09:
 日期關鍵字支援多組與順位
@@ -82,11 +77,6 @@ indievox 支援「區域關鍵字」用在票種與數量的頁面
 
 https://youtu.be/rnYr5CSovGE
 
-### 2023-06-20:
-ticketmaster 支援區域自動點擊
-
-https://youtu.be/vUKWy79ZeP0
- 
 ### 2023-06-18:
 KKTIX/ibon/拓元 合併本地字典與線上字典檔
 
@@ -108,7 +98,7 @@ https://youtu.be/7kEyZI3Xark
 https://youtu.be/wHCNsyud54U
 
 ### 2023-06-14:
-支援brave瀏覽器/示範無視窗模式搶票/刷新時隨機延遲
+支援brave瀏覽器/刷新時隨機延遲
 
 https://youtu.be/QMX6Fo0fRfo
 
@@ -147,20 +137,10 @@ https://youtu.be/U-Rx5RIMFOg
 
 https://youtu.be/Wn1qLz-Re8c
 
-### 2023-04-15:
-ibon驗證碼
-
-https://youtu.be/NmFd7uLptGA
-
 ### 2023-03-27:
 kktix無票時刷新頁面,暫停搶票程式
 
 https://www.youtube.com/watch?v=4trNmMDntwM
-
-### 2023-03-14:
-部份支援 ticketmaster
-
-https://youtu.be/XHE0cxmN4WE
 
 ### 2023-03-02:
 澳門銀河購票無延遲
@@ -178,12 +158,12 @@ https://youtu.be/ZtnAh-VY5qs
 https://youtu.be/QnaCRQjAlng
 
 ### 2023-02-24:
-KKTix，無視窗模式，多設定檔管
+KKTix，多設定檔管理
 
 https://youtu.be/QgLAHkJbhqQ
 
 ### 2023-02-22:
-拓元，無視窗模式，透過 cookie SID登入
+拓元，透過 cookie SID登入
 
 https://youtu.be/fkx0HGqTpTg
 
@@ -202,20 +182,10 @@ https://youtu.be/TuacFXzuvlM
 
 https://youtu.be/Ft2WIWglZ5E
 
-### 2023-02-09:
-開啟Google OAuth網址
-
-https://youtu.be/8PxOXsjuI5Q
-
 ### 2023-02-08:
 Edge瀏覽器WebDriver下載與設定
 
 https://youtu.be/TzbBAEVVtoM
-
-### 2023-02-08:
-修正寬宏售票「熱賣中」文字的誤判
-
-https://youtu.be/Q6bISNSXaWw
 
 ### 2023-02-08:
 重新支援hkticketing
@@ -237,11 +207,6 @@ hkticketing(快達票)
 
 https://youtu.be/pZJlcMjayco
 
-### 2023-01-17:
-優化URBTIX 被登出的問題
-
-https://youtu.be/hBa_0fOBTl8
-
 ### 2023-01-14:
 優化KKTIX "演出日期"的驗證問題
 
@@ -251,11 +216,6 @@ https://youtu.be/ChmGZMaV2w8
 indievox 猜測驗證碼 / 視窗多開
 
 https://youtu.be/O84H1wNO2_w
-
-### 2023-01-12:
-tixcraft 猜測驗證碼後不送出
-
-https://youtu.be/mVzyDUV8Mao
 
 ### 2023-01-11:
 tixcraft 自動輸入驗證碼
@@ -300,11 +260,6 @@ https://youtu.be/_6jxqVC39x8 (macOS)
 
 https://youtu.be/PWKBZ8aG9Rg (Windows)
 
-### 2022-12-22:
-支援新版本的 cityline
-
-https://youtu.be/KOhQ2XdfjjQ
-
 ### 2022-11-24:
 KKTix 支援避開「剩餘 1」的區域的功能。增加關鍵字#2 的欄位。
 
@@ -334,7 +289,3 @@ https://youtu.be/x-OdqvUupiA
 FamiTicket
 
 https://youtu.be/ZV-G91FHVik
-
-### 2022-03-24:
-
-https://youtu.be/AmOYg8Oj0qM
