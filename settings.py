@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.11.06)"
+CONST_APP_VERSION = "MaxBot (2023.11.07)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -75,9 +75,8 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
-#CONST_WEBDRIVER_TYPE_STEALTH = "stealth"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
-#CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
+CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
@@ -210,6 +209,7 @@ def load_translate():
     en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
     en_us["hide_some_image"] = "Hide Some Images"
+    en_us["block_facebook_network"] = "Block Facebook Network"
 
     en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Wish you good luck.'
     en_us["donate"] = 'Donate'
@@ -312,6 +312,7 @@ def load_translate():
     zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
     zh_tw["hide_some_image"] = "隱藏部份圖片"
+    zh_tw["block_facebook_network"] = "擋掉 Facebook 連線"
 
     zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝您搶票成功。'
     zh_tw["donate"] = '打賞'
@@ -415,6 +416,7 @@ def load_translate():
     zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
     zh_cn["hide_some_image"] = "隐藏一些图像"
+    zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
 
     zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
     zh_cn["donate"] = '打赏'
@@ -517,6 +519,7 @@ def load_translate():
     ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
     ja_jp["hide_some_image"] = "一部の画像を非表示にする"
+    ja_jp["block_facebook_network"] = "Facebookをブロックする"
 
     ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
     ja_jp["donate"] = '寄付'
@@ -667,6 +670,7 @@ def get_default_config():
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = True
+    config_dict["advanced"]["block_facebook_network"] = True
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
@@ -799,6 +803,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha_force_submit
     global chk_state_adjacent_seat
     global chk_state_hide_some_image
+    global chk_state_block_facebook_network
     global chk_state_verbose
     global chk_state_auto_guess_options
     global combo_ocr_captcha_image_source
@@ -954,6 +959,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
         config_dict["advanced"]["hide_some_image"] = bool(chk_state_hide_some_image.get())
+        config_dict["advanced"]["block_facebook_network"] = bool(chk_state_block_facebook_network.get())
 
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
@@ -1251,6 +1257,7 @@ def applyNewLanguage():
     global chk_ocr_captcha_force_submit
     global chk_adjacent_seat
     global chk_hide_some_image
+    global chk_block_facebook_network
     global chk_verbose
     global lbl_online_dictionary_url
     global lbl_online_dictionary_preview
@@ -1268,6 +1275,7 @@ def applyNewLanguage():
     global lbl_adblock_plus_settings
     global lbl_adjacent_seat
     global lbl_hide_some_image
+    global lbl_block_facebook_network
     global lbl_auto_reload_page_interval
     global lbl_proxy_server_port
     global lbl_auto_reload_random_delay
@@ -1301,6 +1309,7 @@ def applyNewLanguage():
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_hide_some_image.config(text=translate[language_code]["hide_some_image"])
+    lbl_block_facebook_network.config(text=translate[language_code]["block_facebook_network"])
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
@@ -1328,6 +1337,7 @@ def applyNewLanguage():
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
     chk_adjacent_seat.config(text=translate[language_code]["enable"])
     chk_hide_some_image.config(text=translate[language_code]["enable"])
+    chk_block_facebook_network.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
     chk_auto_reload_random_delay.config(text=translate[language_code]["enable"])
@@ -2017,6 +2027,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_hide_some_image = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_hide_some_image)
     chk_hide_some_image.grid(column=1, row=group_row_count, sticky = W)
 
+    group_row_count +=1
+
+    global lbl_block_facebook_network
+    lbl_block_facebook_network = Label(frame_group_header, text=translate[language_code]['block_facebook_network'])
+    lbl_block_facebook_network.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_block_facebook_network
+    chk_state_block_facebook_network = BooleanVar()
+    chk_state_block_facebook_network.set(config_dict["advanced"]["block_facebook_network"])
+
+    global chk_block_facebook_network
+    chk_block_facebook_network = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_block_facebook_network)
+    chk_block_facebook_network.grid(column=1, row=group_row_count, sticky = W)
+
     group_row_count+=1
 
     global lbl_verbose
@@ -2618,7 +2642,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 570
-    GUI_SIZE_HEIGHT = 580
+    GUI_SIZE_HEIGHT = 605
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
