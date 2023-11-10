@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.07)"
+CONST_APP_VERSION = "MaxBot (2023.11.08)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -794,11 +794,8 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*.ico')
                 NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/*')
                 NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/activity/*')
-                NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/field/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.sg/images/activity/*')
-                NETWORK_BLOCKED_URLS.append('*static.ticketmaster.sg/images/field/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/activity/*')
-                NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/field/*')
                 NETWORK_BLOCKED_URLS.append('*azureedge.net/QWARE_TICKET//images/*')
 
             if config_dict["advanced"]["block_facebook_network"]:
@@ -1586,16 +1583,21 @@ def force_press_button_iframe(driver, f, select_by, select_query, force_submit=T
 
     return is_clicked
 
+def hide_tag_by_selector(driver, select_query, more_script = ""):
+    callback = "eachItem.style='display:none;';"
+    javascript_tag_by_selector(driver, select_query, callback, more_script = more_script)
+
 def clean_tag_by_selector(driver, select_query, more_script = ""):
+    callback = "eachItem.outerHTML='';"
+    javascript_tag_by_selector(driver, select_query, callback, more_script = more_script)
+
+def javascript_tag_by_selector(driver, select_query, callback, more_script = ""):
     try:
         driver.set_script_timeout(1)
         js = """var selectSoldoutItems = document.querySelectorAll('%s');
-selectSoldoutItems.forEach((userItem) =>
-{
-    userItem.outerHTML="";
-}
-);
-%s""" % (select_query, more_script)
+selectSoldoutItems.forEach((eachItem) =>
+{%s});
+%s""" % (select_query, callback, more_script)
 
         #print("javascript:", js)
         driver.execute_script(js)
@@ -3908,7 +3910,7 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
         #print('event_code:',event_code)
         #print("url:", url)
 
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
         headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
         try:
             html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
@@ -10476,7 +10478,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     ]
     for each_url in home_url_list:
         if each_url == url.lower():
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.closeBTN')
+            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.closeBTN')
+            clean_tag_by_selector(driver, ".popoutBG")
 
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
