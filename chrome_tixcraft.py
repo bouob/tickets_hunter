@@ -92,7 +92,7 @@ CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
-
+CONST_CHROME_FAMILY = ["chrome","edge","brave"]
 
 def t_or_f(arg):
     ret = False
@@ -802,8 +802,11 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*facebook.com/*')
                 NETWORK_BLOCKED_URLS.append('*.fbcdn.net/*')
 
-            driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
-            driver.execute_cdp_cmd('Network.enable', {})
+            # Chrome DevTools Protocal
+            if config_dict["browser"] in CONST_CHROME_FAMILY:
+                driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
+                driver.execute_cdp_cmd('Network.enable', {})
+
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
                     if not 'https://kktix.com/users/sign_in?' in homepage:
