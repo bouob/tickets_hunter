@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.09)"
+CONST_APP_VERSION = "MaxBot (2023.11.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -772,7 +772,6 @@ def get_driver_by_config(config_dict):
             ,'*googletagmanager.*'
             ,'*googletagservices.*'
             ,'*play.google.com/*'
-            ,'*fonts.googleapis.com/*'
             ,'*.googlesyndication.com/*'
             ,'*fundingchoicesmessages.google.com/*'
             ,'*.doubleclick.net/*'
