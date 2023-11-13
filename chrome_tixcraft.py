@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.10)"
+CONST_APP_VERSION = "MaxBot (2023.11.11)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1802,9 +1802,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
         if area_list_count > 0:
             formated_area_list = []
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -1957,9 +1955,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
         if area_list_count > 0:
             formated_area_list = []
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -3476,9 +3472,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
             print('kktix_area_keyword_1:', kktix_area_keyword_1)
             print('kktix_area_keyword_1_and:', kktix_area_keyword_1_and)
 
-        row_index = 0
         for row in ticket_price_list:
-            row_index += 1
             row_text = ""
             row_html = ""
             try:
@@ -4347,9 +4341,7 @@ def kktix_double_check_all_text_value(driver, ticket_number):
 
     if not ticket_price_input_list is None:
         #print("bingo, found one of ticket number textbox.")
-        row_index = 0
         for ticket_price_input in ticket_price_input_list:
-            row_index += 1
             current_ticket_number = ""
             try:
                 current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
@@ -4358,7 +4350,6 @@ def kktix_double_check_all_text_value(driver, ticket_number):
             if current_ticket_number is None:
                 current_ticket_number = ""
             if len(current_ticket_number) > 0:
-                #print(row_index, "current_ticket_number:", current_ticket_number)
                 if current_ticket_number == str(ticket_number):
                     #print("bingo, match target ticket number.")
 
@@ -4584,9 +4575,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
             formated_area_list = []
 
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_is_enabled=True
                 el_btn = None
                 try:
@@ -4614,9 +4603,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     date_html_text = ""
                     area_html_text = ""
                     row_text = ""
@@ -4809,9 +4796,7 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
             formated_area_list = []
 
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -4939,9 +4924,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -4988,9 +4971,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
             if len(area_keyword_item) == 0:
                 matched_blocks = formated_area_list
             else:
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -5292,9 +5273,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
             formated_area_list = []
 
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_is_enabled=True
                 el_btn = None
                 try:
@@ -5304,8 +5283,6 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                         button_class_string = str(el_btn.get_attribute('class'))
                         if len(button_class_string) > 1:
                             if 'disabled' in button_class_string:
-                                if show_debug_message:
-                                    print("found disabled activity at row:", row_index)
                                 row_is_enabled=False
                 except Exception as exc:
                     if show_debug_message:
@@ -5326,9 +5303,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                     print("start to match keyword:", date_keyword)
                 matched_blocks = []
 
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -5457,9 +5432,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -5513,9 +5486,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -5836,9 +5807,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
 
         if area_list_count > 0:
             formated_area_list = []
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_is_enabled=True
                 try:
                     if not row.is_enabled():
@@ -5862,9 +5831,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                     print("start to match keyword:", date_keyword)
                 matched_blocks = []
 
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -5962,19 +5929,15 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_is_enabled=True
                 try:
                     my_css_selector = "span.price-limited > span"
                     span_price_limited = row.find_element(By.CSS_SELECTOR, my_css_selector)
                     if not span_price_limited is None:
-                        #print("found span limited at idx:", row_index)
                         span_i18n_string = str(span_price_limited.get_attribute('data-i18n'))
                         if len(span_i18n_string) > 1:
                             if 'soldout' in span_i18n_string:
-                                #print("found span limited soldout at idx:", row_index)
                                 row_is_enabled=False
                 except Exception as exc:
                     pass
@@ -6001,9 +5964,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
     
                     row_text = ""
                     row_html = ""
@@ -6335,9 +6296,7 @@ def ibon_date_auto_select(driver, config_dict):
             formated_area_list = []
 
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 # default is enabled.
                 row_is_enabled=True
                 el_btn = None
@@ -6465,10 +6424,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
-
                 row_text = ""
                 row_html = ""
                 try:
@@ -6559,10 +6515,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
             if len(area_keyword_item) == 0:
                 matched_blocks = formated_area_list
             else:
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
-
                     row_text = ""
                     row_html = ""
                     try:
@@ -8785,11 +8738,8 @@ def hkticketing_date_assign(driver, config_dict):
                 is_page_ready = False
             else:
                 formated_area_list = []
-
                 # filter list.
-                row_index = 0
                 for row in area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -9031,9 +8981,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_is_enabled=True
                 try:
                     button_class_string = str(row.get_attribute('class'))
@@ -9074,9 +9022,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -9673,9 +9619,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                 formated_area_list = []
 
                 # filter list.
-                row_index = 0
                 for row in area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
@@ -9693,9 +9637,16 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                             row_text = ""
 
                     if len(row_text) > 0:
-                        if '立即訂購' in row_text or '點此購票' in row_text:
-                            if "<button" in row_html:
+                        if "<button" in row_html:
+                            buyable = False
+                            if '立即訂購' in row_text:
+                                buyable = True
+                            if '點此購票' in row_text:
+                                buyable = True
+                            if not buyable:
                                 row_text = ""
+                        else:
+                            row_text = ""
 
                     if len(row_text) > 0:
                         formated_area_list.append(row)
@@ -9731,10 +9682,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
         if not target_area is None:
             el_btn = None
             try:
-                # for kham.com
-                my_css_selector = "a > button"
-                if 'ticket.com' in domain_name:
-                    my_css_selector = "td > button.btn"
+                my_css_selector = "button"
                 el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
             except Exception as exc:
                 pass
@@ -9754,21 +9702,6 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     except Exception as exc:
                         pass
 
-        # PS: auto reload in kham is not used, due to soldout still have clickable button to enter.
-        '''
-        if auto_reload_coming_soon_page_enable:
-            # auto refresh for date list page.
-            if not formated_area_list is None:
-                if len(formated_area_list) == 0:
-                    try:
-                        driver.refresh()
-                        time.sleep(0.3)
-                    except Exception as exc:
-                        pass
-
-                    if config_dict["advanced"]["auto_reload_random_delay"]:
-                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
-        '''
 
     return ret
 
@@ -9835,9 +9768,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 formated_area_list.append(row)
         else:
             print("area list is empty, do refresh by javascript!")
@@ -9855,10 +9786,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
         if area_list_count > 0:
             matched_blocks = []
-
-            row_index = 0
             for row in formated_area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -10712,9 +10640,7 @@ def ticketplus_date_auto_select(driver, config_dict):
 
         if area_list_count > 0:
             formated_area_list = []
-            row_index = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -10913,10 +10839,8 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         if area_list_count > 0:
             formated_area_list = []
             # filter list.
-            row_index = 0
             soldout_count = 0
             for row in area_list:
-                row_index += 1
                 row_text = ""
                 row_html = ""
                 try:
@@ -10989,9 +10913,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                row_index = 0
                 for row in formated_area_list:
-                    row_index += 1
                     row_text = ""
                     row_html = ""
                     try:
