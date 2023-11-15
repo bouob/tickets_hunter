@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.11)"
+CONST_APP_VERSION = "MaxBot (2023.11.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -4458,22 +4458,30 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
         is_need_refresh = False
 
         if len(area_keyword) > 0:
-            for retry_index in range(2):
+            area_keyword_array = []
+            try:
+                area_keyword_array = json.loads("["+ area_keyword +"]")
+            except Exception as exc:
                 area_keyword_array = []
-                try:
-                    area_keyword_array = json.loads("["+ area_keyword +"]")
-                except Exception as exc:
-                    area_keyword_array = []
 
-                for area_keyword_item in area_keyword_array:
-                    is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
-                    if is_ticket_number_assigned:
-                        break
-                    else:
-                        print("is_need_refresh for keyword:", area_keyword_item)
+            # default refresh
+            is_need_refresh_final = True
+
+            for area_keyword_item in area_keyword_array:
+                is_ticket_number_assigned, is_need_refresh_tmp = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
+                
+                # one of keywords not need to refresh, final is not refresh.
+                if not is_need_refresh_tmp:
+                    is_need_refresh_final = False
 
                 if is_ticket_number_assigned:
                     break
+                else:
+                    if show_debug_message:
+                        print("is_need_refresh for keyword:", area_keyword_item)
+
+            if not is_ticket_number_assigned:
+                is_need_refresh = is_need_refresh_final
         else:
             # empty keyword, match all.
             is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, "")
@@ -9638,6 +9646,11 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
 
                     if len(row_text) > 0:
                         if "<button" in row_html:
+                            if ' disabled">' in row_html:
+                                row_text = ""
+
+                    if len(row_text) > 0:
+                        if "<button" in row_html:
                             buyable = False
                             if '立即訂購' in row_text:
                                 buyable = True
@@ -9647,6 +9660,25 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                                 row_text = ""
                         else:
                             row_text = ""
+
+                    if len(row_text) > 0:
+                        # kham.
+                        price_disabled_html = '"lightblue"'
+                        if 'ticket.com' in domain_name:
+                            price_disabled_html = '<del>'
+                            
+                        if "<td" in row_html:
+                            td_array = row_html.split("<td")
+                            if len(td_array) > 3:
+                                td_target = "<td" + td_array[3]
+                                price_array = td_target.split("、")
+                                is_all_priece_disabled = True
+                                for each_price in price_array:
+                                    if not (price_disabled_html in each_price):
+                                        is_all_priece_disabled = False
+
+                                if is_all_priece_disabled:
+                                    row_text = ""
 
                     if len(row_text) > 0:
                         formated_area_list.append(row)
@@ -9978,25 +10010,18 @@ def ticket_performance_ticket_number(driver, config_dict):
         inputed_value = ""
 
     if inputed_value == "" or inputed_value == "0":
-        is_visible = False
         try:
-            if form_input.is_enabled():
-                is_visible = True
+            form_input.click()
+            form_input.clear()
+            form_input.send_keys(str(ticket_number))
+            is_ticket_number_assigned = True
         except Exception as exc:
-            pass
-
-        if is_visible:
+            if show_debug_message:
+                print(exc)
             try:
-                form_input.click()
-                form_input.clear()
-                form_input.send_keys(str(ticket_number))
-                is_ticket_number_assigned = True
+                driver.execute_script("arguments[0].value='"+ str(ticket_number) +"';", form_input)
             except Exception as exc:
-                try:
-                    driver.execute_script("arguments[0].value='"+ str(ticket_number) +"'';", form_input)
-                    ret = True
-                except Exception as exc:
-                    pass
+                pass
 
     if len(inputed_value) > 0:
         if not inputed_value=="0":
