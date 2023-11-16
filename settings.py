@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.11.12)"
+CONST_APP_VERSION = "MaxBot (2023.11.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -211,6 +211,7 @@ def load_translate():
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
     en_us["hide_some_image"] = "Hide Some Images"
     en_us["block_facebook_network"] = "Block Facebook Network"
+    en_us["open_google_oauth_url"] = "Open Google OAuth URL"
 
     en_us["maxbot_slogan"] = 'MaxBot is a FREE and open source bot program. Wish you good luck.'
     en_us["donate"] = 'Donate'
@@ -314,6 +315,7 @@ def load_translate():
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
     zh_tw["hide_some_image"] = "隱藏部份圖片"
     zh_tw["block_facebook_network"] = "擋掉 Facebook 連線"
+    zh_tw["open_google_oauth_url"] = "開啟 Google OAuth 網站"
 
     zh_tw["maxbot_slogan"] = 'MaxBot是一個免費、開放原始碼的搶票機器人。\n祝您搶票成功。'
     zh_tw["donate"] = '打賞'
@@ -418,6 +420,7 @@ def load_translate():
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
     zh_cn["hide_some_image"] = "隐藏一些图像"
     zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
+    zh_cn["open_google_oauth_url"] = "开启 Google OAuth 网站"
 
     zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
     zh_cn["donate"] = '打赏'
@@ -521,6 +524,7 @@ def load_translate():
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
     ja_jp["hide_some_image"] = "一部の画像を非表示にする"
     ja_jp["block_facebook_network"] = "Facebookをブロックする"
+    ja_jp["open_google_oauth_url"] = "Google OAuth URL を開く"
 
     ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
     ja_jp["donate"] = '寄付'
@@ -672,6 +676,8 @@ def get_default_config():
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = True
     config_dict["advanced"]["block_facebook_network"] = True
+    config_dict["advanced"]["open_google_oauth_url"] = False
+
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
@@ -805,6 +811,8 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_adjacent_seat
     global chk_state_hide_some_image
     global chk_state_block_facebook_network
+    global chk_state_google_oauth
+
     global chk_state_verbose
     global chk_state_auto_guess_options
     global combo_ocr_captcha_image_source
@@ -961,6 +969,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
         config_dict["advanced"]["hide_some_image"] = bool(chk_state_hide_some_image.get())
         config_dict["advanced"]["block_facebook_network"] = bool(chk_state_block_facebook_network.get())
+        config_dict["advanced"]["open_google_oauth_url"] = bool(chk_state_google_oauth.get())
 
         config_dict["ocr_captcha"] = {}
         config_dict["ocr_captcha"]["enable"] = bool(chk_state_ocr_captcha.get())
@@ -1259,6 +1268,8 @@ def applyNewLanguage():
     global chk_adjacent_seat
     global chk_hide_some_image
     global chk_block_facebook_network
+    global chk_google_oauth
+
     global chk_verbose
     global lbl_online_dictionary_url
     global lbl_online_dictionary_preview
@@ -1277,6 +1288,8 @@ def applyNewLanguage():
     global lbl_adjacent_seat
     global lbl_hide_some_image
     global lbl_block_facebook_network
+    global lbl_google_oauth
+
     global lbl_auto_reload_page_interval
     global lbl_proxy_server_port
     global lbl_auto_reload_random_delay
@@ -1311,6 +1324,8 @@ def applyNewLanguage():
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_hide_some_image.config(text=translate[language_code]["hide_some_image"])
     lbl_block_facebook_network.config(text=translate[language_code]["block_facebook_network"])
+    lbl_google_oauth.config(text=translate[language_code]["open_google_oauth_url"])
+
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
@@ -1339,6 +1354,8 @@ def applyNewLanguage():
     chk_adjacent_seat.config(text=translate[language_code]["enable"])
     chk_hide_some_image.config(text=translate[language_code]["enable"])
     chk_block_facebook_network.config(text=translate[language_code]["enable"])
+    chk_google_oauth.config(text=translate[language_code]["enable"])
+
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
     chk_auto_reload_random_delay.config(text=translate[language_code]["enable"])
@@ -1952,7 +1969,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_adblock_plus_settings = Label(frame_group_header, text=translate[language_code]['adblock_plus_settings'])
     lbl_adblock_plus_settings.grid(column=0, row=group_row_count, sticky = E+N)
 
-    txt_adblock_plus_settings = Text(frame_group_header, width=30, height=4)
+    txt_adblock_plus_settings = Text(frame_group_header, width=30, height=3)
     txt_adblock_plus_settings.grid(column=1, row=group_row_count, sticky = W)
     txt_adblock_plus_settings.insert("1.0", CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
@@ -2041,6 +2058,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_block_facebook_network
     chk_block_facebook_network = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_block_facebook_network)
     chk_block_facebook_network.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_google_oauth
+    lbl_google_oauth = Label(frame_group_header, text=translate[language_code]['open_google_oauth_url'])
+    lbl_google_oauth.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_google_oauth
+    chk_state_google_oauth = BooleanVar()
+    chk_state_google_oauth.set(config_dict["advanced"]["open_google_oauth_url"])
+
+    global chk_google_oauth
+    chk_google_oauth = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_google_oauth)
+    chk_google_oauth.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
@@ -2643,7 +2674,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 570
-    GUI_SIZE_HEIGHT = 605
+    GUI_SIZE_HEIGHT = 620
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
