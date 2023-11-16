@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.12)"
+CONST_APP_VERSION = "MaxBot (2023.11.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -65,6 +65,7 @@ CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
+URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
@@ -805,6 +806,9 @@ def get_driver_by_config(config_dict):
             if config_dict["browser"] in CONST_CHROME_FAMILY:
                 driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
                 driver.execute_cdp_cmd('Network.enable', {})
+
+            if config_dict["advanced"]["open_google_oauth_url"]:
+                driver.execute_script("window.open('%s','_blank');" % (URL_GOOGLE_OAUTH));
 
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
@@ -3648,6 +3652,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
+    is_ticket_number_assigned = False
     matched_blocks = None
     is_ticket_number_assigned, matched_blocks = kktix_travel_price_list(driver, config_dict, auto_select_mode, kktix_area_keyword)
 
@@ -3662,39 +3667,37 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
             if show_debug_message:
                 print("matched_blocks is empty, is_need_refresh")
 
-    current_ticket_number = ""
-    is_visible = False
     if not target_area is None:
+        current_ticket_number = ""
         if show_debug_message:
             print("try to get input box value.")
         try:
             current_ticket_number = str(target_area.get_attribute('value')).strip()
-            is_visible = target_area.is_enabled()
         except Exception as exc:
             pass
 
-    if is_visible and len(current_ticket_number) > 0:
-        if current_ticket_number == "0":
-            try:
-                print("asssign ticket number:%s" % ticket_number_str)
-                target_area.clear()
-                target_area.send_keys(ticket_number_str)
-
-                is_ticket_number_assigned = True
-            except Exception as exc:
-                print("asssign ticket number to ticket-price field Exception:")
-                print(exc)
+        if len(current_ticket_number) > 0:
+            if current_ticket_number == "0":
                 try:
+                    print("asssign ticket number:%s" % ticket_number_str)
                     target_area.clear()
-                    target_area.send_keys("1")
+                    target_area.send_keys(ticket_number_str)
                     is_ticket_number_assigned = True
-                except Exception as exc2:
-                    pass
-        else:
-            if show_debug_message:
-                print("value already assigned.")
-            # already assigned.
-            is_ticket_number_assigned = True
+                except Exception as exc:
+                    print("asssign ticket number to ticket-price field Exception:")
+                    print(exc)
+                    try:
+                        target_area.clear()
+                        target_area.send_keys("1")
+                        is_ticket_number_assigned = True
+                    except Exception as exc2:
+                        print("asssign ticket number to ticket-price still failed.")
+                        pass
+            else:
+                if show_debug_message:
+                    print("value already assigned.")
+                # already assigned.
+                is_ticket_number_assigned = True
 
     return is_ticket_number_assigned, is_need_refresh
 
@@ -5424,7 +5427,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
     area_list = None
     try:
         #print("try to find cityline area block")
-        my_css_selector = "div.area-info"
+        my_css_selector = "div.area-list > div.area-wrapper"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -5458,11 +5461,13 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                         row_text = ""
                 
                 if len(row_text) > 0:
-                    if 'disabled' in row_html:
+                    if ' disabled' in row_html:
                         row_text = ""
-                
+                    if ' 售罄' in row_html:
+                        row_text = ""
+
                 if len(row_text) > 0:
-                    if 'selected' in row_html:
+                    if '<div class="area-info selected' in row_html:
                         # someone is selected. skip this process.
                         is_price_assign_by_bot = True
                         
@@ -5470,6 +5475,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                 if len(row_text) > 0:
+                    #print("row_html:", row_html)
                     formated_area_list.append(row)
         else:
             if show_debug_message:
@@ -5582,11 +5588,8 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
 
     if not ticket_price_input is None:
         current_ticket_number = ""
-        is_visible = False
-
         try:
             current_ticket_number = str(ticket_price_input.get_attribute('value')).strip()
-            is_visible = ticket_price_input.is_enabled()
         except Exception as exc:
             pass
 
@@ -5596,16 +5599,16 @@ def urbtix_ticket_number_auto_select(driver, config_dict):
                     print("asssign ticket number:%s" % ticket_number_str)
                     ticket_price_input.clear()
                     ticket_price_input.send_keys(ticket_number_str)
-
                     is_ticket_number_assigned = True
                 except Exception as exc:
-                    print("asssign ticket number to ticket-price field Exception:")
+                    print("asssign ticket number to ticket-count field Exception:")
                     print(exc)
                     try:
                         ticket_price_input.clear()
                         ticket_price_input.send_keys("1")
                         is_ticket_number_assigned = True
                     except Exception as exc2:
+                        print("asssign ticket number to ticket-count still failed.")
                         pass
             else:
                 # already assigned.
@@ -5744,40 +5747,40 @@ def urbtix_performance(driver, config_dict):
     is_price_assign_by_bot = False
     is_need_refresh = False
 
-    auto_fill_ticket_number = True
-    if auto_fill_ticket_number:
-        # click price row.
-        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    # click price row.
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    if show_debug_message:
+        print("area_keyword:", area_keyword)
 
-        if show_debug_message:
-            print("area_keyword:", area_keyword)
-
-        if len(area_keyword) > 0:
+    if len(area_keyword) > 0:
+        area_keyword_array = []
+        try:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+        except Exception as exc:
             area_keyword_array = []
-            try:
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                area_keyword_array = []
 
-            for area_keyword_item in area_keyword_array:
+        for area_keyword_item in area_keyword_array:
+            if show_debug_message:
                 print("area_keyword_item for keyword:", area_keyword_item)
-                is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, config_dict, area_keyword_item)
-                if not is_need_refresh:
-                    break
-                else:
-                    print("is_need_refresh for keyword:", area_keyword_item)
-        else:
-            # empty keyword, match all.
-            is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, config_dict, "")
+            is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, config_dict, area_keyword_item)
+            if not is_price_assign_by_bot:
+                break
+    else:
+        # empty keyword, match all.
+        is_need_refresh, is_price_assign_by_bot = urbtix_area_auto_select(driver, config_dict, "")
 
-        # un-tested. disable refresh for now.
-        is_need_refresh = False
-        if is_need_refresh:
-            try:
-                driver.refresh()
-            except Exception as exc:
-                pass
+    if show_debug_message:
+        print("is_price_assign_by_bot:", is_price_assign_by_bot)
 
+    # un-tested. disable refresh for now.
+    is_need_refresh = False
+    if is_need_refresh:
+        try:
+            driver.refresh()
+        except Exception as exc:
+            pass
+    else:
+        # now, alway not refresh.
         if config_dict["advanced"]["disable_adjacent_seat"]:
             urbtix_uncheck_adjacent_seat(driver, config_dict)
 
@@ -9053,8 +9056,6 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                             print("row_text:", row_text)
 
                         is_match_area = False
-                        match_area_code = 0
-
                         if len(area_keyword_item) > 0:
                             # must match keyword.
                             is_match_area = True
