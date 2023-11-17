@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.13)"
+CONST_APP_VERSION = "MaxBot (2023.11.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -9599,144 +9599,160 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
     date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-    ret = False
+    if show_debug_message:
+        print("date_keyword:", date_keyword)
+        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
+
     matched_blocks = None
 
-    # default not selected.
-    is_date_assigned = False
-    if not is_date_assigned:
-        area_list = None
-        try:
-            # for kham.com
-            my_css_selector = "table.eventTABLE > tbody > tr"
-            if 'ticket.com' in domain_name:
-                my_css_selector = "div.description > table.table.table-striped.itable > tbody > tr"
+    area_list = None
+    try:
+        # for kham.com
+        my_css_selector = "table.eventTABLE > tbody > tr"
+        if 'ticket.com' in domain_name:
+            my_css_selector = "div.description > table.table.table-striped.itable > tbody > tr"
 
-            area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-        except Exception as exc:
-            print("find #date-time tr list fail")
-            print(exc)
+        area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+    except Exception as exc:
+        print("find #date-time tr list fail")
+        print(exc)
 
-        #PS: some blocks are generate by ajax, not appear at first time.
-        formated_area_list = None
-        if not area_list is None:
-            area_list_count = len(area_list)
-            if show_debug_message:
-                print("date_list_count:", area_list_count)
+    #PS: some blocks are generate by ajax, not appear at first time.
+    formated_area_list = None
+    if not area_list is None:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
 
-            if area_list_count > 0:
-                formated_area_list = []
+        if area_list_count > 0:
+            formated_area_list = []
 
-                # filter list.
-                for row in area_list:
-                    row_text = ""
-                    row_html = ""
-                    try:
-                        #row_text = row.text
-                        row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
-                    except Exception as exc:
-                        if show_debug_message:
-                            print(exc)
-                        # error, exit loop
-                        break
+            # filter list.
+            for row in area_list:
+                row_text = ""
+                row_html = ""
+                try:
+                    #row_text = row.text
+                    row_html = row.get_attribute('innerHTML')
+                    row_text = remove_html_tags(row_html)
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    # error, exit loop
+                    break
 
-                    if len(row_text) > 0:
-                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                if len(row_text) > 0:
+                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        row_text = ""
+
+                if len(row_text) > 0:
+                    if "<button" in row_html:
+                        if ' disabled">' in row_html:
                             row_text = ""
 
-                    if len(row_text) > 0:
-                        if "<button" in row_html:
-                            if ' disabled">' in row_html:
-                                row_text = ""
-
-                    if len(row_text) > 0:
-                        if "<button" in row_html:
-                            buyable = False
-                            if '立即訂購' in row_text:
-                                buyable = True
-                            if '點此購票' in row_text:
-                                buyable = True
-                            if not buyable:
-                                row_text = ""
-                        else:
+                if len(row_text) > 0:
+                    if "<button" in row_html:
+                        buyable = False
+                        if '立即訂購' in row_text:
+                            buyable = True
+                        if '點此購票' in row_text:
+                            buyable = True
+                        if not buyable:
                             row_text = ""
+                    else:
+                        row_text = ""
 
-                    if len(row_text) > 0:
-                        # kham.
-                        price_disabled_html = '"lightblue"'
-                        if 'ticket.com' in domain_name:
-                            price_disabled_html = '<del>'
-                            
-                        if "<td" in row_html:
-                            td_array = row_html.split("<td")
-                            if len(td_array) > 3:
-                                td_target = "<td" + td_array[3]
-                                price_array = td_target.split("、")
-                                is_all_priece_disabled = True
-                                for each_price in price_array:
-                                    if not (price_disabled_html in each_price):
-                                        is_all_priece_disabled = False
+                if len(row_text) > 0:
+                    # kham.
+                    price_disabled_html = '"lightblue"'
+                    if 'ticket.com' in domain_name:
+                        price_disabled_html = '<del>'
+                        
+                    if "<td" in row_html:
+                        td_array = row_html.split("<td")
+                        if len(td_array) > 3:
+                            td_target = "<td" + td_array[3]
+                            price_array = td_target.split("、")
+                            is_all_priece_disabled = True
+                            for each_price in price_array:
+                                if not (price_disabled_html in each_price):
+                                    is_all_priece_disabled = False
 
-                                if is_all_priece_disabled:
-                                    row_text = ""
+                            if is_all_priece_disabled:
+                                row_text = ""
 
-                    if len(row_text) > 0:
-                        formated_area_list.append(row)
-            else:
-                if show_debug_message:
-                    print("area_list is None...")
-
-        if not formated_area_list is None:
-            area_list_count = len(formated_area_list)
-            if show_debug_message:
-                print("formated_area_list count:", area_list_count)
-            if area_list_count > 0:
-                if len(date_keyword) == 0:
-                    matched_blocks = formated_area_list
-                else:
-                    # match keyword.
-                    if show_debug_message:
-                        print("start to match keyword:", date_keyword)
-
-                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
-
-                    if show_debug_message:
-                        if not matched_blocks is None:
-                            print("after match keyword, found count:", len(matched_blocks))
-            else:
-                print("not found date-time-position")
-                pass
+                if len(row_text) > 0:
+                    formated_area_list.append(row)
         else:
-            print("date date-time-position is None")
+            if show_debug_message:
+                print("area_list is None...")
+
+    if not formated_area_list is None:
+        area_list_count = len(formated_area_list)
+        if show_debug_message:
+            print("formated_area_list count:", area_list_count)
+        if area_list_count > 0:
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", date_keyword)
+
+                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    is_date_assign_by_bot = False
+    if not target_area is None:
+        is_button_clicked = False
+        el_btn = None
+        try:
+            my_css_selector = "button"
+            el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+        except Exception as exc:
             pass
 
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-        if not target_area is None:
-            el_btn = None
+        if not el_btn is None:
             try:
-                my_css_selector = "button"
-                el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+                if el_btn.is_enabled() and el_btn.is_displayed():
+                    el_btn.click()
+                    print("buy button pressed.")
+                    is_button_clicked = True
             except Exception as exc:
-                pass
-
-            if not el_btn is None:
+                # use plan B
                 try:
-                    if el_btn.is_enabled() and el_btn.is_displayed():
-                        el_btn.click()
-                        print("buy button pressed.")
-                        ret = True
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", el_btn)
+                    is_button_clicked = True
                 except Exception as exc:
-                    # use plan B
+                    pass
+        is_date_assign_by_bot = is_button_clicked
+    else:
+        # no target to click.
+        if auto_reload_coming_soon_page_enable:
+            # auto refresh for date list page.
+            if not formated_area_list is None:
+                if len(formated_area_list) == 0:
                     try:
-                        print("force to click by js.")
-                        driver.execute_script("arguments[0].click();", el_btn)
-                        ret = True
+                        driver.refresh()
+                        time.sleep(0.3)
                     except Exception as exc:
                         pass
 
+                    if config_dict["advanced"]["auto_reload_random_delay"]:
+                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
-    return ret
+    return is_date_assign_by_bot
 
 def kham_product(driver, domain_name, config_dict):
     show_debug_message = True       # debug.
