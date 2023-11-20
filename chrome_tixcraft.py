@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.14)"
+CONST_APP_VERSION = "MaxBot (2023.11.15)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -65,7 +65,6 @@ CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
-URL_GOOGLE_OAUTH = 'https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&prompt=consent&response_type=code&client_id=407408718192.apps.googleusercontent.com&scope=email&access_type=offline&flowName=GeneralOAuthFlow'
 
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
@@ -806,9 +805,6 @@ def get_driver_by_config(config_dict):
             if config_dict["browser"] in CONST_CHROME_FAMILY:
                 driver.execute_cdp_cmd('Network.setBlockedURLs', {"urls": NETWORK_BLOCKED_URLS})
                 driver.execute_cdp_cmd('Network.enable', {})
-
-            if config_dict["advanced"]["open_google_oauth_url"]:
-                driver.execute_script("window.open('%s','_blank');" % (URL_GOOGLE_OAUTH));
 
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
@@ -10669,7 +10665,8 @@ def ticketplus_date_auto_select(driver, config_dict):
     except Exception as exc:
         print("find #buyTicket fail")
 
-    find_ticket_text_list = ['立即購票']
+    # '立即購票' -> '立即購買'
+    find_ticket_text_list = ['>立即購']
     sold_out_text_list = ['銷售一空','尚未開賣']
 
     matched_blocks = None
@@ -10702,7 +10699,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                 if len(row_text) > 0:
                     row_is_enabled=False
                     for text_item in find_ticket_text_list:
-                        if text_item in row_text:
+                        if text_item in row_html:
                             row_is_enabled = True
                             break
 
