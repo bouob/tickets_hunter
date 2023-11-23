@@ -42,6 +42,11 @@ ssl._create_default_https_context = ssl._create_unverified_context
 # ocr
 import base64
 
+# workaround for ddddocr with Pillow.
+from PIL import Image
+if not hasattr(Image, 'ANTIALIAS'):
+    setattr(Image, 'ANTIALIAS', Image.LANCZOS)
+
 try:
     import ddddocr
 
@@ -55,7 +60,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.15)"
+CONST_APP_VERSION = "MaxBot (2023.11.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -3268,7 +3273,7 @@ def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_n
     else:
         previous_answer = None
         last_url, is_quit_bot = get_current_url(driver)
-        for redo_ocr in range(999):
+        for redo_ocr in range(99):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
                 # start next loop.
@@ -10854,13 +10859,17 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
     matched_blocks = None
 
+    if show_debug_message:
+        print("current_layout_style:", current_layout_style)
+
     area_list = None
     try:
         # style 2: .text-title
         my_css_selector = "div.rwd-margin > div.text-title"
         if current_layout_style == 1:
             # style 1: .text-title
-            my_css_selector = "div.v-expansion-panels > div.v-expansion-panel"
+            # PS: price info header format also is div.v-expansion-panels > div.v-expansion-panel
+            my_css_selector = "div.seats-area > div.v-expansion-panel"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         if current_layout_style == 1:
@@ -10941,6 +10950,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             print("area_list_count is None.")
         pass
 
+    is_price_panel_expanded = False
     if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
@@ -10989,6 +10999,9 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                             matched_blocks.append(row)
 
                             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                if ' aria-expanded="true"' in row_html:
+                                    print(row_html)
+                                    is_price_panel_expanded = True
                                 break
 
             if show_debug_message:
@@ -11008,30 +11021,39 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     # for style_1, need click once.
     if show_debug_message:
         print("current_layout_style:", current_layout_style)
+        print("is_price_panel_expanded:", is_price_panel_expanded)
 
-    if current_layout_style==1:
-        if not target_area is None:
-            try:
-                target_area.click()
-            except Exception as exc:
-                print("click target_area link fail")
-                print(exc)
-                # use plan B
+    if not is_price_panel_expanded:
+        if current_layout_style==1:
+            if not target_area is None:
                 try:
-                    print("force to click by js.")
-                    js = """let titleBar = document.getElementById("titleBar");
-                    if(titleBar!=null) {titleBar.innerHTML="";}
-                    arguments[0].scrollIntoView();
-                    arguments[0].firstChild.click();
-                    """
-                    driver.execute_script(js, target_area)
+                    #PS: must click on button instead of div to expand lay.
+                    my_css_selector = 'button'
+                    target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+                    target_button.click()
+                    print("clicked on button.")
+
+                    #target_area.click()
                 except Exception as exc:
-                    #print(exc)
-                    pass
+                    print("click target_area link fail")
+                    print(exc)
+                    # use plan B
+                    try:
+                        print("force to click by js.")
+                        js = """let titleBar = document.getElementById("titleBar");
+                        if(titleBar!=null) {titleBar.innerHTML="";}
+                        arguments[0].scrollIntoView();
+                        arguments[0].firstChild.click();
+                        """
+                        driver.execute_script(js, target_area)
+                    except Exception as exc:
+                        #print(exc)
+                        pass
 
     is_price_assign_by_bot = False
     if not target_area is None:
         for retry_index in range(2):
+            # PS: each price have each price div, so need pass parent div to increase ticket number.
             is_price_assign_by_bot = ticketplus_assign_ticket_number(target_area, config_dict)
 
     return is_need_refresh, is_price_assign_by_bot
