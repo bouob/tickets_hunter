@@ -11000,7 +11000,6 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
                             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                 if ' aria-expanded="true"' in row_html:
-                                    print(row_html)
                                     is_price_panel_expanded = True
                                 break
 
@@ -11628,9 +11627,8 @@ def ticketplus_ticket_agree(driver, config_dict):
         my_css_selector = 'div.v-input__slot > div > input[type="checkbox"]'
         agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
-        print("find agree checkbox fail")
         if show_debug_message:
-            print(exc)
+            print("find ticketplus agree checkbox fail")
         pass
 
     is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
@@ -11677,6 +11675,8 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+    else:
+        ticketplus_dict["fail_list"]=[]
 
     #https://ticketplus.com.tw/confirm/xx/oo
     if '/confirm/' in url.lower() or '/confirmseat/' in url.lower():
