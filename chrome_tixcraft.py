@@ -60,7 +60,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.16)"
+CONST_APP_VERSION = "MaxBot (2023.11.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -667,9 +667,9 @@ def get_driver_by_config(config_dict):
     print("browser:", config_dict["browser"])
     print("ticket_number:", str(config_dict["ticket_number"]))
 
-    print(config_dict["tixcraft"])
-    print("==[advanced config]==")
-    print(config_dict["advanced"])
+    #print(config_dict["tixcraft"])
+    #print("==[advanced config]==")
+    #print(config_dict["advanced"])
     print("webdriver_type:", config_dict["webdriver_type"])
 
     # entry point
@@ -680,7 +680,7 @@ def get_driver_by_config(config_dict):
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    print("platform.system().lower():", platform.system().lower())
+    #print("platform.system().lower():", platform.system().lower())
 
     if config_dict["browser"] in ["chrome","brave"]:
         # method 6: Selenium Stealth
@@ -2258,7 +2258,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                     matched_blocks.append(row)
 
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                        print("only need first item, break area list loop.")
+                        #print("only need first item, break area list loop.")
                         break
 
         if len(matched_blocks) == 0:
@@ -2346,7 +2346,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                     matched_blocks.append(row)
 
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                        print("only need first item, break area list loop.")
+                        #print("only need first item, break area list loop.")
                         break
 
         if len(matched_blocks) == 0:
@@ -2994,7 +2994,6 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
 def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
-    print("start to ddddocr")
 
     is_need_redo_ocr = False
     is_form_sumbited = False
@@ -3020,7 +3019,8 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
         ocr_answer = tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
-        print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
+        if show_debug_message:
+            print("ocr elapsed time:", "{:.3f}".format(ocr_elapsed_time))
 
         if ocr_answer is None:
             if away_from_keyboard_enable:
@@ -3032,7 +3032,8 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                 tixcraft_keyin_captcha_code(driver)
         else:
             ocr_answer = ocr_answer.strip()
-            print("ocr_answer:", ocr_answer)
+            if show_debug_message:
+                print("ocr_answer:", ocr_answer)
             if len(ocr_answer)==4:
                 who_care_var, is_form_sumbited = tixcraft_keyin_captcha_code(driver, answer = ocr_answer, auto_submit = away_from_keyboard_enable)
             else:
@@ -3043,7 +3044,8 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                     is_need_redo_ocr = True
                     if previous_answer != ocr_answer:
                         previous_answer = ocr_answer
-                        print("click captcha again.")
+                        if show_debug_message:
+                            print("click captcha again.")
                         if True:
                             # selenium solution.
                             tixcraft_reload_captcha(driver, domain_name)
@@ -3144,7 +3146,7 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                     matched_blocks.append(row)
 
                     if area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                        print("only need first item, break area list loop.")
+                        #print("only need first item, break area list loop.")
                         break
 
         if len(matched_blocks) == 0:
@@ -4676,7 +4678,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                             matched_blocks.append(row)
 
                             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                print("only need first item, break area list loop.")
+                                #print("only need first item, break area list loop.")
                                 break
 
     return_row_count = 0
@@ -5336,7 +5338,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                             matched_blocks.append(row)
 
                             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                print("only need first item, break area list loop.")
+                                #print("only need first item, break area list loop.")
                                 break
 
 
@@ -7332,7 +7334,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     if config_dict["auto_check_agree"]:
-        for i in range(3):
+        for i in range(2):
             is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
             if is_finish_checkbox_click:
                 break
@@ -7342,7 +7344,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
     else:
         previous_answer = None
         last_url, is_quit_bot = get_current_url(driver)
-        for redo_ocr in range(999):
+        for redo_ocr in range(99):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
                 # start next loop.
@@ -7395,16 +7397,19 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
             break
 
     if "/activity/detail/" in url:
+        tixcraft_dict["start_time"] = time.time()
         is_redirected = tixcraft_redirect(driver, url)
 
     is_date_selected = False
     if "/activity/game/" in url:
+        tixcraft_dict["start_time"] = time.time()
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
             domain_name = url.split('/')[2]
             is_date_selected = tixcraft_date_auto_select(driver, url, config_dict, domain_name)
 
     if '/artist/' in url and 'ticketmaster.com' in url:
+        tixcraft_dict["start_time"] = time.time()
         is_event_page = False
         if len(url.split('/'))==6:
             is_event_page = True
@@ -7425,7 +7430,6 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 # area auto select is too difficult, skip in this version.
                 tixcraft_dict["fail_promo_list"] = ticketmaster_promo(driver, config_dict, tixcraft_dict["fail_promo_list"])
                 ticketmaster_assign_ticket_number(driver, config_dict)
-
     else:
         tixcraft_dict["fail_promo_list"] = []
 
@@ -7433,7 +7437,6 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     if '/ticket/check-captcha/' in url:
         domain_name = url.split('/')[2]
         ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
-
 
     if '/ticket/verify/' in url:
         tixcraft_dict["fail_list"] = tixcraft_verify(driver, config_dict, tixcraft_dict["fail_list"])
@@ -7444,6 +7447,18 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     if '/ticket/ticket/' in url:
         domain_name = url.split('/')[2]
         tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
+        tixcraft_dict["done_time"] = time.time()
+
+    if '/ticket/order' in url:
+        tixcraft_dict["done_time"] = time.time()
+
+    if '/ticket/checkout' in url:
+        if not tixcraft_dict["start_time"] is None:
+            if not tixcraft_dict["done_time"] is None:
+                bot_elapsed_time = tixcraft_dict["done_time"] - tixcraft_dict["start_time"]
+                if tixcraft_dict["elapsed_time"] != bot_elapsed_time:
+                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
+                tixcraft_dict["elapsed_time"] = bot_elapsed_time
 
     return tixcraft_dict
 
@@ -11808,12 +11823,18 @@ def main(args):
     tixcraft_dict = {}
     tixcraft_dict["fail_list"]=[]
     tixcraft_dict["fail_promo_list"]=[]
+    tixcraft_dict["start_time"]=None
+    tixcraft_dict["done_time"]=None
+    tixcraft_dict["elapsed_time"]=None
 
     # for kktix
     kktix_dict = {}
     kktix_dict["fail_list"]=[]
     kktix_dict["captcha_sound_played"] = False
     kktix_dict["kktix_register_status_last"] = None
+    kktix_dict["start_time"]=None
+    kktix_dict["done_time"]=None
+    kktix_dict["elapsed_time"]=None
 
     fami_dict = {}
     fami_dict["fail_list"] = []
@@ -11821,6 +11842,9 @@ def main(args):
 
     ibon_dict = {}
     ibon_dict["fail_list"]=[]
+    ibon_dict["start_time"]=None
+    ibon_dict["done_time"]=None
+    ibon_dict["elapsed_time"]=None
 
     hkticketing_dict = {}
     hkticketing_dict["is_date_submiting"] = False
