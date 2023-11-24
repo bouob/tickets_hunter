@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.11.16)"
+CONST_APP_VERSION = "MaxBot (2023.11.17)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -732,10 +732,8 @@ def btn_resume_clicked(language_code):
     update_maxbot_runtime_status()
 
 def btn_launcher_clicked(language_code):
-    print('run button pressed.')
     Root_Dir = ""
     save_ret = btn_save_act(language_code, slience_mode=True)
-    print("save config result:", save_ret)
     if save_ret:
         run_python_script("config_launcher")
 
