@@ -4,7 +4,7 @@ cryptography
 idna
 selenium>=4.0.0
 undetected-chromedriver
-playsound
+playsound==1.2.2
 pyperclip
 ddddocr
 urllib3>=1.21.1
