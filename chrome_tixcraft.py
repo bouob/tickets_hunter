@@ -60,7 +60,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.17)"
+CONST_APP_VERSION = "MaxBot (2023.11.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -2072,7 +2072,7 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
         if len(row_text) > 0:
             if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                 row_text = ""
-        
+
         if len(row_text) > 0:
             # start to compare, normalize all.
             row_text = format_keyword_string(row_text)
@@ -2760,7 +2760,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                     print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
         except Exception as exc:
             pass
-    
+
     return is_answer_sent, fail_list
 
 def get_answer_list_from_user_guess_string(config_dict):
@@ -4475,7 +4475,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
 
             for area_keyword_item in area_keyword_array:
                 is_ticket_number_assigned, is_need_refresh_tmp = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
-                
+
                 # one of keywords not need to refresh, final is not refresh.
                 if not is_need_refresh_tmp:
                     is_need_refresh_final = False
@@ -5462,7 +5462,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 if len(row_text) > 0:
                     if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
-                
+
                 if len(row_text) > 0:
                     if ' disabled' in row_html:
                         row_text = ""
@@ -5473,7 +5473,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     if '<div class="area-info selected' in row_html:
                         # someone is selected. skip this process.
                         is_price_assign_by_bot = True
-                        
+
                         row_text = ""
                         break
 
@@ -5979,7 +5979,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
             else:
                 # match keyword.
                 for row in formated_area_list:
-    
+
                     row_text = ""
                     row_html = ""
                     try:
@@ -6672,7 +6672,7 @@ def ibon_purchase_button_press(driver):
     is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#ticket-wrap > a.btn')
     return is_button_clicked
 
-def assign_text(driver, by, query, val, overwrite = False, submit=False):
+def assign_text(driver, by, query, val, overwrite = False, submit=False, overwrite_when = ""):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
@@ -6711,15 +6711,29 @@ def assign_text(driver, by, query, val, overwrite = False, submit=False):
                     if inputed_text == val:
                         is_text_sent = True
                     else:
+                        if len(overwrite_when) > 0:
+                            if overwrite_when == inputed_text:
+                                overwrite = True
                         if overwrite:
-                            el_text.clear()
                             is_do_keyin = True
 
                 if is_do_keyin:
-                    el_text.click()
-                    el_text.send_keys(val)
+                    builder = ActionChains(driver)
+                    builder.move_to_element(el_text)
+                    builder.click(el_text)
+                    if platform.system() == 'Darwin':
+                        builder.key_down(Keys.COMMAND)
+                    else:
+                        builder.key_down(Keys.CONTROL)
+                    builder.send_keys("a")
+                    if platform.system() == 'Darwin':
+                        builder.key_up(Keys.COMMAND)
+                    else:
+                        builder.key_up(Keys.CONTROL)
+                    builder.send_keys(val)
                     if submit:
-                        el_text.send_keys(Keys.ENTER)
+                        builder.send_keys(Keys.ENTER)
+                    builder.perform()
                     is_text_sent = True
         except Exception as exc:
             if show_debug_message:
@@ -6990,6 +7004,40 @@ def ticket_login(driver, account, password):
     ret = is_password_sent
 
     return ret
+
+def udn_login(driver, account, password):
+    is_logined = False
+
+    el_login_li = None
+    try:
+        my_css_selector = '#LoginLI'
+        el_login_li = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not el_login_li is None:
+            li_html = el_login_li.get_attribute('outerHTML')
+            if 'display: none' in li_html:
+                is_logined = True
+    except Exception as exc:
+        pass
+
+    is_password_sent = False
+    if not is_logined:
+        if not el_login_li is None:
+            try:
+                el_login_li.click()
+            except Exception as exc:
+                print(exc)
+                try:
+                    driver.set_script_timeout(1)
+                    driver.execute_script("doLoginRWD();")
+                except Exception as exc2:
+                    print(exc2)
+                    pass
+
+        is_email_sent = assign_text(driver, By.CSS_SELECTOR, '#ID', account)
+        if is_email_sent:
+            is_password_sent = assign_text(driver, By.CSS_SELECTOR, '#password', password, submit=False)
+    return is_password_sent
+
 
 def hkticketing_login(driver, account, password):
     ret = False
@@ -7360,25 +7408,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
             if current_url != last_url:
                 break
 
-def tixcraft_ad_footer(driver, config_dict):
-    ad_div = None
-    try:
-        ad_div = driver.find_element(By.CSS_SELECTOR, '#ad-footer')
-        if not ad_div is None:
-            driver.execute_script("arguments[0].innerHTML='';", ad_div)
-    except Exception as exc:
-        #print(exc)
-        pass
-    try:
-        ad_div = driver.find_element(By.CSS_SELECTOR, 'footer.footer')
-        if not ad_div is None:
-            driver.execute_script("arguments[0].innerHTML='';", ad_div)
-    except Exception as exc:
-        #print(exc)
-        pass
-
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
-    tixcraft_ad_footer(driver, config_dict)
     tixcraft_home_close_window(driver, config_dict)
 
     home_url_list = ['https://tixcraft.com/'
@@ -7464,14 +7494,14 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
 def kktix_paused_main(driver, url, config_dict, kktix_dict):
     if '/registrations/new' in url:
-        
+
         # part 1: check recaptch  div.
         recaptcha_div = None
         try:
             recaptcha_div = driver.find_element(By.CSS_SELECTOR, '.event-captcha-info')
         except Exception as exc:
             pass
-        
+
         if not recaptcha_div is None:
             select_query = '.ng-hide'
             class_name = 'ng-hide'
@@ -7572,8 +7602,7 @@ def urbtix_performance_confirm_dialog_popup(driver):
         is_visible = False
         try:
             if el_div.is_enabled():
-                if el_div.is_displayed():
-                    is_visible = True
+                is_visible = True
         except Exception as exc:
             pass
 
@@ -8581,39 +8610,6 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
 
     return ibon_dict
 
-def hkticketing_home(driver):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    # OMG, I forgot why I wrote this code.
-    '''
-    body_iframe = None
-    body_iframe_list = None
-    try:
-        body_iframe_list = driver.find_elements(By.CSS_SELECTOR, 'body > iframe')
-    except Exception as exc:
-        if show_debug_message:
-            print("find body_iframe fail")
-        pass
-
-    hotshow_btn = None
-    if not body_iframe_list is None:
-        if show_debug_message:
-            print("iframe count:", len(body_iframe_list))
-        for each_iframe in body_iframe_list:
-            try:
-                driver.switch_to.frame(each_iframe)
-                hotshow_btn = driver.find_element(By.CSS_SELECTOR, 'div.hotshow > a.btn')
-                if not hotshow_btn is None:
-                    if hotshow_btn.is_enabled() and hotshow_btn.is_displayed():
-                        hotshow_btn.click()
-            except Exception as exc:
-                pass
-                if show_debug_message:
-                    print("find hotshow btn fail:", exc)
-            driver.switch_to.default_content()
-    '''
-
 def hkticketing_accept_cookie(driver):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
@@ -9145,7 +9141,7 @@ def hkticketing_next_button_press(driver):
         print(exc)
 
     if not el_btn is None:
-        print("bingo, found next button, start to press")
+        #print("bingo, found next button, start to press")
         hkticketing_nav_to_footer(driver)
         try:
             if el_btn.is_enabled() and el_btn.is_displayed():
@@ -9168,7 +9164,7 @@ def hkticketing_go_to_payment(driver):
         print(exc)
 
     if not el_btn is None:
-        print("bingo, found next button, start to press")
+        #print("bingo, found next button, start to press")
         try:
             if el_btn.is_enabled() and el_btn.is_displayed():
                 el_btn.click()
@@ -9515,19 +9511,6 @@ def hkticketing_travel_iframe(driver, config_dict):
     return is_redirected
 
 def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
-    home_url_list = ['https://premier.hkticketing.com/'
-    ,'https://hotshow.hkticketing.com/'
-    ,'https://premier.hkticketing.com/default.aspx'
-    ,'https://hotshow.hkticketing.com/default.aspx'
-    ,'https://premier.hkticketing.com/Membership/Login.aspx'
-    ,'https://hotshow.hkticketing.com/Membership/Login.aspx'
-    ,'https://premier.hkticketing.com/Secure/ShowLogin.aspx'
-    ]
-    for each_url in home_url_list:
-        if each_url == url:
-            hkticketing_home(driver)
-            break
-
     hkticketing_accept_cookie(driver)
 
     is_redirected = hkticketing_url_redirect(driver, url, config_dict)
@@ -9602,6 +9585,8 @@ def khan_go_buy_redirect(driver, domain_name):
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'p > a > button.red')
     if 'ticket.com' in domain_name:
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.row > div > a.btn.btn-order.btn-block')
+    if 'udnfunlife.com' in domain_name:
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buttonBuy')
     return is_button_clicked
 
 def hkam_date_auto_select(driver, domain_name, config_dict):
@@ -9627,6 +9612,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
         my_css_selector = "table.eventTABLE > tbody > tr"
         if 'ticket.com' in domain_name:
             my_css_selector = "div.description > table.table.table-striped.itable > tbody > tr"
+        if 'udnfunlife.com' in domain_name:
+            my_css_selector = "div.yd_session-block"
 
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
@@ -9667,35 +9654,45 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                             row_text = ""
 
                 if len(row_text) > 0:
-                    if "<button" in row_html:
-                        buyable = False
-                        if '立即訂購' in row_text:
-                            buyable = True
-                        if '點此購票' in row_text:
-                            buyable = True
-                        if not buyable:
+                    if 'udnfunlife.com' in domain_name:
+                        # udn.
+                        if not ("前往購票" in row_html):
                             row_text = ""
                     else:
-                        row_text = ""
+                        # kham / ticket.
+                        if "<button" in row_html:
+                            buyable = False
+                            if '立即訂購' in row_text:
+                                buyable = True
+                            if '點此購票' in row_text:
+                                buyable = True
+                            if not buyable:
+                                row_text = ""
+                        else:
+                            row_text = ""
 
                 if len(row_text) > 0:
-                    # kham.
-                    price_disabled_html = '"lightblue"'
-                    if 'ticket.com' in domain_name:
-                        price_disabled_html = '<del>'
-                        
-                    if "<td" in row_html:
-                        td_array = row_html.split("<td")
-                        if len(td_array) > 3:
-                            td_target = "<td" + td_array[3]
-                            price_array = td_target.split("、")
-                            is_all_priece_disabled = True
-                            for each_price in price_array:
-                                if not (price_disabled_html in each_price):
-                                    is_all_priece_disabled = False
+                    if 'udnfunlife.com' in domain_name:
+                        # TODO: check <font color="black" style="white-space: nowrap;"
+                        pass
+                    else:
+                        # kham.
+                        price_disabled_html = '"lightblue"'
+                        if 'ticket.com' in domain_name:
+                            price_disabled_html = '<del>'
 
-                            if is_all_priece_disabled:
-                                row_text = ""
+                        if "<td" in row_html:
+                            td_array = row_html.split("<td")
+                            if len(td_array) > 3:
+                                td_target = "<td" + td_array[3]
+                                price_array = td_target.split("、")
+                                is_all_priece_disabled = True
+                                for each_price in price_array:
+                                    if not (price_disabled_html in each_price):
+                                        is_all_priece_disabled = False
+
+                                if is_all_priece_disabled:
+                                    row_text = ""
 
                 if len(row_text) > 0:
                     formated_area_list.append(row)
@@ -9733,14 +9730,17 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
         is_button_clicked = False
         el_btn = None
         try:
+            # kham / ticket.
             my_css_selector = "button"
+            if 'udnfunlife.com' in domain_name:
+                my_css_selector = "div.goNext"
             el_btn = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
         except Exception as exc:
             pass
 
         if not el_btn is None:
             try:
-                if el_btn.is_enabled() and el_btn.is_displayed():
+                if el_btn.is_enabled():
                     el_btn.click()
                     print("buy button pressed.")
                     is_button_clicked = True
@@ -9952,115 +9952,6 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
     return is_need_refresh, is_price_assign_by_bot
 
-def kham_performance_ticket_number(driver, config_dict):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    is_ticket_number_assigned = False
-
-    ticket_number = config_dict["ticket_number"]
-
-    form_input = None
-    try:
-        form_input = driver.find_element(By.CSS_SELECTOR, '#AMOUNT')
-    except Exception as exc:
-        if show_debug_message:
-            print("find #AMOUNT fail")
-            print(exc)
-        pass
-
-    inputed_value = None
-    if not form_input is None:
-        try:
-            inputed_value = form_input.get_attribute('value')
-        except Exception as exc:
-            print("get_attribute value fail")
-            pass
-
-    if inputed_value is None:
-        inputed_value = ""
-
-    if inputed_value == "" or inputed_value == "0":
-        is_visible = False
-        try:
-            if form_input.is_enabled():
-                is_visible = True
-        except Exception as exc:
-            pass
-
-        if is_visible:
-            try:
-                form_input.click()
-                form_input.clear()
-                form_input.send_keys(str(ticket_number))
-                is_ticket_number_assigned = True
-            except Exception as exc:
-                try:
-                    print("force to click by js.")
-                    driver.execute_script("arguments[0].click();", el_div)
-                    ret = True
-                except Exception as exc:
-                    pass
-
-    if len(inputed_value) > 0:
-        if not inputed_value=="0":
-            is_ticket_number_assigned = True
-
-    return is_ticket_number_assigned
-
-def ticket_performance_ticket_number(driver, config_dict):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    is_ticket_number_assigned = False
-
-    ticket_number = config_dict["ticket_number"]
-
-    form_input = None
-    try:
-        form_input = driver.find_element(By.CSS_SELECTOR, 'div.qty-select input[type="text"]')
-    except Exception as exc:
-        if show_debug_message:
-            print("find qty-select input fail")
-            print(exc)
-        pass
-
-    inputed_value = None
-    if not form_input is None:
-        try:
-            inputed_value = form_input.get_attribute('value')
-        except Exception as exc:
-            print("get_attribute value fail")
-            pass
-
-    if inputed_value is None:
-        inputed_value = ""
-
-    if inputed_value == "" or inputed_value == "0":
-        try:
-            form_input.click()
-            form_input.clear()
-            form_input.send_keys(str(ticket_number))
-            is_ticket_number_assigned = True
-        except Exception as exc:
-            if show_debug_message:
-                print(exc)
-            try:
-                driver.execute_script("arguments[0].value='"+ str(ticket_number) +"';", form_input)
-            except Exception as exc:
-                pass
-
-    if len(inputed_value) > 0:
-        if not inputed_value=="0":
-            is_ticket_number_assigned = True
-
-    return is_ticket_number_assigned
 
 def ticket_allow_not_adjacent_seat(driver, config_dict):
     show_debug_message = True       # debug.
@@ -10465,6 +10356,8 @@ def kham_allow_not_adjacent_seat(driver, config_dict):
     return is_finish_checkbox_click
 
 def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
+    domain_name = url.split('/')[2]
+
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
@@ -10475,6 +10368,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     ,'https://kham.com.tw/application/utk01/utk0101_.aspx'
     ,'https://kham.com.tw/application/utk01/utk0101_03.aspx'
     ,'https://ticket.com.tw/application/utk01/utk0101_.aspx'
+    ,'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx'
     ]
     for each_url in home_url_list:
         if each_url == url.lower():
@@ -10482,7 +10376,6 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             clean_tag_by_selector(driver, ".popoutBG")
 
             if config_dict["ocr_captcha"]["enable"]:
-                domain_name = url.split('/')[2]
                 if not Captcha_Browser is None:
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
@@ -10495,7 +10388,6 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
-            domain_name = url.split('/')[2]
             khan_go_buy_redirect(driver, domain_name)
 
     # https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=N28TFATD
@@ -10507,134 +10399,54 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
         if is_event_page:
             date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
             if date_auto_select_enable:
-                domain_name = url.split('/')[2]
                 kham_product(driver, domain_name, config_dict)
 
-    if url.lower() == 'https://kham.com.tw/application/utk01/utk0101_.aspx':
+    if '/application/utk01/utk0101_.aspx' == url.lower():
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
-            domain_name = url.split('/')[2]
             kham_product(driver, domain_name, config_dict)
 
-    # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
-    if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
-        domain_name = url.split('/')[2]
-        model_name = url.split('/')[5]
-        if len(model_name) > 7:
-            model_name=model_name[:7]
-        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-        #PS: need set cookies once, if user change domain.
-        if not Captcha_Browser is None:
-            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+    # for udn
+    if 'udnfunlife' in domain_name:
+        try:
+            window_handles_count = len(driver.window_handles)
+            if window_handles_count > 1:
+                driver.switch_to.window(driver.window_handles[0])
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+                time.sleep(0.2)
+        except Exception as excSwithFail:
+            pass
 
-        is_captcha_sent = False
-        if config_dict["ocr_captcha"]["enable"]:
-            is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
-            if is_reset_password_text:
-                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+        # udn sign in.
+        if 'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx' == url.lower():
+            if len(config_dict["advanced"]["udn_account"]) > 4:
+                udn_login(driver, config_dict["advanced"]["udn_account"], decryptMe(config_dict["advanced"]["udn_password"]))
 
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
-        if config_dict["area_auto_select"]["enable"]:
-            if "ticket.com.tw" in url:
-                is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
+        if 'utk0203_.aspx?product_id=' in url.lower():
+            select_query = 'input.yd_counterNum'
+            ticket_number_text = None
+            try:
+                ticket_number_text = driver.find_element(By.CSS_SELECTOR, select_query)
+            except Exception as exc:
+                pass
+
+            if not ticket_number_text is None:
+                # layout format #1
+                is_ticket_number_assigned = assign_text(driver, By.CSS_SELECTOR, select_query, str(config_dict["ticket_number"]), overwrite_when="0")
+                if is_ticket_number_assigned:
+                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'#buttonNext')
             else:
-                is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
-            
-            if "kham.com.tw" in url:
-                select_query = "tr.Soldout"
-                more_script = """var ticketItems = document.querySelectorAll('tr.status_tr');
-                if(ticketItems.length==0) { location.reload(); }
-                """
-                clean_tag_by_selector(driver, select_query, more_script)
+                # layout format #2
+                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                if date_auto_select_enable:
+                    kham_product(driver, domain_name, config_dict)
 
-            is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
-
-            # this is a special case, not performance_price_area_id, directly input ticket_nubmer in #amount.
-            is_ticket_number_assigned = False
-            if "ticket.com.tw" in url:
-                is_ticket_number_assigned = ticket_performance_ticket_number(driver, config_dict)
-            else:
-                is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
-
-            if config_dict["advanced"]["disable_adjacent_seat"]:
-                if "ticket.com.tw" in url:
-                    is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
-                else:
-                    is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
-
-            if show_debug_message:
-                print("is_ticket_number_assigned:", is_ticket_number_assigned)
-                print("is_captcha_sent:", is_captcha_sent)
-            if is_ticket_number_assigned:
-                if is_captcha_sent:
-                    el_btn = None
-                    my_css_selector = '#addcart'
-                    if "ticket.com.tw" in url:
-                        my_css_selector = 'a[onclick="return chkCart();"]'
-                    try:
-                        el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if not el_btn is None:
-                            el_btn.click()
-                    except Exception as exc:
-                        if show_debug_message:
-                            print("find addcart button fail")
-                            print(exc)
-                        pass
-
-
-    #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
-    if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
-        domain_name = url.split('/')[2]
-        model_name = url.split('/')[5]
-        if len(model_name) > 7:
-            model_name=model_name[:7]
-        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
-        #PS: need set cookies once, if user change domain.
-        if not Captcha_Browser is None:
-            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
-
-        is_captcha_sent = False
-        if config_dict["ocr_captcha"]["enable"]:
-            is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
-            if is_reset_password_text:
-                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
-
-        if config_dict["advanced"]["disable_adjacent_seat"]:
-            if "ticket.com.tw" in url:
-                is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
-            else:
-                is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
-
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
-        if config_dict["ocr_captcha"]["enable"]:
-            if not is_captcha_sent:
-                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
-
-            is_ticket_number_assigned = False
-            if "ticket.com.tw" in url:
-                is_ticket_number_assigned = ticket_performance_ticket_number(driver, config_dict)
-            else:
-                is_ticket_number_assigned = kham_performance_ticket_number(driver, config_dict)
-
-            if is_ticket_number_assigned:
-                if is_captcha_sent:
-                    el_btn = None
-                    # for kham
-                    my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
-                    if "ticket.com.tw" in url:
-                        my_css_selector = 'a[onclick="return chkCart();"]'
-                    try:
-                        el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-                        if not el_btn is None:
-                            el_btn.click()
-                    except Exception as exc:
-                        print("find chkCart button fail")
-                        pass
-
-    if '/utk13/utk1306_.aspx' in url.lower():
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
-        if config_dict["ocr_captcha"]["enable"]:
-            domain_name = url.split('/')[2]
+    else:
+        # kham / ticket.
+    
+        # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
+        if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
             model_name = url.split('/')[5]
             if len(model_name) > 7:
                 model_name=model_name[:7]
@@ -10643,14 +10455,131 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if not Captcha_Browser is None:
                 Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
 
-            kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
-            account = config_dict["advanced"]["kham_account"]
-            if len(account) > 4:
-                kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
+            is_captcha_sent = False
 
-            account = config_dict["advanced"]["ticket_account"]
-            if len(account) > 4:
-                ticket_login(driver, account, decryptMe(config_dict["advanced"]["ticket_password"]))
+            if config_dict["ocr_captcha"]["enable"]:
+                is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
+                if is_reset_password_text:
+                    is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            if config_dict["area_auto_select"]["enable"]:
+                if "ticket.com.tw" in url:
+                    is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
+                else:
+                    is_switch_to_auto_seat = kham_switch_to_auto_seat(driver)
+
+                if "kham.com.tw" in url:
+                    select_query = "tr.Soldout"
+                    more_script = """var ticketItems = document.querySelectorAll('tr.status_tr');
+                    if(ticketItems.length==0) { location.reload(); }
+                    """
+                    clean_tag_by_selector(driver, select_query, more_script)
+
+                is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
+
+                # this is a special case, not performance_price_area_id, directly input ticket_nubmer in #amount.
+                if "ticket.com.tw" in url:
+                    select_query = 'div.qty-select input[type="text"]'
+                else:
+                    # kham
+                    select_query = '#AMOUNT'
+                is_ticket_number_assigned = assign_text(driver, By.CSS_SELECTOR, select_query, str(config_dict["ticket_number"]), overwrite_when="0")
+
+                if config_dict["advanced"]["disable_adjacent_seat"]:
+                    if "ticket.com.tw" in url:
+                        is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+                    if "kham.com.tw" in url:
+                        is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
+
+                if show_debug_message:
+                    print("is_ticket_number_assigned:", is_ticket_number_assigned)
+                    print("is_captcha_sent:", is_captcha_sent)
+                if is_ticket_number_assigned:
+                    if is_captcha_sent:
+                        el_btn = None
+                        my_css_selector = '#addcart'
+                        if "ticket.com.tw" in url:
+                            my_css_selector = 'a[onclick="return chkCart();"]'
+                        try:
+                            el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                            if not el_btn is None:
+                                el_btn.click()
+                        except Exception as exc:
+                            if show_debug_message:
+                                print("find addcart button fail")
+                                print(exc)
+                            pass
+
+
+        #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
+        if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+            #PS: need set cookies once, if user change domain.
+            if not Captcha_Browser is None:
+                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+            is_captcha_sent = False
+            if config_dict["ocr_captcha"]["enable"]:
+                is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
+                if is_reset_password_text:
+                    is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+            if config_dict["advanced"]["disable_adjacent_seat"]:
+                if "ticket.com.tw" in url:
+                    is_finish_checkbox_click = ticket_allow_not_adjacent_seat(driver, config_dict)
+                else:
+                    is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
+
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            if config_dict["ocr_captcha"]["enable"]:
+                if not is_captcha_sent:
+                    is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+
+                if "ticket.com.tw" in url:
+                    select_query = 'div.qty-select input[type="text"]'
+                else:
+                    # kham
+                    select_query = '#AMOUNT'
+                is_ticket_number_assigned = assign_text(driver, By.CSS_SELECTOR, select_query, str(config_dict["ticket_number"]), overwrite_when="0")
+
+                if is_ticket_number_assigned:
+                    if is_captcha_sent:
+                        el_btn = None
+                        # for kham
+                        my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
+                        if "ticket.com.tw" in url:
+                            my_css_selector = 'a[onclick="return chkCart();"]'
+                        try:
+                            el_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                            if not el_btn is None:
+                                el_btn.click()
+                        except Exception as exc:
+                            print("find chkCart button fail")
+                            pass
+
+        if '/utk13/utk1306_.aspx' in url.lower():
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            if config_dict["ocr_captcha"]["enable"]:
+                model_name = url.split('/')[5]
+                if len(model_name) > 7:
+                    model_name=model_name[:7]
+                captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+                #PS: need set cookies once, if user change domain.
+                if not Captcha_Browser is None:
+                    Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+                kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+                account = config_dict["advanced"]["kham_account"]
+                if len(account) > 4:
+                    kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
+
+                account = config_dict["advanced"]["ticket_account"]
+                if len(account) > 4:
+                    ticket_login(driver, account, decryptMe(config_dict["advanced"]["ticket_password"]))
 
 def ticketplus_date_auto_select(driver, config_dict):
     show_debug_message = True    # debug.
@@ -11203,16 +11132,16 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
     is_captcha_sent = False
     if is_button_disabled:
         is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict, current_layout_style)
-        
+
         is_question_popup = False
         is_answer_sent = False
         if is_price_assign_by_bot:
             is_answer_sent, ticketplus_dict["fail_list"], is_question_popup = ticketplus_order_exclusive_code(driver, config_dict, ticketplus_dict["fail_list"])
-        
+
         if is_price_assign_by_bot:
             if config_dict["ocr_captcha"]["enable"]:
                 is_captcha_sent =  ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
-                
+
                 if is_captcha_sent:
                     # after submit captcha, due to exclusive code not correct, should not auto press next button.
                     if is_question_popup:
@@ -11932,6 +11861,9 @@ def main(args):
             kham_family = True
 
         if 'ticket.com.tw' in url:
+            kham_family = True
+
+        if 'tickets.udnfunlife.com' in url:
             kham_family = True
 
         if kham_family:
