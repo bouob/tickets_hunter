@@ -2,6 +2,7 @@ certifi
 chardet
 cryptography
 idna
+Pillow==9.5.0
 selenium>=4.0.0
 undetected-chromedriver
 playsound==1.2.2

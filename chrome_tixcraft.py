@@ -42,10 +42,13 @@ ssl._create_default_https_context = ssl._create_unverified_context
 # ocr
 import base64
 
-# workaround for ddddocr with Pillow.
-from PIL import Image
-if not hasattr(Image, 'ANTIALIAS'):
-    setattr(Image, 'ANTIALIAS', Image.LANCZOS)
+try:
+    # workaround for ddddocr with Pillow.
+    from PIL import Image
+    if not hasattr(Image, 'ANTIALIAS'):
+        setattr(Image, 'ANTIALIAS', Image.LANCZOS)
+except Exception as exc:
+    pass
 
 try:
     import ddddocr
@@ -60,7 +63,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.18)"
+CONST_APP_VERSION = "MaxBot (2023.11.19)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -165,8 +168,14 @@ def get_config_dict(args):
 
     config_dict = None
     if os.path.isfile(config_filepath):
+        # start to overwrite config settings.
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
+
+            if not args.headless is None:
+                headless_flag = t_or_f(args.headless)
+                if headless_flag:
+                    config_dict["advanced"]["headless"] = True
 
             if not args.homepage is None:
                 if len(args.homepage) > 0:
@@ -193,6 +202,19 @@ def get_config_dict(args):
             if not args.proxy_server is None:
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
+
+            # special case for headless to enable away from keyboard mode.
+            is_headless_enable = False
+            if config_dict["advanced"]["headless"]:
+                # for tixcraft headless.
+                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                    is_headless_enable = True
+                else:
+                    print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
+
+            if is_headless_enable:
+                config_dict["ocr_captcha"]["enable"] = True
+                config_dict["ocr_captcha"]["force_submit"] = True
 
     return config_dict
 
@@ -374,6 +396,10 @@ def get_chrome_options(webdriver_path, config_dict):
             if os.path.exists(ext):
                 chrome_options.add_extension(ext)
 
+    if config_dict["advanced"]["headless"]:
+        #chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless=new')
+
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
     chrome_options.add_argument('--lang=zh-TW')
@@ -525,6 +551,10 @@ def get_uc_options(uc, config_dict, webdriver_path):
             print('load-extension:', load_extension_path[1:])
             options.add_argument('--load-extension=' + load_extension_path[1:])
 
+    if config_dict["advanced"]["headless"]:
+        #options.add_argument('--headless')
+        options.add_argument('--headless=new')
+
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
     options.add_argument('--lang=zh-TW')
@@ -579,7 +609,7 @@ def load_chromdriver_uc(config_dict):
 
         try:
             options = get_uc_options(uc, config_dict, webdriver_path)
-            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options)
+            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
         except Exception as exc:
             print(exc)
             error_message = str(exc)
@@ -669,7 +699,8 @@ def get_driver_by_config(config_dict):
 
     #print(config_dict["tixcraft"])
     #print("==[advanced config]==")
-    #print(config_dict["advanced"])
+    if config_dict["advanced"]["verbose"]:
+        print(config_dict["advanced"])
     print("webdriver_type:", config_dict["webdriver_type"])
 
     # entry point
@@ -714,6 +745,9 @@ def get_driver_by_config(config_dict):
         try:
             from selenium.webdriver.firefox.options import Options
             options = Options()
+            if config_dict["advanced"]["headless"]:
+                options.add_argument('--headless')
+                #options.add_argument('--headless=new')
             if platform.system().lower()=="windows":
                 binary_path = "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
                 if not os.path.exists(binary_path):
@@ -7483,12 +7517,22 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         tixcraft_dict["done_time"] = time.time()
 
     if '/ticket/checkout' in url:
+        if config_dict["advanced"]["headless"]:
+            if not tixcraft_dict["is_popup_checkout"]:
+                domain_name = url.split('/')[2]
+                checkout_url = "https://%s/ticket/checkout" % (domain_name)
+                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                webbrowser.open_new(checkout_url)
+                tixcraft_dict["is_popup_checkout"] = True
+
         if not tixcraft_dict["start_time"] is None:
             if not tixcraft_dict["done_time"] is None:
                 bot_elapsed_time = tixcraft_dict["done_time"] - tixcraft_dict["start_time"]
                 if tixcraft_dict["elapsed_time"] != bot_elapsed_time:
                     print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                 tixcraft_dict["elapsed_time"] = bot_elapsed_time
+    else:
+        tixcraft_dict["is_popup_checkout"] = False
 
     return tixcraft_dict
 
@@ -7527,6 +7571,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
+            kktix_dict["start_time"] = time.time()
             is_need_refresh = False
             is_finish_checkbox_click = False
             is_need_refresh, is_finish_checkbox_click = kktix_reg_auto_reload(driver, url, config_dict, kktix_dict["kktix_register_status_last"])
@@ -7540,6 +7585,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
                     kktix_dict["fail_list"], kktix_dict["captcha_sound_played"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["captcha_sound_played"], is_finish_checkbox_click)
+                    kktix_dict["done_time"] = time.time()
         else:
             is_event_page = False
             if '/events/' in url:
@@ -7557,6 +7603,31 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             kktix_dict["fail_list"] = []
             kktix_dict["captcha_sound_played"] = False
             kktix_dict["kktix_register_status_last"] = None
+
+    if '/events/' in url and '/registrations/' in url and "-" in url:
+        if not kktix_dict["start_time"] is None:
+            if not kktix_dict["done_time"] is None:
+                bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
+                if kktix_dict["elapsed_time"] != bot_elapsed_time:
+                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
+                kktix_dict["elapsed_time"] = bot_elapsed_time
+
+
+        if config_dict["advanced"]["headless"]:
+            if not kktix_dict["is_popup_checkout"]:
+                is_event_page = False
+                if len(url.split('/'))==8:
+                    is_event_page = True
+                if is_event_page:
+                    confirm_clicked = kktix_confirm_order_button(driver)
+                    if confirm_clicked:
+                        domain_name = url.split('/')[2]
+                        checkout_url = "https://%s/account/orders" % (domain_name)
+                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                        webbrowser.open_new(checkout_url)
+                        kktix_dict["is_popup_checkout"] = True
+    else:
+        kktix_dict["is_popup_checkout"] = False
 
     return kktix_dict
 
@@ -11755,6 +11826,7 @@ def main(args):
     tixcraft_dict["start_time"]=None
     tixcraft_dict["done_time"]=None
     tixcraft_dict["elapsed_time"]=None
+    tixcraft_dict["is_popup_checkout"] = False
 
     # for kktix
     kktix_dict = {}
@@ -11764,6 +11836,7 @@ def main(args):
     kktix_dict["start_time"]=None
     kktix_dict["done_time"]=None
     kktix_dict["elapsed_time"]=None
+    kktix_dict["is_popup_checkout"] = False
 
     fami_dict = {}
     fami_dict["fail_list"] = []
@@ -11925,6 +11998,11 @@ def cli():
 
     parser.add_argument("--ibonqware",
         help="overwrite ibonqware field",
+        type=str)
+
+    parser.add_argument("--headless",
+        help="headless mode",
+        default='False',
         type=str)
 
     parser.add_argument("--browser",
