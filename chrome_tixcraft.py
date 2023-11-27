@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.20)"
+CONST_APP_VERSION = "MaxBot (2023.11.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1831,7 +1831,24 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             print("find #gameList fail")
 
     is_coming_soon = False
-    coming_soon_condictions_list_tw = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
+    coming_soon_condictions_list_en = [' day(s)', ' hrs.',' min',' sec',' till sale starts!','0',':','/']
+    coming_soon_condictions_list_tw = ['開賣','剩餘',' 天',' 小時',' 分鐘',' 秒','0',':','/','20']
+    coming_soon_condictions_list_ja = ['発売開始', ' 日', ' 時間',' 分',' 秒','0',':','/','20']
+    coming_soon_condictions_list = coming_soon_condictions_list_en
+    html_lang="en-US"
+    try:
+        html_body = driver.page_source
+        if '<head' in html_body:
+            html = html_body.split("<head")[0]
+            html_lang = html.split('"')[1]
+            if show_debug_message:
+                print("html lang:" , html_lang)
+            if html_lang == "zh-TW":
+                coming_soon_condictions_list = coming_soon_condictions_list_tw
+            if html_lang == "ja":
+                coming_soon_condictions_list = coming_soon_condictions_list_ja
+    except Exception as e:
+        pass
 
     matched_blocks = None
     formated_area_list = None
@@ -1861,6 +1878,20 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         row_text = ""
 
                 if len(row_text) > 0:
+
+                    # check is coming soon events in list.
+                    is_match_all_coming_soon_condiction = True
+                    for condiction_string in coming_soon_condictions_list:
+                        if not condiction_string in row_text:
+                            is_match_all_coming_soon_condiction = False
+                            break
+
+                    if is_match_all_coming_soon_condiction:
+                        if show_debug_message:
+                            print("match coming soon condiction at row:", row_text)
+                        is_coming_soon = True
+                        break
+
                     row_is_enabled=False
                     for text_item in find_ticket_text_list:
                         if text_item in row_text:
@@ -1880,19 +1911,6 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                                     if show_debug_message:
                                         print("match sold out text: %s, skip this row." % (sold_out_item))
                                     break
-
-                    # check is coming soon.
-                    if row_is_enabled:
-                        is_match_all_coming_soon_condiction = True
-                        for condiction_string in coming_soon_condictions_list_tw:
-                            if not condiction_string in row_text:
-                                is_match_all_coming_soon_condiction = False
-                                break
-                        if is_match_all_coming_soon_condiction:
-                            if show_debug_message:
-                                print("match coming soon condiction at row:", row_text)
-                            is_coming_soon = True
-                            break
 
                     if row_is_enabled:
                         formated_area_list.append(row)
