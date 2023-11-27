@@ -43,17 +43,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 import base64
 
 try:
-    # workaround for ddddocr with Pillow.
-    from PIL import Image
-    if not hasattr(Image, 'ANTIALIAS'):
-        setattr(Image, 'ANTIALIAS', Image.LANCZOS)
-except Exception as exc:
-    pass
-
-try:
     import ddddocr
 
-    #PS: python 3.11.1 raise PIL conflict.
+    #PS: python 3.11+ raise PIL conflict.
     from NonBrowser import NonBrowser
 except Exception as exc:
     pass
@@ -63,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.19)"
+CONST_APP_VERSION = "MaxBot (2023.11.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -101,6 +93,7 @@ CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
 def t_or_f(arg):
     ret = False
@@ -218,25 +211,21 @@ def get_config_dict(args):
 
     return config_dict
 
-def write_question_to_file(question_text):
+def write_string_to_file(filename, data):
     outfile = None
     if platform.system() == 'Windows':
-        outfile = open(CONST_MAXBOT_QUESTION_FILE, 'w', encoding='UTF-8')
+        outfile = open(filename, 'w', encoding='UTF-8')
     else:
-        outfile = open(CONST_MAXBOT_QUESTION_FILE, 'w')
+        outfile = open(filename, 'w')
 
     if not outfile is None:
-        outfile.write("%s" % question_text)
+        outfile.write("%s" % data)
+
+def write_question_to_file(question_text):
+    write_string_to_file(CONST_MAXBOT_QUESTION_FILE, question_text)
 
 def write_last_url_to_file(url):
-    outfile = None
-    if platform.system() == 'Windows':
-        outfile = open(CONST_MAXBOT_LAST_URL_FILE, 'w', encoding='UTF-8')
-    else:
-        outfile = open(CONST_MAXBOT_LAST_URL_FILE, 'w')
-
-    if not outfile is None:
-        outfile.write("%s" % url)
+    write_string_to_file(CONST_MAXBOT_LAST_URL_FILE, url)
 
 def read_last_url_from_file():
     ret = ""
@@ -399,6 +388,7 @@ def get_chrome_options(webdriver_path, config_dict):
     if config_dict["advanced"]["headless"]:
         #chrome_options.add_argument('--headless')
         chrome_options.add_argument('--headless=new')
+        chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
 
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
@@ -554,6 +544,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
     if config_dict["advanced"]["headless"]:
         #options.add_argument('--headless')
         options.add_argument('--headless=new')
+        options.add_argument("--user-agent=%s" % (USER_AGENT))
 
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
@@ -1822,11 +1813,22 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         my_css_selector = '#gameList > table > tbody > tr'
         try:
             area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+            if not area_list is None:
+                if len(area_list)==0:
+                    # only headless mode detected now.
+                    if config_dict["advanced"]["headless"]:
+                        html_body = driver.page_source
+                        html_text = remove_html_tags(html_body)
+                        if not html_text is None:
+                            bot_detected_string_list = ['Your Session Has Been Suspended'
+                            , 'Something about your browsing behavior or network made us think you were a bot'
+                            , 'Your browser hit a snag and we need to make sure you'
+                            ]
+                            for each_string in bot_detected_string_list:
+                                print(html_text)
+                                break
         except Exception as exc:
             print("find #gameList fail")
-
-        if show_debug_message:
-            print("end of query #gameList info.")
 
     is_coming_soon = False
     coming_soon_condictions_list_tw = ['開賣','剩餘','天','小時','分鐘','秒','0',':','/']
