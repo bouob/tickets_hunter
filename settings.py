@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.11.19)"
+CONST_APP_VERSION = "MaxBot (2023.11.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -78,6 +78,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
@@ -1054,11 +1055,20 @@ def show_preview_text():
         except Exception as exc:
             pass
 
+def write_string_to_file(filename, data):
+    outfile = None
+    if platform.system() == 'Windows':
+        outfile = open(filename, 'w', encoding='UTF-8')
+    else:
+        outfile = open(filename, 'w')
+
+    if not outfile is None:
+        outfile.write("%s" % data)
+
 def save_url_to_file(new_online_dictionary_url, force_write = False):
     html_text = ""
     if len(new_online_dictionary_url) > 0:
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
-        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
+        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': USER_AGENT}
         html_result = None
         try:
             html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.5, allow_redirects=False)
@@ -1080,8 +1090,7 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
 
     if is_write_to_file:
         html_text = format_config_keyword_for_json(html_text)
-        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "w") as text_file:
-            text_file.write("%s" % html_text)
+        write_string_to_file(html_text, CONST_MAXBOT_ANSWER_ONLINE_FILE)
     return is_write_to_file
 
 def btn_preview_text_clicked():
