@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.21)"
+CONST_APP_VERSION = "MaxBot (2023.11.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7552,6 +7552,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 webbrowser.open_new(checkout_url)
                 tixcraft_dict["is_popup_checkout"] = True
                 driver.quit()
+                sys.exit()
     else:
         tixcraft_dict["is_popup_checkout"] = False
 
@@ -7647,6 +7648,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                         webbrowser.open_new(checkout_url)
                         kktix_dict["is_popup_checkout"] = True
                         driver.quit()
+                        sys.exit()
     else:
         kktix_dict["is_popup_checkout"] = False
 
@@ -10493,7 +10495,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             if date_auto_select_enable:
                 kham_product(driver, domain_name, config_dict)
 
-    if '/application/utk01/utk0101_.aspx' == url.lower():
+    if '/application/utk01/utk0101_.aspx' in url.lower():
         date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
         if date_auto_select_enable:
             kham_product(driver, domain_name, config_dict)
