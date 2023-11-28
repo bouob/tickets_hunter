@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.11.21)"
+CONST_APP_VERSION = "MaxBot (2023.11.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -49,7 +49,7 @@ CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
-CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
+CONST_SELECT_ORDER_DEFAULT = CONST_RANDOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_CENTER, CONST_RANDOM)
 CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT = '''tixcraft.com###topAlert
 tixcraft.com##.col-md-7.col-xs-12.mgt-16.mx-auto
