@@ -7537,6 +7537,13 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         tixcraft_dict["done_time"] = time.time()
 
     if '/ticket/checkout' in url:
+        if not tixcraft_dict["start_time"] is None:
+            if not tixcraft_dict["done_time"] is None:
+                bot_elapsed_time = tixcraft_dict["done_time"] - tixcraft_dict["start_time"]
+                if tixcraft_dict["elapsed_time"] != bot_elapsed_time:
+                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
+                tixcraft_dict["elapsed_time"] = bot_elapsed_time
+        
         if config_dict["advanced"]["headless"]:
             if not tixcraft_dict["is_popup_checkout"]:
                 domain_name = url.split('/')[2]
@@ -7544,13 +7551,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
                 tixcraft_dict["is_popup_checkout"] = True
-
-        if not tixcraft_dict["start_time"] is None:
-            if not tixcraft_dict["done_time"] is None:
-                bot_elapsed_time = tixcraft_dict["done_time"] - tixcraft_dict["start_time"]
-                if tixcraft_dict["elapsed_time"] != bot_elapsed_time:
-                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
-                tixcraft_dict["elapsed_time"] = bot_elapsed_time
+                driver.quit()
     else:
         tixcraft_dict["is_popup_checkout"] = False
 
@@ -7632,7 +7633,6 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                 kktix_dict["elapsed_time"] = bot_elapsed_time
 
-
         if config_dict["advanced"]["headless"]:
             if not kktix_dict["is_popup_checkout"]:
                 is_event_page = False
@@ -7646,6 +7646,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                         print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
                         webbrowser.open_new(checkout_url)
                         kktix_dict["is_popup_checkout"] = True
+                        driver.quit()
     else:
         kktix_dict["is_popup_checkout"] = False
 
