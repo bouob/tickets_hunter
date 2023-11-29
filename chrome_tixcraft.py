@@ -7480,7 +7480,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
             break
 
     # special case for same event re-open.
-    if 'https://tixcraft.com/' == url:
+    if 'https://tixcraft.com/' == url or 'https://tixcraft.com/activity' == url:
         if "/ticket/area/" in config_dict["homepage"]:
             if len(config_dict["homepage"].split('/'))==7:
                 try:
