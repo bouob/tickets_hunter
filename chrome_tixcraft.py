@@ -1890,7 +1890,10 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         if show_debug_message:
                             print("match coming soon condiction at row:", row_text)
                         is_coming_soon = True
-                        break
+                    
+                    if is_coming_soon:
+                        if auto_reload_coming_soon_page_enable:
+                            break
 
                     row_is_enabled=False
                     for text_item in find_ticket_text_list:
