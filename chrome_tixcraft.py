@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.22)"
+CONST_APP_VERSION = "MaxBot (2023.11.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -7466,12 +7466,11 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     tixcraft_home_close_window(driver, config_dict)
 
     home_url_list = ['https://tixcraft.com/'
-    ,'https://www.tixcraft.com/'
     ,'https://indievox.com/'
     ,'https://www.indievox.com/'
     ,'https://teamear.tixcraft.com/activity'
-    ,'https://www.ticketmaster.sg/'
-    ,'https://www.ticketmaster.com/'
+    ,'https://ticketmaster.sg/'
+    ,'https://ticketmaster.com/'
     ]
     for each_url in home_url_list:
         if each_url == url:
@@ -7480,6 +7479,15 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 pass
             break
 
+    # special case for same event re-open.
+    if 'https://tixcraft.com/' == url:
+        if "/activity/detail/" in config_dict["homepage"]:
+            if len(config_dict["homepage"].split('/'))==7:
+                try:
+                    driver.get(config_dict["homepage"])
+                except Exception as e:
+                    pass
+
     if "/activity/detail/" in url:
         tixcraft_dict["start_time"] = time.time()
         is_redirected = tixcraft_redirect(driver, url)
@@ -7487,19 +7495,14 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     is_date_selected = False
     if "/activity/game/" in url:
         tixcraft_dict["start_time"] = time.time()
-        date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-        if date_auto_select_enable:
+        if config_dict["tixcraft"]["date_auto_select"]["enable"]:
             domain_name = url.split('/')[2]
             is_date_selected = tixcraft_date_auto_select(driver, url, config_dict, domain_name)
 
     if '/artist/' in url and 'ticketmaster.com' in url:
         tixcraft_dict["start_time"] = time.time()
-        is_event_page = False
         if len(url.split('/'))==6:
-            is_event_page = True
-        if is_event_page:
-            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-            if date_auto_select_enable:
+            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                 domain_name = url.split('/')[2]
                 is_date_selected = ticketmaster_date_auto_select(driver, url, config_dict, domain_name)
 
