@@ -1090,7 +1090,9 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
 
     if is_write_to_file:
         html_text = format_config_keyword_for_json(html_text)
-        write_string_to_file(html_text, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+        working_dir = os.path.dirname(os.path.realpath(__file__))
+        target_path = os.path.join(working_dir, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+        write_string_to_file(target_path, html_text)
     return is_write_to_file
 
 def btn_preview_text_clicked():
