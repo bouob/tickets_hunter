@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.11.23)"
+CONST_APP_VERSION = "MaxBot (2023.12.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -222,10 +222,14 @@ def write_string_to_file(filename, data):
         outfile.write("%s" % data)
 
 def write_question_to_file(question_text):
-    write_string_to_file(CONST_MAXBOT_QUESTION_FILE, question_text)
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    target_path = os.path.join(working_dir, CONST_MAXBOT_QUESTION_FILE)
+    write_string_to_file(target_path, question_text)
 
 def write_last_url_to_file(url):
-    write_string_to_file(CONST_MAXBOT_LAST_URL_FILE, url)
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    target_path = os.path.join(working_dir, CONST_MAXBOT_LAST_URL_FILE)
+    write_string_to_file(target_path, url)
 
 def read_last_url_from_file():
     ret = ""
@@ -243,6 +247,25 @@ def format_keyword_string(keyword):
             keyword = keyword.replace('$','')
             keyword = keyword.replace(' ','').lower()
     return keyword
+
+def format_quota_string(formated_html_text):
+    formated_html_text = formated_html_text.replace('「','【')
+    formated_html_text = formated_html_text.replace('〔','【')
+    formated_html_text = formated_html_text.replace('［','【')
+    formated_html_text = formated_html_text.replace('〖','【')
+    formated_html_text = formated_html_text.replace('[','【')
+    formated_html_text = formated_html_text.replace('（','【')
+    formated_html_text = formated_html_text.replace('(','【')
+
+    formated_html_text = formated_html_text.replace('」','】')
+    formated_html_text = formated_html_text.replace('〕','】')
+    formated_html_text = formated_html_text.replace('］','】')
+    formated_html_text = formated_html_text.replace('〗','】')
+    formated_html_text = formated_html_text.replace(']','】')
+    formated_html_text = formated_html_text.replace('）','】')
+    formated_html_text = formated_html_text.replace(')','】')
+    return formated_html_text
+
 
 def full2half(keyword):
     n = ""
@@ -908,12 +931,14 @@ def get_driver_by_config(config_dict):
 
 # common functions.
 def find_between( s, first, last ):
+    ret = ""
     try:
         start = s.index( first ) + len( first )
         end = s.index( last, start )
-        return s[start:end]
+        ret = s[start:end]
     except ValueError:
-        return ""
+        pass
+    return ret
 
 # convert web string to reg pattern
 def convert_string_to_pattern(my_str, dynamic_length=True):
@@ -2637,17 +2662,7 @@ def guess_tixcraft_question(driver, question_text):
     if len(question_text) > 0:
         # format question text.
         formated_html_text = question_text
-        formated_html_text = formated_html_text.replace('「','【')
-        formated_html_text = formated_html_text.replace('〔','【')
-        formated_html_text = formated_html_text.replace('［','【')
-        formated_html_text = formated_html_text.replace('〖','【')
-        formated_html_text = formated_html_text.replace('[','【')
-
-        formated_html_text = formated_html_text.replace('」','】')
-        formated_html_text = formated_html_text.replace('〕','】')
-        formated_html_text = formated_html_text.replace('］','】')
-        formated_html_text = formated_html_text.replace('〗','】')
-        formated_html_text = formated_html_text.replace(']','】')
+        formated_html_text = format_quota_string(formated_html_text)
 
         if '【' in formated_html_text and '】' in formated_html_text:
             # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
@@ -4283,7 +4298,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         is_use_quota_message = False
         if "「" in captcha_text_div_text and "」" in captcha_text_div_text:
             # test for rule#1, it's seem very easy conflict...
-            match_quota_text_items = ["下方","空白","輸入","引號","文字"]
+            match_quota_text_items = ["空白","輸入","引號","文字"]
             is_match_quota_text = True
             for each_quota_text in match_quota_text_items:
                 if not each_quota_text in captcha_text_div_text:
@@ -4292,8 +4307,25 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
-            inferred_answer_string = find_between(captcha_text_div_text, "「", "」")
+            temp_answer = find_between(captcha_text_div_text, "「", "」")
+            if len(temp_answer) > 0:
+                inferred_answer_string = temp_answer
             #print("find captcha text:" , inferred_answer_string)
+
+    # 請在下方空白處輸入括號內數字
+    if inferred_answer_string is None:
+        formated_html_text = captcha_text_div_text.strip()
+        formated_html_text = format_quota_string(formated_html_text)
+        formated_html_text = formated_html_text.replace('的','')
+        formated_html_text = formated_html_text.replace('之內','內')
+        match_quota_text_items = ["輸入括號內數字","輸入括號內文字","輸入括號內文數字"
+        ,"輸入引號內數字","輸入引號內文字","輸入引號內文數字"]
+        if len(formated_html_text) <= 30:
+            if not '\n' in formated_html_text:
+                if '【' in formated_html_text and '】' in formated_html_text:
+                    temp_answer = find_between(formated_html_text, "【", "】")
+                    if len(temp_answer) > 0:
+                        inferred_answer_string = temp_answer
 
     if inferred_answer_string is None:
         is_use_quota_message = False
@@ -6775,22 +6807,28 @@ def assign_text(driver, by, query, val, overwrite = False, submit=False, overwri
                             is_do_keyin = True
 
                 if is_do_keyin:
-                    builder = ActionChains(driver)
-                    builder.move_to_element(el_text)
-                    builder.click(el_text)
-                    if platform.system() == 'Darwin':
-                        builder.key_down(Keys.COMMAND)
+                    if len(inputed_text) > 0:
+                        builder = ActionChains(driver)
+                        builder.move_to_element(el_text)
+                        builder.click(el_text)
+                        if platform.system() == 'Darwin':
+                            builder.key_down(Keys.COMMAND)
+                        else:
+                            builder.key_down(Keys.CONTROL)
+                        builder.send_keys("a")
+                        if platform.system() == 'Darwin':
+                            builder.key_up(Keys.COMMAND)
+                        else:
+                            builder.key_up(Keys.CONTROL)
+                        builder.send_keys(val)
+                        if submit:
+                            builder.send_keys(Keys.ENTER)
+                        builder.perform()
                     else:
-                        builder.key_down(Keys.CONTROL)
-                    builder.send_keys("a")
-                    if platform.system() == 'Darwin':
-                        builder.key_up(Keys.COMMAND)
-                    else:
-                        builder.key_up(Keys.CONTROL)
-                    builder.send_keys(val)
-                    if submit:
-                        builder.send_keys(Keys.ENTER)
-                    builder.perform()
+                        el_text.click()
+                        el_text.send_keys(val)
+                        if submit:
+                            el_text.send_keys(Keys.ENTER)
                     is_text_sent = True
         except Exception as exc:
             if show_debug_message:
@@ -7242,10 +7280,14 @@ def check_pop_alert(driver):
 def list_all_cookies(driver):
     cookies_dict = {}
     if not driver is None:
-        all_cookies=driver.get_cookies();
-        for cookie in all_cookies:
-            cookies_dict[cookie['name']] = cookie['value']
-    print(cookies_dict)
+        try:
+            all_cookies=driver.get_cookies();
+            for cookie in all_cookies:
+                cookies_dict[cookie['name']] = cookie['value']
+        except Exception as e:
+            pass
+    return cookies_dict
+    #print(cookies_dict)
 
 def set_non_browser_cookies(driver, url, Captcha_Browser):
     if not driver is None:
@@ -11542,15 +11584,29 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
 def ticketplus_account_auto_fill(driver, config_dict):
     # auto fill account info.
     if len(config_dict["advanced"]["ticketplus_account"]) > 0:
-        sign_in_btn = None
+        is_user_signin = False
         try:
-            my_css_selector = 'button.v-btn > span.v-btn__content > i.mdi-account'
-            sign_in_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-            if not sign_in_btn is None:
-                sign_in_btn.click()
-                time.sleep(0.2)
+            all_cookies=list_all_cookies(driver)
+            if 'user' in all_cookies:
+                #print('user in cookie')
+                if '%22account%22:%22' in all_cookies['user']:
+                    #print('user:', all_cookies['user'])
+                    is_user_signin = True
         except Exception as exc:
+            print(exc)
             pass
+
+        #print("is_user_signin:", is_user_signin)
+        if not is_user_signin:
+            sign_in_btn = None
+            try:
+                my_css_selector = 'button.v-btn > span.v-btn__content > i.mdi-account'
+                sign_in_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                if not sign_in_btn is None:
+                    sign_in_btn.click()
+                    time.sleep(0.2)
+            except Exception as exc:
+                pass
 
     # manually keyin verify code.
     form_account = None
@@ -12052,6 +12108,7 @@ def test_captcha_model():
     captcha_text_div_text = "請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
+    #captcha_text_div_text = "請在下方空白處輸入括號內數字(1234)"
     #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
     #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
     #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
