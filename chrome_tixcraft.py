@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.01)"
+CONST_APP_VERSION = "MaxBot (2023.12.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -836,6 +836,7 @@ def get_driver_by_config(config_dict):
             ,'*syndication.twitter.com/*'
             ,'*youtube.com/*'
             ,'*player.youku.*'
+            ,'*h.clarity.ms/*'
             ,'*e2elog.fetnet.net*']
 
             if config_dict["advanced"]["hide_some_image"]:
@@ -10850,9 +10851,10 @@ def ticketplus_date_auto_select(driver, config_dict):
                 print("find or press button fail:", exc)
 
             if not target_button is None:
-                print("try to click button fail, force click by js.")
+                #print("try to click button fail, force click by js.")
                 try:
-                    driver.execute_script("arguments[0].click();", target_button)
+                    #driver.execute_script("arguments[0].click();", target_button)
+                    pass
                 except Exception as exc:
                     pass
 
@@ -11759,8 +11761,9 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
 
         if is_event_page:
             is_button_pressed = ticketplus_accept_realname_card(driver)
+            #print("is accept button pressed:", is_button_pressed)
             is_button_pressed = ticketplus_accept_other_activity(driver)
-            #print("realname is_button_pressed:", is_button_pressed)
+            #print("is accept button pressed:", is_button_pressed)
 
             if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                 ticketplus_date_auto_select(driver, config_dict)
