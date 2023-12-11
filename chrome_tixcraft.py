@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.03)"
+CONST_APP_VERSION = "MaxBot (2023.12.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -837,6 +837,7 @@ def get_driver_by_config(config_dict):
             ,'*youtube.com/*'
             ,'*player.youku.*'
             ,'*h.clarity.ms/*'
+            ,'*img.uniicreative.com/*'
             ,'*e2elog.fetnet.net*']
 
             if config_dict["advanced"]["hide_some_image"]:
@@ -9728,7 +9729,11 @@ def khan_go_buy_redirect(driver, domain_name):
     if 'ticket.com' in domain_name:
         is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.row > div > a.btn.btn-order.btn-block')
     if 'udnfunlife.com' in domain_name:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buttonBuy')
+        # udn 快速訂購
+        my_css_selector = 'button[name="fastBuy"]'
+        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+        if not is_button_clicked:
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buttonBuy')
     return is_button_clicked
 
 def hkam_date_auto_select(driver, domain_name, config_dict):
@@ -9946,9 +9951,14 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
     try:
         # for kham.com
         my_css_selector = "table#salesTable > tbody > tr[class='status_tr']"
+
         if "ticket.com.tw" in domain_name:
             my_css_selector = "li.main"
-            print("my_css_selector:",my_css_selector)
+            #print("my_css_selector:",my_css_selector)
+
+        if "udnfunlife" in domain_name:
+            my_css_selector = "table.yd_ticketsTable > tbody > tr.main"
+
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
         print("find #ticket-price-tbl date list fail")
@@ -10011,6 +10021,11 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         row_text = ""
                     if ' Soldout' in row_html:
                         row_text = ""
+                    
+                    # for udn
+                    if ' style="color:gray;border:solid 1px gray;cursor:default"' in row_html:
+                        #row_text = ""
+                        pass
 
                 if len(row_text) > 0:
                     if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -10018,21 +10033,23 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
                 # check ticket_number and available count.
                 if len(row_text) > 0:
-                    if config_dict["ticket_number"] > 1:
-                        maybe_ticket_count = row_text[-1:]
-                        if maybe_ticket_count.isdigit():
-                            if "<td" in row_html:
-                                td_array = row_html.split("<td")
-                                if len(td_array) > 0:
-                                    td_target = "<td" + td_array[len(td_array)-1]
-                                    ticket_count_text = remove_html_tags(td_target)
-                                    print("ticket_count_text:", ticket_count_text)
-                                    if ticket_count_text.isdigit():
-                                        if int(ticket_count_text) < config_dict["ticket_number"]:
-                                            if show_debug_message:
-                                                print("skip this row, because ticket_count available only:", ticket_count_text)
-                                            # skip this row.
-                                            row_text = ""
+                    # remaining number not appear in udn.
+                    if not("udnfunlife" in domain_name):
+                        if config_dict["ticket_number"] > 1:
+                            maybe_ticket_count = row_text[-1:]
+                            if maybe_ticket_count.isdigit():
+                                if "<td" in row_html:
+                                    td_array = row_html.split("<td")
+                                    if len(td_array) > 0:
+                                        td_target = "<td" + td_array[len(td_array)-1]
+                                        ticket_count_text = remove_html_tags(td_target)
+                                        #print("ticket_count_text:", ticket_count_text)
+                                        if ticket_count_text.isdigit():
+                                            if int(ticket_count_text) < config_dict["ticket_number"]:
+                                                if show_debug_message:
+                                                    print("skip this row, because ticket_count available only:", ticket_count_text)
+                                                # skip this row.
+                                                row_text = ""
 
                 if len(row_text) > 0:
                     row_text = format_keyword_string(row_text)
@@ -10071,19 +10088,63 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
     target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
-            if target_area.is_enabled():
-                target_area.click()
-                is_price_assign_by_bot = True
+            if not("udnfunlife" in domain_name):
+                if target_area.is_enabled():
+                    target_area.click()
+                    is_price_assign_by_bot = True
+            else:
+                # manually click.
+                """
+                my_css_selector = 'div.yd_btn--link'
+                target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
+                if not target_button is None:
+                    target_button.click()
+                    is_price_assign_by_bot = True
+                """
+
+                FAST_PRICE_TYPE_ID = ""
+                target_area_html = target_area.get_attribute('innerHTML')
+                if 'fastcode="' in target_area_html:
+                    temp_string = target_area_html.split('fastcode="')[1]
+                    FAST_PRICE_TYPE_ID = temp_string.split('"')[0]
+                if len(FAST_PRICE_TYPE_ID) > 0:
+                    js = """fetch("https://tickets.udnfunlife.com/Application/UTK01/UTK0101_009.aspx/AUTOSEAT_BTN_Click", {
+  "headers": {
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9,zh;q=0.8,zh-TW;q=0.7",
+    "content-type": "application/json; charset=UTF-8",
+    "sec-ch-ua-mobile": "?0",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "x-requested-with": "XMLHttpRequest"
+  },
+  "referrerPolicy": "strict-origin-when-cross-origin",
+  "body": JSON.stringify({"FAST_PRICE_TYPE_ID":"%s","QRY":"%s","CHK":"null"}),
+  "method": "POST",
+  "mode": "cors",
+  "credentials": "include"
+}).then(function (response) { return response.json(); 
+}).then(function (data) { if(data.d.ReturnData.script.indexOf('top.location.href')>-1){eval(script);};
+if(data.d.ReturnData.script.indexOf('上限')>-1){top.location.href="https://tickets.udnfunlife.com/application/UTK02/UTK0206_.aspx";};
+if(data.d.ReturnData.script.indexOf('該場次目前無法購買。 ')>-1){location.reload();};
+}).catch(function (err) { console.log(err);
+});""" % (FAST_PRICE_TYPE_ID, str(config_dict["ticket_number"]));
+                    #print("javascript:", js)
+                    driver.execute_script(js)
+                    is_price_assign_by_bot = True
+
         except Exception as exc:
             print("click target_area link fail")
             print(exc)
             # use plan B
-            try:
-                print("force to click by js.")
-                driver.execute_script("arguments[0].click();", target_area)
-                is_price_assign_by_bot = True
-            except Exception as exc:
-                pass
+            if not("udnfunlife" in domain_name):
+                try:
+                    print("force to click by js.")
+                    driver.execute_script("arguments[0].click();", target_area)
+                    is_price_assign_by_bot = True
+                except Exception as exc:
+                    pass
     else:
         if show_debug_message:
             print("target_area is None, no target to click.")
@@ -10238,7 +10299,9 @@ def kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, mod
             except Exception as exc:
                 pass
 
-        is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+        # udn use reCaptcha.
+        if not('udnfunlife' in domain_name):
+            is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
     return is_price_assign_by_bot, is_captcha_sent
 
@@ -10539,8 +10602,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
-            date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
-            if date_auto_select_enable:
+            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
                 kham_product(driver, domain_name, config_dict)
 
     if '/application/utk01/utk0101_.aspx' in url.lower():
@@ -10550,15 +10612,20 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
     # for udn
     if 'udnfunlife' in domain_name:
-        try:
-            window_handles_count = len(driver.window_handles)
-            if window_handles_count > 1:
-                driver.switch_to.window(driver.window_handles[0])
-                driver.close()
-                driver.switch_to.window(driver.window_handles[0])
-                time.sleep(0.2)
-        except Exception as excSwithFail:
-            pass
+        #auto_close_tab = False
+        auto_close_tab = True
+        if auto_close_tab:
+            try:
+                window_handles_count = len(driver.window_handles)
+                if window_handles_count > 1:
+                    #print("window_handles_count:", window_handles_count)
+                    driver.switch_to.window(driver.window_handles[0])
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[0])
+                    time.sleep(0.2)
+            except Exception as exc:
+                print(exc)
+                pass
 
         # udn sign in.
         if 'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx' == url.lower():
@@ -10584,6 +10651,16 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if date_auto_select_enable:
                     kham_product(driver, domain_name, config_dict)
 
+        if 'utk0222_02.aspx?product_id=' in url.lower():
+            model_name = url.split('/')[5]
+            if len(model_name) > 7:
+                model_name=model_name[:7]
+            is_price_assign_by_bot, is_captcha_sent = kham_performance(driver, config_dict, ocr, Captcha_Browser, domain_name, model_name)
+
+            is_ticket_number_sent = assign_text(driver, By.CSS_SELECTOR, 'input#QRY2', str(config_dict["ticket_number"]), overwrite_when="0")
+            if is_ticket_number_sent:
+                is_fastbuy_pressed = force_press_button(driver, By.CSS_SELECTOR,'input#f_btn')
+
     else:
         # kham / ticket.
     
@@ -10604,7 +10681,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if is_reset_password_text:
                     is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            my_css_selector = 'div.ui-dialog-buttonset > button.ui-button'
+            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
             if config_dict["area_auto_select"]["enable"]:
                 if "ticket.com.tw" in url:
                     is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
