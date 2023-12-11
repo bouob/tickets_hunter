@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.02)"
+CONST_APP_VERSION = "MaxBot (2023.12.03)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -8919,7 +8919,7 @@ def hkticketing_date_assign(driver, config_dict):
                         break
 
                     if len(row_text) > 0:
-                        if '20' in row_text:
+                        if not('20' in row_text):
                             row_text = ""
                         if ' Exhausted' in row_text:
                             row_text = ""
@@ -9066,7 +9066,6 @@ def hkticketing_date_auto_select(driver, config_dict, fail_list):
         print("is_password_appear:", is_password_appear)
         print("is_date_assigned:", is_date_assigned)
         print("is_page_ready:", is_page_ready)
-        print("formated_area_list:", formated_area_list)
         print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
 
     if auto_reload_coming_soon_page_enable:
