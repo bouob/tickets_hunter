@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.02)"
+CONST_APP_VERSION = "MaxBot (2023.12.03)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -123,6 +123,7 @@ def load_translate():
 
     en_us["auto_check_agree"] = 'Auto check agree checkbox'
     en_us["enable"] = 'Enable'
+    en_us["recommand_enable"] = "Recommended to enable"
 
     en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
@@ -183,7 +184,7 @@ def load_translate():
     en_us["config_launcher"] = 'Launcher'
     en_us["done"] = 'Done'
 
-    en_us["tixcraft_sid"] = 'Tixcraft cookie SID'
+    en_us["tixcraft_sid"] = 'Tixcraft family cookie SID'
     en_us["ibon_ibonqware"] = 'ibon cookie ibonqware'
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
@@ -231,6 +232,7 @@ def load_translate():
     zh_tw["auto_check_agree"] = '自動勾選同意'
 
     zh_tw["enable"] = '啟用'
+    zh_tw["recommand_enable"] = "建議啟用"
     zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
     zh_tw["and"] = '而且（同列）'
@@ -289,7 +291,7 @@ def load_translate():
     zh_tw["config_launcher"] = '設定檔管理'
     zh_tw["done"] = '完成'
 
-    zh_tw["tixcraft_sid"] = 'Tixcraft cookie SID'
+    zh_tw["tixcraft_sid"] = '拓元家族 cookie SID'
     zh_tw["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
@@ -336,6 +338,7 @@ def load_translate():
 
     zh_cn["auto_check_agree"] = '自动勾选同意'
     zh_cn["enable"] = '启用'
+    zh_cn["recommand_enable"] = "建议启用"
 
     zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
@@ -396,7 +399,7 @@ def load_translate():
     zh_cn["config_launcher"] = '设定档管理'
     zh_cn["done"] = '完成'
 
-    zh_cn["tixcraft_sid"] = 'Tixcraft cookie SID'
+    zh_cn["tixcraft_sid"] = '拓元家族 cookie SID'
     zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_cn["facebook_account"] = 'Facebook 帐号'
     zh_cn["kktix_account"] = 'KKTIX 帐号'
@@ -443,6 +446,7 @@ def load_translate():
 
     ja_jp["auto_check_agree"] = '自動的に同意をチェック'
     ja_jp["enable"] = '有効'
+    ja_jp["recommand_enable"] = "有効化を推奨"
 
     ja_jp["auto_press_next_step_button"] = '次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
@@ -502,7 +506,7 @@ def load_translate():
     ja_jp["config_launcher"] = 'ランチャー'
     ja_jp["done"] = '終わり'
 
-    ja_jp["tixcraft_sid"] = 'Tixcraft cookie SID'
+    ja_jp["tixcraft_sid"] = '拓元家 cookie SID'
     ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
     ja_jp["facebook_account"] = 'Facebookのアカウント'
     ja_jp["kktix_account"] = 'KKTIXのアカウント'
@@ -686,8 +690,8 @@ def get_default_config():
 
     config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["disable_adjacent_seat"] = False
-    config_dict["advanced"]["hide_some_image"] = True
-    config_dict["advanced"]["block_facebook_network"] = True
+    config_dict["advanced"]["hide_some_image"] = False
+    config_dict["advanced"]["block_facebook_network"] = False
 
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
@@ -1315,6 +1319,9 @@ def applyNewLanguage():
     global lbl_hide_some_image
     global lbl_block_facebook_network
 
+    global lbl_hide_some_image_recommand
+    global lbl_block_facebook_network_recommand
+
     global lbl_auto_reload_page_interval
     global lbl_proxy_server_port
     global lbl_auto_reload_random_delay
@@ -1349,6 +1356,9 @@ def applyNewLanguage():
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_hide_some_image.config(text=translate[language_code]["hide_some_image"])
     lbl_block_facebook_network.config(text=translate[language_code]["block_facebook_network"])
+
+    lbl_hide_some_image_recommand.config(text=translate[language_code]["recommand_enable"])
+    lbl_block_facebook_network_reommand.config(text=translate[language_code]["recommand_enable"])
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
@@ -1974,7 +1984,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     lbl_icon_play = Label(frame_group_header, image=icon_play_img, cursor="hand2")
     lbl_icon_play.image = icon_play_img
-    lbl_icon_play.grid(column=2, row=group_row_count)
+    lbl_icon_play.grid(column=2, row=group_row_count, sticky = W)
     lbl_icon_play.bind("<Button-1>", lambda e: btn_preview_sound_clicked())
 
     group_row_count +=1
@@ -2073,6 +2083,10 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     chk_hide_some_image = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_hide_some_image)
     chk_hide_some_image.grid(column=1, row=group_row_count, sticky = W)
 
+    global lbl_hide_some_image_recommand
+    lbl_hide_some_image_recommand = Label(frame_group_header, text=translate[language_code]['recommand_enable'])
+    lbl_hide_some_image_recommand.grid(column=2, row=group_row_count, sticky = W)
+
     group_row_count +=1
 
     global lbl_block_facebook_network
@@ -2086,6 +2100,10 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_block_facebook_network
     chk_block_facebook_network = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_block_facebook_network)
     chk_block_facebook_network.grid(column=1, row=group_row_count, sticky = W)
+
+    global lbl_block_facebook_network_recommand
+    lbl_block_facebook_network_recommand = Label(frame_group_header, text=translate[language_code]['recommand_enable'])
+    lbl_block_facebook_network_recommand.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
