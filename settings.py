@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.03)"
+CONST_APP_VERSION = "MaxBot (2023.12.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1358,7 +1358,7 @@ def applyNewLanguage():
     lbl_block_facebook_network.config(text=translate[language_code]["block_facebook_network"])
 
     lbl_hide_some_image_recommand.config(text=translate[language_code]["recommand_enable"])
-    lbl_block_facebook_network_reommand.config(text=translate[language_code]["recommand_enable"])
+    lbl_block_facebook_network_recommand.config(text=translate[language_code]["recommand_enable"])
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
