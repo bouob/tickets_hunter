@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.04)"
+CONST_APP_VERSION = "MaxBot (2023.12.05)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -10835,8 +10835,8 @@ def ticketplus_date_auto_select(driver, config_dict):
         print("find #buyTicket fail")
 
     # '立即購票' -> '立即購買'
-    find_ticket_text_list = ['>立即購']
-    sold_out_text_list = ['銷售一空','尚未開賣']
+    find_ticket_text_list = ['>立即購','尚未開賣']
+    sold_out_text_list = ['銷售一空']
 
     matched_blocks = None
     formated_area_list = None
@@ -11309,6 +11309,23 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
 
     return is_answer_sent, fail_list, is_question_popup
 
+
+def ticketplus_order_check_coming_soon(driver):
+    is_onsale=True
+
+    current_layout_style = 0
+    try:
+        my_css_selector = "div.order-content"
+        div_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not div_element is None:
+            div_html = div_element.get_attribute('innerHTML')
+            #print("div_html:", div_html)
+            if '<div class="text-nine">開賣時間</div>' in div_html:
+                is_onsale=False
+    except Exception as exc:
+        print(exc)
+
+    return is_onsale
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     show_debug_message = True       # debug.
@@ -11854,7 +11871,17 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
         if is_event_page:
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
-            is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+
+            is_onsale = ticketplus_order_check_coming_soon(driver)
+            #print("is_onsale:", is_onsale)
+            if is_onsale:
+                is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+            else:
+                try:
+                    driver.refresh()
+                except Exception as exc:
+                    print(exc)
+
     else:
         ticketplus_dict["fail_list"]=[]
 
