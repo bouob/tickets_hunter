@@ -55,7 +55,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.05)"
+CONST_APP_VERSION = "MaxBot (2023.12.06)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -400,6 +400,8 @@ def get_chrome_options(webdriver_path, config_dict):
     if browser=="safari":
         chrome_options = webdriver.SafariOptions()
 
+    chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
+
     # some windows cause: timed out receiving message from renderer
     if config_dict["advanced"]["adblock_plus_enable"]:
         # PS: this is ocx version.
@@ -550,8 +552,9 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.page_load_strategy = 'eager'
     #options.page_load_strategy = 'none'
     options.unhandled_prompt_behavior = "accept"
-
     #print("strategy", options.page_load_strategy)
+
+    options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
     if config_dict["advanced"]["adblock_plus_enable"]:
         load_extension_path = ""
@@ -836,7 +839,7 @@ def get_driver_by_config(config_dict):
             ,'*syndication.twitter.com/*'
             ,'*youtube.com/*'
             ,'*player.youku.*'
-            ,'*h.clarity.ms/*'
+            ,'*.clarity.ms/*'
             ,'*img.uniicreative.com/*'
             ,'*e2elog.fetnet.net*']
 
@@ -850,7 +853,9 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/activity/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.sg/images/activity/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketmaster.com/images/activity/*')
-                NETWORK_BLOCKED_URLS.append('*azureedge.net/QWARE_TICKET//images/*')
+                NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/ActivityImage_*')
+                NETWORK_BLOCKED_URLS.append('*.azureedge.net/QWARE_TICKET//images/*')
+                NETWORK_BLOCKED_URLS.append('*static.ticketplus.com.tw/event/*')
 
             if config_dict["advanced"]["block_facebook_network"]:
                 NETWORK_BLOCKED_URLS.append('*facebook.com/*')
@@ -11310,22 +11315,50 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
     return is_answer_sent, fail_list, is_question_popup
 
 
-def ticketplus_order_check_coming_soon(driver):
-    is_onsale=True
+def ticketplus_order_auto_reload_coming_soon(driver):
+    is_vue_ready = False
 
-    current_layout_style = 0
     try:
-        my_css_selector = "div.order-content"
-        div_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-        if not div_element is None:
-            div_html = div_element.get_attribute('innerHTML')
-            #print("div_html:", div_html)
-            if '<div class="text-nine">開賣時間</div>' in div_html:
-                is_onsale=False
-    except Exception as exc:
-        print(exc)
+        getSeatsByTicketAreaIdUrl = ""
+        #r = driver.execute_script("return window.performance.getEntries();")
+        logs = driver.get_log("performance")
+        url_list = []
+        for log in logs:
+            network_log = json.loads(log["message"])["message"]
+            if ("Network.response" in network_log["method"]
+                or "Network.request" in network_log["method"]
+                or "Network.webSocket" in network_log["method"]):
+                if 'request' in network_log["params"]:
+                    if 'url' in network_log["params"]["request"]:
+                        if 'apis.ticketplus.com.tw/config/api/' in network_log["params"]["request"]["url"]:
+                            print("url:", network_log["params"]["request"]["url"])
+                            if 'get?ticketAreaId=' in network_log["params"]["request"]["url"]:
+                                getSeatsByTicketAreaIdUrl = network_log["params"]["request"]["url"]
+                                is_vue_ready = True
+                                break
 
-    return is_onsale
+        if is_vue_ready:
+            js = """var t = JSON.parse(Cookies.get("user")) ? JSON.parse(Cookies.get("user")).access_token : "";
+fetch("%s",{headers: {
+authorization: "Bearer ".concat(t)
+}}).then(function (response) {
+return response.json();
+}).then(function (data) {
+console.log(data);
+if(data.result.product.length>0)
+if(data.result.product[0].status=="pending") {
+    location.reload();
+}
+}).catch(function (err){
+console.log(err);
+});
+""" % getSeatsByTicketAreaIdUrl
+            driver.set_script_timeout(0.1)
+            driver.execute_async_script(js)
+    except Exception as exc:
+        #print(exc)
+        pass
+
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     show_debug_message = True       # debug.
@@ -11872,15 +11905,8 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
-            is_onsale = ticketplus_order_check_coming_soon(driver)
-            #print("is_onsale:", is_onsale)
-            if is_onsale:
-                is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
-            else:
-                try:
-                    driver.refresh()
-                except Exception as exc:
-                    print(exc)
+            ticketplus_order_auto_reload_coming_soon(driver)
+            is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     else:
         ticketplus_dict["fail_list"]=[]
