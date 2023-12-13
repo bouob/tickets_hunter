@@ -11266,7 +11266,9 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
 
         if is_need_refresh:
             try:
-                driver.refresh()
+                # vue mode, refresh need more condition to check.
+                #driver.refresh()
+                pass
             except Exception as exc:
                 pass
 
