@@ -2735,7 +2735,7 @@ def main():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 570
+    GUI_SIZE_WIDTH = 580
     GUI_SIZE_HEIGHT = 615
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)

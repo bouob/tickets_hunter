@@ -44,8 +44,6 @@ import base64
 
 try:
     import ddddocr
-
-    #PS: python 3.11+ raise PIL conflict.
     from NonBrowser import NonBrowser
 except Exception as exc:
     pass
@@ -4332,6 +4330,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 if '【' in formated_html_text and '】' in formated_html_text:
                     temp_answer = find_between(formated_html_text, "【", "】")
                     if len(temp_answer) > 0:
+                        temp_answer = temp_answer.replace(' ','')
                         inferred_answer_string = temp_answer
 
     if inferred_answer_string is None:
@@ -10827,17 +10826,20 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     area_list = None
     try:
-        for retry_index in range(6):
-            area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item > div.row')
-            if not area_list is None:
-                area_list_count = len(area_list)
-                if area_list_count > 0:
-                    break
-                else:
-                    print("empty date item, delay 0.2 to retry.")
-                    time.sleep(0.2)
+        area_list = driver.find_elements(By.CSS_SELECTOR, 'div#buyTicket > div.sesstion-item > div.row')
+        if not area_list is None:
+            area_list_count = len(area_list)
+            if area_list_count == 0:
+                print("empty date item, need retry.")
+                time.sleep(0.2)
     except Exception as exc:
         print("find #buyTicket fail")
+
+    url_keyword='apis.ticketplus.com.tw/config/api/'
+    url_list = get_performance_log(driver, url_keyword)
+    if area_list_count == 0:
+        if len(url_list)==0:
+            area_list = None
 
     # '立即購票' -> '立即購買'
     find_ticket_text_list = ['>立即購','尚未開賣']
@@ -11316,12 +11318,11 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
 
     return is_answer_sent, fail_list, is_question_popup
 
-def ticketplus_order_get_ticket_area_detla(driver):
-    target_count=0
-    getSeatsByTicketAreaIdUrl = ""
+def get_performance_log(driver, url_keyword):
+    url_list = []
     try:
         logs = driver.get_log("performance")
-        url_list = []
+        
         for log in logs:
             network_log = json.loads(log["message"])["message"]
             if ("Network.response" in network_log["method"]
@@ -11329,32 +11330,30 @@ def ticketplus_order_get_ticket_area_detla(driver):
                 or "Network.webSocket" in network_log["method"]):
                 if 'request' in network_log["params"]:
                     if 'url' in network_log["params"]["request"]:
-                        if 'apis.ticketplus.com.tw/config/api/' in network_log["params"]["request"]["url"]:
-                            if 'get?ticketAreaId=' in network_log["params"]["request"]["url"]:
-                                #print("url:", network_log["params"]["request"]["url"])
-                                target_count+=1
-                                getSeatsByTicketAreaIdUrl = network_log["params"]["request"]["url"]
+                        if url_keyword in network_log["params"]["request"]["url"]:
+                            url_list.append(network_log["params"]["request"]["url"])
     except Exception as e:
         #raise e
         pass
 
-    return target_count, getSeatsByTicketAreaIdUrl
+    return url_list
 
 
-def ticketplus_order_auto_reload_coming_soon(driver, delta):
-    is_vue_ready = False
-    target_count = 0
-    
+def ticketplus_order_auto_reload_coming_soon(driver):
+    #r = driver.execute_script("return window.performance.getEntries();")
+
+    url_keyword='apis.ticketplus.com.tw/config/api/'
+    url_list = get_performance_log(driver, url_keyword)
+    #print("url_list:", url_list)
+
+    getSeatsByTicketAreaIdUrl = ""
+    for requset_url in url_list:
+        if 'get?ticketAreaId=' in requset_url:
+            getSeatsByTicketAreaIdUrl = requset_url
+            break
+
     try:
-        getSeatsByTicketAreaIdUrl = ""
-        #r = driver.execute_script("return window.performance.getEntries();")
-
-        target_count, getSeatsByTicketAreaIdUrl = ticketplus_order_get_ticket_area_detla(driver)
-        if target_count > delta:
-            is_vue_ready = True
-
-        print("is_vue_ready:", is_vue_ready, getSeatsByTicketAreaIdUrl)
-        if is_vue_ready:
+        if len(getSeatsByTicketAreaIdUrl) > 0:
             js = """var t = JSON.parse(Cookies.get("user")) ? JSON.parse(Cookies.get("user")).access_token : "";
 fetch("%s",{headers: {
 authorization: "Bearer ".concat(t)
@@ -11376,8 +11375,6 @@ console.log(err);
     except Exception as exc:
         #print(exc)
         pass
-
-    return target_count
 
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
@@ -11925,11 +11922,10 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
-            ticketplus_dict["delta"] = ticketplus_order_auto_reload_coming_soon(driver, ticketplus_dict["delta"])
+            ticketplus_order_auto_reload_coming_soon(driver)
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     else:
-        ticketplus_dict["delta"], getSeatsByTicketAreaIdUrl = ticketplus_order_get_ticket_area_detla(driver)
         ticketplus_dict["fail_list"]=[]
 
     #https://ticketplus.com.tw/confirm/xx/oo
@@ -12093,7 +12089,6 @@ def main(args):
 
     ticketplus_dict = {}
     ticketplus_dict["fail_list"]=[]
-    ticketplus_dict["delta"]=0
     ticketplus_dict["is_popup_confirm"] = False
 
     ocr = None
@@ -12263,7 +12258,7 @@ def test_captcha_model():
     captcha_text_div_text = "請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
-    #captcha_text_div_text = "請在下方空白處輸入括號內數字(1234)"
+    captcha_text_div_text = "請在下方空白處輸入括號內數字(12 34)"
     #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
     #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
     #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
