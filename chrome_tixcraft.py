@@ -11331,7 +11331,7 @@ def ticketplus_order_auto_reload_coming_soon(driver):
                 if 'request' in network_log["params"]:
                     if 'url' in network_log["params"]["request"]:
                         if 'apis.ticketplus.com.tw/config/api/' in network_log["params"]["request"]["url"]:
-                            print("url:", network_log["params"]["request"]["url"])
+                            #print("url:", network_log["params"]["request"]["url"])
                             if 'get?ticketAreaId=' in network_log["params"]["request"]["url"]:
                                 getSeatsByTicketAreaIdUrl = network_log["params"]["request"]["url"]
                                 is_vue_ready = True
