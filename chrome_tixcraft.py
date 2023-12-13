@@ -11267,7 +11267,7 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
         if is_need_refresh:
             try:
                 # vue mode, refresh need more condition to check.
-                #driver.refresh()
+                driver.refresh()
                 pass
             except Exception as exc:
                 pass
@@ -11316,13 +11316,10 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
 
     return is_answer_sent, fail_list, is_question_popup
 
-
-def ticketplus_order_auto_reload_coming_soon(driver):
-    is_vue_ready = False
-
+def ticketplus_order_get_ticket_area_detla(driver):
+    target_count=0
+    getSeatsByTicketAreaIdUrl = ""
     try:
-        getSeatsByTicketAreaIdUrl = ""
-        #r = driver.execute_script("return window.performance.getEntries();")
         logs = driver.get_log("performance")
         url_list = []
         for log in logs:
@@ -11333,12 +11330,30 @@ def ticketplus_order_auto_reload_coming_soon(driver):
                 if 'request' in network_log["params"]:
                     if 'url' in network_log["params"]["request"]:
                         if 'apis.ticketplus.com.tw/config/api/' in network_log["params"]["request"]["url"]:
-                            #print("url:", network_log["params"]["request"]["url"])
                             if 'get?ticketAreaId=' in network_log["params"]["request"]["url"]:
+                                #print("url:", network_log["params"]["request"]["url"])
+                                target_count+=1
                                 getSeatsByTicketAreaIdUrl = network_log["params"]["request"]["url"]
-                                is_vue_ready = True
-                                break
+    except Exception as e:
+        #raise e
+        pass
 
+    return target_count, getSeatsByTicketAreaIdUrl
+
+
+def ticketplus_order_auto_reload_coming_soon(driver, delta):
+    is_vue_ready = False
+    target_count = 0
+    
+    try:
+        getSeatsByTicketAreaIdUrl = ""
+        #r = driver.execute_script("return window.performance.getEntries();")
+
+        target_count, getSeatsByTicketAreaIdUrl = ticketplus_order_get_ticket_area_detla(driver)
+        if target_count > delta:
+            is_vue_ready = True
+
+        print("is_vue_ready:", is_vue_ready, getSeatsByTicketAreaIdUrl)
         if is_vue_ready:
             js = """var t = JSON.parse(Cookies.get("user")) ? JSON.parse(Cookies.get("user")).access_token : "";
 fetch("%s",{headers: {
@@ -11349,7 +11364,8 @@ return response.json();
 console.log(data);
 if(data.result.product.length>0)
 if(data.result.product[0].status=="pending") {
-    location.reload();
+console.log("pending, start to reload");
+location.reload();
 }
 }).catch(function (err){
 console.log(err);
@@ -11360,6 +11376,8 @@ console.log(err);
     except Exception as exc:
         #print(exc)
         pass
+
+    return target_count
 
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
@@ -11907,10 +11925,11 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
-            ticketplus_order_auto_reload_coming_soon(driver)
+            ticketplus_dict["delta"] = ticketplus_order_auto_reload_coming_soon(driver, ticketplus_dict["delta"])
             is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     else:
+        ticketplus_dict["delta"], getSeatsByTicketAreaIdUrl = ticketplus_order_get_ticket_area_detla(driver)
         ticketplus_dict["fail_list"]=[]
 
     #https://ticketplus.com.tw/confirm/xx/oo
@@ -11920,7 +11939,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_event_page = True
 
         if is_event_page:
-            print("is_popup_confirm",ticketplus_dict["is_popup_confirm"])
+            #print("is_popup_confirm",ticketplus_dict["is_popup_confirm"])
             if not ticketplus_dict["is_popup_confirm"]:
                 ticketplus_dict["is_popup_confirm"] = True
                 play_sound_while_ordering(config_dict)
@@ -11958,7 +11977,7 @@ def get_current_url(driver):
         if window_handles_count==0:
             try:
                 driver_log = driver.get_log('driver')[-1]['message']
-                print("get_log:", driver_log)
+                #print("get_log:", driver_log)
                 if DISCONNECTED_MSG in driver_log:
                     print('quit bot by NoSuchWindowException')
                     is_quit_bot = True
@@ -12074,6 +12093,7 @@ def main(args):
 
     ticketplus_dict = {}
     ticketplus_dict["fail_list"]=[]
+    ticketplus_dict["delta"]=0
     ticketplus_dict["is_popup_confirm"] = False
 
     ocr = None
