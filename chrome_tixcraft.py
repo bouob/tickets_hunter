@@ -4313,6 +4313,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
             temp_answer = find_between(captcha_text_div_text, "「", "」")
+            temp_answer = temp_answer.strip()
             if len(temp_answer) > 0:
                 inferred_answer_string = temp_answer
             #print("find captcha text:" , inferred_answer_string)
@@ -4323,12 +4324,16 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         formated_html_text = format_quota_string(formated_html_text)
         formated_html_text = formated_html_text.replace('的','')
         formated_html_text = formated_html_text.replace('之內','內')
-        match_quota_text_items = ["輸入括號內數字","輸入括號內文字","輸入括號內文數字"
-        ,"輸入引號內數字","輸入引號內文字","輸入引號內文數字"]
+        formated_html_text = formated_html_text.replace('之中','中')
+        formated_html_text = formated_html_text.replace('括號中','括號內')
+        formated_html_text = formated_html_text.replace('輸入引號','輸入括號')
+        formated_html_text = formated_html_text.replace('內數字','內文字')
+        match_quota_text_items = ["輸入括號內文字"]
         if len(formated_html_text) <= 30:
             if not '\n' in formated_html_text:
                 if '【' in formated_html_text and '】' in formated_html_text:
                     temp_answer = find_between(formated_html_text, "【", "】")
+                    temp_answer = temp_answer.strip()
                     if len(temp_answer) > 0:
                         temp_answer = temp_answer.replace(' ','')
                         inferred_answer_string = temp_answer
@@ -4343,6 +4348,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
             inferred_answer_string = find_between(captcha_text_div_text, "【", "】")
+            inferred_answer_string = inferred_answer_string.strip()
             #print("find captcha text:" , inferred_answer_string)
 
     # parse '演出日期'
