@@ -53,7 +53,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.08)"
+CONST_APP_VERSION = "MaxBot (2023.12.09)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -10853,6 +10853,7 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     matched_blocks = None
     formated_area_list = None
+    is_vue_ready = True
 
     if not area_list is None:
         area_list_count = len(area_list)
@@ -10877,6 +10878,12 @@ def ticketplus_date_auto_select(driver, config_dict):
                 if len(row_text) > 0:
                     if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
+
+                if len(row_text) > 0:
+                    if '<div class="v-progress-circular__info"></div>' in row_html:
+                        # vue not applied.
+                        is_vue_ready = False
+                        break
 
                 if len(row_text) > 0:
                     row_is_enabled=False
@@ -10921,43 +10928,44 @@ def ticketplus_date_auto_select(driver, config_dict):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     is_date_clicked = False
-    if not target_area is None:
-        target_button = None
-        try:
-            target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
-            if not target_button is None:
-                if target_button.is_enabled():
+    if is_vue_ready:
+        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        if not target_area is None:
+            target_button = None
+            try:
+                target_button = target_area.find_element(By.CSS_SELECTOR, 'button')
+                if not target_button is None:
+                    if target_button.is_enabled():
+                        if show_debug_message:
+                            print("start to press button...")
+                        target_button.click()
+                        is_date_clicked = True
+                else:
                     if show_debug_message:
-                        print("start to press button...")
-                    target_button.click()
-                    is_date_clicked = True
-            else:
+                        print("target_button in target row is None.")
+            except Exception as exc:
                 if show_debug_message:
-                    print("target_button in target row is None.")
-        except Exception as exc:
-            if show_debug_message:
-                print("find or press button fail:", exc)
+                    print("find or press button fail:", exc)
 
-            if not target_button is None:
-                #print("try to click button fail, force click by js.")
-                try:
-                    #driver.execute_script("arguments[0].click();", target_button)
-                    pass
-                except Exception as exc:
-                    pass
-
-    # [PS]: current reload condition only when
-    if auto_reload_coming_soon_page_enable:
-        if not is_date_clicked:
-            if not formated_area_list is None:
-                if len(formated_area_list) == 0:
+                if not target_button is None:
+                    #print("try to click button fail, force click by js.")
                     try:
-                        driver.refresh()
-                        time.sleep(0.3)
+                        #driver.execute_script("arguments[0].click();", target_button)
+                        pass
                     except Exception as exc:
                         pass
+
+        # [PS]: current reload condition only when
+        if auto_reload_coming_soon_page_enable:
+            if not is_date_clicked:
+                if not formated_area_list is None:
+                    if len(formated_area_list) == 0:
+                        try:
+                            driver.refresh()
+                            time.sleep(0.3)
+                        except Exception as exc:
+                            pass
 
     return is_date_clicked
 
@@ -11065,16 +11073,19 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 # not found closed-folder button, try scan opened-text-title.
                 if show_debug_message:
                     print("not found closed-folder button, try scan opened-text-title")
-                my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="false"]'
-                area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-                is_click_on_folder = True
-
-            if len(area_list)==1:
-                my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="true"]'
-                area_list_parent = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
-                if len(area_list_parent) > 0:
-                    # change keyword to match all.
-                    area_keyword_item = ""
+                
+                my_css_selector = 'div.price-group > div'
+                price_group_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                if len(price_group_list) > 0:
+                    # price group style.
+                    my_css_selector = 'div.seats-area > div.v-expansion-panel'
+                    area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                else:
+                    # no price group style.
+                    my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="false"]'
+                    area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                    # triger re-query again.
+                    is_click_on_folder = True
                 
     except Exception as exc:
         if current_layout_style == 1:
