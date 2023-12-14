@@ -53,7 +53,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.06)"
+CONST_APP_VERSION = "MaxBot (2023.12.07)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11007,10 +11007,19 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
                         if show_debug_message:
                             print("click on plus button #",i)
                         try:
-                            if ticket_number_plus.is_enabled():
-                                ticket_number_plus.click()
-                                is_price_assign_by_bot = True
+                            ticket_number_plus.click()
+                            is_price_assign_by_bot = True
+                            if i==0:
                                 time.sleep(0.2)
+
+                            ticket_number_text = ticket_number_div.text
+                            if len(ticket_number_text) > 0:
+                                ticket_number_text_int = int(ticket_number_text)
+                                if show_debug_message:
+                                    print("ticket_number_text_int:", ticket_number_text_int)
+                                if ticket_number_text_int >= ticket_number:
+                                    print("match target ticket count (now/target):", ticket_number_text_int, ticket_number)
+                                    break
                         except Exception as exc:
                             pass
             else:
@@ -11028,6 +11037,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     is_need_refresh = False
+    is_click_on_folder = False
 
     matched_blocks = None
 
@@ -11041,8 +11051,18 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         if current_layout_style == 1:
             # style 1: .text-title
             # PS: price info header format also is div.v-expansion-panels > div.v-expansion-panel
-            my_css_selector = "div.seats-area > div.v-expansion-panel"
+            my_css_selector = "div.seats-area > div.v-expansion-panel > div.v-expansion-panel-content > div.v-expansion-panel-content__wrap > div.text-title"
         area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+
+        if current_layout_style == 1:
+            if len(area_list)==0:
+                # not found closed-folder button, try scan opened-text-title.
+                if show_debug_message:
+                    print("not found closed-folder button, try scan opened-text-title")
+                my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="false"]'
+                area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                is_click_on_folder = True
+                
     except Exception as exc:
         if current_layout_style == 1:
             print("find .v-expansion-panels date list fail")
@@ -11194,6 +11214,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         print("current_layout_style:", current_layout_style)
         print("is_price_panel_expanded:", is_price_panel_expanded)
 
+    is_clicked = False
     if not is_price_panel_expanded:
         if current_layout_style==1:
             if not target_area is None:
@@ -11202,6 +11223,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     my_css_selector = 'button'
                     target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
                     target_button.click()
+                    is_clicked = True
                     print("clicked on button.")
 
                     #target_area.click()
@@ -11221,13 +11243,22 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                         #print(exc)
                         pass
 
-    is_price_assign_by_bot = False
-    if not target_area is None:
-        for retry_index in range(2):
-            # PS: each price have each price div, so need pass parent div to increase ticket number.
-            is_price_assign_by_bot = ticketplus_assign_ticket_number(target_area, config_dict)
+    is_reset_query = False
+    if is_click_on_folder:
+        if is_clicked:
+            time.sleep(0.2)
+            is_reset_query = True
 
-    return is_need_refresh, is_price_assign_by_bot
+    is_price_assign_by_bot = False
+    if not is_reset_query:
+        if not target_area is None:
+            for retry_index in range(2):
+                # PS: each price have each price div, so need pass parent div to increase ticket number.
+                is_price_assign_by_bot = ticketplus_assign_ticket_number(target_area, config_dict)
+                if is_price_assign_by_bot:
+                    break
+
+    return is_need_refresh, is_price_assign_by_bot, is_reset_query
 
 
 def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
@@ -11256,15 +11287,24 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             except Exception as exc:
                 area_keyword_array = []
 
-            for area_keyword_item in area_keyword_array:
-                is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style)
-                if not is_need_refresh:
+            is_reset_query = False
+            for retry_idx in range(2):
+                for area_keyword_item in area_keyword_array:
+                    is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style)
+                    if is_reset_query:
+                        break
+                    if not is_need_refresh:
+                        break
+                    else:
+                        print("is_need_refresh for keyword:", area_keyword_item)
+                
+                # when reset query, do query again.
+                if not is_reset_query:
                     break
-                else:
-                    print("is_need_refresh for keyword:", area_keyword_item)
+
         else:
             # empty keyword, match all.
-            is_need_refresh, is_price_assign_by_bot = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
+            is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
 
         if is_need_refresh:
             try:
