@@ -53,7 +53,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.07)"
+CONST_APP_VERSION = "MaxBot (2023.12.08)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11062,6 +11062,13 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="false"]'
                 area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
                 is_click_on_folder = True
+
+            if len(area_list)==1:
+                my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="true"]'
+                area_list_parent = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                if len(area_list_parent) > 0:
+                    # change keyword to match all.
+                    area_keyword_item = ""
                 
     except Exception as exc:
         if current_layout_style == 1:
