@@ -560,7 +560,15 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.unhandled_prompt_behavior = "accept"
     #print("strategy", options.page_load_strategy)
 
-    options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
+    is_log_performace = False
+    performace_site = ['ticketplus']
+    for site in performace_site:
+        if site in config_dict["homepage"]:
+            is_log_performace = True
+            break
+
+    if is_log_performace:
+        options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
     if config_dict["advanced"]["adblock_plus_enable"]:
         load_extension_path = ""
@@ -854,6 +862,8 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*.woff2')
                 NETWORK_BLOCKED_URLS.append('*.ttf')
                 NETWORK_BLOCKED_URLS.append('*.otf')
+                NETWORK_BLOCKED_URLS.append('*fonts.googleapis.com/earlyaccess/*')
+                NETWORK_BLOCKED_URLS.append('*/ajax/libs/font-awesome/*')
                 NETWORK_BLOCKED_URLS.append('*.ico')
                 NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/*')
                 NETWORK_BLOCKED_URLS.append('*static.tixcraft.com/images/activity/*')
@@ -7583,12 +7593,19 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
             if not 'ticketmaster' in domain_name:
                 # for tixcraft
                 tixcraft_area_auto_select(driver, url, config_dict)
+                tixcraft_dict["area_retry_count"]+=1
+                #print("count:", tixcraft_dict["area_retry_count"])
+                if tixcraft_dict["area_retry_count"] >= (60 * 15):
+                    # Cool-down
+                    tixcraft_dict["area_retry_count"] = 0
+                    time.sleep(3)
             else:
                 # area auto select is too difficult, skip in this version.
                 tixcraft_dict["fail_promo_list"] = ticketmaster_promo(driver, config_dict, tixcraft_dict["fail_promo_list"])
                 ticketmaster_assign_ticket_number(driver, config_dict)
     else:
         tixcraft_dict["fail_promo_list"] = []
+        tixcraft_dict["area_retry_count"]=0
 
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
     if '/ticket/check-captcha/' in url:
@@ -12139,6 +12156,7 @@ def main(args):
     tixcraft_dict["done_time"]=None
     tixcraft_dict["elapsed_time"]=None
     tixcraft_dict["is_popup_checkout"] = False
+    tixcraft_dict["area_retry_count"]=0
 
     # for kktix
     kktix_dict = {}
