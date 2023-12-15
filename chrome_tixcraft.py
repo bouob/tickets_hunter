@@ -53,7 +53,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.09)"
+CONST_APP_VERSION = "MaxBot (2023.12.10)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -293,25 +293,33 @@ def get_chinese_numeric():
     return my_dict
 
 # 同義字
-def synonyms(keyword):
+def synonym_dict(char):
     ret = []
     my_dict = get_chinese_numeric()
-    if keyword in my_dict:
-        ret = my_dict[keyword]
+    if char in my_dict:
+        ret = my_dict[char]
     else:
-        ret.append(keyword)
+        ret.append(char)
     return ret
 
-def normalize_chinese_numeric(keyword):
+def chinese_numeric_to_int(char):
     ret = None
     my_dict = get_chinese_numeric()
     for i in my_dict:
         for item in my_dict[i]:
-            if keyword.lower() == item:
+            if char.lower() == item:
                 ret = int(i)
                 break
         if not ret is None:
             break
+    return ret
+
+def normalize_chinese_numeric(keyword):
+    ret = ""
+    for char in keyword:
+        converted_int = chinese_numeric_to_int(char)
+        if not converted_int is None:
+            ret += str(converted_int)
     return ret
 
 def find_continuous_number(text):
@@ -1328,7 +1336,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -1342,7 +1350,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -1356,7 +1364,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -1370,7 +1378,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -1384,7 +1392,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -1398,7 +1406,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             space_index = tmp_text.find(" ", star_index)
             answer_char_count = tmp_text[star_index-1:star_index]
             if answer_char_count.isnumeric():
-                answer_char_count = normalize_chinese_numeric(answer_char_count)
+                answer_char_count = chinese_numeric_to_int(answer_char_count)
                 if answer_char_count is None:
                     answer_char_count = '0'
 
@@ -4336,6 +4344,11 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                     temp_answer = temp_answer.strip()
                     if len(temp_answer) > 0:
                         temp_answer = temp_answer.replace(' ','')
+
+                        # check raw question.
+                        if '數字' in captcha_text_div_text:
+                            temp_answer = normalize_chinese_numeric(temp_answer)
+                        
                         inferred_answer_string = temp_answer
 
     if inferred_answer_string is None:
@@ -7796,7 +7809,7 @@ def get_urbtix_survey_answer_by_question(question_text):
             if seq_string.isdigit():
                 seq = int(seq_string)
             else:
-                tmp_seq = normalize_chinese_numeric(seq_string)
+                tmp_seq = chinese_numeric_to_int(seq_string)
                 if not tmp_seq is None:
                     seq = tmp_seq
 
@@ -7870,7 +7883,7 @@ def get_urbtix_survey_answer_by_question(question_text):
                     if count_target_string.isdigit():
                         count_target = int(count_target_string)
                     else:
-                        count_target = normalize_chinese_numeric(count_target_string)
+                        count_target = chinese_numeric_to_int(count_target_string)
 
             if not count_target is None:
                 for char in option_text_string:
@@ -7935,7 +7948,7 @@ def urbtix_auto_survey(driver, config_dict):
                                 option_content_div_text = full2half(option_content_div_text)
 
                                 if question_direction in ['left','right']:
-                                    for answer_item in synonyms(question_answer_char):
+                                    for answer_item in synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
                                             is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
@@ -7945,7 +7958,7 @@ def urbtix_auto_survey(driver, config_dict):
                                                 break
 
                                 if question_direction == "count":
-                                    for answer_item in synonyms(question_answer_char):
+                                    for answer_item in synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
                                             is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
@@ -7971,7 +7984,7 @@ def urbtix_auto_survey(driver, config_dict):
                                     int_answer_char = int(question_answer_char)
                                     if int_answer_char > 1:
                                         for i in range(int_answer_char-1):
-                                            for answer_item in synonyms(str(i+1)):
+                                            for answer_item in synonym_dict(str(i+1)):
                                                 is_match_more_then = False
                                                 if answer_item + '個或以上' in option_content_div_text:
                                                     is_match_more_then = True
@@ -12322,7 +12335,8 @@ def test_captcha_model():
     captcha_text_div_text = "請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
-    captcha_text_div_text = "請在下方空白處輸入括號內數字(12 34)"
+    #captcha_text_div_text = "請在下方空白處輸入括號內數字(12 34)"
+    #captcha_text_div_text = "請在下方空白處輸入括號內數字( 2１８４41 )"
     #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
     #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
     #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
