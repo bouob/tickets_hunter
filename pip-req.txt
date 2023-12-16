@@ -11,6 +11,7 @@ ddddocr
 urllib3>=1.21.1
 numpy
 tornado
+#jieba
 
 # Migrate looseversion to fix distutils issues on python 3.12+ for undetected-chromedriver
 looseversion

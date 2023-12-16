@@ -10,6 +10,7 @@ import random
 import re
 import sys
 import time
+#import jieba
 from datetime import datetime
 
 from selenium import webdriver
@@ -53,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.10)"
+CONST_APP_VERSION = "MaxBot (2023.12.12)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -248,7 +249,11 @@ def format_keyword_string(keyword):
 
 def format_quota_string(formated_html_text):
     formated_html_text = formated_html_text.replace('「','【')
+    formated_html_text = formated_html_text.replace('『','【')
     formated_html_text = formated_html_text.replace('〔','【')
+    formated_html_text = formated_html_text.replace('﹝','【')
+    formated_html_text = formated_html_text.replace('〈','【')
+    formated_html_text = formated_html_text.replace('《','【')
     formated_html_text = formated_html_text.replace('［','【')
     formated_html_text = formated_html_text.replace('〖','【')
     formated_html_text = formated_html_text.replace('[','【')
@@ -256,7 +261,11 @@ def format_quota_string(formated_html_text):
     formated_html_text = formated_html_text.replace('(','【')
 
     formated_html_text = formated_html_text.replace('」','】')
+    formated_html_text = formated_html_text.replace('』','】')
     formated_html_text = formated_html_text.replace('〕','】')
+    formated_html_text = formated_html_text.replace('﹞','】')
+    formated_html_text = formated_html_text.replace('〉','】')
+    formated_html_text = formated_html_text.replace('》','】')
     formated_html_text = formated_html_text.replace('］','】')
     formated_html_text = formated_html_text.replace('〗','】')
     formated_html_text = formated_html_text.replace(']','】')
@@ -4340,26 +4349,44 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     if inferred_answer_string is None:
         formated_html_text = captcha_text_div_text.strip()
         formated_html_text = format_quota_string(formated_html_text)
+        formated_html_text = formated_html_text.replace('請輸入','輸入')
+
         formated_html_text = formated_html_text.replace('的','')
         formated_html_text = formated_html_text.replace('之內','內')
         formated_html_text = formated_html_text.replace('之中','中')
+        
+        formated_html_text = formated_html_text.replace('括弧','括號')
+        formated_html_text = formated_html_text.replace('引號','括號')
+        
         formated_html_text = formated_html_text.replace('括號中','括號內')
-        formated_html_text = formated_html_text.replace('輸入引號','輸入括號')
-        formated_html_text = formated_html_text.replace('內數字','內文字')
-        match_quota_text_items = ["輸入括號內文字"]
+
+        formated_html_text = formated_html_text.replace('數字','文字')
+
+        is_match_input_quota_text = False
         if len(formated_html_text) <= 30:
             if not '\n' in formated_html_text:
                 if '【' in formated_html_text and '】' in formated_html_text:
-                    temp_answer = find_between(formated_html_text, "【", "】")
-                    temp_answer = temp_answer.strip()
-                    if len(temp_answer) > 0:
-                        temp_answer = temp_answer.replace(' ','')
+                    is_match_input_quota_text = True
 
-                        # check raw question.
-                        if '數字' in captcha_text_div_text:
-                            temp_answer = normalize_chinese_numeric(temp_answer)
-                        
-                        inferred_answer_string = temp_answer
+        # check target text terms.
+        if is_match_input_quota_text:
+            target_text_list = ["輸入","括號","文字"]
+            for item in target_text_list:
+                if not item in formated_html_text:
+                    is_match_input_quota_text = False
+                    break
+
+        if is_match_input_quota_text:
+            temp_answer = find_between(formated_html_text, "【", "】")
+            temp_answer = temp_answer.strip()
+            if len(temp_answer) > 0:
+                temp_answer = temp_answer.replace(' ','')
+
+                # check raw question.
+                if '數字' in captcha_text_div_text:
+                    temp_answer = normalize_chinese_numeric(temp_answer)
+                
+                inferred_answer_string = temp_answer
 
     if inferred_answer_string is None:
         is_use_quota_message = False
@@ -7598,7 +7625,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 if tixcraft_dict["area_retry_count"] >= (60 * 15):
                     # Cool-down
                     tixcraft_dict["area_retry_count"] = 0
-                    time.sleep(3)
+                    time.sleep(5)
             else:
                 # area auto select is too difficult, skip in this version.
                 tixcraft_dict["fail_promo_list"] = ticketmaster_promo(driver, config_dict, tixcraft_dict["fail_promo_list"])
@@ -12354,7 +12381,7 @@ def test_captcha_model():
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
     #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
     #captcha_text_div_text = "請在下方空白處輸入括號內數字(12 34)"
-    #captcha_text_div_text = "請在下方空白處輸入括號內數字( 2１８４41 )"
+    #captcha_text_div_text = "請輸入括弧內數字( 27８９41 )"
     #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
     #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
     #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
@@ -12391,6 +12418,8 @@ if __name__ == "__main__":
     debug_captcha_model_flag = False    # online mode
     # for debug purpose.
     #debug_captcha_model_flag = True
+
+    #jieba.initialize()
 
     if not debug_captcha_model_flag:
         cli()
