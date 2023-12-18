@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.12)"
+CONST_APP_VERSION = "MaxBot (2023.12.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11463,40 +11463,49 @@ def get_performance_log(driver, url_keyword):
 def ticketplus_order_auto_reload_coming_soon(driver):
     #r = driver.execute_script("return window.performance.getEntries();")
 
+    is_reloading = False
     url_keyword='apis.ticketplus.com.tw/config/api/'
     url_list = get_performance_log(driver, url_keyword)
     #print("url_list:", url_list)
 
     getSeatsByTicketAreaIdUrl = ""
     for requset_url in url_list:
+        if 'get?productId=' in requset_url:
+            getSeatsByTicketAreaIdUrl = requset_url
+            break
         if 'get?ticketAreaId=' in requset_url:
             getSeatsByTicketAreaIdUrl = requset_url
             break
 
     try:
         if len(getSeatsByTicketAreaIdUrl) > 0:
-            js = """var t = JSON.parse(Cookies.get("user")) ? JSON.parse(Cookies.get("user")).access_token : "";
-fetch("%s",{headers: {
-authorization: "Bearer ".concat(t)
-}}).then(function (response) {
+            js = """//var t = JSON.parse(Cookies.get("user")) ? JSON.parse(Cookies.get("user")).access_token : "";
+//var callback = arguments[arguments.length - 1];
+fetch("%s",{
+//headers: {authorization: "Bearer ".concat(t)}
+}).then(function (response) {
 return response.json();
 }).then(function (data) {
-console.log(data);
 if(data.result.product.length>0)
 if(data.result.product[0].status=="pending") {
-console.log("pending, start to reload");
 location.reload();
+//callback(true);
 }
 }).catch(function (err){
-console.log(err);
+//console.log(err);
 });
 """ % getSeatsByTicketAreaIdUrl
             driver.set_script_timeout(0.1)
-            driver.execute_async_script(js)
+            driver.execute_script(js)
+            SeatsByTicketAreaDict = None
+            #SeatsByTicketAreaDict = driver.execute_async_script(js)
+            if not SeatsByTicketAreaDict is None:
+                is_reloading = SeatsByTicketAreaDict
     except Exception as exc:
         #print(exc)
         pass
 
+    return is_reloading
 
 def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     show_debug_message = True       # debug.
@@ -12043,8 +12052,9 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
-            ticketplus_order_auto_reload_coming_soon(driver)
-            is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+            is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
+            if not is_reloading:
+                is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     else:
         ticketplus_dict["fail_list"]=[]
