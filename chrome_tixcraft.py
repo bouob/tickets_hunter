@@ -11389,7 +11389,7 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
 
         if is_need_refresh:
             try:
-                # vue mode, refresh need more condition to check.
+                # vue mode, refresh need to check more conditions to check.
                 driver.refresh()
                 pass
             except Exception as exc:
@@ -11549,7 +11549,11 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
     #print("is_button_disabled:", is_button_disabled)
     is_captcha_sent = False
     if is_button_disabled:
+        is_price_assign_by_bot = False
         is_price_assign_by_bot = ticketplus_order_expansion_panel(driver, config_dict, current_layout_style)
+
+        if not is_price_assign_by_bot:
+            is_price_assign_by_bot = ticketplus_assign_ticket_number(driver, config_dict)
 
         is_question_popup = False
         is_answer_sent = False
