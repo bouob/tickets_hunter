@@ -1,5 +1,36 @@
 # Demo (示範影片)
 
+
+### 2023-12-10: 
+KKTIX 搶車票
+
+https://youtu.be/csUJ6kRSynY
+
+### 2023-12-08: 
+遠大支援購票目錄下單一項目時自動填入張數
+
+https://youtu.be/cuVwUG8IYR4
+
+### 2023-12-07: 
+遠大支援購票目錄下非第一項目的票券
+
+https://youtu.be/wuxQTVumOP0
+
+### 2023-12-06: 
+遠大售票尚未開賣更快地刷新v
+
+https://youtu.be/ls_IU81Kn6k
+
+### 2023-12-04: 
+支援udn售票的快速購票模式v
+
+https://youtu.be/qbkMnOuB9z8
+
+### 2023-12-07: 
+「2023年第30屆亞洲棒球錦標賽」搶票分享(有搶到)
+
+https://youtu.be/8M5LwSZNDX0
+
 ### 2023-11-06: 
 在虛擬主機環境下搶票
 
