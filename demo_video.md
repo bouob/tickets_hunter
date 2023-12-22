@@ -17,12 +17,12 @@ https://youtu.be/cuVwUG8IYR4
 https://youtu.be/wuxQTVumOP0
 
 ### 2023-12-06: 
-遠大售票尚未開賣更快地刷新v
+遠大售票尚未開賣更快地刷新
 
 https://youtu.be/ls_IU81Kn6k
 
 ### 2023-12-04: 
-支援udn售票的快速購票模式v
+支援udn售票的快速購票模式
 
 https://youtu.be/qbkMnOuB9z8
 
