@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.13)"
+CONST_APP_VERSION = "MaxBot (2023.12.14)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -92,7 +92,7 @@ CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 def t_or_f(arg):
     ret = False
@@ -925,6 +925,10 @@ def get_driver_by_config(config_dict):
 
             if 'galaxymacau.com' in homepage:
                 pass
+
+            if 'ticketplus.com.tw' in homepage:
+                if len(config_dict["advanced"]["ticketplus_account"]) > 1:
+                    homepage = "https://ticketplus.com.tw/"
 
             print("goto url:", homepage)
             driver.get(homepage)
@@ -11040,7 +11044,9 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
         my_css_selector = 'div.count-button > div'
         ticket_number_div = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
-        print("find ticket_number_div fail")
+        if show_debug_message:
+            print("find div.count-button fail")
+        pass
 
     if not ticket_number_div is None:
         ticket_number = config_dict["ticket_number"]
@@ -11862,9 +11868,11 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
     return is_verifyCode_editing, is_form_sumbited
 
 def ticketplus_account_auto_fill(driver, config_dict):
+    is_user_signin = False
+
     # auto fill account info.
     if len(config_dict["advanced"]["ticketplus_account"]) > 0:
-        is_user_signin = False
+        
         try:
             all_cookies=list_all_cookies(driver)
             if 'user' in all_cookies:
@@ -11888,6 +11896,12 @@ def ticketplus_account_auto_fill(driver, config_dict):
             except Exception as exc:
                 pass
 
+            is_account_sent, is_password_sent = ticketplus_account_sign_in(driver, config_dict)
+    
+    return is_user_signin
+
+
+def ticketplus_account_sign_in(driver, config_dict):
     # manually keyin verify code.
     form_account = None
     try:
@@ -12020,6 +12034,7 @@ def ticketplus_confirm(driver, config_dict):
 
 def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     home_url_list = ['https://ticketplus.com.tw/']
+    is_user_signin = False
     for each_url in home_url_list:
         if each_url == url.lower():
             if config_dict["ocr_captcha"]["enable"]:
@@ -12028,8 +12043,17 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
                     Captcha_Browser.Set_cookies(driver.get_cookies())
                     Captcha_Browser.Set_Domain(domain_name)
 
-            ticketplus_account_auto_fill(driver, config_dict)
-            break
+            is_user_signin = ticketplus_account_auto_fill(driver, config_dict)
+            if is_user_signin:
+                break
+
+    if is_user_signin:
+        # only sign in on homepage.
+        if url != config_dict["homepage"]:
+            try:
+                driver.get(config_dict["homepage"])
+            except Exception as e:
+                pass
 
     # https://ticketplus.com.tw/activity/XXX
     if '/activity/' in url.lower():
