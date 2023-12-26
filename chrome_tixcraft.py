@@ -375,10 +375,13 @@ def is_all_alpha_or_numeric(text):
     #print("text/is_all_alpha_or_numeric:",text,ret)
     return ret
 
-def get_favoriate_extension_path(webdriver_path):
+def get_favoriate_extension_path(webdriver_path, config_dict):
     print("webdriver_path:", webdriver_path)
+    
     extension_list = []
-    extension_list.append(os.path.join(webdriver_path,"Adblock_3.21.1.0.crx"))
+    if config_dict["advanced"]["adblock_plus_enable"]:
+        extension_list.append(os.path.join(webdriver_path,"Adblock_3.21.1.0.crx"))
+    extension_list.append(os.path.join(webdriver_path,"Maxbot_1.0.0.crx"))
     return extension_list
 
 def get_chromedriver_path(webdriver_path):
@@ -415,15 +418,21 @@ def get_chrome_options(webdriver_path, config_dict):
     if browser=="safari":
         chrome_options = webdriver.SafariOptions()
 
-    chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
+    is_log_performace = False
+    performace_site = ['ticketplus']
+    for site in performace_site:
+        if site in config_dict["homepage"]:
+            is_log_performace = True
+            break
 
-    # some windows cause: timed out receiving message from renderer
-    if config_dict["advanced"]["adblock_plus_enable"]:
-        # PS: this is ocx version.
-        extension_list = get_favoriate_extension_path(webdriver_path)
-        for ext in extension_list:
-            if os.path.exists(ext):
-                chrome_options.add_extension(ext)
+    if is_log_performace:
+        chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
+
+    # PS: this is crx version.
+    extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
+    for ext in extension_list:
+        if os.path.exists(ext):
+            chrome_options.add_extension(ext)
 
     if config_dict["advanced"]["headless"]:
         #chrome_options.add_argument('--headless')
@@ -579,16 +588,15 @@ def get_uc_options(uc, config_dict, webdriver_path):
     if is_log_performace:
         options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
-    if config_dict["advanced"]["adblock_plus_enable"]:
-        load_extension_path = ""
-        extension_list = get_favoriate_extension_path(webdriver_path)
-        for ext in extension_list:
-            ext = ext.replace('.crx','')
-            if os.path.exists(ext):
-                load_extension_path += ("," + os.path.abspath(ext))
-        if len(load_extension_path) > 0:
-            print('load-extension:', load_extension_path[1:])
-            options.add_argument('--load-extension=' + load_extension_path[1:])
+    load_extension_path = ""
+    extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
+    for ext in extension_list:
+        ext = ext.replace('.crx','')
+        if os.path.exists(ext):
+            load_extension_path += ("," + os.path.abspath(ext))
+    if len(load_extension_path) > 0:
+        print('load-extension:', load_extension_path[1:])
+        options.add_argument('--load-extension=' + load_extension_path[1:])
 
     if config_dict["advanced"]["headless"]:
         #options.add_argument('--headless')
@@ -3297,7 +3305,8 @@ def get_tixcraft_ticket_select(driver, config_dict):
     return form_select
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
-    tixcraft_ticket_main_agree(driver, config_dict)
+    # use extension instead of selenium.
+    #tixcraft_ticket_main_agree(driver, config_dict)
 
     # allow agree not enable to assign ticket number.
     form_select_list = None
@@ -3869,23 +3878,6 @@ def kktix_get_web_datetime(registrationsNewApp_div):
 
     return web_datetime
 
-def kktix_hide_blocks(driver):
-    is_need_refresh = False
-    elements = None
-    try:
-        elements = driver.find_elements(By.CSS_SELECTOR, "div[ng-controller='EventInfoCtrl']")
-    except Exception as exc:
-        print("find person_agree_terms checkbox Exception")
-        pass
-
-    if not elements is None:
-        for element in elements:
-            if not element is None:
-                try:
-                    driver.execute_script("arguments[0].innerHTML='';", element);
-                except Exception as exc:
-                    pass
-
 def kktix_check_agree_checkbox(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -3895,8 +3887,6 @@ def kktix_check_agree_checkbox(driver, config_dict):
 
     is_need_refresh = False
     is_finish_checkbox_click = False
-
-    kktix_hide_blocks(driver)
 
     agree_checkbox = None
     try:
