@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.15)"
+CONST_APP_VERSION = "MaxBot (2023.12.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -121,7 +121,6 @@ def load_translate():
     en_us["language"] = 'Language'
     en_us["ticket_number"] = 'Ticker Number'
 
-    en_us["auto_check_agree"] = 'Auto check agree checkbox'
     en_us["enable"] = 'Enable'
     en_us["recommand_enable"] = "Recommended to enable"
 
@@ -229,8 +228,6 @@ def load_translate():
     zh_tw["language"] = '語言'
     zh_tw["ticket_number"] = '門票張數'
 
-    zh_tw["auto_check_agree"] = '自動勾選同意'
-
     zh_tw["enable"] = '啟用'
     zh_tw["recommand_enable"] = "建議啟用"
     zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
@@ -336,7 +333,6 @@ def load_translate():
     zh_cn["language"] = '语言'
     zh_cn["ticket_number"] = '门票张数'
 
-    zh_cn["auto_check_agree"] = '自动勾选同意'
     zh_cn["enable"] = '启用'
     zh_cn["recommand_enable"] = "建议启用"
 
@@ -444,7 +440,6 @@ def load_translate():
     ja_jp["language"] = '言語'
     ja_jp["ticket_number"] = '枚数'
 
-    ja_jp["auto_check_agree"] = '自動的に同意をチェック'
     ja_jp["enable"] = '有効'
     ja_jp["recommand_enable"] = "有効化を推奨"
 
@@ -627,7 +622,6 @@ def get_default_config():
     config_dict["browser"] = "chrome"
     config_dict["language"] = "English"
     config_dict["ticket_number"] = 2
-    config_dict["auto_check_agree"] = True
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
     config_dict["ocr_captcha"]["beta"] = True
@@ -772,7 +766,6 @@ def btn_save_act(language_code, slience_mode=False):
     global combo_browser
     global combo_language
     global combo_ticket_number
-    global chk_state_auto_check_agree
 
     global chk_state_auto_press_next_step_button
     global chk_state_auto_fill_ticket_number
@@ -870,8 +863,6 @@ def btn_save_act(language_code, slience_mode=False):
             config_dict["ticket_number"] = int(combo_ticket_number.get().strip())
 
     if is_all_data_correct:
-        config_dict["auto_check_agree"] = bool(chk_state_auto_check_agree.get())
-
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
 
@@ -1248,7 +1239,6 @@ def applyNewLanguage():
     global lbl_browser
     global lbl_language
     global lbl_ticket_number
-    global lbl_auto_check_agree
 
     # for kktix
     global lbl_auto_press_next_step_button
@@ -1282,8 +1272,6 @@ def applyNewLanguage():
     global lbl_maxbot_last_url
 
     # for checkbox
-    global chk_auto_check_agree
-
     global chk_auto_press_next_step_button
     global chk_auto_fill_ticket_number
     global chk_date_auto_select
@@ -1330,7 +1318,6 @@ def applyNewLanguage():
     lbl_browser.config(text=translate[language_code]["browser"])
     lbl_language.config(text=translate[language_code]["language"])
     lbl_ticket_number.config(text=translate[language_code]["ticket_number"])
-    lbl_auto_check_agree.config(text=translate[language_code]["auto_check_agree"])
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
@@ -1374,7 +1361,6 @@ def applyNewLanguage():
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
     lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
 
-    chk_auto_check_agree.config(text=translate[language_code]["enable"])
     chk_auto_press_next_step_button.config(text=translate[language_code]["enable"])
     chk_auto_fill_ticket_number.config(text=translate[language_code]["enable"])
     chk_date_auto_select.config(text=translate[language_code]["enable"])
@@ -1682,20 +1668,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     #combo_ticket_number.current(0)
     combo_ticket_number.set(str(config_dict["ticket_number"]))
     combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count+=1
-
-    global lbl_auto_check_agree
-    lbl_auto_check_agree = Label(frame_group_header, text=translate[language_code]['auto_check_agree'])
-    lbl_auto_check_agree.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_auto_check_agree
-    chk_state_auto_check_agree = BooleanVar()
-    chk_state_auto_check_agree.set(config_dict["auto_check_agree"])
-
-    global chk_auto_check_agree
-    chk_auto_check_agree = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_check_agree)
-    chk_auto_check_agree.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 

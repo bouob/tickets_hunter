@@ -1,0 +1,67 @@
+{
+  "author": "Max Yao",
+  "name": "MaxBot",
+  "icons": {
+    "16": "icons/maxbot-16.png",
+    "32": "icons/maxbot-32.png",
+    "48": "icons/maxbot-48.png",
+    "64": "icons/maxbot-64.png",
+    "128": "icons/maxbot-128.png"
+  },
+  "manifest_version": 2,
+  "background": {
+    "persistent": true,
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "minimum_chrome_version": "77.0",
+  "minimum_opera_version": "64.0",
+  "permissions": [
+    "<all_urls>",
+    "contextMenus",
+    "notifications",
+    "storage",
+    "tabs",
+    "unlimitedStorage",
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "web_accessible_resources": [
+    "data/settings.json"
+  ],  
+  "content_scripts" : [
+    {
+      "matches" : [ "https://tixcraft.com/ticket/area/*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/tixcraft_area.js" ]
+    },
+    {
+      "matches" : [ "https://tixcraft.com/activity/game/*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/tixcraft_game.js" ]
+    },
+    {
+      "matches" : [ "https://tixcraft.com/ticket/ticket/*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/tixcraft_ticket.js" ]
+    },
+    {
+      "matches" : [ "https://tixcraft.com/" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/tixcraft_home.js" ]
+    },
+    {
+      "matches" : [
+        "https://kktix.com/events/*/registrations/new"
+      ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/kktix_registrations_new.js" ]
+    }
+  ],
+  "version": "1.0.0"
+}

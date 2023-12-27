@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.14)"
+CONST_APP_VERSION = "MaxBot (2023.12.16)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -593,7 +593,17 @@ def get_uc_options(uc, config_dict, webdriver_path):
     for ext in extension_list:
         ext = ext.replace('.crx','')
         if os.path.exists(ext):
+            # sync config.
+            if "Maxbot_" in ext:
+                target_path = ext
+                target_path = os.path.join(target_path, "data")
+                target_path = os.path.join(target_path, "settings.json")
+                #print("save as to:", target_path)
+                if os.path.exists(target_path):
+                    with open(target_path, 'w') as outfile:
+                        json.dump(config_dict, outfile)
             load_extension_path += ("," + os.path.abspath(ext))
+
     if len(load_extension_path) > 0:
         print('load-extension:', load_extension_path[1:])
         options.add_argument('--load-extension=' + load_extension_path[1:])
@@ -2021,6 +2031,24 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
             if show_debug_message:
                 print("press button fail, try to click hyperlink.")
 
+            if "tixcraft" in domain_name:
+                try:
+                    data_href = target_area.get_attribute("data-href")
+                    if not data_href is None:
+                        print("goto url:", data_href)
+                        driver.get(data_href)
+                    else:
+                        if show_debug_message:
+                            print("data-href not ready")
+                        
+                        # delay 200ms to click.
+                        #driver.set_script_timeout(0.3)
+                        #js="""setTimeout(function(){arguments[0].click()},200);"""
+                        #driver.execute_script(js, target_area)
+                except Exception as exc:
+                    pass
+                
+
             # for: ticketmaster.sg
             is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
 
@@ -3180,11 +3208,10 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main_agree(driver, config_dict):
-    if config_dict["auto_check_agree"]:
-        for i in range(3):
-            is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
-            if is_finish_checkbox_click:
-                break
+    for i in range(3):
+        is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
+        if is_finish_checkbox_click:
+            break
 
 def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item):
     show_debug_message = True       # debug.
@@ -3304,9 +3331,8 @@ def get_tixcraft_ticket_select(driver, config_dict):
 
     return form_select
 
-def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
-    # use extension instead of selenium.
-    #tixcraft_ticket_main_agree(driver, config_dict)
+def tixcraft_assign_ticket_number(driver, config_dict):
+    is_ticket_number_assigned = False
 
     # allow agree not enable to assign ticket number.
     form_select_list = None
@@ -3341,20 +3367,12 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     select_obj = None
     if not form_select is None:
-        is_visible = False
         try:
-            if form_select.is_enabled():
-                is_visible = True
+            select_obj = Select(form_select)
         except Exception as exc:
             pass
-        if is_visible:
-            try:
-                select_obj = Select(form_select)
-            except Exception as exc:
-                pass
 
     if not select_obj is None:
-        is_ticket_number_assigned = False
         row_text = None
         try:
             selected_option = select_obj.first_selected_option
@@ -3367,19 +3385,24 @@ def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
                     if row_text.isnumeric():
                         # ticket assign.
                         is_ticket_number_assigned = True
+    return is_ticket_number_assigned
 
-        # must wait select object ready to assign ticket number.
-        if not is_ticket_number_assigned:
-            # only this case: "ticket number not changed by bot" to play sound!
-            # PS: I assume each time assign ticket number will succufully changed, so let sound play first.
-            play_sound_while_ordering(config_dict)
 
-            ticket_number = str(config_dict["ticket_number"])
-            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
+    # use extension instead of selenium.
+    #tixcraft_ticket_main_agree(driver, config_dict)
 
-            # must wait ticket number assign to focus captcha.
-            if is_ticket_number_assigned:
-                tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name)
+
+    is_ticket_number_assigned = tixcraft_assign_ticket_number(driver, config_dict)
+
+    if not is_ticket_number_assigned:
+        # should not enter this block, due to extension done.
+        ticket_number = str(config_dict["ticket_number"])
+        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+
+    # must wait ticket number assign to focus captcha.
+    if is_ticket_number_assigned:
+        tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
 def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_name):
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
@@ -4679,12 +4702,11 @@ def kktix_reg_auto_reload(driver, url, config_dict, kktix_register_status_last):
                     is_need_refresh = True
 
     is_finish_checkbox_click = False
-    if config_dict["auto_check_agree"]:
-        if not is_need_refresh:
-            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
-        if not is_finish_checkbox_click:
-            # retry again.
-            is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
+    if not is_need_refresh:
+        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
+    if not is_finish_checkbox_click:
+        # retry again.
+        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
 
     if is_need_refresh:
         try:
@@ -7536,11 +7558,10 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
-    if config_dict["auto_check_agree"]:
-        for i in range(2):
-            is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
-            if is_finish_checkbox_click:
-                break
+    for i in range(2):
+        is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
+        if is_finish_checkbox_click:
+            break
 
     if not config_dict["ocr_captcha"]["enable"]:
         tixcraft_keyin_captcha_code(driver)
@@ -7643,6 +7664,13 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         domain_name = url.split('/')[2]
         tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_dict["done_time"] = time.time()
+
+        if not tixcraft_dict["played_sound"]:
+            play_sound_while_ordering(config_dict)
+
+        tixcraft_dict["played_sound"] = True
+    else:
+        tixcraft_dict["played_sound"] = False
 
     if '/ticket/order' in url:
         tixcraft_dict["done_time"] = time.time()
@@ -8791,12 +8819,10 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
         if is_event_page:
             is_finish_checkbox_click = False
             if is_event_page:
-                auto_check_agree = config_dict["auto_check_agree"]
-                if auto_check_agree:
-                    for i in range(3):
-                        is_finish_checkbox_click = ibon_ticket_agree(driver)
-                        if is_finish_checkbox_click:
-                            break
+                for i in range(3):
+                    is_finish_checkbox_click = ibon_ticket_agree(driver)
+                    if is_finish_checkbox_click:
+                        break
 
             if is_finish_checkbox_click:
                 is_name_based = False
@@ -12212,6 +12238,7 @@ def main(args):
     tixcraft_dict["elapsed_time"]=None
     tixcraft_dict["is_popup_checkout"] = False
     tixcraft_dict["area_retry_count"]=0
+    tixcraft_dict["played_sound"] = False
 
     # for kktix
     kktix_dict = {}

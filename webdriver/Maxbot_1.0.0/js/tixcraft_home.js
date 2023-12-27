@@ -1,0 +1,2 @@
+$("#newsHome").hide();
+$("footer").hide();

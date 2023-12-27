@@ -27,7 +27,7 @@ import pyperclip
 import tornado
 from tornado.web import Application
 
-CONST_APP_VERSION = "MaxBot (2023.12.12)"
+CONST_APP_VERSION = "MaxBot (2023.12.16)"
 
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
