@@ -3,8 +3,8 @@ $('input[type=checkbox]').each(function ()
     $(this).prop('checked', true);
 }
 );
-$("img[style='width: 100%; padding: 0;']").hide();
-$("footer").hide();
+$("img[style='width: 100%; padding: 0;']").remove();
+$("footer").remove();
 
 function assign_ticket_number(ticket_number)
 {

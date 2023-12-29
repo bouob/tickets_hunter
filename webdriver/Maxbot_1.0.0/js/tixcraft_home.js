@@ -1,2 +1,2 @@
-$("#newsHome").hide();
-$("footer").hide();
+$("#newsHome").remove();
+$("footer").remove();

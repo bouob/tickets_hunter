@@ -16,10 +16,8 @@
     ]
   },
   "minimum_chrome_version": "77.0",
-  "minimum_opera_version": "64.0",
   "permissions": [
     "<all_urls>",
-    "contextMenus",
     "notifications",
     "storage",
     "tabs",
@@ -27,9 +25,6 @@
     "webNavigation",
     "webRequest",
     "webRequestBlocking"
-  ],
-  "host_permissions": [
-    "*://*/*"
   ],
   "web_accessible_resources": [
     "data/settings.json"
@@ -54,6 +49,21 @@
       "matches" : [ "https://tixcraft.com/" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/tixcraft_home.js" ]
+    },
+    {
+      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ticket_area.js" ]
+    },
+    {
+      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/kham_area.js" ]
+    },
+    {
+      "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ibon_area.js" ]
     },
     {
       "matches" : [

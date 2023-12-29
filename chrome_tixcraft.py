@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.17)"
+CONST_APP_VERSION = "MaxBot (2023.12.18)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -376,8 +376,7 @@ def is_all_alpha_or_numeric(text):
     return ret
 
 def get_favoriate_extension_path(webdriver_path, config_dict):
-    print("webdriver_path:", webdriver_path)
-    
+    #print("webdriver_path:", webdriver_path)
     extension_list = []
     if config_dict["advanced"]["adblock_plus_enable"]:
         extension_list.append(os.path.join(webdriver_path,"Adblock_3.21.1.0.crx"))
@@ -605,7 +604,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
             load_extension_path += ("," + os.path.abspath(ext))
 
     if len(load_extension_path) > 0:
-        print('load-extension:', load_extension_path[1:])
+        #print('load-extension:', load_extension_path[1:])
         options.add_argument('--load-extension=' + load_extension_path[1:])
 
     if config_dict["advanced"]["headless"]:
@@ -654,6 +653,9 @@ def load_chromdriver_uc(config_dict):
         print("ChromeDriver not exist, try to download to:", webdriver_path)
         try:
             chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+            if not os.path.exists(chromedriver_path):
+                print("check installed chrome version fail, download last known good version.")
+                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False, detect_installed_version=False)
         except Exception as exc:
             print(exc)
     else:
@@ -699,7 +701,7 @@ def load_chromdriver_uc(config_dict):
         print("WebDriver not found at path:", chromedriver_path)
 
     if driver is None:
-        print('WebDriver object is None..., try again..')
+        print('WebDriver object is still None..., try download by uc.')
         try:
             options = get_uc_options(uc, config_dict, webdriver_path)
             driver = uc.Chrome(options=options)
@@ -3980,94 +3982,6 @@ def force_check_checkbox(driver, agree_checkbox):
                 is_finish_checkbox_click = True
     return is_finish_checkbox_click
 
-
-def kktix_check_register_status(driver, url):
-    #ex: https://xxx.kktix.cc/events/xxx
-    prefix_list = ['.com/events/','.cc/events/']
-    postfix = '/registrations/new'
-
-    is_match_event_code = False
-    event_code = ""
-    for prefix in prefix_list:
-        event_code = find_between(url,prefix,postfix)
-        if len(event_code) > 0:
-            is_match_event_code = True
-            #print('event_code:',event_code)
-            break
-
-    if is_match_event_code:
-        js = '''
-function load_kktix_register_code(){
-let api_url = "https://kktix.com/g/events/%s/register_info";
-fetch(api_url).then(function (response)
-{
-return response.json();
-}
-).then(function (data)
-{
-let reload=false;
-console.log(data.inventory.registerStatus);
-if(data.inventory.registerStatus=='OUT_OF_STOCK') {reload=true;}
-if(data.inventory.registerStatus=='COMING_SOON') {reload=true;}
-console.log(reload);
-if(reload) {location.reload();}
-}
-).catch(function (err)
-{
-console.log(err);
-});
-}
-if (!$.kkUser) {
-    $.kkUser = {};
-}
-if (typeof $.kkUser.checked_status_register_code === 'undefined') {
-    $.kkUser.checked_status_register_code = true;
-    load_kktix_register_code();
-}
-        ''' % (event_code)
-        try:
-            driver.execute_script(js)
-        except Exception as exc:
-            pass
-
-        # use javascritp version only.
-        is_match_event_code = False
-
-    html_result = None
-    if is_match_event_code:
-        url = "https://kktix.com/g/events/%s/register_info" % (event_code)
-        #print('event_code:',event_code)
-        #print("url:", url)
-
-        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
-        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': user_agent}
-        try:
-            html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
-        except Exception as exc:
-            html_result = None
-            print("send reg_info request fail:")
-            print(exc)
-
-    registerStatus = None
-    if not html_result is None:
-        status_code = html_result.status_code
-        #print("status_code:",status_code)
-        if status_code == 200:
-            html_text = html_result.text
-            #print("html_text:", html_text)
-            try:
-                jsLoads = json.loads(html_text)
-                if 'inventory' in jsLoads:
-                    if 'registerStatus' in jsLoads['inventory']:
-                        registerStatus = jsLoads['inventory']['registerStatus']
-            except Exception as exc:
-                print("load reg_info json fail:")
-                print(exc)
-                pass
-
-    #print("registerStatus:", registerStatus)
-    return registerStatus
-
 def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -4687,19 +4601,8 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
 def kktix_reg_auto_reload(driver, url, config_dict, kktix_register_status_last):
     registerStatus = kktix_register_status_last
 
-    # auto refresh for area list page.
+    # auto reload javascrit code at extension.
     is_need_refresh = False
-
-    if not is_need_refresh:
-        if registerStatus is None:
-            # current version, change refresh event from selenium to javascript.
-            registerStatus = kktix_check_register_status(driver, url)
-            # for request solution, refresh on selenium.
-            if not registerStatus is None:
-                print("registerStatus:", registerStatus)
-                # OUT_OF_STOCK
-                if registerStatus != 'IN_STOCK':
-                    is_need_refresh = True
 
     is_finish_checkbox_click = False
     if not is_need_refresh:

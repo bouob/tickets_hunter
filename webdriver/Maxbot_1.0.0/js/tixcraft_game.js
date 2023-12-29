@@ -1,1 +1,1 @@
-$("footer").hide();
+$("footer").remove();
