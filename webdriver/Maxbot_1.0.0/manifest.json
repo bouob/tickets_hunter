@@ -1,6 +1,7 @@
 {
   "author": "Max Yao",
   "name": "MaxBot",
+  "description": "MaxBot Extension",
   "icons": {
     "16": "icons/maxbot-16.png",
     "32": "icons/maxbot-32.png",
@@ -8,27 +9,31 @@
     "64": "icons/maxbot-64.png",
     "128": "icons/maxbot-128.png"
   },
-  "manifest_version": 2,
+  "manifest_version": 3,
   "background": {
-    "persistent": true,
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "background.js"
   },
   "minimum_chrome_version": "77.0",
   "permissions": [
-    "<all_urls>",
-    "notifications",
+    "activeTab",
     "storage",
+    "scripting",
     "tabs",
-    "unlimitedStorage",
     "webNavigation",
-    "webRequest",
-    "webRequestBlocking"
+    "webRequest"
   ],
   "web_accessible_resources": [
-    "data/settings.json"
-  ],  
+    {
+    "resources": [ "data/settings.json" ],
+    "extension_ids": ["*"],
+    "matches": [ "*://*/*" ]
+    }    
+  ], 
+  "options_page": "options.html",
+  "action": {
+    "default_icon": "icons/maxbot-128.png",
+    "default_title": "MaxBot"
+  },
   "content_scripts" : [
     {
       "matches" : [ "https://tixcraft.com/ticket/area/*" ],

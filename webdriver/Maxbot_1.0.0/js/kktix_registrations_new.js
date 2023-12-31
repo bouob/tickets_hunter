@@ -24,7 +24,7 @@ setTimeout(function () {
             if(data.inventory.registerStatus=='COMING_SOON') {reload=true;}
             if(data.inventory.registerStatus=='SOLD_OUT') {reload=true;}
             //console.log(reload);
-            //if(reload) {location.reload();}
+            if(reload) {location.reload();}
         })
         .fail(function() {
             //alert( "error" );
