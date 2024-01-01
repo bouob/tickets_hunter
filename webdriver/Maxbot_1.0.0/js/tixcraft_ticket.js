@@ -1,3 +1,6 @@
+const storage = chrome.storage.local;
+var settings = null;
+
 $('input[type=checkbox]').each(function ()
 {
     $(this).prop('checked', true);
@@ -35,14 +38,16 @@ function assign_ticket_number(ticket_number)
     }
 }
 
-function initSettings()
-{
-    fetch(chrome.extension.getURL("/data/settings.json"))
-    .then((resp) => resp.json())
-    .then((settings) =>
+(function () {
+    storage.get('settings', function (items)
     {
-        assign_ticket_number(settings.ticket_number);
-    }
-    );
-}
-initSettings();
+        if (items.settings)
+        {
+            settings = items.settings;
+            console.log("ticket_number:"+ settings.ticket_number);
+            assign_ticket_number(settings.ticket_number);
+        } else {
+            console.log('no settings found');
+        }
+    });
+})();

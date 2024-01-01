@@ -1,0 +1,245 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*google-analytics.com/*",
+      "resourceTypes": ["main_frame", "sub_frame"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*googletagmanager.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*googletagservices.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*lndata.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*a.amnet.tw/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 6,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*ad.setn.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*adx.c.appier.net/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*cbcapi.setn.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 9,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*clarity.ms/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 10,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*cloudfront.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 11,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*cms.analytics.yahoo.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 12,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*doubleclick.net/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 13,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*e2elog.fetnet.net/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 14,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*fundingchoicesmessages.google.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 15,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*ghtinc.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 16,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*match.adsrvr.org/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 17,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*onead.onevision.com.tw/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 18,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*popin.cc/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 19,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*rollbar.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 20,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*sb.scorecardresearch.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 21,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*t.ssp.hinet.net/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 22,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*tagtoo.co/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 23,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*t.ssp.hinet.net/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 24,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*ticketmaster.sg/js/adblock*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 25,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*tpc.googlesyndication.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 26,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*treasuredata.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 27,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*ubas.setn.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  }
+]

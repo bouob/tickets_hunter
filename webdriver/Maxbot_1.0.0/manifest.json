@@ -13,14 +13,24 @@
   "background": {
     "service_worker": "background.js"
   },
-  "minimum_chrome_version": "77.0",
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules_1.json"
+      }
+    ]
+  },  
   "permissions": [
     "activeTab",
     "storage",
     "scripting",
     "tabs",
     "webNavigation",
-    "webRequest"
+    "webRequest",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
   ],
   "web_accessible_resources": [
     {
@@ -46,6 +56,11 @@
       "js" : [ "jquery.min.js", "js/tixcraft_game.js" ]
     },
     {
+      "matches" : [ "https://tixcraft.com/activity/detail/*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/tixcraft_detail.js" ]
+    },
+    {
       "matches" : [ "https://tixcraft.com/ticket/ticket/*" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/tixcraft_ticket.js" ]
@@ -69,6 +84,11 @@
       "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/ibon_area.js" ]
+    },
+    {
+      "matches" : [ "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/cityline_event_common.js","js/cityline_event_detail.js" ]
     },
     {
       "matches" : [
