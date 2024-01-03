@@ -86,9 +86,26 @@
       "js" : [ "jquery.min.js", "js/ibon_area.js" ]
     },
     {
-      "matches" : [ "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*" ],
+      "matches" : [ 
+        "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*",
+        "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/cityline_event_common.js","js/cityline_event_detail.js" ]
+    },
+    {
+      "matches" : [
+        "https://ticketplus.com.tw/activity/*"
+      ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ticketplus_activity.js", "/js/vendor/crypto.js" ]
+    },
+    {
+      "matches" : [
+        "https://*.kktix.cc/events/*"
+      ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/kktix_events.js" ]
     },
     {
       "matches" : [

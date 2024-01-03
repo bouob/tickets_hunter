@@ -1,3 +1,4 @@
+const storage = chrome.storage.local;
 var eventDataCache = null;
 var performanceDataCache = null;
 var selectedPerfId = null;
@@ -296,14 +297,23 @@ var loadData = function() {
   }
 }
 
-
-console.log("start my extension");
-
-selectedPerfId = getUrlParameter('perfId');
-if(pageLoaded) {
-  reloadFromCache();
-}else{
-  pageLoaded = true;
-  loadData();
+function cityline_event_status_check()
+{
+  selectedPerfId = getUrlParameter('perfId');
+  if(pageLoaded) {
+      reloadFromCache();
+  }else{
+      pageLoaded = true;
+      loadData();
+  }
 }
 
+storage.get('status', function (items)
+{
+    if (items.status && items.status=='ON')
+    {
+        cityline_event_status_check();
+    } else {
+        console.log('no status found');
+    }
+});

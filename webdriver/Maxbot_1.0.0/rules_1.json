@@ -241,5 +241,23 @@
       "urlFilter": "*ubas.setn.com/*",
       "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
     }
+  },
+  {
+    "id": 28,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*play.google.com/log?*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 29,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*www.youtube.com/youtubei/v1/player/heartbeat*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
   }
 ]

@@ -1,11 +1,15 @@
+const storage = chrome.storage.local;
+
 $("footer").remove();
+
 setTimeout(function () {
     $("div.banner-wrapper").remove();
     $("div.ticket-img-wrapper").remove();
 }, 300);
 
 
-(function () {
+function kktix_event_status_check()
+{
     const currentUrl = window.location.href; 
     const event_code = currentUrl.split('/')[4];
     //console.log(currentUrl);
@@ -33,4 +37,16 @@ setTimeout(function () {
             //alert( "finished" );
         });
     }
-})();
+}
+
+
+storage.get('status', function (items)
+{
+    if (items.status && items.status=='ON')
+    {
+        kktix_event_status_check();
+    } else {
+        console.log('no status found');
+    }
+});
+

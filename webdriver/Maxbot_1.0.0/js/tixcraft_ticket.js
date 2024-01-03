@@ -38,16 +38,14 @@ function assign_ticket_number(ticket_number)
     }
 }
 
-(function () {
-    storage.get('settings', function (items)
+storage.get('settings', function (items)
+{
+    if (items.settings)
     {
-        if (items.settings)
-        {
-            settings = items.settings;
-            console.log("ticket_number:"+ settings.ticket_number);
-            assign_ticket_number(settings.ticket_number);
-        } else {
-            console.log('no settings found');
-        }
-    });
-})();
+        settings = items.settings;
+        //console.log("ticket_number:"+ settings.ticket_number);
+        assign_ticket_number(settings.ticket_number);
+    } else {
+        console.log('no settings found');
+    }
+});
