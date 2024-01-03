@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.20)"
+CONST_APP_VERSION = "MaxBot (2023.12.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11440,6 +11440,7 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
         show_debug_message = True
 
     next_step_button = None
+    # PS: only button disabled = True to continue.
     is_button_disabled = False
     current_layout_style = 0
     try:
@@ -11999,7 +12000,9 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_realname_card(driver)
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
-            is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
+            is_reloading = False
+            # move below code to extension.
+            #is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
             if not is_reloading:
                 is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 

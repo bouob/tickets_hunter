@@ -91,14 +91,21 @@
         "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
       ],
       "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/cityline_event_common.js","js/cityline_event_detail.js" ]
+      "js" : [ "jquery.min.js", "js/cityline_event_common.js"]
     },
     {
       "matches" : [
         "https://ticketplus.com.tw/activity/*"
       ],
       "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/ticketplus_activity.js", "/js/vendor/crypto.js" ]
+      "js" : ["jquery.min.js", "js/ticketplus_activity.js"]
+    },
+    {
+      "matches" : [
+        "https://ticketplus.com.tw/order/*"
+      ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ticketplus_order.js"]
     },
     {
       "matches" : [

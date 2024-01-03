@@ -1,3 +1,4 @@
+'use strict';
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
@@ -26344,9 +26345,7 @@ function config (name) {
 (function (Buffer){(function (){
 var crypto = require('crypto-browserify');
 
-window.crypto_decrypt = function decrypt(text) {
-    let KEY = 'ILOVEFETIXFETIX!';
-    const IV = '!@#$FETIXEVENTiv';
+window.crypto_decrypt = function decrypt(text, KEY, IV) {
     let encryptedText = new Buffer.from(text, 'hex');
     let decipher = crypto.createDecipheriv('aes-128-cbc', KEY, IV);
     let decrypted = decipher.update(encryptedText);
@@ -26358,5 +26357,108 @@ window.crypto_decrypt = function decrypt(text) {
 },{"buffer":48,"crypto-browserify":56}]},{},[158]);
 
 
-//let text="";
-//console.log(window.crypto_decrypt(text));
+const storage = chrome.storage.local;
+
+let KEY = 'ILOVEFETIXFETIX!';
+const IV = '!@#$FETIXEVENTiv';
+
+const currentUrl = window.location.href; 
+const event_id = currentUrl.split('/')[4];
+const session_id = currentUrl.split('/')[5];
+//console.log(event_id);
+//console.log(session_id);
+
+var retry_count =0;
+console.log("retry_count:"+retry_count);
+function get_event_status(real_event_id, real_session_id) {
+    console.log("get_event_status")
+    console.log("retry_count:"+retry_count);
+    storage.get('status', function (items)
+    {
+        if (items.status && items.status=='ON')
+        {
+            get_event_status_core(real_event_id, real_session_id);
+        } else {
+            console.log('no status found');
+        }
+    });
+}
+
+function get_event_status_core(real_event_id, real_session_id) {
+    let timestamp = new Date().getTime(); 
+    timestamp = (timestamp/1000).toFixed()*1000;
+    //console.log(timestamp);
+
+    let api_url = "https://apis.ticketplus.com.tw/config/api/v1/get?eventId="+ real_event_id +"&sessionId="+real_session_id+"&_="+timestamp;
+    $.get( api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            let reload=false;
+            //console.log(data);
+            //console.log(data.result.session[0].status);
+            //console.log(reload);
+            //if(reload) {location.reload();}
+            let last_status = "";
+            storage.get('ticketplus_last_status', function (items)
+            {
+                if (items.ticketplus_last_status)
+                {
+                    last_status = items.ticketplus_last_status;
+                } else {
+                    console.log('no status found');
+                }
+            });
+            if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout") {
+                retry_count +=1;
+                chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-FAIL" });
+                location.reload();
+            }
+            console.log("retry_count:"+retry_count);
+            if(data.result.session[0].status=="onsale") {
+                chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-OK" });
+
+                if(last_status==real_session_id + "-FAIL") {
+                    location.reload();
+                }
+            }
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
+}
+
+function decrypt_text() {
+    let real_event_id = window.crypto_decrypt(event_id,KEY,IV);
+    //console.log(real_event_id);
+
+    let real_session_id = window.crypto_decrypt(session_id,KEY,IV);
+    //console.log(real_session_id);
+    get_event_status(real_event_id, real_session_id);
+}
+
+function wait_function_ready() {
+    if(session_id){
+        if (typeof window.crypto_decrypt === 'function') {
+            decrypt_text()
+        } else {
+            setTimeout(function () {
+                wait_function_ready();
+            }, 500);
+        }
+    }
+}
+
+storage.get('status', function (items)
+{
+    if (items.status && items.status=='ON')
+    {
+        wait_function_ready();
+    } else {
+        console.log('no status found');
+    }
+});
