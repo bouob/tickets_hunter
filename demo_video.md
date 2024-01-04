@@ -1,6 +1,16 @@
 # Demo (示範影片)
 
-### 2023-12-08: 
+### 2023-12-21: 
+擴充工具自動刷新遠大售票活動
+
+https://youtu.be/_9ELX4k9EiU
+
+### 2023-12-20: 
+增加 chrome 擴充功能
+
+https://youtu.be/5urnbPEDG50
+
+### 2023-12-14: 
 遠大支援自動登入後網址切為實際搶票頁面
 
 https://youtu.be/U6JlElHiPuo
