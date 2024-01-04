@@ -71,11 +71,35 @@
       "js" : [ "jquery.min.js", "js/tixcraft_home.js" ]
     },
     {
+      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
+      "run_at": "document_end",
+      "world": "MAIN",
+      "js" : [ "jquery.min.js", "js/ticket_event_home.js" ]
+    },
+    {
+      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*" ],
+      "run_at": "document_end",
+      "world": "MAIN",
+      "js" : [ "jquery.min.js", "js/ticket_date.js" ]
+    },
+    {
       "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/ticket_area.js" ]
     },
     {
+      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
+      "run_at": "document_end",
+      "world": "MAIN",
+      "js" : [ "jquery.min.js", "js/kham_event_home.js" ]
+    },
+    {
+      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*" ],
+      "run_at": "document_end",
+      "world": "MAIN",
+      "js" : [ "jquery.min.js", "js/kham_date.js" ]
+    },
+    {   
       "matches" : [ "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/kham_area.js" ]
@@ -104,7 +128,7 @@
       "matches" : [
         "https://ticketplus.com.tw/order/*"
       ],
-      "run_at": "document_end",
+      "run_at": "document_start",
       "js" : [ "jquery.min.js", "js/ticketplus_order.js"]
     },
     {

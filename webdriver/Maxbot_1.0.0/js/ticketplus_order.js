@@ -26415,13 +26415,14 @@ function get_event_status_core(real_event_id, real_session_id) {
                 chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-FAIL" });
                 location.reload();
             }
-            console.log("retry_count:"+retry_count);
+            //console.log("retry_count:"+retry_count);
             if(data.result.session[0].status=="onsale") {
                 chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-OK" });
 
-                if(last_status==real_session_id + "-FAIL") {
+                // no need to check last status if "run_at": "document_start".
+                //if(last_status==real_session_id + "-FAIL") {
                     location.reload();
-                }
+                //}
             }
         })
         .fail(function() {
