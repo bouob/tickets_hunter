@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.25)"
+CONST_APP_VERSION = "MaxBot (2023.12.26)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -3595,19 +3595,19 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
         ticket_price_list = driver.find_elements(By.CSS_SELECTOR, 'div.display-table-row')
     except Exception as exc:
         ticket_price_list = None
-        print("find ticket-price span Exception:")
+        print("find ticket-price Exception:")
         print(exc)
         pass
 
+    is_dom_ready = True
     price_list_count = 0
     if not ticket_price_list is None:
         price_list_count = len(ticket_price_list)
         if show_debug_message:
             print("found price count:", price_list_count)
     else:
-        print("find ticket-price span fail")
-
-    is_travel_interrupted = False
+        is_dom_ready = False
+        print("find ticket-price fail")
 
     if price_list_count > 0:
         areas = []
@@ -3634,7 +3634,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
                 row_html = row.get_attribute('innerHTML')
                 row_text = remove_html_tags(row_html)
             except Exception as exc:
-                is_travel_interrupted = True
+                is_dom_ready = False
                 if show_debug_message:
                     print(exc)
                 # error, exit loop
@@ -3778,7 +3778,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
                                 break
 
 
-            if is_travel_interrupted:
+            if not is_dom_ready:
                 # not sure to break or continue..., maybe break better.
                 break
     else:
@@ -3786,11 +3786,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
             print("no any price list found.")
         pass
 
-    # unknow issue...
-    if is_travel_interrupted:
-        pass
-
-    return is_ticket_number_assigned, areas
+    return is_dom_ready, is_ticket_number_assigned, areas
 
 def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
     show_debug_message = True       # debug.
@@ -3804,18 +3800,20 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
     is_ticket_number_assigned = False
     matched_blocks = None
-    is_ticket_number_assigned, matched_blocks = kktix_travel_price_list(driver, config_dict, auto_select_mode, kktix_area_keyword)
+    is_dom_ready = True
+    is_dom_ready, is_ticket_number_assigned, matched_blocks = kktix_travel_price_list(driver, config_dict, auto_select_mode, kktix_area_keyword)
 
     target_area = None
-    if not is_ticket_number_assigned:
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-
     is_need_refresh = False
-    if not matched_blocks is None:
-        if len(matched_blocks) == 0:
-            is_need_refresh = True
-            if show_debug_message:
-                print("matched_blocks is empty, is_need_refresh")
+    if is_dom_ready:
+        if not is_ticket_number_assigned:
+            target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+
+        if not matched_blocks is None:
+            if len(matched_blocks) == 0:
+                is_need_refresh = True
+                if show_debug_message:
+                    print("matched_blocks is empty, is_need_refresh")
 
     if not target_area is None:
         current_ticket_number = ""
@@ -3849,7 +3847,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
                 # already assigned.
                 is_ticket_number_assigned = True
 
-    return is_ticket_number_assigned, is_need_refresh
+    return is_dom_ready, is_ticket_number_assigned, is_need_refresh
 
 def kktix_get_web_datetime(registrationsNewApp_div):
     show_debug_message = True       # debug.
@@ -4548,6 +4546,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
     # part 2: assign ticket number
     is_ticket_number_assigned = False
     if not registrationsNewApp_div is None:
+        is_dom_ready = True
         is_need_refresh = False
 
         if len(area_keyword) > 0:
@@ -4561,7 +4560,11 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
             is_need_refresh_final = True
 
             for area_keyword_item in area_keyword_array:
-                is_ticket_number_assigned, is_need_refresh_tmp = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
+                is_dom_ready, is_ticket_number_assigned, is_need_refresh_tmp = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
+
+                if not is_dom_ready:
+                    # page redirecting.
+                    break
 
                 # one of keywords not need to refresh, final is not refresh.
                 if not is_need_refresh_tmp:
@@ -4577,29 +4580,30 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
                 is_need_refresh = is_need_refresh_final
         else:
             # empty keyword, match all.
-            is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, "")
+            is_dom_ready, is_ticket_number_assigned, is_need_refresh = kktix_assign_ticket_number(driver, config_dict, "")
 
-        # part 3: captcha
-        if is_ticket_number_assigned:
-            fail_list, captcha_sound_played, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
-            if not is_question_popup:
-                # no captcha text popup, goto next page.
-                control_text = get_kktix_control_label_text(driver)
-                if show_debug_message:
-                    print("control_text:", control_text)
-                if len(control_text) == 0:
-                    click_ret = kktix_press_next_button(driver)
-        else:
-            if is_need_refresh:
-                try:
-                    print("no match any price, start to refresh page...")
-                    driver.refresh()
-                except Exception as exc:
-                    #print("refresh fail")
-                    pass
+        if is_dom_ready:
+            # part 3: captcha
+            if is_ticket_number_assigned:
+                fail_list, captcha_sound_played, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
+                if not is_question_popup:
+                    # no captcha text popup, goto next page.
+                    control_text = get_kktix_control_label_text(driver)
+                    if show_debug_message:
+                        print("control_text:", control_text)
+                    if len(control_text) == 0:
+                        click_ret = kktix_press_next_button(driver)
+            else:
+                if is_need_refresh:
+                    try:
+                        print("no match any price, start to refresh page...")
+                        driver.refresh()
+                    except Exception as exc:
+                        #print("refresh fail")
+                        pass
 
-                if config_dict["advanced"]["auto_reload_random_delay"]:
-                    time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                    if config_dict["advanced"]["auto_reload_random_delay"]:
+                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
 
     return fail_list, captcha_sound_played
 

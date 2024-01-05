@@ -20,8 +20,7 @@ function date_clean()
         $("#gameList td:contains('"+ remove_list[i] +"')").each(function ()
         {
             $(this).parent().remove();
-        }
-        );
+        });
     }
 }
 
