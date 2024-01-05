@@ -4,8 +4,6 @@
  */
 'use strict';
 
-const storage = chrome.storage.local;
-
 chrome.runtime.onInstalled.addListener(function(){
     console.log("onInstalled");
 
@@ -38,7 +36,11 @@ chrome.action.onClicked.addListener(async (tab) => {
     const prevState = await chrome.action.getBadgeText({ tabId: tab.id });
     // Next state will always be the opposite
     const nextState = prevState === 'ON' ? 'OFF' : 'ON';
-    storage.set({status: nextState});
+    chrome.storage.local.set(
+    {
+        status: nextState
+    }
+    );
 
     // Set the action badge to the next state
     await chrome.action.setBadgeText({
@@ -54,7 +56,7 @@ let heartbeatInterval;
 async function runHeartbeat()
 {
     //console.log("runHeartbeat");
-    storage.get('status', function (items)
+    chrome.storage.local.get('status', function (items)
     {
         console.log(items);
         if (items.status && items.status=='ON')

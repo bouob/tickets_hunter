@@ -26357,29 +26357,64 @@ window.crypto_decrypt = function decrypt(text, KEY, IV) {
 },{"buffer":48,"crypto-browserify":56}]},{},[158]);
 
 
-const storage = chrome.storage.local;
-
 let KEY = 'ILOVEFETIXFETIX!';
 const IV = '!@#$FETIXEVENTiv';
 
-const currentUrl = window.location.href; 
-const event_id = currentUrl.split('/')[4];
-const session_id = currentUrl.split('/')[5];
-//console.log(event_id);
-//console.log(session_id);
+var settings = null;
+var maxbot_status = null;
 
 var retry_count =0;
 
-function get_event_status(real_event_id, real_session_id) {
-    storage.get('status', function (items)
+function get_event_status_entry(real_event_id, real_session_id) {
+    //console.log("start to get_event_status");
+
+    if (maxbot_status =='ON')
     {
-        if (items.status && items.status=='ON')
+        get_event_status_core(real_event_id, real_session_id);
+    } else {
+        console.log('no status found');
+    }
+}
+
+function ajax_return_done(data, real_event_id, real_session_id) {
+    //console.log("ajax return done")
+    let reload=false;
+    
+    let auto_reload_random_delay = false;
+    if(settings) {
+        auto_reload_random_delay = settings.advanced.auto_reload_random_delay;
+    }
+    //console.log("auto_reload_random_delay:"+auto_reload_random_delay);
+    
+    let is_match_reload_status = false;
+    if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout" || data.result.session[0].status=="unavailable") {
+        is_match_reload_status = true;
+    }
+
+    //console.log("is_match_reload_status:"+is_match_reload_status);
+    if(is_match_reload_status) {
+        retry_count +=1;
+        
+        if (settings)
         {
-            get_event_status_core(real_event_id, real_session_id);
+            if(!auto_reload_random_delay) {
+                //console.log('Start to reload now.');
+                location.reload();
+            } else {
+                console.log('We are going to reload after few seconeds.');
+                setTimeout(function () {
+                    location.reload();
+                }, 6000);
+            }
         } else {
-            console.log('no status found');
+            console.log('no settings found');
         }
-    });
+    }
+
+    if(data.result.session[0].status=="onsale") {
+        // bingo. ^_^
+    }
+
 }
 
 function get_event_status_core(real_event_id, real_session_id) {
@@ -26388,67 +26423,13 @@ function get_event_status_core(real_event_id, real_session_id) {
     //console.log(timestamp);
 
     let api_url = "https://apis.ticketplus.com.tw/config/api/v1/get?eventId="+ real_event_id +"&sessionId="+real_session_id+"&_="+timestamp;
+    //console.log("calling api:" + api_url);
     $.get( api_url, function() {
             //alert( "success" );
         })
         .done(function(data) {
             //alert( "second success" );
-            let reload=false;
-            //console.log(data);
-            //console.log(data.result.session[0].status);
-            //console.log(reload);
-            //if(reload) {location.reload();}
-            let last_status = "";
-            storage.get('ticketplus_last_status', function (items)
-            {
-                if (items.ticketplus_last_status)
-                {
-                    last_status = items.ticketplus_last_status;
-                } else {
-                    console.log('no status found');
-                }
-            });
-            if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout") {
-                retry_count +=1;
-                chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-FAIL" });
-                
-                storage.get('settings', function (items)
-                {
-                    if (items.settings)
-                    {
-                        if(!items.settings.advanced.auto_reload_random_delay) {
-                            location.reload();
-                        } else {
-                            setTimeout(function () {
-                                location.reload();
-                            }, 8000);
-                        }
-                    } else {
-                        console.log('no settings found');
-                    }
-
-                }
-                );
-
-                storage.get('status', function (items)
-                {
-                    if (items.status && items.status=='ON')
-                    {
-                        get_event_status_core(real_event_id, real_session_id);
-                    } else {
-                        console.log('no status found');
-                    }
-                });
-            }
-            //console.log("retry_count:"+retry_count);
-            if(data.result.session[0].status=="onsale") {
-                //chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-OK" });
-
-                // no need to check last status if "run_at": "document_start".
-                //if(last_status==real_session_id + "-FAIL") {
-                    //location.reload();
-                //}
-            }
+            ajax_return_done(data, real_event_id, real_session_id);
         })
         .fail(function() {
             //alert( "error" );
@@ -26458,20 +26439,29 @@ function get_event_status_core(real_event_id, real_session_id) {
         });
 }
 
-function decrypt_text() {
+function decrypt_text(event_id, session_id) {
+    //console.log("start to decrypt_text");
+
     let real_event_id = window.crypto_decrypt(event_id,KEY,IV);
     //console.log(real_event_id);
 
     let real_session_id = window.crypto_decrypt(session_id,KEY,IV);
     //console.log(real_session_id);
-    get_event_status(real_event_id, real_session_id);
+    get_event_status_entry(real_event_id, real_session_id);
 }
 
 function wait_function_ready() {
+    const currentUrl = window.location.href; 
+    const event_id = currentUrl.split('/')[4];
+    const session_id = currentUrl.split('/')[5];
+    //console.log(event_id);
+    //console.log(session_id);
+
     if(session_id){
         if (typeof window.crypto_decrypt === 'function') {
-            decrypt_text()
+            decrypt_text(event_id, session_id)
         } else {
+            console.log("crypto_decrypt function not ready, delay to retry...")
             setTimeout(function () {
                 wait_function_ready();
             }, 500);
@@ -26479,11 +26469,23 @@ function wait_function_ready() {
     }
 }
 
-storage.get('status', function (items)
+chrome.storage.local.get('settings', function (items)
 {
-    if (items.status && items.status=='ON')
+    if (items.settings)
     {
-        wait_function_ready();
+        settings = items.settings;
+    } else {
+        console.log('no status found');
+    }
+});
+
+chrome.storage.local.get('status', function (items)
+{
+    if (items.status)
+    {
+        maxbot_status = items.status;
+        //console.log("maxbot_status:" + maxbot_status)
+        if(maxbot_status =='ON') wait_function_ready();
     } else {
         console.log('no status found');
     }
