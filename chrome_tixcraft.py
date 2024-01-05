@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.21)"
+CONST_APP_VERSION = "MaxBot (2023.12.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1971,7 +1971,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         if show_debug_message:
                             print("match coming soon condiction at row:", row_text)
                         is_coming_soon = True
-                    
+
                     if is_coming_soon:
                         if auto_reload_coming_soon_page_enable:
                             break
@@ -2042,14 +2042,14 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                     else:
                         if show_debug_message:
                             print("data-href not ready")
-                        
+
                         # delay 200ms to click.
                         #driver.set_script_timeout(0.3)
                         #js="""setTimeout(function(){arguments[0].click()},200);"""
                         #driver.execute_script(js, target_area)
                 except Exception as exc:
                     pass
-                
+
 
             # for: ticketmaster.sg
             is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
@@ -2657,7 +2657,7 @@ def tixcraft_ticket_agree(driver, config_dict):
 
     return is_finish_checkbox_click
 
-def tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number):
+def ticket_number_select_fill(driver, select_obj, ticket_number):
     is_ticket_number_assigned = False
     if not select_obj is None:
         try:
@@ -3387,20 +3387,23 @@ def tixcraft_assign_ticket_number(driver, config_dict):
                     if row_text.isnumeric():
                         # ticket assign.
                         is_ticket_number_assigned = True
-    return is_ticket_number_assigned
+    
+    return is_ticket_number_assigned, select_obj
 
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     # use extension instead of selenium.
     #tixcraft_ticket_main_agree(driver, config_dict)
 
+    is_ticket_number_assigned = False
 
-    is_ticket_number_assigned = tixcraft_assign_ticket_number(driver, config_dict)
+    # PS: some events on tixcraft have multi <select>.
+    is_ticket_number_assigned, select_obj = tixcraft_assign_ticket_number(driver, config_dict)
 
     if not is_ticket_number_assigned:
         # should not enter this block, due to extension done.
         ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+        is_ticket_number_assigned = ticket_number_select_fill(driver, select_obj, ticket_number)
 
     # must wait ticket number assign to focus captcha.
     if is_ticket_number_assigned:
@@ -4285,10 +4288,10 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
         formated_html_text = formated_html_text.replace('的','')
         formated_html_text = formated_html_text.replace('之內','內')
         formated_html_text = formated_html_text.replace('之中','中')
-        
+
         formated_html_text = formated_html_text.replace('括弧','括號')
         formated_html_text = formated_html_text.replace('引號','括號')
-        
+
         formated_html_text = formated_html_text.replace('括號中','括號內')
 
         formated_html_text = formated_html_text.replace('數字','文字')
@@ -4316,7 +4319,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 # check raw question.
                 if '數字' in captcha_text_div_text:
                     temp_answer = normalize_chinese_numeric(temp_answer)
-                
+
                 inferred_answer_string = temp_answer
 
     if inferred_answer_string is None:
@@ -4598,11 +4601,114 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
 
     return fail_list, captcha_sound_played
 
+def kktix_get_registerStatus(driver, event_code):
+    html_result = None
+    
+    url = "https://kktix.com/g/events/%s/register_info" % (event_code)
+    #print('event_code:',event_code)
+    #print("url:", url)
+
+    headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': USER_AGENT}
+    try:
+        html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
+    except Exception as exc:
+        html_result = None
+        print("send reg_info request fail:")
+        print(exc)
+
+    registerStatus = None
+    if not html_result is None:
+        status_code = html_result.status_code
+        #print("status_code:",status_code)
+        if status_code == 200:
+            html_text = html_result.text
+            #print("html_text:", html_text)
+            try:
+                jsLoads = json.loads(html_text)
+                if 'inventory' in jsLoads:
+                    if 'registerStatus' in jsLoads['inventory']:
+                        registerStatus = jsLoads['inventory']['registerStatus']
+            except Exception as exc:
+                print("load reg_info json fail:")
+                print(exc)
+                pass
+
+    #print("registerStatus:", registerStatus)
+    return registerStatus
+
+def kktix_check_register_status(driver, url):
+    #ex: https://xxx.kktix.cc/events/xxx
+    prefix_list = ['.com/events/','.cc/events/']
+    postfix = '/registrations/new'
+
+    is_match_event_code = False
+    event_code = ""
+    for prefix in prefix_list:
+        event_code = find_between(url,prefix,postfix)
+        if len(event_code) > 0:
+            is_match_event_code = True
+            #print('event_code:',event_code)
+            break
+
+    if is_match_event_code:
+        js = '''
+function load_kktix_register_code(){
+let api_url = "https://kktix.com/g/events/%s/register_info";
+fetch(api_url).then(function (response)
+{
+return response.json();
+}
+).then(function (data)
+{
+let reload=false;
+console.log(data.inventory.registerStatus);
+if(data.inventory.registerStatus=='OUT_OF_STOCK') {reload=true;}
+if(data.inventory.registerStatus=='COMING_SOON') {reload=true;}
+console.log(reload);
+if(reload) {location.reload();}
+}
+).catch(function (err)
+{
+console.log(err);
+});
+}
+if (!$.kkUser) {
+    $.kkUser = {};
+}
+if (typeof $.kkUser.checked_status_register_code === 'undefined') {
+    $.kkUser.checked_status_register_code = true;
+    load_kktix_register_code();
+}
+        ''' % (event_code)
+        try:
+            driver.execute_script(js)
+        except Exception as exc:
+            pass
+
+        # use javascritp version only.
+        is_match_event_code = False
+
+    registerStatus = None
+    if is_match_event_code:
+        registerStatus = kktix_get_registerStatus(driver, event_code)
+    return registerStatus
+
 def kktix_reg_auto_reload(driver, url, config_dict, kktix_register_status_last):
     registerStatus = kktix_register_status_last
 
-    # auto reload javascrit code at extension.
+    # auto reload javascrit code at chrome extension.
     is_need_refresh = False
+    if config_dict["browser"] in ["firefox", "edge", "safari"]:
+        if not is_need_refresh:
+            if registerStatus is None:
+                # current version, change refresh event from selenium to javascript.
+                registerStatus = kktix_check_register_status(driver, url)
+                # for request solution, refresh on selenium.
+                if not registerStatus is None:
+                    print("registerStatus:", registerStatus)
+                    # OUT_OF_STOCK
+                    if registerStatus != 'IN_STOCK':
+                        is_need_refresh = True
 
     is_finish_checkbox_click = False
     if not is_need_refresh:
@@ -6210,7 +6316,7 @@ def assign_ticket_number_by_select(driver, config_dict, by_method, selector_stri
                     is_ticket_number_assigned = True
 
         if not is_ticket_number_assigned:
-            is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+            is_ticket_number_assigned = ticket_number_select_fill(driver, select_obj, ticket_number)
         else:
             if show_debug_message:
                 print("ticket_number assigned by previous action.")
@@ -7443,7 +7549,7 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
     # must wait select object ready to assign ticket number.
     if not is_ticket_number_assigned:
         ticket_number = str(config_dict["ticket_number"])
-        is_ticket_number_assigned = tixcraft_ticket_number_auto_fill(driver, select_obj, ticket_number)
+        is_ticket_number_assigned = ticket_number_select_fill(driver, select_obj, ticket_number)
 
         # must wait ticket number assign to focus captcha.
         if is_ticket_number_assigned:
@@ -7585,7 +7691,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 if tixcraft_dict["elapsed_time"] != bot_elapsed_time:
                     print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                 tixcraft_dict["elapsed_time"] = bot_elapsed_time
-        
+
         if config_dict["advanced"]["headless"]:
             if not tixcraft_dict["is_popup_checkout"]:
                 domain_name = url.split('/')[2]
@@ -10011,7 +10117,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         row_text = ""
                     if ' Soldout' in row_html:
                         row_text = ""
-                    
+
                     # for udn
                     if ' style="color:gray;border:solid 1px gray;cursor:default"' in row_html:
                         #row_text = ""
@@ -10114,7 +10220,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
   "method": "POST",
   "mode": "cors",
   "credentials": "include"
-}).then(function (response) { return response.json(); 
+}).then(function (response) { return response.json();
 }).then(function (data) { if(data.d.ReturnData.script.indexOf('top.location.href')>-1){eval(script);};
 if(data.d.ReturnData.script.indexOf('上限')>-1){top.location.href="https://tickets.udnfunlife.com/application/UTK02/UTK0206_.aspx";};
 if(data.d.ReturnData.script.indexOf('該場次目前無法購買。 ')>-1){location.reload();};
@@ -10653,7 +10759,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
     else:
         # kham / ticket.
-    
+
         # https://kham.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=N28UQPA1&PRODUCT_ID=N28TFATD
         if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
             model_name = url.split('/')[5]
@@ -11055,7 +11161,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 # not found closed-folder button, try scan opened-text-title.
                 if show_debug_message:
                     print("not found closed-folder button, try scan opened-text-title")
-                
+
                 my_css_selector = 'div.price-group > div'
                 price_group_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
                 if len(price_group_list) > 0:
@@ -11068,7 +11174,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     area_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
                     # triger re-query again.
                     is_click_on_folder = True
-                
+
     except Exception as exc:
         if current_layout_style == 1:
             print("find .v-expansion-panels date list fail")
@@ -11303,7 +11409,7 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
                         break
                     else:
                         print("is_need_refresh for keyword:", area_keyword_item)
-                
+
                 # when reset query, do query again.
                 if not is_reset_query:
                     break
@@ -11368,7 +11474,7 @@ def get_performance_log(driver, url_keyword):
     url_list = []
     try:
         logs = driver.get_log("performance")
-        
+
         for log in logs:
             network_log = json.loads(log["message"])["message"]
             if ("Network.response" in network_log["method"]
@@ -11792,7 +11898,7 @@ def ticketplus_account_auto_fill(driver, config_dict):
 
     # auto fill account info.
     if len(config_dict["advanced"]["ticketplus_account"]) > 0:
-        
+
         try:
             all_cookies=list_all_cookies(driver)
             if 'user' in all_cookies:
@@ -11817,7 +11923,7 @@ def ticketplus_account_auto_fill(driver, config_dict):
                 pass
 
             is_account_sent, is_password_sent = ticketplus_account_sign_in(driver, config_dict)
-    
+
     return is_user_signin
 
 
