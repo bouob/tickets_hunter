@@ -26369,10 +26369,8 @@ const session_id = currentUrl.split('/')[5];
 //console.log(session_id);
 
 var retry_count =0;
-console.log("retry_count:"+retry_count);
+
 function get_event_status(real_event_id, real_session_id) {
-    console.log("get_event_status")
-    console.log("retry_count:"+retry_count);
     storage.get('status', function (items)
     {
         if (items.status && items.status=='ON')
@@ -26413,15 +26411,42 @@ function get_event_status_core(real_event_id, real_session_id) {
             if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout") {
                 retry_count +=1;
                 chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-FAIL" });
-                location.reload();
+                
+                storage.get('settings', function (items)
+                {
+                    if (items.settings)
+                    {
+                        if(!items.settings.advanced.auto_reload_random_delay) {
+                            location.reload();
+                        } else {
+                            setTimeout(function () {
+                                location.reload();
+                            }, 8000);
+                        }
+                    } else {
+                        console.log('no settings found');
+                    }
+
+                }
+                );
+
+                storage.get('status', function (items)
+                {
+                    if (items.status && items.status=='ON')
+                    {
+                        get_event_status_core(real_event_id, real_session_id);
+                    } else {
+                        console.log('no status found');
+                    }
+                });
             }
             //console.log("retry_count:"+retry_count);
             if(data.result.session[0].status=="onsale") {
-                chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-OK" });
+                //chrome.storage.local.set({'ticketplus_last_status': real_session_id + "-OK" });
 
                 // no need to check last status if "run_at": "document_start".
                 //if(last_status==real_session_id + "-FAIL") {
-                    location.reload();
+                    //location.reload();
                 //}
             }
         })

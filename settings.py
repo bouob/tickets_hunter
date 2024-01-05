@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.22)"
+CONST_APP_VERSION = "MaxBot (2023.12.23)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -246,7 +246,7 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)(香港)'
-    zh_tw["auto_reload_random_delay"] = '自動刷新時隨機延遲(台灣)'
+    zh_tw["auto_reload_random_delay"] = '刷新清票建議增加隨機延遲(台灣)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_tw["area_select_order"] = '區域排序方式'

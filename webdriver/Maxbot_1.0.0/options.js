@@ -7,6 +7,7 @@ const date_keyword = document.querySelector('#date_keyword');
 const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
+const auto_reload_random_delay = document.querySelector('#auto_reload_random_delay');
 var settings = null;
 
 loadChanges();
@@ -28,6 +29,7 @@ async function saveChanges()
             settings.area_auto_select.mode = area_select_mode.value;
             settings.area_auto_select.area_keyword = area_keyword.value;
             settings.keyword_exclude = keyword_exclude.value;
+            settings.advanced.auto_reload_random_delay = auto_reload_random_delay.checked;
 
             await storage.set(
             {
@@ -43,7 +45,7 @@ function loadChanges()
 {
     storage.get('settings', function (items)
     {
-        console.log(items);
+        //console.log(items);
         if (items.settings)
         {
             settings = items.settings;
@@ -54,6 +56,7 @@ function loadChanges()
             area_select_mode.value = settings.area_auto_select.mode;
             area_keyword.value = settings.area_auto_select.area_keyword;
             keyword_exclude.value = settings.keyword_exclude;
+            auto_reload_random_delay.checked = settings.advanced.auto_reload_random_delay;
             //message('Loaded saved settings.');
         } else {
             console.log('no settings found');
