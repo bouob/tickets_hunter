@@ -56,16 +56,7 @@ let heartbeatInterval;
 async function runHeartbeat()
 {
     //console.log("runHeartbeat");
-    chrome.storage.local.get('status', function (items)
-    {
-        console.log(items);
-        if (items.status && items.status=='ON')
-        {
-            heartbeatconnect.start();
-        } else {
-            console.log('no status found');
-        }
-    });
+    heartbeatconnect.start();
 }
 
 async function startHeartbeat()

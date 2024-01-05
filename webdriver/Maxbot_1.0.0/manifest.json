@@ -35,7 +35,7 @@
   ],
   "web_accessible_resources": [
     {
-    "resources": [ "data/settings.json" ],
+    "resources": [ "data/*.json" ],
     "extension_ids": ["*"],
     "matches": [ "*://*/*" ]
     }    
@@ -143,8 +143,8 @@
       "matches" : [
         "https://kktix.com/events/*/registrations/new"
       ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/kktix_registrations_new.js" ]
+      "run_at": "document_start",
+      "js" : [ "jquery.min.js", "js/kktix_registrations_reload.js" ]
     }
   ],
   "version": "1.0.0"

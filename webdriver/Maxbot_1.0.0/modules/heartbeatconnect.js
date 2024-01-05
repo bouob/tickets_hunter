@@ -11,7 +11,10 @@ class HeartBeatConnector
         //console.log("start heart beat connector");
         //load_font.loadFont();
 
+        sync_status_from_parent();
+
         // Query the active tab before injecting the content script
+        /*
         chrome.tabs.query(
         {
             active: true,
@@ -36,8 +39,50 @@ class HeartBeatConnector
                 }
             }
         });
+        */
     }
 }
+
+function sync_status_from_parent()
+{
+    //console.log("sync_status_from_parent");
+
+    let data_url = chrome.runtime.getURL("data/status.json");
+    fetch(data_url)
+    .then(response => {
+        if (response.ok) {
+          return response.json()
+        } else if(response.status === 404) {
+          return Promise.reject('error 404')
+        } else {
+          return Promise.reject('some other error: ' + response.status)
+        }
+        })
+    .then((data) =>
+    {
+    console.log(data);
+        if(data) {
+            let nextState = 'ON';
+            if(!data.status) {
+                nextState = 'OFF';
+            }
+
+            //console.log(nextState);
+            chrome.action.setBadgeText({
+                text: nextState
+            });
+
+            chrome.storage.local.set(
+            {
+                status: nextState
+            }
+            );
+        }
+    })
+    .catch(error => {
+        //console.log('error is', error)
+    });
+    }
 
 function ack() {
     //console.log("act");
