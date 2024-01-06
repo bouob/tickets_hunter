@@ -1,5 +1,3 @@
-const storage = chrome.storage.local;
-var settings=null;
 const https_url="https://";
 const http_url="https://";
 
@@ -43,6 +41,25 @@ class HeartBeatConnector
     }
 }
 
+function set_status_to(flag)
+{
+    let nextState = 'ON';
+    if(!flag) {
+        nextState = 'OFF';
+    }
+
+    //console.log(nextState);
+    chrome.action.setBadgeText({
+        text: nextState
+    });
+
+    chrome.storage.local.set(
+    {
+        status: nextState
+    }
+    );
+}
+
 function sync_status_from_parent()
 {
     //console.log("sync_status_from_parent");
@@ -62,27 +79,13 @@ function sync_status_from_parent()
     {
     console.log(data);
         if(data) {
-            let nextState = 'ON';
-            if(!data.status) {
-                nextState = 'OFF';
-            }
-
-            //console.log(nextState);
-            chrome.action.setBadgeText({
-                text: nextState
-            });
-
-            chrome.storage.local.set(
-            {
-                status: nextState
-            }
-            );
+            set_status_to(data.status);
         }
     })
     .catch(error => {
         //console.log('error is', error)
     });
-    }
+}
 
 function ack() {
     //console.log("act");

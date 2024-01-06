@@ -1,7 +1,7 @@
 {
   "author": "Max Yao",
-  "name": "MaxBot",
-  "description": "MaxBot Extension",
+  "name": "MaxBot Plus",
+  "description": "Quick way to get your expected ticket on some target sites.",
   "icons": {
     "16": "icons/maxbot-16.png",
     "32": "icons/maxbot-32.png",
@@ -28,8 +28,6 @@
     "storage",
     "scripting",
     "tabs",
-    "webNavigation",
-    "webRequest",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback"
   ],
@@ -54,7 +52,7 @@
     {
       "matches" : [ "https://tixcraft.com/activity/game/*" ],
       "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/tixcraft_game.js" ]
+      "js" : [ "jquery.min.js", "js/common.js", "js/tixcraft_game.js" ]
     },
     {
       "matches" : [ "https://tixcraft.com/activity/detail/*" ],
@@ -86,7 +84,7 @@
     {
       "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*" ],
       "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/ticket_area.js" ]
+      "js" : [ "jquery.min.js", "js/common.js", "js/ticket_area.js" ]
     },
     {
       "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
@@ -143,8 +141,16 @@
       "matches" : [
         "https://kktix.com/events/*/registrations/new"
       ],
+      "world": "MAIN",
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/common.js", "js/kktix_registrations_assign.js" ]
+    },
+    {
+      "matches" : [
+        "https://kktix.com/events/*/registrations/new"
+      ],
       "run_at": "document_start",
-      "js" : [ "jquery.min.js", "js/kktix_registrations_reload.js" ]
+      "js" : [ "jquery.min.js", "js/common.js", "js/kktix_registrations_reload.js" ]
     }
   ],
   "version": "1.0.0"

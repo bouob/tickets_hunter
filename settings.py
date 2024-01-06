@@ -34,13 +34,16 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.26)"
+CONST_APP_VERSION = "MaxBot (2023.12.27)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+
+MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
+MAXBOT_EXTENSION_STATUS_JSON = "status.json"
 
 CONST_SERVER_PORT_DEFAULT = 8888
 CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
@@ -2441,10 +2444,38 @@ def settings_timer():
         update_maxbot_runtime_status()
         time.sleep(0.6)
 
+def clean_extension_status():
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    target_path = os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME)
+    target_path = os.path.join(target_path, "data")
+    target_path = os.path.join(target_path, MAXBOT_EXTENSION_STATUS_JSON)
+    if os.path.exists(target_path):
+        try:
+            os.unlink(target_path)
+        except Exception as exc:
+            print(exc)
+            pass
+
+def sync_status_to_extension(status):
+    Root_Dir = get_app_root()
+    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    target_path = os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME)
+    target_path = os.path.join(target_path, "data")
+    target_path = os.path.join(target_path, MAXBOT_EXTENSION_STATUS_JSON)
+    #print("save as to:", target_path)
+    status_json={}
+    status_json["status"]=status
+    #print("dump json to path:", target_path)
+    with open(target_path, 'w') as outfile:
+        json.dump(status_json, outfile)
+
 def update_maxbot_runtime_status():
     is_paused = False
     if os.path.exists(CONST_MAXBOT_INT28_FILE):
         is_paused = True
+
+    sync_status_to_extension(not is_paused)
 
     try:
         global combo_language
@@ -2746,6 +2777,8 @@ def main():
 
     threading.Thread(target=settings_timer, daemon=True).start()
     root.mainloop()
+    print("exit settings")
+    clean_extension_status()
 
 def force_remove_file(filepath):
     if os.path.exists(filepath):

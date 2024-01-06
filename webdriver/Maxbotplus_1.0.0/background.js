@@ -32,20 +32,32 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((e) => {
   //console.log(msg);
 });
 
-chrome.action.onClicked.addListener(async (tab) => {
-    const prevState = await chrome.action.getBadgeText({ tabId: tab.id });
-    // Next state will always be the opposite
-    const nextState = prevState === 'ON' ? 'OFF' : 'ON';
+function set_status_to(flag)
+{
+    let nextState = 'ON';
+    if(!flag) nextState = 'OFF';
+
     chrome.storage.local.set(
     {
         status: nextState
     }
     );
 
-    // Set the action badge to the next state
-    await chrome.action.setBadgeText({
-      tabId: tab.id,
-      text: nextState
+    chrome.action.setBadgeText({
+        text: nextState
+    });
+}
+
+chrome.action.onClicked.addListener(async (tab) => {
+    chrome.storage.local.get('status', function (items)
+    {
+        let next_flag = true;
+        if (items.status && items.status=='ON')
+        {
+            next_flag = false;
+        }
+        console.log("next_flag:"+next_flag);
+        set_status_to(next_flag);
     });
 });
 
