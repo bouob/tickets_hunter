@@ -4,7 +4,8 @@
     //console.log(currentUrl);
     //console.log(event_code);
     if(event_code){
-        let new_url = "https://tixcraft.com/activity/game/"+ event_code;
+        let domain = currentUrl.split('/')[2];
+        let new_url = "https://"+ domain +"/activity/game/"+ event_code;
         location.href=new_url;
     }
 })();

@@ -47,22 +47,46 @@
       "js" : [ "jquery.min.js", "js/tixcraft_area.js" ]
     },
     {
-      "matches" : [ "https://tixcraft.com/activity/game/*" ],
+      "matches" : [ 
+        "https://tixcraft.com/activity/game/*",
+        "https://www.indievox.com/activity/game/*",
+        "https://indievox.com/activity/game/*",
+        "https://ticketmaster.sg/activity/game/*",
+        "https://ticketmaster.com/activity/game/*"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/common.js", "js/tixcraft_game.js" ]
     },
     {
-      "matches" : [ "https://tixcraft.com/activity/detail/*" ],
+      "matches" : [ 
+        "https://tixcraft.com/activity/detail/*",
+        "https://www.indievox.com/activity/detail/*",
+        "https://indievox.com/activity/detail/*",
+        "https://ticketmaster.sg/activity/detail/*",
+        "https://ticketmaster.com/activity/detail/*"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/tixcraft_detail.js" ]
     },
     {
-      "matches" : [ "https://tixcraft.com/ticket/ticket/*" ],
+      "matches" : [ 
+        "https://tixcraft.com/ticket/ticket/*",
+        "https://www.indievox.com/ticket/ticket/*",
+        "https://indievox.com/ticket/ticket/*",
+        "https://ticketmaster.sg/ticket/ticket/*",
+        "https://ticketmaster.com/ticket/ticket/*"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/tixcraft_ticket.js" ]
     },
     {
-      "matches" : [ "https://tixcraft.com/" ],
+      "matches" : [ 
+        "https://tixcraft.com/",
+        "https://www.indievox.com/",
+        "https://indievox.com/",
+        "https://ticketmaster.sg/",
+        "https://ticketmaster.com/"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/tixcraft_home.js" ]
     },
