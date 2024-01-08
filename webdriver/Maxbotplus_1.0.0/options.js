@@ -24,8 +24,8 @@ async function saveChanges()
     } else {
         if(settings) {
             settings.ticket_number = ticket_number_value;
-            settings.tixcraft.date_auto_select.mode = date_select_mode.value;
-            settings.tixcraft.date_auto_select.date_keyword = date_keyword.value;
+            settings.date_auto_select.mode = date_select_mode.value;
+            settings.date_auto_select.date_keyword = date_keyword.value;
             settings.area_auto_select.mode = area_select_mode.value;
             settings.area_auto_select.area_keyword = area_keyword.value;
             settings.keyword_exclude = keyword_exclude.value;
@@ -51,8 +51,8 @@ function loadChanges()
             settings = items.settings;
             //console.log("ticket_number:"+ settings.ticket_number);
             ticket_number.value = settings.ticket_number;
-            date_select_mode.value = settings.tixcraft.date_auto_select.mode;
-            date_keyword.value = settings.tixcraft.date_auto_select.date_keyword;
+            date_select_mode.value = settings.date_auto_select.mode;
+            date_keyword.value = settings.date_auto_select.date_keyword;
             area_select_mode.value = settings.area_auto_select.mode;
             area_keyword.value = settings.area_auto_select.area_keyword;
             keyword_exclude.value = settings.keyword_exclude;
