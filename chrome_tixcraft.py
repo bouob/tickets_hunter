@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.28)"
+CONST_APP_VERSION = "MaxBot (2023.12.29)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11602,7 +11602,7 @@ def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
     is_captcha_sent = False
     previous_answer = None
     last_url, is_quit_bot = get_current_url(driver)
-    for redo_ocr in range(999):
+    for redo_ocr in range(19):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Browser)
 
         # TODO: must ensure the answer is corrent...
@@ -11839,6 +11839,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
             is_form_sumbited = False
 
     if not form_verifyCode is None:
+        print("answer:", answer)
         if len(answer) > 0:
             #answer=answer.upper()
 
@@ -11851,35 +11852,59 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
             if is_visible:
                 try:
+                    # make focus()
                     form_verifyCode.click()
                     is_verifyCode_editing = True
+                except Exception as exc:
+                    pass
+                
+                # plan B.
+                try:
+                    #print("use plan b to focus()")
+                    js="""$("#banner").hide();
+                    $('input[placeholder="請輸入驗證碼"]').focus();"""
+                    driver.set_script_timeout(0.1)
+                    driver.execute_script(js)
                 except Exception as exc:
                     pass
 
                 try:
                     form_verifyCode.clear()
                     form_verifyCode.send_keys(answer)
-
-                    if auto_submit:
-                        # ticketplus not able to send enter key.
-                        #form_verifyCode.send_keys(Keys.ENTER)
-
-                        # for style_2
-                        my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
-                        is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
-                        if not is_form_sumbited:
-                            # for style_1
-                            my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
-                            is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
-                        is_verifyCode_editing = False
-                    else:
-                        print("select all captcha text")
-                        driver.execute_script("arguments[0].select();", form_verifyCode)
-                        if len(answer) > 0:
-                            #tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
-                            pass
                 except Exception as exc:
-                    print("send_keys ocr answer fail.")
+                    print("send_keys ocr answer fail")
+                    pass
+
+                # ticketplus not able to send enter key by javascript.
+                """
+                try:
+                    print("use plan b to input()")
+                    inputed_value = form_verifyCode.get_attribute('value')
+                    if len(inputed_value)==0:
+                        js="arguments[0].value = '%s';" % answer
+                        driver.set_script_timeout(0.1)
+                        driver.execute_script(js, form_verifyCode)
+                except Exception as exc:
+                    pass
+                """
+
+                if auto_submit:
+                    # ticketplus not able to send enter key.
+                    #form_verifyCode.send_keys(Keys.ENTER)
+
+                    # for style_2
+                    my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
+                    is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    if not is_form_sumbited:
+                        # for style_1
+                        my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
+                        is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    
+                    if is_form_sumbited:
+                        # must delay 0.5 second wait ajax return.
+                        time.sleep(0.5)
+                        
+                    is_verifyCode_editing = False
 
     return is_verifyCode_editing, is_form_sumbited
 
@@ -12097,8 +12122,9 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
             is_reloading = False
-            # move below code to extension.
-            #is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
+            # move below code to chrome extension.
+            if config_dict["browser"] in ["firefox", "edge", "safari"]:
+                is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
             
             if not is_reloading:
                 is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)

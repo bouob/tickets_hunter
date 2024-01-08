@@ -26412,7 +26412,13 @@ function ajax_return_done(data, real_event_id, real_session_id) {
     }
 
     if(data.result.session[0].status=="onsale") {
-        // bingo. ^_^
+        //console.log("bingo ^_^, onsale")
+        //$(function() {
+            // console.log("hello ^_^, onsale");
+            //let $captcha = $("input[required='required']");
+            //console.log($captcha.length);
+        //});
+        
     }
 
 }
