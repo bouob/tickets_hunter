@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.27)"
+CONST_APP_VERSION = "MaxBot (2023.12.28)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -1856,8 +1856,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         show_debug_message = True
 
     # read config.
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -2090,8 +2090,8 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
         show_debug_message = True
 
     # read config.
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     # TODO: implement this feature.
     date_keyword_and = ""
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
@@ -3912,11 +3912,12 @@ def kktix_check_agree_checkbox(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    is_need_refresh = False
     is_finish_checkbox_click = False
 
+    agree_label = None
     agree_checkbox = None
     try:
+        agree_label = driver.find_element(By.CSS_SELECTOR, 'label[for="person_agree_terms"]')
         agree_checkbox = driver.find_element(By.CSS_SELECTOR, '#person_agree_terms')
     except Exception as exc:
         print("find person_agree_terms checkbox Exception")
@@ -3924,15 +3925,24 @@ def kktix_check_agree_checkbox(driver, config_dict):
             print(exc)
         pass
 
-    if not agree_checkbox is None:
+    is_dom_ready = False
+    is_need_refresh = False
+    if not agree_checkbox is None and not agree_label is None:
+        checkbox_html = ""
+        try:
+            checkbox_html = agree_label.get_attribute('innerHTML').strip()
+            #print("agree_checkbox html:", checkbox_html)
+            if len(checkbox_html) > 0:
+                if not "{{'new.i_read_and_agree_to'" in checkbox_html:
+                    is_dom_ready = True
+        except Exception as e:
+            #print(e)
+            pass
+
         is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
-    else:
-        is_need_refresh = True
 
-    if is_need_refresh:
-        print("find person_agree_terms checkbox fail, do refresh page.")
-
-    return is_need_refresh, is_finish_checkbox_click
+    #print("status:", is_dom_ready, is_finish_checkbox_click)
+    return is_dom_ready, is_finish_checkbox_click
 
 def check_checkbox(driver, by, query):
     show_debug_message = True       # debug.
@@ -4669,6 +4679,7 @@ let reload=false;
 console.log(data.inventory.registerStatus);
 if(data.inventory.registerStatus=='OUT_OF_STOCK') {reload=true;}
 if(data.inventory.registerStatus=='COMING_SOON') {reload=true;}
+if(data.inventory.registerStatus=='SOLD_OUT') {reload=true;}
 console.log(reload);
 if(reload) {location.reload();}
 }
@@ -4695,45 +4706,18 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
 
     registerStatus = None
     if is_match_event_code:
-        registerStatus = kktix_get_registerStatus(driver, event_code)
+        kktix_get_registerStatus(driver, event_code)
     return registerStatus
 
-def kktix_reg_auto_reload(driver, url, config_dict, kktix_register_status_last):
-    registerStatus = kktix_register_status_last
-
+def kktix_reg_auto_reload(driver, url, config_dict):
     # auto reload javascrit code at chrome extension.
-    is_need_refresh = False
     if config_dict["browser"] in ["firefox", "edge", "safari"]:
-        if not is_need_refresh:
-            if registerStatus is None:
-                # current version, change refresh event from selenium to javascript.
-                registerStatus = kktix_check_register_status(driver, url)
-                # for request solution, refresh on selenium.
-                if not registerStatus is None:
-                    print("registerStatus:", registerStatus)
-                    # OUT_OF_STOCK
-                    if registerStatus != 'IN_STOCK':
-                        is_need_refresh = True
+        kktix_check_register_status(driver, url)
 
     is_finish_checkbox_click = False
-    if not is_need_refresh:
-        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
-    if not is_finish_checkbox_click:
-        # retry again.
-        is_need_refresh, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
+    is_dom_ready, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
 
-    if is_need_refresh:
-        try:
-            print("try to refresh page...")
-            driver.refresh()
-        except Exception as exc:
-            #print("refresh fail")
-            pass
-
-        if config_dict["advanced"]["auto_reload_random_delay"]:
-            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
-
-    return is_need_refresh, is_finish_checkbox_click
+    return is_dom_ready, is_finish_checkbox_click
 
 
 # PURPOSE: get target area list.
@@ -4745,7 +4729,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_keyword = format_keyword_string(date_keyword)
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -4962,8 +4946,8 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -5583,8 +5567,8 @@ def urbtix_purchase_ticket(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    date_auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -6336,8 +6320,8 @@ def cityline_purchase_button_press(driver, config_dict):
         show_debug_message = True
 
 
-    date_auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    date_auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -6462,8 +6446,8 @@ def ibon_date_auto_select(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -7631,14 +7615,14 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     is_date_selected = False
     if "/activity/game/" in url:
         tixcraft_dict["start_time"] = time.time()
-        if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+        if config_dict["date_auto_select"]["enable"]:
             domain_name = url.split('/')[2]
             is_date_selected = tixcraft_date_auto_select(driver, url, config_dict, domain_name)
 
     if '/artist/' in url and 'ticketmaster.com' in url:
         tixcraft_dict["start_time"] = time.time()
         if len(url.split('/'))==6:
-            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+            if config_dict["date_auto_select"]["enable"]:
                 domain_name = url.split('/')[2]
                 is_date_selected = ticketmaster_date_auto_select(driver, url, config_dict, domain_name)
 
@@ -7747,20 +7731,21 @@ def kktix_main(driver, url, config_dict, kktix_dict):
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
             kktix_dict["start_time"] = time.time()
-            is_need_refresh = False
-            is_finish_checkbox_click = False
-            is_need_refresh, is_finish_checkbox_click = kktix_reg_auto_reload(driver, url, config_dict, kktix_dict["kktix_register_status_last"])
 
-            if is_need_refresh:
+            is_dom_ready = False
+            is_finish_checkbox_click = False
+            is_dom_ready, is_finish_checkbox_click = kktix_reg_auto_reload(driver, url, config_dict)
+
+            if not is_dom_ready:
                 # reset answer fail list.
                 kktix_dict["fail_list"] = []
                 kktix_dict["captcha_sound_played"] = False
-                kktix_dict["kktix_register_status_last"] = None
             else:
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
                     kktix_dict["fail_list"], kktix_dict["captcha_sound_played"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["captcha_sound_played"], is_finish_checkbox_click)
                     kktix_dict["done_time"] = time.time()
+
         else:
             is_event_page = False
             if '/events/' in url:
@@ -7777,15 +7762,15 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             # reset answer fail list.
             kktix_dict["fail_list"] = []
             kktix_dict["captcha_sound_played"] = False
-            kktix_dict["kktix_register_status_last"] = None
 
     if '/events/' in url and '/registrations/' in url and "-" in url:
-        if not kktix_dict["start_time"] is None:
-            if not kktix_dict["done_time"] is None:
-                bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
-                if kktix_dict["elapsed_time"] != bot_elapsed_time:
-                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
-                kktix_dict["elapsed_time"] = bot_elapsed_time
+        if not '/registrations/new' in url:
+            if not kktix_dict["start_time"] is None:
+                if not kktix_dict["done_time"] is None:
+                    bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
+                    if kktix_dict["elapsed_time"] != bot_elapsed_time:
+                        print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
+                    kktix_dict["elapsed_time"] = bot_elapsed_time
 
         if config_dict["advanced"]["headless"]:
             if not kktix_dict["is_popup_checkout"]:
@@ -7828,7 +7813,7 @@ def famiticket_main(driver, url, config_dict, fami_dict):
         fami_dict["fail_list"] = []
 
     if '/Sales/Home/Index/' in url:
-        if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+        if config_dict["date_auto_select"]["enable"]:
             is_date_assign_by_bot = fami_home_auto_select(driver, config_dict, fami_dict["last_activity"])
 
     return fami_dict
@@ -8184,7 +8169,7 @@ def urbtix_main(driver, url, config_dict):
 
     # https://www.urbtix.hk/event-detail/00000/
     if '/event-detail/' in url:
-        if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+        if config_dict["date_auto_select"]["enable"]:
             is_event_page = False
             if len(url.split('/'))<=6:
                 is_event_page = True
@@ -8349,7 +8334,7 @@ def cityline_main(driver, url, config_dict):
         if is_modal_dialog_popup:
             print("is_modal_dialog_popup! skip...")
         else:
-            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+            if config_dict["date_auto_select"]["enable"]:
                 cityline_purchase_button_press(driver, config_dict)
 
     if '/performance?' in url:
@@ -8705,7 +8690,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                 is_event_page = True
 
             if is_event_page:
-                if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+                if config_dict["date_auto_select"]["enable"]:
                     is_match_target_feature = True
                     is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
 
@@ -8936,8 +8921,8 @@ def hkticketing_date_assign(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
 
     if show_debug_message:
         print("date_keyword:", date_keyword)
@@ -9791,7 +9776,7 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
                 is_event_page = True
 
             if is_event_page:
-                if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+                if config_dict["date_auto_select"]["enable"]:
                     if not hkticketing_dict["is_date_submiting"]:
                         hkticketing_dict["is_date_submiting"], hkticketing_dict["fail_list"] = hkticketing_date_auto_select(driver, config_dict, hkticketing_dict["fail_list"])
                         pass
@@ -9844,8 +9829,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -10703,11 +10688,11 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
-            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+            if config_dict["date_auto_select"]["enable"]:
                 kham_product(driver, domain_name, config_dict)
 
     if '/application/utk01/utk0101_.aspx' in url.lower():
-        date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+        date_auto_select_enable = config_dict["date_auto_select"]["enable"]
         if date_auto_select_enable:
             kham_product(driver, domain_name, config_dict)
 
@@ -10748,7 +10733,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                     is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'#buttonNext')
             else:
                 # layout format #2
-                date_auto_select_enable = config_dict["tixcraft"]["date_auto_select"]["enable"]
+                date_auto_select_enable = config_dict["date_auto_select"]["enable"]
                 if date_auto_select_enable:
                     kham_product(driver, domain_name, config_dict)
 
@@ -10910,8 +10895,8 @@ def ticketplus_date_auto_select(driver, config_dict):
         show_debug_message = True
 
     # read config.
-    auto_select_mode = config_dict["tixcraft"]["date_auto_select"]["mode"]
-    date_keyword = config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip()
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     # TODO: implement this feature.
     date_keyword_and = ""
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
@@ -12098,7 +12083,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_other_activity(driver)
             #print("is accept button pressed:", is_button_pressed)
 
-            if config_dict["tixcraft"]["date_auto_select"]["enable"]:
+            if config_dict["date_auto_select"]["enable"]:
                 ticketplus_date_auto_select(driver, config_dict)
 
     #https://ticketplus.com.tw/order/XXX/OOO
@@ -12262,7 +12247,6 @@ def main(args):
     kktix_dict = {}
     kktix_dict["fail_list"]=[]
     kktix_dict["captcha_sound_played"] = False
-    kktix_dict["kktix_register_status_last"] = None
     kktix_dict["start_time"]=None
     kktix_dict["done_time"]=None
     kktix_dict["elapsed_time"]=None

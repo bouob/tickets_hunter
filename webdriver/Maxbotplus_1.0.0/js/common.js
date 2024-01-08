@@ -19,13 +19,13 @@ function get_target_date_with_order(settings, matched_block)
     //console.log(settings);
     let target_area = [];
 
-   if(settings.tixcraft.date_auto_select.mode=="from top to bottom")
+   if(settings.date_auto_select.mode=="from top to bottom")
        target_date = matched_block.first();
-   if(settings.tixcraft.date_auto_select.mode=="from bottom to top")
+   if(settings.date_auto_select.mode=="from bottom to top")
        target_date = matched_block.last();
-   if(settings.tixcraft.date_auto_select.mode=="center")
+   if(settings.date_auto_select.mode=="center")
        target_date = matched_block.first();
-   if(settings.tixcraft.date_auto_select.mode=="random")
+   if(settings.date_auto_select.mode=="random")
        target_date = matched_block.first();
 
     return target_area;

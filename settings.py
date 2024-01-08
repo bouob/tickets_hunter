@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.27)"
+CONST_APP_VERSION = "MaxBot (2023.12.28)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -636,15 +636,10 @@ def get_default_config():
         config_dict["ocr_captcha"]["enable"] = False
         config_dict["ocr_captcha"]["force_submit"] = False
 
-    config_dict['kktix']={}
-    config_dict["kktix"]["auto_press_next_step_button"] = True
-    config_dict["kktix"]["auto_fill_ticket_number"] = True
-
-    config_dict['tixcraft']={}
-    config_dict["tixcraft"]["date_auto_select"] = {}
-    config_dict["tixcraft"]["date_auto_select"]["enable"] = True
-    config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = ""
-    config_dict["tixcraft"]["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
+    config_dict["date_auto_select"] = {}
+    config_dict["date_auto_select"]["enable"] = True
+    config_dict["date_auto_select"]["date_keyword"] = ""
+    config_dict["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
 
     config_dict["area_auto_select"] = {}
     config_dict["area_auto_select"]["enable"] = True
@@ -652,6 +647,11 @@ def get_default_config():
     config_dict["area_auto_select"]["area_keyword"] = ""
     config_dict["keyword_exclude"] = CONST_EXCLUDE_DEFAULT
 
+    config_dict['kktix']={}
+    config_dict["kktix"]["auto_press_next_step_button"] = True
+    config_dict["kktix"]["auto_fill_ticket_number"] = True
+
+    config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
 
@@ -869,12 +869,12 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
 
-        config_dict["tixcraft"]["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
-        config_dict["tixcraft"]["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
+        config_dict["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
+        config_dict["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
         
         date_keyword = txt_date_keyword.get("1.0",END).strip()
         date_keyword = format_config_keyword_for_json(date_keyword)
-        config_dict["tixcraft"]["date_auto_select"]["date_keyword"] = date_keyword
+        config_dict["date_auto_select"]["date_keyword"] = date_keyword
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
@@ -1731,7 +1731,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_date_auto_select
     chk_state_date_auto_select = BooleanVar()
-    chk_state_date_auto_select.set(config_dict["tixcraft"]["date_auto_select"]["enable"])
+    chk_state_date_auto_select.set(config_dict["date_auto_select"]["enable"])
 
     global chk_date_auto_select
     chk_date_auto_select = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_date_auto_select, command=callbackDateAutoOnChange)
@@ -1749,7 +1749,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global combo_date_auto_select_mode
     combo_date_auto_select_mode = ttk.Combobox(frame_group_tixcraft, state="readonly", width=30)
     combo_date_auto_select_mode['values']= CONST_SELECT_OPTIONS_DEFAULT
-    combo_date_auto_select_mode.set(config_dict["tixcraft"]["date_auto_select"]["mode"])
+    combo_date_auto_select_mode.set(config_dict["date_auto_select"]["mode"])
     combo_date_auto_select_mode.grid(column=1, row=date_auto_select_mode_index, sticky = W)
 
     group_row_count+=1
@@ -1764,7 +1764,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_date_keyword
     txt_date_keyword = Text(frame_group_tixcraft, width=30, height=4)
     txt_date_keyword.grid(column=1, row=group_row_count, sticky = W)
-    txt_date_keyword.insert("1.0", config_dict["tixcraft"]["date_auto_select"]["date_keyword"].strip())
+    txt_date_keyword.insert("1.0", config_dict["date_auto_select"]["date_keyword"].strip())
 
     group_row_count+=1
 
