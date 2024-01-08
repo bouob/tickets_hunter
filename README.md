@@ -3,16 +3,21 @@ MaxBot是一個免費、開放原始碼的搶票機器人。祝您搶票成功�
 
 MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.
 
-# Download (搶票程式下載)
+# Download 
+(搶票程式下載)
+
 https://github.com/max32002/tixcraft_bot/releases
 
 附註: 如果你是 macOS, 且安裝的 python 版本是 3.12.x 版, 會無法執行, 請移除後並降低版本為 python 3.10.x 版, 原因是使用的第三方套件undetected-chromedriver 暫時無法相容於 python 3.12.x 版.
 
-# Demo (示範影片)
+# Demo 
+(示範影片)
 
 https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 
-# How to use (如何使用)
+# How to Use 
+(如何使用教學)
+
 * tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
 * kktix: https://max-everyday.com/2018/12/kktix-bot/
 * FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
@@ -25,7 +30,9 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 
 https://max-everyday.com/2023/08/interpark-bot/
 
-# How to execute source code (透過原始碼的執行方法)
+# How to Execute Source Code 
+(透過原始碼的執行方法)
+
 1: <code>python3 -m pip install -r pip-req.txt</code>
 
 2: <code>python3 settings.py</code>
@@ -46,15 +53,20 @@ https://max-everyday.com/2023/11/buy-ticket-by-vm/
 
 雖然這篇文章是以虛擬主機來示範，但是在 Windows / macOS / Linux 平台裡的 python 操作方式是類似的，幾乎相同。
 
-# Introduce the implement (實作方法)
+# Introduce the Implement 
+(實作方法)
+
 https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
 
-# Execute suggestion (搶票建議)
+# Execute Suggestion 
+(搶票建議)
+
 please run this source code with high performance hardware computer and high speed + stable network.
 
 門票的「限量」是很殘酷的，建議不要用破舊的電腦或連線不穩的手機網路來搶票，因為只要比別人慢個 0.1 秒，票可能就沒了。為了要搶到限量的票真心建議去一下網咖或找一個網路連線穩定且快的地方並使用硬體不差的電腦來搶票。
 
-# TODO about cpatcha (關於驗證碼)
+# TODO about Cpatcha 
+(關於驗證碼)
 
 目前自動輸入驗證碼用的元件是:
 
@@ -67,12 +79,12 @@ https://www.python.org/downloads/release/python-31011/
 * 猜測驗證碼時比較容易出錯的是字英 f 和 t，還有 q 和 g, v 和 u 還有 w.
 * 猜測驗證碼必錯的情況是，目前不允許有重覆的2個字母出來。
 
-
 想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
 
 https://github.com/JasonLiTW/simple-railway-captcha-solver
 
-# 搶票常見問題整理
+# Common Problems
+(搶票常見問題整理)
 
 詳全文：https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/
 
@@ -90,8 +102,20 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 * 你的硬體設備該不該升級？
 * 想組一台新的電腦，是不是可以給我一些建議呢？
 
+# Extension Privacy 
+(擴充功能隱私權政策)
 
-# Supporting the Project (贊助Max)
+產品如何收集、使用及分享使用者資料
+* 擴充功能移除已售完的網頁區塊。
+* 擴充功能取得網址資訊, 並置換為下一個新的網址。
+* 擴充取得網頁內容, 判斷為需要重新整理時, 自動刷新頁面。
+
+使用者資料的所有分享對象。
+* 擴充功能沒有分享使用者資料。
+
+
+# Supporting the Project 
+(贊助Max)
 
 如果這個項目對您有幫助，不妨請作者我喝杯咖啡 ：）
 
