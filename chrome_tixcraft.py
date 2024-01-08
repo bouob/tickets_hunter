@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.29)"
+CONST_APP_VERSION = "MaxBot (2023.12.30)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -11409,12 +11409,17 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
 
         if is_need_refresh:
+            # vue mode, refresh need to check more conditions to check.
+            print('start to refresh page.')
             try:
-                # vue mode, refresh need to check more conditions to check.
                 driver.refresh()
-                pass
+                time.sleep(0.3)
             except Exception as exc:
                 pass
+
+            if config_dict["advanced"]["auto_reload_random_delay"]:
+                time.sleep(random.randint(1,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND+1))
+
 
     return is_price_assign_by_bot
 

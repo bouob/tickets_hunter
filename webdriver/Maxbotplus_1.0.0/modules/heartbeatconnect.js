@@ -3,7 +3,9 @@ const http_url="https://";
 
 class HeartBeatConnector
 {
-    constructor() {}
+    constructor() {
+        this.crypto_decrypt = null;
+    }
 
     start() {
         //console.log("start heart beat connector");
