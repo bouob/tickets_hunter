@@ -27,8 +27,8 @@ function date_clean()
 function date_keyword(settings)
 {
     let date_keyword_array = [];
-    if(settings.tixcraft.date_auto_select.date_keyword.length > 0) {
-        date_keyword_array = JSON.parse('[' +  settings.tixcraft.date_auto_select.date_keyword +']');
+    if(settings.date_auto_select.date_keyword.length > 0) {
+        date_keyword_array = JSON.parse('[' +  settings.date_auto_select.date_keyword +']');
     }
     //console.log(date_keyword_array);
     let target_date;
@@ -66,8 +66,8 @@ function date_keyword(settings)
 function date_main(settings)
 {
     myInterval = setInterval(() => {
-        //console.log("date_mode:"+ settings.tixcraft.date_auto_select.mode);
-        //console.log("date_keyword:"+ settings.tixcraft.date_auto_select.date_keyword);
+        //console.log("date_mode:"+ settings.date_auto_select.mode);
+        //console.log("date_keyword:"+ settings.date_auto_select.date_keyword);
         date_keyword(settings);
     }, 200);
 }
