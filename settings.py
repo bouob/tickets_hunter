@@ -34,7 +34,7 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-CONST_APP_VERSION = "MaxBot (2023.12.31)"
+CONST_APP_VERSION = "MaxBot (2024.01.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -142,8 +142,7 @@ def load_translate():
     en_us["date_keyword"] = 'Date Keyword'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
-    en_us["auto_reload_page_interval"] = 'Reload page interval sec.(HK)'
-    en_us["auto_reload_random_delay"] = 'Reload random delay(TW)'
+    en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
 
     en_us["area_select_order"] = 'Area select order'
@@ -214,8 +213,6 @@ def load_translate():
 
     en_us["play_captcha_sound"] = 'Play sound while ordering'
     en_us["captcha_sound_filename"] = 'sound filename'
-    en_us["adblock_plus_enable"] = 'Browser Extension'
-    en_us["adblock_plus_settings"] = "Adblock Advanced Filter"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
     en_us["hide_some_image"] = "Hide Some Images"
     en_us["block_facebook_network"] = "Block Facebook Network"
@@ -248,8 +245,7 @@ def load_translate():
     zh_tw["date_keyword"] = '日期關鍵字'
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
-    zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)(香港)'
-    zh_tw["auto_reload_random_delay"] = '刷新清票建議增加隨機延遲(台灣)'
+    zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_tw["area_select_order"] = '區域排序方式'
@@ -319,8 +315,6 @@ def load_translate():
 
     zh_tw["play_captcha_sound"] = '訂購時播放音效'
     zh_tw["captcha_sound_filename"] = '音效檔'
-    zh_tw["adblock_plus_enable"] = '瀏覽器擴充功能'
-    zh_tw["adblock_plus_settings"] = "Adblock 進階過濾規則"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
     zh_tw["hide_some_image"] = "隱藏部份圖片"
     zh_tw["block_facebook_network"] = "擋掉 Facebook 連線"
@@ -354,8 +348,7 @@ def load_translate():
     zh_cn["date_keyword"] = '日期关键字'
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
-    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)(香港)'
-    zh_cn["auto_reload_random_delay"] = '重新加载随机延迟(台湾)'
+    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_cn["area_select_order"] = '区域排序方式'
@@ -426,8 +419,6 @@ def load_translate():
 
     zh_cn["play_captcha_sound"] = '订购时播放音效'
     zh_cn["captcha_sound_filename"] = '音效档'
-    zh_cn["adblock_plus_enable"] = '浏览器扩充功能'
-    zh_cn["adblock_plus_settings"] = "Adblock 进阶过滤规则"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
     zh_cn["hide_some_image"] = "隐藏一些图像"
     zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
@@ -461,8 +452,7 @@ def load_translate():
     ja_jp["date_keyword"] = '日付キーワード'
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
-    ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)(HK)'
-    ja_jp["auto_reload_random_delay"] = 'ランダムなリロード遅延(TW)'
+    ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
@@ -532,8 +522,6 @@ def load_translate():
 
     ja_jp["play_captcha_sound"] = '注文時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル'
-    ja_jp["adblock_plus_enable"] = '拡張機能'
-    ja_jp["adblock_plus_settings"] = "Adblock 高度なフィルター"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
     ja_jp["hide_some_image"] = "一部の画像を非表示にする"
     ja_jp["block_facebook_network"] = "Facebookをブロックする"
@@ -685,7 +673,6 @@ def get_default_config():
     config_dict["advanced"]["udn_password"] = ""
     config_dict["advanced"]["ticketplus_password"] = ""
 
-    config_dict["advanced"]["adblock_plus_enable"] = False
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = False
     config_dict["advanced"]["block_facebook_network"] = False
@@ -696,8 +683,7 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["online_dictionary_url"] = ""
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 1.0
-    config_dict["advanced"]["auto_reload_random_delay"] = False
+    config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["proxy_server_port"] = ""
 
     return config_dict
@@ -788,7 +774,6 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_auto_reload_coming_soon_page
     global txt_auto_reload_page_interval
     global txt_proxy_server_port
-    global chk_state_auto_reload_random_delay
 
     global txt_tixcraft_sid
     global txt_ibon_ibonqware
@@ -816,7 +801,6 @@ def btn_save_act(language_code, slience_mode=False):
 
     global chk_state_play_captcha_sound
     global txt_captcha_sound_filename
-    global chk_state_adblock_plus
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_ddddocr_beta
     global chk_state_ocr_captcha_force_submit
@@ -978,7 +962,6 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["udn_password"] = encryptMe(config_dict["advanced"]["udn_password"])
         config_dict["advanced"]["ticketplus_password"] = encryptMe(config_dict["advanced"]["ticketplus_password"])
 
-        config_dict["advanced"]["adblock_plus_enable"] = bool(chk_state_adblock_plus.get())
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
         config_dict["advanced"]["hide_some_image"] = bool(chk_state_hide_some_image.get())
         config_dict["advanced"]["block_facebook_network"] = bool(chk_state_block_facebook_network.get())
@@ -1000,7 +983,6 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
-        config_dict["advanced"]["auto_reload_random_delay"] = bool(chk_state_auto_reload_random_delay.get())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
 
 
@@ -1282,7 +1264,6 @@ def applyNewLanguage():
     global chk_pass_date_is_sold_out
     global chk_auto_reload_coming_soon_page
     global chk_play_captcha_sound
-    global chk_adblock_plus
     global chk_ocr_captcha
     global chk_ocr_captcha_ddddocr_beta
     global chk_ocr_captcha_force_submit
@@ -1295,7 +1276,6 @@ def applyNewLanguage():
     global lbl_online_dictionary_url
     global lbl_online_dictionary_preview
     global chk_auto_guess_options
-    global chk_auto_reload_random_delay
 
     global tabControl
 
@@ -1304,8 +1284,6 @@ def applyNewLanguage():
     global lbl_donate
     global lbl_release
 
-    global lbl_adblock_plus
-    global lbl_adblock_plus_settings
     global lbl_adjacent_seat
     global lbl_hide_some_image
     global lbl_block_facebook_network
@@ -1315,7 +1293,6 @@ def applyNewLanguage():
 
     global lbl_auto_reload_page_interval
     global lbl_proxy_server_port
-    global lbl_auto_reload_random_delay
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -1352,7 +1329,6 @@ def applyNewLanguage():
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
-    lbl_auto_reload_random_delay.config(text=translate[language_code]["auto_reload_random_delay"])
 
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
@@ -1371,7 +1347,6 @@ def applyNewLanguage():
     chk_pass_date_is_sold_out.config(text=translate[language_code]["enable"])
     chk_auto_reload_coming_soon_page.config(text=translate[language_code]["enable"])
     chk_play_captcha_sound.config(text=translate[language_code]["enable"])
-    chk_adblock_plus.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
@@ -1382,7 +1357,6 @@ def applyNewLanguage():
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
-    chk_auto_reload_random_delay.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -1453,9 +1427,6 @@ def applyNewLanguage():
     lbl_help.config(text=translate[language_code]["help"])
     lbl_donate.config(text=translate[language_code]["donate"])
     lbl_release.config(text=translate[language_code]["release"])
-
-    lbl_adblock_plus.config(text=translate[language_code]["adblock_plus_enable"])
-    lbl_adblock_plus_settings.config(text=translate[language_code]["adblock_plus_settings"])
 
     global btn_run
     global btn_save
@@ -1964,38 +1935,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
-    global lbl_adblock_plus
-    lbl_adblock_plus = Label(frame_group_header, text=translate[language_code]['adblock_plus_enable'])
-    lbl_adblock_plus.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_adblock_plus
-    chk_state_adblock_plus = BooleanVar()
-    chk_state_adblock_plus.set(config_dict["advanced"]["adblock_plus_enable"])
-
-    global chk_adblock_plus
-    chk_adblock_plus = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_adblock_plus)
-    chk_adblock_plus.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_adblock_plus_settings
-    lbl_adblock_plus_settings = Label(frame_group_header, text=translate[language_code]['adblock_plus_settings'])
-    lbl_adblock_plus_settings.grid(column=0, row=group_row_count, sticky = E+N)
-
-    txt_adblock_plus_settings = Text(frame_group_header, width=30, height=3)
-    txt_adblock_plus_settings.grid(column=1, row=group_row_count, sticky = W)
-    txt_adblock_plus_settings.insert("1.0", CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
-
-    icon_copy_filename = "icon_copy_2.gif"
-    icon_copy_img = PhotoImage(file=icon_copy_filename)
-
-    lbl_icon_copy = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
-    lbl_icon_copy.image = icon_copy_img
-    lbl_icon_copy.grid(column=2, row=group_row_count, sticky = W+N)
-    lbl_icon_copy.bind("<Button-1>", lambda e: btn_copy_clicked())
-
-    group_row_count +=1
-
     global lbl_auto_reload_page_interval
     lbl_auto_reload_page_interval = Label(frame_group_header, text=translate[language_code]['auto_reload_page_interval'])
     lbl_auto_reload_page_interval.grid(column=0, row=group_row_count, sticky = E)
@@ -2004,20 +1943,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_auto_reload_page_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["auto_reload_page_interval"])
     txt_auto_reload_page_interval = Entry(frame_group_header, width=30, textvariable = txt_auto_reload_page_interval_value)
     txt_auto_reload_page_interval.grid(column=1, row=group_row_count, sticky = W)
-
-    group_row_count +=1
-
-    global lbl_auto_reload_random_delay
-    lbl_auto_reload_random_delay = Label(frame_group_header, text=translate[language_code]['auto_reload_random_delay'])
-    lbl_auto_reload_random_delay.grid(column=0, row=group_row_count, sticky = E)
-
-    global chk_state_auto_reload_random_delay
-    chk_state_auto_reload_random_delay = BooleanVar()
-    chk_state_auto_reload_random_delay.set(config_dict["advanced"]["auto_reload_random_delay"])
-
-    global chk_auto_reload_random_delay
-    chk_auto_reload_random_delay = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_reload_random_delay)
-    chk_auto_reload_random_delay.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -2739,7 +2664,7 @@ def main():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 580
-    GUI_SIZE_HEIGHT = 615
+    GUI_SIZE_HEIGHT = 590
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)

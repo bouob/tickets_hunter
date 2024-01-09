@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2023.12.31)"
+CONST_APP_VERSION = "MaxBot (2024.01.01)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -379,8 +379,6 @@ def is_all_alpha_or_numeric(text):
 def get_favoriate_extension_path(webdriver_path, config_dict):
     #print("webdriver_path:", webdriver_path)
     extension_list = []
-    if config_dict["advanced"]["adblock_plus_enable"]:
-        extension_list.append(os.path.join(webdriver_path,"Adblock_3.21.1.0.crx"))
     extension_list.append(os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME + ".crx"))
     return extension_list
 
@@ -2077,8 +2075,8 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                         except Exception as exc:
                             pass
 
-                        if config_dict["advanced"]["auto_reload_random_delay"]:
-                            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                        if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_date_clicked
 
@@ -2576,8 +2574,8 @@ def tixcraft_area_auto_select(driver, url, config_dict):
             except Exception as exc:
                 pass
 
-            if config_dict["advanced"]["auto_reload_random_delay"]:
-                time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
 def ticketmaster_area_auto_select(driver, config_dict, zone_info):
     show_debug_message = True       # debug.
@@ -2633,8 +2631,8 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
         except Exception as exc:
             pass
 
-        if config_dict["advanced"]["auto_reload_random_delay"]:
-            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+        if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
 
 def tixcraft_ticket_agree(driver, config_dict):
@@ -3394,7 +3392,9 @@ def tixcraft_assign_ticket_number(driver, config_dict):
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     # use extension instead of selenium.
-    #tixcraft_ticket_main_agree(driver, config_dict)
+    # checkbox javascrit code at chrome extension.
+    if config_dict["browser"] in ["firefox", "edge", "safari"]:
+        tixcraft_ticket_main_agree(driver, config_dict)
 
     is_ticket_number_assigned = False
 
@@ -3421,7 +3421,7 @@ def tixcraft_ticket_main_ocr(driver, config_dict, ocr, Captcha_Browser, domain_n
     else:
         previous_answer = None
         last_url, is_quit_bot = get_current_url(driver)
-        for redo_ocr in range(99):
+        for redo_ocr in range(19):
             is_need_redo_ocr, previous_answer, is_form_sumbited = tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name)
             if is_form_sumbited:
                 # start next loop.
@@ -4611,8 +4611,8 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
                         #print("refresh fail")
                         pass
 
-                    if config_dict["advanced"]["auto_reload_random_delay"]:
-                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return fail_list, captcha_sound_played
 
@@ -5068,8 +5068,8 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
                     except Exception as exc:
                         pass
 
-                    if config_dict["advanced"]["auto_reload_random_delay"]:
-                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_date_assign_by_bot
 
@@ -5264,8 +5264,8 @@ def fami_date_to_area(driver, config_dict, last_activity_url):
         except Exception as exc:
             pass
 
-        if config_dict["advanced"]["auto_reload_random_delay"]:
-            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+        if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 
@@ -6563,8 +6563,8 @@ def ibon_date_auto_select(driver, config_dict):
                     except Exception as exc:
                         pass
 
-                    if config_dict["advanced"]["auto_reload_random_delay"]:
-                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_date_assign_by_bot
 
@@ -6828,8 +6828,8 @@ def ibon_performance(driver, config_dict):
         except Exception as exc:
             pass
 
-        if config_dict["advanced"]["auto_reload_random_delay"]:
-            time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+        if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 
@@ -9998,8 +9998,8 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     except Exception as exc:
                         pass
 
-                    if config_dict["advanced"]["auto_reload_random_delay"]:
-                        time.sleep(random.randint(0,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND))
+                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_date_assign_by_bot
 
@@ -11417,9 +11417,8 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             except Exception as exc:
                 pass
 
-            if config_dict["advanced"]["auto_reload_random_delay"]:
-                time.sleep(random.randint(1,CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND+1))
-
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 

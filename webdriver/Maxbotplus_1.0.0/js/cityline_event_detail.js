@@ -1,4 +1,6 @@
 const storage = chrome.storage.local;
+var settings = null;
+
 var eventDataCache = null;
 var performanceDataCache = null;
 var selectedPerfId = null;
@@ -70,9 +72,27 @@ var fillEventData = function(data) {
   eventDataCache = data;
   eventImageUrl =  data.eventLargeCoverUrl
 
+  let reload=false;
   let eventStatues = {"TOBESOLD" : "event-status-tobesold", "SALE" : "event-status-sale", "SOLDOUT" : "event-status-soldout", "EXPIRED" : "event-status-expired"};
-  if(data.status=="TOBESOLD") location.reload();
-  if(data.status=="SOLDOUT") location.reload();
+  if(data.status=="TOBESOLD") reload=true;
+  if(data.status=="SOLDOUT") reload=true;;
+
+    if(reload) {
+        let auto_reload_page_interval = 0.0;
+        if(settings) {
+            auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
+        }
+        if(auto_reload_page_interval == 0) {
+            //console.log('Start to reload now.');
+            location.reload();
+        } else {
+            console.log('We are going to reload after few seconeds.');
+            setTimeout(function () {
+                location.reload();
+            }, auto_reload_page_interval * 1000);
+        }
+    }
+  
 }
 
 var openWindow = function(url) {
@@ -307,6 +327,14 @@ function cityline_event_status_check()
       loadData();
   }
 }
+
+storage.get('settings', function (items)
+{
+    if (items.settings)
+    {
+        settings = items.settings;
+    }
+});
 
 storage.get('status', function (items)
 {

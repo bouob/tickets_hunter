@@ -52,7 +52,14 @@ function date_keyword(settings)
     }
     
     if (target_date.length) {
-        let link = target_date.parent().find("button").attr("data-href");
+        let button_tag = "button";
+        const currentUrl = window.location.href; 
+        const domain = currentUrl.split('/')[2];
+        if(domain=="ticketmaster.sg") {
+            button_tag = "a";
+        }
+
+        let link = target_date.parent().find(button_tag).attr("data-href");
         if (link) {
             //console.log("link: " + link);
             clearInterval(myInterval);
@@ -74,31 +81,57 @@ function date_main(settings)
 
 function date_auto_reload()
 {
-    if ($("#gameList button").length) {
-        date_clean();
-        if ($("#gameList button").length) {
-            storage.get('settings', function (items)
-            {
-                if (items.settings)
-                {
-                    settings = items.settings;
-                    date_main(settings);
-                } else {
-                    console.log('no settings found');
-                }
-            });
+    let reload=false;
+    
+    let button_tag = "button";
+    const currentUrl = window.location.href; 
+    const domain = currentUrl.split('/')[2];
+    if(domain=="ticketmaster.sg") {
+        button_tag = "a";
+    }
 
+    const query_string = "#gameList "+button_tag;
+    if ($(query_string).length) {
+        date_clean();
+        if ($(query_string).length) {
+            if (settings)
+            {
+                date_main(settings);
+            }
         } else {
-            location.reload();
+            reload=true;
         }
     } else {
-        location.reload();
+        reload=true;
+    }
+    
+    if(reload) {
+        let auto_reload_page_interval = 0.0;
+        if(settings) {
+            auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
+        }
+        if(auto_reload_page_interval == 0) {
+            //console.log('Start to reload now.');
+            location.reload();
+        } else {
+            console.log('We are going to reload after few seconeds.');
+            setTimeout(function () {
+                location.reload();
+            }, auto_reload_page_interval * 1000);
+        }
     }
 }
 
+storage.get('settings', function (items)
+{
+    if (items.settings)
+    {
+        settings = items.settings;
+    }
+});
+
 storage.get('status', function (items)
 {
-    console.log(items);
     if (items.status && items.status=='ON')
     {
         date_auto_reload();
@@ -106,5 +139,3 @@ storage.get('status', function (items)
         console.log('no status found');
     }
 });
-
-

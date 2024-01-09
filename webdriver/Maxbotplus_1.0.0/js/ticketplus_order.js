@@ -19,34 +19,30 @@ function ajax_return_done(data, real_event_id, real_session_id) {
     //console.log("ajax return done")
     let reload=false;
     
-    let auto_reload_random_delay = false;
+    let auto_reload_page_interval = 0.0;
     if(settings) {
-        auto_reload_random_delay = settings.advanced.auto_reload_random_delay;
+        auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
     }
-    //console.log("auto_reload_random_delay:"+auto_reload_random_delay);
+    //console.log("auto_reload_page_interval:"+auto_reload_page_interval);
     
-    let is_match_reload_status = false;
     if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout" || data.result.session[0].status=="unavailable") {
-        is_match_reload_status = true;
+        reload=true;
     }
 
     //console.log("is_match_reload_status:"+is_match_reload_status);
-    if(is_match_reload_status) {
-        retry_count +=1;
-        
-        if (settings)
-        {
-            if(!auto_reload_random_delay) {
-                //console.log('Start to reload now.');
-                location.reload();
-            } else {
-                console.log('We are going to reload after few seconeds.');
-                setTimeout(function () {
-                    location.reload();
-                }, 7000);
-            }
+    if(reload) {
+        let auto_reload_page_interval = 0.0;
+        if(settings) {
+            auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
+        }
+        if(auto_reload_page_interval == 0) {
+            //console.log('Start to reload now.');
+            location.reload();
         } else {
-            console.log('no settings found');
+            console.log('We are going to reload after few seconeds.');
+            setTimeout(function () {
+                location.reload();
+            }, auto_reload_page_interval * 1000);
         }
     }
 

@@ -259,5 +259,32 @@
       "urlFilter": "*www.youtube.com/youtubei/v1/player/heartbeat*",
       "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
     }
+  },
+  {
+    "id": 30,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*tixcraft.com/js/analytics.js*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 31,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*ticketmaster.sg/js/adblock.js*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
+  },
+  {
+    "id": 32,
+    "priority": 1,
+    "action": { "type": "block"},
+    "condition": {
+      "urlFilter": "*img.uniicreative.com/*",
+      "resourceTypes": ["main_frame", "sub_frame", "script", "image", "font", "xmlhttprequest", "media"]
+    }
   }
 ]

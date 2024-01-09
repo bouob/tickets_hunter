@@ -73,8 +73,21 @@ function kktix_ajax_done(register_info)
     if(register_info.inventory.registerStatus=='SOLD_OUT') {reload=true;}
     //console.log(reload);
     if(reload) {
-        location.reload();
-    } else {
+        let auto_reload_page_interval = 0.0;
+        if(settings) {
+            auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
+        }
+        if(auto_reload_page_interval == 0) {
+            //console.log('Start to reload now.');
+            location.reload();
+        } else {
+            console.log('We are going to reload after few seconeds.');
+            setTimeout(function () {
+                location.reload();
+            }, auto_reload_page_interval * 1000);
+        }
+    }
+    else {
         $(function() {
             myInterval = setInterval(() => {
                 clean_sold_out_row(register_info);
