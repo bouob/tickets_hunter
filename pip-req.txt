@@ -13,9 +13,9 @@ numpy
 tornado
 #jieba
 
+# PS: chromedriver_autoinstaller, please use max fork version.
+# chromedriver_autoinstaller
+python-chromedriver-autoinstaller-max
+
 # Migrate looseversion to fix distutils issues on python 3.12+ for undetected-chromedriver
 looseversion
-
-# chromedriver_autoinstaller
-# PS: chromedriver_autoinstaller, please use max fork version.
-# python -m pip install git+https://github.com/max32002/python-chromedriver-autoinstaller@master

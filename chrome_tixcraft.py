@@ -52,9 +52,9 @@ except Exception as exc:
 import argparse
 import webbrowser
 
-import chromedriver_autoinstaller
+import chromedriver_autoinstaller_max
 
-CONST_APP_VERSION = "MaxBot (2024.01.03)"
+CONST_APP_VERSION = "MaxBot (2024.01.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -483,7 +483,7 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     if not os.path.exists(chromedriver_path):
         print("WebDriver not exist, try to download to:", webdriver_path)
-        chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+        chromedriver_autoinstaller_max.install(path=webdriver_path, make_version_dir=False)
 
     if not os.path.exists(chromedriver_path):
         print("Please download chromedriver and extract zip to webdriver folder from this url:")
@@ -515,7 +515,7 @@ def load_chromdriver_normal(config_dict, driver_type):
                     print(exc2)
                     pass
 
-                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+                chromedriver_autoinstaller_max.install(path=webdriver_path, make_version_dir=False)
                 chrome_service = Service(chromedriver_path)
                 try:
                     chrome_options = get_chrome_options(webdriver_path, config_dict)
@@ -651,10 +651,10 @@ def load_chromdriver_uc(config_dict):
     if not os.path.exists(chromedriver_path):
         print("ChromeDriver not exist, try to download to:", webdriver_path)
         try:
-            chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+            chromedriver_autoinstaller_max.install(path=webdriver_path, make_version_dir=False)
             if not os.path.exists(chromedriver_path):
                 print("check installed chrome version fail, download last known good version.")
-                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False, detect_installed_version=False)
+                chromedriver_autoinstaller_max.install(path=webdriver_path, make_version_dir=False, detect_installed_version=False)
         except Exception as exc:
             print(exc)
     else:
@@ -690,7 +690,7 @@ def load_chromdriver_uc(config_dict):
                 pass
 
             try:
-                chromedriver_autoinstaller.install(path=webdriver_path, make_version_dir=False)
+                chromedriver_autoinstaller_max.install(path=webdriver_path, make_version_dir=False)
                 options = get_uc_options(uc, config_dict, webdriver_path)
                 driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options)
             except Exception as exc2:
