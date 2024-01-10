@@ -1,5 +1,15 @@
 # Demo (示範影片)
 
+### 2024-01-02: 
+MaxBot Plus 擴充功能在 ibon 輸入張數
+
+https://youtu.be/kb7hjzqbVV8
+
+### 2024-01-01: 
+MaxBot Plus 擴充功能 刷cityline
+
+https://youtu.be/rRl_EETv_b0
+
 ### 2023-12-27: 
 KKTIX 支援用擴充功能搶票
 
