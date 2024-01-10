@@ -189,5 +189,5 @@
       "js" : [ "jquery.min.js", "js/common.js", "js/kktix_registrations_reload.js" ]
     }
   ],
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
