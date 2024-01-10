@@ -147,7 +147,10 @@
       "js" : [ "jquery.min.js", "js/ibon_area.js" ]
     },
     {
-      "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*" ],
+      "matches" : [ 
+        "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
+        "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
+      ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/ibon_ticket.js" ]
     },
