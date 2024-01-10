@@ -8,6 +8,8 @@ const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
+const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
+
 var settings = null;
 
 loadChanges();
@@ -30,6 +32,7 @@ async function saveChanges()
             settings.area_auto_select.area_keyword = area_keyword.value;
             settings.keyword_exclude = keyword_exclude.value;
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
+            settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
 
             await storage.set(
             {
@@ -57,6 +60,7 @@ function loadChanges()
             area_keyword.value = settings.area_auto_select.area_keyword;
             keyword_exclude.value = settings.keyword_exclude;
             auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
+            disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
             //message('Loaded saved settings.');
         } else {
             console.log('no settings found');

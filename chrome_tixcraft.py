@@ -54,7 +54,7 @@ import webbrowser
 
 import chromedriver_autoinstaller
 
-CONST_APP_VERSION = "MaxBot (2024.01.01)"
+CONST_APP_VERSION = "MaxBot (2024.01.02)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -871,6 +871,7 @@ def get_driver_by_config(config_dict):
             ,'*googletagservices.*'
             ,'*play.google.com/*'
             ,'*.googlesyndication.com/*'
+            ,'*cdn.cookielaw.org/*'
             ,'*fundingchoicesmessages.google.com/*'
             ,'*.doubleclick.net/*'
             ,'*.rollbar.com/*'
@@ -8141,7 +8142,8 @@ def urbtix_main(driver, url, config_dict):
                 pass
             pass
             # 刷太快, 會被封IP?
-            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     if '/logout?' in url:
         try:
@@ -8253,7 +8255,8 @@ def cityline_auto_retry_access(driver, config_dict):
         pass
 
     # 刷太快, 會被封IP?
-    time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+        time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
 def cityline_go_venue(driver, url):
     url_https = url.replace("http://","https://")
@@ -8638,7 +8641,7 @@ def ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name):
     is_captcha_sent = False
     previous_answer = None
     last_url, is_quit_bot = get_current_url(driver)
-    for redo_ocr in range(999):
+    for redo_ocr in range(19):
         is_need_redo_ocr, previous_answer, is_form_sumbited = ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_answer, Captcha_Browser, ocr_captcha_image_source, model_name)
 
         # TODO: must ensure the answer is corrent...
@@ -9613,7 +9616,8 @@ def hkticketing_url_redirect(driver, url, config_dict):
                 pass
 
             # 刷太快, 會被封IP?
-            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
             if is_redirected:
                 break
@@ -9695,7 +9699,8 @@ def hkticketing_content_refresh(driver, url, config_dict):
                 pass
 
             # 刷太快, 會被封IP?
-            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_redirected
 

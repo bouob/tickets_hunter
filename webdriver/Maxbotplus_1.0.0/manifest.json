@@ -91,6 +91,11 @@
       "js" : [ "jquery.min.js", "js/tixcraft_ticket.js" ]
     },
     {
+      "matches" : [ "https://ticket.com.tw/application/utk01/utk0101_.aspx" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ticket_home.js" ]
+    },
+    {
       "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
       "run_at": "document_end",
       "world": "MAIN",
@@ -108,13 +113,20 @@
       "js" : [ "jquery.min.js", "js/common.js", "js/ticket_area.js" ]
     },
     {
+      "matches" : [ "https://kham.com.tw/application/utk01/UTK0101_03.aspx" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/kham_home.js" ]
+    },
+    {
       "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
       "run_at": "document_end",
       "world": "MAIN",
       "js" : [ "jquery.min.js", "js/kham_event_home.js" ]
     },
     {
-      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*" ],
+      "matches" : [ 
+        "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
+      ],
       "run_at": "document_end",
       "world": "MAIN",
       "js" : [ "jquery.min.js", "js/kham_date.js" ]
@@ -124,10 +136,20 @@
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/kham_area.js" ]
     },
+    {   
+      "matches" : [ "https://ticket.ibon.com.tw/ActivityInfo/Details/*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ibon_detail.js" ]
+    },
     {
       "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*" ],
       "run_at": "document_end",
       "js" : [ "jquery.min.js", "js/ibon_area.js" ]
+    },
+    {
+      "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*" ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/ibon_ticket.js" ]
     },
     {
       "matches" : [ 
@@ -138,7 +160,7 @@
     },
     {
       "matches" : [ 
-        "https://msg.cityline.com/*.html*"
+        "https://msg.cityline.com/*"
       ],
       "run_at": "document_end",
       "world": "MAIN",
@@ -165,6 +187,13 @@
       ],
       "run_at": "document_start",
       "js" : [ "jquery.min.js", "js/ticketplus_order.js"]
+    },
+    {
+      "matches" : [
+        "https://kktix.com/"
+      ],
+      "run_at": "document_end",
+      "js" : [ "jquery.min.js", "js/kktix_home.js" ]
     },
     {
       "matches" : [
