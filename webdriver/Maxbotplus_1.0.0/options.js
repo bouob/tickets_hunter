@@ -9,6 +9,8 @@ const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
+const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
+const remote_url = document.querySelector('#remote_url');
 
 var settings = null;
 
@@ -33,6 +35,15 @@ async function saveChanges()
             settings.keyword_exclude = keyword_exclude.value;
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
+            settings.ocr_captcha.enable = ocr_captcha_enable.checked;
+
+            let remote_url_array = [];
+            remote_url_array.push(remote_url.value);
+            let remote_url_string = JSON.stringify(remote_url_array);
+            remote_url_string = remote_url_string.substring(0,remote_url_string.length-1);
+            remote_url_string = remote_url_string.substring(1);
+            //console.log("final remote_url_string:"+remote_url_string);
+            settings.advanced.remote_url = remote_url_string;
 
             await storage.set(
             {
@@ -61,6 +72,18 @@ function loadChanges()
             keyword_exclude.value = settings.keyword_exclude;
             auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
             disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
+            ocr_captcha_enable.checked = settings.ocr_captcha.enable;
+
+            let remote_url_string = "";
+            let remote_url_array = [];
+            if(settings.advanced.remote_url.length > 0) {
+                remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
+            }
+            if(remote_url_array.length) {
+                remote_url_string = remote_url_array[0];
+            }
+            remote_url.value = remote_url_string;
+
             //message('Loaded saved settings.');
         } else {
             console.log('no settings found');

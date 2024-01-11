@@ -97,13 +97,19 @@ function begin()
 
 function dom_ready()
 {
+    let ret=false;
     //console.log("checking...");
     if($("#settings").length>0) {
-        clearInterval(myInterval);
+        ret=true;
+        if(myInterval) clearInterval(myInterval);
         begin();
     }
+    console.log("dom_ready:"+ret);
+    return ret;
 }
 
-myInterval = setInterval(() => {
-    dom_ready();
-}, 100);
+if(!dom_ready()) {
+    myInterval = setInterval(() => {
+        dom_ready();
+    }, 100);    
+}

@@ -28,6 +28,9 @@
     "declarativeNetRequest",
     "declarativeNetRequestFeedback"
   ],
+  "host_permissions": [
+    "http://127.0.0.1:16888/*"
+  ],
   "web_accessible_resources": [
     {
     "resources": [ "data/*.json" ],

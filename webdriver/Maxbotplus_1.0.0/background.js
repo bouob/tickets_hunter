@@ -5,12 +5,14 @@
 'use strict';
 
 chrome.runtime.onInstalled.addListener(function(){
-    console.log("onInstalled");
+    //console.log("onInstalled");
 
     let default_status='ON';
     chrome.action.setBadgeText({
         text: default_status
     });
+
+    const default_webserver_runing=false;
 
     fetch("data/settings.json")
     .then((resp) => resp.json())
@@ -19,10 +21,11 @@ chrome.runtime.onInstalled.addListener(function(){
         chrome.storage.local.set(
         {
             settings: settings,
-            status: default_status
+            status: default_status,
+            webserver_runing: default_webserver_runing
         }
         );
-        console.log("dump settings.json to storage");
+        console.log("dump settings.json to extension storage");
     }
     );
 });
@@ -56,7 +59,7 @@ chrome.action.onClicked.addListener(async (tab) => {
         {
             next_flag = false;
         }
-        console.log("next_flag:"+next_flag);
+        //console.log("next_flag:"+next_flag);
         set_status_to(next_flag);
     });
 });
@@ -87,19 +90,78 @@ async function stopHeartbeat()
 
 startHeartbeat();
 
+async function ocr(data_url, image_data, tabId)
+{
+    //console.log("data_url:"+data_url);
+    fetch(data_url,{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          image_data: image_data
+        })
+    })
+    .then(response =>
+    {
+        if (response.ok)
+        {
+            return response.json();
+        }
+        else if (response.status === 404)
+        {
+            let result_json={"answer": "", "fail": 'error 404'};
+            //console.log(result_json);
+            //sendResponse(result_json);
+            return Promise.reject('error 404')
+        }
+        else
+        {
+            let result_json={"answer": "", "fail": response.status};
+            //console.log(result_json);
+            //sendResponse(result_json);
+            return Promise.reject('some other error: ' + response.status)
+        }
+    }
+    )
+    .then((data) =>
+    {
+        if (data)
+        {
+            let result_json=data;
+            console.log(result_json);
+            //sendResponse(result_json);
+            chrome.tabs.sendMessage(tabId, result_json);
+        }
+    }
+    )
+    .catch(error =>
+    {
+        //console.log('error is', error)
+        let result_json={"answer": "", "fail": error};
+        //console.log(result_json);
+        //sendResponse(result_json);
+    }
+    );
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     let request_json = request;
     let result_json={"answer": "pong from background"};
-    if(request_json.act=="decrypt") {
+    if(request_json.action=="decrypt") {
         console.log(typeof crypto_decrypt);
         let answer="";
         if(typeof crypto_decrypt === 'function') {
             answer=crypto_decrypt(request_json.data.text,request_json.data.KEY,request_json.data.IV);
         }
         result_json={"answer": answer};
+        sendResponse(result_json);
     }
-    //let result = JSON.stringify(result_json);
-    sendResponse(result_json);
+
+    if(request_json.action=="ocr") {
+        const tabId = sender.tab.id;
+        ocr(request_json.data.url, request_json.data.image_data, tabId);
+    }
 });
 
 

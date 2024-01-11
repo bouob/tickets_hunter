@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 #encoding=utf-8
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
+#import jieba
+#from DrissionPage import ChromiumPage
+import argparse
+import base64
 import json
 import logging
 import os
@@ -8,11 +12,15 @@ import pathlib
 import platform
 import random
 import re
+import ssl
 import sys
 import time
-#import jieba
+import warnings
+import webbrowser
 from datetime import datetime
 
+import chromedriver_autoinstaller_max
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import (NoAlertPresentException,
                                         NoSuchWindowException,
@@ -24,58 +32,35 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
-
-#from DrissionPage import ChromiumPage
-
-logging.basicConfig()
-logger = logging.getLogger('logger')
-import warnings
-
-# for check kktix reg_info
-import requests
 from urllib3.exceptions import InsecureRequestWarning
 
-warnings.simplefilter('ignore',InsecureRequestWarning)
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-# ocr
-import base64
+from NonBrowser import NonBrowser
 
 try:
     import ddddocr
-    from NonBrowser import NonBrowser
 except Exception as exc:
     pass
 
-import argparse
-import webbrowser
+CONST_APP_VERSION = "MaxBot (2024.01.05)"
 
-import chromedriver_autoinstaller_max
-
-CONST_APP_VERSION = "MaxBot (2024.01.04)"
-
-CONST_MAXBOT_CONFIG_FILE = "settings.json"
-CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
-CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
+CONST_MAXBOT_CONFIG_FILE = "settings.json"
+CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
+CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
+CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
-MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
-
-CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
-URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
+CONST_CHROME_DRIVER_WEBSITE = 'https://chromedriver.chromium.org/'
 
-CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
-CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
-CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
-CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
-CONST_TICKET_SIGN_IN_URL = "https://ticket.com.tw/application/utk13/utk1306_.aspx"
+CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
+CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
+CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
+CONST_TICKET_SIGN_IN_URL = "https://ticket.com.tw/application/utk13/utk1306_.aspx"
+CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
@@ -91,9 +76,13 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
-CONST_AUTO_RELOAD_RANDOM_DELAY_MAX_SECOND = 4
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+warnings.simplefilter('ignore',InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
+logging.basicConfig()
+logger = logging.getLogger('logger')
 
 def t_or_f(arg):
     ret = False
@@ -379,7 +368,7 @@ def is_all_alpha_or_numeric(text):
 def get_favoriate_extension_path(webdriver_path, config_dict):
     #print("webdriver_path:", webdriver_path)
     extension_list = []
-    extension_list.append(os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME + ".crx"))
+    extension_list.append(os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME + ".crx"))
     return extension_list
 
 def get_chromedriver_path(webdriver_path):
@@ -408,12 +397,10 @@ def get_brave_bin_path():
     return brave_path
 
 def get_chrome_options(webdriver_path, config_dict):
-    browser=config_dict["browser"]
-
     chrome_options = webdriver.ChromeOptions()
-    if browser=="edge":
+    if config_dict["browser"]=="edge":
         chrome_options = webdriver.EdgeOptions()
-    if browser=="safari":
+    if config_dict["browser"]=="safari":
         chrome_options = webdriver.SafariOptions()
 
     is_log_performace = False
@@ -424,7 +411,8 @@ def get_chrome_options(webdriver_path, config_dict):
             break
 
     if is_log_performace:
-        chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
+        if config_dict["browser"] in CONST_CHROME_FAMILY:
+            chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
     # PS: this is crx version.
     extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
@@ -454,7 +442,7 @@ def get_chrome_options(webdriver_path, config_dict):
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         chrome_options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
-    if browser=="brave":
+    if config_dict["browser"]=="brave":
         brave_path = get_brave_bin_path()
         if os.path.exists(brave_path):
             chrome_options.binary_location = brave_path
@@ -488,7 +476,7 @@ def load_chromdriver_normal(config_dict, driver_type):
     if not os.path.exists(chromedriver_path):
         print("Please download chromedriver and extract zip to webdriver folder from this url:")
         print("請下在面的網址下載與你chrome瀏覽器相同版本的chromedriver,解壓縮後放到webdriver目錄裡：")
-        print(URL_CHROME_DRIVER)
+        print(CONST_CHROME_DRIVER_WEBSITE)
     else:
         chrome_service = Service(chromedriver_path)
         chrome_options = get_chrome_options(webdriver_path, config_dict)
@@ -592,14 +580,17 @@ def get_uc_options(uc, config_dict, webdriver_path):
         ext = ext.replace('.crx','')
         if os.path.exists(ext):
             # sync config.
-            if MAXBOT_EXTENSION_NAME in ext:
+            if CONST_MAXBOT_EXTENSION_NAME in ext:
                 target_path = ext
                 target_path = os.path.join(target_path, "data")
-                target_path = os.path.join(target_path, "settings.json")
+                target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
                 #print("save as to:", target_path)
-                if os.path.exists(target_path):
-                    with open(target_path, 'w') as outfile:
-                        json.dump(config_dict, outfile)
+                try:
+                    os.unlink(target_path)
+                except Exception as exc:
+                    pass
+                with open(target_path, 'w') as outfile:
+                    json.dump(config_dict, outfile)
             load_extension_path += ("," + os.path.abspath(ext))
 
     if len(load_extension_path) > 0:
@@ -765,8 +756,6 @@ def get_driver_by_config(config_dict):
     # entry point
     if homepage is None:
         homepage = ""
-    if len(homepage) == 0:
-        homepage = CONST_HOMEPAGE_DEFAULT
 
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
@@ -3394,7 +3383,7 @@ def tixcraft_assign_ticket_number(driver, config_dict):
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
     # use extension instead of selenium.
     # checkbox javascrit code at chrome extension.
-    if config_dict["browser"] in ["firefox", "edge", "safari"]:
+    if not config_dict["browser"] in CONST_CHROME_FAMILY:
         tixcraft_ticket_main_agree(driver, config_dict)
 
     is_ticket_number_assigned = False
@@ -4712,7 +4701,7 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
 
 def kktix_reg_auto_reload(driver, url, config_dict):
     # auto reload javascrit code at chrome extension.
-    if config_dict["browser"] in ["firefox", "edge", "safari"]:
+    if not config_dict["browser"] in CONST_CHROME_FAMILY:
         kktix_check_register_status(driver, url)
 
     is_finish_checkbox_click = False
@@ -12132,7 +12121,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
 
             is_reloading = False
             # move below code to chrome extension.
-            if config_dict["browser"] in ["firefox", "edge", "safari"]:
+            if not config_dict["browser"] in CONST_CHROME_FAMILY:
                 is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
             
             if not is_reloading:

@@ -13,11 +13,13 @@ except ImportError:
     from tkinter import messagebox
     from tkinter.filedialog import asksaveasfilename
 
+import asyncio
 import base64
 import json
 import os
 import platform
 import socket
+import ssl
 import subprocess
 import sys
 import threading
@@ -27,26 +29,26 @@ import webbrowser
 
 import pyperclip
 import requests
+import tornado
+from tornado.web import Application
 from urllib3.exceptions import InsecureRequestWarning
 
-warnings.simplefilter('ignore',InsecureRequestWarning)
-import ssl
+try:
+    import ddddocr
+except Exception as exc:
+    pass
 
-ssl._create_default_https_context = ssl._create_unverified_context
+CONST_APP_VERSION = "MaxBot (2024.01.05)"
 
-CONST_APP_VERSION = "MaxBot (2024.01.04)"
-
-CONST_MAXBOT_CONFIG_FILE = "settings.json"
-CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
-CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
+CONST_MAXBOT_CONFIG_FILE = "settings.json"
+CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
+CONST_MAXBOT_EXTENSION_STATUS_JSON = "status.json"
+CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
+CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 
-MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
-MAXBOT_EXTENSION_STATUS_JSON = "status.json"
-
-CONST_SERVER_PORT_DEFAULT = 8888
-CONST_SERVER_PORT = CONST_SERVER_PORT_DEFAULT
+CONST_SERVER_PORT = 16888
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
@@ -54,23 +56,6 @@ CONST_CENTER = "center"
 CONST_RANDOM = "random"
 CONST_SELECT_ORDER_DEFAULT = CONST_RANDOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_CENTER, CONST_RANDOM)
-CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT = '''tixcraft.com###topAlert
-tixcraft.com##.col-md-7.col-xs-12.mgt-16.mx-auto
-tixcraft.com##.col-md-7.col-xs-12.mgt-16.text-center
-tixcraft.com##.footer.clearfix
-tixcraft.com##.page-info.row.line-btm.mg-0
-tixcraft.com##.row.justify-content-start.navbar-location
-tixcraft.com##.topBar.alert-box.emergency
-||facebook.com/plugins/share_button.php
-||google-analytics.com^
-||googletagmanager.com^
-||googletagservices.com^
-||play.google.com^
-||player.youku.com^
-||twitter.com^
-||youtube.com/iframe_api^
-||e2elog.fetnet.net^
-'''
 CONST_EXCLUDE_DEFAULT = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\",\"燈柱遮蔽\",\"視線不完整\""
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
@@ -81,7 +66,6 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
@@ -102,9 +86,9 @@ CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://ticketing.galaxymacau.com/ (澳門銀河)"
     ,"http://premier.ticketek.com.au"
     ]
-# 目前機器人已失效, 因為官方的 reCaptcha 可以檢測出機器人。
-'''
-'''
+
+warnings.simplefilter('ignore',InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 translate={}
 
@@ -132,10 +116,13 @@ def load_translate():
     en_us["and"] = 'And with'
 
     en_us["local_dictionary"] = 'Local Dictionary'
-    en_us["online_dictionary_url"] = 'Online Dictionary URL'
+    en_us["remote_url"] = 'Remote URL'
+    en_us["server_url"] = 'Server URL'
     en_us["auto_guess_options"] = 'Guess Options in Question'
     en_us["user_guess_string"] = 'Fill Answers in Question'
     en_us["preview"] = 'Preview'
+    en_us["question"] = 'Question'
+    en_us["answer"] = 'Answer'
 
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
@@ -173,6 +160,7 @@ def load_translate():
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
     en_us["verification_word"] = "Verification code"
+    en_us["maxbot_server"] = 'Server'
     en_us["autofill"] = 'Autofill'
     en_us["runtime"] = 'Runtime'
     en_us["about"] = 'About'
@@ -235,10 +223,13 @@ def load_translate():
     zh_tw["and"] = '而且（同列）'
 
     zh_tw["local_dictionary"] = '使用者自定字典'
-    zh_tw["online_dictionary_url"] = '線上字典檔網址'
+    zh_tw["remote_url"] = '遠端網址'
+    zh_tw["server_url"] = '伺服器網址'
     zh_tw["auto_guess_options"] = '自動猜測驗證問題'
     zh_tw["user_guess_string"] = '驗證問題中的答案清單'
     zh_tw["preview"] = '預覽'
+    zh_tw["question"] = '驗證問題'
+    zh_tw["answer"] = '答案'
 
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
@@ -275,6 +266,7 @@ def load_translate():
     zh_tw["preference"] = '偏好設定'
     zh_tw["advanced"] = '進階設定'
     zh_tw["verification_word"] = "驗證問題"
+    zh_tw["maxbot_server"] = '伺服器'
     zh_tw["autofill"] = '自動填表單'
     zh_tw["runtime"] = '執行階段'
     zh_tw["about"] = '關於'
@@ -338,10 +330,13 @@ def load_translate():
     zh_cn["and"] = '而且（同列）'
 
     zh_cn["local_dictionary"] = '本地字典'
-    zh_cn["online_dictionary_url"] = '在线词典网址'
+    zh_cn["remote_url"] = '远端网址'
+    zh_cn["server_url"] = '服务器地址'
     zh_cn["auto_guess_options"] = '自动猜测验证问题'
     zh_cn["user_guess_string"] = '验证问题的答案列表'
     zh_cn["preview"] = '预览'
+    zh_cn["question"] = '验证问题'
+    zh_cn["answer"] = '答案'
 
     zh_cn["date_auto_select"] = '日期自动点选'
     zh_cn["date_select_order"] = '日期排序方式'
@@ -378,6 +373,7 @@ def load_translate():
     zh_cn["preference"] = '偏好设定'
     zh_cn["advanced"] = '进阶设定'
     zh_cn["verification_word"] = "验证字"
+    zh_cn["maxbot_server"] = '伺服器'
     zh_cn["autofill"] = '自动填表单'
     zh_cn["runtime"] = '运行'
     zh_cn["about"] = '关于'
@@ -442,10 +438,13 @@ def load_translate():
     ja_jp["and"] = 'そして（同列）'
 
     ja_jp["local_dictionary"] = 'ローカル辞書'
-    ja_jp["online_dictionary_url"] = 'オンライン辞書のURL'
+    ja_jp["remote_url"] = 'リモートURL'
+    ja_jp["server_url"] = 'サーバーURL'
     ja_jp["auto_guess_options"] = '自動推測検証問題'
     ja_jp["user_guess_string"] = '検証用の質問の回答リスト'
     ja_jp["preview"] = 'プレビュー'
+    ja_jp["question"] = '質問'
+    ja_jp["answer"] = '答え'
 
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
@@ -482,6 +481,7 @@ def load_translate():
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
     ja_jp["verification_word"] = "確認の言葉"
+    ja_jp["maxbot_server"] = 'サーバ'
     ja_jp["autofill"] = 'オートフィル'
     ja_jp["runtime"] = 'ランタイム'
     ja_jp["about"] = '情報'
@@ -681,7 +681,7 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
-    config_dict["advanced"]["online_dictionary_url"] = ""
+    config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["proxy_server_port"] = ""
@@ -765,7 +765,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_area_auto_select
     global txt_area_keyword
     global txt_keyword_exclude
-    global txt_online_dictionary_url
+    global txt_remote_url
 
     global combo_date_auto_select_mode
     global combo_area_auto_select_mode
@@ -855,7 +855,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
-        
+
         date_keyword = txt_date_keyword.get("1.0",END).strip()
         date_keyword = format_config_keyword_for_json(date_keyword)
         config_dict["date_auto_select"]["date_keyword"] = date_keyword
@@ -872,8 +872,8 @@ def btn_save_act(language_code, slience_mode=False):
         user_guess_string = txt_user_guess_string.get("1.0",END).strip()
         user_guess_string = format_config_keyword_for_json(user_guess_string)
 
-        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
-        online_dictionary_url = format_config_keyword_for_json(online_dictionary_url)
+        remote_url = txt_remote_url.get("1.0",END).strip()
+        remote_url = format_config_keyword_for_json(remote_url)
 
         # test keyword format.
         if is_all_data_correct:
@@ -904,19 +904,19 @@ def btn_save_act(language_code, slience_mode=False):
                     is_all_data_correct = False
 
         if is_all_data_correct:
-            if len(online_dictionary_url) > 0:
+            if len(remote_url) > 0:
                 try:
-                    test_array = json.loads("["+ online_dictionary_url +"]")
+                    test_array = json.loads("["+ remote_url +"]")
                 except Exception as exc:
                     print(exc)
-                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["online_dictionary_url"])
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["remote_url"])
                     is_all_data_correct = False
 
         if is_all_data_correct:
             config_dict["area_auto_select"]["area_keyword"] = area_keyword
             config_dict["keyword_exclude"] = keyword_exclude
             config_dict["advanced"]["user_guess_string"] = user_guess_string
-            config_dict["advanced"]["online_dictionary_url"] = online_dictionary_url
+            config_dict["advanced"]["remote_url"] = remote_url
 
     if is_all_data_correct:
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
@@ -1045,13 +1045,12 @@ def write_string_to_file(filename, data):
     if not outfile is None:
         outfile.write("%s" % data)
 
-def save_url_to_file(new_online_dictionary_url, force_write = False):
+def save_url_to_file(new_remote_url, force_write = False):
     html_text = ""
-    if len(new_online_dictionary_url) > 0:
-        headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': USER_AGENT}
+    if len(new_remote_url) > 0:
         html_result = None
         try:
-            html_result = requests.get(new_online_dictionary_url , headers=headers, timeout=0.5, allow_redirects=False)
+            html_result = requests.get(new_remote_url , timeout=0.5, allow_redirects=False)
         except Exception as exc:
             html_result = None
             #print(exc)
@@ -1076,17 +1075,17 @@ def save_url_to_file(new_online_dictionary_url, force_write = False):
     return is_write_to_file
 
 def btn_preview_text_clicked():
-    global txt_online_dictionary_url
-    online_dictionary_url = ""
+    global txt_remote_url
+    remote_url = ""
     try:
-        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
+        remote_url = txt_remote_url.get("1.0",END).strip()
     except Exception as exc:
         pass
-    online_dictionary_url = format_config_keyword_for_json(online_dictionary_url)
-    if len(online_dictionary_url) > 0:
+    remote_url = format_config_keyword_for_json(remote_url)
+    if len(remote_url) > 0:
         url_array = []
         try:
-            url_array = json.loads("["+ online_dictionary_url +"]")
+            url_array = json.loads("["+ remote_url +"]")
         except Exception as exc:
             url_array = []
 
@@ -1094,7 +1093,7 @@ def btn_preview_text_clicked():
         if len(url_array)==1:
             force_write = True
         for each_url in url_array:
-            #print("new_online_dictionary_url:", new_online_dictionary_url)
+            #print("new_remote_url:", new_remote_url)
             is_write_to_file = save_url_to_file(each_url, force_write=force_write)
             if is_write_to_file:
                 break
@@ -1144,19 +1143,9 @@ def run_python_script(script_name):
                 pass
 
 def btn_open_text_server_clicked():
-    global txt_online_dictionary_url
-    online_dictionary_url = ""
-    try:
-        online_dictionary_url = txt_online_dictionary_url.get("1.0",END).strip()
-    except Exception as exc:
-        pass
-
-    if online_dictionary_url=="":
-        local_ip = get_ip_address()
-        ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
-        txt_online_dictionary_url.insert("1.0", ip_address)
-
-    run_python_script("text_server")
+    global tab4
+    global tabControl
+    tabControl.select(tab4)
 
 def btn_preview_sound_clicked():
     global txt_captcha_sound_filename
@@ -1194,9 +1183,6 @@ def btn_donate_clicked():
 
 def btn_help_clicked():
     webbrowser.open(URL_HELP)
-
-def btn_copy_clicked():
-    pyperclip.copy(CONST_ADBLOCK_PLUS_ADVANCED_FILTER_DEFAULT)
 
 def callbackLanguageOnChange(event):
     applyNewLanguage()
@@ -1273,8 +1259,11 @@ def applyNewLanguage():
 
     global chk_headless
     global chk_verbose
-    global lbl_online_dictionary_url
+    global lbl_remote_url
+    global lbl_server_url
     global lbl_online_dictionary_preview
+    global lbl_question
+    global lbl_answer
     global chk_auto_guess_options
 
     global tabControl
@@ -1333,9 +1322,12 @@ def applyNewLanguage():
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
 
-    lbl_online_dictionary_url.config(text=translate[language_code]["online_dictionary_url"])
+    lbl_remote_url.config(text=translate[language_code]["remote_url"])
+    lbl_server_url.config(text=translate[language_code]["server_url"])
     lbl_online_dictionary_preview.config(text=translate[language_code]["preview"])
     lbl_auto_guess_options.config(text=translate[language_code]["auto_guess_options"])
+    lbl_question.config(text=translate[language_code]["question"])
+    lbl_answer.config(text=translate[language_code]["answer"])
 
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
     lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
@@ -1361,9 +1353,10 @@ def applyNewLanguage():
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
     tabControl.tab(2, text=translate[language_code]["verification_word"])
-    tabControl.tab(3, text=translate[language_code]["autofill"])
-    tabControl.tab(4, text=translate[language_code]["runtime"])
-    tabControl.tab(5, text=translate[language_code]["about"])
+    tabControl.tab(3, text=translate[language_code]["maxbot_server"])
+    tabControl.tab(4, text=translate[language_code]["autofill"])
+    tabControl.tab(5, text=translate[language_code]["runtime"])
+    tabControl.tab(6, text=translate[language_code]["about"])
 
     global lbl_tixcraft_sid
     global lbl_ibon_ibonqware
@@ -2114,14 +2107,14 @@ def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
-    global lbl_online_dictionary_url
-    lbl_online_dictionary_url = Label(frame_group_header, text=translate[language_code]['online_dictionary_url'])
-    lbl_online_dictionary_url.grid(column=0, row=group_row_count, sticky = E+N)
+    global lbl_remote_url
+    lbl_remote_url = Label(frame_group_header, text=translate[language_code]['remote_url'])
+    lbl_remote_url.grid(column=0, row=group_row_count, sticky = E+N)
 
-    global txt_online_dictionary_url
-    txt_online_dictionary_url = Text(frame_group_header, width=30, height=4)
-    txt_online_dictionary_url.grid(column=1, row=group_row_count, sticky = W)
-    txt_online_dictionary_url.insert("1.0", config_dict['advanced']["online_dictionary_url"].strip())
+    global txt_remote_url
+    txt_remote_url = Text(frame_group_header, width=30, height=4)
+    txt_remote_url.grid(column=1, row=group_row_count, sticky = W)
+    txt_remote_url.insert("1.0", config_dict['advanced']["remote_url"].strip())
 
     icon_preview_text_filename = "icon_chrome_4.gif"
     icon_preview_text_img = PhotoImage(file=icon_preview_text_filename)
@@ -2158,6 +2151,70 @@ def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
     group_row_count+=1
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
+
+def ServerTab(root, config_dict, language_code, UI_PADDING_X):
+    row_count = 0
+
+    frame_group_header = Frame(root)
+    group_row_count = 0
+
+    global lbl_server_url
+    lbl_server_url = Label(frame_group_header, text=translate[language_code]['server_url'])
+    lbl_server_url.grid(column=0, row=group_row_count, sticky = E)
+
+    local_ip = get_ip_address()
+    ip_address = "http://%s:%d/" % (local_ip, CONST_SERVER_PORT)
+    global lbl_ip_address
+    lbl_ip_address = Label(frame_group_header, text=ip_address)
+    lbl_ip_address.grid(column=1, row=group_row_count, sticky = W)
+
+    icon_copy_filename = "icon_copy_2.gif"
+    icon_copy_img = PhotoImage(file=icon_copy_filename)
+
+    lbl_icon_copy_ip = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy_ip.image = icon_copy_img
+    lbl_icon_copy_ip.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_copy_ip.bind("<Button-1>", lambda e: btn_copy_ip_clicked())
+
+    group_row_count += 1
+
+    global lbl_question
+    lbl_question = Label(frame_group_header, text=translate[language_code]['question'])
+    lbl_question.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_question
+    txt_question = Text(frame_group_header, width=50, height=22)
+    txt_question.grid(column=1, row=group_row_count, sticky = W)
+    txt_question.insert("1.0", "")
+
+    lbl_icon_copy_question = Label(frame_group_header, image=icon_copy_img, cursor="hand2")
+    lbl_icon_copy_question.image = icon_copy_img
+    #lbl_icon_copy_question.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_copy_question.bind("<Button-1>", lambda e: btn_copy_question_clicked())
+
+    icon_query_filename = "icon_query_5.gif"
+    icon_query_img = PhotoImage(file=icon_query_filename)
+
+    lbl_icon_query_question = Label(frame_group_header, image=icon_query_img, cursor="hand2")
+    lbl_icon_query_question.image = icon_query_img
+    lbl_icon_query_question.grid(column=2, row=group_row_count, sticky = W+N)
+    lbl_icon_query_question.bind("<Button-1>", lambda e: btn_query_question_clicked())
+
+    group_row_count += 1
+
+    global lbl_answer
+    lbl_answer = Label(frame_group_header, text=translate[language_code]['answer'])
+    lbl_answer.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_answer
+    global txt_answer_value
+    txt_answer_value = StringVar(frame_group_header, value="")
+    txt_answer = Entry(frame_group_header, width=30, textvariable = txt_answer_value)
+    txt_answer.grid(column=1, row=group_row_count, sticky = W)
+    txt_answer.bind('<Control-v>', lambda e: btn_paste_answer_by_user())
+
+    frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X, pady=15)
+
 
 def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     row_count = 0
@@ -2256,7 +2313,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
-    
+
     global lbl_urbtix_account
     lbl_urbtix_account = Label(frame_group_header, text=translate[language_code]['urbtix_account'])
     lbl_urbtix_account.grid(column=0, row=group_row_count, sticky = E)
@@ -2362,6 +2419,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 def resetful_api_timer():
     while True:
         btn_preview_text_clicked()
+        preview_question_text_file()
         time.sleep(0.2)
 
 def settings_timer():
@@ -2372,9 +2430,9 @@ def settings_timer():
 def clean_extension_status():
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    target_path = os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME)
+    target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, MAXBOT_EXTENSION_STATUS_JSON)
+    target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
     if os.path.exists(target_path):
         try:
             os.unlink(target_path)
@@ -2385,9 +2443,9 @@ def clean_extension_status():
 def sync_status_to_extension(status):
     Root_Dir = get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
-    target_path = os.path.join(webdriver_path, MAXBOT_EXTENSION_NAME)
+    target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, MAXBOT_EXTENSION_STATUS_JSON)
+    target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
     #print("save as to:", target_path)
     status_json={}
     status_json["status"]=status
@@ -2618,14 +2676,18 @@ def load_GUI(root, config_dict):
     tab3 = Frame(tabControl)
     tabControl.add(tab3, text=translate[language_code]['verification_word'])
 
+    global tab4
     tab4 = Frame(tabControl)
-    tabControl.add(tab4, text=translate[language_code]['autofill'])
+    tabControl.add(tab4, text=translate[language_code]['maxbot_server'])
 
     tab5 = Frame(tabControl)
-    tabControl.add(tab5, text=translate[language_code]['runtime'])
+    tabControl.add(tab5, text=translate[language_code]['autofill'])
 
     tab6 = Frame(tabControl)
-    tabControl.add(tab6, text=translate[language_code]['about'])
+    tabControl.add(tab6, text=translate[language_code]['runtime'])
+
+    tab7 = Frame(tabControl)
+    tabControl.add(tab7, text=translate[language_code]['about'])
 
     tabControl.grid(column=0, row=row_count)
     tabControl.select(tab1)
@@ -2639,9 +2701,10 @@ def load_GUI(root, config_dict):
     PreferenctTab(tab1, config_dict, language_code, UI_PADDING_X)
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
     VerificationTab(tab3, config_dict, language_code, UI_PADDING_X)
-    AutofillTab(tab4, config_dict, language_code, UI_PADDING_X)
-    RuntimeTab(tab5, config_dict, language_code, UI_PADDING_X)
-    AboutTab(tab6, language_code)
+    ServerTab(tab4, config_dict, language_code, UI_PADDING_X)
+    AutofillTab(tab5, config_dict, language_code, UI_PADDING_X)
+    RuntimeTab(tab6, config_dict, language_code, UI_PADDING_X)
+    AboutTab(tab7, language_code)
 
 
 def main():
@@ -2721,7 +2784,168 @@ def clean_tmp_file():
     for filepath in remove_file_list:
         force_remove_file(filepath)
 
+def get_ip_address():
+    default_ip = "127.0.0.1"
+    ip = default_ip
+    try:
+        ip = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2]
+            if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
+            s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
+            socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    except Exception as exc:
+        print(exc)
+        try:
+            ip = socket.gethostname()
+        except Exception as exc2:
+            print(exc2)
+            ip = default_ip
+    return ip
+
+def btn_copy_ip_clicked():
+    local_ip = get_ip_address()
+    ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
+    pyperclip.copy(ip_address)
+
+def btn_copy_question_clicked():
+    global txt_question
+    question_text = txt_question.get("1.0",END).strip()
+    if len(question_text) > 0:
+        pyperclip.copy(question_text)
+
+def btn_query_question_clicked():
+    global txt_question
+    question_text = txt_question.get("1.0",END).strip()
+    if len(question_text) > 0:
+        webbrowser.open("https://www.google.com/search?q="+question_text)
+
+class MainHandler(tornado.web.RequestHandler):
+    def format_config_keyword_for_json(self, user_input):
+        if len(user_input) > 0:
+            if not ('\"' in user_input):
+                user_input = '"' + user_input + '"'
+        return user_input
+
+    def compose_as_json(self, user_input):
+        user_input = self.format_config_keyword_for_json(user_input)
+        return "{\"data\":[%s]}" % user_input
+
+    def get(self):
+        global txt_answer_value
+        answer_text = ""
+        try:
+            answer_text = txt_answer_value.get().strip()
+        except Exception as exc:
+            pass
+        answer_text_output = self.compose_as_json(answer_text)
+        #print("answer_text_output:", answer_text_output)
+        self.write(answer_text_output)
+
+class QuestionHandler(tornado.web.RequestHandler):
+    def get(self):
+        global txt_question
+        txt_question.insert("1.0", "")
+
+class VersionHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write({"version":self.application.version})
+
+
+class OcrHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write({"answer": "1234"})
+    
+    def post(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')        
+        
+        _body = None
+        is_pass_check = True
+        errorMessage = ""
+        errorCode = 0
+
+        if is_pass_check:
+            is_pass_check = False
+            try :
+                _body = json.loads(self.request.body)
+                is_pass_check = True
+            except Exception:
+                errorMessage = "wrong json format"
+                errorCode = 1001
+                pass
+
+        img_base64 = None
+        image_data = ""
+        if is_pass_check:
+            if 'image_data' in _body:
+                image_data = _body['image_data']
+                if len(image_data) > 0:
+                    img_base64 = base64.b64decode(image_data)
+            else:
+                errorMessage = "image_data not exist"
+                errorCode = 1002
+
+        #print("is_pass_check:", is_pass_check)
+        #print("errorMessage:", errorMessage)
+        #print("errorCode:", errorCode)
+        ocr_answer = ""
+        if not img_base64 is None:
+            try:
+                ocr_answer = self.application.ocr.classification(img_base64)
+                print("ocr_answer:", ocr_answer)
+            except Exception as exc:
+                pass
+
+        self.write({"answer": ocr_answer})
+
+async def main_server():
+    ocr = None
+    try:
+        ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+    except Exception as exc:
+        print(exc)
+        pass
+
+    app = Application([
+        (r"/", MainHandler),
+        (r"/version", VersionHandler),
+        (r"/ocr", OcrHandler),
+        (r"/query", MainHandler),
+        (r"/question", QuestionHandler),
+    ])
+    app.ocr = ocr;
+    app.version = CONST_APP_VERSION;
+
+    app.listen(CONST_SERVER_PORT)
+    await asyncio.Event().wait()
+
+def web_server():
+    asyncio.run(main_server())
+
+def preview_question_text_file():
+    if os.path.exists(CONST_MAXBOT_QUESTION_FILE):
+        infile = None
+        if platform.system() == 'Windows':
+            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r', encoding='UTF-8')
+        else:
+            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r')
+
+        if not infile is None:
+            question_text = infile.readline()
+
+            global txt_question
+            try:
+                displayed_question_text = txt_question.get("1.0",END).strip()
+                if displayed_question_text != question_text:
+                    # start to refresh
+                    txt_question.delete("1.0","end")
+                    if len(question_text) > 0:
+                        txt_question.insert("1.0", question_text)
+            except Exception as exc:
+                pass
+
 if __name__ == "__main__":
     threading.Thread(target=resetful_api_timer, daemon=True).start()
+    threading.Thread(target=web_server, daemon=True).start()
     clean_tmp_file()
     main()

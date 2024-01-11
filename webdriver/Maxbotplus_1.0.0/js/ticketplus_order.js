@@ -86,7 +86,7 @@ async function decrypt_text(event_id, session_id) {
     const IV = '!@#$FETIXEVENTiv';
 
     let bundle = {
-      act: 'decrypt',
+      action: 'decrypt',
       data: {
         'KEY':KEY, 
         'IV':IV, 
@@ -100,7 +100,7 @@ async function decrypt_text(event_id, session_id) {
     //console.log(real_event_id);
 
     bundle = {
-      act: 'decrypt',
+      action: 'decrypt',
       data: {
         'KEY':KEY, 
         'IV':IV, 
