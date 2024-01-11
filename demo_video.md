@@ -1,5 +1,10 @@
 # Demo (示範影片)
 
+### 2024-01-05: 
+MaxBot Plus 擴充功能支援驗證碼輸入
+
+https://youtu.be/nRBr19u6cHY
+
 ### 2024-01-02: 
 MaxBot Plus 擴充功能在 ibon 輸入張數
 
