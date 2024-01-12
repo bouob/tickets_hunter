@@ -27,8 +27,12 @@ function date_clean()
 function date_keyword(settings)
 {
     let date_keyword_array = [];
-    if(settings.date_auto_select.date_keyword.length > 0) {
-        date_keyword_array = JSON.parse('[' +  settings.date_auto_select.date_keyword +']');
+    if(settings) {
+        if(settings.date_auto_select.date_keyword.length > 0) {
+            if(settings.date_auto_select.date_keyword!='""') {
+                date_keyword_array = JSON.parse('[' +  settings.date_auto_select.date_keyword +']');
+            }
+        }
     }
     //console.log(date_keyword_array);
     let target_date;

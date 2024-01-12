@@ -8,9 +8,14 @@ $("footer").remove();
 function tixcraft_clean_exclude(settings) 
 {
     let exclude_keyword_array = [];
-    if(settings.keyword_exclude.length > 0) {
-        exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+    if(settings) {
+        if(settings.keyword_exclude.length > 0) {
+            if(settings.keyword_exclude != '""') {
+                exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+            }
+        }
     }
+
     for (let i = 0; i < exclude_keyword_array.length; i++) {
         $("ul.area-list > li > a:contains('"+ exclude_keyword_array[i] +"')").each(function ()
         {
@@ -23,8 +28,12 @@ function tixcraft_clean_exclude(settings)
 function tixcraft_area_keyword(settings) 
 {
     let area_keyword_array = [];
-    if(settings.area_auto_select.area_keyword.length > 0) {
-        area_keyword_array = JSON.parse('[' +  settings.area_auto_select.area_keyword +']');
+    if(settings) {
+        if(settings.area_auto_select.area_keyword.length > 0) {
+            if(settings.area_auto_select.area_keyword!='""') {
+                area_keyword_array = JSON.parse('[' +  settings.area_auto_select.area_keyword +']');
+            }
+        }
     }
     // console.log(area_keyword_array);
     let target_area=[];

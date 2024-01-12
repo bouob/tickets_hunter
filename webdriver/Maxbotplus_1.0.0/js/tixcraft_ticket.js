@@ -9,26 +9,99 @@ $('input[type=checkbox]').each(function ()
 $("img[style='width: 100%; padding: 0;']").remove();
 $("footer").remove();
 
-function assign_ticket_number(ticket_number)
+function tixcraft_ticket_clean_exclude(settings) 
 {
-    if ($("#ticketPriceList select").length > 0)
+    let exclude_keyword_array = [];
+    if(settings) {
+        if(settings.keyword_exclude.length > 0) {
+            if(settings.keyword_exclude!='""') {
+                exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+            }
+        }
+    }
+    for (let i = 0; i < exclude_keyword_array.length; i++) {
+        $("#ticketPriceList > tbody > tr").each(function ()
+        {
+            let html_text=$(this).text();
+            //console.log("html:"+html_text);
+            if(html_text.indexOf(exclude_keyword_array[i])>-1) {
+                $(this).remove();
+            }
+        });
+    }
+}
+
+function tixcraft_assign_ticket_number(settings)
+{
+    let area_keyword_array = [];
+    if(settings) {
+        if(settings.area_auto_select.area_keyword.length > 0) {
+            if(settings.area_auto_select.area_keyword!='""') {
+                area_keyword_array = JSON.parse('[' +  settings.area_auto_select.area_keyword +']');
+            }
+        }
+    }
+    //let target_area = [];
+    
+    let target_row=null;
+    let all_row = $("#ticketPriceList > tbody > tr");
+    if (all_row.length > 0)
     {
-        let $ticket_options = $("#ticketPriceList select:first option");
+        if (all_row.length == 1) {
+            // single select.
+            target_row=all_row;
+        } else {
+            // single select.
+            all_row.each(function ()
+            {
+                //console.log(all_row.index(this));
+                let is_match_keyword = false;
+                if(all_row.index(this)==0) {
+                    target_row=$(this);
+                } else {
+                    if(area_keyword_array.length) {
+                        let html_text=$(this).text();
+                        //console.log("html:"+html_text);
+
+                        for (let i = 0; i < area_keyword_array.length; i++) {
+                            // TOOD: multi item matched, need sort.
+                            // target_area = get_target_area_with_order(settings, matched_block);
+
+                            if(html_text.indexOf(area_keyword_array[i])>-1) {
+                                is_match_keyword = true;
+                                target_row=$(this);
+                                break;
+                            }
+                        }
+                    } else {
+                        if(all_row.index(this)==0) {
+                            is_match_keyword = true;
+                            target_row=$(this);
+                        }
+                    }
+                }
+                //console.log("is_match_keyword:"+is_match_keyword);
+                if(is_match_keyword) {
+                    return;
+                }
+            });
+        }
+        
+        let $ticket_options = target_row.find("option");
         if ($ticket_options.length)
         {
             let is_ticket_number_assign = false;
-            if (ticket_number > 0)
+            if (settings.ticket_number > 0)
             {
                 $ticket_options.each(function ()
                 {
-                    if ($(this).val() == ticket_number)
+                    if ($(this).val() == settings.ticket_number)
                     {
                         $(this).prop('selected', true);
                         is_ticket_number_assign = true;
                         return false;
                     }
-                }
-                );
+                });
             }
             if (!is_ticket_number_assign)
             {
@@ -68,19 +141,19 @@ function get_ocr_image()
 
 chrome.runtime.onMessage.addListener((message) => {
     //console.log('sent from background', message);
-    set_ocr_answer(message.answer);
+    tixcraft_set_ocr_answer(message.answer);
 });
 
-function set_ocr_answer(answer)
+function tixcraft_set_ocr_answer(answer)
 {
-    console.log("answer:"+answer);
+    //console.log("answer:"+answer);
     if(answer.length > 0) {
         $('#TicketForm_verifyCode').val(answer);
         $("button[type='submit']").click();
     }
 }
 
-async function get_ocr_answer(api_url, image_data)
+async function tixcraft_get_ocr_answer(api_url, image_data)
 {
     let bundle = {
       action: 'ocr',
@@ -98,27 +171,47 @@ async function get_ocr_answer(api_url, image_data)
     //ocr(bundle.data.url, bundle.data.image_data, bundle.data.callback);
 }
 
-function orc_image_ready(api_url)
+function tixcraft_orc_image_ready(api_url)
 {
     let ret=false;
     let image_data = get_ocr_image();
     if(image_data.length>0) {
         ret=true;
         if(myInterval) clearInterval(myInterval);
-        get_ocr_answer(api_url, image_data);
+        tixcraft_get_ocr_answer(api_url, image_data);
     }
-    console.log("orc_image_ready:"+ret);
+    //console.log("orc_image_ready:"+ret);
     return ret;
 }
-
 
 storage.get('settings', function (items)
 {
     if (items.settings)
     {
         settings = items.settings;
+    } else {
+        console.log('no settings found');
+    }
+});
+
+storage.get('settings', function (items)
+{
+    if (items.settings)
+    {
+        settings = items.settings;
+    }
+});
+
+storage.get('status', function (items)
+{
+    if (items.status && items.status=='ON')
+    {
+        tixcraft_ticket_clean_exclude(settings);
+
         //console.log("ticket_number:"+ settings.ticket_number);
-        assign_ticket_number(settings.ticket_number);
+        tixcraft_assign_ticket_number(settings);
+        
+        // ocr
         if(settings.ocr_captcha.enable) {
             let remote_url_string = "";
             let remote_url_array = [];
@@ -128,13 +221,14 @@ storage.get('settings', function (items)
             if(remote_url_array.length) {
                 remote_url_string = remote_url_array[0];
             }
-            if(!orc_image_ready(remote_url_string)) {
+            if(!tixcraft_orc_image_ready(remote_url_string)) {
                 myInterval = setInterval(() => {
-                    orc_image_ready(remote_url_string);
+                    tixcraft_orc_image_ready(remote_url_string);
                 }, 100);
             }
         }
+
     } else {
-        console.log('no settings found');
+        console.log('no status found');
     }
 });

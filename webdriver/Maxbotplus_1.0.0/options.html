@@ -12,90 +12,112 @@
 <h2>MaxBot Settings</h2>
 
 <div class="row g-3">
-  <div class="col-12">
-    <label for="ticket_number" class="form-label">Ticket Number</label>
-    <select id="ticket_number" class="form-select" aria-label="Default select">
-      <option selected>Ticket Number</option>
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
-      <option value="8">8</option>
-      <option value="9">9</option>
-      <option value="10">10</option>
-    </select>
-  </div>
 
-  <div class="col-12">
-    <label for="date_select_mode" class="form-label">Date Select Order</label>
-    <select id="date_select_mode" class="form-select" aria-label="Default select">
-      <option value="from top to bottom">from top to bottom</option>
-      <option value="from bottom to top">from bottom to top</option>
-      <option value="center">center</option>
-      <option value="random">random</option>
-    </select>
-  </div>
-  <div class="col-12">
-    <label for="date_keyword" class="form-label">Date Keywords</label>
-    <textarea class="form-control" id="date_keyword" rows="3"></textarea>
-  </div>
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button>
+  </li>
+</ul>
 
-  <div class="col-12">
-    <label for="area_select_mode" class="form-label">Area Select Order</label>
-    <select id="area_select_mode" class="form-select" aria-label="Default select">
-      <option value="from top to bottom">from top to bottom</option>
-      <option value="from bottom to top">from bottom to top</option>
-      <option value="center">center</option>
-      <option value="random">random</option>
-    </select>
-  </div>
-  <div class="col-12">
-    <label for="area_keyword" class="form-label">Area Keywords</label>
-    <textarea class="form-control" id="area_keyword" rows="3"></textarea>
-  </div>
-  
-  <div class="col-12">
-    <label for="keyword_exclude" class="form-label">Exclude Keywords</label>
-    <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
-  </div>
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+    
+    <div class="row g-3">
+      <div class="col-12">
+        <label for="ticket_number" class="form-label">Ticket Number</label>
+        <select id="ticket_number" class="form-select" aria-label="Default select">
+          <option selected>Ticket Number</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+      </div>
 
-  <div class="col-12">
-    <label for="auto_reload_page_interval" class="form-label">Reload page interval(sec.)</label>
-    <input class="form-control" id="auto_reload_page_interval" value="" />
-  </div>
+      <div class="col-12">
+        <label for="date_select_mode" class="form-label">Date Select Order</label>
+        <select id="date_select_mode" class="form-select" aria-label="Default select">
+          <option value="from top to bottom">from top to bottom</option>
+          <option value="from bottom to top">from bottom to top</option>
+          <option value="center">center</option>
+          <option value="random">random</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label for="date_keyword" class="form-label">Date Keywords</label>
+        <textarea class="form-control" id="date_keyword" rows="3"></textarea>
+      </div>
 
-  <div class="col-12">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
-      <label class="form-check-label" for="disable_adjacent_seat">
-        Disable Adjacent Seat
-      </label>
+      <div class="col-12">
+        <label for="area_select_mode" class="form-label">Area Select Order</label>
+        <select id="area_select_mode" class="form-select" aria-label="Default select">
+          <option value="from top to bottom">from top to bottom</option>
+          <option value="from bottom to top">from bottom to top</option>
+          <option value="center">center</option>
+          <option value="random">random</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label for="area_keyword" class="form-label">Area Keywords</label>
+        <textarea class="form-control" id="area_keyword" rows="3"></textarea>
+      </div>
+      
+      <div class="col-12">
+        <label for="keyword_exclude" class="form-label">Exclude Keywords</label>
+        <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
+      </div>
     </div>
-  </div>
 
-  <div class="col-12">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
-      <label class="form-check-label" for="ocr_captcha_enable">
-        OCR
-      </label>
+  </div>
+  <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label for="auto_reload_page_interval" class="form-label">Reload page interval(sec.)</label>
+        <input class="form-control" id="auto_reload_page_interval" value="" />
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
+          <label class="form-check-label" for="disable_adjacent_seat">
+            Disable Adjacent Seat
+          </label>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
+          <label class="form-check-label" for="ocr_captcha_enable">
+            OCR
+          </label>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label for="remote_url" class="form-label">Remote URL</label>
+        <input class="form-control" id="remote_url" value="" />
+      </div>
     </div>
+
   </div>
-
-
-
-  <div class="col-12">
-    <label for="remote_url" class="form-label">Remote URL</label>
-    <input class="form-control" id="remote_url" value="" />
-  </div>
+</div>
 
   <div class="col-12">
     <button class="btn btn-primary" id="save_btn">Save</button>
   </div>
 </div>
+
 <script src="options.js"></script>
 </body>
 </html>

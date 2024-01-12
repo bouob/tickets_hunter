@@ -5,9 +5,14 @@ var myInterval = null;
 function kktix_clean_exclude(settings, register_info) 
 {
     let exclude_keyword_array = [];
-    if(settings.keyword_exclude.length > 0) {
-        exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+    if(settings) {
+        if(settings.keyword_exclude.length > 0) {
+            if(settings.keyword_exclude != '""') {
+                exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+            }
+        }
     }
+
     for (let i = 0; i < exclude_keyword_array.length; i++) {
         $("div.ticket-unit").each(function ()
         {

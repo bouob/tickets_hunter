@@ -29,10 +29,23 @@ async function saveChanges()
         if(settings) {
             settings.ticket_number = ticket_number_value;
             settings.date_auto_select.mode = date_select_mode.value;
-            settings.date_auto_select.date_keyword = date_keyword.value;
+            
+            let date_keyword_string = date_keyword.value;
+            if(date_keyword_string.indexOf('"')==-1) {
+                date_keyword_string = '"' + date_keyword_string + '"';
+            }
+            settings.date_auto_select.date_keyword = date_keyword_string;
+
             settings.area_auto_select.mode = area_select_mode.value;
-            settings.area_auto_select.area_keyword = area_keyword.value;
+
+            let area_keyword_string = area_keyword.value;
+            if(area_keyword_string.indexOf('"')==-1) {
+                area_keyword_string = '"' + area_keyword_string + '"';
+            }
+            settings.area_auto_select.area_keyword = area_keyword_string;
+            
             settings.keyword_exclude = keyword_exclude.value;
+
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
@@ -67,8 +80,16 @@ function loadChanges()
             ticket_number.value = settings.ticket_number;
             date_select_mode.value = settings.date_auto_select.mode;
             date_keyword.value = settings.date_auto_select.date_keyword;
+            if(date_keyword.value=='""') {
+                date_keyword.value='';
+            }
+
             area_select_mode.value = settings.area_auto_select.mode;
             area_keyword.value = settings.area_auto_select.area_keyword;
+            if(area_keyword.value=='""') {
+                area_keyword.value='';
+            }
+
             keyword_exclude.value = settings.keyword_exclude;
             auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
             disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;

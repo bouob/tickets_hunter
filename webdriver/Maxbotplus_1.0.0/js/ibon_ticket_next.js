@@ -4,12 +4,8 @@ var myInterval = null;
 function kktix_area_keyword(settings, register_info) 
 {
     let area_keyword_array = [];
-    if(settings) {
-        if(settings.area_auto_select.area_keyword.length > 0) {
-            if(settings.area_auto_select.area_keyword!='""') {
-                area_keyword_array = JSON.parse('[' +  settings.area_auto_select.area_keyword +']');
-            }
-        }
+    if(settings.area_auto_select.area_keyword.length > 0) {
+        area_keyword_array = JSON.parse('[' +  settings.area_auto_select.area_keyword +']');
     }
     // console.log(area_keyword_array);
     let target_area = [];
@@ -85,18 +81,15 @@ function kktix_area_keyword(settings, register_info)
 
 function begin()
 {
-    let settings = JSON.parse($("#settings").html());
-    let register_info = JSON.parse($("#register_info").html());
-    //console.log(settings);
-    //console.log(register_info);
-    kktix_area_keyword(settings, register_info);
+    console.log("begin to next");
+    $("div#ticket-wrap a[onclick]").click();
 }
 
 function dom_ready()
 {
     let ret=false;
-    //console.log("checking...");
-    if($("#settings").length>0) {
+    if($("#done").length>0) {
+        $("#done").remove();
         ret=true;
         if(myInterval) clearInterval(myInterval);
         begin();
