@@ -557,6 +557,51 @@ def clean_uc_exe_cache():
 
     return is_cache_exist
 
+def dump_settins_to_maxbot_plus_extension(ext, config_dict):
+    target_path = ext
+    target_path = os.path.join(target_path, "data")
+    target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
+    #print("save as to:", target_path)
+    try:
+        os.unlink(target_path)
+    except Exception as exc:
+        pass
+    with open(target_path, 'w') as outfile:
+        json.dump(config_dict, outfile)
+
+    target_path = ext
+    target_path = os.path.join(target_path, "manifest.json")
+
+    manifest_dict = None
+    if os.path.isfile(target_path):
+        with open(target_path) as json_data:
+            manifest_dict = json.load(json_data)
+    
+    local_remote_url_array = []
+    local_remote_url = config_dict["advanced"]["remote_url"]
+    if len(local_remote_url) > 0:
+        try:
+            temp_remote_url_array = json.loads("["+ local_remote_url +"]")
+            for remote_url in temp_remote_url_array:
+                remote_url_final = remote_url + "*"
+                local_remote_url_array.append(remote_url_final)
+        except Exception as exc:
+            pass
+    
+    if len(local_remote_url_array) > 0:
+        is_manifest_changed = False
+        for remote_url_final in local_remote_url_array:
+            if not remote_url_final in manifest_dict["host_permissions"]:
+                #print("local remote_url not in manifest:", remote_url_final)
+                manifest_dict["host_permissions"].append(remote_url_final)
+                is_manifest_changed = True
+
+        if is_manifest_changed:
+            json_str = json.dumps(manifest_dict, indent=4)
+            with open(target_path, 'w') as outfile:
+                outfile.write(json_str)
+
+
 def get_uc_options(uc, config_dict, webdriver_path):
     options = uc.ChromeOptions()
     options.page_load_strategy = 'eager'
@@ -581,16 +626,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
         if os.path.exists(ext):
             # sync config.
             if CONST_MAXBOT_EXTENSION_NAME in ext:
-                target_path = ext
-                target_path = os.path.join(target_path, "data")
-                target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
-                #print("save as to:", target_path)
-                try:
-                    os.unlink(target_path)
-                except Exception as exc:
-                    pass
-                with open(target_path, 'w') as outfile:
-                    json.dump(config_dict, outfile)
+                dump_settins_to_maxbot_plus_extension(ext, config_dict)
             load_extension_path += ("," + os.path.abspath(ext))
 
     if len(load_extension_path) > 0:

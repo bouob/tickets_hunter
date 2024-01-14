@@ -1,237 +1,345 @@
 {
-  "author": "Max Yao",
-  "name": "MaxBot Plus",
-  "description": "Quick way to get expected tickets on some specific websites.",
-  "icons": {
-    "16": "icons/maxbot-16.png",
-    "32": "icons/maxbot-32.png",
-    "48": "icons/maxbot-48.png",
-    "64": "icons/maxbot-64.png",
-    "128": "icons/maxbot-128.png"
-  },
-  "manifest_version": 3,
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "ruleset_1",
-        "enabled": true,
-        "path": "rules_1.json"
-      }
-    ]
-  },  
-  "permissions": [
-    "storage",
-    "declarativeNetRequest",
-    "declarativeNetRequestFeedback"
-  ],
-  "host_permissions": [
-    "http://127.0.0.1:16888/*"
-  ],
-  "web_accessible_resources": [
-    {
-    "resources": [ "data/*.json" ],
-    "extension_ids": ["*"],
-    "matches": [ "*://*/*" ]
-    }    
-  ], 
-  "options_page": "options.html",
-  "action": {
-    "default_icon": "icons/maxbot-128.png",
-    "default_title": "MaxBot"
-  },
-  "content_scripts" : [
-    {
-      "matches" : [ 
-        "https://tixcraft.com/",
-        "https://www.indievox.com/",
-        "https://indievox.com/",
-        "https://ticketmaster.sg/"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/tixcraft_home.js" ]
+    "author": "Max Yao",
+    "name": "MaxBot Plus",
+    "description": "Quick way to get expected tickets on some specific websites.",
+    "icons": {
+        "16": "icons/maxbot-16.png",
+        "32": "icons/maxbot-32.png",
+        "48": "icons/maxbot-48.png",
+        "64": "icons/maxbot-64.png",
+        "128": "icons/maxbot-128.png"
     },
-    {
-      "matches" : [ 
-        "https://tixcraft.com/activity/detail/*",
-        "https://www.indievox.com/activity/detail/*",
-        "https://indievox.com/activity/detail/*",
-        "https://ticketmaster.sg/activity/detail/*"
-      ],
-      "run_at": "document_start",
-      "js" : [ "jquery.min.js", "js/tixcraft_detail.js" ]
+    "manifest_version": 3,
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
     },
-    {
-      "matches" : [ 
-        "https://tixcraft.com/activity/game/*",
-        "https://www.indievox.com/activity/game/*",
-        "https://indievox.com/activity/game/*",
-        "https://ticketmaster.sg/activity/game/*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/common.js", "js/tixcraft_game.js" ]
+    "declarative_net_request": {
+        "rule_resources": [
+            {
+                "id": "ruleset_1",
+                "enabled": true,
+                "path": "rules_1.json"
+            }
+        ]
     },
-    {
-      "matches" : [ 
-        "https://tixcraft.com/ticket/area/*",
-        "https://www.indievox.com/ticket/area/*",
-        "https://indievox.com/ticket/area/*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/common.js", "js/tixcraft_area.js" ]
+    "permissions": [
+        "storage",
+        "declarativeNetRequest",
+        "declarativeNetRequestFeedback"
+    ],
+    "host_permissions": [
+        "http://maxbot.dropboxlike.com:16888/*"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "data/*.json"
+            ],
+            "extension_ids": [
+                "*"
+            ],
+            "matches": [
+                "*://*/*"
+            ]
+        }
+    ],
+    "options_page": "options.html",
+    "action": {
+        "default_icon": "icons/maxbot-128.png",
+        "default_title": "MaxBot"
     },
-    {
-      "matches" : [ 
-        "https://tixcraft.com/ticket/ticket/*",
-        "https://www.indievox.com/ticket/ticket/*",
-        "https://indievox.com/ticket/ticket/*",
-        "https://ticketmaster.sg/ticket/ticket/*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/common.js", "js/tixcraft_ticket.js" ]
-    },
-    {
-      "matches" : [ "https://ticket.com.tw/application/utk01/utk0101_.aspx" ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/ticket_home.js" ]
-    },
-    {
-      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/ticket_event_home.js" ]
-    },
-    {
-      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*" ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/ticket_date.js" ]
-    },
-    {
-      "matches" : [ "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*" ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/common.js", "js/ticket_area.js" ]
-    },
-    {
-      "matches" : [ "https://kham.com.tw/application/utk01/UTK0101_03.aspx" ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/kham_home.js" ]
-    },
-    {
-      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*" ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/kham_event_home.js" ]
-    },
-    {
-      "matches" : [ 
-        "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
-      ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/kham_date.js" ]
-    },
-    {   
-      "matches" : [ "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*" ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/kham_area.js" ]
-    },
-    {   
-      "matches" : [ "https://ticket.ibon.com.tw/ActivityInfo/Details/*" ],
-      "run_at": "document_start",
-      "js" : [ "jquery.min.js", "js/ibon_detail.js" ]
-    },
-    {
-      "matches" : [ "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*" ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/ibon_area.js" ]
-    },
-    {
-      "matches" : [ 
-        "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-        "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/ibon_ticket.js" ]
-    },
-    {
-      "matches" : [ 
-        "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-        "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
-      ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/ibon_ticket_next.js" ]
-    },
-    {
-      "matches" : [ 
-        "https://msg.cityline.com/*.html*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/cityline_msg_background.js"]
-    },
-    {
-      "matches" : [ 
-        "https://msg.cityline.com/*"
-      ],
-      "run_at": "document_end",
-      "world": "MAIN",
-      "js" : [ "jquery.min.js", "js/cityline_msg_front.js"]
-    },
-    {
-      "matches" : [ 
-        "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*",
-        "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/cityline_event_common.js"]
-    },
-    {
-      "matches" : [
-        "https://ticketplus.com.tw/activity/*"
-      ],
-      "run_at": "document_end",
-      "js" : ["jquery.min.js", "js/ticketplus_activity.js"]
-    },
-    {
-      "matches" : [
-        "https://ticketplus.com.tw/order/*"
-      ],
-      "run_at": "document_start",
-      "js" : [ "jquery.min.js", "js/ticketplus_order.js"]
-    },
-    {
-      "matches" : [
-        "https://kktix.com/"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/kktix_home.js" ]
-    },
-    {
-      "matches" : [
-        "https://*.kktix.cc/events/*"
-      ],
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/kktix_events.js" ]
-    },
-    {
-      "matches" : [
-        "https://kktix.com/events/*/registrations/new"
-      ],
-      "world": "MAIN",
-      "run_at": "document_end",
-      "js" : [ "jquery.min.js", "js/common.js", "js/kktix_registrations_assign.js" ]
-    },
-    {
-      "matches" : [
-        "https://kktix.com/events/*/registrations/new"
-      ],
-      "run_at": "document_start",
-      "js" : [ "jquery.min.js", "js/common.js", "js/kktix_registrations_reload.js" ]
-    }
-  ],
-  "version": "1.0.4"
+    "content_scripts": [
+        {
+            "matches": [
+                "https://tixcraft.com/",
+                "https://www.indievox.com/",
+                "https://indievox.com/",
+                "https://ticketmaster.sg/"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/tixcraft_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://tixcraft.com/activity/detail/*",
+                "https://www.indievox.com/activity/detail/*",
+                "https://indievox.com/activity/detail/*",
+                "https://ticketmaster.sg/activity/detail/*"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "jquery.min.js",
+                "js/tixcraft_detail.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://tixcraft.com/activity/game/*",
+                "https://www.indievox.com/activity/game/*",
+                "https://indievox.com/activity/game/*",
+                "https://ticketmaster.sg/activity/game/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/tixcraft_game.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://tixcraft.com/ticket/area/*",
+                "https://www.indievox.com/ticket/area/*",
+                "https://indievox.com/ticket/area/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/tixcraft_area.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://tixcraft.com/ticket/ticket/*",
+                "https://www.indievox.com/ticket/ticket/*",
+                "https://indievox.com/ticket/ticket/*",
+                "https://ticketmaster.sg/ticket/ticket/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/tixcraft_ticket.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticket.com.tw/application/utk01/utk0101_.aspx"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ticket_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/ticket_event_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/ticket_date.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/ticket_area.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kham.com.tw/application/utk01/UTK0101_03.aspx"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/kham_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/kham_event_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/kham_date.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/kham_area.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticket.ibon.com.tw/ActivityInfo/Details/*"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_detail.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_area.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
+                "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_ticket.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
+                "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_ticket_next.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://msg.cityline.com/*.html*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/cityline_msg_background.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://msg.cityline.com/*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/cityline_msg_front.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*",
+                "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/cityline_event_common.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticketplus.com.tw/activity/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ticketplus_activity.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://ticketplus.com.tw/order/*"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "jquery.min.js",
+                "js/ticketplus_order.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kktix.com/"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/kktix_home.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://*.kktix.cc/events/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/kktix_events.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kktix.com/events/*/registrations/new"
+            ],
+            "world": "MAIN",
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/kktix_registrations_assign.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kktix.com/events/*/registrations/new"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/kktix_registrations_reload.js"
+            ]
+        }
+    ],
+    "version": "1.0.5"
 }

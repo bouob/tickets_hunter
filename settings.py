@@ -2849,7 +2849,6 @@ class VersionHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"version":self.application.version})
 
-
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
