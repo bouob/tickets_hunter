@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.06)"
+CONST_APP_VERSION = "MaxBot (2024.01.07)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -558,6 +558,7 @@ def clean_uc_exe_cache():
     return is_cache_exist
 
 def dump_settins_to_maxbot_plus_extension(ext, config_dict):
+    # sync config.
     target_path = ext
     target_path = os.path.join(target_path, "data")
     target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
@@ -569,6 +570,7 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
     with open(target_path, 'w') as outfile:
         json.dump(config_dict, outfile)
 
+    # add host_permissions
     target_path = ext
     target_path = os.path.join(target_path, "manifest.json")
 
@@ -600,6 +602,27 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
             json_str = json.dumps(manifest_dict, indent=4)
             with open(target_path, 'w') as outfile:
                 outfile.write(json_str)
+
+    # show advanced rows in extension.
+    target_path = ext
+    target_path = os.path.join(target_path, "options.html")
+    if os.path.isfile(target_path):
+        file_options = open(target_path, 'r')
+        html_lines = file_options.readlines()
+        file_options.close()
+        new_html_array = []
+        my_target_row = ['remote_url_row','ocr_captcha_enable_row']
+        for line in html_lines:
+            for row in my_target_row:
+                if row in line:
+                    line = line.replace('display: none;','')
+            new_html_array.append(line)
+        if len(new_html_array) > 0:
+            print("output new options.html")
+            with open(target_path, 'w') as outfile:
+                outfile.write("".join(new_html_array))
+
+        
 
 
 def get_uc_options(uc, config_dict, webdriver_path):

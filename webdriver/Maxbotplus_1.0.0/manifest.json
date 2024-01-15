@@ -29,7 +29,7 @@
         "declarativeNetRequestFeedback"
     ],
     "host_permissions": [
-        "http://maxbot.dropboxlike.com:16888/*"
+        "http://127.0.0.1:16888/*"
     ],
     "web_accessible_resources": [
         {
