@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.07)"
+CONST_APP_VERSION = "MaxBot (2024.01.08)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2971,10 +2971,9 @@ def get_answer_list_from_user_guess_string(config_dict):
 
     # load from internet.
     user_guess_string = ""
-    if len(config_dict["advanced"]["online_dictionary_url"]) > 0:
-        if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
-            with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-                user_guess_string = text_file.readline()
+    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+            user_guess_string = text_file.readline()
     if len(user_guess_string) > 0:
         user_guess_string = format_config_keyword_for_json(user_guess_string)
         try:

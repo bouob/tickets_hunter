@@ -38,7 +38,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.07)"
+CONST_APP_VERSION = "MaxBot (2024.01.08)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -994,15 +994,17 @@ def btn_save_act(language_code, slience_mode=False):
             if not file_to_save is None:
                 if len(file_to_save) > 0:
                     print("save as to:", file_to_save)
-                    with open(file_to_save, 'w') as outfile:
-                        json.dump(config_dict, outfile)
+                    save_json(config_dict, file_to_save)
         else:
             # slience
-            with open(config_filepath, 'w') as outfile:
-                json.dump(config_dict, outfile)
-
+            save_json(config_dict, config_filepath)
 
     return is_all_data_correct
+
+def save_json(config_dict, target_path):
+    json_str = json.dumps(config_dict, indent=4)
+    with open(target_path, 'w') as outfile:
+        outfile.write(json_str)
 
 def btn_run_clicked(language_code):
     print('run button pressed.')

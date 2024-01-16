@@ -139,9 +139,20 @@ function get_ocr_image()
     return image_data;
 }
 
+var last_captcha_answer="";
 chrome.runtime.onMessage.addListener((message) => {
     //console.log('sent from background', message);
-    tixcraft_set_ocr_answer(message.answer);
+    if(message.answer.length==4) {
+        tixcraft_set_ocr_answer(message.answer);
+        last_captcha_answer=message.answer;
+    } else {
+        // renew captcha.
+        if(last_captcha_answer!=message.answer) {
+            last_captcha_answer=message.answer;
+            console.log("renew captcha");
+            $('#TicketForm_verifyCode').click();
+        }
+    }
 });
 
 function tixcraft_set_ocr_answer(answer)
