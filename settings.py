@@ -38,7 +38,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.08)"
+CONST_APP_VERSION = "MaxBot (2024.01.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -99,6 +99,8 @@ URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
+
+GLOBAL_SERVER_SHUTDOWN = False
 
 def load_translate():
     translate = {}
@@ -2422,12 +2424,10 @@ def resetful_api_timer():
     while True:
         btn_preview_text_clicked()
         preview_question_text_file()
-        time.sleep(0.2)
-
-def settings_timer():
-    while True:
         update_maxbot_runtime_status()
-        time.sleep(0.6)
+        time.sleep(0.3)
+        if GLOBAL_SERVER_SHUTDOWN:
+            break
 
 def clean_extension_status():
     Root_Dir = get_app_root()
@@ -2765,9 +2765,9 @@ def main():
         root.call('wm', 'iconphoto', root._w, logo)
     os.remove(icon_filepath)
 
-    threading.Thread(target=settings_timer, daemon=True).start()
     root.mainloop()
     print("exit settings")
+    GLOBAL_SERVER_SHUTDOWN=True
     clean_extension_status()
 
 def force_remove_file(filepath):
@@ -2854,12 +2854,12 @@ class VersionHandler(tornado.web.RequestHandler):
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
-    
+
     def post(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')        
-        
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
         _body = None
         is_pass_check = True
         errorMessage = ""
@@ -2918,6 +2918,7 @@ async def main_server():
     app.version = CONST_APP_VERSION;
 
     app.listen(CONST_SERVER_PORT)
+    print("server running on port:", CONST_SERVER_PORT)
     await asyncio.Event().wait()
 
 def web_server():

@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.08)"
+CONST_APP_VERSION = "MaxBot (2024.01.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -578,7 +578,7 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
     if os.path.isfile(target_path):
         with open(target_path) as json_data:
             manifest_dict = json.load(json_data)
-    
+
     local_remote_url_array = []
     local_remote_url = config_dict["advanced"]["remote_url"]
     if len(local_remote_url) > 0:
@@ -589,7 +589,7 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
                 local_remote_url_array.append(remote_url_final)
         except Exception as exc:
             pass
-    
+
     if len(local_remote_url_array) > 0:
         is_manifest_changed = False
         for remote_url_final in local_remote_url_array:
@@ -618,11 +618,9 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
                     line = line.replace('display: none;','')
             new_html_array.append(line)
         if len(new_html_array) > 0:
-            print("output new options.html")
+            #print("output new options.html")
             with open(target_path, 'w') as outfile:
                 outfile.write("".join(new_html_array))
-
-        
 
 
 def get_uc_options(uc, config_dict, webdriver_path):
@@ -3434,7 +3432,7 @@ def tixcraft_assign_ticket_number(driver, config_dict):
                     if row_text.isnumeric():
                         # ticket assign.
                         is_ticket_number_assigned = True
-    
+
     return is_ticket_number_assigned, select_obj
 
 
@@ -4666,7 +4664,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
 
 def kktix_get_registerStatus(driver, event_code):
     html_result = None
-    
+
     url = "https://kktix.com/g/events/%s/register_info" % (event_code)
     #print('event_code:',event_code)
     #print("url:", url)
@@ -11913,7 +11911,7 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
                     is_verifyCode_editing = True
                 except Exception as exc:
                     pass
-                
+
                 # plan B.
                 try:
                     #print("use plan b to focus()")
@@ -11955,11 +11953,11 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
                         # for style_1
                         my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
                         is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
-                    
+
                     if is_form_sumbited:
                         # must delay 0.5 second wait ajax return.
                         time.sleep(0.5)
-                        
+
                     is_verifyCode_editing = False
 
     return is_verifyCode_editing, is_form_sumbited
@@ -12181,7 +12179,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             # move below code to chrome extension.
             if not config_dict["browser"] in CONST_CHROME_FAMILY:
                 is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
-            
+
             if not is_reloading:
                 is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
