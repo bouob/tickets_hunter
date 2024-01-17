@@ -3,12 +3,12 @@ chardet
 cryptography
 idna
 Pillow
-selenium>=4.0.0
+selenium
 undetected-chromedriver
 playsound==1.2.2
 pyperclip
 ddddocr
-urllib3>=1.21.1
+urllib3
 numpy
 tornado
 #jieba
