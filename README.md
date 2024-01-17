@@ -8,7 +8,9 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 
 https://github.com/max32002/tixcraft_bot/releases
 
-附註: 如果你是 macOS, 且安裝的 python 版本是 3.12.x 版, 會無法執行, 請移除後並降低版本為 python 3.10.x 版, 原因是使用的第三方套件undetected-chromedriver 暫時無法相容於 python 3.12.x 版.
+附註: 如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，你的系統預設python 只能使用 python 3.10。
+
+如果你是要用原始碼執行MaxBot, 在透過git clone 或其他方式取得原始碼後，你的python 版本可以使用3.7.x, 3.8.x, 3.9.x, 3.10.x 這4個版號。
 
 # Demo 
 (示範影片)
