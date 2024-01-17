@@ -162,6 +162,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const tabId = sender.tab.id;
         ocr(request_json.data.url, request_json.data.image_data, tabId);
     }
+
+    if(request_json.action=="status") {
+        result_json={"status": answer};
+        const tabId = sender.tab.id;
+        chrome.tabs.sendMessage(tabId, result_json);
+    }
+
 });
 
 

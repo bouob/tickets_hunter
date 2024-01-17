@@ -247,6 +247,28 @@
         },
         {
             "matches": [
+                "https://queue.hkticketing.com/hotshow.html",
+                "https://busy.hkticketing.com/"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/hkticketing_queue_background.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://queue.hkticketing.com/hotshow.html",
+                "https://busy.hkticketing.com/"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "js/hkticketing_queue_front.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://msg.cityline.com/*.html*"
             ],
             "run_at": "document_end",
