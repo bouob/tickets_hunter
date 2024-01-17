@@ -425,13 +425,21 @@ def get_chrome_options(webdriver_path, config_dict):
         chrome_options.add_argument('--headless=new')
         chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
 
+    chrome_options.add_argument("--disable-animations")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-notifications")
+    chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--disable-print-preview")
+    chrome_options.add_argument("--disable-setuid-sandbox")
+    chrome_options.add_argument("--disable-site-isolation-trials")
+    chrome_options.add_argument("--disable-smooth-scrolling")
+    chrome_options.add_argument("--disable-sync")
+    chrome_options.add_argument("--no-sandbox");
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
-    chrome_options.add_argument('--lang=zh-TW')
     chrome_options.add_argument('--disable-web-security')
-    chrome_options.add_argument("--no-sandbox");
-    chrome_options.add_argument("--disable-popup-blocking")
-    chrome_options.add_argument("--disable-notifications")
+    chrome_options.add_argument('--lang=zh-TW')
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -659,13 +667,21 @@ def get_uc_options(uc, config_dict, webdriver_path):
         options.add_argument('--headless=new')
         options.add_argument("--user-agent=%s" % (USER_AGENT))
 
+    options.add_argument("--disable-animations")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-infobars")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--disable-print-preview")
+    options.add_argument("--disable-setuid-sandbox")
+    options.add_argument("--disable-site-isolation-trials")
+    options.add_argument("--disable-smooth-scrolling")
+    options.add_argument("--disable-sync")
+    options.add_argument("--no-sandbox");
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
-    options.add_argument('--lang=zh-TW')
     options.add_argument('--disable-web-security')
-    options.add_argument("--no-sandbox");
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--disable-notifications")
+    options.add_argument('--lang=zh-TW')
 
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
@@ -11087,11 +11103,16 @@ def ticketplus_date_auto_select(driver, config_dict):
             if not is_date_clicked:
                 if not formated_area_list is None:
                     if len(formated_area_list) == 0:
+                        # in fact, no need reload on /activity/ page, should reload in /order/ page.
                         try:
                             driver.refresh()
                             time.sleep(0.3)
                         except Exception as exc:
                             pass
+
+                        if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                            time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
 
     return is_date_clicked
 

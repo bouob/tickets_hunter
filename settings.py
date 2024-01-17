@@ -32,6 +32,7 @@ import requests
 import tornado
 from tornado.web import Application
 from urllib3.exceptions import InsecureRequestWarning
+from typing import Optional
 
 try:
     import ddddocr
@@ -2921,8 +2922,31 @@ async def main_server():
     print("server running on port:", CONST_SERVER_PORT)
     await asyncio.Event().wait()
 
+def is_connectable(port: int, host: Optional[str] = "localhost") -> bool:
+    """Tries to connect to the server at port to see if it is running.
+
+    :Args:
+     - port - The port to connect.
+    """
+    socket_ = None
+    _is_connectable_exceptions = (socket.error, ConnectionResetError)
+    try:
+        socket_ = socket.create_connection((host, port), 1)
+        result = True
+    except _is_connectable_exceptions:
+        result = False
+    finally:
+        if socket_:
+            socket_.close()
+    return result
+
 def web_server():
-    asyncio.run(main_server())
+    is_port_binded = is_connectable(CONST_SERVER_PORT)
+    #print("is_port_binded:", is_port_binded)
+    if not is_port_binded:
+        asyncio.run(main_server())
+    else:
+        print("port:", CONST_SERVER_PORT, " is in used.")
 
 def preview_question_text_file():
     if os.path.exists(CONST_MAXBOT_QUESTION_FILE):
