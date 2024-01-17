@@ -8,9 +8,18 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 
 https://github.com/max32002/tixcraft_bot/releases
 
-附註: 如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，你的系統預設python 只能使用 python 3.10。
+附註: 如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，你的系統預設python 能使用 python 3.8 / 3.9 / 3.10。
 
-如果你是要用原始碼執行MaxBot, 在透過git clone 或其他方式取得原始碼後，你的python 版本可以使用3.7.x, 3.8.x, 3.9.x, 3.10.x 這4個版號。
+如果你是要用原始碼執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
+
+如果你是使用 macOS 或 Linux 平台，建議你使用原始碼來執行MaxBot, 使用方法是先取得原始碼後，開啟Terminal 視窗來下指令，應該是2行指令就可以了。
+
+請參看看文章: 如何用虛擬主機搶拓元的門票
+
+https://max-everyday.com/2023/11/buy-ticket-by-vm/
+
+雖然這篇文章是以虛擬主機來示範，但是在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
+
 
 # Demo 
 (示範影片)
@@ -27,10 +36,6 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 * cityline: https://max-everyday.com/2019/03/cityline-bot/
 * urbtix: https://max-everyday.com/2019/02/urbtix-bot/
 * hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
-
-如果你想在 interpark 上搶票, 你需要去下載另一個專門為 interpark 量身定制的 Max Interpark Bot:
-
-https://max-everyday.com/2023/08/interpark-bot/
 
 # How to Execute Source Code 
 (透過原始碼的執行方法)
@@ -49,11 +54,6 @@ PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。
 
 PS：「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
 
-參看看文章: 如何用虛擬主機搶拓元的門票
-
-https://max-everyday.com/2023/11/buy-ticket-by-vm/
-
-雖然這篇文章是以虛擬主機來示範，但是在 Windows / macOS / Linux 平台裡的 python 操作方式是類似的，幾乎相同。
 
 # Introduce the Implement 
 (實作方法)
@@ -79,7 +79,6 @@ https://github.com/sml2h3/ddddocr
 * macOS 舊款intel CPU 的電腦裡的 python 版本要降到低於等於 3.9版 或 3.10版, 例如:
 https://www.python.org/downloads/release/python-31011/
 * 猜測驗證碼時比較容易出錯的是字英 f 和 t，還有 q 和 g, v 和 u 還有 w.
-* 猜測驗證碼必錯的情況是，目前不允許有重覆的2個字母出來。
 
 想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
 
