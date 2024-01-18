@@ -8,18 +8,15 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 
 https://github.com/max32002/tixcraft_bot/releases
 
-附註: 如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，你的系統預設python 能使用 python 3.8 / 3.9 / 3.10。
+如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，在你的macOS系統預設 python 版本可以使用 3.8 / 3.9 / 3.10。
 
 如果你是要用原始碼執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
 
 如果你是使用 macOS 或 Linux 平台，建議你使用原始碼來執行MaxBot, 使用方法是先取得原始碼後，開啟Terminal 視窗來下指令，應該是2行指令就可以了。
 
-請參看看文章: 如何用虛擬主機搶拓元的門票
+請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
 https://max-everyday.com/2023/11/buy-ticket-by-vm/
-
-雖然這篇文章是以虛擬主機來示範，但是在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
-
 
 # Demo 
 (示範影片)
@@ -89,7 +86,7 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 
 詳全文：https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/
 
-整理大家在搶票時常遇到的問題：
+## 整理大家在搶票時常遇到的問題：
 * 使用搶票程式有違法嗎？
 * 沒講清楚成功後的報酬
 * 買到太多票
@@ -104,27 +101,25 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 * 想組一台新的電腦，是不是可以給我一些建議呢？
 
 # Extension Privacy 
-(擴充功能隱私權政策)
+(MaxBot Plus擴充功能隱私權政策)
 
-產品如何收集、使用及分享使用者資料
+## 產品如何收集、使用及分享使用者資料
 
 * 擴充取得會取得特定網頁內容, 並且自動輸入張數。
 * 擴充功能會移除特定網頁內容裡已售完的網頁區塊。
 * 擴充功能會取得特定網址資訊, 並置換為下一個新的網址。
-* 擴充功能會阻擋與訂票網頁無關的外部連線, 以增加效率。
 * 擴充取得會取得特定網頁內容, 判斷為需要重新整理時, 自動刷新頁面。
 
-使用者資料的所有分享對象。
+## 使用者資料的所有分享對象。
 
 * 擴充功能沒有分享使用者資料。
 
-擴充功能主要功能：
+## 擴充功能主要功能：
 
 * 特定的訂票網頁內容, 並且自動輸入張數。
 * 移除特定的訂票網頁內容裡已售完的網頁區塊。
 * 特定的訂票網址, 自動置換為下一步的新網址。
 * 當訂票網頁內容已經無票或沒有符合的關鍵字時, 自動刷新網頁。
-* 阻擋與訂票網頁無關的外部連線, 減少網頁載入所需時間與減少網頁所需記憶體.
 * 特定網頁支援驗證碼功能, 需要同時開啟 MaxBot 主程式。
 
 # Supporting the Project 
@@ -132,7 +127,7 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 
 如果這個項目對您有幫助，不妨請作者我喝杯咖啡 ：）
 
-目前支援的贊助方式：
+## 目前支援的贊助方式：
 * 台灣的ATM匯款: 中國信託 (代碼：822) 帳號：071512949756
 * 7-11 ATM的無卡存款
 * 街口支付： 901643378
