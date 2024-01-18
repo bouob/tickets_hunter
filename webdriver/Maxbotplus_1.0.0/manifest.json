@@ -14,21 +14,13 @@
         "service_worker": "background.js",
         "type": "module"
     },
-    "declarative_net_request": {
-        "rule_resources": [
-            {
-                "id": "ruleset_1",
-                "enabled": true,
-                "path": "rules_1.json"
-            }
-        ]
-    },
     "permissions": [
         "storage",
         "declarativeNetRequest",
         "declarativeNetRequestFeedback"
     ],
     "host_permissions": [
+        "http://maxbot.dropboxlike.com:16888/*",
         "http://127.0.0.1:16888/*"
     ],
     "web_accessible_resources": [

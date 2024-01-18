@@ -10,13 +10,17 @@ const keyword_exclude = document.querySelector('#keyword_exclude');
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
+const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
 const remote_url = document.querySelector('#remote_url');
+
+const PUBLIC_SERVER_URL = "http://maxbot.dropboxlike.com:16888/";
 
 var settings = null;
 
 loadChanges();
 
 submitButton.addEventListener('click', saveChanges);
+ocr_captcha_use_public_server.addEventListener('change', checkUsePublicServer);
 
 async function saveChanges()
 {
@@ -114,6 +118,14 @@ function loadChanges()
     );
 }
 
+async function checkUsePublicServer()
+{
+    if(ocr_captcha_enable.checked) {
+        remote_url.value = PUBLIC_SERVER_URL;
+    } else {
+
+    }
+}
 
 let messageClearTimer;
 function message(msg)

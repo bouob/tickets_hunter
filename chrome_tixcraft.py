@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.12)"
+CONST_APP_VERSION = "MaxBot (2024.01.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -49,6 +49,7 @@ CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
 
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"
@@ -369,6 +370,7 @@ def get_favoriate_extension_path(webdriver_path, config_dict):
     #print("webdriver_path:", webdriver_path)
     extension_list = []
     extension_list.append(os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME + ".crx"))
+    extension_list.append(os.path.join(webdriver_path, CONST_MAXBLOCK_EXTENSION_NAME + ".crx"))
     return extension_list
 
 def get_chromedriver_path(webdriver_path):
@@ -610,26 +612,6 @@ def dump_settins_to_maxbot_plus_extension(ext, config_dict):
             json_str = json.dumps(manifest_dict, indent=4)
             with open(target_path, 'w') as outfile:
                 outfile.write(json_str)
-
-    # show advanced rows in extension.
-    target_path = ext
-    target_path = os.path.join(target_path, "options.html")
-    if os.path.isfile(target_path):
-        file_options = open(target_path, 'r')
-        html_lines = file_options.readlines()
-        file_options.close()
-        new_html_array = []
-        my_target_row = ['remote_url_row','ocr_captcha_enable_row']
-        for line in html_lines:
-            for row in my_target_row:
-                if row in line:
-                    line = line.replace('display: none;','')
-            new_html_array.append(line)
-        if len(new_html_array) > 0:
-            #print("output new options.html")
-            with open(target_path, 'w') as outfile:
-                outfile.write("".join(new_html_array))
-
 
 def get_uc_options(uc, config_dict, webdriver_path):
     options = uc.ChromeOptions()
