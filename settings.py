@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.11)"
+CONST_APP_VERSION = "MaxBot (2024.01.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -133,6 +133,7 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
+    en_us["reset_browser_interval"] = 'Reset browser interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
 
     en_us["area_select_order"] = 'Area select order'
@@ -240,6 +241,7 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
+    zh_tw["reset_browser_interval"] = '重新啟動瀏覽器間隔(秒)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_tw["area_select_order"] = '區域排序方式'
@@ -347,6 +349,7 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
+    zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
 
     zh_cn["area_select_order"] = '区域排序方式'
@@ -455,6 +458,7 @@ def load_translate():
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
+    ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
@@ -687,6 +691,7 @@ def get_default_config():
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
+    config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
 
     return config_dict
@@ -776,6 +781,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
     global txt_auto_reload_page_interval
+    global txt_reset_browser_intervalv
     global txt_proxy_server_port
 
     global txt_tixcraft_sid
@@ -986,7 +992,13 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
+        config_dict["advanced"]["reset_browser_interval"] = float(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
+
+        if config_dict["advanced"]["reset_browser_interval"] > 0:
+            if config_dict["advanced"]["reset_browser_interval"] < 20:
+                # min value is 20 seconds.
+                config_dict["advanced"]["reset_browser_interval"] = 20
 
 
     # save config.
@@ -1286,6 +1298,7 @@ def applyNewLanguage():
     global lbl_block_facebook_network_recommand
 
     global lbl_auto_reload_page_interval
+    global lbl_reset_browser_interval
     global lbl_proxy_server_port
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
@@ -1322,6 +1335,7 @@ def applyNewLanguage():
     lbl_block_facebook_network_recommand.config(text=translate[language_code]["recommand_enable"])
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+    lbl_reset_browser_interval.config(text=translate[language_code]["reset_browser_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
 
     lbl_headless.config(text=translate[language_code]["headless"])
@@ -1941,6 +1955,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_auto_reload_page_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["auto_reload_page_interval"])
     txt_auto_reload_page_interval = Entry(frame_group_header, width=30, textvariable = txt_auto_reload_page_interval_value)
     txt_auto_reload_page_interval.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_reset_browser_interval
+    lbl_reset_browser_interval = Label(frame_group_header, text=translate[language_code]['reset_browser_interval'])
+    lbl_reset_browser_interval.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_reset_browser_interval
+    txt_reset_browser_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["reset_browser_interval"])
+    txt_reset_browser_interval = Entry(frame_group_header, width=30, textvariable = txt_reset_browser_interval_value)
+    txt_reset_browser_interval.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 

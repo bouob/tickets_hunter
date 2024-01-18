@@ -19,6 +19,9 @@ class NonBrowser():
                 ret = True
         return ret
 
+    def Get_cookies(self):
+        return self.Session.cookies.get_dict()
+
     def set_headers(self, header:str):
         self.Session.headers = header
 

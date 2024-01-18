@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.11)"
+CONST_APP_VERSION = "MaxBot (2024.01.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -807,8 +807,8 @@ def close_browser_tabs(driver):
             pass
 
 def get_driver_by_config(config_dict):
-    global driver
-
+    driver = None
+    
     # read config.
     homepage = config_dict["homepage"]
 
@@ -7432,7 +7432,10 @@ def set_non_browser_cookies(driver, url, Captcha_Browser):
         domain_name = url.split('/')[2]
         #PS: need set cookies once, if user change domain.
         if not Captcha_Browser is None:
-            Captcha_Browser.Set_cookies(driver.get_cookies())
+            try:
+                Captcha_Browser.Set_cookies(driver.get_cookies())
+            except Exception as e:
+                pass
             Captcha_Browser.Set_Domain(domain_name)
 
 def ticketmaster_parse_zone_info(driver, config_dict):
@@ -12309,7 +12312,7 @@ def get_current_url(driver):
         for each_error_string in exit_bot_error_strings:
             if isinstance(str_exc, str):
                 if each_error_string in str_exc:
-                    print('quit bot by error:', each_error_string)
+                    print('quit bot by error:', each_error_string, driver)
                     is_quit_bot = True
                     driver.quit()
                     sys.exit()
@@ -12319,6 +12322,21 @@ def get_current_url(driver):
         pass
 
     return url, is_quit_bot
+
+def reset_webdriver(driver, config_dict, url):
+    new_driver = None
+    try:
+        cookies = driver.get_cookies()
+        driver.close()
+        config_dict["homepage"]=url
+        new_driver = get_driver_by_config(config_dict)
+        for cookie in cookies:
+            new_driver.add_cookie(cookie);
+        new_driver.get(url)
+        driver = new_driver
+    except Exception as e:
+        pass
+    return new_driver
 
 def main(args):
     config_dict = get_config_dict(args)
@@ -12377,13 +12395,13 @@ def main(args):
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
             Captcha_Browser = NonBrowser()
-
             if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
                 set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
     except Exception as exc:
         print(exc)
         pass
 
+    maxbot_last_reset_time = time.time()
     while True:
         time.sleep(0.05)
 
@@ -12417,9 +12435,15 @@ def main(args):
         if is_maxbot_paused:
             if 'kktix.c' in url:
                 kktix_dict = kktix_paused_main(driver, url, config_dict, kktix_dict)
-
+            # sleep more when paused.
             time.sleep(0.1)
             continue
+
+        if config_dict["advanced"]["reset_browser_interval"] > 0:
+            maxbot_running_time = time.time() - maxbot_last_reset_time
+            if maxbot_running_time > config_dict["advanced"]["reset_browser_interval"]:
+                driver = reset_webdriver(driver, config_dict, url)
+                maxbot_last_reset_time = time.time()
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
