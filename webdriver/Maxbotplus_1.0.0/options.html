@@ -25,9 +25,9 @@
 <div class="tab-content" id="myTabContent">
   <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
     
-    <div class="row g-3">
-      <div class="col-12">
-        <label for="ticket_number" class="form-label">Ticket Number</label>
+    <div class="row mb-3">
+      <label for="ticket_number" class="col-sm-2 col-form-label">Ticket Number</label>
+      <div class="col-sm-10">
         <select id="ticket_number" class="form-select" aria-label="Default select">
           <option selected>Ticket Number</option>
           <option value="1">1</option>
@@ -42,9 +42,11 @@
           <option value="10">10</option>
         </select>
       </div>
+    </div>
 
-      <div class="col-12">
-        <label for="date_select_mode" class="form-label">Date Select Order</label>
+    <div class="row mb-3">
+      <label for="date_select_mode" class="col-sm-2 col-form-label">Date Select Order</label>
+      <div class="col-sm-10">
         <select id="date_select_mode" class="form-select" aria-label="Default select">
           <option value="from top to bottom">from top to bottom</option>
           <option value="from bottom to top">from bottom to top</option>
@@ -52,13 +54,18 @@
           <option value="random">random</option>
         </select>
       </div>
-      <div class="col-12">
-        <label for="date_keyword" class="form-label">Date Keywords</label>
+    </div>
+
+    <div class="row mb-3">
+      <label for="date_keyword" class="col-sm-2 col-form-label">Date Keywords</label>
+      <div class="col-sm-10">
         <textarea class="form-control" id="date_keyword" rows="3"></textarea>
       </div>
+    </div>
 
-      <div class="col-12">
-        <label for="area_select_mode" class="form-label">Area Select Order</label>
+    <div class="row mb-3">
+      <label for="area_select_mode" class="col-sm-2 col-form-label">Area Select Order</label>
+      <div class="col-sm-10">
         <select id="area_select_mode" class="form-select" aria-label="Default select">
           <option value="from top to bottom">from top to bottom</option>
           <option value="from bottom to top">from bottom to top</option>
@@ -66,60 +73,66 @@
           <option value="random">random</option>
         </select>
       </div>
-      <div class="col-12">
-        <label for="area_keyword" class="form-label">Area Keywords</label>
+    </div>
+
+    <div class="row mb-3">
+      <label for="area_keyword" class="col-sm-2 col-form-label">Area Keywords</label>
+      <div class="col-sm-10">
         <textarea class="form-control" id="area_keyword" rows="3"></textarea>
       </div>
-      
-      <div class="col-12">
-        <label for="keyword_exclude" class="form-label">Exclude Keywords</label>
+    </div>
+
+    <div class="row mb-3">
+      <label for="keyword_exclude" class="col-sm-2 col-form-label">Exclude Keywords</label>
+      <div class="col-sm-10">
         <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
       </div>
     </div>
 
   </div>
+
   <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
 
-    <div class="row g-3">
-      <div class="col-12">
-        <label for="auto_reload_page_interval" class="form-label">Reload page interval(sec.)</label>
+    <div class="row mb-3">
+      <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">Reload page interval(sec.)</label>
+      <div class="col-sm-10">
         <input class="form-control" id="auto_reload_page_interval" value="" />
       </div>
-
-      <div class="col-12">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
-          <label class="form-check-label" for="disable_adjacent_seat">
-            Disable Adjacent Seat
-          </label>
-        </div>
-      </div>
-
-      <div class="col-12">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
-          <label class="form-check-label" for="ocr_captcha_enable">
-            OCR
-          </label>
-        </div>
-      </div>
-
-      <div class="col-12">
-        <label for="remote_url" class="form-label">OCR Server URL</label>
-        <input class="form-control" id="remote_url" value="" />
-      </div>
-
-      <div class="col-12">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server">
-          <label class="form-check-label" for="ocr_captcha_use_public_server">
-            Use MaxBot Pulic OCR Server
-          </label>
-        </div>
-      </div>
-
     </div>
 
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">
+            Disable Adjacent Seat
+      </label>
+      <div class="col-sm-10">
+        <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">
+            OCR
+      </label>
+      <div class="col-sm-10">
+        <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
+      <div class="col-sm-10">
+        <input class="form-control" id="remote_url" value="" />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">
+            MaxBot Public OCR Server
+      </label>
+      <div class="col-sm-10">
+        <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server">
+      </div>
+    </div>
   </div>
 </div>
 
