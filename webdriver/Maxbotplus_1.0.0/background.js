@@ -21,11 +21,13 @@ chrome.runtime.onInstalled.addListener(function(){
         chrome.storage.local.set(
         {
             settings: settings,
-            status: default_status,
-            webserver_runing: default_webserver_runing
         }
         );
         console.log("dump settings.json to extension storage");
+    }
+    ).catch(error =>
+    {
+        console.log('error is', error)
     }
     );
 });

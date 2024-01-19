@@ -10,18 +10,28 @@
         "128": "icons/maxblock-128.png"
     },
     "manifest_version": 3,
-    "declarative_net_request": {
-        "rule_resources": [
-            {
-                "id": "ruleset_1",
-                "enabled": true,
-                "path": "rules_1.json"
-            }
-        ]
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
     },
     "permissions": [
+        "storage",
         "declarativeNetRequest",
         "declarativeNetRequestFeedback"
+    ],
+    "options_page": "options.html",
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "data/*.json"
+            ],
+            "extension_ids": [
+                "*"
+            ],
+            "matches": [
+                "*://*/*"
+            ]
+        }
     ],
     "action": {
         "default_icon": "icons/maxblock-128.png",

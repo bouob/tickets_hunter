@@ -174,7 +174,6 @@ async function tixcraft_get_ocr_answer(api_url, image_data)
       }
     };
     
-    let bundle_string = JSON.stringify(bundle);
     const return_answer = await chrome.runtime.sendMessage(bundle);
     //console.log(return_answer);
 

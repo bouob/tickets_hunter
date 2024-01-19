@@ -1,146 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>Extension Options</title>
-  <meta charset="UTF-8">
-  <link href="dist/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <link href="dist/bootstrap/bootstrap.min.css" rel="stylesheet" />
   <script src="dist/bootstrap/bootstrap.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/options.css" />
 </head>
 <body>
-<div id="message"></div>
-<h2>MaxBot Settings</h2>
-
-<div class="row g-3">
-
-<ul class="nav nav-tabs" id="myTab" role="tablist">
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button>
-  </li>
-</ul>
-
-<div class="tab-content" id="myTabContent">
-  <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
-    
-    <div class="row mb-3">
-      <label for="ticket_number" class="col-sm-2 col-form-label">Ticket Number</label>
-      <div class="col-sm-10">
-        <select id="ticket_number" class="form-select" aria-label="Default select">
-          <option selected>Ticket Number</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-        </select>
+  <div id="message"></div>
+  <h2>MaxBot Settings</h2>
+  <div class="row g-3">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button></li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+        <div class="row mb-3">
+          <label for="ticket_number" class="col-sm-2 col-form-label">Ticket Number</label>
+          <div class="col-sm-10">
+            <select id="ticket_number" class="form-select" aria-label="Default select">
+              <option selected="selected">
+                Ticket Number
+              </option>
+              <option value="1">
+                1
+              </option>
+              <option value="2">
+                2
+              </option>
+              <option value="3">
+                3
+              </option>
+              <option value="4">
+                4
+              </option>
+              <option value="5">
+                5
+              </option>
+              <option value="6">
+                6
+              </option>
+              <option value="7">
+                7
+              </option>
+              <option value="8">
+                8
+              </option>
+              <option value="9">
+                9
+              </option>
+              <option value="10">
+                10
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="date_select_mode" class="col-sm-2 col-form-label">Date Select Order</label>
+          <div class="col-sm-10">
+            <select id="date_select_mode" class="form-select" aria-label="Default select">
+              <option value="from top to bottom">
+                from top to bottom
+              </option>
+              <option value="from bottom to top">
+                from bottom to top
+              </option>
+              <option value="center">
+                center
+              </option>
+              <option value="random">
+                random
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="date_keyword" class="col-sm-2 col-form-label">Date Keywords</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" id="date_keyword" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="area_select_mode" class="col-sm-2 col-form-label">Area Select Order</label>
+          <div class="col-sm-10">
+            <select id="area_select_mode" class="form-select" aria-label="Default select">
+              <option value="from top to bottom">
+                from top to bottom
+              </option>
+              <option value="from bottom to top">
+                from bottom to top
+              </option>
+              <option value="center">
+                center
+              </option>
+              <option value="random">
+                random
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="area_keyword" class="col-sm-2 col-form-label">Area Keywords</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" id="area_keyword" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="keyword_exclude" class="col-sm-2 col-form-label">Exclude Keywords</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
+        <div class="row mb-3">
+          <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">Reload page interval(sec.)</label>
+          <div class="col-sm-10">
+            <input class="form-control" id="auto_reload_page_interval" value="" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">Disable Adjacent Seat</label>
+          <div class="col-sm-10">
+            <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">OCR</label>
+          <div class="col-sm-10">
+            <input class="form-check-input" type="checkbox" id="ocr_captcha_enable" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
+          <div class="col-sm-10">
+            <input class="form-control" id="remote_url" value="" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">MaxBot Public OCR Server</label>
+          <div class="col-sm-10">
+            <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server" />
+          </div>
+        </div>
       </div>
     </div>
-
-    <div class="row mb-3">
-      <label for="date_select_mode" class="col-sm-2 col-form-label">Date Select Order</label>
-      <div class="col-sm-10">
-        <select id="date_select_mode" class="form-select" aria-label="Default select">
-          <option value="from top to bottom">from top to bottom</option>
-          <option value="from bottom to top">from bottom to top</option>
-          <option value="center">center</option>
-          <option value="random">random</option>
-        </select>
-      </div>
+    <div class="col-12">
+      <button class="btn btn-primary" id="save_btn">Save</button>
     </div>
-
-    <div class="row mb-3">
-      <label for="date_keyword" class="col-sm-2 col-form-label">Date Keywords</label>
-      <div class="col-sm-10">
-        <textarea class="form-control" id="date_keyword" rows="3"></textarea>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label for="area_select_mode" class="col-sm-2 col-form-label">Area Select Order</label>
-      <div class="col-sm-10">
-        <select id="area_select_mode" class="form-select" aria-label="Default select">
-          <option value="from top to bottom">from top to bottom</option>
-          <option value="from bottom to top">from bottom to top</option>
-          <option value="center">center</option>
-          <option value="random">random</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label for="area_keyword" class="col-sm-2 col-form-label">Area Keywords</label>
-      <div class="col-sm-10">
-        <textarea class="form-control" id="area_keyword" rows="3"></textarea>
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label for="keyword_exclude" class="col-sm-2 col-form-label">Exclude Keywords</label>
-      <div class="col-sm-10">
-        <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
-      </div>
-    </div>
-
   </div>
-
-  <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
-
-    <div class="row mb-3">
-      <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">Reload page interval(sec.)</label>
-      <div class="col-sm-10">
-        <input class="form-control" id="auto_reload_page_interval" value="" />
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">
-            Disable Adjacent Seat
-      </label>
-      <div class="col-sm-10">
-        <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">
-            OCR
-      </label>
-      <div class="col-sm-10">
-        <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
-      <div class="col-sm-10">
-        <input class="form-control" id="remote_url" value="" />
-      </div>
-    </div>
-
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">
-            MaxBot Public OCR Server
-      </label>
-      <div class="col-sm-10">
-        <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server">
-      </div>
-    </div>
-  </div>
-</div>
-
-  <div class="col-12">
-    <button class="btn btn-primary" id="save_btn">Save</button>
-  </div>
-</div>
-
-<script src="options.js"></script>
+  <script src="options.js"></script>
 </body>
 </html>
