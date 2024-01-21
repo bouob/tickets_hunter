@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.14)"
+CONST_APP_VERSION = "MaxBot (2024.01.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -450,7 +450,9 @@ def get_chrome_options(webdriver_path, config_dict):
             chrome_options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
     # PS: this is crx version.
-    extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
+    extension_list = []
+    if config_dict["advanced"]["chrome_extension"]:
+        extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
     for ext in extension_list:
         if os.path.exists(ext):
             chrome_options.add_extension(ext)
@@ -606,10 +608,12 @@ def dump_settings_to_maxbot_plus_extension(ext, config_dict):
     target_path = os.path.join(target_path, "data")
     target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
     #print("save as to:", target_path)
-    try:
-        os.unlink(target_path)
-    except Exception as exc:
-        pass
+    if os.path.isfile(target_path):
+        try:
+            #print("remove file:", target_path)
+            os.unlink(target_path)
+        except Exception as exc:
+            pass
     with open(target_path, 'w') as outfile:
         json.dump(config_dict, outfile)
 
@@ -650,12 +654,17 @@ def dump_settings_to_maxblock_plus_extension(ext, config_dict):
     # sync config.
     target_path = ext
     target_path = os.path.join(target_path, "data")
+    # special case, due to data folder is empty, sometime will be removed.
+    if not os.path.exists(target_path):
+        os.mkdir(target_path)
     target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
     #print("save as to:", target_path)
-    try:
-        os.unlink(target_path)
-    except Exception as exc:
-        pass
+    if os.path.isfile(target_path):
+        try:
+            #print("remove file:", target_path)
+            os.unlink(target_path)
+        except Exception as exc:
+            pass
     with open(target_path, 'w') as outfile:
         config_dict["domain_filter"]=CONST_MAXBLOCK_EXTENSION_FILTER
         json.dump(config_dict, outfile)
@@ -678,7 +687,9 @@ def get_uc_options(uc, config_dict, webdriver_path):
         options.set_capability("goog:loggingPrefs",{"performance": "ALL"})
 
     load_extension_path = ""
-    extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
+    extension_list = []
+    if config_dict["advanced"]["chrome_extension"]:
+        extension_list = get_favoriate_extension_path(webdriver_path, config_dict)
     for ext in extension_list:
         ext = ext.replace('.crx','')
         if os.path.exists(ext):
@@ -688,6 +699,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
             if CONST_MAXBLOCK_EXTENSION_NAME in ext:
                 dump_settings_to_maxblock_plus_extension(ext, config_dict)
             load_extension_path += ("," + os.path.abspath(ext))
+            #print("load_extension_path:", load_extension_path)
 
     if len(load_extension_path) > 0:
         #print('load-extension:', load_extension_path[1:])
@@ -849,7 +861,7 @@ def get_driver_by_config(config_dict):
     print("platform:", platform.platform())
     print("homepage:", homepage)
     print("browser:", config_dict["browser"])
-    print("ticket_number:", str(config_dict["ticket_number"]))
+    #print("ticket_number:", str(config_dict["ticket_number"]))
 
     #print(config_dict["tixcraft"])
     #print("==[advanced config]==")
@@ -2367,32 +2379,34 @@ def is_row_match_keyword(keyword_string, row_text):
     # clean stop word.
     row_text = format_keyword_string(row_text)
 
-    is_match_keyword = False
-    if len(keyword_string) > 0:
-        area_keyword_exclude_array = []
+    is_match_keyword = True
+    if len(keyword_string) > 0 and len(row_text) > 0:
+        is_match_keyword = False
+        keyword_array = []
         try:
-            area_keyword_exclude_array = json.loads("["+ keyword_string +"]")
+            keyword_array = json.loads("["+ keyword_string +"]")
         except Exception as exc:
-            area_keyword_exclude_array = []
-        for exclude_item_list in area_keyword_exclude_array:
-            if len(row_text) > 0:
-                if ' ' in exclude_item_list:
-                    area_keyword_array = exclude_item_list.split(' ')
+            keyword_array = []
+        for item_list in keyword_array:
+            if len(item_list) > 0:
+                if ' ' in item_list:
+                    keyword_item_array = item_list.split(' ')
                     is_match_all_exclude = True
-                    for exclude_item in area_keyword_array:
-                        exclude_item = format_keyword_string(exclude_item)
-                        if not exclude_item in row_text:
+                    for each_item in keyword_item_array:
+                        each_item = format_keyword_string(each_item)
+                        if not each_item in row_text:
                             is_match_all_exclude = False
                     if is_match_all_exclude:
-                        row_text = ""
                         is_match_keyword = True
-                        break
                 else:
-                    exclude_item = format_keyword_string(exclude_item_list)
-                    if exclude_item in row_text:
-                        row_text = ""
+                    item_list = format_keyword_string(item_list)
+                    if item_list in row_text:
                         is_match_keyword = True
-                        break
+            else:
+                # match all.
+                is_match_keyword = True
+            if is_match_keyword:
+                break
     return is_match_keyword
 
 def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -3484,9 +3498,15 @@ def tixcraft_assign_ticket_number(driver, config_dict):
 
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
-    # use extension instead of selenium.
-    # checkbox javascrit code at chrome extension.
+    is_agree_at_webdriver = False
     if not config_dict["browser"] in CONST_CHROME_FAMILY:
+        is_agree_at_webdriver = True
+    else:
+        if not config_dict["advanced"]["chrome_extension"]:
+            is_agree_at_webdriver = True
+    if is_agree_at_webdriver:
+        # use extension instead of selenium.
+        # checkbox javascrit code at chrome extension.
         tixcraft_ticket_main_agree(driver, config_dict)
 
     is_ticket_number_assigned = False
@@ -4804,7 +4824,13 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
 
 def kktix_reg_auto_reload(driver, url, config_dict):
     # auto reload javascrit code at chrome extension.
+    is_reload_at_webdriver = False
     if not config_dict["browser"] in CONST_CHROME_FAMILY:
+        is_reload_at_webdriver = True
+    else:
+        if not config_dict["advanced"]["chrome_extension"]:
+            is_reload_at_webdriver = True
+    if is_reload_at_webdriver:
         kktix_check_register_status(driver, url)
 
     is_finish_checkbox_click = False
@@ -12231,8 +12257,15 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
             is_button_pressed = ticketplus_accept_order_fail(driver)
 
             is_reloading = False
-            # move below code to chrome extension.
+
+            is_reload_at_webdriver = False
             if not config_dict["browser"] in CONST_CHROME_FAMILY:
+                is_reload_at_webdriver = True
+            else:
+                if not config_dict["advanced"]["chrome_extension"]:
+                    is_reload_at_webdriver = True
+            if is_reload_at_webdriver:
+                # move below code to chrome extension.
                 is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
 
             if not is_reloading:

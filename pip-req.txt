@@ -1,21 +1,15 @@
 certifi
 chardet
+chromedriver-autoinstaller-max
 cryptography
+ddddocr
 idna
+looseversion
+numpy
 Pillow
-selenium
-undetected-chromedriver
 playsound==1.2.2
 pyperclip
-ddddocr
-urllib3
-numpy
+selenium
 tornado
-#jieba
-
-# PS: chromedriver_autoinstaller, please use max fork version.
-# chromedriver_autoinstaller
-chromedriver-autoinstaller-max
-
-# Migrate looseversion to fix distutils issues on python 3.12+ for undetected-chromedriver
-looseversion
+undetected-chromedriver
+urllib3

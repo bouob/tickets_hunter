@@ -26,20 +26,21 @@ import threading
 import time
 import warnings
 import webbrowser
+from datetime import datetime
+from typing import Optional
 
 import pyperclip
 import requests
 import tornado
 from tornado.web import Application
 from urllib3.exceptions import InsecureRequestWarning
-from typing import Optional
 
 try:
     import ddddocr
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.14)"
+CONST_APP_VERSION = "MaxBot (2024.01.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -71,7 +72,7 @@ CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
     ,"https://ticketmaster.sg"
-    ,"https://ticketmaster.com"
+    #,"https://ticketmaster.com"
     ,"https://teamear.tixcraft.com/ (添翼)"
     ,"https://www.indievox.com/ (獨立音樂)"
     ,"https://www.famiticket.com.tw (全網)"
@@ -153,6 +154,12 @@ def load_translate():
     en_us["verbose"] = 'Verbose mode'
     en_us["running_status"] = 'Running Status'
     en_us["running_url"] = 'Running URL'
+    en_us["system_clock"] = 'System Clock'
+    en_us["idle_keyword"] = 'Idle Keyword'
+    en_us["resume_keyword"] = 'Resume Keyword'
+    en_us["idle_keyword_second"] = 'Idle Keyword (second)'
+    en_us["resume_keyword_second"] = 'Resume Keyword (second)'
+    
     en_us["status_idle"] = 'Idle'
     en_us["status_paused"] = 'Paused'
     en_us["status_enabled"] = 'Enabled'
@@ -163,7 +170,7 @@ def load_translate():
 
     en_us["preference"] = 'Preference'
     en_us["advanced"] = 'Advanced'
-    en_us["verification_word"] = "Verification code"
+    en_us["verification_word"] = "Verification"
     en_us["maxbot_server"] = 'Server'
     en_us["autofill"] = 'Autofill'
     en_us["runtime"] = 'Runtime'
@@ -205,6 +212,8 @@ def load_translate():
 
     en_us["play_captcha_sound"] = 'Play sound while ordering'
     en_us["captcha_sound_filename"] = 'sound filename'
+    
+    en_us["chrome_extension"] = "Chrome Browser Extension"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
     en_us["hide_some_image"] = "Hide Some Images"
     en_us["block_facebook_network"] = "Block Facebook Network"
@@ -260,6 +269,12 @@ def load_translate():
     zh_tw["verbose"] = '輸出詳細除錯訊息'
     zh_tw["running_status"] = '執行狀態'
     zh_tw["running_url"] = '執行網址'
+    zh_tw["system_clock"] = '系統時鐘'
+    zh_tw["idle_keyword"] = '暫停關鍵字'
+    zh_tw["resume_keyword"] = '接續關鍵字'
+    zh_tw["idle_keyword_second"] = '暫停關鍵字(秒)'
+    zh_tw["resume_keyword_second"] = '接續關鍵字(秒)'
+
     zh_tw["status_idle"] = '閒置中'
     zh_tw["status_paused"] = '已暫停'
     zh_tw["status_enabled"] = '已啟用'
@@ -312,6 +327,8 @@ def load_translate():
 
     zh_tw["play_captcha_sound"] = '訂購時播放音效'
     zh_tw["captcha_sound_filename"] = '音效檔'
+    
+    zh_tw["chrome_extension"] = "Chrome 瀏覽器擴充功能"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
     zh_tw["hide_some_image"] = "隱藏部份圖片"
     zh_tw["block_facebook_network"] = "擋掉 Facebook 連線"
@@ -368,6 +385,12 @@ def load_translate():
     zh_cn["verbose"] = '输出详细除错讯息'
     zh_cn["running_status"] = '执行状态'
     zh_cn["running_url"] = '执行网址'
+    zh_cn["system_clock"] = '系统时钟'
+    zh_cn["idle_keyword"] = '暂停关键字'
+    zh_cn["resume_keyword"] = '接续关键字'
+    zh_cn["idle_keyword_second"] = '暂停关键字(秒)'
+    zh_cn["resume_keyword_second"] = '接续关键字(秒)'
+    
     zh_cn["status_idle"] = '闲置中'
     zh_cn["status_paused"] = '已暂停'
     zh_cn["status_enabled"] = '已启用'
@@ -421,6 +444,8 @@ def load_translate():
 
     zh_cn["play_captcha_sound"] = '订购时播放音效'
     zh_cn["captcha_sound_filename"] = '音效档'
+    
+    zh_cn["chrome_extension"] = "Chrome 浏览器扩展程序"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
     zh_cn["hide_some_image"] = "隐藏一些图像"
     zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
@@ -477,13 +502,19 @@ def load_translate():
     ja_jp["verbose"] = '詳細モード'
     ja_jp["running_status"] = 'スターテス'
     ja_jp["running_url"] = '現在の URL'
-    ja_jp["status_idle"] = '閒置中'
+    ja_jp["system_clock"] = 'システムクロック'
+    ja_jp["idle_keyword"] = 'アイドルキーワード'
+    ja_jp["resume_keyword"] = '再起動キーワード'
+    ja_jp["idle_keyword_second"] = 'アイドルキーワード（秒）'
+    ja_jp["resume_keyword_second"] = '再起動キーワード（秒）'
+    
+    ja_jp["status_idle"] = 'アイドル状態'
     ja_jp["status_paused"] = '一時停止'
     ja_jp["status_enabled"] = '有効'
     ja_jp["status_running"] = 'ランニング'
 
     ja_jp["idle"] = 'アイドル'
-    ja_jp["resume"] = '再開する'
+    ja_jp["resume"] = '再起動'
 
     ja_jp["preference"] = '設定'
     ja_jp["advanced"] = '高度な設定'
@@ -529,6 +560,8 @@ def load_translate():
 
     ja_jp["play_captcha_sound"] = '注文時に音を鳴らす'
     ja_jp["captcha_sound_filename"] = 'サウンドファイル'
+    
+    ja_jp["chrome_extension"] = "Chrome ブラウザ拡張機能"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
     ja_jp["hide_some_image"] = "一部の画像を非表示にする"
     ja_jp["block_facebook_network"] = "Facebookをブロックする"
@@ -680,6 +713,7 @@ def get_default_config():
     config_dict["advanced"]["udn_password"] = ""
     config_dict["advanced"]["ticketplus_password"] = ""
 
+    config_dict["advanced"]["chrome_extension"] = True
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = False
     config_dict["advanced"]["block_facebook_network"] = False
@@ -693,6 +727,11 @@ def get_default_config():
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
+
+    config_dict["advanced"]["idle_keyword"] = ""
+    config_dict["advanced"]["resume_keyword"] = ""
+    config_dict["advanced"]["idle_keyword_second"] = ""
+    config_dict["advanced"]["resume_keyword_second"] = ""
 
     return config_dict
 
@@ -729,18 +768,24 @@ def btn_restore_defaults_clicked(language_code):
     global root
     load_GUI(root, config_dict)
 
-def btn_idle_clicked(language_code):
+def do_maxbot_idle():
     app_root = get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
         text_file.write("")
+
+def btn_idle_clicked(language_code):
+    do_maxbot_idle()
     update_maxbot_runtime_status()
 
-def btn_resume_clicked(language_code):
+def do_maxbot_resume():
     app_root = get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
-    for i in range(10):
+    for i in range(3):
         force_remove_file(idle_filepath)
+
+def btn_resume_clicked(language_code):
+    do_maxbot_resume()
     update_maxbot_runtime_status()
 
 def btn_launcher_clicked(language_code):
@@ -813,6 +858,7 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_ddddocr_beta
     global chk_state_ocr_captcha_force_submit
+    global chk_state_chrome_extension
     global chk_state_adjacent_seat
     global chk_state_hide_some_image
     global chk_state_block_facebook_network
@@ -822,6 +868,11 @@ def btn_save_act(language_code, slience_mode=False):
     global chk_state_auto_guess_options
     global combo_ocr_captcha_image_source
     global combo_webdriver_type
+
+    global txt_idle_keyword
+    global txt_resume_keyword
+    global txt_idle_keyword_second
+    global txt_resume_keyword_second
 
     is_all_data_correct = True
 
@@ -884,6 +935,18 @@ def btn_save_act(language_code, slience_mode=False):
         remote_url = txt_remote_url.get("1.0",END).strip()
         remote_url = format_config_keyword_for_json(remote_url)
 
+        idle_keyword = txt_idle_keyword.get("1.0",END).strip()
+        idle_keyword = format_config_keyword_for_json(idle_keyword)
+
+        resume_keyword = txt_resume_keyword.get("1.0",END).strip()
+        resume_keyword = format_config_keyword_for_json(resume_keyword)
+
+        idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
+        idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
+
+        resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
+        resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+
         # test keyword format.
         if is_all_data_correct:
             if len(area_keyword) > 0:
@@ -922,10 +985,50 @@ def btn_save_act(language_code, slience_mode=False):
                     is_all_data_correct = False
 
         if is_all_data_correct:
+            if len(idle_keyword) > 0:
+                try:
+                    test_array = json.loads("["+ idle_keyword +"]")
+                except Exception as exc:
+                    print(exc)
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["idle_keyword"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(resume_keyword) > 0:
+                try:
+                    test_array = json.loads("["+ resume_keyword +"]")
+                except Exception as exc:
+                    print(exc)
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["resume_keyword"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(idle_keyword_second) > 0:
+                try:
+                    test_array = json.loads("["+ idle_keyword_second +"]")
+                except Exception as exc:
+                    print(exc)
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["idle_keyword_second"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
+            if len(resume_keyword_second) > 0:
+                try:
+                    test_array = json.loads("["+ resume_keyword_second +"]")
+                except Exception as exc:
+                    print(exc)
+                    messagebox.showinfo(translate[language_code]["save"], "Error:" + translate[language_code]["resume_keyword_second"])
+                    is_all_data_correct = False
+
+        if is_all_data_correct:
             config_dict["area_auto_select"]["area_keyword"] = area_keyword
             config_dict["keyword_exclude"] = keyword_exclude
             config_dict["advanced"]["user_guess_string"] = user_guess_string
             config_dict["advanced"]["remote_url"] = remote_url
+            config_dict["advanced"]["idle_keyword"] = idle_keyword
+            config_dict["advanced"]["resume_keyword"] = resume_keyword
+            config_dict["advanced"]["idle_keyword_second"] = idle_keyword_second
+            config_dict["advanced"]["resume_keyword_second"] = resume_keyword_second
 
     if is_all_data_correct:
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
@@ -971,6 +1074,7 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["udn_password"] = encryptMe(config_dict["advanced"]["udn_password"])
         config_dict["advanced"]["ticketplus_password"] = encryptMe(config_dict["advanced"]["ticketplus_password"])
 
+        config_dict["advanced"]["chrome_extension"] = bool(chk_state_chrome_extension.get())
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
         config_dict["advanced"]["hide_some_image"] = bool(chk_state_hide_some_image.get())
         config_dict["advanced"]["block_facebook_network"] = bool(chk_state_block_facebook_network.get())
@@ -1258,6 +1362,11 @@ def applyNewLanguage():
 
     global lbl_maxbot_status
     global lbl_maxbot_last_url
+    global lbl_system_clock
+    global lbl_idle_keyword
+    global lbl_resume_keyword
+    global lbl_idle_keyword_second
+    global lbl_resume_keyword_second
 
     # for checkbox
     global chk_auto_press_next_step_button
@@ -1270,6 +1379,7 @@ def applyNewLanguage():
     global chk_ocr_captcha
     global chk_ocr_captcha_ddddocr_beta
     global chk_ocr_captcha_force_submit
+    global chk_chrome_extension
     global chk_adjacent_seat
     global chk_hide_some_image
     global chk_block_facebook_network
@@ -1290,6 +1400,7 @@ def applyNewLanguage():
     global lbl_donate
     global lbl_release
 
+    global lbl_chrome_extension
     global lbl_adjacent_seat
     global lbl_hide_some_image
     global lbl_block_facebook_network
@@ -1327,6 +1438,7 @@ def applyNewLanguage():
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
     lbl_ocr_captcha_not_support_arm.config(text=translate[language_code]["ocr_captcha_not_support_arm"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
+    lbl_chrome_extension.config(text=translate[language_code]["chrome_extension"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
     lbl_hide_some_image.config(text=translate[language_code]["hide_some_image"])
     lbl_block_facebook_network.config(text=translate[language_code]["block_facebook_network"])
@@ -1350,6 +1462,11 @@ def applyNewLanguage():
 
     lbl_maxbot_status.config(text=translate[language_code]["running_status"])
     lbl_maxbot_last_url.config(text=translate[language_code]["running_url"])
+    lbl_system_clock.config(text=translate[language_code]["system_clock"])
+    lbl_idle_keyword.config(text=translate[language_code]["idle_keyword"])
+    lbl_resume_keyword.config(text=translate[language_code]["resume_keyword"])
+    lbl_idle_keyword_second.config(text=translate[language_code]["idle_keyword_second"])
+    lbl_resume_keyword_second.config(text=translate[language_code]["resume_keyword_second"])
 
     chk_auto_press_next_step_button.config(text=translate[language_code]["enable"])
     chk_auto_fill_ticket_number.config(text=translate[language_code]["enable"])
@@ -1361,6 +1478,7 @@ def applyNewLanguage():
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
+    chk_chrome_extension.config(text=translate[language_code]["enable"])
     chk_adjacent_seat.config(text=translate[language_code]["enable"])
     chk_hide_some_image.config(text=translate[language_code]["enable"])
     chk_block_facebook_network.config(text=translate[language_code]["enable"])
@@ -1980,6 +2098,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
+    global lbl_chrome_extension
+    lbl_chrome_extension = Label(frame_group_header, text=translate[language_code]['chrome_extension'])
+    lbl_chrome_extension.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_chrome_extension
+    chk_state_chrome_extension = BooleanVar()
+    chk_state_chrome_extension.set(config_dict["advanced"]["chrome_extension"])
+
+    global chk_chrome_extension
+    chk_chrome_extension = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_chrome_extension)
+    chk_chrome_extension.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
     global lbl_adjacent_seat
     lbl_adjacent_seat = Label(frame_group_header, text=translate[language_code]['disable_adjacent_seat'])
     lbl_adjacent_seat.grid(column=0, row=group_row_count, sticky = E)
@@ -2446,11 +2578,69 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
+def is_text_match_keyword(keyword_string, text):
+    is_match_keyword = True
+    if len(keyword_string) > 0 and len(text) > 0:
+        is_match_keyword = False
+        keyword_array = []
+        try:
+            keyword_array = json.loads("["+ keyword_string +"]")
+        except Exception as exc:
+            keyword_array = []
+        for item_list in keyword_array:
+            if len(item_list) > 0:
+                if ' ' in item_list:
+                    keyword_item_array = item_list.split(' ')
+                    is_match_all = True
+                    for each_item in keyword_item_array:
+                        if not each_item in text:
+                            is_match_all = False
+                    if is_match_all:
+                        is_match_keyword = True
+                else:
+                    if item_list in text:
+                        is_match_keyword = True
+            else:
+                is_match_keyword = True
+            if is_match_keyword:
+                break
+    return is_match_keyword
+
+def change_maxbot_status_by_keyword():
+    config_filepath, config_dict = load_json()
+
+    system_clock_data = datetime.now()
+    current_time = system_clock_data.strftime('%H:%M:%S')
+    #print('Current Time is:', current_time)
+    if len(config_dict["advanced"]["idle_keyword"]) > 0:
+        is_matched = is_text_match_keyword(config_dict["advanced"]["idle_keyword"], current_time)
+        if is_matched:
+            #print("match to idle:", current_time)
+            do_maxbot_idle()
+    if len(config_dict["advanced"]["resume_keyword"]) > 0:
+        is_matched = is_text_match_keyword(config_dict["advanced"]["resume_keyword"], current_time)
+        if is_matched:
+            #print("match to resume:", current_time)
+            do_maxbot_resume()
+    
+    current_time = system_clock_data.strftime('%S')
+    if len(config_dict["advanced"]["idle_keyword_second"]) > 0:
+        is_matched = is_text_match_keyword(config_dict["advanced"]["idle_keyword_second"], current_time)
+        if is_matched:
+            #print("match to idle:", current_time)
+            do_maxbot_idle()
+    if len(config_dict["advanced"]["resume_keyword_second"]) > 0:
+        is_matched = is_text_match_keyword(config_dict["advanced"]["resume_keyword_second"], current_time)
+        if is_matched:
+            #print("match to resume:", current_time)
+            do_maxbot_resume()
+
 def resetful_api_timer():
     while True:
         btn_preview_text_clicked()
         preview_question_text_file()
         update_maxbot_runtime_status()
+        change_maxbot_status_by_keyword()
         time.sleep(0.3)
         if GLOBAL_SERVER_SHUTDOWN:
             break
@@ -2515,7 +2705,14 @@ def update_maxbot_runtime_status():
         if len(last_url) > 60:
             last_url=last_url[:60]+"..."
         lbl_maxbot_last_url_data.config(text=last_url)
+
+        global lbl_system_clock_data
+        system_clock_data = datetime.now()
+        current_time = system_clock_data.strftime('%H:%M:%S')
+        #print('Current Time is:', current_time)
+        lbl_system_clock_data.config(text=current_time)
     except Exception as exc:
+        #print(exc)
         pass
 
 
@@ -2558,6 +2755,61 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global lbl_maxbot_last_url_data
     lbl_maxbot_last_url_data = Label(frame_group_header, text=last_url)
     lbl_maxbot_last_url_data.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_system_clock
+    lbl_system_clock = Label(frame_group_header, text=translate[language_code]['system_clock'])
+    lbl_system_clock.grid(column=0, row=group_row_count, sticky = E)
+
+    system_clock = ""
+    global lbl_system_clock_data
+    lbl_system_clock_data = Label(frame_group_header, text=system_clock)
+    lbl_system_clock_data.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_idle_keyword
+    lbl_idle_keyword = Label(frame_group_header, text=translate[language_code]['idle_keyword'])
+    lbl_idle_keyword.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_idle_keyword
+    txt_idle_keyword = Text(frame_group_header, width=30, height=4)
+    txt_idle_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_idle_keyword.insert("1.0", config_dict["advanced"]["idle_keyword"].strip())
+
+    group_row_count +=1
+
+    global lbl_resume_keyword
+    lbl_resume_keyword = Label(frame_group_header, text=translate[language_code]['resume_keyword'])
+    lbl_resume_keyword.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_resume_keyword
+    txt_resume_keyword = Text(frame_group_header, width=30, height=4)
+    txt_resume_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_resume_keyword.insert("1.0", config_dict["advanced"]["resume_keyword"].strip())
+
+    group_row_count +=1
+
+    global lbl_idle_keyword_second
+    lbl_idle_keyword_second = Label(frame_group_header, text=translate[language_code]['idle_keyword_second'])
+    lbl_idle_keyword_second.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_idle_keyword_second
+    txt_idle_keyword_second = Text(frame_group_header, width=30, height=4)
+    txt_idle_keyword_second.grid(column=1, row=group_row_count, sticky = W)
+    txt_idle_keyword_second.insert("1.0", config_dict["advanced"]["idle_keyword_second"].strip())
+
+    group_row_count +=1
+
+    global lbl_resume_keyword_second
+    lbl_resume_keyword_second = Label(frame_group_header, text=translate[language_code]['resume_keyword_second'])
+    lbl_resume_keyword_second.grid(column=0, row=group_row_count, sticky = E+N)
+
+    global txt_resume_keyword_second
+    txt_resume_keyword_second = Text(frame_group_header, width=30, height=4)
+    txt_resume_keyword_second.grid(column=1, row=group_row_count, sticky = W)
+    txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
     update_maxbot_runtime_status()
