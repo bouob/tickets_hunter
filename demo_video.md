@@ -1,5 +1,35 @@
 # Demo (示範影片)
 
+### 2024-01-15: 
+MaxBot Plus 1.0.6 擴充功能 for ticktmaster.sg
+
+https://youtu.be/V8S_E7ayAGU
+
+### 2024-01-15: 
+增加關鍵字對狀態做開關的切換
+
+https://youtu.be/u3YQCZZu6kE
+
+### 2024-01-12:
+MaxBot 自動重啟瀏覽器
+
+https://youtu.be/mp6pYgniaPU
+
+### 2024-01-10:
+MaxBot Plus 擴充功能 刷hkticketing
+
+https://youtu.be/zOzFYJsqWME
+
+### 2024-01-08:
+遠大清票延遲重刷
+
+https://youtu.be/j6DlV4BFCuM
+
+### 2024-01-06:
+MaxBot擴充功能在iNDIEVOX選取套票
+
+https://youtu.be/WLukzMTbNR8
+
 ### 2024-01-05: 
 MaxBot Plus 擴充功能支援驗證碼輸入
 
