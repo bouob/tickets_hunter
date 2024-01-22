@@ -87,13 +87,13 @@ function tixcraft_assign_ticket_number(settings)
             });
         }
         
-        let $ticket_options = target_row.find("option");
-        if ($ticket_options.length)
+        let ticket_options = target_row.find("option");
+        if (ticket_options.length)
         {
             let is_ticket_number_assign = false;
             if (settings.ticket_number > 0)
             {
-                $ticket_options.each(function ()
+                ticket_options.each(function ()
                 {
                     if ($(this).val() == settings.ticket_number)
                     {
@@ -105,7 +105,7 @@ function tixcraft_assign_ticket_number(settings)
             }
             if (!is_ticket_number_assign)
             {
-                $ticket_options.last().prop('selected', true);
+                ticket_options.last().prop('selected', true);
             }
         }
     }
@@ -201,14 +201,6 @@ storage.get('settings', function (items)
         settings = items.settings;
     } else {
         console.log('no settings found');
-    }
-});
-
-storage.get('settings', function (items)
-{
-    if (items.settings)
-    {
-        settings = items.settings;
     }
 });
 

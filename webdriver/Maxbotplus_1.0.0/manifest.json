@@ -84,6 +84,16 @@
         },
         {
             "matches": [
+                "https://ticketmaster.sg/ticket/area/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ticketmaster_area.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://tixcraft.com/ticket/area/*",
                 "https://www.indievox.com/ticket/area/*",
                 "https://indievox.com/ticket/area/*"
@@ -100,7 +110,8 @@
                 "https://tixcraft.com/ticket/ticket/*",
                 "https://www.indievox.com/ticket/ticket/*",
                 "https://indievox.com/ticket/ticket/*",
-                "https://ticketmaster.sg/ticket/ticket/*"
+                "https://ticketmaster.sg/ticket/ticket/*",
+                "https://ticketmaster.sg/ticket/check-captcha/*"
             ],
             "run_at": "document_end",
             "js": [
@@ -355,5 +366,5 @@
             ]
         }
     ],
-    "version": "1.0.5"
+    "version": "1.0.6"
 }
