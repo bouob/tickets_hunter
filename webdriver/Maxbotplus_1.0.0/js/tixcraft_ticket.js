@@ -204,6 +204,21 @@ storage.get('settings', function (items)
     }
 });
 
+function get_remote_url(settings)
+{
+    let remote_url_string = "";
+    if(settings) {
+        let remote_url_array = [];
+        if(settings.advanced.remote_url.length > 0) {
+            remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
+        }
+        if(remote_url_array.length) {
+            remote_url_string = remote_url_array[0];
+        }
+    }
+    return remote_url_string;
+}
+
 storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
@@ -215,14 +230,7 @@ storage.get('status', function (items)
         
         // ocr
         if(settings.ocr_captcha.enable) {
-            let remote_url_string = "";
-            let remote_url_array = [];
-            if(settings.advanced.remote_url.length > 0) {
-                remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
-            }
-            if(remote_url_array.length) {
-                remote_url_string = remote_url_array[0];
-            }
+            let remote_url_string = get_remote_url(settings);
             if(!tixcraft_orc_image_ready(remote_url_string)) {
                 myInterval = setInterval(() => {
                     tixcraft_orc_image_ready(remote_url_string);

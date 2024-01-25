@@ -52,23 +52,43 @@ chrome.runtime.onMessage.addListener((message) => {
 
 function ticket_set_ocr_answer(answer)
 {
-    //console.log("answer:"+answer);
+    console.log("answer:"+answer);
     if(answer.length > 0) {
         const currentUrl = window.location.href; 
         const domain = currentUrl.split('/')[2];
         const scrip_page = currentUrl.split('/')[5];
-
-        answer = answer.toUpperCase();
-        let query_string = "div.form-group input[autocomplete='off']";
-        if(domain.indexOf('kham') > -1) {
-            query_string = ".step2Login input[maxlength='4']";
+        
+        if(answer.length == 4) {
+            answer = answer.toUpperCase();
+            let query_string = "div.form-group input[autocomplete='off']";
+            if(domain.indexOf('kham') > -1) {
+                query_string = ".step2Login input[maxlength='4']";
+            }
+            $(query_string).val(answer);
+            //console.log($(query_string).length);
+            //$("div#ticket-wrap a[onclick]").click();
+            //$("#aspnetForm").submit();
+            let done_div="<div style='display:none' id='done'></div>";
+            $("body").append(done_div);
+        } else {
+            let query_string = "div.form-group a img";
+            if(domain.indexOf('kham') > -1) {
+                query_string = ".step2Login a img";
+            }
+            let onclick_event = $(query_string).attr("onclick");
+            let onclick_url = onclick_event.split('?')[1];
+            let ocr_type = get_url_parameter("TYPE", onclick_url);
+            //console.log("get new captcha:", onclick_event);
+            if(ocr_type && ocr_type.length > 0) {
+                let new_image_src = "/pic.aspx?TYPE="+ ocr_type +"&ts=" + new Date().getTime();
+                $("#chk_pic").attr("src", new_image_src);
+                
+                let remote_url_string = get_remote_url(settings);
+                myInterval = setInterval(() => {
+                    ticket_orc_image_ready(remote_url_string);
+                }, 400);                
+            }
         }
-        $(query_string).val(answer);
-        //console.log($(query_string).length);
-        //$("div#ticket-wrap a[onclick]").click();
-        //$("#aspnetForm").submit();
-        let done_div="<div style='display:none' id='done'></div>";
-        $("body").append(done_div);
 
     }
 }
@@ -120,6 +140,21 @@ storage.get('settings', function (items)
     }
 });
 
+function get_remote_url(settings)
+{
+    let remote_url_string = "";
+    if(settings) {
+        let remote_url_array = [];
+        if(settings.advanced.remote_url.length > 0) {
+            remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
+        }
+        if(remote_url_array.length) {
+            remote_url_string = remote_url_array[0];
+        }
+    }
+    return remote_url_string;
+}
+
 storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
@@ -129,14 +164,7 @@ storage.get('status', function (items)
         
         // ocr
         if(settings.ocr_captcha.enable) {
-            let remote_url_string = "";
-            let remote_url_array = [];
-            if(settings.advanced.remote_url.length > 0) {
-                remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
-            }
-            if(remote_url_array.length) {
-                remote_url_string = remote_url_array[0];
-            }
+            let remote_url_string = get_remote_url(settings);
             if(!ticket_orc_image_ready(remote_url_string)) {
                 myInterval = setInterval(() => {
                     ticket_orc_image_ready(remote_url_string);
