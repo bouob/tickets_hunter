@@ -12,6 +12,12 @@ chrome.runtime.onInstalled.addListener(function(){
         text: default_status
     });
 
+    chrome.storage.local.set(
+    {
+        status: default_status
+    }
+    );
+    
     const default_webserver_runing=false;
 
     fetch("data/settings.json")

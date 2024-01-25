@@ -165,6 +165,20 @@
         },
         {
             "matches": [
+                "https://ticket.com.tw/application/UTK02/UTK0205_.aspx?*",
+                "https://ticket.com.tw/application/UTK02/UTK0202_.aspx?*",
+                "https://kham.com.tw/application/UTK02/UTK0205_.aspx?*",
+                "https://kham.com.tw/application/UTK02/UTK0202_.aspx?*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/ticket_ticket.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://kham.com.tw/application/utk01/UTK0101_03.aspx"
             ],
             "run_at": "document_end",
@@ -366,5 +380,5 @@
             ]
         }
     ],
-    "version": "1.0.6"
+    "version": "1.0.7"
 }
