@@ -37,9 +37,21 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 # How to Execute Source Code 
 (透過原始碼的執行方法)
 
-1: <code>python3 -m pip install -r pip-req.txt</code>
+1: 取得source code:
 
-2: <code>python3 settings.py</code>
+<code>git clone https://github.com/max32002/tixcraft_bot.git</code>
+
+2: 進入 clone 的資料夾: tixcraft_bot:
+
+<code>cd tixcraft_bot </code>
+
+3: 安裝第三方套件:
+
+<code>python3 -m pip install -r pip-req.txt</code>
+
+4: 執行設定界面主桯式:
+
+<code>python3 settings.py</code>
 
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
