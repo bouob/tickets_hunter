@@ -37,6 +37,9 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 # How to Execute Source Code 
 (透過原始碼的執行方法)
 
+透過原始碼執行MaxBot教學影片：
+https://youtu.be/HpVG91j0lbI
+
 1: 取得source code:
 
 <code>git clone https://github.com/max32002/tixcraft_bot.git</code>
