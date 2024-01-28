@@ -16,7 +16,7 @@ https://github.com/max32002/tixcraft_bot/releases
 
 請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
-https://max-everyday.com/2023/11/buy-ticket-by-vm/
+https://max-everyday.com/2023/11/buy-ticket-by-vm/#maxbot
 
 # Demo 
 (示範影片)
