@@ -58,6 +58,9 @@ Step 4: 執行設定界面主桯式:
 
 如果MaxBot 沒改版, 第二次要再執行的話, 使用 Step 2 + Step 4, 這2行指令, 就可以執行 MaxBot.
 
+如果你是 ARM CPU 應該會在 Step 3 就顯示錯誤訊息,  解法:
+https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
+
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
 * 透過 python3 執行 settings.py 就可以有 GUI 的設定界面。
