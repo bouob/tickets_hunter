@@ -8,11 +8,9 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 
 https://github.com/max32002/tixcraft_bot/releases
 
-如果你是使用 macOS, 而且是在 release頁面下載整包的MaxBot的zip檔，在你的macOS系統預設 python 版本可以使用 3.8 / 3.9 / 3.10。
-
 如果你是要用原始碼執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
 
-如果你是使用 macOS 或 Linux 平台，建議你使用原始碼來執行MaxBot, 使用方法是先取得原始碼後，開啟Terminal 視窗來下指令，應該是2行指令就可以了。
+如果有辦法的話，建議使用原始碼來執行MaxBot，執行上的效率與相容性的問題會較少，使用方法是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
 
 請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
@@ -40,21 +38,25 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 透過原始碼執行MaxBot教學影片：
 https://youtu.be/HpVG91j0lbI
 
-1: 取得source code:
+Step 1: 取得source code:
 
 <code>git clone https://github.com/max32002/tixcraft_bot.git</code>
 
-2: 進入 clone 的資料夾: tixcraft_bot:
+Step 2: 進入 clone 的資料夾: tixcraft_bot:
 
 <code>cd tixcraft_bot </code>
 
-3: 安裝第三方套件:
+Step 3: 安裝第三方套件:
 
 <code>python3 -m pip install -r pip-req.txt</code>
 
-4: 執行設定界面主桯式:
+Step 4: 執行設定界面主桯式:
 
 <code>python3 settings.py</code>
+
+如果遇到MaxBot 改版, 請重新操作上面4個步驟一次, 即可取得新的版本.
+
+如果MaxBot 沒改版, 第二次要再執行的話, 使用 Step 2 + Step 4, 這2行指令, 就可以執行 MaxBot.
 
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
