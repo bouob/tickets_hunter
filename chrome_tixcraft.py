@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.16)"
+CONST_APP_VERSION = "MaxBot (2024.01.17)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2951,23 +2951,28 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                         # PS: sometime may send key twice...
                         form_input_1.clear()
                         form_input_1.send_keys(inferred_answer_string)
-                        is_button_clicked = False
-                        if is_do_press_next_button:
-                            if submit_by_enter:
-                                form_input_1.send_keys(Keys.ENTER)
-                                is_button_clicked = True
-                            if len(next_step_button_css) > 0:
-                                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
-
-                        if is_button_clicked:
-                            is_answer_sent = True
-                            fail_list.append(inferred_answer_string)
-                            if show_debug_message:
-                                print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
                         pass
+
+                is_button_clicked = False
+                try:
+                    if is_do_press_next_button:
+                        if submit_by_enter:
+                            form_input_1.send_keys(Keys.ENTER)
+                            is_button_clicked = True
+                        if len(next_step_button_css) > 0:
+                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                except Exception as exc:
+                    if show_debug_message:
+                        print(exc)
+                    pass
+                if is_button_clicked:
+                    is_answer_sent = True
+                    fail_list.append(inferred_answer_string)
+                    if show_debug_message:
+                        print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
 
                 if is_answer_sent:
                     for i in range(3):
@@ -8475,17 +8480,18 @@ def cityline_main(driver, url, config_dict):
                 cityline_shows_goto_cta(driver)
 
 def get_ibon_question_text(driver):
-    form_select = None
+    question_div = None
     try:
-        form_select = driver.find_element(By.CSS_SELECTOR, 'div.editor-box > div > div.form-group > label')
+        content_div = driver.find_element(By.CSS_SELECTOR, '#content')
+        question_div = content_div.find_element(By.CSS_SELECTOR, 'label')
     except Exception as exc:
         print("find verify textbox fail")
         pass
 
     question_text = ""
-    if not form_select is None:
+    if not question_div is None:
         try:
-            question_text = form_select.text
+            question_text = question_div.text
         except Exception as exc:
             print("get text fail")
 

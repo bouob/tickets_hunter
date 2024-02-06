@@ -12,10 +12,18 @@
   <h2>MaxBot Settings</h2>
   <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
-      <li class="nav-item" role="presentation"><button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button></li>
-      <li class="nav-item" role="presentation"><button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button></li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false">Verification</button>
+      </li>
     </ul>
     <div class="tab-content" id="myTabContent">
+      <!-- tab 1 -->
       <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
         <div class="row mb-3">
           <label for="ticket_number" class="col-sm-2 col-form-label">Ticket Number</label>
@@ -114,7 +122,8 @@
           </div>
         </div>
       </div>
-      <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="0">
+      <!-- tab 2 -->
+      <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="1">
         <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">Reload page interval(sec.)</label>
           <div class="col-sm-10">
@@ -143,6 +152,15 @@
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">MaxBot Public OCR Server</label>
           <div class="col-sm-10">
             <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server" />
+          </div>
+        </div>
+      </div>
+      <!-- tab 3 -->
+      <div class="tab-pane fade" id="verification-tab-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="2">
+        <div class="row mb-3">
+          <label for="user_guess_string" class="col-sm-2 col-form-label">Local Dictionary</label>
+          <div class="col-sm-10">
+            <textarea class="form-control" id="user_guess_string" rows="3"></textarea>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
 const remote_url = document.querySelector('#remote_url');
+const user_guess_string = document.querySelector('#user_guess_string');
 
 const PUBLIC_SERVER_URL = "http://maxbot.dropboxlike.com:16888/";
 
@@ -25,7 +26,7 @@ ocr_captcha_use_public_server.addEventListener('change', checkUsePublicServer);
 async function saveChanges()
 {
     const ticket_number_value = ticket_number.value;
-    console.log(ticket_number_value);
+    //console.log(ticket_number_value);
     if (!ticket_number_value)
     {
         message('Error: No ticket_number specified');
@@ -33,7 +34,7 @@ async function saveChanges()
         if(settings) {
             settings.ticket_number = ticket_number_value;
             settings.date_auto_select.mode = date_select_mode.value;
-            
+
             let date_keyword_string = date_keyword.value;
             if(date_keyword_string.indexOf('"')==-1) {
                 date_keyword_string = '"' + date_keyword_string + '"';
@@ -47,7 +48,13 @@ async function saveChanges()
                 area_keyword_string = '"' + area_keyword_string + '"';
             }
             settings.area_auto_select.area_keyword = area_keyword_string;
-            
+
+            let user_guess_string_string = user_guess_string.value;
+            if(user_guess_string_string.indexOf('"')==-1) {
+                user_guess_string_string = '"' + user_guess_string_string + '"';
+            }
+            settings.advanced.user_guess_string = user_guess_string_string;
+
             settings.keyword_exclude = keyword_exclude.value;
 
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
@@ -92,6 +99,11 @@ function loadChanges()
             area_keyword.value = settings.area_auto_select.area_keyword;
             if(area_keyword.value=='""') {
                 area_keyword.value='';
+            }
+
+            user_guess_string.value = settings.advanced.user_guess_string;
+            if(user_guess_string.value=='""') {
+                user_guess_string.value='';
             }
 
             keyword_exclude.value = settings.keyword_exclude;

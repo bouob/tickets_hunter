@@ -264,6 +264,17 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?*PERFORMANCE_ID=*PRODUCT_ID=*",
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?*PRODUCT_ID=*PERFORMANCE_ID=*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_verification.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://queue.hkticketing.com/hotshow.html",
                 "https://busy.hkticketing.com/"
             ],
@@ -380,5 +391,5 @@
             ]
         }
     ],
-    "version": "1.0.8"
+    "version": "1.0.9"
 }
