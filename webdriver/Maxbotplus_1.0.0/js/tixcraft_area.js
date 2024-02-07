@@ -36,14 +36,18 @@ function tixcraft_area_keyword(settings)
         }
     }
     // console.log(area_keyword_array);
-    let target_area=[];
+    let target_area=null;
     if(area_keyword_array.length) {
         for (let i = 0; i < area_keyword_array.length; i++) {
             let query_string = "ul.area-list > li > a:contains('"+ area_keyword_array[i] +"')";
             if(area_keyword_array[i]=="") {
                 query_string = "ul.area-list > li > a"
             }
-            let matched_block=$(query_string);
+            let matched_block=[];
+            $(query_string).each(function ()
+            {
+                matched_block.push($(this));
+            });
             target_area = get_target_area_with_order(settings, matched_block);
             if (target_area.length) {
                 console.log("match keyword:" + area_keyword_array[i]);
@@ -52,11 +56,15 @@ function tixcraft_area_keyword(settings)
         }
     } else {
         let query_string = "ul.area-list > li > a";
-        let matched_block=$(query_string);
+        let matched_block=[];
+        $(query_string).each(function ()
+        {
+            matched_block.push($(this));
+        });
         target_area = get_target_area_with_order(settings, matched_block);
     }
     
-    if (target_area.length) {
+    if (target_area) {
         let link_id = target_area.attr("id");
         //console.log("link_id: " + link_id);
         if(link_id) {

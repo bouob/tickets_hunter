@@ -159,7 +159,6 @@
             "run_at": "document_end",
             "js": [
                 "jquery.min.js",
-                "js/common.js",
                 "js/ticket_area.js"
             ]
         },
@@ -173,7 +172,6 @@
             "run_at": "document_end",
             "js": [
                 "jquery.min.js",
-                "js/common.js",
                 "js/ticket_ticket.js"
             ]
         },
@@ -386,10 +384,9 @@
             "run_at": "document_start",
             "js": [
                 "jquery.min.js",
-                "js/common.js",
                 "js/kktix_registrations_reload.js"
             ]
         }
     ],
-    "version": "1.0.10"
+    "version": "1.0.11"
 }

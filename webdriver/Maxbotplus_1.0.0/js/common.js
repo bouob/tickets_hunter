@@ -1,32 +1,40 @@
 function get_target_area_with_order(settings, matched_block)
 {
     //console.log(settings);
-    let target_area = [];
+    let target_area = null;
 
-    if(settings.area_auto_select.mode=="from top to bottom")
-        target_area = matched_block.first();
-    if(settings.area_auto_select.mode=="from bottom to top")
-        target_area = matched_block.last();
-    if(settings.area_auto_select.mode=="center")
-        target_area = matched_block.first();
-    if(settings.area_auto_select.mode=="random")
-        target_area = matched_block.first();
+    if(matched_block.length) {
+        let last_index = matched_block.length-1
+        let center_index = parseInt(last_index/2);
+        if(settings.area_auto_select.mode=="from top to bottom")
+            target_area = matched_block[0];
+        if(settings.area_auto_select.mode=="from bottom to top")
+            target_area = matched_block[last_index];
+        if(settings.area_auto_select.mode=="center")
+            target_area = matched_block[center_index];
+        if(settings.area_auto_select.mode=="random")
+            target_area = matched_block[0];
+    }
     return target_area;
 }
 
 function get_target_date_with_order(settings, matched_block)
 {
     //console.log(settings);
-    let target_area = [];
+    let target_area = null;
 
-   if(settings.date_auto_select.mode=="from top to bottom")
-       target_date = matched_block.first();
-   if(settings.date_auto_select.mode=="from bottom to top")
-       target_date = matched_block.last();
-   if(settings.date_auto_select.mode=="center")
-       target_date = matched_block.first();
-   if(settings.date_auto_select.mode=="random")
-       target_date = matched_block.first();
+    if(matched_block.length) {
+        let last_index = matched_block.length-1
+        let center_index = parseInt(last_index/2);
+        if(settings.date_auto_select.mode=="from top to bottom")
+            target_area = matched_block[0];
+        if(settings.date_auto_select.mode=="from bottom to top")
+            target_area = matched_block[last_index];
+        if(settings.date_auto_select.mode=="center")
+            target_area = matched_block[center_index];
+        if(settings.date_auto_select.mode=="random")
+            target_area = matched_block[0];
+    }
 
     return target_area;
 }

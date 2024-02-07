@@ -35,27 +35,35 @@ function date_keyword(settings)
         }
     }
     //console.log(date_keyword_array);
-    let target_date;
+    let target_date=null;
     if(date_keyword_array.length) {
         for (let i = 0; i < date_keyword_array.length; i++) {
             let query_string = "#gameList td:contains('"+ date_keyword_array[i] +"')";
             if(date_keyword_array[i]=="") {
                 query_string = "#gameList td"
             }
-            let matched_block=$(query_string);
+            let matched_block=[];
+            $(query_string).each(function ()
+            {
+                matched_block.push($(this));
+            });
             target_date = get_target_date_with_order(settings, matched_block);
-            if (target_date.length) {
+            if (target_date) {
                 console.log("match keyword:" + date_keyword_array[i]);
                 break;
             }
         }
     } else {
         let query_string = "#gameList td";
-        let matched_block=$(query_string);
+        let matched_block=[];
+        $(query_string).each(function ()
+        {
+            matched_block.push($(this));
+        });
         target_date = get_target_area_with_order(settings, matched_block);
     }
     
-    if (target_date.length) {
+    if (target_date) {
         let button_tag = "button";
         const currentUrl = window.location.href; 
         const domain = currentUrl.split('/')[2];

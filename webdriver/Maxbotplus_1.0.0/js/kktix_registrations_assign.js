@@ -45,11 +45,10 @@ function kktix_area_keyword(settings, base_info, register_info)
         }
     }
     // console.log(area_keyword_array);
-    let target_area = [];
+    let target_area = null;
     if(area_keyword_array.length) {
         for (let i = 0; i < area_keyword_array.length; i++) {
             let matched_block=[];
-
             $("div.ticket-unit").each(function ()
             {
                 let html_text=$(this).text();
@@ -65,12 +64,15 @@ function kktix_area_keyword(settings, base_info, register_info)
             }
         }
     } else {
-        let query_string = "div.ticket-unit";
-        let matched_block=$(query_string);
+        let matched_block=[];
+        $("div.ticket-unit").each(function ()
+        {
+            matched_block.push($(this));
+        });
         target_area = get_target_area_with_order(settings, matched_block);
     }
 
-    if (target_area.length) {
+    if (target_area) {
         let first_node = target_area.find(":first-child");
         let link_id = first_node.attr("id");
         //console.log("link_id: " + link_id);
