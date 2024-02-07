@@ -1,5 +1,15 @@
 # Demo (示範影片)
 
+### 2024-01-17: 
+調整ibon驗證問題的輸入
+
+https://youtu.be/z3mM_Ljui2U
+
+### 2024-01-16: 
+只使用 chrome 擴充功能輸入驗證碼
+
+https://youtu.be/8RtmfknXdGk
+
 ### 2024-01-15: 
 MaxBot Plus 1.0.6 擴充功能 for ticktmaster.sg
 
