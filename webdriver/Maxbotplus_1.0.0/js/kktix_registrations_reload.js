@@ -29,7 +29,7 @@ function kktix_clean_exclude(settings, register_info)
     }
 }
 
-function clean_sold_out_row(register_info)
+function clean_sold_out_row(register_info, base_info)
 {
     //console.log("clean_sold_out_row");
 
@@ -61,13 +61,25 @@ function clean_sold_out_row(register_info)
             $("body").append(settings_div);
             let register_info_div="<div style='display:none' id='register_info'>" + JSON.stringify(register_info) + "</div>";
             $("body").append(register_info_div);
+            let base_info_div="<div style='display:none' id='base_info'>" + JSON.stringify(base_info) + "</div>";
+            $("body").append(base_info_div);
             kktix_clean_exclude(settings, register_info);
             //kktix_area_keyword(settings, register_info);
         }
     }
 }
 
-function kktix_ajax_done(register_info)
+function kktix_ajax_return_base_info(base_info, register_info)
+{
+    //console.log(base_info.eventData.order_qualifications);
+    $(function() {
+        myInterval = setInterval(() => {
+            clean_sold_out_row(register_info, base_info);
+        }, 200);
+    });
+}
+
+function kktix_ajax_return_register_info(register_info)
 {
     let reload=false;
     console.log(register_info.inventory.registerStatus);
@@ -92,15 +104,35 @@ function kktix_ajax_done(register_info)
         }
     }
     else {
-        $(function() {
-            myInterval = setInterval(() => {
-                clean_sold_out_row(register_info);
-            }, 200);
+        kktix_event_base_info(register_info);
+    }
+}
+
+function kktix_event_base_info(register_info)
+{
+    const currentUrl = window.location.href; 
+    const event_code = currentUrl.split('/')[4];
+    //console.log(currentUrl);
+    //console.log(event_code);
+    if(event_code){
+        let api_url = "https://kktix.com/g/events/"+ event_code +"/base_info";
+        $.get( api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            kktix_ajax_return_base_info(data, register_info);
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
         });
     }
 }
 
-function kktix_event_status_check()
+function kktix_event_register_info()
 {
     const currentUrl = window.location.href; 
     const event_code = currentUrl.split('/')[4];
@@ -113,7 +145,7 @@ function kktix_event_status_check()
         })
         .done(function(data) {
             //alert( "second success" );
-            kktix_ajax_done(data);
+            kktix_ajax_return_register_info(data);
         })
         .fail(function() {
             //alert( "error" );
@@ -136,7 +168,7 @@ storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
     {
-        kktix_event_status_check();
+        kktix_event_register_info();
     } else {
         console.log('no status found');
     }

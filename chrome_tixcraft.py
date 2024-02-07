@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.17)"
+CONST_APP_VERSION = "MaxBot (2024.01.18)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -4583,12 +4583,26 @@ def get_kktix_control_label_text(driver):
 
     captcha_inner_div = None
     try:
-        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div.ticket-unit > div.code-input > div.control-group > label.control-label')
+        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div > div.code-input > div.control-group > label.control-label')
         if not captcha_inner_div is None:
             question_text = remove_html_tags(captcha_inner_div.get_attribute('innerHTML'))
     except Exception as exc:
         pass
     return question_text
+
+def set_kktix_control_label_text(driver, config_dict):
+    fail_list = []
+    answer_list = get_answer_list_from_user_guess_string(config_dict)
+    inferred_answer_string = ""
+    for answer_item in answer_list:
+        if not answer_item in fail_list:
+            inferred_answer_string = answer_item
+            break
+    input_text_css = 'div > div.code-input > div.control-group > div.controls > label > input[type="text"]'
+    next_step_button_css = '#registrationsNewApp div.form-actions button.btn-primary'
+    submit_by_enter = False
+    check_input_interval = 0.2
+    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
 def get_kktix_question_text(driver):
     question_text = ""
@@ -4720,6 +4734,10 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
                         print("control_text:", control_text)
                     if len(control_text) == 0:
                         click_ret = kktix_press_next_button(driver)
+                    else:
+                        #set_kktix_control_label_text(driver, config_dict)
+                        # input by maxbox plus extension.
+                        pass
             else:
                 if is_need_refresh:
                     try:
