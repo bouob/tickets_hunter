@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.01.19)"
+CONST_APP_VERSION = "MaxBot (2024.01.20)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -9745,7 +9745,7 @@ def hkticketing_url_redirect(driver, url, config_dict):
     for redirect_url in redirect_url_list:
         if redirect_url in url:
             # for hkticketing.
-            entry_url = 'http://entry-hotshow.hkticketing.com/'
+            entry_url = 'https://entry-hotshow.hkticketing.com/'
 
             # for macau
             # for ticketek.com
@@ -9766,6 +9766,30 @@ def hkticketing_url_redirect(driver, url, config_dict):
 
             if is_redirected:
                 break
+
+    # for Access denied (403)
+    if url == 'https://entry-hotshow.hkticketing.com/':
+        content_redirect_string_list = ['Access denied (403)','Current session has been terminated']
+        is_need_refresh = False
+        html_body = None
+        try:
+            html_body = driver.page_source
+        except Exception as exc:
+            #print(exc)
+            pass
+        if not html_body is None:
+            for each_redirect_string in content_redirect_string_list:
+                if each_redirect_string in html_body:
+                    is_need_refresh = True
+                    break
+        if is_need_refresh:
+            entry_url = "https://hotshow.hkticketing.com/"
+            try:
+                driver.get(entry_url)
+                is_redirected = True
+            except Exception as exc:
+                pass
+
     return is_redirected
 
 def hkticketing_content_refresh(driver, url, config_dict):
