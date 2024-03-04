@@ -50,15 +50,15 @@ Step 3: 安裝第三方套件:
 
 <code>python3 -m pip install -r pip-req.txt</code>
 
-Step 4: 執行設定界面主桯式:
+Step 4: 執行設定介面主桯式:
 
 <code>python3 settings.py</code>
 
-如果不使用設定界面，直接執行主程式:
+如果不使用設定介面，直接執行主程式:
 
 <code>python3 chrome_tixcraft.py</code>
 
-如果不使用設定界面，直接執行主程式並套用特定的設定檔:
+如果不使用設定介面，直接執行主程式並套用特定的設定檔:
 
 <code>python3 chrome_tixcraft.py --input settings.json</code>
 
@@ -73,7 +73,7 @@ https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
-* 透過 python3 執行 settings.py 就可以有 GUI 的設定界面。
+* 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
 * 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站([https://www.python.org/downloads/](https://www.python.org/downloads/))來安裝 python3.
 * 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有2個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
 
