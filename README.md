@@ -61,6 +61,8 @@ Step 4: 執行設定界面主桯式:
 如果你是 ARM CPU 應該會在 Step 3 就顯示錯誤訊息,  解法:
 https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
+不管是 macOS 還是 Windows 預設都是沒有 git 這個指令，如果 Step 1 執行後,  沒有檔案被下載, 請先安裝 git 到你的作業系統。
+
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
 * 透過 python3 執行 settings.py 就可以有 GUI 的設定界面。
