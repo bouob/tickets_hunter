@@ -54,6 +54,14 @@ Step 4: 執行設定界面主桯式:
 
 <code>python3 settings.py</code>
 
+如果不使用設定界面，直接執行主程式:
+
+<code>python3 chrome_tixcraft.py</code>
+
+如果不使用設定界面，直接執行主程式並套用特定的設定檔:
+
+<code>python3 chrome_tixcraft.py --input settings.json</code>
+
 如果遇到MaxBot 改版, 請重新操作上面4個步驟一次, 即可取得新的版本.
 
 如果MaxBot 沒改版, 第二次要再執行的話, 使用 Step 2 + Step 4, 這2行指令, 就可以執行 MaxBot.
