@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.01)"
+CONST_APP_VERSION = "MaxBot (2024.02.02)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -7841,34 +7841,41 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     return tixcraft_dict
 
 def kktix_paused_main(driver, url, config_dict, kktix_dict):
-    if '/registrations/new' in url:
-
-        # part 1: check recaptch  div.
-        recaptcha_div = None
-        try:
-            recaptcha_div = driver.find_element(By.CSS_SELECTOR, '.event-captcha-info')
-        except Exception as exc:
-            pass
-
-        if not recaptcha_div is None:
-            select_query = '.ng-hide'
-            class_name = 'ng-hide'
-            remove_class_tag_by_selector(driver, select_query, class_name)
-            select_query = '.btn-disabled-alt'
-            class_name = 'btn-disabled-alt'
-            remove_class_tag_by_selector(driver, select_query, class_name)
-            select_query = 'button[disabled="disabled"]'
-            class_name = 'disabled'
-            remove_attribute_tag_by_selector(driver, select_query, class_name)
-
-    return kktix_dict
-
-def kktix_main(driver, url, config_dict, kktix_dict):
-    kktix_account = config_dict["advanced"]["kktix_account"]
-
     is_url_contain_sign_in = False
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
+        kktix_account = config_dict["advanced"]["kktix_account"]
+        if len(kktix_account) > 4:
+            kktix_login(driver, kktix_account, decryptMe(config_dict["advanced"]["kktix_password"]))
+        is_url_contain_sign_in = True
+    
+    # PS: after test, this still not popup reCaptcha.
+    if not is_url_contain_sign_in:
+        if '/registrations/new' in url:
+            # part 1: check recaptch  div.
+            recaptcha_div = None
+            try:
+                recaptcha_div = driver.find_element(By.CSS_SELECTOR, '.event-captcha-info')
+            except Exception as exc:
+                pass
+
+            if not recaptcha_div is None:
+                select_query = '.ng-hide'
+                class_name = 'ng-hide'
+                remove_class_tag_by_selector(driver, select_query, class_name)
+                select_query = '.btn-disabled-alt'
+                class_name = 'btn-disabled-alt'
+                remove_class_tag_by_selector(driver, select_query, class_name)
+                select_query = 'button[disabled="disabled"]'
+                class_name = 'disabled'
+                remove_attribute_tag_by_selector(driver, select_query, class_name)
+    return kktix_dict
+
+def kktix_main(driver, url, config_dict, kktix_dict):
+    is_url_contain_sign_in = False
+    # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
+    if '/users/sign_in?' in url:
+        kktix_account = config_dict["advanced"]["kktix_account"]
         if len(kktix_account) > 4:
             kktix_login(driver, kktix_account, decryptMe(config_dict["advanced"]["kktix_password"]))
         is_url_contain_sign_in = True
@@ -7890,7 +7897,6 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
                     kktix_dict["fail_list"], kktix_dict["captcha_sound_played"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["captcha_sound_played"], is_finish_checkbox_click)
                     kktix_dict["done_time"] = time.time()
-
         else:
             is_event_page = False
             if '/events/' in url:
