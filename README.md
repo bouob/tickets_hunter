@@ -71,6 +71,8 @@ https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
 不管是 macOS 還是 Windows 預設都是沒有 git 這個指令，如果 Step 1 執行後,  沒有檔案被下載, 請先安裝 git 到你的作業系統。或是使用github 網頁裡的 Download 功能把python 腳本下載。
 
+如果你選擇下載 github 上的 zip 檔, 在 Step 2 可能會遇到問題, 因為直接解壓縮的目錄名稱並不是 tixcraft_bot 而是 tixcraft_bot-master, 你在進入的資料夾名稱, 需要調整為您實際解壓縮後的目錄名稱。
+
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
 * 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
