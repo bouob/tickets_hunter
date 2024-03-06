@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.02)"
+CONST_APP_VERSION = "MaxBot (2024.02.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -773,6 +773,7 @@ def load_chromdriver_uc(config_dict):
         # use chromedriver_autodownload instead of uc auto download.
         is_cache_exist = clean_uc_exe_cache()
 
+        fail_1 = False
         try:
             options = get_uc_options(uc, config_dict, webdriver_path)
             driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
@@ -787,7 +788,18 @@ def load_chromdriver_uc(config_dict):
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+            fail_1 = True
 
+        fail_2 = False
+        if fail_1:
+            try:
+                options = get_uc_options(uc, config_dict, webdriver_path)
+                driver = uc.Chrome(options=options)
+            except Exception as exc:
+                print(exc)
+                fail_2 = True
+
+        if fail_2:
             # remove exist chromedriver, download again.
             try:
                 print("Deleting exist and download ChromeDriver again.")
