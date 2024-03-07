@@ -12,6 +12,14 @@ except ImportError:
     import tkinter.font as tkfont
     from tkinter import messagebox
     from tkinter.filedialog import asksaveasfilename
+    '''
+    try:
+        import customtkinter
+        customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
+        customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+    except Exception as exc:
+        pass
+    '''
 
 import asyncio
 import base64
@@ -40,7 +48,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.03)"
+CONST_APP_VERSION = "MaxBot (2024.02.04)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1025,10 +1033,21 @@ def btn_save_act(language_code, slience_mode=False):
             config_dict["keyword_exclude"] = keyword_exclude
             config_dict["advanced"]["user_guess_string"] = user_guess_string
             config_dict["advanced"]["remote_url"] = remote_url
+            
             config_dict["advanced"]["idle_keyword"] = idle_keyword
             config_dict["advanced"]["resume_keyword"] = resume_keyword
             config_dict["advanced"]["idle_keyword_second"] = idle_keyword_second
             config_dict["advanced"]["resume_keyword_second"] = resume_keyword_second
+
+            txt_idle_keyword.delete(1.0, "end")
+            txt_resume_keyword.delete(1.0, "end")
+            txt_idle_keyword_second.delete(1.0, "end")
+            txt_resume_keyword_second.delete(1.0, "end")
+
+            txt_idle_keyword.insert("1.0", config_dict["advanced"]["idle_keyword"].strip())
+            txt_resume_keyword.insert("1.0", config_dict["advanced"]["resume_keyword"].strip())
+            txt_idle_keyword_second.insert("1.0", config_dict["advanced"]["idle_keyword_second"].strip())
+            txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
 
     if is_all_data_correct:
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
@@ -2635,6 +2654,50 @@ def change_maxbot_status_by_keyword():
             #print("match to resume:", current_time)
             do_maxbot_resume()
 
+    check_maxbot_config_unsaved(config_dict)
+
+def check_maxbot_config_unsaved(config_dict):
+    # alert not saved config.
+    global txt_idle_keyword
+    global txt_resume_keyword
+    global txt_idle_keyword_second
+    global txt_resume_keyword_second
+
+    try:
+        idle_keyword = txt_idle_keyword.get("1.0",END).strip()
+        idle_keyword = format_config_keyword_for_json(idle_keyword)
+
+        resume_keyword = txt_resume_keyword.get("1.0",END).strip()
+        resume_keyword = format_config_keyword_for_json(resume_keyword)
+
+        idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
+        idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
+
+        resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
+        resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+
+        highlightthickness = 0
+        if config_dict["advanced"]["idle_keyword"] != idle_keyword:
+            highlightthickness = 2
+        txt_idle_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["advanced"]["resume_keyword"] != resume_keyword:
+            highlightthickness = 2
+        txt_resume_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["advanced"]["idle_keyword_second"] != idle_keyword_second:
+            highlightthickness = 2
+        txt_idle_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["advanced"]["resume_keyword_second"] != resume_keyword_second:
+            highlightthickness = 2
+        txt_resume_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
+    except Exception as exc:
+        pass
+
 def resetful_api_timer():
     while True:
         btn_preview_text_clicked()
@@ -2711,6 +2774,7 @@ def update_maxbot_runtime_status():
         current_time = system_clock_data.strftime('%H:%M:%S')
         #print('Current Time is:', current_time)
         lbl_system_clock_data.config(text=current_time)
+
     except Exception as exc:
         #print(exc)
         pass
@@ -2999,6 +3063,7 @@ def main():
 
     global root
     root = Tk()
+    #root = customtkinter.CTk()
     root.title(CONST_APP_VERSION)
 
     global UI_PADDING_X
