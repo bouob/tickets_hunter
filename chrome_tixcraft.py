@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.04)"
+CONST_APP_VERSION = "MaxBot (2024.02.05)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -205,16 +205,18 @@ def get_config_dict(args):
 
             if not args.tixcraft_sid is None:
                 if len(args.tixcraft_sid) > 0:
-                    config_dict["advanced"]["tixcraft_sid"] = encryptMe(args.tixcraft_sid)
+                    config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
+            if not args.ibonqware is None:
+                if len(args.ibonqware) > 0:
+                    config_dict["advanced"]["ibonqware"] = args.ibonqware
+
             if not args.kktix_account is None:
                 if len(args.kktix_account) > 0:
                     config_dict["advanced"]["kktix_account"] = args.kktix_account
             if not args.kktix_password is None:
                 if len(args.kktix_password) > 0:
-                    config_dict["advanced"]["kktix_password"] = args.kktix_password
-            if not args.ibonqware is None:
-                if len(args.ibonqware) > 0:
-                    config_dict["advanced"]["ibonqware"] = encryptMe(args.ibonqware)
+                    config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
+            
             if not args.proxy_server is None:
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
@@ -1083,13 +1085,13 @@ def get_driver_by_config(config_dict):
 
             if tixcraft_family:
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    tixcraft_sid = decryptMe(config_dict["advanced"]["tixcraft_sid"])
+                    tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
 
             if 'ibon.com' in homepage:
                 if len(config_dict["advanced"]["ibonqware"]) > 1:
-                    ibonqware = decryptMe(config_dict["advanced"]["ibonqware"])
+                    ibonqware = config_dict["advanced"]["ibonqware"]
                     driver.delete_cookie("ibonqware")
                     driver.add_cookie({"name":"ibonqware", "value": ibonqware, "domain" : "ibon.com.tw", "secure":True})
 
@@ -7857,8 +7859,11 @@ def kktix_paused_main(driver, url, config_dict, kktix_dict):
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         kktix_account = config_dict["advanced"]["kktix_account"]
+        kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+        if kktix_password == "":
+            kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
         if len(kktix_account) > 4:
-            kktix_login(driver, kktix_account, decryptMe(config_dict["advanced"]["kktix_password"]))
+            kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
     
     # PS: after test, this still not popup reCaptcha.
@@ -7888,8 +7893,11 @@ def kktix_main(driver, url, config_dict, kktix_dict):
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         kktix_account = config_dict["advanced"]["kktix_account"]
+        kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+        if kktix_password == "":
+            kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
         if len(kktix_account) > 4:
-            kktix_login(driver, kktix_account, decryptMe(config_dict["advanced"]["kktix_password"]))
+            kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
 
     if not is_url_contain_sign_in:
@@ -7965,8 +7973,11 @@ def fami_login(driver, account, password):
 def famiticket_main(driver, url, config_dict, fami_dict):
     if '/Home/User/SignIn' in url:
         fami_account = config_dict["advanced"]["fami_account"]
+        fami_password = config_dict["advanced"]["fami_password_plaintext"].strip()
+        if fami_password == "":
+            fami_password = decryptMe(config_dict["advanced"]["fami_password"])
         if len(fami_account) > 4:
-            fami_login(driver, fami_account, decryptMe(config_dict["advanced"]["fami_password"]))
+            fami_login(driver, fami_account, fami_password)
 
     if '/Home/Activity/Info/' in url:
         fami_dict["last_activity"] = url
@@ -8322,8 +8333,11 @@ def urbtix_main(driver, url, config_dict):
 
     if '.hk/member-login' in url:
         urbtix_account = config_dict["advanced"]["urbtix_account"]
-        if len(urbtix_account) > 2:
-            urbtix_login(driver, urbtix_account, decryptMe(config_dict["advanced"]["urbtix_password"]))
+        urbtix_password = config_dict["advanced"]["urbtix_password_plaintext"].strip()
+        if urbtix_password == "":
+            urbtix_password = decryptMe(config_dict["advanced"]["urbtix_password"])
+        if len(urbtix_account) > 4:
+            urbtix_login(driver, urbtix_account, urbtix_password)
 
     is_ready_to_buy_from_queue = False
     # Q: How to know ready to buy ticket from queue?
@@ -8483,9 +8497,11 @@ def cityline_main(driver, url, config_dict):
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
     if '/Login.html' in url:
-        cityline_account = config_dict["advanced"]["cityline_account"]
-        if len(cityline_account) > 2:
-            cityline_login(driver, cityline_account, decryptMe(config_dict["advanced"]["cityline_password"]))
+        cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
+        if cityline_password == "":
+            cityline_password = decryptMe(config_dict["advanced"]["cityline_password"])
+        if len(cityline_account) > 4:
+            cityline_login(driver, cityline_account, cityline_password)
         return
 
     is_ready_to_buy_from_queue = False
@@ -9947,9 +9963,12 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
     if 'hkticketing.com/Membership/Login.aspx' in url:
         is_hkticketing_sign_in_page = True
     if is_hkticketing_sign_in_page:
-        account = config_dict["advanced"]["hkticketing_account"].strip()
-        if len(account) > 4:
-            hkticketing_login(driver, account, decryptMe(config_dict["advanced"]["hkticketing_password"]))
+        hkticketing_account = config_dict["advanced"]["hkticketing_account"].strip()
+        hkticketing_password = config_dict["advanced"]["hkticketing_password_plaintext"].strip()
+        if hkticketing_password == "":
+            hkticketing_password = decryptMe(config_dict["advanced"]["hkticketing_password"])
+        if len(hkticketing_account) > 4:
+            hkticketing_login(driver, hkticketing_account, hkticketing_password)
 
     is_ready_to_buy_from_queue = False
     # TODO: play sound when ready to buy ticket.
@@ -10907,8 +10926,12 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
         # udn sign in.
         if 'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx' == url.lower():
-            if len(config_dict["advanced"]["udn_account"]) > 4:
-                udn_login(driver, config_dict["advanced"]["udn_account"], decryptMe(config_dict["advanced"]["udn_password"]))
+            udn_account = config_dict["advanced"]["udn_account"]
+            udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
+            if udn_password == "":
+                udn_password = decryptMe(config_dict["advanced"]["udn_password"])
+            if len(udn_account) > 4:
+                udn_login(driver, udn_account, udn_password)
 
         if 'utk0203_.aspx?product_id=' in url.lower():
             select_query = 'input.yd_counterNum'
@@ -11071,13 +11094,22 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                     Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
 
                 kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
-                account = config_dict["advanced"]["kham_account"]
-                if len(account) > 4:
-                    kham_login(driver, account, decryptMe(config_dict["advanced"]["kham_password"]))
 
-                account = config_dict["advanced"]["ticket_account"]
-                if len(account) > 4:
-                    ticket_login(driver, account, decryptMe(config_dict["advanced"]["ticket_password"]))
+                kham_account = config_dict["advanced"]["kham_account"]
+                kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
+                if kham_password == "":
+                    kham_password = decryptMe(config_dict["advanced"]["kham_password"])
+                if len(kham_account) > 4:
+                    kham_login(driver, kham_account, kham_password)
+
+
+                ticket_account = config_dict["advanced"]["ticket_account"]
+                ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
+                if ticket_password == "":
+                    ticket_password = decryptMe(config_dict["advanced"]["ticket_password"])
+                if len(ticket_account) > 4:
+                    ticket_login(driver, ticket_account, ticket_password)
+
 
 def ticketplus_date_auto_select(driver, config_dict):
     show_debug_message = True    # debug.
@@ -12215,16 +12247,19 @@ def ticketplus_account_sign_in(driver, config_dict):
                 if el_pass.is_enabled():
                     inputed_text = el_pass.get_attribute('value')
                     if not inputed_text is None:
-                        password = decryptMe(config_dict["advanced"]["ticketplus_password"])
+                        ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
+                        if ticketplus_password == "":
+                            ticketplus_password = decryptMe(config_dict["advanced"]["ticketplus_password"])
+
                         if len(inputed_text) == 0:
                             el_pass.click()
-                            if(len(password)>0):
-                                el_pass.send_keys(password)
+                            if(len(ticketplus_password)>0):
+                                el_pass.send_keys(ticketplus_password)
                                 el_pass.send_keys(Keys.ENTER)
                                 is_password_sent = True
                         else:
-                            if(len(password)>0):
-                                if inputed_text == password:
+                            if(len(ticketplus_password)>0):
+                                if inputed_text == ticketplus_password:
                                     el_pass.click()
                                     el_pass.send_keys(Keys.ENTER)
                                     is_password_sent = True
@@ -12634,8 +12669,11 @@ def main(args):
         facebook_login_url = 'https://www.facebook.com/login.php?'
         if url[:len(facebook_login_url)]==facebook_login_url:
             facebook_account = config_dict["advanced"]["facebook_account"].strip()
+            facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
+            if facebook_password == "":
+                facebook_password = decryptMe(config_dict["advanced"]["facebook_password"])
             if len(facebook_account) > 4:
-                facebook_login(driver, facebook_account, decryptMe(config_dict["advanced"]["facebook_password"]))
+                facebook_login(driver, facebook_account, facebook_password)
 
 def cli():
     parser = argparse.ArgumentParser(

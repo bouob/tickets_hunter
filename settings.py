@@ -48,7 +48,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.04)"
+CONST_APP_VERSION = "MaxBot (2024.02.05)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -721,6 +721,17 @@ def get_default_config():
     config_dict["advanced"]["udn_password"] = ""
     config_dict["advanced"]["ticketplus_password"] = ""
 
+    config_dict["advanced"]["facebook_password_plaintext"] = ""
+    config_dict["advanced"]["kktix_password_plaintext"] = ""
+    config_dict["advanced"]["fami_password_plaintext"] = ""
+    config_dict["advanced"]["urbtix_password_plaintext"] = ""
+    config_dict["advanced"]["cityline_password_plaintext"] = ""
+    config_dict["advanced"]["hkticketing_password_plaintext"] = ""
+    config_dict["advanced"]["kham_password_plaintext"] = ""
+    config_dict["advanced"]["ticket_password_plaintext"] = ""
+    config_dict["advanced"]["udn_password_plaintext"] = ""
+    config_dict["advanced"]["ticketplus_password_plaintext"] = ""
+
     config_dict["advanced"]["chrome_extension"] = True
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = False
@@ -1058,6 +1069,7 @@ def btn_save_act(language_code, slience_mode=False):
 
         config_dict["advanced"]["tixcraft_sid"] = txt_tixcraft_sid.get().strip()
         config_dict["advanced"]["ibonqware"] = txt_ibon_ibonqware.get().strip()
+        
         config_dict["advanced"]["facebook_account"] = txt_facebook_account.get().strip()
         config_dict["advanced"]["kktix_account"] = txt_kktix_account.get().strip()
         config_dict["advanced"]["fami_account"] = txt_fami_account.get().strip()
@@ -1080,8 +1092,9 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["advanced"]["udn_password"] = txt_udn_password.get().strip()
         config_dict["advanced"]["ticketplus_password"] = txt_ticketplus_password.get().strip()
 
-        config_dict["advanced"]["tixcraft_sid"] = encryptMe(config_dict["advanced"]["tixcraft_sid"])
-        config_dict["advanced"]["ibonqware"] = encryptMe(config_dict["advanced"]["ibonqware"])
+        config_dict["advanced"]["tixcraft_sid"] = config_dict["advanced"]["tixcraft_sid"]
+        config_dict["advanced"]["ibonqware"] = config_dict["advanced"]["ibonqware"]
+
         config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
         config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
         config_dict["advanced"]["fami_password"] = encryptMe(config_dict["advanced"]["fami_password"])
@@ -2408,7 +2421,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_tixcraft_sid.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_tixcraft_sid
-    txt_tixcraft_sid_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["tixcraft_sid"].strip()))
+    txt_tixcraft_sid_value = StringVar(frame_group_header, value=config_dict["advanced"]["tixcraft_sid"].strip())
     txt_tixcraft_sid = Entry(frame_group_header, width=30, textvariable = txt_tixcraft_sid_value, show="*")
     txt_tixcraft_sid.grid(column=1, row=group_row_count, columnspan=2, sticky = W)
 
@@ -2419,7 +2432,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_ibon_ibonqware.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_ibon_ibonqware
-    txt_ibon_ibonqware_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ibonqware"].strip()))
+    txt_ibon_ibonqware_value = StringVar(frame_group_header, value=config_dict["advanced"]["ibonqware"].strip())
     txt_ibon_ibonqware = Entry(frame_group_header, width=30, textvariable = txt_ibon_ibonqware_value, show="*")
     txt_ibon_ibonqware.grid(column=1, row=group_row_count, columnspan=2, sticky = W)
 
@@ -2658,12 +2671,26 @@ def change_maxbot_status_by_keyword():
 
 def check_maxbot_config_unsaved(config_dict):
     # alert not saved config.
+    global combo_ticket_number
+    global txt_date_keyword
+    global txt_area_keyword
+    global txt_keyword_exclude
+
     global txt_idle_keyword
     global txt_resume_keyword
     global txt_idle_keyword_second
     global txt_resume_keyword_second
 
     try:
+        date_keyword = txt_date_keyword.get("1.0",END).strip()
+        date_keyword = format_config_keyword_for_json(date_keyword)
+
+        area_keyword = txt_area_keyword.get("1.0",END).strip()
+        area_keyword = format_config_keyword_for_json(area_keyword)
+
+        keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
+        keyword_exclude = format_config_keyword_for_json(keyword_exclude)
+
         idle_keyword = txt_idle_keyword.get("1.0",END).strip()
         idle_keyword = format_config_keyword_for_json(idle_keyword)
 
@@ -2675,6 +2702,27 @@ def check_maxbot_config_unsaved(config_dict):
 
         resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
         resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+
+        highlightthickness = 0
+        if len(combo_ticket_number.get().strip())>0:
+            if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
+                highlightthickness = 2
+        #combo_ticket_number.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["date_auto_select"]["date_keyword"] != date_keyword:
+            highlightthickness = 2
+        txt_date_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["area_auto_select"]["area_keyword"] != area_keyword:
+            highlightthickness = 2
+        txt_area_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+        highlightthickness = 0
+        if config_dict["keyword_exclude"] != keyword_exclude:
+            highlightthickness = 2
+        txt_keyword_exclude.config(highlightthickness=highlightthickness, highlightbackground="red")
 
         highlightthickness = 0
         if config_dict["advanced"]["idle_keyword"] != idle_keyword:
@@ -2696,6 +2744,7 @@ def check_maxbot_config_unsaved(config_dict):
             highlightthickness = 2
         txt_resume_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
     except Exception as exc:
+        print(exc)
         pass
 
 def resetful_api_timer():
@@ -2790,7 +2839,6 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global lbl_maxbot_status
     lbl_maxbot_status = Label(frame_group_header, text=translate[language_code]['running_status'])
     lbl_maxbot_status.grid(column=0, row=group_row_count, sticky = E)
-
 
     frame_maxbot_interrupt = Frame(frame_group_header)
 
