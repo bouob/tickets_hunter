@@ -239,6 +239,17 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/ibon_area_front.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
             ],
@@ -388,5 +399,5 @@
             ]
         }
     ],
-    "version": "1.0.11"
+    "version": "1.0.12"
 }

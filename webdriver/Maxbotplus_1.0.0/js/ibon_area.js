@@ -36,25 +36,30 @@ function ibon_area_ready(settings) {
             target_row=all_row;
         } else {
             // multi select.
-            all_row.each(function ()
-            {
-                //console.log(all_row.index(this));
-                let is_match_keyword = false;
-                if(all_row.index(this)==0) {
-                    target_row=$(this);
-                } else {
+            try {
+                all_row.each(function ()
+                {
+                    //console.log(all_row.index(this));
+                    let is_match_keyword = false;
+
                     if(area_keyword_array.length) {
                         let html_text=$(this).text();
                         //console.log("html:"+html_text);
 
+                        // TOOD: multi item matched, need sort.
                         for (let i = 0; i < area_keyword_array.length; i++) {
-                            // TOOD: multi item matched, need sort.
                             // target_area = get_target_area_with_order(settings, matched_block);
+                            //console.log("area_keyword:"+area_keyword_array[i]);
 
-                            if(html_text.indexOf(area_keyword_array[i])>-1) {
-                                is_match_keyword = true;
-                                target_row=$(this);
-                                break;
+                            if(area_keyword_array[i].indexOf(" ")>-1) {
+                                // TODO: muti keywords with AND logic.
+                            } else {
+                                // single keyword.
+                                if(html_text.indexOf(area_keyword_array[i])>-1) {
+                                    is_match_keyword = true;
+                                    target_row=$(this);
+                                    break;
+                                }
                             }
                         }
                     } else {
@@ -63,15 +68,20 @@ function ibon_area_ready(settings) {
                             target_row=$(this);
                         }
                     }
-                }
-                //console.log("is_match_keyword:"+is_match_keyword);
-                if(is_match_keyword) {
-                    return;
-                }
-            });
+
+                    //console.log("is_match_keyword:"+is_match_keyword);
+                    if(is_match_keyword) {
+                        throw {};
+                    }
+                });
+            } catch { }
         }
         if(target_row) {
-            target_row.click();
+            //console.log("found target, clicking");
+            // click fail on sandbox world.
+            //target_row.click();
+            let done_div="<div style='display:none' id='maxbot'>"+ target_row.attr("id") +"</div>";
+            $("body").append(done_div);
         }
     } else {
         location.reload();

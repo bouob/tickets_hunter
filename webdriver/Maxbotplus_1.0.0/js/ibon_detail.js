@@ -111,8 +111,6 @@ function ibon_event_status_check()
     //console.log(event_code);
     if(event_code){
         let api_url = "https://ticketapi.ibon.com.tw/api/ActivityInfo/GetGameInfoList";
-
-        "{\"id\":38042,\"hasDeadline\":true,\"SystemBrowseType\":0}"
         dataJSON = {
             id: parseInt(event_code, 10),
             hasDeadline: true,

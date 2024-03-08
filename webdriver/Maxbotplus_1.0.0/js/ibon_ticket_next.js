@@ -1,11 +1,4 @@
 var myInterval = null;
-//console.log("assign appear");
-
-function begin()
-{
-    console.log("begin to next");
-    $("div#ticket-wrap a[onclick]").click();
-}
 
 function dom_ready()
 {
@@ -14,14 +7,16 @@ function dom_ready()
         $("#done").remove();
         ret=true;
         if(myInterval) clearInterval(myInterval);
-        begin();
+        (function () {
+            $("div#ticket-wrap a[onclick]").click();
+        })();
     }
-    console.log("dom_ready:"+ret);
+    //console.log("dom_ready:"+ret);
     return ret;
 }
 
 if(!dom_ready()) {
     myInterval = setInterval(() => {
         dom_ready();
-    }, 100);    
+    }, 100);
 }
