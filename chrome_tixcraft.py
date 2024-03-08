@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.06)"
+CONST_APP_VERSION = "MaxBot (2024.02.07)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -8497,6 +8497,7 @@ def cityline_main(driver, url, config_dict):
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
     if '/Login.html' in url:
+        cityline_account = config_dict["advanced"]["cityline_account"]
         cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
         if cityline_password == "":
             cityline_password = decryptMe(config_dict["advanced"]["cityline_password"])

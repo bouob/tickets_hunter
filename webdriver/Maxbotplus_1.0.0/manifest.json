@@ -338,6 +338,20 @@
         },
         {
             "matches": [
+                "https://shows.cityline.com/tc/*",
+                "https://priority.cityline.com/tc/*",
+                "https://shows.cityline.com/en/*",
+                "https://priority.cityline.com/en/*"
+            ],
+            "run_at": "document_end",
+            "world": "MAIN",
+            "js": [
+                "jquery.min.js",
+                "js/cityline_shows_buy_front.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://ticketplus.com.tw/activity/*"
             ],
             "run_at": "document_end",
@@ -399,5 +413,5 @@
             ]
         }
     ],
-    "version": "1.0.12"
+    "version": "1.0.14"
 }
