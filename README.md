@@ -75,6 +75,13 @@ https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
 透過瀏覽器下載 github 上的 zip 檔, 在 Windows / macOS / Linux 平台, 預設的路徑在「下載」(~/Download) 的資料夾, 你在執行的 Terminal 視窗的路徑, 與你解壓縮的路徑可能不同, 直接執行上面的指令, 會無法進入到預期的資料夾內。
 
+Q: 取得source code後跑出來fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
+
+A: 執行 git clone 2次, 重覆取得 source code, 才會有這個問題, 如果 tixcraft_bot 目錄已經存在, 直接 cd tixcraft_bot 就可以了。
+如果你想把已下載的刪除, 可以直把把 tixcraft_bot 目錄刪掉即可。
+如果你想更新 source code, 可以重新下載, 或是先 cd tixcraft_bot 目錄後, 再執行 git pull , 可以更新 source code 為新的版本。
+
+
 PS:
 * 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
 * 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
