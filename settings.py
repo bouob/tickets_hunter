@@ -48,7 +48,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.07)"
+CONST_APP_VERSION = "MaxBot (2024.03.01)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -218,8 +218,9 @@ def load_translate():
     en_us["ticketplus_password"] = 'TicketPlus password'
     en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
 
-    en_us["play_captcha_sound"] = 'Play sound while ordering'
-    en_us["captcha_sound_filename"] = 'sound filename'
+    en_us["play_ticket_sound"] = 'Play sound when ticketing'
+    en_us["play_order_sound"] = 'Play sound when ordering'
+    en_us["play_sound_filename"] = 'sound filename'
     
     en_us["chrome_extension"] = "Chrome Browser Extension"
     en_us["disable_adjacent_seat"] = "Disable Adjacent Seat"
@@ -333,8 +334,9 @@ def load_translate():
     zh_tw["ticketplus_password"] = '遠大 密碼'
     zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
 
-    zh_tw["play_captcha_sound"] = '訂購時播放音效'
-    zh_tw["captcha_sound_filename"] = '音效檔'
+    zh_tw["play_ticket_sound"] = '有票時播放音效'
+    zh_tw["play_order_sound"] = '訂購時播放音效'
+    zh_tw["play_sound_filename"] = '音效檔'
     
     zh_tw["chrome_extension"] = "Chrome 瀏覽器擴充功能"
     zh_tw["disable_adjacent_seat"] = "允許不連續座位"
@@ -450,8 +452,9 @@ def load_translate():
     zh_cn["ticketplus_password"] = '远大 密码'
     zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
 
-    zh_cn["play_captcha_sound"] = '订购时播放音效'
-    zh_cn["captcha_sound_filename"] = '音效档'
+    zh_cn["play_ticket_sound"] = '有票时播放音效'
+    zh_cn["play_order_sound"] = '订购时播放音效'
+    zh_cn["play_sound_filename"] = '音效档'
     
     zh_cn["chrome_extension"] = "Chrome 浏览器扩展程序"
     zh_cn["disable_adjacent_seat"] = "允许不连续座位"
@@ -566,8 +569,9 @@ def load_translate():
     ja_jp["ticketplus_password"] = '遠大のパスワード'
     ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
 
-    ja_jp["play_captcha_sound"] = '注文時に音を鳴らす'
-    ja_jp["captcha_sound_filename"] = 'サウンドファイル'
+    ja_jp["play_ticket_sound"] = '有票時に音を鳴らす'
+    ja_jp["play_order_sound"] = '注文時に音を鳴らす'
+    ja_jp["play_sound_filename"] = 'サウンドファイル'
     
     ja_jp["chrome_extension"] = "Chrome ブラウザ拡張機能"
     ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
@@ -693,9 +697,10 @@ def get_default_config():
 
     config_dict['advanced']={}
 
-    config_dict['advanced']['play_captcha_sound']={}
-    config_dict["advanced"]["play_captcha_sound"]["enable"] = True
-    config_dict["advanced"]["play_captcha_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
+    config_dict['advanced']['play_sound']={}
+    config_dict["advanced"]["play_sound"]["ticket"] = True
+    config_dict["advanced"]["play_sound"]["order"] = True
+    config_dict["advanced"]["play_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
 
     config_dict["advanced"]["tixcraft_sid"] = ""
     config_dict["advanced"]["ibonqware"] = ""
@@ -872,8 +877,9 @@ def btn_save_act(language_code, slience_mode=False):
     global txt_udn_password
     global txt_ticketplus_password
 
-    global chk_state_play_captcha_sound
-    global txt_captcha_sound_filename
+    global chk_state_play_ticket_sound
+    global chk_state_play_order_sound
+    global txt_play_sound_filename
     global chk_state_ocr_captcha
     global chk_state_ocr_captcha_ddddocr_beta
     global chk_state_ocr_captcha_force_submit
@@ -1064,8 +1070,9 @@ def btn_save_act(language_code, slience_mode=False):
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
 
-        config_dict["advanced"]["play_captcha_sound"]["enable"] = bool(chk_state_play_captcha_sound.get())
-        config_dict["advanced"]["play_captcha_sound"]["filename"] = txt_captcha_sound_filename.get().strip()
+        config_dict["advanced"]["play_sound"]["ticket"] = bool(chk_state_play_ticket_sound.get())
+        config_dict["advanced"]["play_sound"]["order"] = bool(chk_state_play_order_sound.get())
+        config_dict["advanced"]["play_sound"]["filename"] = txt_play_sound_filename.get().strip()
 
         config_dict["advanced"]["tixcraft_sid"] = txt_tixcraft_sid.get().strip()
         config_dict["advanced"]["ibonqware"] = txt_ibon_ibonqware.get().strip()
@@ -1301,8 +1308,8 @@ def btn_open_text_server_clicked():
     tabControl.select(tab4)
 
 def btn_preview_sound_clicked():
-    global txt_captcha_sound_filename
-    new_sound_filename = txt_captcha_sound_filename.get().strip()
+    global txt_play_sound_filename
+    new_sound_filename = txt_play_sound_filename.get().strip()
     #print("new_sound_filename:", new_sound_filename)
     app_root = get_app_root()
     new_sound_filename = os.path.join(app_root, new_sound_filename)
@@ -1407,7 +1414,8 @@ def applyNewLanguage():
     global chk_area_auto_select
     global chk_pass_date_is_sold_out
     global chk_auto_reload_coming_soon_page
-    global chk_play_captcha_sound
+    global chk_play_ticket_sound
+    global chk_play_order_sound
     global chk_ocr_captcha
     global chk_ocr_captcha_ddddocr_beta
     global chk_ocr_captcha_force_submit
@@ -1506,7 +1514,8 @@ def applyNewLanguage():
     chk_area_auto_select.config(text=translate[language_code]["enable"])
     chk_pass_date_is_sold_out.config(text=translate[language_code]["enable"])
     chk_auto_reload_coming_soon_page.config(text=translate[language_code]["enable"])
-    chk_play_captcha_sound.config(text=translate[language_code]["enable"])
+    chk_play_ticket_sound.config(text=translate[language_code]["enable"])
+    chk_play_order_sound.config(text=translate[language_code]["enable"])
     chk_ocr_captcha.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["enable"])
     chk_ocr_captcha_force_submit.config(text=translate[language_code]["enable"])
@@ -1554,8 +1563,9 @@ def applyNewLanguage():
 
     global lbl_save_password_alert
 
-    global lbl_play_captcha_sound
-    global lbl_captcha_sound_filename
+    global lbl_play_ticket_sound
+    global lbl_play_order_sound
+    global lbl_play_sound_filename
 
     lbl_tixcraft_sid.config(text=translate[language_code]["tixcraft_sid"])
     lbl_ibon_ibonqware.config(text=translate[language_code]["ibon_ibonqware"])
@@ -1582,8 +1592,9 @@ def applyNewLanguage():
 
     lbl_save_password_alert.config(text=translate[language_code]["save_password_alert"])
 
-    lbl_play_captcha_sound.config(text=translate[language_code]["play_captcha_sound"])
-    lbl_captcha_sound_filename.config(text=translate[language_code]["captcha_sound_filename"])
+    lbl_play_ticket_sound.config(text=translate[language_code]["play_ticket_sound"])
+    lbl_play_order_sound.config(text=translate[language_code]["play_order_sound"])
+    lbl_play_sound_filename.config(text=translate[language_code]["play_sound_filename"])
 
     lbl_slogan.config(text=translate[language_code]["maxbot_slogan"])
     lbl_help.config(text=translate[language_code]["help"])
@@ -2009,11 +2020,11 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     group_row_count = 0
 
     # assign default value.
-    captcha_sound_filename = config_dict["advanced"]["play_captcha_sound"]["filename"].strip()
-    if captcha_sound_filename is None:
-        captcha_sound_filename = ""
-    if len(captcha_sound_filename)==0:
-        captcha_sound_filename = captcha_sound_filename_default
+    play_sound_filename = config_dict["advanced"]["play_sound"]["filename"].strip()
+    if play_sound_filename is None:
+        play_sound_filename = ""
+    if len(play_sound_filename)==0:
+        play_sound_filename = play_sound_filename_default
 
     global lbl_browser
     lbl_browser = Label(frame_group_header, text=translate[language_code]['browser'])
@@ -2064,28 +2075,42 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
-    global lbl_play_captcha_sound
-    lbl_play_captcha_sound = Label(frame_group_header, text=translate[language_code]['play_captcha_sound'])
-    lbl_play_captcha_sound.grid(column=0, row=group_row_count, sticky = E)
+    global lbl_play_ticket_sound
+    lbl_play_ticket_sound = Label(frame_group_header, text=translate[language_code]['play_ticket_sound'])
+    lbl_play_ticket_sound.grid(column=0, row=group_row_count, sticky = E)
 
-    global chk_state_play_captcha_sound
-    chk_state_play_captcha_sound = BooleanVar()
-    chk_state_play_captcha_sound.set(config_dict["advanced"]["play_captcha_sound"]["enable"])
+    global chk_state_play_ticket_sound
+    chk_state_play_ticket_sound = BooleanVar()
+    chk_state_play_ticket_sound.set(config_dict["advanced"]["play_sound"]["ticket"])
 
-    global chk_play_captcha_sound
-    chk_play_captcha_sound = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_play_captcha_sound)
-    chk_play_captcha_sound.grid(column=1, row=group_row_count, sticky = W)
+    global chk_play_ticket_sound
+    chk_play_ticket_sound = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_play_ticket_sound)
+    chk_play_ticket_sound.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
-    global lbl_captcha_sound_filename
-    lbl_captcha_sound_filename = Label(frame_group_header, text=translate[language_code]['captcha_sound_filename'])
-    lbl_captcha_sound_filename.grid(column=0, row=group_row_count, sticky = E)
+    global lbl_play_order_sound
+    lbl_play_order_sound = Label(frame_group_header, text=translate[language_code]['play_order_sound'])
+    lbl_play_order_sound.grid(column=0, row=group_row_count, sticky = E)
 
-    global txt_captcha_sound_filename
-    txt_captcha_sound_filename_value = StringVar(frame_group_header, value=captcha_sound_filename)
-    txt_captcha_sound_filename = Entry(frame_group_header, width=30, textvariable = txt_captcha_sound_filename_value)
-    txt_captcha_sound_filename.grid(column=1, row=group_row_count, sticky = W)
+    global chk_state_play_order_sound
+    chk_state_play_order_sound = BooleanVar()
+    chk_state_play_order_sound.set(config_dict["advanced"]["play_sound"]["order"])
+
+    global chk_play_order_sound
+    chk_play_order_sound = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_play_order_sound)
+    chk_play_order_sound.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_play_sound_filename
+    lbl_play_sound_filename = Label(frame_group_header, text=translate[language_code]['play_sound_filename'])
+    lbl_play_sound_filename.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_play_sound_filename
+    txt_play_sound_filename_value = StringVar(frame_group_header, value=play_sound_filename)
+    txt_play_sound_filename = Entry(frame_group_header, width=30, textvariable = txt_play_sound_filename_value)
+    txt_play_sound_filename.grid(column=1, row=group_row_count, sticky = W)
 
     icon_play_filename = "icon_play_1.gif"
     icon_play_img = PhotoImage(file=icon_play_filename)

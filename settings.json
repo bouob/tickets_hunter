@@ -30,8 +30,9 @@
         "auto_reload_coming_soon_page": true
     },
     "advanced": {
-        "play_captcha_sound": {
-            "enable": true,
+        "play_sound": {
+            "ticket": true,
+            "order": true,
             "filename": "ding-dong.wav"
         },
         "tixcraft_sid": "",

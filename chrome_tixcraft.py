@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.02.07)"
+CONST_APP_VERSION = "MaxBot (2024.03.01)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -988,8 +988,8 @@ def get_driver_by_config(config_dict):
             ,'*google-analytics.*'
             ,'*googletagmanager.*'
             ,'*googletagservices.*'
+            ,'*googlesyndication.*'
             ,'*play.google.com/*'
-            ,'*.googlesyndication.com/*'
             ,'*cdn.cookielaw.org/*'
             ,'*fundingchoicesmessages.google.com/*'
             ,'*.doubleclick.net/*'
@@ -4631,7 +4631,7 @@ def get_kktix_question_text(driver):
         question_text = kktix_reg_captcha_question_text(captcha_inner_div)
     return question_text
 
-def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div):
+def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, registrationsNewApp_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -4645,15 +4645,6 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
     if len(question_text) > 0:
         is_question_popup = True
         write_question_to_file(question_text)
-
-        if len(fail_list)==0:
-            # only play sound once.
-            if not captcha_sound_played:
-                captcha_sound_played = True
-                try:
-                    play_sound_while_ordering(config_dict)
-                except Exception as exc:
-                    pass
 
         answer_list = get_answer_list_from_user_guess_string(config_dict)
         if len(answer_list)==0:
@@ -4678,9 +4669,9 @@ def kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_f
         check_input_interval = 0.2
         is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
-    return fail_list, captcha_sound_played, is_question_popup
+    return fail_list, is_question_popup
 
-def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click):
+def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_finish_checkbox_click):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -4740,7 +4731,12 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
         if is_dom_ready:
             # part 3: captcha
             if is_ticket_number_assigned:
-                fail_list, captcha_sound_played, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, captcha_sound_played, is_finish_checkbox_click, registrationsNewApp_div)
+                if config_dict["advanced"]["play_sound"]["ticket"]:
+                    if not played_sound_ticket:
+                        play_sound_while_ordering(config_dict)
+                    played_sound_ticket = True
+
+                fail_list, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, registrationsNewApp_div)
                 if not is_question_popup:
                     # no captcha text popup, goto next page.
                     control_text = get_kktix_control_label_text(driver)
@@ -4754,6 +4750,9 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
                         pass
             else:
                 if is_need_refresh:
+                    # reset to play sound when ticket avaiable.
+                    played_sound_ticket = False
+
                     try:
                         print("no match any price, start to refresh page...")
                         driver.refresh()
@@ -4764,7 +4763,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, captcha_sound_played, is_
                     if config_dict["advanced"]["auto_reload_page_interval"] > 0:
                         time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
-    return fail_list, captcha_sound_played
+    return fail_list, played_sound_ticket
 
 def kktix_get_registerStatus(driver, event_code):
     html_result = None
@@ -7441,10 +7440,9 @@ def hkticketing_login(driver, account, password):
     return ret
 
 def play_sound_while_ordering(config_dict):
-    if config_dict["advanced"]["play_captcha_sound"]["enable"]:
-        app_root = get_app_root()
-        captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_captcha_sound"]["filename"].strip())
-        play_mp3_async(captcha_sound_filename)
+    app_root = get_app_root()
+    captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
+    play_mp3_async(captcha_sound_filename)
 
 def play_mp3_async(sound_filename):
     import threading
@@ -7822,12 +7820,12 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_dict["done_time"] = time.time()
 
-        if not tixcraft_dict["played_sound"]:
-            play_sound_while_ordering(config_dict)
-
-        tixcraft_dict["played_sound"] = True
+        if config_dict["advanced"]["play_sound"]["ticket"]:
+            if not tixcraft_dict["played_sound_ticket"]:
+                play_sound_while_ordering(config_dict)
+            tixcraft_dict["played_sound_ticket"] = True
     else:
-        tixcraft_dict["played_sound"] = False
+        tixcraft_dict["played_sound_ticket"] = False
 
     if '/ticket/order' in url:
         tixcraft_dict["done_time"] = time.time()
@@ -7849,8 +7847,14 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 tixcraft_dict["is_popup_checkout"] = True
                 driver.quit()
                 sys.exit()
+        
+        if config_dict["advanced"]["play_sound"]["order"]:
+            if not tixcraft_dict["played_sound_order"]:
+                play_sound_while_ordering(config_dict)
+            tixcraft_dict["played_sound_order"] = True
     else:
         tixcraft_dict["is_popup_checkout"] = False
+        tixcraft_dict["played_sound_order"] = False
 
     return tixcraft_dict
 
@@ -7911,11 +7915,11 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             if not is_dom_ready:
                 # reset answer fail list.
                 kktix_dict["fail_list"] = []
-                kktix_dict["captcha_sound_played"] = False
+                kktix_dict["played_sound_ticket"] = False
             else:
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
-                    kktix_dict["fail_list"], kktix_dict["captcha_sound_played"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["captcha_sound_played"], is_finish_checkbox_click)
+                    kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"], is_finish_checkbox_click)
                     kktix_dict["done_time"] = time.time()
         else:
             is_event_page = False
@@ -7932,7 +7936,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
 
             # reset answer fail list.
             kktix_dict["fail_list"] = []
-            kktix_dict["captcha_sound_played"] = False
+            kktix_dict["played_sound_ticket"] = False
 
     if '/events/' in url and '/registrations/' in url and "-" in url:
         if not '/registrations/new' in url:
@@ -7942,6 +7946,12 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     if kktix_dict["elapsed_time"] != bot_elapsed_time:
                         print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                     kktix_dict["elapsed_time"] = bot_elapsed_time
+            
+            if config_dict["advanced"]["play_sound"]["order"]:
+                if not kktix_dict["played_sound_order"]:
+                    play_sound_while_ordering(config_dict)
+                kktix_dict["played_sound_order"] = True
+
 
         if config_dict["advanced"]["headless"]:
             if not kktix_dict["is_popup_checkout"]:
@@ -7960,6 +7970,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                         sys.exit()
     else:
         kktix_dict["is_popup_checkout"] = False
+        kktix_dict["played_sound_order"] = False
 
     return kktix_dict
 
@@ -8476,11 +8487,14 @@ def cityline_main(driver, url, config_dict):
     try:
         window_handles_count = len(driver.window_handles)
         if window_handles_count > 1:
-            driver.switch_to.window(driver.window_handles[0])
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-            time.sleep(0.2)
-    except Exception as excSwithFail:
+            driver.switch_to.window(driver.window_handles[-1])
+            page_title = driver.title
+            if len(page_title) > 0:
+                driver.switch_to.window(driver.window_handles[0])
+                if not(".cityline.com/" in page_title and "https://" in page_title):
+                    driver.close()
+                    driver.switch_to.window(driver.window_handles[-1])
+    except Exception as exc:
         pass
 
     if '.cityline.com/Events.html' in url:
@@ -12526,16 +12540,16 @@ def main(args):
     tixcraft_dict["elapsed_time"]=None
     tixcraft_dict["is_popup_checkout"] = False
     tixcraft_dict["area_retry_count"]=0
-    tixcraft_dict["played_sound"] = False
 
     # for kktix
     kktix_dict = {}
     kktix_dict["fail_list"]=[]
-    kktix_dict["captcha_sound_played"] = False
     kktix_dict["start_time"]=None
     kktix_dict["done_time"]=None
     kktix_dict["elapsed_time"]=None
     kktix_dict["is_popup_checkout"] = False
+    kktix_dict["played_sound_ticket"] = False
+    kktix_dict["played_sound_order"] = False
 
     fami_dict = {}
     fami_dict["fail_list"] = []
