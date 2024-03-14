@@ -1,5 +1,15 @@
 # Demo (示範影片)
 
+### 2024-03-02: 
+一直問KKTIX清票了沒, 解決KKTIX不定期清票
+
+https://youtu.be/4FTzfe1ZC8o
+
+### 2024-02-02: 
+KKTIX 定時啟動+帳號多開
+
+https://youtu.be/eETZTajxBnY
+
 ### 2024-02-01: 
 搶遠大Lisa票,沒搶到 (2024-02-24)
 
