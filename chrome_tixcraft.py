@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.01)"
+CONST_APP_VERSION = "MaxBot (2024.03.02)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -111,7 +111,7 @@ CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 warnings.simplefilter('ignore',InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -4765,7 +4765,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_f
 
     return fail_list, played_sound_ticket
 
-def kktix_get_registerStatus(driver, event_code):
+def kktix_get_registerStatus(event_code):
     html_result = None
 
     url = "https://kktix.com/g/events/%s/register_info" % (event_code)
@@ -4800,21 +4800,23 @@ def kktix_get_registerStatus(driver, event_code):
     #print("registerStatus:", registerStatus)
     return registerStatus
 
-def kktix_check_register_status(driver, url):
-    #ex: https://xxx.kktix.cc/events/xxx
-    prefix_list = ['.com/events/','.cc/events/']
-    postfix = '/registrations/new'
-
-    is_match_event_code = False
+def kktix_get_event_code(url):
     event_code = ""
-    for prefix in prefix_list:
-        event_code = find_between(url,prefix,postfix)
-        if len(event_code) > 0:
-            is_match_event_code = True
-            #print('event_code:',event_code)
-            break
+    if '/registrations/new' in url:
+        prefix_list = ['.com/events/','.cc/events/']
+        postfix = '/registrations/new'
 
-    if is_match_event_code:
+        for prefix in prefix_list:
+            event_code = find_between(url,prefix,postfix)
+            if len(event_code) > 0:
+                break
+
+    #print('event_code:',event_code)
+    return event_code
+
+def kktix_check_register_status(driver, url):
+    event_code = kktix_get_event_code(url)
+    if len(event_code) > 0:
         js = '''
 function load_kktix_register_code(){
 let api_url = "https://kktix.com/g/events/%s/register_info";
@@ -4850,12 +4852,12 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
         except Exception as exc:
             pass
 
-        # use javascritp version only.
-        is_match_event_code = False
-
     registerStatus = None
+
+    # use javascritp version only.
+    is_match_event_code = False
     if is_match_event_code:
-        kktix_get_registerStatus(driver, event_code)
+        registerStatus = kktix_get_registerStatus(event_code)
     return registerStatus
 
 def kktix_reg_auto_reload(driver, url, config_dict):
