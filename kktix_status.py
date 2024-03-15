@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #encoding=utf-8
-
+# if you want to run on command mode to monitor kktix status, try:
+# python kktix_status.py --silent true
 try:
     # for Python2
     import tkMessageBox as messagebox
@@ -13,6 +14,7 @@ except ImportError:
     from tkinter import messagebox
     from tkinter import filedialog
 
+import argparse
 import base64
 import json
 import os
@@ -25,10 +27,11 @@ import requests
 import time
 from datetime import datetime
 
-CONST_APP_VERSION = "MaxBot (2024.03.03)"
+CONST_APP_VERSION = "MaxBot (2024.03.04)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
-CONST_MAXBOT_KKTIX_FILE = "kktix.json"
+CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
+CONST_MAXBOT_KKTIX_LOG_FILE = "kktix.log"
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 
 translate={}
@@ -102,8 +105,16 @@ def find_between( s, first, last ):
         pass
     return ret
 
+def t_or_f(arg):
+    ret = False
+    ua = str(arg).upper()
+    if 'TRUE'.startswith(ua):
+        ret = True
+    elif 'YES'.startswith(ua):
+        ret = True
+    return ret
+
 def get_app_root():
-    # 讀取檔案裡的參數值
     basis = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
@@ -114,9 +125,7 @@ def get_app_root():
 
 def load_json():
     app_root = get_app_root()
-
-    # overwrite config path.
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_FILE)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -128,7 +137,7 @@ def load_json():
 
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_FILE)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
     if os.path.exists(str(config_filepath)):
         try:
             os.unlink(str(config_filepath))
@@ -170,9 +179,9 @@ def play_mp3(sound_filename):
 def btn_save_clicked():
     btn_save_act()
 
-def btn_save_act(slience_mode=True):
+def get_config_dict_from_ui():
     app_root = get_app_root()
-    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_FILE)
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
 
     config_dict = get_default_config()
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
@@ -205,26 +214,32 @@ def btn_save_act(slience_mode=True):
     global txt_new_process
 
     if is_all_data_correct:
-        config_dict["url"] = txt_url.get().strip()
-        config_dict["check_interval"] = int(combo_check_interval.get().strip())
+        try:
+            config_dict["url"] = txt_url.get().strip()
+            config_dict["check_interval"] = int(combo_check_interval.get().strip())
 
-        config_dict["advanced"]["play_sound"]["ticket"] = bool(chk_state_play_ticket_sound.get())
-        config_dict["advanced"]["play_sound"]["filename"] = txt_play_sound_filename.get().strip()
-        
-        config_dict["ticket_exec_maxbot"] = bool(chk_state_ticket_exec_maxbot.get())
-        
-        config_dict["ticket_exec_command"] = bool(chk_state_ticket_exec_command.get())
-        config_dict["new_process"] = txt_new_process.get().strip()
+            config_dict["advanced"]["play_sound"]["ticket"] = bool(chk_state_play_ticket_sound.get())
+            config_dict["advanced"]["play_sound"]["filename"] = txt_play_sound_filename.get().strip()
+            
+            config_dict["ticket_exec_maxbot"] = bool(chk_state_ticket_exec_maxbot.get())
+            
+            config_dict["ticket_exec_command"] = bool(chk_state_ticket_exec_command.get())
+            config_dict["new_process"] = txt_new_process.get().strip()
+        except Exception as e:
+            raise e
 
-    # save config.
-    if is_all_data_correct:
-        # slience
-        save_json(config_dict, config_filepath)
-        
-        if not slience_mode:
-            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
+    return is_all_data_correct, config_dict
 
-    return is_all_data_correct
+def btn_save_act(slience_mode=True):
+    is_all_data_correct, config_dict = get_config_dict_from_ui()
+
+    # slience
+    app_root = get_app_root()
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
+    save_json(config_dict, config_filepath)
+    
+    if not slience_mode:
+        messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
 def save_json(config_dict, target_path):
     json_str = json.dumps(config_dict, indent=4)
@@ -420,8 +435,8 @@ def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_check_interval.grid(column=0, row=group_row_count, sticky = E)
 
     global combo_check_interval
-    combo_check_interval = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_check_interval['values']= ("1","5","10","30","60","180","300","600","3600")
+    combo_check_interval = ttk.Combobox(frame_group_header, width=30)
+    combo_check_interval['values']= ("1","3","8","15","30","60","180","300","600","3600")
     combo_check_interval.set(str(config_dict["check_interval"]))
     combo_check_interval.grid(column=1, row=group_row_count, sticky = W)
 
@@ -738,7 +753,7 @@ def get_default_config():
     config_dict={}
 
     config_dict["list"] = [CONST_MAXBOT_CONFIG_FILE]
-    config_dict["check_interval"]=5
+    config_dict["check_interval"]=3
     config_dict["url"]=""
 
     config_dict["advanced"] = {}
@@ -754,7 +769,7 @@ def get_default_config():
 
     return config_dict
 
-def main():
+def main_gui():
     global translate
     # only need to load translate once.
     translate = load_translate()
@@ -861,98 +876,182 @@ def kktix_get_event_code(url):
     #print('event_code:',event_code)
     return event_code
 
-def kktix_in_stock():
+def kktix_in_stock_play_sound():
     global chk_state_play_ticket_sound
     try:
-        if bool(chk_state_play_ticket_sound.get()):
-            btn_preview_sound_clicked()
+        if 'chk_state_play_ticket_sound' in globals():
+            if bool(chk_state_play_ticket_sound.get()):
+                btn_preview_sound_clicked()
     except Exception as e:
         pass
 
-def update_kktix_status():
-    global txt_url
-    global status_variable 
-    global txt_status_log
-
-    url = ""
-    last_status = ""
-    datetime_string = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-
-    try:
-        url = txt_url.get().strip()
-        last_status = status_variable.get()
-    except Exception as exc:
-        #print(exc)
-        url = ""
-        last_status = ""
-        pass
-
+def get_kktix_status_by_url(url):
+    registerStatus = ""
     if len(url) > 0:
         event_code = kktix_get_event_code(url)
         #print(event_code)
         if len(event_code) > 0:
             registerStatus = kktix_get_registerStatus(event_code)
             #print(registerStatus)
+    return registerStatus
 
-            output_log = datetime_string + ", " + registerStatus
-            print(output_log)
+def update_kktix_status(registerStatus):
+    global status_variable 
+    try:
+        if 'status_variable' in globals():
+            status_variable.set(registerStatus)
+    except Exception as e:
+        pass
+
+def append_kktix_status_log(output_log):
+    global txt_status_log
+    try:
+        if 'txt_status_log' in globals():
+            txt_status_log.insert("1.0", output_log + "\n")
+    except Exception as e:
+        pass
+
+def append_kktix_status_log_file(output_log):
+    app_root = get_app_root()
+    log_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_LOG_FILE)
+    file1 = open(log_filepath, "a")  # append mode
+    file1.write(output_log)
+    file1.close()
+
+def kktix_status_query(config_dict, last_status, log_file=False):
+    url = config_dict["url"]
+    datetime_string = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    registerStatus = ""
+    if len(url) > 0:
+        registerStatus = get_kktix_status_by_url(url)
+        update_kktix_status(registerStatus)
+
+    if len(registerStatus) > 0:
+        output_log = datetime_string + ", " + registerStatus
+        print(output_log)
+        if log_file:
+            append_kktix_status_log_file(output_log + "\n")
+
+        if registerStatus=="IN_STOCK":
+            # each time to play sound.
+            kktix_in_stock_play_sound()
+
+        if registerStatus != last_status:
+            # run once.
+            append_kktix_status_log(output_log)
 
             if registerStatus=="IN_STOCK":
-                kktix_in_stock()
-
-            if registerStatus != last_status:
-                status_variable.set(registerStatus)
-                
+                btn_index = 1
                 try:
-                    txt_status_log.insert("1.0", output_log + "\n")
+                    if config_dict["ticket_exec_maxbot"]:
+                        filename=config_dict["list"][btn_index-1].get().strip()
+                        threading.Thread(target=launch_maxbot, args=(filename,)).start()
+
+                    if config_dict["ticket_exec_command"]:
+                        working_dir = os.path.dirname(os.path.realpath(__file__))
+                        subprocess.Popen(config_dict["new_process"] , shell=True, cwd=working_dir)
                 except Exception as e:
                     pass
 
-                # run once.
-                if registerStatus=="IN_STOCK":
-                    btn_index = 1
-                    
-                    global txt_file_name
-                    global chk_state_ticket_exec_maxbot
-                    
-                    global txt_new_process
-                    global chk_state_ticket_exec_command
+    return registerStatus
 
-                    try:
-                        if bool(chk_state_ticket_exec_maxbot.get()):
-                            filename=txt_file_name[btn_index-1].get().strip()
-                            threading.Thread(target=launch_maxbot, args=(filename,)).start()
-
-                        if bool(chk_state_ticket_exec_command.get()):
-                            working_dir = os.path.dirname(os.path.realpath(__file__))
-                            subprocess.Popen(txt_new_process.get().strip() , shell=True, cwd=working_dir)
-                    except Exception as e:
-                        pass
-
-def resetful_api_timer():
-    checkpoint_time = time.time()
-
+def collect_ui_config():
     global combo_check_interval
+    global txt_url
+    
+    global chk_state_ticket_exec_maxbot
+    global txt_file_name
+    
+    global chk_state_ticket_exec_command
+    global txt_new_process
 
-    check_interval = 5
+    is_ui_ready = True
+    check_interval = 3
+    config_filepath, config_dict = load_json()
 
-    while True:
-        try:
+    try:
+        if 'combo_check_interval' in globals():
             check_interval = int(combo_check_interval.get().strip())
+            config_dict["check_interval"] = check_interval
+        else:
+            is_ui_ready = False
+    except Exception as e:
+        pass
+
+    url = ""
+    filename = ""
+    #print("is_ui_ready:", is_ui_ready)
+    if is_ui_ready:
+        try:
+            if 'txt_url' in globals():
+                url = txt_url.get().strip()
+                config_dict["url"] = url
+
+            if 'chk_state_ticket_exec_maxbot' in globals():
+                config_dict["ticket_exec_maxbot"] = bool(chk_state_ticket_exec_maxbot.get())
+            
+            # current only 1 config file.
+            btn_index = 1
+            if 'txt_file_name' in globals():
+                filename=txt_file_name[btn_index-1].get().strip()
+                config_dict["list"] = [filename]
+
+            if 'chk_state_ticket_exec_command' in globals():
+                config_dict["ticket_exec_command"] = bool(chk_state_ticket_exec_command.get())
+            
+            if 'txt_new_process' in globals():
+                config_dict["new_process"] = txt_new_process.get().strip()
         except Exception as e:
-            check_interval = 5
             pass
 
+    return is_ui_ready, config_dict
+
+def resetful_api_timer(log_file=False):
+    checkpoint_time = time.time()
+    last_status = ""
+
+    config_filepath, config_dict = load_json()
+    json_str_old = json.dumps(config_dict)
+
+    while True:
         elapsed_time = time.time() - checkpoint_time
-        if elapsed_time > check_interval:
-            update_kktix_status()
-            try:
-                btn_save_act()
-            except Exception as e:
-                pass
+        is_ui_ready, config_dict = collect_ui_config()
+        #print(is_ui_ready, config_dict)
+
+        if elapsed_time > config_dict["check_interval"]:
+            # main program.
+            last_status = kktix_status_query(config_dict, last_status, log_file=log_file)
             checkpoint_time = time.time()
+
+        if is_ui_ready:
+            json_str_new = json.dumps(config_dict)
+            if json_str_new != json_str_old:
+                save_json(config_dict, config_filepath)
+                json_str_old = json_str_new
+
         time.sleep(0.5)
 
+def main(args):
+    silent_flag = False
+    if not args.silent is None:
+        silent_flag = t_or_f(args.silent)
+    #print("silent_flag:",silent_flag)
+
+    if not silent_flag:
+        threading.Thread(target=resetful_api_timer, daemon=True).start()
+        main_gui()
+    else:
+        resetful_api_timer(log_file=True)
+
+
 if __name__ == "__main__":
-    threading.Thread(target=resetful_api_timer, daemon=True).start()
-    main()
+    parser = argparse.ArgumentParser(
+            description="MaxBot Aggument Parser")
+
+    parser.add_argument("--silent",
+        help="command line mode",
+        default='False',
+        type=str)
+
+    args = parser.parse_args()
+    main(args)

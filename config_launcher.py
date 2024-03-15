@@ -22,7 +22,7 @@ import sys
 import threading
 import webbrowser
 
-CONST_APP_VERSION = "MaxBot (2024.03.03)"
+CONST_APP_VERSION = "MaxBot (2024.03.04)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -134,7 +134,6 @@ def load_translate():
     return translate
 
 def get_app_root():
-    # 讀取檔案裡的參數值
     basis = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
@@ -157,8 +156,6 @@ def get_default_config():
 
 def load_json():
     app_root = get_app_root()
-
-    # overwrite config path.
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
 
     config_dict = None
@@ -524,7 +521,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
 
-
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
 
@@ -578,7 +574,7 @@ def load_GUI(root, config_dict):
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
     AboutTab(tab3, language_code)
 
-def main():
+def main_gui():
     global translate
     # only need to load translate once.
     translate = load_translate()
@@ -637,4 +633,4 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    main_gui()

@@ -48,7 +48,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.03)"
+CONST_APP_VERSION = "MaxBot (2024.03.04)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -3129,7 +3129,7 @@ def load_GUI(root, config_dict):
     AboutTab(tab7, language_code)
 
 
-def main():
+def main_gui():
     global translate
     # only need to load translate once.
     translate = load_translate()
@@ -3394,4 +3394,4 @@ if __name__ == "__main__":
     threading.Thread(target=resetful_api_timer, daemon=True).start()
     threading.Thread(target=web_server, daemon=True).start()
     clean_tmp_file()
-    main()
+    main_gui()
