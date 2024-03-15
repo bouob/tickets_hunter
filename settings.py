@@ -7,11 +7,14 @@ try:
     from Tkinter import *
 except ImportError:
     # for Python3
-    from tkinter import *
-    from tkinter import ttk
-    import tkinter.font as tkfont
-    from tkinter import messagebox
-    from tkinter.filedialog import asksaveasfilename
+    try:
+        from tkinter import *
+        from tkinter import ttk
+        import tkinter.font as tkfont
+        from tkinter import messagebox
+        from tkinter.filedialog import asksaveasfilename
+    except Exception as e:
+        pass
     '''
     try:
         import customtkinter

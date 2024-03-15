@@ -9,10 +9,13 @@ try:
     from Tkinter import *
 except ImportError:
     # for Python3
-    from tkinter import *
-    from tkinter import ttk
-    from tkinter import messagebox
-    from tkinter import filedialog
+    try:
+        from tkinter import *
+        from tkinter import ttk
+        from tkinter import messagebox
+        from tkinter import filedialog
+    except Exception as e:
+        pass
 
 import argparse
 import base64
