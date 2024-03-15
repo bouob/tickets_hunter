@@ -22,7 +22,7 @@ import sys
 import threading
 import webbrowser
 
-CONST_APP_VERSION = "MaxBot (2024.03.02)"
+CONST_APP_VERSION = "MaxBot (2024.03.03)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -172,28 +172,36 @@ def load_json():
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
+    if os.path.exists(str(config_filepath)):
+        try:
+            os.unlink(str(config_filepath))
+        except Exception as exc:
+            print(exc)
+            pass
 
     config_dict = get_default_config()
-    import json
-    with open(config_filepath, 'w') as outfile:
-        json.dump(config_dict, outfile)
     messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
 
     global root
     load_GUI(root, config_dict)
 
-def btn_save_clicked(language_code):
-    btn_save_act(language_code)
+def btn_save_clicked():
+    btn_save_act()
 
-def btn_save_act(language_code, slience_mode=True):
+def btn_save_act(slience_mode=True):
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
 
     config_dict = get_default_config()
-
-    global combo_language
+    language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
     is_all_data_correct = True
+
+    global combo_language
+    if is_all_data_correct:
+        config_dict["advanced"]["language"] = combo_language.get().strip()
+        # display as new language.
+        language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
 
     global txt_file_name
@@ -201,25 +209,23 @@ def btn_save_act(language_code, slience_mode=True):
     for i in range(15):
         filelist.append(txt_file_name[i].get().strip())
 
-
     if is_all_data_correct:
         config_dict["list"]=filelist
-        config_dict["advanced"]["language"] = combo_language.get().strip()
-        # display as new language.
-        language_code = get_language_code_by_name(config_dict["advanced"]["language"])
-
 
     # save config.
     if is_all_data_correct:
-        import json
-        with open(config_filepath, 'w') as outfile:
-            json.dump(config_dict, outfile)
-
+        # slience
+        save_json(config_dict, config_filepath)
+        
         if not slience_mode:
             messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
     return is_all_data_correct
 
+def save_json(config_dict, target_path):
+    json_str = json.dumps(config_dict, indent=4)
+    with open(target_path, 'w') as outfile:
+        outfile.write(json_str)
 
 def open_url(url):
     webbrowser.open_new(url)
@@ -528,7 +534,7 @@ def get_action_bar(root, language_code):
     global btn_save
     global btn_restore_defaults
 
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked(language_code) )
+    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked() )
     btn_save.grid(column=1, row=0)
 
     btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))

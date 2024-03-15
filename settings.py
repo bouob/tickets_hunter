@@ -48,7 +48,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.02)"
+CONST_APP_VERSION = "MaxBot (2024.03.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -783,10 +783,14 @@ def load_json():
 def btn_restore_defaults_clicked(language_code):
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
+    if os.path.exists(str(config_filepath)):
+        try:
+            os.unlink(str(config_filepath))
+        except Exception as exc:
+            print(exc)
+            pass
 
     config_dict = get_default_config()
-    with open(config_filepath, 'w') as outfile:
-        json.dump(config_dict, outfile)
     messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
 
     global root
@@ -814,18 +818,19 @@ def btn_resume_clicked(language_code):
 
 def btn_launcher_clicked(language_code):
     Root_Dir = ""
-    save_ret = btn_save_act(language_code, slience_mode=True)
+    save_ret = btn_save_act(slience_mode=True)
     if save_ret:
         run_python_script("config_launcher")
 
-def btn_save_clicked(language_code):
-    btn_save_act(language_code)
+def btn_save_clicked():
+    btn_save_act()
 
-def btn_save_act(language_code, slience_mode=False):
+def btn_save_act(slience_mode=False):
     app_root = get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = get_default_config()
+    language_code = get_language_code_by_name(config_dict["language"])
 
     # read user input
     global combo_homepage
@@ -1167,7 +1172,7 @@ def save_json(config_dict, target_path):
 def btn_run_clicked(language_code):
     print('run button pressed.')
     Root_Dir = ""
-    save_ret = btn_save_act(language_code, slience_mode=True)
+    save_ret = btn_save_act(slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
         threading.Thread(target=launch_maxbot).start()
@@ -3053,7 +3058,7 @@ def get_action_bar(root, language_code):
     btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command= lambda: btn_run_clicked(language_code))
     btn_run.grid(column=0, row=0)
 
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked(language_code) )
+    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked() )
     btn_save.grid(column=1, row=0)
 
     btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)

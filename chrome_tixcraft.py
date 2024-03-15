@@ -3,6 +3,7 @@
 #執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 #import jieba
 #from DrissionPage import ChromiumPage
+#import nodriver as uc
 import argparse
 import base64
 import json
@@ -41,7 +42,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.02)"
+CONST_APP_VERSION = "MaxBot (2024.03.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
