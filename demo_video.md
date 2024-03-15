@@ -41,7 +41,7 @@ https://youtu.be/V8S_E7ayAGU
 https://youtu.be/u3YQCZZu6kE
 
 ### 2024-01-12:
-MaxBot 自動重啟瀏覽器
+MaxBot 自動重啟瀏覽器 (遠大刷太久會Out Of Memory)
 
 https://youtu.be/mp6pYgniaPU
 
