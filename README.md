@@ -6,11 +6,15 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 # Download 
 (搶票程式下載)
 
+目前有打包的「執行檔」，只有Windows 平台，其他作業系統需要使用原始碼來執行。當然Windows 平台也可以用原始碼執行MaxBot.
+
 https://github.com/max32002/tixcraft_bot/releases
 
-如果你是要用原始碼執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
+如果你是要用「原始碼」執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
 
-如果有辦法的話，建議使用原始碼來執行MaxBot，執行上的效率與相容性的問題會較少，使用方法是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
+如果有辦法的話，建議使用原始碼來執行MaxBot，執行上的「效率」與「相容性」的問題會較少。
+
+使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
 
 請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
