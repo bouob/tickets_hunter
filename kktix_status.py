@@ -11,9 +11,7 @@ except ImportError:
     # for Python3
     try:
         from tkinter import *
-        from tkinter import ttk
-        from tkinter import messagebox
-        from tkinter import filedialog
+        from tkinter import filedialog, messagebox, ttk
     except Exception as e:
         pass
 
@@ -25,12 +23,13 @@ import platform
 import subprocess
 import sys
 import threading
-import webbrowser
-import requests
 import time
+import webbrowser
 from datetime import datetime
 
-CONST_APP_VERSION = "MaxBot (2024.03.04)"
+import requests
+
+CONST_APP_VERSION = "MaxBot (2024.03.05)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
@@ -845,7 +844,7 @@ def kktix_get_registerStatus(event_code):
         print("send reg_info request fail:")
         print(exc)
 
-    registerStatus = None
+    registerStatus = ""
     if not html_result is None:
         status_code = html_result.status_code
         #print("status_code:",status_code)
@@ -881,12 +880,12 @@ def kktix_get_event_code(url):
 
 def kktix_in_stock_play_sound():
     global chk_state_play_ticket_sound
-    try:
-        if 'chk_state_play_ticket_sound' in globals():
+    if 'chk_state_play_ticket_sound' in globals():
+        try:
             if bool(chk_state_play_ticket_sound.get()):
                 btn_preview_sound_clicked()
-    except Exception as e:
-        pass
+        except Exception as e:
+            pass
 
 def get_kktix_status_by_url(url):
     registerStatus = ""
@@ -900,19 +899,19 @@ def get_kktix_status_by_url(url):
 
 def update_kktix_status(registerStatus):
     global status_variable 
-    try:
-        if 'status_variable' in globals():
+    if 'status_variable' in globals():
+        try:
             status_variable.set(registerStatus)
-    except Exception as e:
-        pass
+        except Exception as e:
+            pass
 
 def append_kktix_status_log(output_log):
     global txt_status_log
-    try:
-        if 'txt_status_log' in globals():
+    if 'txt_status_log' in globals():
+        try:
             txt_status_log.insert("1.0", output_log + "\n")
-    except Exception as e:
-        pass
+        except Exception as e:
+            pass
 
 def append_kktix_status_log_file(output_log):
     app_root = get_app_root()
@@ -972,14 +971,14 @@ def collect_ui_config():
     check_interval = 3
     config_filepath, config_dict = load_json()
 
-    try:
-        if 'combo_check_interval' in globals():
+    if 'combo_check_interval' in globals():
+        try:
             check_interval = int(combo_check_interval.get().strip())
             config_dict["check_interval"] = check_interval
-        else:
-            is_ui_ready = False
-    except Exception as e:
-        pass
+        except Exception as e:
+            pass
+    else:
+        is_ui_ready = False
 
     url = ""
     filename = ""

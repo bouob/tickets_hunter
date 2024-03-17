@@ -8,10 +8,9 @@ try:
 except ImportError:
     # for Python3
     try:
-        from tkinter import *
-        from tkinter import ttk
         import tkinter.font as tkfont
-        from tkinter import messagebox
+        from tkinter import *
+        from tkinter import messagebox, ttk
         from tkinter.filedialog import asksaveasfilename
     except Exception as e:
         pass
@@ -51,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.04)"
+CONST_APP_VERSION = "MaxBot (2024.03.05)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1198,10 +1197,11 @@ def show_preview_text():
             date_array = []
 
         global lbl_online_dictionary_preview_data
-        try:
-            lbl_online_dictionary_preview_data.config(text=','.join(date_array))
-        except Exception as exc:
-            pass
+        if 'lbl_online_dictionary_preview_data' in globals():
+            try:
+                lbl_online_dictionary_preview_data.config(text=','.join(date_array))
+            except Exception as exc:
+                pass
 
 def write_string_to_file(filename, data):
     outfile = None
@@ -1245,11 +1245,13 @@ def save_url_to_file(new_remote_url, force_write = False):
 def btn_preview_text_clicked():
     global txt_remote_url
     remote_url = ""
-    try:
-        remote_url = txt_remote_url.get("1.0",END).strip()
-    except Exception as exc:
-        pass
+    if 'txt_remote_url' in globals():
+        try:
+            remote_url = txt_remote_url.get("1.0",END).strip()
+        except Exception as exc:
+            pass
     remote_url = format_config_keyword_for_json(remote_url)
+
     if len(remote_url) > 0:
         url_array = []
         try:
@@ -2715,31 +2717,46 @@ def check_maxbot_config_unsaved(config_dict):
     global txt_resume_keyword_second
 
     try:
-        date_keyword = txt_date_keyword.get("1.0",END).strip()
-        date_keyword = format_config_keyword_for_json(date_keyword)
+        date_keyword = ""
+        if 'txt_date_keyword' in globals():
+            date_keyword = txt_date_keyword.get("1.0",END).strip()
+            date_keyword = format_config_keyword_for_json(date_keyword)
 
-        area_keyword = txt_area_keyword.get("1.0",END).strip()
-        area_keyword = format_config_keyword_for_json(area_keyword)
+        area_keyword = ""
+        if 'txt_area_keyword' in globals():
+            area_keyword = txt_area_keyword.get("1.0",END).strip()
+            area_keyword = format_config_keyword_for_json(area_keyword)
 
-        keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
-        keyword_exclude = format_config_keyword_for_json(keyword_exclude)
+        keyword_exclude = ""
+        if 'txt_keyword_exclude' in globals():
+            keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
+            keyword_exclude = format_config_keyword_for_json(keyword_exclude)
 
-        idle_keyword = txt_idle_keyword.get("1.0",END).strip()
-        idle_keyword = format_config_keyword_for_json(idle_keyword)
+        idle_keyword = ""
+        if 'txt_idle_keyword' in globals():
+            idle_keyword = txt_idle_keyword.get("1.0",END).strip()
+            idle_keyword = format_config_keyword_for_json(idle_keyword)
 
-        resume_keyword = txt_resume_keyword.get("1.0",END).strip()
-        resume_keyword = format_config_keyword_for_json(resume_keyword)
+        resume_keyword = ""
+        if 'txt_resume_keyword' in globals():
+            resume_keyword = txt_resume_keyword.get("1.0",END).strip()
+            resume_keyword = format_config_keyword_for_json(resume_keyword)
 
-        idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
-        idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
+        idle_keyword_second = ""
+        if 'txt_idle_keyword_second' in globals():
+            idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
+            idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
 
-        resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
-        resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+        resume_keyword_second = ""
+        if 'txt_resume_keyword_second' in globals():
+            resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
+            resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
 
         highlightthickness = 0
-        if len(combo_ticket_number.get().strip())>0:
-            if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
-                highlightthickness = 2
+        if 'combo_ticket_number' in globals():
+            if len(combo_ticket_number.get().strip())>0:
+                if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
+                    highlightthickness = 2
         #combo_ticket_number.config(highlightthickness=highlightthickness, highlightbackground="red")
 
         highlightthickness = 0
@@ -2777,10 +2794,10 @@ def check_maxbot_config_unsaved(config_dict):
             highlightthickness = 2
         txt_resume_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
     except Exception as exc:
-        print(exc)
+        #print(exc)
         pass
 
-def resetful_api_timer():
+def settgins_gui_timer():
     while True:
         btn_preview_text_clicked()
         preview_question_text_file()
@@ -2823,17 +2840,19 @@ def update_maxbot_runtime_status():
 
     sync_status_to_extension(not is_paused)
 
+    global combo_language
+    global lbl_maxbot_status_data
     try:
-        global combo_language
-        new_language = combo_language.get().strip()
-        language_code=get_language_code_by_name(new_language)
+        if 'combo_language' in globals():
+            new_language = combo_language.get().strip()
+            language_code=get_language_code_by_name(new_language)
 
-        global lbl_maxbot_status_data
         maxbot_status = translate[language_code]['status_enabled']
         if is_paused:
             maxbot_status = translate[language_code]['status_paused']
 
-        lbl_maxbot_status_data.config(text=maxbot_status)
+        if 'lbl_maxbot_status_data' in globals():
+            lbl_maxbot_status_data.config(text=maxbot_status)
 
         global btn_idle
         global btn_resume
@@ -2849,13 +2868,16 @@ def update_maxbot_runtime_status():
         last_url = read_last_url_from_file()
         if len(last_url) > 60:
             last_url=last_url[:60]+"..."
-        lbl_maxbot_last_url_data.config(text=last_url)
+        if 'lbl_maxbot_last_url_data' in globals():
+            lbl_maxbot_last_url_data.config(text=last_url)
 
-        global lbl_system_clock_data
         system_clock_data = datetime.now()
         current_time = system_clock_data.strftime('%H:%M:%S')
         #print('Current Time is:', current_time)
-        lbl_system_clock_data.config(text=current_time)
+        
+        global lbl_system_clock_data
+        if 'lbl_system_clock_data' in globals():
+            lbl_system_clock_data.config(text=current_time)
 
     except Exception as exc:
         #print(exc)
@@ -3383,18 +3405,19 @@ def preview_question_text_file():
             question_text = infile.readline()
 
             global txt_question
-            try:
-                displayed_question_text = txt_question.get("1.0",END).strip()
-                if displayed_question_text != question_text:
-                    # start to refresh
-                    txt_question.delete("1.0","end")
-                    if len(question_text) > 0:
-                        txt_question.insert("1.0", question_text)
-            except Exception as exc:
-                pass
+            if 'txt_question' in globals():
+                try:
+                    displayed_question_text = txt_question.get("1.0",END).strip()
+                    if displayed_question_text != question_text:
+                        # start to refresh
+                        txt_question.delete("1.0","end")
+                        if len(question_text) > 0:
+                            txt_question.insert("1.0", question_text)
+                except Exception as exc:
+                    pass
 
 if __name__ == "__main__":
-    threading.Thread(target=resetful_api_timer, daemon=True).start()
+    threading.Thread(target=settgins_gui_timer, daemon=True).start()
     threading.Thread(target=web_server, daemon=True).start()
     clean_tmp_file()
     main_gui()
