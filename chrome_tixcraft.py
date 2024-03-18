@@ -42,7 +42,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.05)"
+CONST_APP_VERSION = "MaxBot (2024.03.06)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -8482,6 +8482,36 @@ def cityline_clean_ads(driver):
     except Exception as exc:
         pass
 
+def cityline_input_code(driver, config_dict, fail_list):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    answer_list = []
+
+    answer_list = get_answer_list_from_user_guess_string(config_dict)
+
+    inferred_answer_string = ""
+    for answer_item in answer_list:
+        if not answer_item in fail_list:
+            inferred_answer_string = answer_item
+            break
+
+    if show_debug_message:
+        print("inferred_answer_string:", inferred_answer_string)
+        print("answer_list:", answer_list)
+
+    # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
+    input_text_css = "input[type='text']"
+    next_step_button_css = ""
+    submit_by_enter = False
+    check_input_interval = 0.2
+    is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+
+    return fail_list
+
 def cityline_main(driver, url, config_dict):
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
@@ -8510,10 +8540,9 @@ def cityline_main(driver, url, config_dict):
         # show HTTP ERROR 400
         pass
 
-
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
-    if '/Login.html' in url:
+    if '.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
         if cityline_password == "":
@@ -8548,6 +8577,13 @@ def cityline_main(driver, url, config_dict):
         if not '/slim_end.htm' in url:
             if len(url.split('/'))>=5:
                 cityline_shows_goto_cta(driver)
+
+    # https://venue.cityline.com/utsvInternet/XXX/login?lang=TW
+    if '/utsvInternet/' in url and '/login?' in url:
+        if len(url.split('/')) == 6:
+            fail_list = []
+            fail_list = cityline_input_code(driver, config_dict, fail_list)
+        
 
 def get_ibon_question_text(driver):
     question_div = None

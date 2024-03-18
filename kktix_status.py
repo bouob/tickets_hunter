@@ -29,7 +29,7 @@ from datetime import datetime
 
 import requests
 
-CONST_APP_VERSION = "MaxBot (2024.03.05)"
+CONST_APP_VERSION = "MaxBot (2024.03.06)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
@@ -945,14 +945,20 @@ def kktix_status_query(config_dict, last_status, log_file=False):
             if registerStatus=="IN_STOCK":
                 btn_index = 1
                 try:
+                    print(config_dict["ticket_exec_maxbot"])
                     if config_dict["ticket_exec_maxbot"]:
-                        filename=config_dict["list"][btn_index-1].get().strip()
-                        threading.Thread(target=launch_maxbot, args=(filename,)).start()
+                        filename=config_dict["list"][btn_index-1]
+                        print("filename", filename)
+                        if len(filename) > 0:
+                            threading.Thread(target=launch_maxbot, args=(filename,)).start()
 
+                    print(config_dict["ticket_exec_command"], config_dict["new_process"])
                     if config_dict["ticket_exec_command"]:
-                        working_dir = os.path.dirname(os.path.realpath(__file__))
-                        subprocess.Popen(config_dict["new_process"] , shell=True, cwd=working_dir)
+                        if len(config_dict["new_process"]) > 0:
+                            working_dir = os.path.dirname(os.path.realpath(__file__))
+                            subprocess.Popen(config_dict["new_process"] , shell=True, cwd=working_dir)
                 except Exception as e:
+                    print(e)
                     pass
 
     return registerStatus
