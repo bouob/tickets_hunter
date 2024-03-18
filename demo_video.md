@@ -1,5 +1,11 @@
 # Demo (示範影片)
 
+### 2024-03-04: 
+(2024-03-16) KKTIX 的 Golden Wave in Taiwan 搶票心得
+
+https://youtu.be/OZauGhoj4xU 
+* 前面都癈話，可以直接快轉到最後30秒。
+
 ### 2024-03-02: 
 一直問KKTIX清票了沒, 解決KKTIX不定期清票
 
