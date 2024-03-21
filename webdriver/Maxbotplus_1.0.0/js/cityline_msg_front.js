@@ -15,14 +15,17 @@ function begin()
     }
 
     // too short to cause error.
-    if(auto_reload_page_interval < 0.3) {
-        auto_reload_page_interval = 0.3;
+    if(auto_reload_page_interval < 0.6) {
+        auto_reload_page_interval = 0.6;
     }
 
     if(status=='ON') {
+        let target_interval = auto_reload_page_interval * 1000;
         setInterval(() => {
-            retry();
-        }, auto_reload_page_interval * 1000);
+            //retry();
+            //console.log("trigger");
+            $(".btn_cta").prop('disabled', false).trigger("click");
+        }, target_interval);
     }
 }
 
