@@ -100,6 +100,12 @@ Q: 是只有使用虛擬主機才要用程式碼執行搶票機器人嗎？
 
 A: 除了 Window 有打包的執行檔之外, macOS / Linux 只能使用原始碼來執行, 當然 Windows 也可以用原始碼來執行.
 
+# File Description
+(檔案說明)
+* chrome_tixcraft.py : 搶票機器人主程式, 用來自動化網頁的操作。
+* config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
+* kktix_status.py : kktix 售票狀態監控，可以在有票時提發出提醒。
+* settings.py : 編輯 settings.json 的 GUI 介面。提供圖片OCR功能給chrome擴充功能。支援定時啟用/停用MaxBot。
 
 # Introduce the Implement 
 (實作方法)
