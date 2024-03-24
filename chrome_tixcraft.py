@@ -42,7 +42,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.07)"
+CONST_APP_VERSION = "MaxBot (2024.03.08)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -4613,7 +4613,7 @@ def set_kktix_control_label_text(driver, config_dict):
         if not answer_item in fail_list:
             inferred_answer_string = answer_item
             break
-    input_text_css = 'div > div.code-input > div.control-group > div.controls > label > input[type="text"]'
+    input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
     next_step_button_css = '#registrationsNewApp div.form-actions button.btn-primary'
     submit_by_enter = False
     check_input_interval = 0.2
@@ -4737,17 +4737,32 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_f
                         play_sound_while_ordering(config_dict)
                     played_sound_ticket = True
 
+                # whole event question.
                 fail_list, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, registrationsNewApp_div)
+                
+                # single option question
                 if not is_question_popup:
                     # no captcha text popup, goto next page.
                     control_text = get_kktix_control_label_text(driver)
                     if show_debug_message:
                         print("control_text:", control_text)
+                    
                     if len(control_text) == 0:
                         click_ret = kktix_press_next_button(driver)
                     else:
-                        #set_kktix_control_label_text(driver, config_dict)
                         # input by maxbox plus extension.
+                        is_fill_at_webdriver = False
+
+                        if not config_dict["browser"] in CONST_CHROME_FAMILY:
+                            is_fill_at_webdriver = True
+                        else:
+                            if not config_dict["advanced"]["chrome_extension"]:
+                                is_fill_at_webdriver = True
+                        
+                        # TODO: not implement in extension, so force to fill in webdriver.
+                        is_fill_at_webdriver = True
+                        if is_fill_at_webdriver:
+                            set_kktix_control_label_text(driver, config_dict)
                         pass
             else:
                 if is_need_refresh:
