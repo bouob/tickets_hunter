@@ -7968,7 +7968,13 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             if config_dict["advanced"]["play_sound"]["order"]:
                 if not kktix_dict["played_sound_order"]:
                     play_sound_while_ordering(config_dict)
-                kktix_dict["played_sound_order"] = True
+            
+            if not kktix_dict["played_sound_order"]:
+                if len(config_dict["advanced"]["kktix_account"]) > 0:
+                    print("搶票成功, 帳號:", config_dict["advanced"]["kktix_account"])
+                print("基本資料與實名制網址:", url)
+
+            kktix_dict["played_sound_order"] = True
 
 
         if config_dict["advanced"]["headless"]:

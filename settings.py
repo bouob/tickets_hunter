@@ -757,7 +757,7 @@ def get_default_config():
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
-    config_dict["advanced"]["window_size"] = "512,520"
+    config_dict["advanced"]["window_size"] = "512,580"
 
     config_dict["advanced"]["idle_keyword"] = ""
     config_dict["advanced"]["resume_keyword"] = ""
@@ -1341,7 +1341,7 @@ def play_mp3(sound_filename):
         playsound(sound_filename)
     except Exception as exc:
         msg=str(exc)
-        print("play sound exeption:", msg)
+        #print("play sound exeption:", msg)
         if platform.system() == 'Windows':
             import winsound
             try:
@@ -2739,10 +2739,6 @@ def check_maxbot_config_unsaved(config_dict):
     global txt_resume_keyword
     global txt_idle_keyword_second
     global txt_resume_keyword_second
-
-    style = ttk.Style()
-    style.configure("redStyle.TCombobox", foreground="red")
-    style.configure("greenStyle.TCombobox", foreground="green")
 
     try:
         date_keyword = ""
