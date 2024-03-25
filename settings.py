@@ -50,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.09)"
+CONST_APP_VERSION = "MaxBot (2024.03.10)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1658,8 +1658,10 @@ def showHideBlocks():
 
     global combo_homepage
 
-    new_homepage = combo_homepage.get().strip()
-    #print("new homepage value:", new_homepage)
+    new_homepage = ""
+    if 'combo_homepage' in globals():
+        new_homepage = combo_homepage.get().strip()
+        #print("new homepage value:", new_homepage)
 
     BLOCK_STYLE_TIXCRAFT = 0
     BLOCK_STYLE_KKTIX = 1
@@ -1670,15 +1672,15 @@ def showHideBlocks():
         if domain_name in new_homepage:
             show_block_index = BLOCK_STYLE_KKTIX
 
-    if show_block_index == BLOCK_STYLE_KKTIX:
-        frame_group_kktix.grid(column=0, row=frame_group_kktix_index, padx=UI_PADDING_X)
-        frame_group_tixcraft.grid_forget()
+    if 'frame_group_kktix' in globals():
+        if show_block_index == BLOCK_STYLE_KKTIX:
+            frame_group_kktix.grid(column=0, row=frame_group_kktix_index, padx=UI_PADDING_X)
+            frame_group_tixcraft.grid_forget()
+        else:
+            frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
+            frame_group_kktix.grid_forget()
 
-    else:
-        frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
-        frame_group_kktix.grid_forget()
-
-    showHideTixcraftBlocks()
+        showHideTixcraftBlocks()
 
 def showHideOcrCaptchaWithSubmit():
     global chk_state_ocr_captcha
@@ -2726,7 +2728,9 @@ def change_maxbot_status_by_keyword():
 
 def check_maxbot_config_unsaved(config_dict):
     # alert not saved config.
+    global combo_homepage
     global combo_ticket_number
+
     global txt_date_keyword
     global txt_area_keyword
     global txt_keyword_exclude
@@ -2735,6 +2739,10 @@ def check_maxbot_config_unsaved(config_dict):
     global txt_resume_keyword
     global txt_idle_keyword_second
     global txt_resume_keyword_second
+
+    style = ttk.Style()
+    style.configure("redStyle.TCombobox", foreground="red")
+    style.configure("greenStyle.TCombobox", foreground="green")
 
     try:
         date_keyword = ""
@@ -2773,10 +2781,20 @@ def check_maxbot_config_unsaved(config_dict):
             resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
 
         highlightthickness = 0
+        if 'combo_homepage' in globals():
+            if len(combo_homepage.get().strip())>0:
+                if config_dict["homepage"] != combo_homepage.get().strip():
+                    highlightthickness = 2
+        
+        if highlightthickness > 0:
+            showHideBlocks()
+
+        highlightthickness = 0
         if 'combo_ticket_number' in globals():
             if len(combo_ticket_number.get().strip())>0:
                 if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
                     highlightthickness = 2
+        # fail, tkinter combobox border style is not working anymore
         #combo_ticket_number.config(highlightthickness=highlightthickness, highlightbackground="red")
 
         highlightthickness = 0
@@ -2863,16 +2881,18 @@ def update_maxbot_runtime_status():
     global combo_language
     global lbl_maxbot_status_data
     try:
+        language_code = ""
         if 'combo_language' in globals():
             new_language = combo_language.get().strip()
             language_code=get_language_code_by_name(new_language)
 
-        maxbot_status = translate[language_code]['status_enabled']
-        if is_paused:
-            maxbot_status = translate[language_code]['status_paused']
+        if len(language_code) > 0:
+            maxbot_status = translate[language_code]['status_enabled']
+            if is_paused:
+                maxbot_status = translate[language_code]['status_paused']
 
-        if 'lbl_maxbot_status_data' in globals():
-            lbl_maxbot_status_data.config(text=maxbot_status)
+            if 'lbl_maxbot_status_data' in globals():
+                lbl_maxbot_status_data.config(text=maxbot_status)
 
         global btn_idle
         global btn_resume
