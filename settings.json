@@ -79,6 +79,7 @@
         "auto_reload_page_interval": 0.1,
         "reset_browser_interval": 0.0,
         "proxy_server_port": "",
+        "window_size": "500,1024",
         "idle_keyword": "",
         "resume_keyword": "",
         "idle_keyword_second": "",

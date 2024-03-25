@@ -112,7 +112,7 @@ CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
 warnings.simplefilter('ignore',InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -463,8 +463,8 @@ def get_chrome_options(webdriver_path, config_dict):
     if config_dict["advanced"]["headless"]:
         #chrome_options.add_argument('--headless')
         chrome_options.add_argument('--headless=new')
-        chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
 
+    chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
     chrome_options.add_argument("--disable-animations")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-infobars")
@@ -711,8 +711,8 @@ def get_uc_options(uc, config_dict, webdriver_path):
     if config_dict["advanced"]["headless"]:
         #options.add_argument('--headless')
         options.add_argument('--headless=new')
-        options.add_argument("--user-agent=%s" % (USER_AGENT))
 
+    options.add_argument("--user-agent=%s" % (USER_AGENT))
     options.add_argument("--disable-animations")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--disable-infobars")
@@ -12572,12 +12572,19 @@ def reset_webdriver(driver, config_dict, url):
         pass
     return new_driver
 
+def resize_window(driver, config_dict):
+    if len(config_dict["advanced"]["window_size"]) > 0:
+        if "," in config_dict["advanced"]["window_size"]:
+            target_array = config_dict["advanced"]["window_size"].split(",")
+            driver.set_window_size(int(target_array[0]), int(target_array[1]))
+
 def main(args):
     config_dict = get_config_dict(args)
 
     driver = None
     if not config_dict is None:
         driver = get_driver_by_config(config_dict)
+        resize_window(driver, config_dict)
     else:
         print("Load config error!")
 

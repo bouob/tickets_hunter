@@ -50,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.08)"
+CONST_APP_VERSION = "MaxBot (2024.03.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -146,6 +146,7 @@ def load_translate():
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
     en_us["reset_browser_interval"] = 'Reset browser interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
+    en_us["window_size"] = 'Window size'
 
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
@@ -263,6 +264,7 @@ def load_translate():
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
     zh_tw["reset_browser_interval"] = '重新啟動瀏覽器間隔(秒)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
+    zh_tw["window_size"] = '瀏覽器視窗大小'
 
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
@@ -380,6 +382,7 @@ def load_translate():
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
     zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
+    zh_cn["window_size"] = '浏览器窗口大小'
 
     zh_cn["area_select_order"] = '区域排序方式'
     zh_cn["area_keyword"] = '区域关键字'
@@ -498,6 +501,7 @@ def load_translate():
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
     ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
+    ja_jp["window_size"] = 'ウィンドウサイズ'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
@@ -753,6 +757,7 @@ def get_default_config():
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["proxy_server_port"] = ""
+    config_dict["advanced"]["window_size"] = "512,520"
 
     config_dict["advanced"]["idle_keyword"] = ""
     config_dict["advanced"]["resume_keyword"] = ""
@@ -859,6 +864,7 @@ def btn_save_act(slience_mode=False):
     global txt_auto_reload_page_interval
     global txt_reset_browser_intervalv
     global txt_proxy_server_port
+    global txt_window_size
 
     global txt_tixcraft_sid
     global txt_ibon_ibonqware
@@ -1144,6 +1150,7 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
         config_dict["advanced"]["reset_browser_interval"] = float(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
+        config_dict["advanced"]["window_size"] = txt_window_size.get().strip()
 
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             if config_dict["advanced"]["reset_browser_interval"] < 20:
@@ -1461,6 +1468,7 @@ def applyNewLanguage():
     global lbl_auto_reload_page_interval
     global lbl_reset_browser_interval
     global lbl_proxy_server_port
+    global lbl_window_size
 
     lbl_homepage.config(text=translate[language_code]["homepage"])
     lbl_browser.config(text=translate[language_code]["browser"])
@@ -1499,6 +1507,7 @@ def applyNewLanguage():
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_reset_browser_interval.config(text=translate[language_code]["reset_browser_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
+    lbl_window_size.config(text=translate[language_code]["window_size"])
 
     lbl_headless.config(text=translate[language_code]["headless"])
     lbl_verbose.config(text=translate[language_code]["verbose"])
@@ -2162,6 +2171,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_proxy_server_port_value = StringVar(frame_group_header, value=config_dict["advanced"]["proxy_server_port"])
     txt_proxy_server_port = Entry(frame_group_header, width=30, textvariable = txt_proxy_server_port_value)
     txt_proxy_server_port.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_window_size
+    lbl_window_size = Label(frame_group_header, text=translate[language_code]['window_size'])
+    lbl_window_size.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_window_size
+    txt_window_size_value = StringVar(frame_group_header, value=config_dict["advanced"]["window_size"])
+    txt_window_size = Entry(frame_group_header, width=30, textvariable = txt_window_size_value)
+    txt_window_size.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -3175,7 +3195,7 @@ def main_gui():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 580
-    GUI_SIZE_HEIGHT = 590
+    GUI_SIZE_HEIGHT = 610
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)

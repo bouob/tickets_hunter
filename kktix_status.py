@@ -29,7 +29,7 @@ from datetime import datetime
 
 import requests
 
-CONST_APP_VERSION = "MaxBot (2024.03.08)"
+CONST_APP_VERSION = "MaxBot (2024.03.09)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
