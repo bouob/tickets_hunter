@@ -1,5 +1,25 @@
 # Demo (示範影片)
 
+### 2024-03-09: 
+增加瀏覽器視窗大小的設定值, 方便視窗多開 
+
+https://youtu.be/zPgP43w-ceg
+
+### 2024-03-08 
+KKIX 加購粉絲福利
+
+https://youtu.be/Hc2wW_sWiAo
+
+### 2024-03-06: 
+(2024-03-24) IU 演唱會沒搶到，沒搶到票建議多刷10~20分鐘
+
+https://youtu.be/6R3tGCZ_s6c
+
+### 2024-03-22
+MaxBot 售票系統架構猜測與搶票建議
+
+https://youtu.be/alpy9HX6aRw
+
 ### 2024-03-04: 
 (2024-03-16) KKTIX 的 Golden Wave in Taiwan 搶票心得
 
