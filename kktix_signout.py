@@ -117,31 +117,41 @@ async def kktix_signin_nodriver(kktix_account, kktix_password):
     driver = await uc.start()
     profile_url = "https://kktix.com/users/edit"
     signin_url = "https://kktix.com/users/sign_in"
-    signout_url = "https://kktix.com/users/sign_out"
+    #signout_url = "https://kktix.com/users/sign_out"
     
-
     while True:
         try:
             tab = await driver.get(signin_url)
             #html = await tab.get_content()
             #await tab.sleep(0.1)
             #print(html)
-            
-            account = await tab.select("#user_login")
-            await account.send_keys(kktix_account)
-            #await tab.sleep(0.1)
 
-            password = await tab.select("#user_password")
-            await password.send_keys(kktix_password)
-            #await tab.sleep(0.1)
+            x = await tab.js_dumps('window')
+            #print(x)
+            #print(x["location"]["href"])
+            if x["location"]["href"]=="signin_url":
+                account = await tab.select("#user_login")
+                await account.send_keys(kktix_account)
+                #await tab.sleep(0.1)
 
-            submit = await tab.select("input[type='submit'][name]")
-            await submit.click()
+                password = await tab.select("#user_password")
+                await password.send_keys(kktix_password)
+                #await tab.sleep(0.1)
 
-            await tab.sleep(0.3)
-            tab = await driver.get(signout_url)
-            await tab.sleep(0.3)
+                submit = await tab.select("input[type='submit'][name]")
+                await submit.click()
+                
+                await tab.sleep(0.5)
+                #tab = await tab.get(signout_url)
+
+            signout = await tab.select("a[href='/users/sign_out']")
+            await signout.click()
+            await tab.sleep(0.5)
         except Exception as e:
+            print(e)
+            
+            if str(e)=="coroutine raised StopIteration":
+                break
             pass
 
 
