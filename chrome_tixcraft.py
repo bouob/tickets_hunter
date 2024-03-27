@@ -42,7 +42,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.10)"
+CONST_APP_VERSION = "MaxBot (2024.03.11)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -111,6 +111,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
+CONST_WEBDRIVER_TYPE_ND = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
@@ -8460,8 +8461,9 @@ def cityline_auto_retry_access(driver, config_dict):
         btn_retry = driver.find_element(By.CSS_SELECTOR, 'button')
         if not btn_retry is None:
             js = btn_retry.get_attribute('onclick')
-            driver.set_script_timeout(1)
-            driver.execute_script(js)
+            if len(js) > 0:
+                driver.set_script_timeout(1)
+                driver.execute_script(js)
     except Exception as exc:
         pass
 
@@ -8533,11 +8535,7 @@ def cityline_input_code(driver, config_dict, fail_list):
 
     return fail_list
 
-def cityline_main(driver, url, config_dict):
-    # https://msg.cityline.com/ https://event.cityline.com/
-    if 'msg.cityline.com' in url or 'event.cityline.com' in url:
-        cityline_auto_retry_access(driver, config_dict)
-
+def cityline_close_second_tab(driver):
     try:
         window_handles_count = len(driver.window_handles)
         if window_handles_count > 1:
@@ -8550,6 +8548,13 @@ def cityline_main(driver, url, config_dict):
                     driver.switch_to.window(driver.window_handles[-1])
     except Exception as exc:
         pass
+
+def cityline_main(driver, url, config_dict):
+    # https://msg.cityline.com/ https://event.cityline.com/
+    if 'msg.cityline.com' in url or 'event.cityline.com' in url:
+        cityline_auto_retry_access(driver, config_dict)
+
+    cityline_close_second_tab(driver)
 
     if '.cityline.com/Events.html' in url:
         cityline_cookie_accept(driver)

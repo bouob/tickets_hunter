@@ -2,9 +2,9 @@ function begin()
 {
     let settings = JSON.parse($("#settings").html());
     let status = $("#status").html();
-    console.log("msg");
-    console.log(settings);
-    console.log(status);
+    //console.log("msg");
+    //console.log(settings);
+    //console.log(status);
 
     $("#settings").remove();
     $("#status").remove();
@@ -15,8 +15,8 @@ function begin()
     }
 
     // too short to cause error.
-    if(auto_reload_page_interval < 0.2) {
-        auto_reload_page_interval = 0.2;
+    if(auto_reload_page_interval < 0.1) {
+        auto_reload_page_interval = 0.1;
     }
 
     if(status=='ON') {
