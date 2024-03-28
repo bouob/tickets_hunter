@@ -308,7 +308,8 @@
             "matches": [
                 "https://msg.cityline.com/*.html*",
                 "https://*.cityline.com/utsvInternet/*/home?lang=TW",
-                "https://event.cityline.com/"
+                "https://event.cityline.com/",
+                "https://event.cityline.com/queue?loc=*"
             ],
             "run_at": "document_end",
             "js": [
@@ -320,7 +321,8 @@
             "matches": [
                 "https://msg.cityline.com/*",
                 "https://*.cityline.com/utsvInternet/*/home?lang=TW",
-                "https://event.cityline.com/"
+                "https://event.cityline.com/",
+                "https://event.cityline.com/queue?loc=*"
             ],
             "run_at": "document_end",
             "world": "MAIN",
