@@ -1,3 +1,22 @@
+function goEvent(){
+    if(urlThrottler.indexOf('https://event.cityline.com/')>-1) {
+        window.location.href = urlThrottler;
+    } else {
+        document.getElementById("multiple_tab_layout").innerHTML = 'start to retry';
+
+        var ddsScheduler = undefined;
+        var retryingMsg = "重試中...<br>Retrying...";
+        var retryingMsg2 = "重試中... Retrying...";
+        var enableAutoRetry = true;
+        var remainTime = 10;
+        var enableButtonTime = 7;
+        
+        document.getElementById("busy_zone").innerHTML = '<button id="btn-retry-en-1" class="btn_cta" type="button" onclick="javascript:goEvent()">請重試 Retry<span id="remainTime1"></span></button>';
+        setTimeout(startCountDownTimer, 1000);
+    }
+    
+}
+
 function begin()
 {
     let settings = JSON.parse($("#settings").html());
@@ -26,6 +45,12 @@ function begin()
             //console.log("trigger");
             $(".btn_cta").prop('disabled', false).trigger("click");
         }, target_interval);
+    }
+
+    if(window.IsDuplicate()) {
+        window.IsDuplicate = function () {return false;};
+        document.getElementById("busy_zone").innerHTML = '<button id="btn-retry-en-1" class="btn_cta" type="button" disabled="disabled" onclick="javascript:goEvent()">請重試 Retry<span id="remainTime1"></span></button>';
+        setTimeout(startCountDownTimer, 1000);
     }
 }
 
