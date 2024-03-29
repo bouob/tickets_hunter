@@ -1,3 +1,5 @@
+$("footer").remove();
+$("div.banner-wrapper div.img-wrapper img").remove();
 var myInterval = null;
 //console.log("assign appear");
 

@@ -146,7 +146,6 @@ function setCookie(name, value, days) {
 }
 
 setInterval(() => {
-    console.log('set item');
     SetItem(ItemType.Local, "");
 }, 100);
 
