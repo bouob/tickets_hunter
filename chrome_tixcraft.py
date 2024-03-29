@@ -44,7 +44,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.13)"
+CONST_APP_VERSION = "MaxBot (2024.03.14)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -7961,23 +7961,22 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                 if not kktix_dict["played_sound_order"]:
                     play_sound_while_ordering(config_dict)
             
-            if not kktix_dict["played_sound_order"]:
-                kktix_account = config_dict["advanced"]["kktix_account"]
-                kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-                if kktix_password == "":
-                    kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
-                
-                print("基本資料(或實名制)網址:", url)
-                if len(kktix_account) > 0:
-                    print("搶票成功, 帳號:", kktix_account)
-                    threading.Thread(target=launch_maxbot, args=("", url, kktix_account, kktix_password, "false", )).start()
-                    driver.quit()
-                    sys.exit()
-
             kktix_dict["played_sound_order"] = True
 
             if config_dict["advanced"]["headless"]:
                 if not kktix_dict["is_popup_checkout"]:
+                    kktix_account = config_dict["advanced"]["kktix_account"]
+                    kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+                    if kktix_password == "":
+                        kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+                    
+                    print("基本資料(或實名制)網址:", url)
+                    if len(kktix_account) > 0:
+                        print("搶票成功, 帳號:", kktix_account)
+                        threading.Thread(target=launch_maxbot, args=("", url, kktix_account, kktix_password, "false", )).start()
+                        #driver.quit()
+                        #sys.exit()
+
                     is_event_page = False
                     if len(url.split('/'))>=7:
                         is_event_page = True
@@ -7988,9 +7987,10 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                             checkout_url = "https://%s/account/orders" % (domain_name)
                             print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
                             webbrowser.open_new(checkout_url)
-                            kktix_dict["is_popup_checkout"] = True
-                            driver.quit()
-                            sys.exit()
+                    
+                    kktix_dict["is_popup_checkout"] = True
+                    driver.quit()
+                    sys.exit()
     else:
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
