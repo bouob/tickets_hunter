@@ -50,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.12)"
+CONST_APP_VERSION = "MaxBot (2024.03.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -655,13 +655,12 @@ def is_arm():
     return ret
 
 def get_app_root():
-    # 讀取檔案裡的參數值
-    basis = ""
+    app_root = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
+        app_root = os.path.dirname(basis)
     else:
-        basis = sys.argv[0]
-    app_root = os.path.dirname(basis)
+        app_root = os.getcwd()
     return app_root
 
 def get_default_config():
@@ -1278,45 +1277,39 @@ def btn_preview_text_clicked():
 
 def run_python_script(script_name):
     working_dir = os.path.dirname(os.path.realpath(__file__))
+    cmd_argument = ""
     if hasattr(sys, 'frozen'):
         print("execute in frozen mode")
 
+        cmd = './' + script_name + cmd_argument
         # check platform here.
         if platform.system() == 'Darwin':
             print("execute MacOS python script")
-            subprocess.Popen("./" + script_name, shell=True, cwd=working_dir)
         if platform.system() == 'Linux':
             print("execute linux binary")
-            subprocess.Popen("./" + script_name, shell=True, cwd=working_dir)
         if platform.system() == 'Windows':
             print("execute .exe binary.")
-            subprocess.Popen(script_name + ".exe", shell=True, cwd=working_dir)
+            cmd = script_name + ".exe" + cmd_argument
+        subprocess.Popen(cmd, shell=True, cwd=working_dir)
     else:
         interpreter_binary = 'python'
         interpreter_binary_alt = 'python3'
-        if platform.system() == 'Darwin':
-            # try python3 before python.
+        if platform.system() != 'Windows':
             interpreter_binary = 'python3'
             interpreter_binary_alt = 'python'
         print("execute in shell mode.")
-        #print("script path:", working_dir)
-        #messagebox.showinfo(title="Debug0", message=working_dir)
-
-        # some python3 binary, running in 'python' command.
+        
+        cmd = script_name + '.py'
         try:
             print('try', interpreter_binary)
-            s=subprocess.Popen([interpreter_binary, script_name + '.py'], cwd=working_dir)
-            #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-            #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-            #messagebox.showinfo(title="Debug1", message=str(s))
+            s=subprocess.Popen([interpreter_binary, cmd], cwd=working_dir)
         except Exception as exc:
             print('try', interpreter_binary_alt)
             try:
-                s=subprocess.Popen([interpreter_binary_alt, script_name + '.py'], cwd=working_dir)
+                s=subprocess.Popen([interpreter_binary_alt, cmd], cwd=working_dir)
             except Exception as exc:
                 msg=str(exc)
                 print("exeption:", msg)
-                #messagebox.showinfo(title="Debug2", message=msg)
                 pass
 
 def btn_open_text_server_clicked():

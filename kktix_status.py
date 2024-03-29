@@ -29,7 +29,7 @@ from datetime import datetime
 
 import requests
 
-CONST_APP_VERSION = "MaxBot (2024.03.12)"
+CONST_APP_VERSION = "MaxBot (2024.03.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
@@ -117,12 +117,12 @@ def t_or_f(arg):
     return ret
 
 def get_app_root():
-    basis = ""
+    app_root = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
+        app_root = os.path.dirname(basis)
     else:
-        basis = sys.argv[0]
-    app_root = os.path.dirname(basis)
+        app_root = os.getcwd()
     return app_root
 
 def load_json():
@@ -348,49 +348,52 @@ def btn_items_run_event(event):
     filename=txt_file_name[btn_index-1].get().strip()
     threading.Thread(target=launch_maxbot, args=(filename,)).start()
 
-def launch_maxbot(filename):
-    if True:
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-        if hasattr(sys, 'frozen'):
-            print("execute in frozen mode")
+def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password=""):
+    cmd_argument = []
+    if len(filename) > 0:
+        cmd_argument.append('--input=' + filename)
+    if len(homepage) > 0:
+        cmd_argument.append('--homepage=' + homepage)
+    if len(kktix_account) > 0:
+        cmd_argument.append('--kktix_account=' + kktix_account)
+    if len(kktix_password) > 0:
+        cmd_argument.append('--kktix_password=' + kktix_password)
 
-            # check platform here.
-            if platform.system() == 'Darwin':
-                print("execute MacOS python script")
-                subprocess.Popen("./chrome_tixcraft --input %s" % (filename), shell=True, cwd=working_dir)
-            if platform.system() == 'Linux':
-                print("execute linux binary")
-                subprocess.Popen("./chrome_tixcraft --input %s" % (filename), shell=True, cwd=working_dir)
-            if platform.system() == 'Windows':
-                print("execute .exe binary.")
-                subprocess.Popen("chrome_tixcraft.exe --input %s" % (filename), shell=True, cwd=working_dir)
-        else:
-            interpreter_binary = 'python'
-            interpreter_binary_alt = 'python3'
-            if platform.system() == 'Darwin':
-                # try python3 before python.
-                interpreter_binary = 'python3'
-                interpreter_binary_alt = 'python'
-            print("execute in shell mode.")
-            #print("script path:", working_dir)
-            #messagebox.showinfo(title="Debug0", message=working_dir)
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    if hasattr(sys, 'frozen'):
+        print("execute in frozen mode")
+        # check platform here.
+        cmd = './chrome_tixcraft' + ' '.join(cmd_argument)
+        if platform.system() == 'Darwin':
+            print("execute MacOS python script")
+        if platform.system() == 'Linux':
+            print("execute linux binary")
+        if platform.system() == 'Windows':
+            print("execute .exe binary.")
+            cmd = 'chrome_tixcraft.exe ' + ' '.join(cmd_argument)
+        subprocess.Popen(cmd, shell=True, cwd=working_dir)
+    else:
+        interpreter_binary = 'python'
+        interpreter_binary_alt = 'python3'
+        if platform.system() != 'Windows':
+            interpreter_binary = 'python3'
+            interpreter_binary_alt = 'python'
+        print("execute in shell mode.")
 
-            # some python3 binary, running in 'python' command.
+        script_name = "chrome_tixcraft"
+        try:
+            print('try', interpreter_binary)
+            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
+            s=subprocess.Popen(cmd_array, cwd=working_dir)
+        except Exception as exc:
+            print('try', interpreter_binary_alt)
             try:
-                print('try', interpreter_binary)
-                s=subprocess.Popen([interpreter_binary, "chrome_tixcraft.py","--input", "%s" % (filename)], cwd=working_dir)
-                #s=subprocess.Popen(['./chrome_tixcraft'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=working_dir)
-                #s=subprocess.run(['python3', 'chrome_tixcraft.py'], cwd=working_dir)
-                #messagebox.showinfo(title="Debug1", message=str(s))
+                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
+                s=subprocess.Popen(cmd_array, cwd=working_dir)
             except Exception as exc:
-                print('try', interpreter_binary_alt)
-                try:
-                    s=subprocess.Popen([interpreter_binary_alt, "chrome_tixcraft.py","--input", "%s" % (filename)], cwd=working_dir)
-                except Exception as exc:
-                    msg=str(exc)
-                    print("exeption:", msg)
-                    #messagebox.showinfo(title="Debug2", message=msg)
-                    pass
+                msg=str(exc)
+                print("exeption:", msg)
+                pass
 
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):

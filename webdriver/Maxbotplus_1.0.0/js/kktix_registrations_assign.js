@@ -1,9 +1,10 @@
 $("footer").remove();
 $("div.banner-wrapper div.img-wrapper img").remove();
+
 var myInterval = null;
 //console.log("assign appear");
 
-function kktix_verification_conditions(settings) 
+function kktix_verification_conditions(settings)
 {
     let is_text_sent = false;
     let user_guess_string_array = [];
@@ -36,7 +37,7 @@ function kktix_verification_conditions(settings)
     return is_text_sent;
 }
 
-function kktix_area_keyword(settings, base_info, register_info) 
+function kktix_area_keyword(settings, base_info, register_info)
 {
     let area_keyword_array = [];
     if(settings) {
@@ -140,7 +141,7 @@ function kktix_area_keyword(settings, base_info, register_info)
                 }
 
                 let auto_click_next_btn = true;
-                
+
                 if(is_verification_conditions_popup) {
                     auto_click_next_btn = false;
                     let is_text_sent = kktix_verification_conditions(settings);
@@ -165,8 +166,12 @@ function begin()
     let settings = JSON.parse($("#settings").html());
     let base_info = JSON.parse($("#base_info").html());
     let register_info = JSON.parse($("#register_info").html());
+    $("#settings").remove();
+    $("#base_info").remove();
+    $("#register_info").remove();
     //console.log(settings);
     //console.log(register_info);
+
     kktix_area_keyword(settings, base_info, register_info);
 }
 
@@ -186,5 +191,7 @@ function dom_ready()
 if(!dom_ready()) {
     myInterval = setInterval(() => {
         dom_ready();
-    }, 100);    
+    }, 100);
 }
+
+

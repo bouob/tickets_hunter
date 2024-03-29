@@ -156,6 +156,18 @@ function kktix_event_register_info()
     }
 }
 
+function kktix_force_auto_reload_by_timer() 
+{
+    if(settings) {
+        //console.log("auto reload for kktix");
+        if(settings.advanced.kktix_account.length > 0) {
+            setInterval(() => {
+                location.reload();;
+            }, 45 * 1000);
+        }
+    }
+}
+
 storage.get('settings', function (items)
 {
     if (items.settings)
@@ -169,7 +181,8 @@ storage.get('status', function (items)
     if (items.status && items.status=='ON')
     {
         kktix_event_register_info();
+        kktix_force_auto_reload_by_timer();
     } else {
-        console.log('no status found');
+        console.log('maxbot status is not ON');
     }
 });

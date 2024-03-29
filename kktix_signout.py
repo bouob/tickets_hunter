@@ -11,7 +11,7 @@ import requests
 import asyncio
 import nodriver as uc
 
-CONST_APP_VERSION = "MaxBot (2024.03.12)"
+CONST_APP_VERSION = "MaxBot (2024.03.13)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
@@ -34,12 +34,12 @@ def encryptMe(s):
     return data
 
 def get_app_root():
-    basis = ""
+    app_root = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
+        app_root = os.path.dirname(basis)
     else:
-        basis = sys.argv[0]
-    app_root = os.path.dirname(basis)
+        app_root = os.getcwd()
     return app_root
 
 def load_json():

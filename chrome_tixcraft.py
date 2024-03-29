@@ -19,6 +19,8 @@ import time
 import warnings
 import webbrowser
 from datetime import datetime
+import subprocess
+import threading
 
 import chromedriver_autoinstaller_max
 import requests
@@ -42,7 +44,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.12)"
+CONST_APP_VERSION = "MaxBot (2024.03.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -166,13 +168,12 @@ def encryptMe(s):
     return data
 
 def get_app_root():
-    # 讀取檔案裡的參數值
-    basis = ""
+    app_root = ""
     if hasattr(sys, 'frozen'):
         basis = sys.executable
+        app_root = os.path.dirname(basis)
     else:
-        basis = sys.argv[0]
-    app_root = os.path.dirname(basis)
+        app_root = os.getcwd()
     return app_root
 
 def get_config_dict(args):
@@ -191,9 +192,7 @@ def get_config_dict(args):
             config_dict = json.load(json_data)
 
             if not args.headless is None:
-                headless_flag = t_or_f(args.headless)
-                if headless_flag:
-                    config_dict["advanced"]["headless"] = True
+                config_dict["advanced"]["headless"] = t_or_f(args.headless)
 
             if not args.homepage is None:
                 if len(args.homepage) > 0:
@@ -224,15 +223,14 @@ def get_config_dict(args):
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
 
             # special case for headless to enable away from keyboard mode.
-            is_headless_enable = False
+            is_headless_enable_ocr = False
             if config_dict["advanced"]["headless"]:
                 # for tixcraft headless.
+                #print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    is_headless_enable = True
-                else:
-                    print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
+                    is_headless_enable_ocr = True
 
-            if is_headless_enable:
+            if is_headless_enable_ocr:
                 config_dict["ocr_captcha"]["enable"] = True
                 config_dict["ocr_captcha"]["force_submit"] = True
 
@@ -467,19 +465,15 @@ def get_chrome_options(webdriver_path, config_dict):
 
     chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
     chrome_options.add_argument("--disable-animations")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--disable-print-preview")
-    chrome_options.add_argument("--disable-setuid-sandbox")
-    chrome_options.add_argument("--disable-site-isolation-trials")
     chrome_options.add_argument("--disable-smooth-scrolling")
     chrome_options.add_argument("--disable-sync")
     chrome_options.add_argument("--no-sandbox");
     chrome_options.add_argument('--disable-features=TranslateUI')
     chrome_options.add_argument('--disable-translate')
-    chrome_options.add_argument('--disable-web-security')
     chrome_options.add_argument('--lang=zh-TW')
 
     # for navigator.webdriver
@@ -715,19 +709,15 @@ def get_uc_options(uc, config_dict, webdriver_path):
 
     options.add_argument("--user-agent=%s" % (USER_AGENT))
     options.add_argument("--disable-animations")
-    options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--disable-print-preview")
-    options.add_argument("--disable-setuid-sandbox")
-    options.add_argument("--disable-site-isolation-trials")
     options.add_argument("--disable-smooth-scrolling")
     options.add_argument("--disable-sync")
     options.add_argument("--no-sandbox");
     options.add_argument('--disable-features=TranslateUI')
     options.add_argument('--disable-translate')
-    options.add_argument('--disable-web-security')
     options.add_argument('--lang=zh-TW')
 
     options.add_argument("--password-store=basic")
@@ -877,6 +867,7 @@ def get_driver_by_config(config_dict):
     print("platform:", platform.platform())
     print("homepage:", homepage)
     print("browser:", config_dict["browser"])
+    #print("headless:", config_dict["advanced"]["headless"])
     #print("ticket_number:", str(config_dict["ticket_number"]))
 
     #print(config_dict["tixcraft"])
@@ -3587,21 +3578,6 @@ def kktix_confirm_order_button(driver):
         print("wait form-actions div wait to be clickable Exception:")
         #print(exc)
         pass
-
-        if not next_step_button is None:
-            is_visible = False
-            try:
-                if next_step_button.is_enabled():
-                    is_visible = True
-            except Exception as exc:
-                pass
-
-            if is_visible:
-                try:
-                    driver.execute_script("arguments[0].click();", next_step_button)
-                    ret = True
-                except Exception as exc:
-                    pass
 
     return ret
 
@@ -7919,7 +7895,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
         kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
         if kktix_password == "":
             kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
-        if len(kktix_account) > 4:
+        if len(kktix_account) > 0:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
 
@@ -7957,8 +7933,23 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             kktix_dict["fail_list"] = []
             kktix_dict["played_sound_ticket"] = False
 
+    is_kktix_got_ticket = False
     if '/events/' in url and '/registrations/' in url and "-" in url:
         if not '/registrations/new' in url:
+            if not 'https://kktix.com/users/sign_in?' in url:
+                is_kktix_got_ticket = True
+
+    if is_kktix_got_ticket:
+        if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
+            # do nothing when second time come in.
+            if len(url.split('/'))>=7:
+                if len(config_dict["homepage"].split('/'))>=7:
+                    # match event code.
+                    if url.split('/')[4]==config_dict["homepage"].split('/')[4]:
+                        # break loop.
+                        is_kktix_got_ticket = False
+
+    if is_kktix_got_ticket:
             if not kktix_dict["start_time"] is None:
                 if not kktix_dict["done_time"] is None:
                     bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
@@ -7971,28 +7962,35 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     play_sound_while_ordering(config_dict)
             
             if not kktix_dict["played_sound_order"]:
-                if len(config_dict["advanced"]["kktix_account"]) > 0:
-                    print("搶票成功, 帳號:", config_dict["advanced"]["kktix_account"])
-                print("基本資料與實名制網址:", url)
+                kktix_account = config_dict["advanced"]["kktix_account"]
+                kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+                if kktix_password == "":
+                    kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+                
+                print("基本資料(或實名制)網址:", url)
+                if len(kktix_account) > 0:
+                    print("搶票成功, 帳號:", kktix_account)
+                    threading.Thread(target=launch_maxbot, args=("", url, kktix_account, kktix_password, "false", )).start()
+                    driver.quit()
+                    sys.exit()
 
             kktix_dict["played_sound_order"] = True
 
-
-        if config_dict["advanced"]["headless"]:
-            if not kktix_dict["is_popup_checkout"]:
-                is_event_page = False
-                if len(url.split('/'))==8:
-                    is_event_page = True
-                if is_event_page:
-                    confirm_clicked = kktix_confirm_order_button(driver)
-                    if confirm_clicked:
-                        domain_name = url.split('/')[2]
-                        checkout_url = "https://%s/account/orders" % (domain_name)
-                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-                        webbrowser.open_new(checkout_url)
-                        kktix_dict["is_popup_checkout"] = True
-                        driver.quit()
-                        sys.exit()
+            if config_dict["advanced"]["headless"]:
+                if not kktix_dict["is_popup_checkout"]:
+                    is_event_page = False
+                    if len(url.split('/'))>=7:
+                        is_event_page = True
+                    if is_event_page:
+                        confirm_clicked = kktix_confirm_order_button(driver)
+                        if confirm_clicked:
+                            domain_name = url.split('/')[2]
+                            checkout_url = "https://%s/account/orders" % (domain_name)
+                            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                            webbrowser.open_new(checkout_url)
+                            kktix_dict["is_popup_checkout"] = True
+                            driver.quit()
+                            sys.exit()
     else:
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
@@ -12589,13 +12587,63 @@ def resize_window(driver, config_dict):
             target_array = config_dict["advanced"]["window_size"].split(",")
             driver.set_window_size(int(target_array[0]), int(target_array[1]))
 
+def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless=""):
+    cmd_argument = []
+    if len(filename) > 0:
+        cmd_argument.append('--input=' + filename)
+    if len(homepage) > 0:
+        cmd_argument.append('--homepage=' + homepage)
+    if len(kktix_account) > 0:
+        cmd_argument.append('--kktix_account=' + kktix_account)
+    if len(kktix_password) > 0:
+        cmd_argument.append('--kktix_password=' + kktix_password)
+    if len(headless) > 0:
+        cmd_argument.append('--headless=' + headless)
+
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    if hasattr(sys, 'frozen'):
+        print("execute in frozen mode")
+        # check platform here.
+        cmd = './chrome_tixcraft' + ' '.join(cmd_argument)
+        if platform.system() == 'Darwin':
+            print("execute MacOS python script")
+        if platform.system() == 'Linux':
+            print("execute linux binary")
+        if platform.system() == 'Windows':
+            print("execute .exe binary.")
+            cmd = 'chrome_tixcraft.exe ' + ' '.join(cmd_argument)
+        subprocess.Popen(cmd, shell=True, cwd=working_dir)
+    else:
+        interpreter_binary = 'python'
+        interpreter_binary_alt = 'python3'
+        if platform.system() != 'Windows':
+            interpreter_binary = 'python3'
+            interpreter_binary_alt = 'python'
+        print("execute in shell mode.")
+
+        script_name = "chrome_tixcraft"
+        try:
+            print('try', interpreter_binary)
+            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
+            s=subprocess.Popen(cmd_array, cwd=working_dir)
+        except Exception as exc:
+            print('try', interpreter_binary_alt)
+            try:
+                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
+                s=subprocess.Popen(cmd_array, cwd=working_dir)
+            except Exception as exc:
+                msg=str(exc)
+                print("exeption:", msg)
+                pass
+
 def main(args):
     config_dict = get_config_dict(args)
 
     driver = None
     if not config_dict is None:
         driver = get_driver_by_config(config_dict)
-        resize_window(driver, config_dict)
+        if not config_dict["advanced"]["headless"]:
+            resize_window(driver, config_dict)
     else:
         print("Load config error!")
 
@@ -12794,9 +12842,9 @@ def cli():
         help="overwrite ibonqware field",
         type=str)
 
+    #default="False",
     parser.add_argument("--headless",
         help="headless mode",
-        default='False',
         type=str)
 
     parser.add_argument("--browser",
