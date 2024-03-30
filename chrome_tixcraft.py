@@ -45,7 +45,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.14)"
+CONST_APP_VERSION = "MaxBot (2024.03.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -3595,43 +3595,26 @@ def kktix_events_press_next_button(driver):
 def kktix_press_next_button(driver):
     ret = False
 
-    wait = WebDriverWait(driver, 1)
-    next_step_button = None
+    css_select = "div.register-new-next-button-area > button"
+    but_button_list = None
     try:
-        # method #1
-        #form_actions_div = None
-        #form_actions_div = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp')
-        #next_step_button = form_actions_div.find_element(By.CSS_SELECTOR, 'div.form-actions button.btn-primary')
-
-        # method #2
-        # next_step_button = driver.find_element(By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')
-
-        # method #3 wait
-        next_step_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#registrationsNewApp div.form-actions button.btn-primary')))
-        if not next_step_button is None:
-            if next_step_button.is_enabled():
-                next_step_button.click()
-                ret = True
-
+        but_button_list = driver.find_elements(By.CSS_SELECTOR, css_select)
     except Exception as exc:
-        print("wait form-actions div wait to be clickable Exception:")
         print(exc)
-        #pass
+        pass
 
-        if not next_step_button is None:
-            is_visible = False
+    if not but_button_list is None:
+        button_count = len(but_button_list)
+        #print("button_count:",button_count)
+        if button_count > 0:
             try:
-                if next_step_button.is_enabled():
-                    is_visible = True
+                #print("click on last button")
+                but_button_list[button_count-1].click()
+                ret = True
             except Exception as exc:
+                print(exc)
                 pass
 
-            if is_visible:
-                try:
-                    driver.execute_script("arguments[0].click();", next_step_button)
-                    ret = True
-                except Exception as exc:
-                    pass
     return ret
 
 def kktix_captcha_inputed_text(captcha_inner_div):
@@ -4643,10 +4626,13 @@ def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, 
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
         input_text_css = 'div.custom-captcha-inner > div > div > input'
-        next_step_button_css = '#registrationsNewApp div.form-actions button.btn-primary'
+        next_step_button_css = ''
         submit_by_enter = False
         check_input_interval = 0.2
         is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+
+        # due multi next buttons(pick seats/best seats)
+        kktix_press_next_button(driver)
 
     return fail_list, is_question_popup
 

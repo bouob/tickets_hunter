@@ -160,11 +160,10 @@ function kktix_force_auto_reload_by_timer()
 {
     if(settings) {
         //console.log("auto reload for kktix");
-        // TODO: load from settings.advanced.max_dwell_time
         if(settings.advanced.kktix_account.length > 0) {
             setInterval(() => {
                 location.reload();;
-            }, 30 * 1000);
+            }, 45 * 1000);
         }
     }
 }

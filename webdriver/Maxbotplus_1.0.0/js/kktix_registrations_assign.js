@@ -152,7 +152,13 @@ function kktix_area_keyword(settings, base_info, register_info)
 
                 if(auto_click_next_btn) {
                     let $next_btn = $('div.register-new-next-button-area > button');
-                    $next_btn.click();
+                    if($next_btn) {
+                        if($next_btn.length>1) {
+                            $next_btn.last().click();
+                        } else {
+                            $next_btn.click();
+                        }
+                    }
                 }
             }
         }
@@ -191,7 +197,7 @@ function dom_ready()
 if(!dom_ready()) {
     myInterval = setInterval(() => {
         dom_ready();
-    }, 100);
+    }, 1000);
 }
 
 
