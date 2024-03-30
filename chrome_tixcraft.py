@@ -45,7 +45,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.16)"
+CONST_APP_VERSION = "MaxBot (2024.03.17)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -12629,8 +12629,12 @@ def main(args):
     driver = None
     if not config_dict is None:
         driver = get_driver_by_config(config_dict)
-        if not config_dict["advanced"]["headless"]:
-            resize_window(driver, config_dict)
+        if not driver is None:
+            if not config_dict["advanced"]["headless"]:
+                resize_window(driver, config_dict)
+        else:
+            print("無法使用web driver，程式無法繼續工作")
+            sys.exit()
     else:
         print("Load config error!")
 
