@@ -161,9 +161,15 @@ function kktix_force_auto_reload_by_timer()
     if(settings) {
         //console.log("auto reload for kktix");
         if(settings.advanced.kktix_account.length > 0) {
+            let auto_reload_time = 120;
+            if(settings.advanced.max_dwell_time >= 10) {
+                auto_reload_time = settings.advanced.max_dwell_time;
+            }
+            //console.log("max_dwell_time:" + auto_reload_time);
+
             setInterval(() => {
                 location.reload();;
-            }, 45 * 1000);
+            }, auto_reload_time * 1000);
         }
     }
 }

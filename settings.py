@@ -50,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.15)"
+CONST_APP_VERSION = "MaxBot (2024.03.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -759,7 +759,7 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
-    config_dict["advanced"]["max_dwell_time"] = 60
+    config_dict["advanced"]["max_dwell_time"] = 120
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "512,1024"
 
@@ -866,6 +866,7 @@ def btn_save_act(slience_mode=False):
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
     global txt_auto_reload_page_interval
+    global txt_max_dwell_time
     global txt_reset_browser_intervalv
     global txt_proxy_server_port
     global txt_window_size
@@ -1152,9 +1153,14 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
+        config_dict["advanced"]["max_dwell_time"] = int(txt_max_dwell_time.get().strip())
         config_dict["advanced"]["reset_browser_interval"] = float(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
         config_dict["advanced"]["window_size"] = txt_window_size.get().strip()
+
+        if config_dict["advanced"]["max_dwell_time"] > 0:
+            if config_dict["advanced"]["max_dwell_time"] < 15:
+                config_dict["advanced"]["max_dwell_time"] = 15
 
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             if config_dict["advanced"]["reset_browser_interval"] < 20:
@@ -1464,6 +1470,7 @@ def applyNewLanguage():
     global lbl_block_facebook_network_recommand
 
     global lbl_auto_reload_page_interval
+    global lbl_max_dwell_time
     global lbl_reset_browser_interval
     global lbl_proxy_server_port
     global lbl_window_size
@@ -1503,6 +1510,7 @@ def applyNewLanguage():
     lbl_block_facebook_network_recommand.config(text=translate[language_code]["recommand_enable"])
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+    lbl_max_dwell_time.config(text=translate[language_code]["max_dwell_time"])
     lbl_reset_browser_interval.config(text=translate[language_code]["reset_browser_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_window_size.config(text=translate[language_code]["window_size"])
@@ -2149,6 +2157,17 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     txt_auto_reload_page_interval_value = StringVar(frame_group_header, value=config_dict["advanced"]["auto_reload_page_interval"])
     txt_auto_reload_page_interval = Entry(frame_group_header, width=30, textvariable = txt_auto_reload_page_interval_value)
     txt_auto_reload_page_interval.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_max_dwell_time
+    lbl_max_dwell_time = Label(frame_group_header, text=translate[language_code]['max_dwell_time'])
+    lbl_max_dwell_time.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_max_dwell_time
+    txt_max_dwell_time_value = StringVar(frame_group_header, value=config_dict["advanced"]["max_dwell_time"])
+    txt_max_dwell_time = Entry(frame_group_header, width=30, textvariable = txt_max_dwell_time_value)
+    txt_max_dwell_time.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -3209,7 +3228,7 @@ def main_gui():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 580
-    GUI_SIZE_HEIGHT = 610
+    GUI_SIZE_HEIGHT = 640
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
