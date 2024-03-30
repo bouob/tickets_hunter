@@ -42,6 +42,7 @@ from NonBrowser import NonBrowser
 try:
     import ddddocr
 except Exception as exc:
+    print(exc)
     pass
 
 CONST_APP_VERSION = "MaxBot (2024.03.14)"

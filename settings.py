@@ -144,6 +144,7 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
+    en_us["max_dwell_time"] = 'Max dwell time(sec.)'
     en_us["reset_browser_interval"] = 'Reset browser interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
     en_us["window_size"] = 'Window size'
@@ -262,6 +263,7 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
+    zh_tw["max_dwell_time"] = '購票網頁最長停留(秒)'
     zh_tw["reset_browser_interval"] = '重新啟動瀏覽器間隔(秒)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
     zh_tw["window_size"] = '瀏覽器視窗大小'
@@ -380,6 +382,7 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
+    zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
     zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
     zh_cn["window_size"] = '浏览器窗口大小'
@@ -499,6 +502,7 @@ def load_translate():
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
+    ja_jp["max_dwell_time"] = '最大滞留時間(秒)'
     ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
     ja_jp["window_size"] = 'ウィンドウサイズ'
@@ -755,6 +759,7 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
+    config_dict["advanced"]["max_dwell_time"] = 30
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "512,1024"
 
@@ -3383,11 +3388,11 @@ async def main_server():
         pass
 
     app = Application([
-        (r"/", MainHandler),
-        (r"/version", VersionHandler),
-        (r"/ocr", OcrHandler),
-        (r"/query", MainHandler),
-        (r"/question", QuestionHandler),
+        ("/", MainHandler),
+        ("/version", VersionHandler),
+        ("/ocr", OcrHandler),
+        ("/query", MainHandler),
+        ("/question", QuestionHandler),
     ])
     app.ocr = ocr;
     app.version = CONST_APP_VERSION;
