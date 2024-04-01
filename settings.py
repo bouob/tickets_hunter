@@ -50,7 +50,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.17)"
+CONST_APP_VERSION = "MaxBot (2024.03.18)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -78,6 +78,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
+CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"https://tixcraft.com (拓元)"
@@ -757,9 +758,9 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.1
+    config_dict["advanced"]["auto_reload_page_interval"] = 0.05
     config_dict["advanced"]["reset_browser_interval"] = 0
-    config_dict["advanced"]["max_dwell_time"] = 120
+    config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "512,1024"
 
@@ -2041,6 +2042,19 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     showHideAreaBlocks()
 
 def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
+    browser_options = ("chrome","firefox","edge","safari","brave")
+    webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
+
+    not_support_python_version = ["3.7.","3.8."]
+    is_current_version_after_3_9 = True
+    for ver in not_support_python_version:
+        if ver in platform.python_version():
+            is_current_version_after_3_9 = False
+            break
+    if is_current_version_after_3_9:
+        #webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC, CONST_WEBDRIVER_TYPE_NODRIVER)
+        pass
+
     row_count = 0
 
     frame_group_header = Frame(root)
@@ -2059,7 +2073,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_browser
     combo_browser = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_browser['values']= ("chrome","firefox","edge","safari","brave")
+    combo_browser['values']= browser_options
     combo_browser.set(config_dict['browser'])
     combo_browser.grid(column=1, row=group_row_count, sticky = W)
 
@@ -2096,7 +2110,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_webdriver_type
     combo_webdriver_type = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_webdriver_type['values']= (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
+    combo_webdriver_type['values']= webdriver_type_options
     combo_webdriver_type.set(config_dict["webdriver_type"])
     combo_webdriver_type.grid(column=1, row=group_row_count, sticky = W)
 

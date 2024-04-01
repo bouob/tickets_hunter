@@ -45,7 +45,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.17)"
+CONST_APP_VERSION = "MaxBot (2024.03.18)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -114,7 +114,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
 CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
-CONST_WEBDRIVER_TYPE_ND = "nodriver"
+CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
@@ -1014,6 +1014,12 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*ticketimg2.azureedge.net/image/ActivityImage/ActivityImage_*')
                 NETWORK_BLOCKED_URLS.append('*.azureedge.net/QWARE_TICKET//images/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketplus.com.tw/event/*')
+
+                NETWORK_BLOCKED_URLS.append('https://kktix.cc/change_locale?locale=*')
+                NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/logo_*.png')
+                NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/icon-*.png')
+                NETWORK_BLOCKED_URLS.append('https://t.kfs.io/upload_images/*.jpg')
+
 
             if config_dict["advanced"]["block_facebook_network"]:
                 NETWORK_BLOCKED_URLS.append('*facebook.com/*')

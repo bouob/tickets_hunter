@@ -18,13 +18,6 @@ function get_event_status_entry(real_event_id, real_session_id) {
 function ajax_return_done(data, real_event_id, real_session_id) {
     //console.log("ajax return done")
     let reload=false;
-    
-    let auto_reload_page_interval = 0.0;
-    if(settings) {
-        auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
-    }
-    //console.log("auto_reload_page_interval:"+auto_reload_page_interval);
-    
     if(data.result.session[0].status=="pending" || data.result.session[0].status=="soldout" || data.result.session[0].status=="unavailable") {
         reload=true;
     }

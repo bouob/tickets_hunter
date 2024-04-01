@@ -14,8 +14,8 @@ function begin()
     }
 
     // too short to cause error.
-    if(auto_reload_page_interval < 0.8) {
-        auto_reload_page_interval = 0.8;
+    if(auto_reload_page_interval < 0.5) {
+        auto_reload_page_interval = 0.5;
     }
 
     if(status=='ON') {

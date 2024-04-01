@@ -93,6 +93,9 @@ function kktix_ajax_return_register_info(register_info)
         if(settings) {
             auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
         }
+        const rootElement = document.documentElement;
+        rootElement.remove();
+        delete window;
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();
@@ -161,15 +164,17 @@ function kktix_force_auto_reload_by_timer()
     if(settings) {
         //console.log("auto reload for kktix");
         if(settings.advanced.kktix_account.length > 0) {
-            let auto_reload_time = 120;
-            if(settings.advanced.max_dwell_time >= 10) {
-                auto_reload_time = settings.advanced.max_dwell_time;
+            let max_dwell_time = 120;
+            if(settings) {
+                max_dwell_time = settings.advanced.max_dwell_time;
             }
-            //console.log("max_dwell_time:" + auto_reload_time);
-
-            setInterval(() => {
-                location.reload();;
-            }, auto_reload_time * 1000);
+            if(max_dwell_time <= 10) {
+                max_dwell_time = 10;
+            }        
+            console.log('We are going to reload after few seconeds.');
+            setTimeout(function () {
+                location.reload();
+            }, max_dwell_time * 1000);
         }
     }
 }
