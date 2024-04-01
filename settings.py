@@ -2890,13 +2890,14 @@ def sync_status_to_extension(status):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
-    #print("save as to:", target_path)
-    status_json={}
-    status_json["status"]=status
-    #print("dump json to path:", target_path)
-    with open(target_path, 'w') as outfile:
-        json.dump(status_json, outfile)
+    if os.path.exists(target_path):
+        target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
+        #print("save as to:", target_path)
+        status_json={}
+        status_json["status"]=status
+        #print("dump json to path:", target_path)
+        with open(target_path, 'w') as outfile:
+            json.dump(status_json, outfile)
 
 def update_maxbot_runtime_status():
     is_paused = False
