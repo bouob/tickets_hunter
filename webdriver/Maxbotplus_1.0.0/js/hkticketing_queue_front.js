@@ -19,6 +19,8 @@ function begin()
     }
 
     if(status=='ON') {
+        const rootElement = document.documentElement;
+        rootElement.remove();
         setInterval(() => {
             busyFor = 0;
             reload();

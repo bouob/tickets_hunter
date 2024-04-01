@@ -90,6 +90,9 @@ function begin()
     }
 
     if(status=='ON') {
+        const rootElement = document.documentElement;
+        rootElement.remove();
+
         let target_interval = auto_reload_page_interval * 1000;
         setInterval(() => {
             //retry();

@@ -95,7 +95,6 @@ function kktix_ajax_return_register_info(register_info)
         }
         const rootElement = document.documentElement;
         rootElement.remove();
-        delete window;
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();
