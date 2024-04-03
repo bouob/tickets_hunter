@@ -13,10 +13,12 @@ import requests
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.03.20)"
+CONST_APP_VERSION = "MaxBot (2024.03.21)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+PROFILE_URL = "https://kktix.com/users/edit"
+SIGNIN_URL = "https://kktix.com/users/sign_in"
 
 def load_json():
     app_root = util.get_app_root()
@@ -31,9 +33,6 @@ def load_json():
     return config_filepath, config_dict
 
 def kktix_signin_requests(kktix_account, kktix_password):
-    profile_url = "https://kktix.com/users/edit"
-    signin_url = "https://kktix.com/users/sign_in"
-
     import urllib.parse
     headers = {
         "accept-language": "zh-TW;q=0.7", 
@@ -89,23 +88,17 @@ def kktix_signin_requests(kktix_account, kktix_password):
     except Exception as exc:
         print(exc)
 
-async def kktix_signin_nodriver(kktix_account, kktix_password):
-    driver = await uc.start()
-    profile_url = "https://kktix.com/users/edit"
-    signin_url = "https://kktix.com/users/sign_in"
-    #signout_url = "https://kktix.com/users/sign_out"
-    
+async def kktix_signin_nodriver(tab, kktix_account, kktix_password):
     while True:
         try:
-            tab = await driver.get(signin_url)
+    
             #html = await tab.get_content()
             #await tab.sleep(0.1)
             #print(html)
 
-            x = await tab.js_dumps('window')
-            #print(x)
-            #print(x["location"]["href"])
-            if x["location"]["href"]=="signin_url":
+            x_window = await tab.js_dumps('window')
+            #print(x_window["location"]["href"])
+            if x_window["location"]["href"]==SIGNIN_URL:
                 account = await tab.select("#user_login")
                 await account.send_keys(kktix_account)
                 #await tab.sleep(0.1)
@@ -114,15 +107,17 @@ async def kktix_signin_nodriver(kktix_account, kktix_password):
                 await password.send_keys(kktix_password)
                 #await tab.sleep(0.1)
 
-                submit = await tab.select("input[type='submit'][name]")
+                submit = await tab.select("div.form-actions a.btn-primary")
                 await submit.click()
                 
                 await tab.sleep(0.5)
-                #tab = await tab.get(signout_url)
+                #tab = await tab.get(SIGNOUT_URL)
 
             signout = await tab.select("a[href='/users/sign_out']")
             await signout.click()
             await tab.sleep(0.5)
+
+            tab = await tab.get(SIGNIN_URL)
         except Exception as e:
             print(e)
             
@@ -131,9 +126,18 @@ async def kktix_signin_nodriver(kktix_account, kktix_password):
             pass
 
 
+#def kktix_signout_main(config_dict):
+async def kktix_signout_main(config_dict):
+    conf = util.get_extension_config()
+    driver = await uc.start(conf)
+    tab = await driver.get(SIGNIN_URL)
 
-#def kktix_account_loop(config_dict):
-async def kktix_account_loop(config_dict):
+    #if not config_dict["advanced"]["headless"]:
+    if len(config_dict["advanced"]["window_size"]) > 0:
+        if "," in config_dict["advanced"]["window_size"]:
+            target_array = config_dict["advanced"]["window_size"].split(",")
+            await tab.set_window_size(left=20, top=20, width=int(target_array[0]), height=int(target_array[1]))
+
     kktix_account = config_dict["advanced"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
@@ -143,7 +147,7 @@ async def kktix_account_loop(config_dict):
     #print("kktix_password:", kktix_password)
 
     #kktix_signin_requests(kktix_account, kktix_password)
-    await kktix_signin_nodriver(kktix_account, kktix_password)
+    await kktix_signin_nodriver(tab, kktix_account, kktix_password)
 
 
 #def main(args):
@@ -159,7 +163,7 @@ async def main(args):
 
     if len(config_dict["advanced"]["kktix_account"]) > 0:
         #kktix_account_loop(config_dict)
-        await kktix_account_loop(config_dict)
+        await kktix_signout_main(config_dict)
     else:
         print("請輸入 kktix_account")
 

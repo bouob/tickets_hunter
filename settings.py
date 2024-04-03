@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.20)"
+CONST_APP_VERSION = "MaxBot (2024.03.21)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1117,7 +1117,13 @@ def btn_run_clicked(language_code):
         threading.Thread(target=launch_maxbot).start()
 
 def launch_maxbot():
-    run_python_script("chrome_tixcraft")
+    global combo_webdriver_type
+    webdriver_type = combo_webdriver_type.get().strip()
+
+    python_script_name = "chrome_tixcraft"
+    if webdriver_type == CONST_WEBDRIVER_TYPE_NODRIVER:
+        python_script_name = "nodriver_tixcraft"
+    run_python_script(python_script_name)
 
 def show_preview_text():
     if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
@@ -1908,14 +1914,15 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     browser_options = ("chrome","firefox","edge","safari","brave")
     webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
 
-    not_support_python_version = ["3.7.","3.8."]
+    not_support_python_version = ["3.6.", "3.7.", "3.8."]
     is_current_version_after_3_9 = True
-    for ver in not_support_python_version:
-        if ver in platform.python_version():
+    for not_support_ver in not_support_python_version:
+        current_version = platform.python_version()
+        if current_version[:4] == not_support_ver :
             is_current_version_after_3_9 = False
             break
     if is_current_version_after_3_9:
-        #webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC, CONST_WEBDRIVER_TYPE_NODRIVER)
+        webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC, CONST_WEBDRIVER_TYPE_NODRIVER)
         pass
 
     row_count = 0

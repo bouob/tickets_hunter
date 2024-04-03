@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.20)"
+CONST_APP_VERSION = "MaxBot (2024.03.21)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2719,62 +2719,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
     return is_dom_ready, is_ticket_number_assigned, is_need_refresh
 
-def kktix_get_web_datetime(registrationsNewApp_div):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
 
-    web_datetime = None
-
-    is_found_web_datetime = False
-
-    el_web_datetime_list = None
-    if not registrationsNewApp_div is None:
-        try:
-            el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
-        except Exception as exc:
-            if show_debug_message:
-                print("find td.ng-binding Exception")
-                print(exc)
-            pass
-        #print("is_found_web_datetime", is_found_web_datetime)
-
-    if not el_web_datetime_list is None:
-        el_web_datetime_list_count = len(el_web_datetime_list)
-        if el_web_datetime_list_count > 0:
-            el_web_datetime = None
-            for el_web_datetime in el_web_datetime_list:
-                el_web_datetime_text = None
-                try:
-                    el_web_datetime_text = el_web_datetime.text
-                    if show_debug_message:
-                        print("el_web_datetime_text:", el_web_datetime_text)
-                except Exception as exc:
-                    if show_debug_message:
-                        print('parse web datetime fail:')
-                        print(exc)
-                    pass
-
-                if not el_web_datetime_text is None:
-                    if len(el_web_datetime_text) > 0:
-                        now = datetime.now()
-                        #print("now:", now)
-                        for guess_year in range(now.year,now.year+3):
-                            current_year = str(guess_year)
-                            if current_year in el_web_datetime_text:
-                                if '/' in el_web_datetime_text:
-                                    web_datetime = el_web_datetime_text
-                                    is_found_web_datetime = True
-                                    break
-                        if is_found_web_datetime:
-                            break
-    else:
-        print("find td.ng-binding fail")
-
-    if show_debug_message:
-        print('is_found_web_datetime:', is_found_web_datetime)
-        print('web_datetime:', web_datetime)
-
-    return web_datetime
 
 def kktix_check_agree_checkbox(driver, config_dict):
     show_debug_message = True       # debug.
@@ -2851,375 +2796,9 @@ def force_check_checkbox(driver, agree_checkbox):
                 is_finish_checkbox_click = True
     return is_finish_checkbox_click
 
-def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    inferred_answer_string = None
-
-    is_need_parse_web_datetime = False
-    # '半形阿拉伯數字' & '半形數字'
-    if '半形' in captcha_text_div_text and '字' in captcha_text_div_text:
-        if '演出日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '活動日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '表演日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '開始日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '演唱會日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '展覽日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-        if '音樂會日期' in captcha_text_div_text:
-            is_need_parse_web_datetime = True
-    if 'the date of the show you purchased' in captcha_text_div_text:
-        is_need_parse_web_datetime = True
-
-    if show_debug_message:
-        print("is_need_parse_web_datetime:", is_need_parse_web_datetime)
-
-    if is_need_parse_web_datetime:
-        web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
-        if not web_datetime is None:
-            if show_debug_message:
-                print("web_datetime:", web_datetime)
-
-            captcha_text_formatted = util.format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-            if show_debug_message:
-                print("captcha_text_formatted", captcha_text_formatted)
-
-            my_datetime_foramted = None
-
-            # MMDD
-            if my_datetime_foramted is None:
-                if '4位半形' in captcha_text_formatted:
-                    my_datetime_foramted = "%m%d"
-
-            # for "如為2月30日，請輸入0230"
-            if my_datetime_foramted is None:
-                right_part = ""
-                if CONST_EXAMPLE_SYMBOL in captcha_text_formatted:
-                    right_part = captcha_text_formatted.split(CONST_EXAMPLE_SYMBOL)[1]
-
-                if CONST_INPUT_SYMBOL in right_part:
-                    right_part = right_part.split(CONST_INPUT_SYMBOL)[1]
-                    number_text = util.find_continuous_number(right_part)
-
-                    my_anwser_formated = util.convert_string_to_pattern(number_text, dynamic_length=False)
-                    if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
-                        my_datetime_foramted = "%Y%m%d"
-                    if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
-                        my_datetime_foramted = "%m%d"
-                    #print("my_datetime_foramted:", my_datetime_foramted)
-
-            if show_debug_message:
-                print("my_datetime_foramted", my_datetime_foramted)
-
-            if my_datetime_foramted is None:
-                now = datetime.now()
-                for guess_year in range(now.year-4,now.year+2):
-                    current_year = str(guess_year)
-                    if current_year in captcha_text_formatted:
-                        my_hint_index = captcha_text_formatted.find(current_year)
-                        my_hint_anwser = captcha_text_formatted[my_hint_index:]
-                        #print("my_hint_anwser:", my_hint_anwser)
-                        # get after.
-                        my_delimitor_symbol = CONST_EXAMPLE_SYMBOL
-                        if my_delimitor_symbol in my_hint_anwser:
-                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                            my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
-                        #print("my_hint_anwser:", my_hint_anwser)
-                        # get before.
-                        my_delimitor_symbol = '，'
-                        if my_delimitor_symbol in my_hint_anwser:
-                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                        my_delimitor_symbol = '。'
-                        if my_delimitor_symbol in my_hint_anwser:
-                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                        # PS: space may not is delimitor...
-                        my_delimitor_symbol = ' '
-                        if my_delimitor_symbol in my_hint_anwser:
-                            my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                            my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                        #remove last char.
-                        remove_last_char_list = [')','(','.','。','）','（','[',']']
-                        for check_char in remove_last_char_list:
-                            if my_hint_anwser[-1:]==check_char:
-                                my_hint_anwser = my_hint_anwser[:-1]
-
-                        my_anwser_formated = util.convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
-                        if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
-                            my_datetime_foramted = "%Y%m%d"
-                        if my_anwser_formated == "[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
-                            my_datetime_foramted = "%Y/%m/%d"
-
-                        if show_debug_message:
-                            print("my_hint_anwser:", my_hint_anwser)
-                            print("my_anwser_formated:", my_anwser_formated)
-                            print("my_datetime_foramted:", my_datetime_foramted)
-                        break
-
-            if not my_datetime_foramted is None:
-                my_delimitor_symbol = ' '
-                if my_delimitor_symbol in web_datetime:
-                    web_datetime = web_datetime[:web_datetime.find(my_delimitor_symbol)]
-                date_time = datetime.strptime(web_datetime,"%Y/%m/%d")
-                if show_debug_message:
-                    print("our web date_time:", date_time)
-                ans = None
-                try:
-                    if not date_time is None:
-                        ans = date_time.strftime(my_datetime_foramted)
-                except Exception as exc:
-                    pass
-                inferred_answer_string = ans
-                if show_debug_message:
-                    print("web date_time anwser:", ans)
-
-    return inferred_answer_string
-
-def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    inferred_answer_string = None
-
-    # parse '演出時間'
-    is_need_parse_web_time = False
-    if '半形' in captcha_text_div_text:
-        if '演出時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if '表演時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if '開始時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if '演唱會時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if '展覽時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if '音樂會時間' in captcha_text_div_text:
-            is_need_parse_web_time = True
-        if 'the time of the show you purchased' in captcha_text_div_text:
-            is_need_parse_web_time = True
-
-    #print("is_need_parse_web_time", is_need_parse_web_time)
-    if is_need_parse_web_time:
-        web_datetime = None
-        if not registrationsNewApp_div is None:
-            web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
-        if not web_datetime is None:
-            tmp_text = util.format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-
-            my_datetime_foramted = None
-
-            if my_datetime_foramted is None:
-                my_hint_anwser = tmp_text
-
-                my_delimitor_symbol = CONST_EXAMPLE_SYMBOL
-                if my_delimitor_symbol in my_hint_anwser:
-                    my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                    my_hint_anwser = my_hint_anwser[my_delimitor_index+len(my_delimitor_symbol):]
-                #print("my_hint_anwser:", my_hint_anwser)
-                # get before.
-                my_delimitor_symbol = '，'
-                if my_delimitor_symbol in my_hint_anwser:
-                    my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                    my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                my_delimitor_symbol = '。'
-                if my_delimitor_symbol in my_hint_anwser:
-                    my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                    my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                # PS: space may not is delimitor...
-                my_delimitor_symbol = ' '
-                if my_delimitor_symbol in my_hint_anwser:
-                    my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
-                    my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                my_anwser_formated = util.convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
-                #print("my_hint_anwser:", my_hint_anwser)
-                #print("my_anwser_formated:", my_anwser_formated)
-                if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
-                    my_datetime_foramted = "%H%M"
-                    if '12小時' in tmp_text:
-                        my_datetime_foramted = "%I%M"
-
-                if my_anwser_formated == "[\\d][\\d]:[\\d][\\d]":
-                    my_datetime_foramted = "%H:%M"
-                    if '12小時' in tmp_text:
-                        my_datetime_foramted = "%I:%M"
-
-            if not my_datetime_foramted is None:
-                date_delimitor_symbol = '('
-                if date_delimitor_symbol in web_datetime:
-                    date_delimitor_symbol_index = web_datetime.find(date_delimitor_symbol)
-                    if date_delimitor_symbol_index > 8:
-                        web_datetime = web_datetime[:date_delimitor_symbol_index-1]
-                date_time = datetime.strptime(web_datetime,"%Y/%m/%d %H:%M")
-                #print("date_time:", date_time)
-                ans = None
-                try:
-                    ans = date_time.strftime(my_datetime_foramted)
-                except Exception as exc:
-                    pass
-                inferred_answer_string = ans
-                #print("my_anwser:", ans)
-
-    return inferred_answer_string
 
 
-def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
 
-    inferred_answer_string = None
-    answer_list = []
-
-    CONST_EXAMPLE_SYMBOL = "範例"
-    CONST_INPUT_SYMBOL = "輸入"
-
-    if captcha_text_div_text is None:
-        captcha_text_div_text = ""
-
-    # 請在下方空白處輸入引號內文字：
-    # 請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）
-    if inferred_answer_string is None:
-        is_use_quota_message = False
-        if "「" in captcha_text_div_text and "」" in captcha_text_div_text:
-            # test for rule#1, it's seem very easy conflict...
-            match_quota_text_items = ["空白","輸入","引號","文字"]
-            is_match_quota_text = True
-            for each_quota_text in match_quota_text_items:
-                if not each_quota_text in captcha_text_div_text:
-                    is_match_quota_text = False
-            if is_match_quota_text:
-                is_use_quota_message = True
-        #print("is_use_quota_message:" , is_use_quota_message)
-        if is_use_quota_message:
-            temp_answer = util.find_between(captcha_text_div_text, "「", "」")
-            temp_answer = temp_answer.strip()
-            if len(temp_answer) > 0:
-                inferred_answer_string = temp_answer
-            #print("find captcha text:" , inferred_answer_string)
-
-    # 請在下方空白處輸入括號內數字
-    if inferred_answer_string is None:
-        formated_html_text = captcha_text_div_text.strip()
-        formated_html_text = util.format_quota_string(formated_html_text)
-        formated_html_text = formated_html_text.replace('請輸入','輸入')
-
-        formated_html_text = formated_html_text.replace('的','')
-        formated_html_text = formated_html_text.replace('之內','內')
-        formated_html_text = formated_html_text.replace('之中','中')
-
-        formated_html_text = formated_html_text.replace('括弧','括號')
-        formated_html_text = formated_html_text.replace('引號','括號')
-
-        formated_html_text = formated_html_text.replace('括號中','括號內')
-
-        formated_html_text = formated_html_text.replace('數字','文字')
-
-        is_match_input_quota_text = False
-        if len(formated_html_text) <= 30:
-            if not '\n' in formated_html_text:
-                if '【' in formated_html_text and '】' in formated_html_text:
-                    is_match_input_quota_text = True
-
-        # check target text terms.
-        if is_match_input_quota_text:
-            target_text_list = ["輸入","括號","文字"]
-            for item in target_text_list:
-                if not item in formated_html_text:
-                    is_match_input_quota_text = False
-                    break
-
-        if is_match_input_quota_text:
-            temp_answer = util.find_between(formated_html_text, "【", "】")
-            temp_answer = temp_answer.strip()
-            if len(temp_answer) > 0:
-                temp_answer = temp_answer.replace(' ','')
-
-                # check raw question.
-                if '數字' in captcha_text_div_text:
-                    temp_answer = util.normalize_chinese_numeric(temp_answer)
-
-                inferred_answer_string = temp_answer
-
-    if inferred_answer_string is None:
-        is_use_quota_message = False
-        if "【" in captcha_text_div_text and "】" in captcha_text_div_text:
-            if '下' in captcha_text_div_text and '空' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and '引號' in captcha_text_div_text and '字' in captcha_text_div_text:
-                is_use_quota_message = True
-            if '半形' in captcha_text_div_text and CONST_INPUT_SYMBOL in captcha_text_div_text and '引號' in captcha_text_div_text and '字' in captcha_text_div_text:
-                is_use_quota_message = True
-        #print("is_use_quota_message:" , is_use_quota_message)
-        if is_use_quota_message:
-            inferred_answer_string = util.find_between(captcha_text_div_text, "【", "】")
-            inferred_answer_string = inferred_answer_string.strip()
-            #print("find captcha text:" , inferred_answer_string)
-
-    # parse '演出日期'
-    if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
-
-    # parse '演出時間'
-    if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
-
-    # name of event.
-    if inferred_answer_string is None:
-        if "name of event" in captcha_text_div_text:
-            if '(' in captcha_text_div_text and ')' in captcha_text_div_text and 'ans:' in captcha_text_div_text.lower():
-                target_symbol = "("
-                star_index = captcha_text_div_text.find(target_symbol)
-                target_symbol = ":"
-                star_index = captcha_text_div_text.find(target_symbol, star_index)
-                target_symbol = ")"
-                end_index = captcha_text_div_text.find(target_symbol, star_index)
-                inferred_answer_string = captcha_text_div_text[star_index+1:end_index]
-                #print("inferred_answer_string:", inferred_answer_string)
-
-    # 二題式，組合問題。
-    is_combine_two_question = False
-    if "第一題" in captcha_text_div_text and "第二題" in captcha_text_div_text:
-        is_combine_two_question = True
-    if "Q1." in captcha_text_div_text and "Q2." in captcha_text_div_text:
-        if "二題" in captcha_text_div_text:
-            is_combine_two_question = True
-        if "2題" in captcha_text_div_text:
-            is_combine_two_question = True
-    if "Q1:" in captcha_text_div_text and "Q2:" in captcha_text_div_text:
-        if "二題" in captcha_text_div_text:
-            is_combine_two_question = True
-        if "2題" in captcha_text_div_text:
-            is_combine_two_question = True
-    if "Q1 " in captcha_text_div_text and "Q2 " in captcha_text_div_text:
-        if "二題" in captcha_text_div_text:
-            is_combine_two_question = True
-        if "2題" in captcha_text_div_text:
-            is_combine_two_question = True
-    if is_combine_two_question:
-        inferred_answer_string = None
-    #print("is_combine_two_question:", is_combine_two_question)
-
-    # still no answer.
-    if inferred_answer_string is None:
-        if not is_combine_two_question:
-            answer_list = util.get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-            if show_debug_message:
-                print("guess answer list:", answer_list)
-        else:
-            if show_debug_message:
-                print("skip to guess answer because of combine question...")
-
-    else:
-        if show_debug_message:
-            print("got an inferred_answer_string:", inferred_answer_string)
-        answer_list = [inferred_answer_string]
-
-    return answer_list
 
 def kktix_reg_captcha_question_text(captcha_inner_div):
     captcha_text_div = None
@@ -3316,7 +2895,7 @@ def get_kktix_question_text(driver):
         question_text = kktix_reg_captcha_question_text(captcha_inner_div)
     return question_text
 
-def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, registrationsNewApp_div):
+def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -3334,7 +2913,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, 
         answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = get_answer_list_from_question_string(registrationsNewApp_div, question_text)
+                answer_list = util.get_answer_list_from_question_string(registrationsNewApp_div, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -3359,7 +2938,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, 
 
     return fail_list, is_question_popup
 
-def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_finish_checkbox_click):
+def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -3394,6 +2973,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_f
             is_need_refresh_final = True
 
             for area_keyword_item in area_keyword_array:
+                is_need_refresh_tmp = False
                 is_dom_ready, is_ticket_number_assigned, is_need_refresh_tmp = kktix_assign_ticket_number(driver, config_dict, area_keyword_item)
 
                 if not is_dom_ready:
@@ -3425,7 +3005,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_f
                     played_sound_ticket = True
 
                 # whole event question.
-                fail_list, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, registrationsNewApp_div)
+                fail_list, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div)
                 
                 # single option question
                 if not is_question_popup:
@@ -3525,11 +3105,6 @@ def kktix_reg_auto_reload(driver, url, config_dict):
             is_reload_at_webdriver = True
     if is_reload_at_webdriver:
         kktix_check_register_status(driver, url)
-
-    is_finish_checkbox_click = False
-    is_dom_ready, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
-
-    return is_dom_ready, is_finish_checkbox_click
 
 
 # PURPOSE: get target area list.
@@ -6546,9 +6121,11 @@ def kktix_main(driver, url, config_dict, kktix_dict):
         if '/registrations/new' in url:
             kktix_dict["start_time"] = time.time()
 
+            kktix_reg_auto_reload(driver, url, config_dict)
+
             is_dom_ready = False
             is_finish_checkbox_click = False
-            is_dom_ready, is_finish_checkbox_click = kktix_reg_auto_reload(driver, url, config_dict)
+            is_dom_ready, is_finish_checkbox_click = kktix_check_agree_checkbox(driver, config_dict)
 
             if not is_dom_ready:
                 # reset answer fail list.
@@ -6557,7 +6134,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
             else:
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
-                    kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"], is_finish_checkbox_click)
+                    kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = kktix_reg_new_main(driver, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
                     kktix_dict["done_time"] = time.time()
         else:
             is_event_page = False
@@ -7289,7 +6866,7 @@ def ibon_verification_question(driver, fail_list, config_dict):
         answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = get_answer_list_from_question_string(None, question_text)
+                answer_list = util.get_answer_list_from_question_string(None, question_text)
 
         inferred_answer_string = ""
         if len(answer_list) > 0:
@@ -11230,7 +10807,7 @@ def resize_window(driver, config_dict):
             target_array = config_dict["advanced"]["window_size"].split(",")
             driver.set_window_size(int(target_array[0]), int(target_array[1]))
 
-def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless=""):
+def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless="", script_name="chrome_tixcraft"):
     cmd_argument = []
     if len(filename) > 0:
         cmd_argument.append('--input=' + filename)
@@ -11247,14 +10824,14 @@ def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", 
     if hasattr(sys, 'frozen'):
         print("execute in frozen mode")
         # check platform here.
-        cmd = './chrome_tixcraft' + ' '.join(cmd_argument)
+        cmd = './' + script_name + ' '.join(cmd_argument)
         if platform.system() == 'Darwin':
             print("execute MacOS python script")
         if platform.system() == 'Linux':
             print("execute linux binary")
         if platform.system() == 'Windows':
             print("execute .exe binary.")
-            cmd = 'chrome_tixcraft.exe ' + ' '.join(cmd_argument)
+            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
         subprocess.Popen(cmd, shell=True, cwd=working_dir)
     else:
         interpreter_binary = 'python'
@@ -11263,8 +10840,7 @@ def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", 
             interpreter_binary = 'python3'
             interpreter_binary_alt = 'python'
         print("execute in shell mode.")
-
-        script_name = "chrome_tixcraft"
+        
         try:
             print('try', interpreter_binary)
             cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
@@ -11535,7 +11111,7 @@ def test_captcha_model():
     #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
     #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   1. PET / 2. PAN / 3. PENCIL / 4. PEN （請填寫選項「純數字」/ Please only enter the number）"
     #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   A. PET / B. PAN / C. PENCIL / D. PEN （請填寫選項「純數字」/ Please only enter the number）"
-    answer_list = get_answer_list_from_question_string(None, captcha_text_div_text)
+    answer_list = util.get_answer_list_from_question_string(None, captcha_text_div_text)
     print("answer_list:", answer_list)
 
     ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
