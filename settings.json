@@ -77,7 +77,7 @@
         "user_guess_string": "",
         "remote_url": "\"http://127.0.0.1:16888/\"",
         "auto_reload_page_interval": 0.05,
-        "reset_browser_interval": 0.0,
+        "reset_browser_interval": 0,
         "max_dwell_time": 60,
         "proxy_server_port": "",
         "window_size": "512,1024",

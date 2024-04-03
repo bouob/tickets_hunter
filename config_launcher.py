@@ -23,7 +23,9 @@ import sys
 import threading
 import webbrowser
 
-CONST_APP_VERSION = "MaxBot (2024.03.19)"
+import util
+
+CONST_APP_VERSION = "MaxBot (2024.03.20)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -134,16 +136,6 @@ def load_translate():
     translate['ja_jp']=ja_jp
     return translate
 
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
-
-
 def get_default_config():
     config_dict={}
 
@@ -154,9 +146,8 @@ def get_default_config():
 
     return config_dict
 
-
 def load_json():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
 
     config_dict = None
@@ -168,7 +159,7 @@ def load_json():
     return config_filepath, config_dict
 
 def btn_restore_defaults_clicked(language_code):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
     if os.path.exists(str(config_filepath)):
         try:
@@ -187,7 +178,7 @@ def btn_save_clicked():
     btn_save_act()
 
 def btn_save_act(slience_mode=True):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_LAUNCHER_FILE)
 
     config_dict = get_default_config()
@@ -213,17 +204,12 @@ def btn_save_act(slience_mode=True):
     # save config.
     if is_all_data_correct:
         # slience
-        save_json(config_dict, config_filepath)
+        util.save_json(config_dict, config_filepath)
         
         if not slience_mode:
             messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
     return is_all_data_correct
-
-def save_json(config_dict, target_path):
-    json_str = json.dumps(config_dict, indent=4)
-    with open(target_path, 'w') as outfile:
-        outfile.write(json_str)
 
 def open_url(url):
     webbrowser.open_new(url)

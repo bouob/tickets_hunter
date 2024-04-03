@@ -14,21 +14,12 @@ except ImportError:
         from tkinter.filedialog import asksaveasfilename
     except Exception as e:
         pass
-    '''
-    try:
-        import customtkinter
-        customtkinter.set_appearance_mode("dark")  # Modes: system (default), light, dark
-        customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
-    except Exception as exc:
-        pass
-    '''
 
 import asyncio
 import base64
 import json
 import os
 import platform
-import socket
 import ssl
 import subprocess
 import sys
@@ -37,20 +28,20 @@ import time
 import warnings
 import webbrowser
 from datetime import datetime
-from typing import Optional
 
 import pyperclip
-import requests
 import tornado
 from tornado.web import Application
 from urllib3.exceptions import InsecureRequestWarning
+
+import util
 
 try:
     import ddddocr
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.19)"
+CONST_APP_VERSION = "MaxBot (2024.03.20)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -600,80 +591,6 @@ def load_translate():
     translate['ja_jp']=ja_jp
     return translate
 
-def get_ip_address():
-    gethostname = None
-    try:
-        gethostname = socket.gethostname()
-    except Exception as exc:
-        print(exc)
-        gethostname = None
-
-    default_ip = "127.0.0.1"
-    ip = default_ip
-    if not gethostname is None:
-        try:
-            ip = [l for l in ([ip for ip in socket.gethostbyname_ex(gethostname)[2]
-                if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)),
-                s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET,
-                socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
-        except Exception as exc:
-            print(exc)
-            ip = gethostname
-    
-    #print("get_ip_address:", ip)
-    return ip
-
-def format_config_keyword_for_json(user_input):
-    if len(user_input) > 0:
-        if not ('\"' in user_input):
-            user_input = '"' + user_input + '"'
-
-        if user_input[:1]=="{" and user_input[-1:]=="}":
-            tmp_json = {}
-            try:
-                tmp_json = json.loads(user_input)
-                key=list(tmp_json.keys())[0]
-                first_item=tmp_json[key]
-                user_input=json.dumps(first_item)
-            except Exception as exc:
-                pass
-
-        if user_input[:1]=="[" and user_input[-1:]=="]":
-            user_input=user_input[1:]
-            user_input=user_input[:-1]
-    return user_input
-
-def sx(s1):
-    key=18
-    return ''.join(chr(ord(a) ^ key) for a in s1)
-
-def decryptMe(b):
-    s=""
-    if(len(b)>0):
-        s=sx(base64.b64decode(b).decode("UTF-8"))
-    return s
-
-def encryptMe(s):
-    data=""
-    if(len(s)>0):
-        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
-    return data
-
-def is_arm():
-    ret = False
-    if "-arm" in platform.platform():
-        ret = True
-    return ret
-
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
-
 def get_default_config():
     config_dict={}
 
@@ -688,7 +605,7 @@ def get_default_config():
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
 
-    if is_arm():
+    if util.is_arm():
         config_dict["ocr_captcha"]["enable"] = False
         config_dict["ocr_captcha"]["force_submit"] = False
 
@@ -785,7 +702,7 @@ def read_last_url_from_file():
     return ret
 
 def load_json():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
 
     # overwrite config path.
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
@@ -799,7 +716,7 @@ def load_json():
     return config_filepath, config_dict
 
 def btn_restore_defaults_clicked(language_code):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
     if os.path.exists(str(config_filepath)):
         try:
@@ -815,7 +732,7 @@ def btn_restore_defaults_clicked(language_code):
     load_GUI(root, config_dict)
 
 def do_maxbot_idle():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
         text_file.write("")
@@ -825,10 +742,10 @@ def btn_idle_clicked(language_code):
     update_maxbot_runtime_status()
 
 def do_maxbot_resume():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     for i in range(3):
-        force_remove_file(idle_filepath)
+         util.force_remove_file(idle_filepath)
 
 def btn_resume_clicked(language_code):
     do_maxbot_resume()
@@ -844,7 +761,7 @@ def btn_save_clicked():
     btn_save_act()
 
 def btn_save_act(slience_mode=False):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = get_default_config()
@@ -967,35 +884,35 @@ def btn_save_act(slience_mode=False):
         config_dict["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
 
         date_keyword = txt_date_keyword.get("1.0",END).strip()
-        date_keyword = format_config_keyword_for_json(date_keyword)
+        date_keyword = util.format_config_keyword_for_json(date_keyword)
         config_dict["date_auto_select"]["date_keyword"] = date_keyword
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
 
         area_keyword = txt_area_keyword.get("1.0",END).strip()
-        area_keyword = format_config_keyword_for_json(area_keyword)
+        area_keyword = util.format_config_keyword_for_json(area_keyword)
 
         keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
-        keyword_exclude = format_config_keyword_for_json(keyword_exclude)
+        keyword_exclude = util.format_config_keyword_for_json(keyword_exclude)
 
         user_guess_string = txt_user_guess_string.get("1.0",END).strip()
-        user_guess_string = format_config_keyword_for_json(user_guess_string)
+        user_guess_string = util.format_config_keyword_for_json(user_guess_string)
 
         remote_url = txt_remote_url.get("1.0",END).strip()
-        remote_url = format_config_keyword_for_json(remote_url)
+        remote_url = util.format_config_keyword_for_json(remote_url)
 
         idle_keyword = txt_idle_keyword.get("1.0",END).strip()
-        idle_keyword = format_config_keyword_for_json(idle_keyword)
+        idle_keyword = util.format_config_keyword_for_json(idle_keyword)
 
         resume_keyword = txt_resume_keyword.get("1.0",END).strip()
-        resume_keyword = format_config_keyword_for_json(resume_keyword)
+        resume_keyword = util.format_config_keyword_for_json(resume_keyword)
 
         idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
-        idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
+        idle_keyword_second = util.format_config_keyword_for_json(idle_keyword_second)
 
         resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
-        resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+        resume_keyword_second = util.format_config_keyword_for_json(resume_keyword_second)
 
         # test keyword format.
         if is_all_data_correct:
@@ -1127,16 +1044,16 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["tixcraft_sid"] = config_dict["advanced"]["tixcraft_sid"]
         config_dict["advanced"]["ibonqware"] = config_dict["advanced"]["ibonqware"]
 
-        config_dict["advanced"]["facebook_password"] = encryptMe(config_dict["advanced"]["facebook_password"])
-        config_dict["advanced"]["kktix_password"] = encryptMe(config_dict["advanced"]["kktix_password"])
-        config_dict["advanced"]["fami_password"] = encryptMe(config_dict["advanced"]["fami_password"])
-        config_dict["advanced"]["cityline_password"] = encryptMe(config_dict["advanced"]["cityline_password"])
-        config_dict["advanced"]["urbtix_password"] = encryptMe(config_dict["advanced"]["urbtix_password"])
-        config_dict["advanced"]["hkticketing_password"] = encryptMe(config_dict["advanced"]["hkticketing_password"])
-        config_dict["advanced"]["kham_password"] = encryptMe(config_dict["advanced"]["kham_password"])
-        config_dict["advanced"]["ticket_password"] = encryptMe(config_dict["advanced"]["ticket_password"])
-        config_dict["advanced"]["udn_password"] = encryptMe(config_dict["advanced"]["udn_password"])
-        config_dict["advanced"]["ticketplus_password"] = encryptMe(config_dict["advanced"]["ticketplus_password"])
+        config_dict["advanced"]["facebook_password"] = util.encryptMe(config_dict["advanced"]["facebook_password"])
+        config_dict["advanced"]["kktix_password"] = util.encryptMe(config_dict["advanced"]["kktix_password"])
+        config_dict["advanced"]["fami_password"] = util.encryptMe(config_dict["advanced"]["fami_password"])
+        config_dict["advanced"]["cityline_password"] = util.encryptMe(config_dict["advanced"]["cityline_password"])
+        config_dict["advanced"]["urbtix_password"] = util.encryptMe(config_dict["advanced"]["urbtix_password"])
+        config_dict["advanced"]["hkticketing_password"] = util.encryptMe(config_dict["advanced"]["hkticketing_password"])
+        config_dict["advanced"]["kham_password"] = util.encryptMe(config_dict["advanced"]["kham_password"])
+        config_dict["advanced"]["ticket_password"] = util.encryptMe(config_dict["advanced"]["ticket_password"])
+        config_dict["advanced"]["udn_password"] = util.encryptMe(config_dict["advanced"]["udn_password"])
+        config_dict["advanced"]["ticketplus_password"] = util.encryptMe(config_dict["advanced"]["ticketplus_password"])
 
         config_dict["advanced"]["chrome_extension"] = bool(chk_state_chrome_extension.get())
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
@@ -1149,7 +1066,7 @@ def btn_save_act(slience_mode=False):
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
 
-        if is_arm():
+        if util.is_arm():
             config_dict["ocr_captcha"]["enable"] = False
             config_dict["ocr_captcha"]["force_submit"] = False
 
@@ -1161,7 +1078,7 @@ def btn_save_act(slience_mode=False):
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
         config_dict["advanced"]["max_dwell_time"] = int(txt_max_dwell_time.get().strip())
-        config_dict["advanced"]["reset_browser_interval"] = float(txt_reset_browser_interval.get().strip())
+        config_dict["advanced"]["reset_browser_interval"] = int(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
         config_dict["advanced"]["window_size"] = txt_window_size.get().strip()
 
@@ -1183,17 +1100,13 @@ def btn_save_act(slience_mode=False):
             if not file_to_save is None:
                 if len(file_to_save) > 0:
                     print("save as to:", file_to_save)
-                    save_json(config_dict, file_to_save)
+                    util.save_json(config_dict, file_to_save)
         else:
             # slience
-            save_json(config_dict, config_filepath)
+            util.save_json(config_dict, config_filepath)
 
     return is_all_data_correct
 
-def save_json(config_dict, target_path):
-    json_str = json.dumps(config_dict, indent=4)
-    with open(target_path, 'w') as outfile:
-        outfile.write(json_str)
 
 def btn_run_clicked(language_code):
     print('run button pressed.')
@@ -1212,7 +1125,7 @@ def show_preview_text():
         with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
             answer_text = text_file.readline()
 
-        answer_text = format_config_keyword_for_json(answer_text)
+        answer_text = util.format_config_keyword_for_json(answer_text)
 
         date_array = []
         try:
@@ -1227,45 +1140,6 @@ def show_preview_text():
             except Exception as exc:
                 pass
 
-def write_string_to_file(filename, data):
-    outfile = None
-    if platform.system() == 'Windows':
-        outfile = open(filename, 'w', encoding='UTF-8')
-    else:
-        outfile = open(filename, 'w')
-
-    if not outfile is None:
-        outfile.write("%s" % data)
-
-def save_url_to_file(new_remote_url, force_write = False):
-    html_text = ""
-    if len(new_remote_url) > 0:
-        html_result = None
-        try:
-            html_result = requests.get(new_remote_url , timeout=0.5, allow_redirects=False)
-        except Exception as exc:
-            html_result = None
-            #print(exc)
-        if not html_result is None:
-            status_code = html_result.status_code
-            #print("status_code:", status_code)
-            if status_code == 200:
-                html_text = html_result.text
-                #print("html_text:", html_text)
-
-    is_write_to_file = False
-    if force_write:
-        is_write_to_file = True
-    if len(html_text) > 0:
-        is_write_to_file = True
-
-    if is_write_to_file:
-        html_text = format_config_keyword_for_json(html_text)
-        working_dir = os.path.dirname(os.path.realpath(__file__))
-        target_path = os.path.join(working_dir, CONST_MAXBOT_ANSWER_ONLINE_FILE)
-        write_string_to_file(target_path, html_text)
-    return is_write_to_file
-
 def btn_preview_text_clicked():
     global txt_remote_url
     remote_url = ""
@@ -1274,7 +1148,7 @@ def btn_preview_text_clicked():
             remote_url = txt_remote_url.get("1.0",END).strip()
         except Exception as exc:
             pass
-    remote_url = format_config_keyword_for_json(remote_url)
+    remote_url = util.format_config_keyword_for_json(remote_url)
 
     if len(remote_url) > 0:
         url_array = []
@@ -1288,7 +1162,7 @@ def btn_preview_text_clicked():
             force_write = True
         for each_url in url_array:
             #print("new_remote_url:", new_remote_url)
-            is_write_to_file = save_url_to_file(each_url, force_write=force_write)
+            is_write_to_file = util.save_url_to_file(each_url, CONST_MAXBOT_ANSWER_ONLINE_FILE, force_write=force_write)
             if is_write_to_file:
                 break
     show_preview_text()
@@ -1339,26 +1213,9 @@ def btn_preview_sound_clicked():
     global txt_play_sound_filename
     new_sound_filename = txt_play_sound_filename.get().strip()
     #print("new_sound_filename:", new_sound_filename)
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     new_sound_filename = os.path.join(app_root, new_sound_filename)
-    play_mp3_async(new_sound_filename)
-
-def play_mp3_async(sound_filename):
-    threading.Thread(target=play_mp3, args=(sound_filename,)).start()
-
-def play_mp3(sound_filename):
-    from playsound import playsound
-    try:
-        playsound(sound_filename)
-    except Exception as exc:
-        msg=str(exc)
-        #print("play sound exeption:", msg)
-        if platform.system() == 'Windows':
-            import winsound
-            try:
-                winsound.PlaySound(sound_filename, winsound.SND_FILENAME)
-            except Exception as exc2:
-                pass
+    util.play_mp3_async(new_sound_filename)
 
 def open_url(url):
     webbrowser.open_new(url)
@@ -2332,7 +2189,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global lbl_ocr_captcha_not_support_arm
     lbl_ocr_captcha_not_support_arm = Label(frame_group_ddddocr_enable, fg="red", text=translate[language_code]['ocr_captcha_not_support_arm'])
-    if is_arm():
+    if util.is_arm():
         lbl_ocr_captcha_not_support_arm.grid(column=1, row=0, sticky = E)
 
     frame_group_ddddocr_enable.grid(column=1, row=group_row_count, sticky = W)
@@ -2450,7 +2307,7 @@ def ServerTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_server_url = Label(frame_group_header, text=translate[language_code]['server_url'])
     lbl_server_url.grid(column=0, row=group_row_count, sticky = E)
 
-    local_ip = get_ip_address()
+    local_ip = util.get_ip_address()
     ip_address = "http://%s:%d/" % (local_ip, CONST_SERVER_PORT)
     global lbl_ip_address
     lbl_ip_address = Label(frame_group_header, text=ip_address)
@@ -2548,7 +2405,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_facebook_password
-    txt_facebook_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["facebook_password"].strip()))
+    txt_facebook_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["facebook_password"].strip()))
     txt_facebook_password = Entry(frame_group_header, width=15, textvariable = txt_facebook_password_value, show="*")
     txt_facebook_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2564,7 +2421,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_kktix_password
-    txt_kktix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kktix_password"].strip()))
+    txt_kktix_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["kktix_password"].strip()))
     txt_kktix_password = Entry(frame_group_header, width=15, textvariable = txt_kktix_password_value, show="*")
     txt_kktix_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2580,7 +2437,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_fami_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_fami_password
-    txt_fami_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["fami_password"].strip()))
+    txt_fami_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["fami_password"].strip()))
     txt_fami_password = Entry(frame_group_header, width=15, textvariable = txt_fami_password_value, show="*")
     txt_fami_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2596,7 +2453,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_cityline_password
-    txt_cityline_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["cityline_password"].strip()))
+    txt_cityline_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["cityline_password"].strip()))
     txt_cityline_password = Entry(frame_group_header, width=15, textvariable = txt_cityline_password_value, show="*")
     txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2612,7 +2469,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_urbtix_password
-    txt_urbtix_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
+    txt_urbtix_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
     txt_urbtix_password = Entry(frame_group_header, width=15, textvariable = txt_urbtix_password_value, show="*")
     txt_urbtix_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2628,7 +2485,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_hkticketing_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_hkticketing_password
-    txt_hkticketing_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
+    txt_hkticketing_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
     txt_hkticketing_password = Entry(frame_group_header, width=15, textvariable = txt_hkticketing_password_value, show="*")
     txt_hkticketing_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2644,7 +2501,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kham_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_kham_password
-    txt_kham_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["kham_password"].strip()))
+    txt_kham_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["kham_password"].strip()))
     txt_kham_password = Entry(frame_group_header, width=15, textvariable = txt_kham_password_value, show="*")
     txt_kham_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2660,7 +2517,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_ticket_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_ticket_password
-    txt_ticket_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ticket_password"].strip()))
+    txt_ticket_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["ticket_password"].strip()))
     txt_ticket_password = Entry(frame_group_header, width=15, textvariable = txt_ticket_password_value, show="*")
     txt_ticket_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2676,7 +2533,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_udn_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_udn_password
-    txt_udn_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["udn_password"].strip()))
+    txt_udn_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["udn_password"].strip()))
     txt_udn_password = Entry(frame_group_header, width=15, textvariable = txt_udn_password_value, show="*")
     txt_udn_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2692,7 +2549,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_ticketplus_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_ticketplus_password
-    txt_ticketplus_password_value = StringVar(frame_group_header, value=decryptMe(config_dict["advanced"]["ticketplus_password"].strip()))
+    txt_ticketplus_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["ticketplus_password"].strip()))
     txt_ticketplus_password = Entry(frame_group_header, width=15, textvariable = txt_ticketplus_password_value, show="*")
     txt_ticketplus_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2704,33 +2561,6 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
 
-def is_text_match_keyword(keyword_string, text):
-    is_match_keyword = True
-    if len(keyword_string) > 0 and len(text) > 0:
-        is_match_keyword = False
-        keyword_array = []
-        try:
-            keyword_array = json.loads("["+ keyword_string +"]")
-        except Exception as exc:
-            keyword_array = []
-        for item_list in keyword_array:
-            if len(item_list) > 0:
-                if ' ' in item_list:
-                    keyword_item_array = item_list.split(' ')
-                    is_match_all = True
-                    for each_item in keyword_item_array:
-                        if not each_item in text:
-                            is_match_all = False
-                    if is_match_all:
-                        is_match_keyword = True
-                else:
-                    if item_list in text:
-                        is_match_keyword = True
-            else:
-                is_match_keyword = True
-            if is_match_keyword:
-                break
-    return is_match_keyword
 
 def change_maxbot_status_by_keyword():
     config_filepath, config_dict = load_json()
@@ -2739,24 +2569,24 @@ def change_maxbot_status_by_keyword():
     current_time = system_clock_data.strftime('%H:%M:%S')
     #print('Current Time is:', current_time)
     if len(config_dict["advanced"]["idle_keyword"]) > 0:
-        is_matched = is_text_match_keyword(config_dict["advanced"]["idle_keyword"], current_time)
+        is_matched =  util.is_text_match_keyword(config_dict["advanced"]["idle_keyword"], current_time)
         if is_matched:
             #print("match to idle:", current_time)
             do_maxbot_idle()
     if len(config_dict["advanced"]["resume_keyword"]) > 0:
-        is_matched = is_text_match_keyword(config_dict["advanced"]["resume_keyword"], current_time)
+        is_matched =  util.is_text_match_keyword(config_dict["advanced"]["resume_keyword"], current_time)
         if is_matched:
             #print("match to resume:", current_time)
             do_maxbot_resume()
     
     current_time = system_clock_data.strftime('%S')
     if len(config_dict["advanced"]["idle_keyword_second"]) > 0:
-        is_matched = is_text_match_keyword(config_dict["advanced"]["idle_keyword_second"], current_time)
+        is_matched =  util.is_text_match_keyword(config_dict["advanced"]["idle_keyword_second"], current_time)
         if is_matched:
             #print("match to idle:", current_time)
             do_maxbot_idle()
     if len(config_dict["advanced"]["resume_keyword_second"]) > 0:
-        is_matched = is_text_match_keyword(config_dict["advanced"]["resume_keyword_second"], current_time)
+        is_matched =  util.is_text_match_keyword(config_dict["advanced"]["resume_keyword_second"], current_time)
         if is_matched:
             #print("match to resume:", current_time)
             do_maxbot_resume()
@@ -2781,37 +2611,37 @@ def check_maxbot_config_unsaved(config_dict):
         date_keyword = ""
         if 'txt_date_keyword' in globals():
             date_keyword = txt_date_keyword.get("1.0",END).strip()
-            date_keyword = format_config_keyword_for_json(date_keyword)
+            date_keyword = util.format_config_keyword_for_json(date_keyword)
 
         area_keyword = ""
         if 'txt_area_keyword' in globals():
             area_keyword = txt_area_keyword.get("1.0",END).strip()
-            area_keyword = format_config_keyword_for_json(area_keyword)
+            area_keyword = util.format_config_keyword_for_json(area_keyword)
 
         keyword_exclude = ""
         if 'txt_keyword_exclude' in globals():
             keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
-            keyword_exclude = format_config_keyword_for_json(keyword_exclude)
+            keyword_exclude = util.format_config_keyword_for_json(keyword_exclude)
 
         idle_keyword = ""
         if 'txt_idle_keyword' in globals():
             idle_keyword = txt_idle_keyword.get("1.0",END).strip()
-            idle_keyword = format_config_keyword_for_json(idle_keyword)
+            idle_keyword = util.format_config_keyword_for_json(idle_keyword)
 
         resume_keyword = ""
         if 'txt_resume_keyword' in globals():
             resume_keyword = txt_resume_keyword.get("1.0",END).strip()
-            resume_keyword = format_config_keyword_for_json(resume_keyword)
+            resume_keyword = util.format_config_keyword_for_json(resume_keyword)
 
         idle_keyword_second = ""
         if 'txt_idle_keyword_second' in globals():
             idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
-            idle_keyword_second = format_config_keyword_for_json(idle_keyword_second)
+            idle_keyword_second = util.format_config_keyword_for_json(idle_keyword_second)
 
         resume_keyword_second = ""
         if 'txt_resume_keyword_second' in globals():
             resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
-            resume_keyword_second = format_config_keyword_for_json(resume_keyword_second)
+            resume_keyword_second = util.format_config_keyword_for_json(resume_keyword_second)
 
         highlightthickness = 0
         if 'combo_homepage' in globals():
@@ -2879,7 +2709,7 @@ def settgins_gui_timer():
             break
 
 def clean_extension_status():
-    Root_Dir = get_app_root()
+    Root_Dir = util.get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
@@ -2892,7 +2722,7 @@ def clean_extension_status():
             pass
 
 def sync_status_to_extension(status):
-    Root_Dir = get_app_root()
+    Root_Dir = util.get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
@@ -3286,16 +3116,9 @@ def main_gui():
     os.remove(icon_filepath)
 
     root.mainloop()
-    print("exit settings")
+    #print("exit settings")
     GLOBAL_SERVER_SHUTDOWN=True
     clean_extension_status()
-
-def force_remove_file(filepath):
-    if os.path.exists(filepath):
-        try:
-            os.remove(filepath)
-        except Exception as exc:
-            pass
 
 def clean_tmp_file():
     remove_file_list = [CONST_MAXBOT_LAST_URL_FILE
@@ -3304,10 +3127,10 @@ def clean_tmp_file():
         ,CONST_MAXBOT_QUESTION_FILE
     ]
     for filepath in remove_file_list:
-        force_remove_file(filepath)
+         util.force_remove_file(filepath)
 
 def btn_copy_ip_clicked():
-    local_ip = get_ip_address()
+    local_ip = util.get_ip_address()
     ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
     pyperclip.copy(ip_address)
 
@@ -3424,26 +3247,9 @@ async def main_server():
     print("server running on port:", CONST_SERVER_PORT)
     await asyncio.Event().wait()
 
-def is_connectable(port: int, host: Optional[str] = "localhost") -> bool:
-    """Tries to connect to the server at port to see if it is running.
-
-    :Args:
-     - port - The port to connect.
-    """
-    socket_ = None
-    _is_connectable_exceptions = (socket.error, ConnectionResetError)
-    try:
-        socket_ = socket.create_connection((host, port), 1)
-        result = True
-    except _is_connectable_exceptions:
-        result = False
-    finally:
-        if socket_:
-            socket_.close()
-    return result
 
 def web_server():
-    is_port_binded = is_connectable(CONST_SERVER_PORT)
+    is_port_binded = util.is_connectable(CONST_SERVER_PORT)
     #print("is_port_binded:", is_port_binded)
     if not is_port_binded:
         asyncio.run(main_server())

@@ -1,49 +1,25 @@
 #!/usr/bin/env python
 #encoding=utf-8
 import argparse
+import asyncio
 import base64
 import json
 import os
 import sys
 import time
+
+import nodriver as uc
 import requests
 
-import asyncio
-import nodriver as uc
+import util
 
-CONST_APP_VERSION = "MaxBot (2024.03.19)"
+CONST_APP_VERSION = "MaxBot (2024.03.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
-
-def sx(s1):
-    key=18
-    return ''.join(chr(ord(a) ^ key) for a in s1)
-
-def decryptMe(b):
-    s=""
-    if(len(b)>0):
-        s=sx(base64.b64decode(b).decode("UTF-8"))
-    return s
-
-def encryptMe(s):
-    data=""
-    if(len(s)>0):
-        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
-    return data
-
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
-
 def load_json():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     config_dict = None
@@ -161,7 +137,7 @@ async def kktix_account_loop(config_dict):
     kktix_account = config_dict["advanced"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
-        kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
 
     print("kktix_account:", kktix_account)
     #print("kktix_password:", kktix_password)

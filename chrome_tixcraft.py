@@ -9,18 +9,16 @@ import base64
 import json
 import logging
 import os
-import pathlib
 import platform
 import random
-import re
 import ssl
+import subprocess
 import sys
+import threading
 import time
 import warnings
 import webbrowser
 from datetime import datetime
-import subprocess
-import threading
 
 import chromedriver_autoinstaller_max
 import requests
@@ -37,6 +35,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from urllib3.exceptions import InsecureRequestWarning
 
+import util
 from NonBrowser import NonBrowser
 
 try:
@@ -45,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.19)"
+CONST_APP_VERSION = "MaxBot (2024.03.20)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -104,7 +103,6 @@ CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
-CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
 
 CONT_STRING_1_SEATS_REMAINING = ['@1 seat(s) remaining','剩餘 1@','@1 席残り']
 
@@ -123,62 +121,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 logging.basicConfig()
 logger = logging.getLogger('logger')
 
-def t_or_f(arg):
-    ret = False
-    ua = str(arg).upper()
-    if 'TRUE'.startswith(ua):
-        ret = True
-    elif 'YES'.startswith(ua):
-        ret = True
-    return ret
-
-def format_config_keyword_for_json(user_input):
-    if len(user_input) > 0:
-        if not ('\"' in user_input):
-            user_input = '"' + user_input + '"'
-        if user_input[:1]=="{" and user_input[-1:]=="}":
-            user_input=user_input[1:]
-            user_input=user_input[:-1]
-        if user_input[:1]=="[" and user_input[-1:]=="]":
-            user_input=user_input[1:]
-            user_input=user_input[:-1]
-    return user_input
-
-def remove_html_tags(text):
-    ret = ""
-    if not text is None:
-        clean = re.compile('<.*?>')
-        ret = re.sub(clean, '', text)
-        ret = ret.strip()
-    return ret
-
-def sx(s1):
-    key=18
-    return ''.join(chr(ord(a) ^ key) for a in s1)
-
-def decryptMe(b):
-    s=""
-    if(len(b)>0):
-        s=sx(base64.b64decode(b).decode("UTF-8"))
-    return s
-
-def encryptMe(s):
-    data=""
-    if(len(s)>0):
-        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
-    return data
-
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
-
 def get_config_dict(args):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     # allow assign config by command line.
@@ -193,7 +137,7 @@ def get_config_dict(args):
             config_dict = json.load(json_data)
 
             if not args.headless is None:
-                config_dict["advanced"]["headless"] = t_or_f(args.headless)
+                config_dict["advanced"]["headless"] = util.t_or_f(args.headless)
 
             if not args.homepage is None:
                 if len(args.homepage) > 0:
@@ -237,169 +181,20 @@ def get_config_dict(args):
 
     return config_dict
 
-def write_string_to_file(filename, data):
-    outfile = None
-    if platform.system() == 'Windows':
-        outfile = open(filename, 'w', encoding='UTF-8')
-    else:
-        outfile = open(filename, 'w')
-
-    if not outfile is None:
-        outfile.write("%s" % data)
-
 def write_question_to_file(question_text):
     working_dir = os.path.dirname(os.path.realpath(__file__))
     target_path = os.path.join(working_dir, CONST_MAXBOT_QUESTION_FILE)
-    write_string_to_file(target_path, question_text)
+    util.write_string_to_file(target_path, question_text)
 
 def write_last_url_to_file(url):
     working_dir = os.path.dirname(os.path.realpath(__file__))
     target_path = os.path.join(working_dir, CONST_MAXBOT_LAST_URL_FILE)
-    write_string_to_file(target_path, url)
+    util.write_string_to_file(target_path, url)
 
 def read_last_url_from_file():
     ret = ""
     with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
         ret = text_file.readline()
-    return ret
-
-def format_keyword_string(keyword):
-    if not keyword is None:
-        if len(keyword) > 0:
-            keyword = keyword.replace('／','/')
-            keyword = keyword.replace('　','')
-            keyword = keyword.replace(',','')
-            keyword = keyword.replace('，','')
-            keyword = keyword.replace('$','')
-            keyword = keyword.replace(' ','').lower()
-    return keyword
-
-def format_quota_string(formated_html_text):
-    formated_html_text = formated_html_text.replace('「','【')
-    formated_html_text = formated_html_text.replace('『','【')
-    formated_html_text = formated_html_text.replace('〔','【')
-    formated_html_text = formated_html_text.replace('﹝','【')
-    formated_html_text = formated_html_text.replace('〈','【')
-    formated_html_text = formated_html_text.replace('《','【')
-    formated_html_text = formated_html_text.replace('［','【')
-    formated_html_text = formated_html_text.replace('〖','【')
-    formated_html_text = formated_html_text.replace('[','【')
-    formated_html_text = formated_html_text.replace('（','【')
-    formated_html_text = formated_html_text.replace('(','【')
-
-    formated_html_text = formated_html_text.replace('」','】')
-    formated_html_text = formated_html_text.replace('』','】')
-    formated_html_text = formated_html_text.replace('〕','】')
-    formated_html_text = formated_html_text.replace('﹞','】')
-    formated_html_text = formated_html_text.replace('〉','】')
-    formated_html_text = formated_html_text.replace('》','】')
-    formated_html_text = formated_html_text.replace('］','】')
-    formated_html_text = formated_html_text.replace('〗','】')
-    formated_html_text = formated_html_text.replace(']','】')
-    formated_html_text = formated_html_text.replace('）','】')
-    formated_html_text = formated_html_text.replace(')','】')
-    return formated_html_text
-
-
-def full2half(keyword):
-    n = ""
-    if not keyword is None:
-        if len(keyword) > 0:
-            for char in keyword:
-                num = ord(char)
-                if num == 0x3000:
-                    num = 32
-                elif 0xFF01 <= num <= 0xFF5E:
-                    num -= 0xfee0
-                n += chr(num)
-    return n
-
-def get_chinese_numeric():
-    my_dict = {}
-    my_dict['0']=['0','０','zero','零']
-    my_dict['1']=['1','１','one','一','壹','①','❶','⑴']
-    my_dict['2']=['2','２','two','二','貳','②','❷','⑵']
-    my_dict['3']=['3','３','three','三','叁','③','❸','⑶']
-    my_dict['4']=['4','４','four','四','肆','④','❹','⑷']
-    my_dict['5']=['5','５','five','五','伍','⑤','❺','⑸']
-    my_dict['6']=['6','６','six','六','陸','⑥','❻','⑹']
-    my_dict['7']=['7','７','seven','七','柒','⑦','❼','⑺']
-    my_dict['8']=['8','８','eight','八','捌','⑧','❽','⑻']
-    my_dict['9']=['9','９','nine','九','玖','⑨','❾','⑼']
-    return my_dict
-
-# 同義字
-def synonym_dict(char):
-    ret = []
-    my_dict = get_chinese_numeric()
-    if char in my_dict:
-        ret = my_dict[char]
-    else:
-        ret.append(char)
-    return ret
-
-def chinese_numeric_to_int(char):
-    ret = None
-    my_dict = get_chinese_numeric()
-    for i in my_dict:
-        for item in my_dict[i]:
-            if char.lower() == item:
-                ret = int(i)
-                break
-        if not ret is None:
-            break
-    return ret
-
-def normalize_chinese_numeric(keyword):
-    ret = ""
-    for char in keyword:
-        converted_int = chinese_numeric_to_int(char)
-        if not converted_int is None:
-            ret += str(converted_int)
-    return ret
-
-def find_continuous_number(text):
-    chars = "0123456789"
-    return find_continuous_pattern(chars, text)
-
-def find_continuous_text(text):
-    chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    return find_continuous_pattern(chars, text)
-
-def find_continuous_pattern(allowed_char, text):
-    ret = ""
-    is_allowed_char_start = False
-    for char in text:
-        #print("char:", char)
-        if char in allowed_char:
-            if len(ret)==0 and not is_allowed_char_start:
-                is_allowed_char_start = True
-            if is_allowed_char_start:
-                ret += char
-        else:
-            # make not continuous
-            is_allowed_char_start = False
-    return ret
-
-def is_all_alpha_or_numeric(text):
-    ret = False
-    alpha_count = 0
-    numeric_count = 0
-    for char in text:
-        try:
-            if char.encode('UTF-8').isalpha():
-                alpha_count += 1
-        except Exception as exc:
-            pass
-
-        #if char.isnumeric():
-        if char.isdigit():
-            numeric_count += 1
-
-    if (alpha_count + numeric_count) == len(text):
-        ret = True
-
-    #print("text/is_all_alpha_or_numeric:",text,ret)
     return ret
 
 def get_favoriate_extension_path(webdriver_path, config_dict):
@@ -414,25 +209,6 @@ def get_chromedriver_path(webdriver_path):
     if platform.system().lower()=="windows":
         chromedriver_path = os.path.join(webdriver_path,"chromedriver.exe")
     return chromedriver_path
-
-def get_brave_bin_path():
-    brave_path = ""
-    if platform.system() == 'Windows':
-        brave_path = "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-        if not os.path.exists(brave_path):
-            brave_path = os.path.expanduser('~') + "\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-        if not os.path.exists(brave_path):
-            brave_path = "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-        if not os.path.exists(brave_path):
-            brave_path = "D:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-
-    if platform.system() == 'Linux':
-        brave_path = "/usr/bin/brave-browser"
-
-    if platform.system() == 'Darwin':
-        brave_path = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
-
-    return brave_path
 
 def get_chrome_options(webdriver_path, config_dict):
     chrome_options = webdriver.ChromeOptions()
@@ -487,7 +263,7 @@ def get_chrome_options(webdriver_path, config_dict):
         chrome_options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
     if config_dict["browser"]=="brave":
-        brave_path = get_brave_bin_path()
+        brave_path = util.get_brave_bin_path()
         if os.path.exists(brave_path):
             chrome_options.binary_location = brave_path
 
@@ -506,7 +282,7 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     driver = None
 
-    Root_Dir = get_app_root()
+    Root_Dir = util.get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -563,110 +339,6 @@ def load_chromdriver_normal(config_dict, driver_type):
 
     return driver
 
-def clean_uc_exe_cache():
-    exe_name = "chromedriver%s"
-
-    platform = sys.platform
-    if platform.endswith("win32"):
-        exe_name %= ".exe"
-    if platform.endswith(("linux", "linux2")):
-        exe_name %= ""
-    if platform.endswith("darwin"):
-        exe_name %= ""
-
-    d = ""
-    if platform.endswith("win32"):
-        d = "~/appdata/roaming/undetected_chromedriver"
-    elif "LAMBDA_TASK_ROOT" in os.environ:
-        d = "/tmp/undetected_chromedriver"
-    elif platform.startswith(("linux", "linux2")):
-        d = "~/.local/share/undetected_chromedriver"
-    elif platform.endswith("darwin"):
-        d = "~/Library/Application Support/undetected_chromedriver"
-    else:
-        d = "~/.undetected_chromedriver"
-    data_path = os.path.abspath(os.path.expanduser(d))
-
-    is_cache_exist = False
-    p = pathlib.Path(data_path)
-    files = list(p.rglob("*chromedriver*?"))
-    for file in files:
-        if os.path.exists(str(file)):
-            is_cache_exist = True
-            try:
-                os.unlink(str(file))
-            except Exception as exc2:
-                print(exc2)
-                pass
-
-    return is_cache_exist
-
-def dump_settings_to_maxbot_plus_extension(ext, config_dict):
-    # sync config.
-    target_path = ext
-    target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
-    #print("save as to:", target_path)
-    if os.path.isfile(target_path):
-        try:
-            #print("remove file:", target_path)
-            os.unlink(target_path)
-        except Exception as exc:
-            pass
-    with open(target_path, 'w') as outfile:
-        json.dump(config_dict, outfile)
-
-    # add host_permissions
-    target_path = ext
-    target_path = os.path.join(target_path, "manifest.json")
-
-    manifest_dict = None
-    if os.path.isfile(target_path):
-        with open(target_path) as json_data:
-            manifest_dict = json.load(json_data)
-
-    local_remote_url_array = []
-    local_remote_url = config_dict["advanced"]["remote_url"]
-    if len(local_remote_url) > 0:
-        try:
-            temp_remote_url_array = json.loads("["+ local_remote_url +"]")
-            for remote_url in temp_remote_url_array:
-                remote_url_final = remote_url + "*"
-                local_remote_url_array.append(remote_url_final)
-        except Exception as exc:
-            pass
-
-    if len(local_remote_url_array) > 0:
-        is_manifest_changed = False
-        for remote_url_final in local_remote_url_array:
-            if not remote_url_final in manifest_dict["host_permissions"]:
-                #print("local remote_url not in manifest:", remote_url_final)
-                manifest_dict["host_permissions"].append(remote_url_final)
-                is_manifest_changed = True
-
-        if is_manifest_changed:
-            json_str = json.dumps(manifest_dict, indent=4)
-            with open(target_path, 'w') as outfile:
-                outfile.write(json_str)
-
-def dump_settings_to_maxblock_plus_extension(ext, config_dict):
-    # sync config.
-    target_path = ext
-    target_path = os.path.join(target_path, "data")
-    # special case, due to data folder is empty, sometime will be removed.
-    if not os.path.exists(target_path):
-        os.mkdir(target_path)
-    target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
-    #print("save as to:", target_path)
-    if os.path.isfile(target_path):
-        try:
-            #print("remove file:", target_path)
-            os.unlink(target_path)
-        except Exception as exc:
-            pass
-    with open(target_path, 'w') as outfile:
-        config_dict["domain_filter"]=CONST_MAXBLOCK_EXTENSION_FILTER
-        json.dump(config_dict, outfile)
 
 def get_uc_options(uc, config_dict, webdriver_path):
     options = uc.ChromeOptions()
@@ -694,9 +366,9 @@ def get_uc_options(uc, config_dict, webdriver_path):
         if os.path.exists(ext):
             # sync config.
             if CONST_MAXBOT_EXTENSION_NAME in ext:
-                dump_settings_to_maxbot_plus_extension(ext, config_dict)
+                util.dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE)
             if CONST_MAXBLOCK_EXTENSION_NAME in ext:
-                dump_settings_to_maxblock_plus_extension(ext, config_dict)
+                util.dump_settings_to_maxblock_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE, CONST_MAXBLOCK_EXTENSION_FILTER)
             load_extension_path += ("," + os.path.abspath(ext))
             #print("load_extension_path:", load_extension_path)
 
@@ -728,7 +400,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
         options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
     if config_dict["browser"]=="brave":
-        brave_path = get_brave_bin_path()
+        brave_path = util.get_brave_bin_path()
         if os.path.exists(brave_path):
             options.binary_location = brave_path
 
@@ -743,7 +415,7 @@ def load_chromdriver_uc(config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    Root_Dir = get_app_root()
+    Root_Dir = util.get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
@@ -762,11 +434,10 @@ def load_chromdriver_uc(config_dict):
     else:
         print("ChromeDriver exist:", chromedriver_path)
 
-
     driver = None
     if os.path.exists(chromedriver_path):
         # use chromedriver_autodownload instead of uc auto download.
-        is_cache_exist = clean_uc_exe_cache()
+        is_cache_exist =  util.clean_uc_exe_cache()
 
         fail_1 = False
         try:
@@ -881,7 +552,7 @@ def get_driver_by_config(config_dict):
     if homepage is None:
         homepage = ""
 
-    Root_Dir = get_app_root()
+    Root_Dir = util.get_app_root()
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     #print("platform.system().lower():", platform.system().lower())
 
@@ -1104,692 +775,6 @@ def get_driver_by_config(config_dict):
 
     return driver
 
-# common functions.
-def find_between( s, first, last ):
-    ret = ""
-    try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        ret = s[start:end]
-    except ValueError:
-        pass
-    return ret
-
-# convert web string to reg pattern
-def convert_string_to_pattern(my_str, dynamic_length=True):
-    my_hint_anwser_length = len(my_str)
-    my_formated = ""
-    if my_hint_anwser_length > 0:
-        my_anwser_symbols = "()[]<>{}-"
-        for idx in range(my_hint_anwser_length):
-            char = my_str[idx:idx+1]
-
-            if char in my_anwser_symbols:
-                my_formated += ('\\' + char)
-                continue
-
-            pattern = re.compile("[A-Z]")
-            match_result = pattern.match(char)
-            #print("match_result A:", match_result)
-            if not match_result is None:
-                my_formated += "[A-Z]"
-
-            pattern = re.compile("[a-z]")
-            match_result = pattern.match(char)
-            #print("match_result a:", match_result)
-            if not match_result is None:
-                my_formated += "[a-z]"
-
-            pattern = re.compile("[\d]")
-            match_result = pattern.match(char)
-            #print("match_result d:", match_result)
-            if not match_result is None:
-                my_formated += "[\d]"
-
-        # for dynamic length
-        if dynamic_length:
-            for i in range(10):
-                my_formated = my_formated.replace("[A-Z][A-Z]","[A-Z]")
-                my_formated = my_formated.replace("[a-z][a-z]","[a-z]")
-                my_formated = my_formated.replace("[\d][\d]","[\d]")
-
-            my_formated = my_formated.replace("[A-Z]","[A-Z]+")
-            my_formated = my_formated.replace("[a-z]","[a-z]+")
-            my_formated = my_formated.replace("[\d]","[\d]+")
-    return my_formated
-
-def guess_answer_list_from_multi_options(tmp_text):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    options_list = []
-    matched_pattern = ""
-    if len(options_list) == 0:
-        if '【' in tmp_text and '】' in tmp_text:
-            pattern = '【.{1,4}】'
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if '(' in tmp_text and ')' in tmp_text:
-            pattern = '\(.{1,4}\)'
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if '[' in tmp_text and ']' in tmp_text:
-            pattern = '\[.{1,4}\]'
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if "\n" in tmp_text and ')' in tmp_text:
-            pattern = "\\n.{1,4}\)"
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if "\n" in tmp_text and ']' in tmp_text:
-            pattern = "\\n.{1,4}\]"
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if "\n" in tmp_text and '】' in tmp_text:
-            pattern = "\\n.{1,4}】"
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if "\n" in tmp_text and ':' in tmp_text:
-            pattern = "\\n.{1,4}:"
-            options_list = re.findall(pattern, tmp_text)
-            if len(options_list) <= 2:
-                options_list = []
-            else:
-                matched_pattern = pattern
-
-    if len(options_list) == 0:
-        if " " in tmp_text and '?' in tmp_text:
-            if ('.' in tmp_text or ':' in tmp_text or ')' in tmp_text or ']' in tmp_text or '>' in tmp_text):
-                pattern = "[ /\n\|;\.\?]{1}.{1}[\.:)\]>]{1}.{2,3}"
-                options_list = re.findall(pattern, tmp_text)
-                if len(options_list) <= 2:
-                    options_list = []
-                else:
-                    formated_list = []
-                    for new_item in options_list:
-                        new_item = new_item.strip()
-                        if new_item[:1] == ".":
-                            new_item = new_item[1:]
-                        if new_item[:1] == "?":
-                            new_item = new_item[1:]
-                        if new_item[:1] == "|":
-                            new_item = new_item[1:]
-                        if new_item[:1] == ";":
-                            new_item = new_item[1:]
-                        if new_item[:1] == "/":
-                            new_item = new_item[1:]
-                        new_item = new_item.strip()
-                        new_item = new_item[:1]
-                        formated_list.append(new_item)
-                    options_list = formated_list
-
-                    matched_pattern = pattern
-
-    if show_debug_message:
-        print("matched pattern:", matched_pattern)
-
-    # default remove quota
-    is_trim_quota = not check_answer_keep_symbol(tmp_text)
-    if show_debug_message:
-        print("is_trim_quota:", is_trim_quota)
-
-    return_list = []
-    if len(options_list) > 0:
-        options_list_length = len(options_list)
-        if show_debug_message:
-            print("options_list_length:", options_list_length)
-            print("options_list:", options_list)
-        if options_list_length > 2:
-            is_all_options_same_length = True
-            options_length_count = {}
-            for i in range(options_list_length-1):
-                current_option_length = len(options_list[i])
-                next_option_length = len(options_list[i+1])
-                if current_option_length != next_option_length:
-                    is_all_options_same_length = False
-                if current_option_length in options_length_count:
-                    options_length_count[current_option_length] += 1
-                else:
-                    options_length_count[current_option_length] = 1
-
-            if show_debug_message:
-                print("is_all_options_same_length:", is_all_options_same_length)
-
-            if is_all_options_same_length:
-                return_list = []
-                for each_option in options_list:
-                    if len(each_option) > 2:
-                        if is_trim_quota:
-                            return_list.append(each_option[1:-1])
-                        else:
-                            return_list.append(each_option)
-                    else:
-                        return_list.append(each_option)
-            else:
-                #print("options_length_count:", options_length_count)
-                if len(options_length_count) > 0:
-                    target_option_length = 0
-                    most_length_count = 0
-                    for k in options_length_count.keys():
-                        if options_length_count[k] > most_length_count:
-                            most_length_count = options_length_count[k]
-                            target_option_length = k
-                    #print("most_length_count:", most_length_count)
-                    #print("target_option_length:", target_option_length)
-                    if target_option_length > 0:
-                        return_list = []
-                        for each_option in options_list:
-                            current_option_length = len(each_option)
-                            if current_option_length == target_option_length:
-                                if is_trim_quota:
-                                    return_list.append(each_option[1:-1])
-                                else:
-                                    return_list.append(each_option)
-
-    # something is wrong, give up when option equal 2 options.
-    if len(return_list) <= 2:
-        return_list = []
-
-    # remove chinese work options.
-    if len(options_list) > 0:
-        new_list = []
-        for item in return_list:
-            if is_all_alpha_or_numeric(item):
-                new_list.append(item)
-        if len(new_list) >=3:
-            return_list = new_list
-
-    return return_list
-
-#PS: this may get a wrong answer list. XD
-def guess_answer_list_from_symbols(captcha_text_div_text):
-    return_list = []
-    # need replace to space to get first options.
-    tmp_text = captcha_text_div_text
-    tmp_text = tmp_text.replace('?',' ')
-    tmp_text = tmp_text.replace('？',' ')
-    tmp_text = tmp_text.replace('。',' ')
-
-    delimitor_symbols_left = [u"(","[","{", " ", " ", " ", " "]
-    delimitor_symbols_right = [u")","]","}", ":", ".", ")", "-"]
-    idx = -1
-    for idx in range(len(delimitor_symbols_left)):
-        symbol_left = delimitor_symbols_left[idx]
-        symbol_right = delimitor_symbols_right[idx]
-        if symbol_left in tmp_text and symbol_right in tmp_text and '半形' in tmp_text:
-            hint_list = re.findall('\\'+ symbol_left + '[\\w]+\\'+ symbol_right , tmp_text)
-            #print("hint_list:", hint_list)
-            if not hint_list is None:
-                if len(hint_list) > 1:
-                    return_list = []
-                    my_answer_delimitor = symbol_right
-                    for options in hint_list:
-                        if len(options) > 2:
-                            my_anwser = options[1:-1]
-                            #print("my_anwser:",my_anwser)
-                            if len(my_anwser) > 0:
-                                return_list.append(my_anwser)
-
-        if len(return_list) > 0:
-            break
-    return return_list
-
-def get_offical_hint_string_from_symbol(symbol, tmp_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    offical_hint_string = ""
-    if symbol in tmp_text:
-        # start to guess offical hint
-        if offical_hint_string == "":
-            if '【' in tmp_text and '】' in tmp_text:
-                hint_list = re.findall('【.*?】', tmp_text)
-                if not hint_list is None:
-                    if show_debug_message:
-                        print("【.*?】hint_list:", hint_list)
-                    for hint in hint_list:
-                        if symbol in hint:
-                            offical_hint_string = hint[1:-1]
-                            break
-        if offical_hint_string == "":
-            if '(' in tmp_text and ')' in tmp_text:
-                hint_list = re.findall('\(.*?\)', tmp_text)
-                if not hint_list is None:
-                    if show_debug_message:
-                        print("\(.*?\)hint_list:", hint_list)
-                    for hint in hint_list:
-                        if symbol in hint:
-                            offical_hint_string = hint[1:-1]
-                            break
-        if offical_hint_string == "":
-            if '[' in tmp_text and ']' in tmp_text:
-                hint_list = re.findall('[.*?]', tmp_text)
-                if not hint_list is None:
-                    if show_debug_message:
-                        print("[.*?]hint_list:", hint_list)
-                    for hint in hint_list:
-                        if symbol in hint:
-                            offical_hint_string = hint[1:-1]
-                            break
-        if offical_hint_string == "":
-            offical_hint_string = tmp_text
-    return offical_hint_string
-
-def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-
-    my_question = ""
-    my_options = ""
-    offical_hint_string = ""
-    offical_hint_string_anwser = ""
-    my_anwser_formated = ""
-    my_answer_delimitor = ""
-
-    if my_question == "":
-        if "?" in tmp_text:
-            question_index = tmp_text.find("?")
-            my_question = tmp_text[:question_index+1]
-    if my_question == "":
-        if "。" in tmp_text:
-            question_index = tmp_text.find("。")
-            my_question = tmp_text[:question_index+1]
-    if my_question == "":
-        my_question = tmp_text
-    #print("my_question:", my_question)
-
-    # ps: hint_list is not options list
-
-    if offical_hint_string == "":
-        # for: 若你覺得答案為 a，請輸入 a
-        if '答案' in tmp_text and CONST_INPUT_SYMBOL in tmp_text:
-            offical_hint_string = get_offical_hint_string_from_symbol(CONST_INPUT_SYMBOL, tmp_text)
-        if len(offical_hint_string) > 0:
-            right_part = offical_hint_string.split(CONST_INPUT_SYMBOL)[1]
-            #print("right_part:", right_part)
-            if len(offical_hint_string) == len(tmp_text):
-                offical_hint_string = right_part
-
-            new_hint = find_continuous_text(right_part)
-            if len(new_hint) > 0:
-                # TODO: 答案為B需填入Bb)
-                #if '答案' in offical_hint_string and CONST_INPUT_SYMBOL in offical_hint_string:
-                offical_hint_string_anwser = new_hint
-
-
-    if offical_hint_string == "":
-        offical_hint_string = get_offical_hint_string_from_symbol(CONST_EXAMPLE_SYMBOL, tmp_text)
-        if len(offical_hint_string) > 0:
-            right_part = offical_hint_string.split(CONST_EXAMPLE_SYMBOL)[1]
-            if len(offical_hint_string) == len(tmp_text):
-                offical_hint_string = right_part
-
-            # PS: find first text will only get B char in this case: 答案為B需填入Bb)
-            new_hint = find_continuous_text(right_part)
-            if len(new_hint) > 0:
-                offical_hint_string_anwser = new_hint
-
-    # resize offical_hint_string_anwser for options contains in hint string.
-    #print("offical_hint_string_anwser:", offical_hint_string_anwser)
-    if len(offical_hint_string_anwser) > 0:
-        offical_hint_string = offical_hint_string.split(offical_hint_string_anwser)[0]
-
-    if show_debug_message:
-        print("offical_hint_string:", offical_hint_string)
-
-    # try rule4:
-    # get hint from rule 3: without '(' & '), but use "*"
-    if len(offical_hint_string) == 0:
-        target_symbol = "*"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index + len(target_symbol))
-            offical_hint_string = tmp_text[star_index: space_index]
-
-    # is need to merge next block
-    if len(offical_hint_string) > 0:
-        target_symbol = offical_hint_string + " "
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            next_block_index = star_index + len(target_symbol)
-            space_index = tmp_text.find(" ", next_block_index)
-            next_block = tmp_text[next_block_index: space_index]
-            if CONST_EXAMPLE_SYMBOL in next_block:
-                offical_hint_string += ' ' + next_block
-
-    # try rule5:
-    # get hint from rule 3: n個半形英文大寫
-    if len(offical_hint_string) == 0:
-        target_symbol = "個半形英文大寫"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                offical_hint_string_anwser = 'A' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-        target_symbol = "個英文大寫"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                offical_hint_string_anwser = 'A' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-        target_symbol = "個半形英文小寫"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                offical_hint_string_anwser = 'a' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-        target_symbol = "個英文小寫"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                offical_hint_string_anwser = 'a' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-        target_symbol = "個英數半形字"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-        target_symbol = "個半形"
-        if target_symbol in tmp_text :
-            star_index = tmp_text.find(target_symbol)
-            space_index = tmp_text.find(" ", star_index)
-            answer_char_count = tmp_text[star_index-1:star_index]
-            if answer_char_count.isnumeric():
-                answer_char_count = chinese_numeric_to_int(answer_char_count)
-                if answer_char_count is None:
-                    answer_char_count = '0'
-
-                star_index -= 1
-                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
-            offical_hint_string = tmp_text[star_index: space_index]
-
-    if len(offical_hint_string) > 0:
-        if show_debug_message:
-            print("offical_hint_string_anwser:", offical_hint_string_anwser)
-        my_anwser_formated = convert_string_to_pattern(offical_hint_string_anwser)
-
-    my_options = tmp_text
-    if len(my_question) < len(tmp_text):
-        my_options = my_options.replace(my_question,"")
-    my_options = my_options.replace(offical_hint_string,"")
-
-    # try rule7:
-    # check is chinese/english in question, if match, apply my_options rule.
-    if len(offical_hint_string) > 0:
-        tmp_text_org = captcha_text_div_text
-        if CONST_EXAMPLE_SYMBOL in tmp_text:
-            tmp_text_org = tmp_text_org.replace('Ex:','ex:')
-            target_symbol = "ex:"
-            if target_symbol in tmp_text_org :
-                star_index = tmp_text_org.find(target_symbol)
-                my_options = tmp_text_org[star_index-1:]
-
-    if show_debug_message:
-        print("tmp_text:", tmp_text)
-        print("my_options:", my_options)
-
-    if len(my_anwser_formated) > 0:
-        allow_delimitor_symbols = ")].: }"
-        pattern = re.compile(my_anwser_formated)
-        search_result = pattern.search(my_options)
-        if not search_result is None:
-            (span_start, span_end) = search_result.span()
-            maybe_delimitor=""
-            if len(my_options) > (span_end+1)+1:
-                maybe_delimitor = my_options[span_end+0:span_end+1]
-            if maybe_delimitor in allow_delimitor_symbols:
-                my_answer_delimitor = maybe_delimitor
-
-    if show_debug_message:
-        print("my_answer_delimitor:", my_answer_delimitor)
-
-    # default remove quota
-    is_trim_quota = not check_answer_keep_symbol(tmp_text)
-    if show_debug_message:
-        print("is_trim_quota:", is_trim_quota)
-
-    return_list = []
-    if len(my_anwser_formated) > 0:
-        new_pattern = my_anwser_formated
-        if len(my_answer_delimitor) > 0:
-            new_pattern = my_anwser_formated + '\\' + my_answer_delimitor
-
-        return_list = re.findall(new_pattern, my_options)
-        if show_debug_message:
-            print("my_anwser_formated:", my_anwser_formated)
-            print("new_pattern:", new_pattern)
-            print("return_list:" , return_list)
-
-        if not return_list is None:
-            if len(return_list) == 1:
-                # re-sample for this case.
-                return_list = re.findall(my_anwser_formated, my_options)
-
-            if len(return_list) == 1:
-                # if use pattern to find matched only one, means it is for example text.
-                return_list = None
-
-        if not return_list is None:
-            # clean delimitor
-            if is_trim_quota:
-                return_list_length = len(return_list)
-                if return_list_length >= 1:
-                    if len(my_answer_delimitor) > 0:
-                        for idx in range(return_list_length):
-                            return_list[idx]=return_list[idx].replace(my_answer_delimitor,'')
-                if show_debug_message:
-                    print("cleaned return_list:" , return_list)
-
-        if return_list is None:
-            return_list = []
-
-    return return_list, offical_hint_string_anwser
-
-def format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-    tmp_text = captcha_text_div_text
-    tmp_text = tmp_text.replace('  ',' ')
-    tmp_text = tmp_text.replace('：',':')
-    # for hint
-    tmp_text = tmp_text.replace('*','*')
-
-    # stop word.
-    tmp_text = tmp_text.replace('輸入法','')
-    tmp_text = tmp_text.replace('請問','')
-    tmp_text = tmp_text.replace('請將','')
-    tmp_text = tmp_text.replace('請在','')
-    tmp_text = tmp_text.replace('請以','')
-    tmp_text = tmp_text.replace('請回答','')
-    tmp_text = tmp_text.replace('請','')
-
-    # replace ex.
-    tmp_text = tmp_text.replace('例如', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace('如:', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace('如為', CONST_EXAMPLE_SYMBOL+'為')
-
-    tmp_text = tmp_text.replace('舉例', CONST_EXAMPLE_SYMBOL)
-    if not CONST_EXAMPLE_SYMBOL in tmp_text:
-        tmp_text = tmp_text.replace('例', CONST_EXAMPLE_SYMBOL)
-    # important, maybe 例 & ex occurs at same time.
-    tmp_text = tmp_text.replace('ex:', CONST_EXAMPLE_SYMBOL)
-    tmp_text = tmp_text.replace('Ex:', CONST_EXAMPLE_SYMBOL)
-
-    #若你覺得
-    #PS:這個，可能會造成更多問題，呵呵。
-    SYMBOL_IF_LIST = ['假設','如果','若']
-    for symbol_if in SYMBOL_IF_LIST:
-        if symbol_if in tmp_text and '答案' in tmp_text:
-            tmp_text = tmp_text.replace('覺得', '')
-            tmp_text = tmp_text.replace('認為', '')
-            tmp_text = tmp_text.replace(symbol_if + '你答案', CONST_EXAMPLE_SYMBOL + '答案')
-            tmp_text = tmp_text.replace(symbol_if + '答案', CONST_EXAMPLE_SYMBOL + '答案')
-
-    tmp_text = tmp_text.replace('填入', CONST_INPUT_SYMBOL)
-
-    #tmp_text = tmp_text.replace('[','(')
-    #tmp_text = tmp_text.replace(']',')')
-    tmp_text = tmp_text.replace('？','?')
-
-    tmp_text = tmp_text.replace('（','(')
-    tmp_text = tmp_text.replace('）',')')
-
-    return tmp_text
-
-def permutations(iterable, r=None):
-    pool = tuple(iterable)
-    n = len(pool)
-    r = n if r is None else r
-    if r > n:
-        return
-    indices = list(range(n))
-    cycles = list(range(n, n-r, -1))
-    yield tuple(pool[i] for i in indices[:r])
-    while n:
-        for i in reversed(range(r)):
-            cycles[i] -= 1
-            if cycles[i] == 0:
-                indices[i:] = indices[i+1:] + indices[i:i+1]
-                cycles[i] = n - i
-            else:
-                j = cycles[i]
-                indices[i], indices[-j] = indices[-j], indices[i]
-                yield tuple(pool[i] for i in indices[:r])
-                break
-        else:
-            return
-
-def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    return_list = []
-
-    tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-
-    # guess answer list from multi-options: 【】() []
-    if len(return_list)==0:
-        return_list = guess_answer_list_from_multi_options(tmp_text)
-    if show_debug_message:
-        print("captcha_text_div_text:", captcha_text_div_text)
-        if len(return_list) > 0:
-            print("found, guess_answer_list_from_multi_options:", return_list)
-
-    offical_hint_string_anwser = ""
-    if len(return_list)==0:
-        return_list, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-    else:
-        is_match_factorial = False
-        mutiple = 0
-
-        return_list_2, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-        if return_list_2 is None:
-            if len(offical_hint_string_anwser) >=3:
-                if len(return_list) >=3:
-                    mutiple = int(len(offical_hint_string_anwser) / len(return_list[0]))
-                    if mutiple >=3 :
-                        is_match_factorial = True
-
-        if show_debug_message:
-            print("mutiple:", mutiple)
-            print("is_match_factorial:", is_match_factorial)
-        if is_match_factorial:
-            is_match_factorial = False
-            order_string_list = ['排列','排序','依序','順序','遞增','遞減','升冪','降冪','新到舊','舊到新','小到大','大到小','高到低','低到高']
-            for order_string in order_string_list:
-                if order_string in tmp_text:
-                    is_match_factorial = True
-
-        if is_match_factorial:
-            new_array = permutations(return_list, mutiple)
-            #print("new_array:", new_array)
-
-            return_list = []
-            for item_tuple in new_array:
-                return_list.append(''.join(item_tuple))
-
-        if show_debug_message:
-            if len(return_list) > 0:
-                print("found, guess_answer_list_from_hint:", return_list)
-
-    if len(return_list)==0:
-        return_list = guess_answer_list_from_symbols(captcha_text_div_text)
-        if show_debug_message:
-            if len(return_list) > 0:
-                print("found, guess_answer_list_from_symbols:", return_list)
-
-    return return_list
 
 def force_press_button_iframe(driver, f, select_by, select_query, force_submit=True):
     if not f:
@@ -1942,29 +927,6 @@ def tixcraft_redirect(driver, url):
 
     return ret
 
-def get_target_item_from_matched_list(matched_blocks, auto_select_mode):
-    target_area = None
-    if not matched_blocks is None:
-        matched_blocks_count = len(matched_blocks)
-        if matched_blocks_count > 0:
-            target_row_index = 0
-
-            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                pass
-
-            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = matched_blocks_count - 1
-
-            if auto_select_mode == CONST_RANDOM:
-                if matched_blocks_count > 1:
-                    target_row_index = random.randint(0,matched_blocks_count-1)
-
-            if auto_select_mode == CONST_CENTER:
-                if matched_blocks_count > 2:
-                    target_row_index = int(matched_blocks_count/2)
-
-            target_area = matched_blocks[target_row_index]
-    return target_area
 
 def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     show_debug_message = True    # debug.
@@ -2018,15 +980,16 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                     # only headless mode detected now.
                     if config_dict["advanced"]["headless"]:
                         html_body = driver.page_source
-                        html_text = remove_html_tags(html_body)
-                        if not html_text is None:
-                            bot_detected_string_list = ['Your Session Has Been Suspended'
-                            , 'Something about your browsing behavior or network made us think you were a bot'
-                            , 'Your browser hit a snag and we need to make sure you'
-                            ]
-                            for each_string in bot_detected_string_list:
-                                print(html_text)
-                                break
+                        if not html_body is None:
+                            if len(html_body) > 0:
+                                html_text = util.remove_html_tags(html_body)
+                                bot_detected_string_list = ['Your Session Has Been Suspended'
+                                , 'Something about your browsing behavior or network made us think you were a bot'
+                                , 'Your browser hit a snag and we need to make sure you'
+                                ]
+                                for each_string in bot_detected_string_list:
+                                    print(html_text)
+                                    break
         except Exception as exc:
             print("find #gameList fail")
 
@@ -2038,15 +1001,17 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
     html_lang="en-US"
     try:
         html_body = driver.page_source
-        if '<head' in html_body:
-            html = html_body.split("<head")[0]
-            html_lang = html.split('"')[1]
-            if show_debug_message:
-                print("html lang:" , html_lang)
-            if html_lang == "zh-TW":
-                coming_soon_condictions_list = coming_soon_condictions_list_tw
-            if html_lang == "ja":
-                coming_soon_condictions_list = coming_soon_condictions_list_ja
+        if not html_body is None:
+            if len(html_body) > 0:
+                if '<head' in html_body:
+                    html = html_body.split("<head")[0]
+                    html_lang = html.split('"')[1]
+                    if show_debug_message:
+                        print("html lang:" , html_lang)
+                    if html_lang == "zh-TW":
+                        coming_soon_condictions_list = coming_soon_condictions_list_tw
+                    if html_lang == "ja":
+                        coming_soon_condictions_list = coming_soon_condictions_list_ja
     except Exception as e:
         pass
 
@@ -2066,7 +1031,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -2074,7 +1039,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                     break
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -2128,7 +1093,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -2140,7 +1105,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     is_date_clicked = False
     if not target_area is None:
@@ -2241,7 +1206,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -2276,11 +1241,11 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                date_keyword = format_keyword_string(date_keyword)
+                date_keyword = util.format_keyword_string(date_keyword)
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -2292,7 +1257,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     is_date_clicked = False
     if not target_area is None:
@@ -2323,109 +1288,6 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     return is_date_clicked
 
-def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keyword_item_set, formated_area_list):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    matched_blocks = []
-    for row in formated_area_list:
-        row_text = ""
-        row_html = ""
-        try:
-            #row_text = row.text
-            row_html = row.get_attribute('innerHTML')
-            row_text = remove_html_tags(row_html)
-        except Exception as exc:
-            if show_debug_message:
-                print(exc)
-            # error, exit loop
-            break
-
-        if len(row_text) > 0:
-            if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                row_text = ""
-
-        if len(row_text) > 0:
-            # start to compare, normalize all.
-            row_text = format_keyword_string(row_text)
-            if show_debug_message:
-                print("row_text:", row_text)
-
-            is_match_all = False
-            if ' ' in keyword_item_set:
-                keyword_item_array = keyword_item_set.split(' ')
-                is_match_all = True
-                for keyword_item in keyword_item_array:
-                    keyword_item = format_keyword_string(keyword_item)
-                    if not keyword_item in row_text:
-                        is_match_all = False
-            else:
-                exclude_item = format_keyword_string(keyword_item_set)
-                if exclude_item in row_text:
-                    is_match_all = True
-
-            if is_match_all:
-                matched_blocks.append(row)
-
-                # only need first row.
-                if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                    break
-    return matched_blocks
-
-def get_matched_blocks_by_keyword(config_dict, auto_select_mode, keyword_string, formated_area_list):
-    keyword_array = []
-    try:
-        keyword_array = json.loads("["+ keyword_string +"]")
-    except Exception as exc:
-        keyword_array = []
-
-    matched_blocks = []
-    for keyword_item_set in keyword_array:
-        matched_blocks = get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keyword_item_set, formated_area_list)
-        if len(matched_blocks) > 0:
-            break
-    return matched_blocks
-
-def is_row_match_keyword(keyword_string, row_text):
-    # clean stop word.
-    row_text = format_keyword_string(row_text)
-
-    is_match_keyword = True
-    if len(keyword_string) > 0 and len(row_text) > 0:
-        is_match_keyword = False
-        keyword_array = []
-        try:
-            keyword_array = json.loads("["+ keyword_string +"]")
-        except Exception as exc:
-            keyword_array = []
-        for item_list in keyword_array:
-            if len(item_list) > 0:
-                if ' ' in item_list:
-                    keyword_item_array = item_list.split(' ')
-                    is_match_all_exclude = True
-                    for each_item in keyword_item_array:
-                        each_item = format_keyword_string(each_item)
-                        if not each_item in row_text:
-                            is_match_all_exclude = False
-                    if is_match_all_exclude:
-                        is_match_keyword = True
-                else:
-                    item_list = format_keyword_string(item_list)
-                    if item_list in row_text:
-                        is_match_keyword = True
-            else:
-                # match all.
-                is_match_keyword = True
-            if is_match_keyword:
-                break
-    return is_match_keyword
-
-def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-    area_keyword_exclude = config_dict["keyword_exclude"]
-    return is_row_match_keyword(area_keyword_exclude, row_text)
 
 # PURPOSE: get target area list.
 # RETURN:
@@ -2471,7 +1333,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
             try:
                 #row_text = row.text
                 row_html = row.get_attribute('innerHTML')
-                row_text = remove_html_tags(row_html)
+                row_text = util.remove_html_tags(row_html)
             except Exception as exc:
                 if show_debug_message:
                     print(exc)
@@ -2479,12 +1341,12 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                 break
 
             if len(row_text) > 0:
-                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                     row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
-                row_text = format_keyword_string(row_text)
+                row_text = util.format_keyword_string(row_text)
 
                 is_append_this_row = False
 
@@ -2493,7 +1355,7 @@ def get_tixcraft_target_area(el, config_dict, area_keyword_item):
                     is_append_this_row = True
                     area_keyword_array = area_keyword_item.split(' ')
                     for area_keyword in area_keyword_array:
-                        area_keyword = format_keyword_string(area_keyword)
+                        area_keyword = util.format_keyword_string(area_keyword)
                         if not area_keyword in row_text:
                             is_append_this_row = False
                             break
@@ -2590,12 +1452,12 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                 row_text = ""
 
             if len(row_text) > 0:
-                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                     row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
-                row_text = format_keyword_string(row_text)
+                row_text = util.format_keyword_string(row_text)
                 if show_debug_message:
                     #print("formated row_text:", row_text)
                     pass
@@ -2607,7 +1469,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                     is_append_this_row = True
                     area_keyword_array = area_keyword_item.split(' ')
                     for area_keyword in area_keyword_array:
-                        area_keyword = format_keyword_string(area_keyword)
+                        area_keyword = util.format_keyword_string(area_keyword)
                         if not area_keyword in row_text:
                             is_append_this_row = False
                             break
@@ -2676,7 +1538,7 @@ def tixcraft_area_auto_select(driver, url, config_dict):
             # empty keyword, match all.
             is_need_refresh, matched_blocks = get_tixcraft_target_area(el, config_dict, "")
 
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
         if not target_area is None:
             try:
                 target_area.click()
@@ -2732,7 +1594,7 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
         is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             #print("area text:", target_area.text)
@@ -2755,28 +1617,6 @@ def ticketmaster_area_auto_select(driver, config_dict, zone_info):
 
         if config_dict["advanced"]["auto_reload_page_interval"] > 0:
             time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
-
-
-def tixcraft_ticket_agree(driver, config_dict):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    agree_checkbox = None
-    try:
-        my_css_selector = '#TicketForm_agree'
-        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-    except Exception as exc:
-        print("find TicketForm_agree fail")
-        if show_debug_message:
-            print(exc)
-        pass
-
-    is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
-
-    return is_finish_checkbox_click
 
 def ticket_number_select_fill(driver, select_obj, ticket_number):
     is_ticket_number_assigned = False
@@ -2847,50 +1687,6 @@ def get_div_text_by_selector(driver, my_css_selector):
 
     return question_text
 
-def guess_tixcraft_question(driver, question_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    answer_list = []
-
-    formated_html_text = ""
-    if len(question_text) > 0:
-        # format question text.
-        formated_html_text = question_text
-        formated_html_text = format_quota_string(formated_html_text)
-
-        if '【' in formated_html_text and '】' in formated_html_text:
-            # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
-            #inferred_answer_string = find_between(formated_html_text, "【", "】")
-            pass
-
-    if show_debug_message:
-        print("formated_html_text:", formated_html_text)
-
-    # start to guess answer
-    inferred_answer_string = None
-
-    # 請輸入"YES"，代表您已詳閱且瞭解並同意。
-    if inferred_answer_string is None:
-        if '輸入"YES"' in formated_html_text:
-            if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
-                if '同意' in formated_html_text:
-                    inferred_answer_string = 'YES'
-
-    # 購票前請詳閱注意事項，並於驗證碼欄位輸入【同意】繼續購票流程。
-    if inferred_answer_string is None:
-        if '驗證碼' in formated_html_text or '驗證欄位' in formated_html_text:
-            if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
-                if '輸入【同意】' in formated_html_text:
-                    inferred_answer_string = '同意'
-
-    if inferred_answer_string is None:
-        if len(question_text) > 0:
-            answer_list = get_answer_list_from_question_string(None, question_text)
-    else:
-        answer_list = [answer_list]
-
-    return answer_list
 
 def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
     show_debug_message = True       # debug.
@@ -2923,7 +1719,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
             form_input_2 = form_input_list[1]
 
     is_multi_question_mode = False
-    answer_list = get_answer_list_from_user_guess_string(config_dict)
+    answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
     if form_input_count == 1:
         is_do_press_next_button = True
     else:
@@ -3035,31 +1831,6 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
 
     return is_answer_sent, fail_list
 
-def get_answer_list_from_user_guess_string(config_dict):
-    local_array = []
-    online_array = []
-
-    user_guess_string = config_dict["advanced"]["user_guess_string"]
-    if len(user_guess_string) > 0:
-        user_guess_string = format_config_keyword_for_json(user_guess_string)
-        try:
-            local_array = json.loads("["+ user_guess_string +"]")
-        except Exception as exc:
-            local_array = []
-
-    # load from internet.
-    user_guess_string = ""
-    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
-        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-            user_guess_string = text_file.readline()
-    if len(user_guess_string) > 0:
-        user_guess_string = format_config_keyword_for_json(user_guess_string)
-        try:
-            online_array = json.loads("["+ user_guess_string +"]")
-        except Exception as exc:
-            online_array = []
-
-    return local_array + online_array
 
 def ticketmaster_promo(driver, config_dict, fail_list):
     question_selector = '#promoBox'
@@ -3082,10 +1853,10 @@ def tixcraft_input_check_code(driver, config_dict, fail_list, question_selector)
     if len(question_text) > 0:
         write_question_to_file(question_text)
 
-        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = guess_tixcraft_question(driver, question_text)
+                answer_list = util.guess_tixcraft_question(driver, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -3336,7 +2107,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
 
 def tixcraft_ticket_main_agree(driver, config_dict):
     for i in range(3):
-        is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
+        is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
         if is_finish_checkbox_click:
             break
 
@@ -3379,7 +2150,7 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
             try:
                 #row_text = row.text
                 row_html = row.get_attribute('innerHTML')
-                row_text = remove_html_tags(row_html)
+                row_text = util.remove_html_tags(row_html)
             except Exception as exc:
                 if show_debug_message:
                     print(exc)
@@ -3387,12 +2158,12 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                 break
 
             if len(row_text) > 0:
-                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                     row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
-                row_text = format_keyword_string(row_text)
+                row_text = util.format_keyword_string(row_text)
 
                 is_append_this_row = False
 
@@ -3401,7 +2172,7 @@ def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item
                     is_append_this_row = True
                     area_keyword_array = area_keyword_item.split(' ')
                     for area_keyword in area_keyword_array:
-                        area_keyword = format_keyword_string(area_keyword)
+                        area_keyword = util.format_keyword_string(area_keyword)
                         if not area_keyword in row_text:
                             is_append_this_row = False
                             break
@@ -3447,7 +2218,7 @@ def get_tixcraft_ticket_select(driver, config_dict):
         is_need_refresh, matched_blocks = get_tixcraft_target_area(driver, config_dict, "")
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             form_select = target_area.find_element(By.TAG_NAME, 'select')
@@ -3718,8 +2489,8 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
             kktix_area_keyword_1_and = kktix_area_keyword_array[1]
 
         # clean stop word.
-        kktix_area_keyword_1 = format_keyword_string(kktix_area_keyword_1)
-        kktix_area_keyword_1_and = format_keyword_string(kktix_area_keyword_1_and)
+        kktix_area_keyword_1 = util.format_keyword_string(kktix_area_keyword_1)
+        kktix_area_keyword_1_and = util.format_keyword_string(kktix_area_keyword_1_and)
 
         if show_debug_message:
             print('kktix_area_keyword_1:', kktix_area_keyword_1)
@@ -3731,7 +2502,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
             try:
                 #row_text = row.text
                 row_html = row.get_attribute('innerHTML')
-                row_text = remove_html_tags(row_html)
+                row_text = util.remove_html_tags(row_html)
             except Exception as exc:
                 is_dom_ready = False
                 if show_debug_message:
@@ -3759,12 +2530,12 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
                     row_text = ""
 
             if len(row_text) > 0:
-                if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                     row_text = ""
 
             if len(row_text) > 0:
                 # clean stop word.
-                row_text = format_keyword_string(row_text)
+                row_text = util.format_keyword_string(row_text)
 
             if len(row_text) > 0:
                 if ticket_number > 1:
@@ -3906,7 +2677,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
     is_need_refresh = False
     if is_dom_ready:
         if not is_ticket_number_assigned:
-            target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+            target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
         if not matched_blocks is None:
             if len(matched_blocks) == 0:
@@ -4013,34 +2784,21 @@ def kktix_check_agree_checkbox(driver, config_dict):
         show_debug_message = True
 
     is_finish_checkbox_click = False
-
-    agree_label = None
-    agree_checkbox = None
+    is_dom_ready = False
     try:
-        agree_label = driver.find_element(By.CSS_SELECTOR, 'label[for="person_agree_terms"]')
-        agree_checkbox = driver.find_element(By.CSS_SELECTOR, '#person_agree_terms')
+        html_body = driver.page_source
+        #print("html_body:",len(html_body))
+        if len(html_body) > 0:
+            if not "{{'new.i_read_and_agree_to'" in html_body:
+                is_dom_ready = True
     except Exception as exc:
-        print("find person_agree_terms checkbox Exception")
         if show_debug_message:
             print(exc)
         pass
 
-    is_dom_ready = False
-    is_need_refresh = False
-    if not agree_checkbox is None and not agree_label is None:
-        checkbox_html = ""
-        try:
-            checkbox_html = agree_label.get_attribute('innerHTML').strip()
-            #print("agree_checkbox html:", checkbox_html)
-            if len(checkbox_html) > 0:
-                if not "{{'new.i_read_and_agree_to'" in checkbox_html:
-                    is_dom_ready = True
-        except Exception as e:
-            #print(e)
-            pass
-
-        is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
-
+    if is_dom_ready:
+        is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#person_agree_terms')
+    
     #print("status:", is_dom_ready, is_finish_checkbox_click)
     return is_dom_ready, is_finish_checkbox_click
 
@@ -4059,7 +2817,6 @@ def check_checkbox(driver, by, query):
     if not agree_checkbox is None:
         is_checkbox_checked = force_check_checkbox(driver, agree_checkbox)
     return is_checkbox_checked
-
 
 def force_check_checkbox(driver, agree_checkbox):
     is_finish_checkbox_click = False
@@ -4129,7 +2886,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
             if show_debug_message:
                 print("web_datetime:", web_datetime)
 
-            captcha_text_formatted = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+            captcha_text_formatted = util.format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
             if show_debug_message:
                 print("captcha_text_formatted", captcha_text_formatted)
 
@@ -4148,9 +2905,9 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
                 if CONST_INPUT_SYMBOL in right_part:
                     right_part = right_part.split(CONST_INPUT_SYMBOL)[1]
-                    number_text = find_continuous_number(right_part)
+                    number_text = util.find_continuous_number(right_part)
 
-                    my_anwser_formated = convert_string_to_pattern(number_text, dynamic_length=False)
+                    my_anwser_formated = util.convert_string_to_pattern(number_text, dynamic_length=False)
                     if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
                         my_datetime_foramted = "%Y%m%d"
                     if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
@@ -4194,7 +2951,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                             if my_hint_anwser[-1:]==check_char:
                                 my_hint_anwser = my_hint_anwser[:-1]
 
-                        my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
+                        my_anwser_formated = util.convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
                         if my_anwser_formated == "[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]":
                             my_datetime_foramted = "%Y%m%d"
                         if my_anwser_formated == "[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
@@ -4255,7 +3012,7 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
         if not registrationsNewApp_div is None:
             web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
         if not web_datetime is None:
-            tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+            tmp_text = util.format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
             my_datetime_foramted = None
 
@@ -4281,7 +3038,7 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                 if my_delimitor_symbol in my_hint_anwser:
                     my_delimitor_index = my_hint_anwser.find(my_delimitor_symbol)
                     my_hint_anwser = my_hint_anwser[:my_delimitor_index]
-                my_anwser_formated = convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
+                my_anwser_formated = util.convert_string_to_pattern(my_hint_anwser, dynamic_length=False)
                 #print("my_hint_anwser:", my_hint_anwser)
                 #print("my_anwser_formated:", my_anwser_formated)
                 if my_anwser_formated == "[\\d][\\d][\\d][\\d]":
@@ -4312,47 +3069,6 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
     return inferred_answer_string
 
-def check_answer_keep_symbol(captcha_text_div_text):
-    is_need_keep_symbol = False
-
-    # format text
-    keep_symbol_tmp = captcha_text_div_text
-    keep_symbol_tmp = keep_symbol_tmp.replace('也','須')
-    keep_symbol_tmp = keep_symbol_tmp.replace('必須','須')
-
-    keep_symbol_tmp = keep_symbol_tmp.replace('全都','都')
-    keep_symbol_tmp = keep_symbol_tmp.replace('全部都','都')
-
-    keep_symbol_tmp = keep_symbol_tmp.replace('一致','相同')
-    keep_symbol_tmp = keep_symbol_tmp.replace('一樣','相同')
-    keep_symbol_tmp = keep_symbol_tmp.replace('相等','相同')
-
-    if '符號須都相同' in keep_symbol_tmp:
-        is_need_keep_symbol = True
-
-    if '符號都相同' in keep_symbol_tmp:
-        is_need_keep_symbol = True
-
-    if '符號須相同' in keep_symbol_tmp:
-        is_need_keep_symbol = True
-
-    # for: 大小寫含括號需一模一樣
-    keep_symbol_tmp = keep_symbol_tmp.replace('含', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('和', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('與', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('還有', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('及', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('以及', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('需', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('必須', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('而且', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('且', '')
-    keep_symbol_tmp = keep_symbol_tmp.replace('一模', '')
-    #print("keep_symbol_tmp:", keep_symbol_tmp)
-    if '大小寫括號相同' in keep_symbol_tmp:
-        is_need_keep_symbol = True
-
-    return is_need_keep_symbol
 
 def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_div_text):
     show_debug_message = True       # debug.
@@ -4382,7 +3098,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
-            temp_answer = find_between(captcha_text_div_text, "「", "」")
+            temp_answer = util.find_between(captcha_text_div_text, "「", "」")
             temp_answer = temp_answer.strip()
             if len(temp_answer) > 0:
                 inferred_answer_string = temp_answer
@@ -4391,7 +3107,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     # 請在下方空白處輸入括號內數字
     if inferred_answer_string is None:
         formated_html_text = captcha_text_div_text.strip()
-        formated_html_text = format_quota_string(formated_html_text)
+        formated_html_text = util.format_quota_string(formated_html_text)
         formated_html_text = formated_html_text.replace('請輸入','輸入')
 
         formated_html_text = formated_html_text.replace('的','')
@@ -4420,14 +3136,14 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                     break
 
         if is_match_input_quota_text:
-            temp_answer = find_between(formated_html_text, "【", "】")
+            temp_answer = util.find_between(formated_html_text, "【", "】")
             temp_answer = temp_answer.strip()
             if len(temp_answer) > 0:
                 temp_answer = temp_answer.replace(' ','')
 
                 # check raw question.
                 if '數字' in captcha_text_div_text:
-                    temp_answer = normalize_chinese_numeric(temp_answer)
+                    temp_answer = util.normalize_chinese_numeric(temp_answer)
 
                 inferred_answer_string = temp_answer
 
@@ -4440,7 +3156,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
                 is_use_quota_message = True
         #print("is_use_quota_message:" , is_use_quota_message)
         if is_use_quota_message:
-            inferred_answer_string = find_between(captcha_text_div_text, "【", "】")
+            inferred_answer_string = util.find_between(captcha_text_div_text, "【", "】")
             inferred_answer_string = inferred_answer_string.strip()
             #print("find captcha text:" , inferred_answer_string)
 
@@ -4491,7 +3207,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     # still no answer.
     if inferred_answer_string is None:
         if not is_combine_two_question:
-            answer_list = get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+            answer_list = util.get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
             if show_debug_message:
                 print("guess answer list:", answer_list)
         else:
@@ -4526,6 +3242,7 @@ def kktix_reg_captcha_question_text(captcha_inner_div):
 
     return question_text
 
+# PS: no double check, NOW.
 def kktix_double_check_all_text_value(driver, ticket_number):
     is_do_press_next_button = False
 
@@ -4567,14 +3284,14 @@ def get_kktix_control_label_text(driver):
     try:
         captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div > div.code-input > div.control-group > label.control-label')
         if not captcha_inner_div is None:
-            question_text = remove_html_tags(captcha_inner_div.get_attribute('innerHTML'))
+            question_text = util.remove_html_tags(captcha_inner_div.get_attribute('innerHTML'))
     except Exception as exc:
         pass
     return question_text
 
 def set_kktix_control_label_text(driver, config_dict):
     fail_list = []
-    answer_list = get_answer_list_from_user_guess_string(config_dict)
+    answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
     inferred_answer_string = ""
     for answer_item in answer_list:
         if not answer_item in fail_list:
@@ -4614,7 +3331,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, is_finish_checkbox_click, 
         is_question_popup = True
         write_question_to_file(question_text)
 
-        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
                 answer_list = get_answer_list_from_question_string(registrationsNewApp_div, question_text)
@@ -4751,57 +3468,9 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket, is_f
 
     return fail_list, played_sound_ticket
 
-def kktix_get_registerStatus(event_code):
-    html_result = None
-
-    url = "https://kktix.com/g/events/%s/register_info" % (event_code)
-    #print('event_code:',event_code)
-    #print("url:", url)
-
-    headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': USER_AGENT}
-    try:
-        html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
-    except Exception as exc:
-        html_result = None
-        print("send reg_info request fail:")
-        print(exc)
-
-    registerStatus = None
-    if not html_result is None:
-        status_code = html_result.status_code
-        #print("status_code:",status_code)
-        if status_code == 200:
-            html_text = html_result.text
-            #print("html_text:", html_text)
-            try:
-                jsLoads = json.loads(html_text)
-                if 'inventory' in jsLoads:
-                    if 'registerStatus' in jsLoads['inventory']:
-                        registerStatus = jsLoads['inventory']['registerStatus']
-            except Exception as exc:
-                print("load reg_info json fail:")
-                print(exc)
-                pass
-
-    #print("registerStatus:", registerStatus)
-    return registerStatus
-
-def kktix_get_event_code(url):
-    event_code = ""
-    if '/registrations/new' in url:
-        prefix_list = ['.com/events/','.cc/events/']
-        postfix = '/registrations/new'
-
-        for prefix in prefix_list:
-            event_code = find_between(url,prefix,postfix)
-            if len(event_code) > 0:
-                break
-
-    #print('event_code:',event_code)
-    return event_code
 
 def kktix_check_register_status(driver, url):
-    event_code = kktix_get_event_code(url)
+    event_code = util.kktix_get_event_code(url)
     if len(event_code) > 0:
         js = '''
 function load_kktix_register_code(){
@@ -4843,7 +3512,7 @@ if (typeof $.kkUser.checked_status_register_code === 'undefined') {
     # use javascritp version only.
     is_match_event_code = False
     if is_match_event_code:
-        registerStatus = kktix_get_registerStatus(event_code)
+        registerStatus = util.kktix_get_registerStatus(event_code)
     return registerStatus
 
 def kktix_reg_auto_reload(driver, url, config_dict):
@@ -4873,7 +3542,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
         show_debug_message = True
 
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-    date_keyword = format_keyword_string(date_keyword)
+    date_keyword = util.format_keyword_string(date_keyword)
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
@@ -4935,17 +3604,17 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                         td_date = row.find_element(By.CSS_SELECTOR, my_css_selector)
                         if not td_date is None:
                             #print("date:", td_date.text)
-                            date_html_text = format_keyword_string(td_date.text)
+                            date_html_text = util.format_keyword_string(td_date.text)
 
                         my_css_selector = "td:nth-child(2)"
                         td_area = row.find_element(By.CSS_SELECTOR, my_css_selector)
                         if not td_area is None:
                             #print("area:", td_area.text)
-                            area_html_text = format_keyword_string(td_area.text)
+                            area_html_text = util.format_keyword_string(td_area.text)
 
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -4953,7 +3622,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
                     if len(row_text) > 0:
@@ -4974,7 +3643,7 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -5014,10 +3683,10 @@ def fami_verify(driver, config_dict, fail_list):
     if True:
         #write_question_to_file(question_text)
 
-        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = guess_tixcraft_question(driver, question_text)
+                answer_list = util.guess_tixcraft_question(driver, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -5124,7 +3793,7 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -5153,7 +3822,7 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
                 if show_debug_message:
                     print("start to match keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -5165,7 +3834,7 @@ def fami_date_auto_select(driver, config_dict, last_activity_url):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     is_date_assign_by_bot = False
     if not target_area is None:
         is_button_clicked = False
@@ -5252,7 +3921,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -5266,7 +3935,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                     row_text = ""
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -5299,7 +3968,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -5307,7 +3976,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -5318,7 +3987,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -5336,7 +4005,7 @@ def fami_area_auto_select(driver, config_dict, area_keyword_item):
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not matched_blocks is None:
         if len(matched_blocks) == 0:
             is_need_refresh = True
@@ -5541,7 +4210,7 @@ def fami_home_auto_select(driver, config_dict, last_activity_url):
             matched_blocks = get_fami_target_area(driver, config_dict, "")
 
         auto_select_mode = config_dict["area_auto_select"]["mode"]
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
         if not target_area is None:
             el_btn = None
             is_visible = False
@@ -5631,7 +4300,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -5641,7 +4310,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
                     if len(row_text) > 0:
                         if show_debug_message:
                             print("row_text:", row_text)
-                        is_match_area = is_row_match_keyword(date_keyword, row_text)
+                        is_match_area = util.is_row_match_keyword(date_keyword, row_text)
                         if is_match_area:
                             matched_blocks.append(row)
 
@@ -5660,7 +4329,7 @@ def urbtix_date_auto_select(driver, auto_select_mode, date_keyword, auto_reload_
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         el_btn = None
         try:
@@ -5760,7 +4429,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -5768,7 +4437,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     break
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -5817,7 +4486,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -5825,7 +4494,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -5836,7 +4505,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -5858,7 +4527,7 @@ def urbtix_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = None
                 is_need_refresh = True
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             if target_area.is_enabled():
@@ -6100,7 +4769,6 @@ def urbtix_performance(driver, config_dict):
         if show_debug_message:
             print("is_ticket_number_assigned:", is_ticket_number_assigned)
 
-
     return ret
 
 
@@ -6159,7 +4827,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -6169,7 +4837,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
                     if len(row_text) > 0:
                         if show_debug_message:
                             print("row_text:", row_text)
-                        is_match_area = is_row_match_keyword(date_keyword, row_text)
+                        is_match_area = util.is_row_match_keyword(date_keyword, row_text)
                         if is_match_area:
                             matched_blocks.append(row)
 
@@ -6186,7 +4854,7 @@ def cityline_date_auto_select(driver, auto_select_mode, date_keyword, auto_reloa
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             if target_area.is_enabled():
@@ -6293,7 +4961,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -6301,11 +4969,11 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -6316,7 +4984,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -6337,7 +5005,7 @@ def cityline_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = None
                 is_need_refresh = True
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         el_btn = None
         try:
@@ -6649,7 +5317,7 @@ def ibon_date_auto_select(driver, config_dict):
                 if show_debug_message:
                     print("start to match keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -6661,7 +5329,7 @@ def ibon_date_auto_select(driver, config_dict):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     is_date_assign_by_bot = False
     if not target_area is None:
         is_button_clicked = False
@@ -6752,7 +5420,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -6779,7 +5447,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                         row_text=""
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 # check ticket count when amount is few, because of it spent a lot of time at parsing element.
@@ -6843,7 +5511,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -6851,7 +5519,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -6862,7 +5530,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -6880,7 +5548,7 @@ def ibon_area_auto_select(driver, config_dict, area_keyword_item):
             if show_debug_message:
                 print("after match keyword, found count:", len(matched_blocks))
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     if not matched_blocks is None:
         if len(matched_blocks) == 0:
@@ -7428,27 +6096,9 @@ def hkticketing_login(driver, account, password):
     return ret
 
 def play_sound_while_ordering(config_dict):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
-    play_mp3_async(captcha_sound_filename)
-
-def play_mp3_async(sound_filename):
-    import threading
-    threading.Thread(target=play_mp3, args=(sound_filename,), daemon=True).start()
-
-def play_mp3(sound_filename):
-    try:
-        from playsound import playsound
-        playsound(sound_filename)
-    except Exception as exc:
-        msg=str(exc)
-        #print("play sound exeption:", msg)
-        if platform.system() == 'Windows':
-            import winsound
-            try:
-                winsound.PlaySound(sound_filename, winsound.SND_FILENAME)
-            except Exception as exc2:
-                pass
+    util.play_mp3_async(captcha_sound_filename)
 
 # purpose: check alert poped.
 # PS: current version not enable...
@@ -7702,7 +6352,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
     for i in range(2):
-        is_finish_checkbox_click = tixcraft_ticket_agree(driver, config_dict)
+        is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
         if is_finish_checkbox_click:
             break
 
@@ -7853,7 +6503,7 @@ def kktix_paused_main(driver, url, config_dict, kktix_dict):
         kktix_account = config_dict["advanced"]["kktix_account"]
         kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
         if kktix_password == "":
-            kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+            kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
         if len(kktix_account) > 4:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
@@ -7887,7 +6537,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
         kktix_account = config_dict["advanced"]["kktix_account"]
         kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
         if kktix_password == "":
-            kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+            kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
         if len(kktix_account) > 0:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
@@ -7961,7 +6611,7 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     kktix_account = config_dict["advanced"]["kktix_account"]
                     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
                     if kktix_password == "":
-                        kktix_password = decryptMe(config_dict["advanced"]["kktix_password"])
+                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
                     
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
@@ -8002,7 +6652,7 @@ def famiticket_main(driver, url, config_dict, fami_dict):
         fami_account = config_dict["advanced"]["fami_account"]
         fami_password = config_dict["advanced"]["fami_password_plaintext"].strip()
         if fami_password == "":
-            fami_password = decryptMe(config_dict["advanced"]["fami_password"])
+            fami_password = util.decryptMe(config_dict["advanced"]["fami_password"])
         if len(fami_account) > 4:
             fami_login(driver, fami_account, fami_password)
 
@@ -8060,12 +6710,13 @@ def urbtix_performance_confirm_dialog_popup(driver):
 
     return ret
 
+# PS: NOW not able to use, due to open question not able to fill by stupid program.
 def get_urbtix_survey_answer_by_question(question_text):
     show_debug_message = True    # debug.
     show_debug_message = False   # online
 
     question_text = question_text.replace('  ',' ')
-    question_text = full2half(question_text)
+    question_text = util.full2half(question_text)
 
     seq = 0
     if '第' in question_text and '個' in question_text:
@@ -8075,7 +6726,7 @@ def get_urbtix_survey_answer_by_question(question_text):
             if seq_string.isdigit():
                 seq = int(seq_string)
             else:
-                tmp_seq = chinese_numeric_to_int(seq_string)
+                tmp_seq =  util.chinese_numeric_to_int(seq_string)
                 if not tmp_seq is None:
                     seq = tmp_seq
 
@@ -8122,8 +6773,7 @@ def get_urbtix_survey_answer_by_question(question_text):
     question_text_formated = question_text_formated.replace(',','')
 
     question_answer_char = ""
-    option_text_string = find_continuous_text(question_text_formated)
-
+    option_text_string = util.find_continuous_text(question_text_formated)
 
     if show_debug_message:
         print("option_text_string:", option_text_string)
@@ -8149,7 +6799,7 @@ def get_urbtix_survey_answer_by_question(question_text):
                     if count_target_string.isdigit():
                         count_target = int(count_target_string)
                     else:
-                        count_target = chinese_numeric_to_int(count_target_string)
+                        count_target =  util.chinese_numeric_to_int(count_target_string)
 
             if not count_target is None:
                 for char in option_text_string:
@@ -8211,10 +6861,10 @@ def urbtix_auto_survey(driver, config_dict):
                                 if option_content_div is None:
                                     option_content_div=""
                                 option_content_div_text = option_content_div_text.strip()
-                                option_content_div_text = full2half(option_content_div_text)
+                                option_content_div_text = util.full2half(option_content_div_text)
 
                                 if question_direction in ['left','right']:
-                                    for answer_item in synonym_dict(question_answer_char):
+                                    for answer_item in util.synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
                                             is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
@@ -8224,7 +6874,7 @@ def urbtix_auto_survey(driver, config_dict):
                                                 break
 
                                 if question_direction == "count":
-                                    for answer_item in synonym_dict(question_answer_char):
+                                    for answer_item in util.synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
                                             is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
@@ -8250,7 +6900,7 @@ def urbtix_auto_survey(driver, config_dict):
                                     int_answer_char = int(question_answer_char)
                                     if int_answer_char > 1:
                                         for i in range(int_answer_char-1):
-                                            for answer_item in synonym_dict(str(i+1)):
+                                            for answer_item in util.synonym_dict(str(i+1)):
                                                 is_match_more_then = False
                                                 if answer_item + '個或以上' in option_content_div_text:
                                                     is_match_more_then = True
@@ -8362,7 +7012,7 @@ def urbtix_main(driver, url, config_dict):
         urbtix_account = config_dict["advanced"]["urbtix_account"]
         urbtix_password = config_dict["advanced"]["urbtix_password_plaintext"].strip()
         if urbtix_password == "":
-            urbtix_password = decryptMe(config_dict["advanced"]["urbtix_password"])
+            urbtix_password = util.decryptMe(config_dict["advanced"]["urbtix_password"])
         if len(urbtix_account) > 4:
             urbtix_login(driver, urbtix_account, urbtix_password)
 
@@ -8505,7 +7155,7 @@ def cityline_input_code(driver, config_dict, fail_list):
 
     answer_list = []
 
-    answer_list = get_answer_list_from_user_guess_string(config_dict)
+    answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
 
     inferred_answer_string = ""
     for answer_item in answer_list:
@@ -8563,7 +7213,7 @@ def cityline_main(driver, url, config_dict):
         cityline_account = config_dict["advanced"]["cityline_account"]
         cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
         if cityline_password == "":
-            cityline_password = decryptMe(config_dict["advanced"]["cityline_password"])
+            cityline_password = util.decryptMe(config_dict["advanced"]["cityline_password"])
         if len(cityline_account) > 4:
             cityline_login(driver, cityline_account, cityline_password)
         return
@@ -8636,7 +7286,7 @@ def ibon_verification_question(driver, fail_list, config_dict):
     if len(question_text) > 0:
         write_question_to_file(question_text)
 
-        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
                 answer_list = get_answer_list_from_question_string(None, question_text)
@@ -9183,7 +7833,7 @@ def hkticketing_date_assign(driver, config_dict):
     matched_blocks = None
 
     # clean stop word.
-    date_keyword = format_keyword_string(date_keyword)
+    date_keyword = util.format_keyword_string(date_keyword)
     date_keyword_and = ""
 
     form_select = None
@@ -9251,7 +7901,7 @@ def hkticketing_date_assign(driver, config_dict):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -9290,7 +7940,7 @@ def hkticketing_date_assign(driver, config_dict):
                     if show_debug_message:
                         print("start to match keyword:", date_keyword)
 
-                    matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                    matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                     if show_debug_message:
                         if not matched_blocks is None:
@@ -9302,7 +7952,7 @@ def hkticketing_date_assign(driver, config_dict):
             print("date date-time-position is None")
             pass
 
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
         if not target_area is None:
             try:
                 if target_area.is_enabled():
@@ -9344,7 +7994,7 @@ def hkticketing_date_password_input(driver, config_dict, fail_list):
                 local_array = []
                 user_guess_string = config_dict["advanced"]["user_guess_string"]
                 if len(user_guess_string) > 0:
-                    user_guess_string = format_config_keyword_for_json(user_guess_string)
+                    user_guess_string = util.format_config_keyword_for_json(user_guess_string)
                     try:
                         local_array = json.loads("["+ user_guess_string +"]")
                     except Exception as exc:
@@ -9533,7 +8183,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -9541,11 +8191,11 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                         break
 
                     if len(row_text) > 0:
-                        if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                        if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                             row_text = ""
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -9555,7 +8205,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -9576,7 +8226,7 @@ def hkticketing_area_auto_select(driver, config_dict, area_keyword_item):
                 matched_blocks = None
                 is_need_refresh = True
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             if target_area.is_enabled():
@@ -10037,7 +8687,7 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
         hkticketing_account = config_dict["advanced"]["hkticketing_account"].strip()
         hkticketing_password = config_dict["advanced"]["hkticketing_password_plaintext"].strip()
         if hkticketing_password == "":
-            hkticketing_password = decryptMe(config_dict["advanced"]["hkticketing_password"])
+            hkticketing_password = util.decryptMe(config_dict["advanced"]["hkticketing_password"])
         if len(hkticketing_account) > 4:
             hkticketing_login(driver, hkticketing_account, hkticketing_password)
 
@@ -10152,7 +8802,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -10160,7 +8810,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     break
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -10227,7 +8877,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                 if show_debug_message:
                     print("start to match keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -10239,7 +8889,7 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
         print("date date-time-position is None")
         pass
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     is_date_assign_by_bot = False
     if not target_area is None:
         is_button_clicked = False
@@ -10377,7 +9027,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -10396,7 +9046,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         pass
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 # check ticket_number and available count.
@@ -10410,7 +9060,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                                     td_array = row_html.split("<td")
                                     if len(td_array) > 0:
                                         td_target = "<td" + td_array[len(td_array)-1]
-                                        ticket_count_text = remove_html_tags(td_target)
+                                        ticket_count_text = util.remove_html_tags(td_target)
                                         #print("ticket_count_text:", ticket_count_text)
                                         if ticket_count_text.isdigit():
                                             if int(ticket_count_text) < config_dict["ticket_number"]:
@@ -10420,7 +9070,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                                                 row_text = ""
 
                 if len(row_text) > 0:
-                    row_text = format_keyword_string(row_text)
+                    row_text = util.format_keyword_string(row_text)
                     if show_debug_message:
                         print("row_text:", row_text)
 
@@ -10433,7 +9083,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                         # match keyword.
                         area_keyword_array = area_keyword_item.split(' ')
                         for area_keyword in area_keyword_array:
-                            area_keyword = format_keyword_string(area_keyword)
+                            area_keyword = util.format_keyword_string(area_keyword)
                             if not area_keyword in row_text:
                                 is_match_area = False
                                 break
@@ -10453,7 +9103,7 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
                 matched_blocks = None
                 is_need_refresh = True
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not target_area is None:
         try:
             if not("udnfunlife" in domain_name):
@@ -11000,7 +9650,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             udn_account = config_dict["advanced"]["udn_account"]
             udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
             if udn_password == "":
-                udn_password = decryptMe(config_dict["advanced"]["udn_password"])
+                udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
             if len(udn_account) > 4:
                 udn_login(driver, udn_account, udn_password)
 
@@ -11169,7 +9819,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 kham_account = config_dict["advanced"]["kham_account"]
                 kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
                 if kham_password == "":
-                    kham_password = decryptMe(config_dict["advanced"]["kham_password"])
+                    kham_password = util.decryptMe(config_dict["advanced"]["kham_password"])
                 if len(kham_account) > 4:
                     kham_login(driver, kham_account, kham_password)
 
@@ -11177,7 +9827,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 ticket_account = config_dict["advanced"]["ticket_account"]
                 ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
                 if ticket_password == "":
-                    ticket_password = decryptMe(config_dict["advanced"]["ticket_password"])
+                    ticket_password = util.decryptMe(config_dict["advanced"]["ticket_password"])
                 if len(ticket_account) > 4:
                     ticket_login(driver, ticket_account, ticket_password)
 
@@ -11239,7 +9889,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -11247,7 +9897,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                     break
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -11283,11 +9933,11 @@ def ticketplus_date_auto_select(driver, config_dict):
                 matched_blocks = formated_area_list
             else:
                 # match keyword.
-                date_keyword = format_keyword_string(date_keyword)
+                date_keyword = util.format_keyword_string(date_keyword)
                 if show_debug_message:
                     print("start to match formated keyword:", date_keyword)
 
-                matched_blocks = get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
                 if show_debug_message:
                     if not matched_blocks is None:
@@ -11301,7 +9951,7 @@ def ticketplus_date_auto_select(driver, config_dict):
 
     is_date_clicked = False
     if is_vue_ready:
-        target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
         if not target_area is None:
             target_button = None
             try:
@@ -11488,7 +10138,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 try:
                     #row_text = row.text
                     row_html = row.get_attribute('innerHTML')
-                    row_text = remove_html_tags(row_html)
+                    row_text = util.remove_html_tags(row_html)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -11523,7 +10173,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                         row_text = ""
 
                 if len(row_text) > 0:
-                    if reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
                         row_text = ""
 
                 if len(row_text) > 0:
@@ -11562,7 +10212,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     try:
                         #row_text = row.text
                         row_html = row.get_attribute('innerHTML')
-                        row_text = remove_html_tags(row_html)
+                        row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
                         if show_debug_message:
                             print(exc)
@@ -11570,7 +10220,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                         break
 
                     if len(row_text) > 0:
-                        row_text = format_keyword_string(row_text)
+                        row_text = util.format_keyword_string(row_text)
                         if show_debug_message:
                             print("row_text:", row_text)
 
@@ -11581,7 +10231,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                             is_match_area = True
                             area_keyword_array = area_keyword_item.split(' ')
                             for area_keyword in area_keyword_array:
-                                area_keyword = format_keyword_string(area_keyword)
+                                area_keyword = util.format_keyword_string(area_keyword)
                                 if not area_keyword in row_text:
                                     is_match_area = False
                                     break
@@ -11604,7 +10254,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                 matched_blocks = None
                 is_need_refresh = True
 
-    target_area = get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if not matched_blocks is None:
         if len(matched_blocks) == 0:
             is_need_refresh = True
@@ -11739,10 +10389,10 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
         is_question_popup = True
         write_question_to_file(question_text)
 
-        answer_list = get_answer_list_from_user_guess_string(config_dict)
+        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = guess_tixcraft_question(driver, question_text)
+                answer_list = util.guess_tixcraft_question(driver, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -12320,7 +10970,7 @@ def ticketplus_account_sign_in(driver, config_dict):
                     if not inputed_text is None:
                         ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
                         if ticketplus_password == "":
-                            ticketplus_password = decryptMe(config_dict["advanced"]["ticketplus_password"])
+                            ticketplus_password = util.decryptMe(config_dict["advanced"]["ticketplus_password"])
 
                         if len(inputed_text) == 0:
                             el_pass.click()
@@ -12803,7 +11453,7 @@ def main(args):
             facebook_account = config_dict["advanced"]["facebook_account"].strip()
             facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
             if facebook_password == "":
-                facebook_password = decryptMe(config_dict["advanced"]["facebook_password"])
+                facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
             if len(facebook_account) > 4:
                 facebook_login(driver, facebook_account, facebook_password)
 

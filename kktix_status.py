@@ -27,9 +27,9 @@ import time
 import webbrowser
 from datetime import datetime
 
-import requests
+import util
 
-CONST_APP_VERSION = "MaxBot (2024.03.19)"
+CONST_APP_VERSION = "MaxBot (2024.03.20)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
@@ -45,8 +45,6 @@ URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
-
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 
 def load_translate():
     translate = {}
@@ -96,37 +94,9 @@ def load_translate():
     translate['ja_jp']=ja_jp
     return translate
 
-# common functions.
-def find_between( s, first, last ):
-    ret = ""
-    try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        ret = s[start:end]
-    except ValueError:
-        pass
-    return ret
-
-def t_or_f(arg):
-    ret = False
-    ua = str(arg).upper()
-    if 'TRUE'.startswith(ua):
-        ret = True
-    elif 'YES'.startswith(ua):
-        ret = True
-    return ret
-
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
 
 def load_json():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
 
     config_dict = None
@@ -138,7 +108,7 @@ def load_json():
     return config_filepath, config_dict
 
 def btn_restore_defaults_clicked(language_code):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
     if os.path.exists(str(config_filepath)):
         try:
@@ -157,32 +127,15 @@ def btn_preview_sound_clicked():
     global txt_play_sound_filename
     new_sound_filename = txt_play_sound_filename.get().strip()
     #print("new_sound_filename:", new_sound_filename)
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     new_sound_filename = os.path.join(app_root, new_sound_filename)
-    play_mp3_async(new_sound_filename)
-
-def play_mp3_async(sound_filename):
-    threading.Thread(target=play_mp3, args=(sound_filename,)).start()
-
-def play_mp3(sound_filename):
-    from playsound import playsound
-    try:
-        playsound(sound_filename)
-    except Exception as exc:
-        msg=str(exc)
-        print("play sound exeption:", msg)
-        if platform.system() == 'Windows':
-            import winsound
-            try:
-                winsound.PlaySound(sound_filename, winsound.SND_FILENAME)
-            except Exception as exc2:
-                pass
+    util.play_mp3_async(new_sound_filename)
 
 def btn_save_clicked():
     btn_save_act()
 
 def get_config_dict_from_ui():
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
 
     config_dict = get_default_config()
@@ -236,17 +189,12 @@ def btn_save_act(slience_mode=True):
     is_all_data_correct, config_dict = get_config_dict_from_ui()
 
     # slience
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_CONFIG_FILE)
-    save_json(config_dict, config_filepath)
+    util.save_json(config_dict, config_filepath)
     
     if not slience_mode:
         messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
-
-def save_json(config_dict, target_path):
-    json_str = json.dumps(config_dict, indent=4)
-    with open(target_path, 'w') as outfile:
-        outfile.write(json_str)
 
 def open_url(url):
     webbrowser.open_new(url)
@@ -758,7 +706,7 @@ def get_default_config():
     config_dict={}
 
     config_dict["list"] = [CONST_MAXBOT_CONFIG_FILE]
-    config_dict["check_interval"]=3
+    config_dict["check_interval"]=1
     config_dict["url"]=""
 
     config_dict["advanced"] = {}
@@ -832,55 +780,6 @@ def main_gui():
 
     root.mainloop()
 
-def kktix_get_registerStatus(event_code):
-    html_result = None
-
-    url = "https://kktix.com/g/events/%s/register_info" % (event_code)
-    #print('event_code:',event_code)
-    #print("url:", url)
-
-    headers = {"Accept-Language": "zh-TW,zh;q=0.5", 'User-Agent': USER_AGENT}
-    try:
-        html_result = requests.get(url , headers=headers, timeout=0.7, allow_redirects=False)
-    except Exception as exc:
-        html_result = None
-        print("send reg_info request fail:")
-        print(exc)
-
-    registerStatus = ""
-    if not html_result is None:
-        status_code = html_result.status_code
-        #print("status_code:",status_code)
-        if status_code == 200:
-            html_text = html_result.text
-            #print("html_text:", html_text)
-            try:
-                jsLoads = json.loads(html_text)
-                if 'inventory' in jsLoads:
-                    if 'registerStatus' in jsLoads['inventory']:
-                        registerStatus = jsLoads['inventory']['registerStatus']
-            except Exception as exc:
-                print("load reg_info json fail:")
-                print(exc)
-                pass
-
-    #print("registerStatus:", registerStatus)
-    return registerStatus
-
-def kktix_get_event_code(url):
-    event_code = ""
-    if '/registrations/new' in url:
-        prefix_list = ['.com/events/','.cc/events/']
-        postfix = '/registrations/new'
-
-        for prefix in prefix_list:
-            event_code = find_between(url,prefix,postfix)
-            if len(event_code) > 0:
-                break
-
-    #print('event_code:',event_code)
-    return event_code
-
 def kktix_in_stock_play_sound():
     global chk_state_play_ticket_sound
     if 'chk_state_play_ticket_sound' in globals():
@@ -889,16 +788,6 @@ def kktix_in_stock_play_sound():
                 btn_preview_sound_clicked()
         except Exception as e:
             pass
-
-def get_kktix_status_by_url(url):
-    registerStatus = ""
-    if len(url) > 0:
-        event_code = kktix_get_event_code(url)
-        #print(event_code)
-        if len(event_code) > 0:
-            registerStatus = kktix_get_registerStatus(event_code)
-            #print(registerStatus)
-    return registerStatus
 
 def update_kktix_status(registerStatus):
     global status_variable 
@@ -917,7 +806,7 @@ def append_kktix_status_log(output_log):
             pass
 
 def append_kktix_status_log_file(output_log):
-    app_root = get_app_root()
+    app_root = util.get_app_root()
     log_filepath = os.path.join(app_root, CONST_MAXBOT_KKTIX_LOG_FILE)
     file1 = open(log_filepath, "a")  # append mode
     file1.write(output_log)
@@ -928,7 +817,7 @@ def kktix_status_query(config_dict, last_status, log_file=False):
     datetime_string = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     registerStatus = ""
     if len(url) > 0:
-        registerStatus = get_kktix_status_by_url(url)
+        registerStatus = util.get_kktix_status_by_url(url)
         update_kktix_status(registerStatus)
 
     if len(registerStatus) > 0:
@@ -1037,7 +926,7 @@ def resetful_api_timer(log_file=False):
         if is_ui_ready:
             json_str_new = json.dumps(config_dict)
             if json_str_new != json_str_old:
-                save_json(config_dict, config_filepath)
+                util.save_json(config_dict, config_filepath)
                 json_str_old = json_str_new
 
         time.sleep(0.5)
@@ -1045,7 +934,7 @@ def resetful_api_timer(log_file=False):
 def main(args):
     silent_flag = False
     if not args.silent is None:
-        silent_flag = t_or_f(args.silent)
+        silent_flag = util.t_or_f(args.silent)
     #print("silent_flag:",silent_flag)
 
     if not silent_flag:
