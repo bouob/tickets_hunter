@@ -1869,7 +1869,7 @@ def kktix_get_registerStatus(event_code):
         print("send reg_info request fail:")
         print(exc)
 
-    registerStatus = None
+    registerStatus = ""
     if not html_result is None:
         status_code = html_result.status_code
         #print("status_code:",status_code)

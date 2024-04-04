@@ -142,9 +142,11 @@ def get_config_dict(args):
             if not args.homepage is None:
                 if len(args.homepage) > 0:
                     config_dict["homepage"] = args.homepage
+            
             if not args.ticket_number is None:
-                if args.homepage > 0:
+                if args.ticket_number > 0:
                     config_dict["ticket_number"] = args.ticket_number
+            
             if not args.browser is None:
                 if len(args.browser) > 0:
                     config_dict["browser"] = args.browser
@@ -152,6 +154,7 @@ def get_config_dict(args):
             if not args.tixcraft_sid is None:
                 if len(args.tixcraft_sid) > 0:
                     config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
+            
             if not args.ibonqware is None:
                 if len(args.ibonqware) > 0:
                     config_dict["advanced"]["ibonqware"] = args.ibonqware

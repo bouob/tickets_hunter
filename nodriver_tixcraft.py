@@ -125,9 +125,11 @@ def get_config_dict(args):
             if not args.homepage is None:
                 if len(args.homepage) > 0:
                     config_dict["homepage"] = args.homepage
+            
             if not args.ticket_number is None:
-                if args.homepage > 0:
+                if args.ticket_number > 0:
                     config_dict["ticket_number"] = args.ticket_number
+            
             if not args.browser is None:
                 if len(args.browser) > 0:
                     config_dict["browser"] = args.browser
