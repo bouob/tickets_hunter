@@ -1,6 +1,3 @@
-$("footer").remove();
-$("div.banner-wrapper div.img-wrapper img").remove();
-
 var myInterval = null;
 //console.log("assign appear");
 
@@ -199,8 +196,11 @@ if(rootElement) {
     if(!dom_ready()) {
         myInterval = setInterval(() => {
             dom_ready();
-        }, 1000);
+        }, 400);
     }
+
+    $("footer").remove();
+    $("div.banner-wrapper div.img-wrapper img").remove();
 }
 
 

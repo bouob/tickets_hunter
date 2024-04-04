@@ -1913,7 +1913,7 @@ def get_kktix_status_by_url(url):
             #print(registerStatus)
     return registerStatus
 
-def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size=""):
+def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size="", headless=""):
     cmd_argument = []
     if len(filename) > 0:
         cmd_argument.append('--input=' + filename)
@@ -1925,6 +1925,8 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
         cmd_argument.append('--kktix_password=' + kktix_password)
     if len(window_size) > 0:
         cmd_argument.append('--window_size=' + window_size)
+    if len(headless) > 0:
+        cmd_argument.append('--headless=' + headless)
 
     working_dir = os.path.dirname(os.path.realpath(__file__))
     if hasattr(sys, 'frozen'):

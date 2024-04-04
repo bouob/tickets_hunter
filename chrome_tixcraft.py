@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.22)"
+CONST_APP_VERSION = "MaxBot (2024.03.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -248,7 +248,6 @@ def get_chrome_options(webdriver_path, config_dict):
         chrome_options.add_argument('--headless=new')
 
     chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
-    chrome_options.add_argument("--password-store=basic")
     chrome_options.add_argument("--disable-animations")
     chrome_options.add_argument("--disable-background-networking")
     chrome_options.add_argument("--disable-backgrounding-occluded-windows")
@@ -266,7 +265,7 @@ def get_chrome_options(webdriver_path, config_dict):
     chrome_options.add_argument("--disable-device-discovery-notifications")
     chrome_options.add_argument("--disable-dinosaur-easter-egg")
     chrome_options.add_argument("--disable-domain-reliability")
-    chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI")
+    chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI,PrivacySandboxSettings4")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-logging")
     chrome_options.add_argument("--disable-login-animations")
@@ -277,20 +276,23 @@ def get_chrome_options(webdriver_path, config_dict):
     chrome_options.add_argument("--disable-renderer-backgrounding")
     chrome_options.add_argument("--disable-session-crashed-bubble")
     chrome_options.add_argument("--disable-smooth-scrolling")
+    chrome_options.add_argument("--disable-suggestions-ui")
     chrome_options.add_argument("--disable-sync")
     chrome_options.add_argument("--disable-translate")
+    chrome_options.add_argument("--hide-crash-restore-bubble")
     chrome_options.add_argument("--lang=zh-TW")
     chrome_options.add_argument("--no-default-browser-check")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-pings")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--no-service-autorun")
+    chrome_options.add_argument("--password-store=basic")
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
     # Deprecated chrome option is ignored: useAutomationExtension
     #chrome_options.add_experimental_option('useAutomationExtension', False)
-    chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
+    chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "profile.name": CONST_APP_VERSION, "translate":{"enabled": False}})
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         chrome_options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
@@ -414,7 +416,6 @@ def get_uc_options(uc, config_dict, webdriver_path):
         options.add_argument('--headless=new')
 
     options.add_argument("--user-agent=%s" % (USER_AGENT))
-    options.add_argument("--password-store=basic")
     options.add_argument("--disable-animations")
     options.add_argument("--disable-background-networking")
     options.add_argument("--disable-backgrounding-occluded-windows")
@@ -432,7 +433,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.add_argument("--disable-device-discovery-notifications")
     options.add_argument("--disable-dinosaur-easter-egg")
     options.add_argument("--disable-domain-reliability")
-    options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI")
+    options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI,PrivacySandboxSettings4")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-logging")
     options.add_argument("--disable-login-animations")
@@ -443,15 +444,18 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.add_argument("--disable-renderer-backgrounding")
     options.add_argument("--disable-session-crashed-bubble")
     options.add_argument("--disable-smooth-scrolling")
+    options.add_argument("--disable-suggestions-ui")
     options.add_argument("--disable-sync")
     options.add_argument("--disable-translate")
+    options.add_argument("--hide-crash-restore-bubble")
     options.add_argument("--lang=zh-TW")
     options.add_argument("--no-default-browser-check")
     options.add_argument("--no-first-run")
     options.add_argument("--no-pings")
     options.add_argument("--no-sandbox")
     options.add_argument("--no-service-autorun")
-    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
+    options.add_argument("--password-store=basic")
+    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "profile.name": CONST_APP_VERSION, "translate":{"enabled": False}})
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
@@ -6250,7 +6254,11 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
                         print("搶票成功, 帳號:", kktix_account)
-                        threading.Thread(target=launch_maxbot, args=("", url, kktix_account, kktix_password, "false", )).start()
+
+                        script_name = "chrome_tixcraft"
+                        if config_dict["advanced"]["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
+                            script_name = "nodriver_tixcraft"
+                        threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
                         #driver.quit()
                         #sys.exit()
 
@@ -10868,53 +10876,6 @@ def resize_window(driver, config_dict):
             driver.set_window_size(int(size_array[0]), int(size_array[1]))
             driver.set_window_position(position_left, 30)
 
-def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless="", script_name="chrome_tixcraft"):
-    cmd_argument = []
-    if len(filename) > 0:
-        cmd_argument.append('--input=' + filename)
-    if len(homepage) > 0:
-        cmd_argument.append('--homepage=' + homepage)
-    if len(kktix_account) > 0:
-        cmd_argument.append('--kktix_account=' + kktix_account)
-    if len(kktix_password) > 0:
-        cmd_argument.append('--kktix_password=' + kktix_password)
-    if len(headless) > 0:
-        cmd_argument.append('--headless=' + headless)
-
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    if hasattr(sys, 'frozen'):
-        print("execute in frozen mode")
-        # check platform here.
-        cmd = './' + script_name + ' '.join(cmd_argument)
-        if platform.system() == 'Darwin':
-            print("execute MacOS python script")
-        if platform.system() == 'Linux':
-            print("execute linux binary")
-        if platform.system() == 'Windows':
-            print("execute .exe binary.")
-            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
-        subprocess.Popen(cmd, shell=True, cwd=working_dir)
-    else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() != 'Windows':
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
-        print("execute in shell mode.")
-        
-        try:
-            print('try', interpreter_binary)
-            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
-            s=subprocess.Popen(cmd_array, cwd=working_dir)
-        except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
-                s=subprocess.Popen(cmd_array, cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                pass
 
 def main(args):
     config_dict = get_config_dict(args)

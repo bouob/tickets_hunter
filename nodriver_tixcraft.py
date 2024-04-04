@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.22)"
+CONST_APP_VERSION = "MaxBot (2024.03.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -797,7 +797,12 @@ async def nodriver_kktix_main(tab, url, config_dict, kktix_dict):
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
                         print("搶票成功, 帳號:", kktix_account)
-                        threading.Thread(target=launch_maxbot, args=("", url, kktix_account, kktix_password, "false", )).start()
+                        
+                        script_name = "chrome_tixcraft"
+                        if config_dict["advanced"]["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
+                            script_name = "nodriver_tixcraft"
+
+                        threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
                         #driver.quit()
                         #sys.exit()
 
@@ -829,65 +834,10 @@ async def nodriver_kktix_main(tab, url, config_dict, kktix_dict):
 
     return kktix_dict
 
-def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless="", script_name="nodriver_tixcraft"):
-    cmd_argument = []
-    if len(filename) > 0:
-        cmd_argument.append('--input=' + filename)
-    if len(homepage) > 0:
-        cmd_argument.append('--homepage=' + homepage)
-    if len(kktix_account) > 0:
-        cmd_argument.append('--kktix_account=' + kktix_account)
-    if len(kktix_password) > 0:
-        cmd_argument.append('--kktix_password=' + kktix_password)
-    if len(headless) > 0:
-        cmd_argument.append('--headless=' + headless)
-
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    if hasattr(sys, 'frozen'):
-        print("execute in frozen mode")
-        # check platform here.
-        cmd = './' + script_name + ' '.join(cmd_argument)
-        if platform.system() == 'Darwin':
-            print("execute MacOS python script")
-        if platform.system() == 'Linux':
-            print("execute linux binary")
-        if platform.system() == 'Windows':
-            print("execute .exe binary.")
-            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
-        subprocess.Popen(cmd, shell=True, cwd=working_dir)
-    else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() != 'Windows':
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
-        print("execute in shell mode.")
-        
-        try:
-            print('try', interpreter_binary)
-            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
-            s=subprocess.Popen(cmd_array, cwd=working_dir)
-        except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
-                s=subprocess.Popen(cmd_array, cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                pass
 
 def get_nodriver_browser_args():
     browser_args = [
         "--user-agent=%s" % (USER_AGENT),
-        "--remote-allow-origins=*",
-        "--homepage=about:blank",
-        "--no-first-run",
-        "--no-service-autorun",
-        "--no-default-browser-check",
-        "--no-pings",
-        "--no-sandbox"
-        "--password-store=basic",
         "--disable-2d-canvas-clip-aa",
         "--disable-3d-apis",
         "--disable-animations",
@@ -920,10 +870,20 @@ def get_nodriver_browser_args():
         "--disable-renderer-backgrounding",
         "--disable-session-crashed-bubble",
         "--disable-smooth-scrolling",
+        "--disable-suggestions-ui",
         "--disable-sync",
         "--disable-translate",
-        #"--disable-remote-fonts",
+        "--hide-crash-restore-bubble",
+        "--homepage=about:blank",
+        "--no-default-browser-check",
+        "--no-first-run",
+        "--no-pings",
+        "--no-sandbox"
+        "--no-service-autorun",
+        "--password-store=basic",
+        "--remote-allow-origins=*",
         "--lang=zh-TW",
+        #"--disable-remote-fonts",
     ]
     return browser_args
 
@@ -1039,6 +999,33 @@ async def nodriver_current_url(tab):
             url = ''.join(url_array)
     return url
 
+def nodriver_overwrite_prefs(conf, prefs_dict={}):
+    #print(conf.user_data_dir)
+    prefs_filepath = os.path.join(conf.user_data_dir,"Default")
+    if not os.path.exists(prefs_filepath):
+        os.mkdir(prefs_filepath)
+    prefs_filepath = os.path.join(prefs_filepath,"Preferences")
+    prefs_dict["profile"]={}
+    prefs_dict["profile"]["name"]=CONST_APP_VERSION
+    prefs_dict["profile"]["password_manager_enabled"]=False
+    json_str = json.dumps(prefs_dict)
+    with open(prefs_filepath, 'w') as outfile:
+        outfile.write(json_str)
+
+    state_filepath = os.path.join(conf.user_data_dir,"Local State")
+    state_dict = {}
+    state_dict["performance_tuning"]={}
+    state_dict["performance_tuning"]["high_efficiency_mode"]={}
+    state_dict["performance_tuning"]["high_efficiency_mode"]["state"]=1
+    state_dict["browser"]={}
+    state_dict["browser"]["enabled_labs_experiments"]=[
+        "memory-saver-multi-state-mode@1",
+        "modal-memory-saver@1"
+    ]
+    json_str = json.dumps(state_dict)
+    with open(state_filepath, 'w') as outfile:
+        outfile.write(json_str)
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -1047,6 +1034,10 @@ async def main(args):
     if not config_dict is None:
         sandbox = False
         conf = get_extension_config(config_dict)
+        prefs = {"credentials_enable_service": False,
+            "ack_existing_ntp_extensions": False,
+            "translate":{"enabled": False}}
+        nodriver_overwrite_prefs(conf, prefs)
         # PS: nodrirver run twice always cause error:
         # Failed to connect to browser
         # One of the causes could be when you are running as root.
@@ -1157,6 +1148,76 @@ async def main(args):
         if 'kktix.c' in url:
             kktix_dict = await nodriver_kktix_main(tab, url, config_dict, kktix_dict)
             pass
+
+        tixcraft_family = False
+        if 'tixcraft.com' in url:
+            tixcraft_family = True
+
+        if 'indievox.com' in url:
+            tixcraft_family = True
+
+        if 'ticketmaster.' in url:
+            tixcraft_family = True
+
+        if tixcraft_family:
+            #tixcraft_dict = tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
+            pass
+
+        if 'famiticket.com' in url:
+            #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
+            pass
+
+        if 'ibon.com' in url:
+            #ibon_dict = ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser)
+            pass
+
+        kham_family = False
+        if 'kham.com.tw' in url:
+            kham_family = True
+
+        if 'ticket.com.tw' in url:
+            kham_family = True
+
+        if 'tickets.udnfunlife.com' in url:
+            kham_family = True
+
+        if kham_family:
+            #kham_main(driver, url, config_dict, ocr, Captcha_Browser)
+            pass
+
+        if 'ticketplus.com' in url:
+            #ticketplus_dict = ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+            pass
+
+        if 'urbtix.hk' in url:
+            #urbtix_main(driver, url, config_dict)
+            pass
+
+        if 'cityline.com' in url:
+            #cityline_main(driver, url, config_dict)
+            pass
+
+        softix_family = False
+        if 'hkticketing.com' in url:
+            softix_family = True
+        if 'galaxymacau.com' in url:
+            softix_family = True
+        if 'ticketek.com' in url:
+            softix_family = True
+        if softix_family:
+            #hkticketing_dict = softix_powerweb_main(driver, url, config_dict, hkticketing_dict)
+            pass
+
+        # for facebook
+        facebook_login_url = 'https://www.facebook.com/login.php?'
+        if url[:len(facebook_login_url)]==facebook_login_url:
+            facebook_account = config_dict["advanced"]["facebook_account"].strip()
+            facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
+            if facebook_password == "":
+                facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+            if len(facebook_account) > 4:
+                #facebook_login(driver, facebook_account, facebook_password)
+                pass
 
 
 def cli():

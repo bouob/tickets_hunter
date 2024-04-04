@@ -2,7 +2,7 @@ const storage = chrome.storage.local;
 var settings = null;
 var myInterval = null;
 
-function kktix_clean_exclude(settings, register_info) 
+function kktix_clean_exclude(settings, register_info)
 {
     let exclude_keyword_array = [];
     if(settings) {
@@ -41,7 +41,7 @@ function clean_sold_out_row(register_info, base_info)
                 match_target = true;
                 break;
             }
-            
+
         }
     }
     //console.log("match_target:"+match_target);
@@ -97,14 +97,18 @@ function kktix_ajax_return_register_info(register_info)
         rootElement.remove();
         register_info=null;
         settings = null;
-        myInterval = null;        
+        myInterval = null;
+        for (var key in window) {
+            key=null;
+            delete key;
+        }        
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
-            location.reload();
+            window.location.reload();
         } else {
             //console.log('We are going to reload after few seconeds.');
             setTimeout(function () {
-                location.reload();
+                window.location.reload();
             }, auto_reload_page_interval * 1000);
         }
     }
@@ -116,7 +120,7 @@ function kktix_ajax_return_register_info(register_info)
 
 function kktix_event_base_info(register_info)
 {
-    const currentUrl = window.location.href; 
+    const currentUrl = window.location.href;
     const event_code = currentUrl.split('/')[4];
     //console.log(currentUrl);
     //console.log(event_code);
@@ -140,7 +144,7 @@ function kktix_event_base_info(register_info)
 
 function kktix_event_register_info()
 {
-    const currentUrl = window.location.href; 
+    const currentUrl = window.location.href;
     const event_code = currentUrl.split('/')[4];
     //console.log(currentUrl);
     //console.log(event_code);
@@ -162,7 +166,7 @@ function kktix_event_register_info()
     }
 }
 
-function kktix_force_auto_reload_by_timer() 
+function kktix_force_auto_reload_by_timer()
 {
     if(settings) {
         //console.log("auto reload for kktix");
@@ -173,7 +177,7 @@ function kktix_force_auto_reload_by_timer()
             }
             if(max_dwell_time <= 10) {
                 max_dwell_time = 10;
-            }        
+            }
             //console.log('We are going to reload after few seconeds.');
             setTimeout(function () {
                 location.reload();
