@@ -8,6 +8,7 @@ import re
 import socket
 import sys
 import threading
+import subprocess
 from typing import Optional
 
 import requests
@@ -1912,3 +1913,50 @@ def get_kktix_status_by_url(url):
             #print(registerStatus)
     return registerStatus
 
+def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size=""):
+    cmd_argument = []
+    if len(filename) > 0:
+        cmd_argument.append('--input=' + filename)
+    if len(homepage) > 0:
+        cmd_argument.append('--homepage=' + homepage)
+    if len(kktix_account) > 0:
+        cmd_argument.append('--kktix_account=' + kktix_account)
+    if len(kktix_password) > 0:
+        cmd_argument.append('--kktix_password=' + kktix_password)
+    if len(window_size) > 0:
+        cmd_argument.append('--window_size=' + window_size)
+
+    working_dir = os.path.dirname(os.path.realpath(__file__))
+    if hasattr(sys, 'frozen'):
+        print("execute in frozen mode")
+        # check platform here.
+        cmd = './' + script_name + ' '.join(cmd_argument)
+        if platform.system() == 'Darwin':
+            print("execute MacOS python script")
+        if platform.system() == 'Linux':
+            print("execute linux binary")
+        if platform.system() == 'Windows':
+            print("execute .exe binary.")
+            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
+        subprocess.Popen(cmd, shell=True, cwd=working_dir)
+    else:
+        interpreter_binary = 'python'
+        interpreter_binary_alt = 'python3'
+        if platform.system() != 'Windows':
+            interpreter_binary = 'python3'
+            interpreter_binary_alt = 'python'
+        print("execute in shell mode.")
+
+        try:
+            print('try', interpreter_binary)
+            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
+            s=subprocess.Popen(cmd_array, cwd=working_dir)
+        except Exception as exc:
+            print('try', interpreter_binary_alt)
+            try:
+                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
+                s=subprocess.Popen(cmd_array, cwd=working_dir)
+            except Exception as exc:
+                msg=str(exc)
+                print("exeption:", msg)
+                pass
