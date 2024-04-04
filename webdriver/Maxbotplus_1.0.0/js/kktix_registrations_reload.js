@@ -82,7 +82,7 @@ function kktix_ajax_return_base_info(base_info, register_info)
 function kktix_ajax_return_register_info(register_info)
 {
     let reload=false;
-    console.log(register_info.inventory.registerStatus);
+    //console.log(register_info.inventory.registerStatus);
     // IN_STOCK
     if(register_info.inventory.registerStatus=='OUT_OF_STOCK') {reload=true;}
     if(register_info.inventory.registerStatus=='COMING_SOON') {reload=true;}
@@ -95,11 +95,16 @@ function kktix_ajax_return_register_info(register_info)
         }
         const rootElement = document.documentElement;
         rootElement.remove();
+        /*
+        $('*').bind('blur change click dblclick error focus focusin focusout hover keydown keypress keyup load mousedown mouseenter mouseleave mousemove mouseout mouseover mouseup resize scroll select submit', function(event){
+            event.stopPropagation();
+        });
+        */
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();
         } else {
-            console.log('We are going to reload after few seconeds.');
+            //console.log('We are going to reload after few seconeds.');
             setTimeout(function () {
                 location.reload();
             }, auto_reload_page_interval * 1000);
@@ -170,7 +175,7 @@ function kktix_force_auto_reload_by_timer()
             if(max_dwell_time <= 10) {
                 max_dwell_time = 10;
             }        
-            console.log('We are going to reload after few seconeds.');
+            //console.log('We are going to reload after few seconeds.');
             setTimeout(function () {
                 location.reload();
             }, max_dwell_time * 1000);
@@ -193,6 +198,6 @@ storage.get('status', function (items)
         kktix_event_register_info();
         kktix_force_auto_reload_by_timer();
     } else {
-        console.log('maxbot status is not ON');
+        //console.log('maxbot status is not ON');
     }
 });

@@ -10858,8 +10858,12 @@ def reset_webdriver(driver, config_dict, url):
 def resize_window(driver, config_dict):
     if len(config_dict["advanced"]["window_size"]) > 0:
         if "," in config_dict["advanced"]["window_size"]:
-            target_array = config_dict["advanced"]["window_size"].split(",")
-            driver.set_window_size(int(target_array[0]), int(target_array[1]))
+            size_array = config_dict["advanced"]["window_size"].split(",")
+            position_left = 0
+            if len(size_array) >= 3:
+                position_left = int(size_array[0]) * int(size_array[2])
+            driver.set_window_size(int(size_array[0]), int(size_array[1]))
+            driver.set_window_position(position_left, 30)
 
 def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password="", headless="", script_name="chrome_tixcraft"):
     cmd_argument = []

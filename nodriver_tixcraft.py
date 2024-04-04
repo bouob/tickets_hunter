@@ -1018,6 +1018,25 @@ async def nodriver_resize_window(tab, config_dict):
             if tab:
                 await tab.set_window_size(left=position_left, top=30, width=int(size_array[0]), height=int(size_array[1]))
 
+async def nodriver_current_url(tab):
+    url = ""
+    if tab:
+        url_dict = {}
+        try:
+            url_dict = await tab.js_dumps('window.location.href')
+        except Exception as exc:
+            print(exc)
+            pass
+
+        url_array = []
+        if url_dict:
+            for k in url_dict: 
+                if k.isnumeric():
+                    if "0" in url_dict[k]:
+                        url_array.append(url_dict[k]["0"])
+            url = ''.join(url_array)
+    return url
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -1106,19 +1125,7 @@ async def main(args):
             print("nodriver not accessible!")
             break
 
-        x_window = None
-        try:
-            x_window = await tab.js_dumps('window')
-        except Exception as exc:
-            print(exc)
-            pass
-
-        url = None
-        if x_window:
-            if "location" in x_window:
-                if "href" in x_window["location"]:
-                    url = x_window["location"]["href"]
-
+        url = await nodriver_current_url(tab)
         if url is None:
             continue
         else:

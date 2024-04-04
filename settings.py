@@ -1136,10 +1136,12 @@ def launch_maxbot():
         if "," in window_size:
             size_array = window_size.split(",")
             target_width = int(size_array[0])
-            target_left = launch_counter * launch_counter
-            if target_left > 1440:
+            target_left = target_width * launch_counter
+            #print("target_left:", target_left)
+            if target_left >= 1440:
                 launch_counter = 0
             window_size = window_size + "," + str(launch_counter)
+            #print("window_size:", window_size)
 
     threading.Thread(target=util.launch_maxbot, args=(script_name,"","","","",window_size,)).start()
 
