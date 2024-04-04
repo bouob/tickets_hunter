@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.21)"
+CONST_APP_VERSION = "MaxBot (2024.03.22)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -685,7 +685,7 @@ def get_default_config():
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
-    config_dict["advanced"]["window_size"] = "512,1024"
+    config_dict["advanced"]["window_size"] = "480,1024"
 
     config_dict["advanced"]["idle_keyword"] = ""
     config_dict["advanced"]["resume_keyword"] = ""
@@ -755,7 +755,8 @@ def btn_launcher_clicked(language_code):
     Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
     if save_ret:
-        run_python_script("config_launcher")
+        script_name = "config_launcher"
+        threading.Thread(target=util.launch_maxbot, args=(script_name,)).start()
 
 def btn_save_clicked():
     btn_save_act()
@@ -1114,16 +1115,33 @@ def btn_run_clicked(language_code):
     save_ret = btn_save_act(slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
-        threading.Thread(target=launch_maxbot).start()
+        launch_maxbot()
 
 def launch_maxbot():
+    global launch_counter
+    if "launch_counter" in globals():
+        launch_counter += 1
+    else:
+        launch_counter = 0
     global combo_webdriver_type
     webdriver_type = combo_webdriver_type.get().strip()
 
-    python_script_name = "chrome_tixcraft"
+    script_name = "chrome_tixcraft"
     if webdriver_type == CONST_WEBDRIVER_TYPE_NODRIVER:
-        python_script_name = "nodriver_tixcraft"
-    run_python_script(python_script_name)
+        script_name = "nodriver_tixcraft"
+
+    global txt_window_size
+    window_size = txt_window_size.get().strip()
+    if len(window_size) > 0:
+        if "," in window_size:
+            size_array = window_size.split(",")
+            target_width = int(size_array[0])
+            target_left = launch_counter * launch_counter
+            if target_left > 1440:
+                launch_counter = 0
+            window_size = window_size + "," + str(launch_counter)
+
+    threading.Thread(target=util.launch_maxbot, args=(script_name,"","","","",window_size,)).start()
 
 def show_preview_text():
     if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
@@ -1173,42 +1191,6 @@ def btn_preview_text_clicked():
                 break
     show_preview_text()
 
-def run_python_script(script_name):
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    cmd_argument = ""
-    if hasattr(sys, 'frozen'):
-        print("execute in frozen mode")
-
-        cmd = './' + script_name + cmd_argument
-        # check platform here.
-        if platform.system() == 'Darwin':
-            print("execute MacOS python script")
-        if platform.system() == 'Linux':
-            print("execute linux binary")
-        if platform.system() == 'Windows':
-            print("execute .exe binary.")
-            cmd = script_name + ".exe" + cmd_argument
-        subprocess.Popen(cmd, shell=True, cwd=working_dir)
-    else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() != 'Windows':
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
-        print("execute in shell mode.")
-        
-        cmd = script_name + '.py'
-        try:
-            print('try', interpreter_binary)
-            s=subprocess.Popen([interpreter_binary, cmd], cwd=working_dir)
-        except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                s=subprocess.Popen([interpreter_binary_alt, cmd], cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                pass
 
 def btn_open_text_server_clicked():
     global tab4
@@ -3085,11 +3067,11 @@ def main_gui():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 580
-    GUI_SIZE_HEIGHT = 640
+    GUI_SIZE_WIDTH = 590
+    GUI_SIZE_HEIGHT = 645
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
-    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-60) + 'x' + str(GUI_SIZE_HEIGHT-70)
+    GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-70) + 'x' + str(GUI_SIZE_HEIGHT-80)
 
     GUI_SIZE =GUI_SIZE_MACOS
 

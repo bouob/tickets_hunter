@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.21)"
+CONST_APP_VERSION = "MaxBot (2024.03.22)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -167,6 +167,10 @@ def get_config_dict(args):
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
 
+            if not args.window_size is None:
+                if len(args.window_size) > 2:
+                    config_dict["advanced"]["window_size"] = args.window_size
+
             # special case for headless to enable away from keyboard mode.
             is_headless_enable_ocr = False
             if config_dict["advanced"]["headless"]:
@@ -241,17 +245,43 @@ def get_chrome_options(webdriver_path, config_dict):
         chrome_options.add_argument('--headless=new')
 
     chrome_options.add_argument("--user-agent=%s" % (USER_AGENT))
+    chrome_options.add_argument("--password-store=basic")
     chrome_options.add_argument("--disable-animations")
+    chrome_options.add_argument("--disable-background-networking")
+    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+    chrome_options.add_argument("--disable-bookmark-reordering")
+    chrome_options.add_argument("--disable-boot-animation")
+    chrome_options.add_argument("--disable-breakpad")
+    chrome_options.add_argument("--disable-canvas-aa")
+    chrome_options.add_argument("--disable-client-side-phishing-detection")
+    chrome_options.add_argument("--disable-cloud-import")
+    chrome_options.add_argument("--disable-component-cloud-policy")
+    chrome_options.add_argument("--disable-component-update")
+    chrome_options.add_argument("--disable-composited-antialiasing")
+    chrome_options.add_argument("--disable-default-apps")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-device-discovery-notifications")
+    chrome_options.add_argument("--disable-dinosaur-easter-egg")
+    chrome_options.add_argument("--disable-domain-reliability")
+    chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI")
     chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-logging")
+    chrome_options.add_argument("--disable-login-animations")
+    chrome_options.add_argument("--disable-login-screen-apps")
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--disable-print-preview")
+    chrome_options.add_argument("--disable-renderer-backgrounding")
+    chrome_options.add_argument("--disable-session-crashed-bubble")
     chrome_options.add_argument("--disable-smooth-scrolling")
     chrome_options.add_argument("--disable-sync")
-    chrome_options.add_argument("--no-sandbox");
-    chrome_options.add_argument('--disable-features=TranslateUI')
-    chrome_options.add_argument('--disable-translate')
-    chrome_options.add_argument('--lang=zh-TW')
+    chrome_options.add_argument("--disable-translate")
+    chrome_options.add_argument("--lang=zh-TW")
+    chrome_options.add_argument("--no-default-browser-check")
+    chrome_options.add_argument("--no-first-run")
+    chrome_options.add_argument("--no-pings")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--no-service-autorun")
 
     # for navigator.webdriver
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
@@ -381,19 +411,43 @@ def get_uc_options(uc, config_dict, webdriver_path):
         options.add_argument('--headless=new')
 
     options.add_argument("--user-agent=%s" % (USER_AGENT))
+    options.add_argument("--password-store=basic")
     options.add_argument("--disable-animations")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+    options.add_argument("--disable-bookmark-reordering")
+    options.add_argument("--disable-boot-animation")
+    options.add_argument("--disable-breakpad")
+    options.add_argument("--disable-canvas-aa")
+    options.add_argument("--disable-client-side-phishing-detection")
+    options.add_argument("--disable-cloud-import")
+    options.add_argument("--disable-component-cloud-policy")
+    options.add_argument("--disable-component-update")
+    options.add_argument("--disable-composited-antialiasing")
+    options.add_argument("--disable-default-apps")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-device-discovery-notifications")
+    options.add_argument("--disable-dinosaur-easter-egg")
+    options.add_argument("--disable-domain-reliability")
+    options.add_argument("--disable-features=IsolateOrigins,site-per-process,TranslateUI")
     options.add_argument("--disable-infobars")
+    options.add_argument("--disable-logging")
+    options.add_argument("--disable-login-animations")
+    options.add_argument("--disable-login-screen-apps")
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--disable-print-preview")
+    options.add_argument("--disable-renderer-backgrounding")
+    options.add_argument("--disable-session-crashed-bubble")
     options.add_argument("--disable-smooth-scrolling")
     options.add_argument("--disable-sync")
-    options.add_argument("--no-sandbox");
-    options.add_argument('--disable-features=TranslateUI')
-    options.add_argument('--disable-translate')
-    options.add_argument('--lang=zh-TW')
-
-    options.add_argument("--password-store=basic")
+    options.add_argument("--disable-translate")
+    options.add_argument("--lang=zh-TW")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-pings")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--no-service-autorun")
     options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "translate":{"enabled": False}})
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
@@ -11074,6 +11128,10 @@ def cli():
         help="overwrite browser setting",
         default='',
         choices=['chrome','firefox','edge','safari','brave'],
+        type=str)
+
+    parser.add_argument("--window_size",
+        help="Window size",
         type=str)
 
     parser.add_argument("--proxy_server",

@@ -80,7 +80,7 @@
         "reset_browser_interval": 0,
         "max_dwell_time": 60,
         "proxy_server_port": "",
-        "window_size": "512,1024",
+        "window_size": "480,1024",
         "idle_keyword": "",
         "resume_keyword": "",
         "idle_keyword_second": "",

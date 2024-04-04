@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.21)"
+CONST_APP_VERSION = "MaxBot (2024.03.22)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -149,6 +149,11 @@ def get_config_dict(args):
             if not args.proxy_server is None:
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
+
+            if not args.window_size is None:
+                if len(args.window_size) > 2:
+                    config_dict["advanced"]["window_size"] = args.window_size
+
 
             # special case for headless to enable away from keyboard mode.
             is_headless_enable_ocr = False
@@ -896,7 +901,6 @@ def get_nodriver_browser_args():
         "--disable-component-cloud-policy",
         "--disable-component-update",
         "--disable-composited-antialiasing",
-        "--disable-d3d11",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
         "--disable-device-discovery-notifications",
@@ -911,7 +915,6 @@ def get_nodriver_browser_args():
         "--disable-office-editing-component-extension",
         "--disable-password-generation",
         "--disable-popup-blocking",
-        "--disable-renderer-backgrounding",
         "--disable-renderer-backgrounding",
         "--disable-session-crashed-bubble",
         "--disable-smooth-scrolling",
@@ -944,7 +947,8 @@ def get_maxbot_plus_extension_path():
 
 def get_extension_config(config_dict):
     default_lang = "zh-TW"
-    conf = Config(browser_args=get_nodriver_browser_args(), lang=default_lang, headless=config_dict["advanced"]["headless"])
+    no_sandbox=True
+    conf = Config(browser_args=get_nodriver_browser_args(), lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     conf.add_extension(get_maxbot_plus_extension_path())
     return conf
 
@@ -1003,24 +1007,36 @@ async def nodrver_block_urls(tab, config_dict):
     await tab.send(cdp.network.set_blocked_ur_ls(NETWORK_BLOCKED_URLS))
     return tab
 
+async def nodriver_resize_window(tab, config_dict):
+    if len(config_dict["advanced"]["window_size"]) > 0:
+        if "," in config_dict["advanced"]["window_size"]:
+            size_array = config_dict["advanced"]["window_size"].split(",")
+            position_left = 0
+            if len(size_array) >= 3:
+                position_left = int(size_array[0]) * int(size_array[2])
+            #tab = await driver.main_tab()
+            if tab:
+                await tab.set_window_size(left=position_left, top=30, width=int(size_array[0]), height=int(size_array[1]))
+
 async def main(args):
     config_dict = get_config_dict(args)
 
     driver = None
     tab = None
     if not config_dict is None:
+        sandbox = False
         conf = get_extension_config(config_dict)
+        # PS: nodrirver run twice always cause error:
+        # Failed to connect to browser
+        # One of the causes could be when you are running as root.
+        # In that case you need to pass no_sandbox=True
+        #driver = await uc.start(conf, sandbox=sandbox, headless=config_dict["advanced"]["headless"])
         driver = await uc.start(conf)
         if not driver is None:
             tab = await nodriver_goto_homepage(driver, config_dict)
             tab = await nodrver_block_urls(tab, config_dict)
             if not config_dict["advanced"]["headless"]:
-                if len(config_dict["advanced"]["window_size"]) > 0:
-                    if "," in config_dict["advanced"]["window_size"]:
-                        target_array = config_dict["advanced"]["window_size"].split(",")
-                        #tab = await driver.main_tab()
-                        if tab:
-                            await tab.set_window_size(left=30, top=30, width=int(target_array[0]), height=int(target_array[1]))
+                await nodriver_resize_window(tab, config_dict)
         else:
             print("無法使用nodriver，程式無法繼續工作")
             sys.exit()
@@ -1175,6 +1191,10 @@ def cli():
         help="overwrite browser setting",
         default='',
         choices=['chrome','firefox','edge','safari','brave'],
+        type=str)
+
+    parser.add_argument("--window_size",
+        help="Window size",
         type=str)
 
     parser.add_argument("--proxy_server",

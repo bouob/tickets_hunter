@@ -13,7 +13,7 @@ import requests
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.03.21)"
+CONST_APP_VERSION = "MaxBot (2024.03.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"

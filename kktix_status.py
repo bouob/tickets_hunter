@@ -29,7 +29,7 @@ from datetime import datetime
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.03.21)"
+CONST_APP_VERSION = "MaxBot (2024.03.22)"
 
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_KKTIX_CONFIG_FILE = "kktix.json"
@@ -294,54 +294,8 @@ def btn_items_run_event(event):
     btn_index = 1
     global txt_file_name
     filename=txt_file_name[btn_index-1].get().strip()
-    threading.Thread(target=launch_maxbot, args=(filename,)).start()
-
-def launch_maxbot(filename, homepage="", kktix_account = "", kktix_password=""):
-    cmd_argument = []
-    if len(filename) > 0:
-        cmd_argument.append('--input=' + filename)
-    if len(homepage) > 0:
-        cmd_argument.append('--homepage=' + homepage)
-    if len(kktix_account) > 0:
-        cmd_argument.append('--kktix_account=' + kktix_account)
-    if len(kktix_password) > 0:
-        cmd_argument.append('--kktix_password=' + kktix_password)
-
-    working_dir = os.path.dirname(os.path.realpath(__file__))
-    if hasattr(sys, 'frozen'):
-        print("execute in frozen mode")
-        # check platform here.
-        cmd = './chrome_tixcraft' + ' '.join(cmd_argument)
-        if platform.system() == 'Darwin':
-            print("execute MacOS python script")
-        if platform.system() == 'Linux':
-            print("execute linux binary")
-        if platform.system() == 'Windows':
-            print("execute .exe binary.")
-            cmd = 'chrome_tixcraft.exe ' + ' '.join(cmd_argument)
-        subprocess.Popen(cmd, shell=True, cwd=working_dir)
-    else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() != 'Windows':
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
-        print("execute in shell mode.")
-
-        script_name = "chrome_tixcraft"
-        try:
-            print('try', interpreter_binary)
-            cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
-            s=subprocess.Popen(cmd_array, cwd=working_dir)
-        except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
-                s=subprocess.Popen(cmd_array, cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                pass
+    script_name = "chrome_tixcraft"
+    threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
 
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
@@ -840,9 +794,12 @@ def kktix_status_query(config_dict, last_status, log_file=False):
                     print(config_dict["ticket_exec_maxbot"])
                     if config_dict["ticket_exec_maxbot"]:
                         filename=config_dict["list"][btn_index-1]
-                        print("filename", filename)
+                        #print("filename", filename)
+                        script_name = "chrome_tixcraft"
+                        if config_dict["advanced"]["webdriver_type"]=="nodriver":
+                            script_name = "nodriver_tixcraft"
                         if len(filename) > 0:
-                            threading.Thread(target=launch_maxbot, args=(filename,)).start()
+                            threading.Thread(target=util.launch_maxbot, args=(script_name, filename,)).start()
 
                     print(config_dict["ticket_exec_command"], config_dict["new_process"])
                     if config_dict["ticket_exec_command"]:

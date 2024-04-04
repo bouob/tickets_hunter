@@ -5,6 +5,7 @@ cryptography
 ddddocr
 idna
 looseversion
+nodriver
 numpy
 Pillow
 playsound==1.2.2
@@ -13,3 +14,5 @@ selenium
 tornado
 undetected-chromedriver
 urllib3
+#PS: nodriver need python 3.9+
+#
