@@ -194,10 +194,13 @@ function dom_ready()
     return ret;
 }
 
-if(!dom_ready()) {
-    myInterval = setInterval(() => {
-        dom_ready();
-    }, 1000);
+const rootElement = document.documentElement;
+if(rootElement) {
+    if(!dom_ready()) {
+        myInterval = setInterval(() => {
+            dom_ready();
+        }, 1000);
+    }
 }
 
 

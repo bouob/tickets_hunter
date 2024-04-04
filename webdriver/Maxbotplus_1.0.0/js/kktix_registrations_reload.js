@@ -95,11 +95,9 @@ function kktix_ajax_return_register_info(register_info)
         }
         const rootElement = document.documentElement;
         rootElement.remove();
-        /*
-        $('*').bind('blur change click dblclick error focus focusin focusout hover keydown keypress keyup load mousedown mouseenter mouseleave mousemove mouseout mouseover mouseup resize scroll select submit', function(event){
-            event.stopPropagation();
-        });
-        */
+        register_info=null;
+        settings = null;
+        myInterval = null;        
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();
@@ -112,6 +110,7 @@ function kktix_ajax_return_register_info(register_info)
     }
     else {
         kktix_event_base_info(register_info);
+        kktix_force_auto_reload_by_timer()
     }
 }
 
@@ -196,7 +195,6 @@ storage.get('status', function (items)
     if (items.status && items.status=='ON')
     {
         kktix_event_register_info();
-        kktix_force_auto_reload_by_timer();
     } else {
         //console.log('maxbot status is not ON');
     }

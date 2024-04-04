@@ -681,7 +681,7 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.05
+    config_dict["advanced"]["auto_reload_page_interval"] = 0.25
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
