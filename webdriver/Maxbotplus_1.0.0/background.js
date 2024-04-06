@@ -160,7 +160,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log(typeof crypto_decrypt);
         let answer="";
         if(typeof crypto_decrypt === 'function') {
-            answer=crypto_decrypt(request_json.data.text,request_json.data.KEY,request_json.data.IV);
+            answer=crypto_decrypt(request_json.data.text,request_json.data.key,request_json.data.iv);
         }
         result_json={"answer": answer};
         sendResponse(result_json);
@@ -26532,7 +26532,7 @@ crypto_decrypt = function decrypt(text, KEY, IV) {
     let decipher = crypto.createDecipheriv('aes-128-cbc', KEY, IV);
     let decrypted = decipher.update(encryptedText);
     decrypted = decipher.final();
-    return decrypted.toString()
+    return decrypted.toString();
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)

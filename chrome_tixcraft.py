@@ -142,11 +142,11 @@ def get_config_dict(args):
             if not args.homepage is None:
                 if len(args.homepage) > 0:
                     config_dict["homepage"] = args.homepage
-            
+
             if not args.ticket_number is None:
                 if args.ticket_number > 0:
                     config_dict["ticket_number"] = args.ticket_number
-            
+
             if not args.browser is None:
                 if len(args.browser) > 0:
                     config_dict["browser"] = args.browser
@@ -154,7 +154,7 @@ def get_config_dict(args):
             if not args.tixcraft_sid is None:
                 if len(args.tixcraft_sid) > 0:
                     config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
-            
+
             if not args.ibonqware is None:
                 if len(args.ibonqware) > 0:
                     config_dict["advanced"]["ibonqware"] = args.ibonqware
@@ -165,7 +165,7 @@ def get_config_dict(args):
             if not args.kktix_password is None:
                 if len(args.kktix_password) > 0:
                     config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
-            
+
             if not args.proxy_server is None:
                 if len(args.proxy_server) > 2:
                     config_dict["advanced"]["proxy_server_port"] = args.proxy_server
@@ -590,7 +590,7 @@ def close_browser_tabs(driver):
 
 def get_driver_by_config(config_dict):
     driver = None
-    
+
     # read config.
     homepage = config_dict["homepage"]
 
@@ -771,9 +771,6 @@ def get_driver_by_config(config_dict):
                 if len(config_dict["advanced"]["fami_account"])>0:
                     homepage = CONST_FAMI_SIGN_IN_URL
 
-            if 'ibon.com' in homepage:
-                pass
-
             if 'kham.com' in homepage:
                 if len(config_dict["advanced"]["kham_account"])>0:
                     homepage = CONST_KHAM_SIGN_IN_URL
@@ -794,9 +791,6 @@ def get_driver_by_config(config_dict):
                 if len(config_dict["advanced"]["hkticketing_account"])>0:
                     homepage = CONST_HKTICKETING_SIGN_IN_URL
 
-            if 'galaxymacau.com' in homepage:
-                pass
-
             if 'ticketplus.com.tw' in homepage:
                 if len(config_dict["advanced"]["ticketplus_account"]) > 1:
                     homepage = "https://ticketplus.com.tw/"
@@ -816,14 +810,14 @@ def get_driver_by_config(config_dict):
                 tixcraft_family = True
 
             if tixcraft_family:
-                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
+                tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
+                if len(tixcraft_sid) > 1:
                     driver.delete_cookie("SID")
                     driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
 
             if 'ibon.com' in homepage:
-                if len(config_dict["advanced"]["ibonqware"]) > 1:
-                    ibonqware = config_dict["advanced"]["ibonqware"]
+                ibonqware = config_dict["advanced"]["ibonqware"]
+                if len(ibonqware) > 1:
                     driver.delete_cookie("ibonqware")
                     driver.add_cookie({"name":"ibonqware", "value": ibonqware, "domain" : "ibon.com.tw", "secure":True})
 
@@ -926,66 +920,32 @@ def force_press_button(driver, select_by, select_query, force_submit=True):
     return ret
 
 # close some div on home url.
-def tixcraft_home_close_window(driver, config_dict):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
+def tixcraft_home_close_window(driver):
     accept_all_cookies_btn = None
     try:
         accept_all_cookies_btn = driver.find_element(By.CSS_SELECTOR, '#onetrust-accept-btn-handler')
+        if accept_all_cookies_btn:
+            accept_all_cookies_btn.click()
     except Exception as exc:
         #print(exc)
-        if show_debug_message:
-            print("find accept_all_cookies_btn fail")
         pass
-
-    if not accept_all_cookies_btn is None:
-        is_visible = False
-        try:
-            if accept_all_cookies_btn.is_enabled() and accept_all_cookies_btn.is_displayed():
-                is_visible = True
-        except Exception as exc:
-            #print(exc)
-            pass
-
-        if is_visible:
-            if show_debug_message:
-                print("accept_all_cookies_btn visible. start to press.")
-            try:
-                accept_all_cookies_btn.click()
-            except Exception as exc:
-                #print(exc)
-                print("try to click accept_all_cookies_btn fail, force click by js.")
-                try:
-                    driver.execute_script("arguments[0].click();", accept_all_cookies_btn)
-                except Exception as exc:
-                    pass
-        else:
-            if show_debug_message:
-                print("accept_all_cookies_btn invisible.")
-
 
 # from detail to game
 def tixcraft_redirect(driver, url):
     ret = False
-
     game_name = ""
-
-    # get game_name from url
     url_split = url.split("/")
     if len(url_split) >= 6:
         game_name = url_split[5]
-
-    if "/activity/detail/%s" % (game_name,) in url:
-        # to support teamear
-        entry_url = url.replace("/activity/detail/","/activity/game/")
-        print("redirec to new url:", entry_url)
-        try:
-            driver.get(entry_url)
-        except Exception as exec1:
-            pass
-        ret = True
-
+    if len(game_name) > 0:
+        if "/activity/detail/%s" % (game_name,) in url:
+            entry_url = url.replace("/activity/detail/","/activity/game/")
+            print("redirec to new url:", entry_url)
+            try:
+                driver.get(entry_url)
+                ret = True
+            except Exception as exec1:
+                pass
     return ret
 
 
@@ -1728,25 +1688,25 @@ def ticket_number_select_fill(driver, select_obj, ticket_number):
 
     return is_ticket_number_assigned
 
-def get_div_text_by_selector(driver, my_css_selector):
+def get_text_by_selector(driver, my_css_selector, attribute='innerHTML'):
     div_element = None
     try:
         div_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
     except Exception as exc:
-        print("find verify textbox fail")
+        #print("find element fail")
         pass
 
-    question_text = ""
+    row_text = ""
     if not div_element is None:
         try:
-            question_text = div_element.text
+            if attribute=='innerText':
+                row_html = div_element.get_attribute('innerHTML')
+                row_text = util.remove_html_tags(row_html)
+            else:
+                row_text = div_element.get_attribute(attribute)
         except Exception as exc:
-            print("get text fail")
-
-    if question_text is None:
-        question_text = ""
-
-    return question_text
+            print("get text fail:", my_css_selector)
+    return row_text
 
 
 def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
@@ -1910,7 +1870,7 @@ def tixcraft_input_check_code(driver, config_dict, fail_list, question_selector)
 
     answer_list = []
 
-    question_text = get_div_text_by_selector(driver, question_selector)
+    question_text = get_text_by_selector(driver, question_selector, 'innerText')
     if len(question_text) > 0:
         write_question_to_file(question_text)
 
@@ -2804,7 +2764,7 @@ def kktix_check_agree_checkbox(driver, config_dict):
 
     if is_dom_ready:
         is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#person_agree_terms')
-    
+
     #print("status:", is_dom_ready, is_finish_checkbox_click)
     return is_dom_ready, is_finish_checkbox_click
 
@@ -2858,30 +2818,6 @@ def force_check_checkbox(driver, agree_checkbox):
     return is_finish_checkbox_click
 
 
-
-
-
-def kktix_reg_captcha_question_text(captcha_inner_div):
-    captcha_text_div = None
-    try:
-        captcha_text_div = captcha_inner_div.find_element(By.TAG_NAME, "p")
-    except Exception as exc:
-        pass
-        print("find p tag(captcha_text_div) fail")
-        print(exc)
-
-    question_text = None
-    if not captcha_text_div is None:
-        try:
-            question_text = captcha_text_div.text
-        except Exception as exc:
-            pass
-
-    if question_text is None:
-        question_text = ""
-
-    return question_text
-
 # PS: no double check, NOW.
 def kktix_double_check_all_text_value(driver, ticket_number):
     is_do_press_next_button = False
@@ -2916,19 +2852,6 @@ def kktix_double_check_all_text_value(driver, ticket_number):
 
     return is_do_press_next_button
 
-# 本票券需要符合以下任一資格才可以購買
-def get_kktix_control_label_text(driver):
-    question_text = ""
-
-    captcha_inner_div = None
-    try:
-        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div > div.code-input > div.control-group > label.control-label')
-        if not captcha_inner_div is None:
-            question_text = util.remove_html_tags(captcha_inner_div.get_attribute('innerHTML'))
-    except Exception as exc:
-        pass
-    return question_text
-
 def set_kktix_control_label_text(driver, config_dict):
     fail_list = []
     answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
@@ -2943,18 +2866,6 @@ def set_kktix_control_label_text(driver, config_dict):
     check_input_interval = 0.2
     is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
-def get_kktix_question_text(driver):
-    question_text = ""
-
-    captcha_inner_div = None
-    try:
-        captcha_inner_div = driver.find_element(By.CSS_SELECTOR, 'div.custom-captcha-inner')
-    except Exception as exc:
-        pass
-
-    if not captcha_inner_div is None:
-        question_text = kktix_reg_captcha_question_text(captcha_inner_div)
-    return question_text
 
 def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
     show_debug_message = True       # debug.
@@ -2966,7 +2877,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
     answer_list = []
 
     is_question_popup = False
-    question_text = get_kktix_question_text(driver)
+    question_text = get_text_by_selector(driver, 'div.custom-captcha-inner p', 'innerText')
     if len(question_text) > 0:
         is_question_popup = True
         write_question_to_file(question_text)
@@ -3067,14 +2978,14 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket):
 
                 # whole event question.
                 fail_list, is_question_popup = kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div)
-                
+
                 # single option question
                 if not is_question_popup:
                     # no captcha text popup, goto next page.
-                    control_text = get_kktix_control_label_text(driver)
+                    control_text = get_text_by_selector(driver, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
                     if show_debug_message:
                         print("control_text:", control_text)
-                    
+
                     if len(control_text) == 0:
                         click_ret = kktix_press_next_button(driver)
                     else:
@@ -3086,7 +2997,7 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket):
                         else:
                             if not config_dict["advanced"]["chrome_extension"]:
                                 is_fill_at_webdriver = True
-                        
+
                         # TODO: not implement in extension, so force to fill in webdriver.
                         is_fill_at_webdriver = True
                         if is_fill_at_webdriver:
@@ -6014,7 +5925,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
                 break
 
 def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
-    tixcraft_home_close_window(driver, config_dict)
+    tixcraft_home_close_window(driver)
 
     home_url_list = ['https://tixcraft.com/'
     ,'https://indievox.com/'
@@ -6030,7 +5941,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 pass
             break
 
-    # special case for same event re-open.
+    # special case for same event re-open, redirect to user's homepage.
     if 'https://tixcraft.com/' == url or 'https://tixcraft.com/activity' == url:
         if "/ticket/area/" in config_dict["homepage"]:
             if len(config_dict["homepage"].split('/'))==7:
@@ -6104,6 +6015,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
     if '/ticket/order' in url:
         tixcraft_dict["done_time"] = time.time()
 
+    is_quit_bot = False
     if '/ticket/checkout' in url:
         if not tixcraft_dict["start_time"] is None:
             if not tixcraft_dict["done_time"] is None:
@@ -6119,9 +6031,8 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
                 print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
                 tixcraft_dict["is_popup_checkout"] = True
-                driver.quit()
-                sys.exit()
-        
+                is_quit_bot = True
+
         if config_dict["advanced"]["play_sound"]["order"]:
             if not tixcraft_dict["played_sound_order"]:
                 play_sound_while_ordering(config_dict)
@@ -6130,7 +6041,7 @@ def tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
         tixcraft_dict["is_popup_checkout"] = False
         tixcraft_dict["played_sound_order"] = False
 
-    return tixcraft_dict
+    return tixcraft_dict, is_quit_bot
 
 def kktix_paused_main(driver, url, config_dict, kktix_dict):
     is_url_contain_sign_in = False
@@ -6143,7 +6054,7 @@ def kktix_paused_main(driver, url, config_dict, kktix_dict):
         if len(kktix_account) > 4:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
-    
+
     # PS: after test, this still not popup reCaptcha.
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
@@ -6230,57 +6141,55 @@ def kktix_main(driver, url, config_dict, kktix_dict):
                         # break loop.
                         is_kktix_got_ticket = False
 
+    is_quit_bot = False
     if is_kktix_got_ticket:
-            if not kktix_dict["start_time"] is None:
-                if not kktix_dict["done_time"] is None:
-                    bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
-                    if kktix_dict["elapsed_time"] != bot_elapsed_time:
-                        print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
-                    kktix_dict["elapsed_time"] = bot_elapsed_time
-            
-            if config_dict["advanced"]["play_sound"]["order"]:
-                if not kktix_dict["played_sound_order"]:
-                    play_sound_while_ordering(config_dict)
-            
-            kktix_dict["played_sound_order"] = True
+        if not kktix_dict["start_time"] is None:
+            if not kktix_dict["done_time"] is None:
+                bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
+                if kktix_dict["elapsed_time"] != bot_elapsed_time:
+                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
+                kktix_dict["elapsed_time"] = bot_elapsed_time
 
-            if config_dict["advanced"]["headless"]:
-                if not kktix_dict["is_popup_checkout"]:
-                    kktix_account = config_dict["advanced"]["kktix_account"]
-                    kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-                    if kktix_password == "":
-                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
-                    
-                    print("基本資料(或實名制)網址:", url)
-                    if len(kktix_account) > 0:
-                        print("搶票成功, 帳號:", kktix_account)
+        if config_dict["advanced"]["play_sound"]["order"]:
+            if not kktix_dict["played_sound_order"]:
+                play_sound_while_ordering(config_dict)
 
-                        script_name = "chrome_tixcraft"
-                        if config_dict["advanced"]["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
-                            script_name = "nodriver_tixcraft"
-                        threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
-                        #driver.quit()
-                        #sys.exit()
+        kktix_dict["played_sound_order"] = True
 
-                    is_event_page = False
-                    if len(url.split('/'))>=7:
-                        is_event_page = True
-                    if is_event_page:
-                        confirm_clicked = kktix_confirm_order_button(driver)
-                        if confirm_clicked:
-                            domain_name = url.split('/')[2]
-                            checkout_url = "https://%s/account/orders" % (domain_name)
-                            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-                            webbrowser.open_new(checkout_url)
-                    
-                    kktix_dict["is_popup_checkout"] = True
-                    driver.quit()
-                    sys.exit()
+        if config_dict["advanced"]["headless"]:
+            if not kktix_dict["is_popup_checkout"]:
+                kktix_account = config_dict["advanced"]["kktix_account"]
+                kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+                if kktix_password == "":
+                    kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+
+                print("基本資料(或實名制)網址:", url)
+                if len(kktix_account) > 0:
+                    print("搶票成功, 帳號:", kktix_account)
+
+                    script_name = "chrome_tixcraft"
+                    if config_dict["advanced"]["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
+                        script_name = "nodriver_tixcraft"
+                    threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
+
+                is_event_page = False
+                if len(url.split('/'))>=7:
+                    is_event_page = True
+                if is_event_page:
+                    confirm_clicked = kktix_confirm_order_button(driver)
+                    if confirm_clicked:
+                        domain_name = url.split('/')[2]
+                        checkout_url = "https://%s/account/orders" % (domain_name)
+                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                        webbrowser.open_new(checkout_url)
+
+                kktix_dict["is_popup_checkout"] = True
+                is_quit_bot = True
     else:
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
 
-    return kktix_dict
+    return kktix_dict, is_quit_bot
 
 def fami_login(driver, account, password):
     is_email_sent = assign_text(driver, By.CSS_SELECTOR, '#usr_act', account)
@@ -6892,7 +6801,7 @@ def cityline_main(driver, url, config_dict):
         if len(url.split('/')) == 6:
             fail_list = []
             fail_list = cityline_input_code(driver, config_dict, fail_list)
-        
+
 
 def get_ibon_question_text(driver):
     question_div = None
@@ -10024,7 +9933,7 @@ def ticketplus_order_exclusive_code(driver, config_dict, fail_list):
     answer_list = []
 
     question_selector = ".exclusive-code > form > div"
-    question_text = get_div_text_by_selector(driver, question_selector)
+    question_text = get_text_by_selector(driver, question_selector, 'innerText')
     is_answer_sent = False
     is_question_popup = False
     if len(question_text) > 0:
@@ -10509,7 +10418,6 @@ def ticketplus_account_auto_fill(driver, config_dict):
 
     # auto fill account info.
     if len(config_dict["advanced"]["ticketplus_account"]) > 0:
-
         try:
             all_cookies=list_all_cookies(driver)
             if 'user' in all_cookies:
@@ -10523,15 +10431,62 @@ def ticketplus_account_auto_fill(driver, config_dict):
 
         #print("is_user_signin:", is_user_signin)
         if not is_user_signin:
-            sign_in_btn = None
+            is_sign_in_btn_pressed = False
             try:
                 my_css_selector = 'button.v-btn > span.v-btn__content > i.mdi-account'
                 sign_in_btn = driver.find_element(By.CSS_SELECTOR, my_css_selector)
                 if not sign_in_btn is None:
                     sign_in_btn.click()
+                    is_sign_in_btn_pressed = True
                     time.sleep(0.2)
             except Exception as exc:
+                #print(exc)
+                # RWD mode not show sign in icon.
                 pass
+
+            #print("is_sign_in_btn_pressed", is_sign_in_btn_pressed)
+            if not is_sign_in_btn_pressed:
+                #print("rwd mode")
+                action_btns = None
+                try:
+                    my_css_selector = 'div.px-4.py-3.drawerItem.cursor-pointer'
+                    action_btns = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+                except Exception as exc:
+                    #print(exc)
+                    pass
+                if action_btns:
+                    #print("len:", len(action_btns))
+                    if len(action_btns) >= 4:
+                        el_pass = None
+                        try:
+                            my_css_selector = 'input[type="password"]'
+                            el_pass = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                        except Exception as exc:
+                            #print(exc)
+                            pass
+
+                        is_need_popup_modal = False
+                        if el_pass is None:
+                            is_need_popup_modal = True
+                        else:
+                            try:
+                                if not el_pass.is_displayed():
+                                    is_need_popup_modal = True
+                            except Exception as exc:
+                                #print(exc)
+                                pass
+
+                        print("is_need_popup_modal", is_need_popup_modal)
+                        if is_need_popup_modal:
+                            print("show sign in modal")
+                            #action_btns[3].click()
+                            try:
+                                driver.set_script_timeout(1)
+                                driver.execute_script("arguments[0].click();", action_btns[3])
+                            except Exception as exc:
+                                #print(exc)
+                                pass
+
 
             is_account_sent, is_password_sent = ticketplus_account_sign_in(driver, config_dict)
 
@@ -10947,6 +10902,7 @@ def main(args):
         pass
 
     maxbot_last_reset_time = time.time()
+    is_quit_bot = False
     while True:
         time.sleep(0.05)
 
@@ -10955,8 +10911,15 @@ def main(args):
             print("web driver not accessible!")
             break
 
-        url, is_quit_bot = get_current_url(driver)
+        if not is_quit_bot:
+            url, is_quit_bot = get_current_url(driver)
+
         if is_quit_bot:
+            try:
+                driver.quit()
+                driver = None
+            except Exception as e:
+                pass
             break
 
         if url is None:
@@ -11001,7 +10964,7 @@ def main(args):
             tixcraft_family = True
 
         if tixcraft_family:
-            tixcraft_dict = tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
+            tixcraft_dict, is_quit_bot = tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
@@ -11054,6 +11017,7 @@ def main(args):
                 facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
             if len(facebook_account) > 4:
                 facebook_login(driver, facebook_account, facebook_password)
+                time.sleep(2)
 
 def cli():
     parser = argparse.ArgumentParser(

@@ -17,24 +17,24 @@ async function ajax_return_done(data, event_id)
 }
 
 async function wait_function_ready() {
-    const currentUrl = window.location.href; 
+    const currentUrl = window.location.href;
     const event_id = currentUrl.split('/')[4];
     if(event_id){
         let api_url = "https://apis.ticketplus.com.tw/config/api/v1/getS3?path=event/"+event_id+"/sessions.json";
         //console.log("calling api:" + api_url);
         $.get( api_url, function() {
                 //alert( "success" );
-            })
-            .done(function(data) {
-                //alert( "second success" );
-                ajax_return_done(data, event_id);
-            })
-            .fail(function() {
-                //alert( "error" );
-            })
-            .always(function() {
-                //alert( "finished" );
-            });
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            ajax_return_done(data, event_id);
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
     }
 }
 
