@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.25)"
+CONST_APP_VERSION = "MaxBot (2024.03.26)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -115,6 +115,21 @@ CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+CONST_PREFS_DICT = {
+    "credentials_enable_service": False, 
+    "in_product_help.snoozed_feature.IPH_LiveCaption.is_dismissed": True,
+    "in_product_help.snoozed_feature.IPH_LiveCaption.last_dismissed_by": 4,
+    "media_router.show_cast_sessions_started_by_other_devices.enabled": False,
+    "net.network_prediction_options": 3,
+    "privacy_guide.viewed": True,
+    "profile.default_content_setting_values.notifications": 2,
+    "profile.default_content_setting_values.sound": 2,
+    "profile.name": CONST_APP_VERSION, 
+    "profile.password_manager_enabled": False, 
+    "safebrowsing.enabled":False,
+    "safebrowsing.enhanced":False,
+    "sync.autofill_wallet_import_enabled_migrated":False,
+    "translate":{"enabled": False}}
 
 warnings.simplefilter('ignore',InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -292,7 +307,7 @@ def get_chrome_options(webdriver_path, config_dict):
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
     # Deprecated chrome option is ignored: useAutomationExtension
     #chrome_options.add_experimental_option('useAutomationExtension', False)
-    chrome_options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "profile.name": CONST_APP_VERSION, "translate":{"enabled": False}})
+    chrome_options.add_experimental_option("prefs", CONST_PREFS_DICT)
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         chrome_options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
@@ -455,7 +470,7 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.add_argument("--no-sandbox")
     options.add_argument("--no-service-autorun")
     options.add_argument("--password-store=basic")
-    options.add_experimental_option("prefs", {"credentials_enable_service": False, "profile.password_manager_enabled": False, "profile.name": CONST_APP_VERSION, "translate":{"enabled": False}})
+    options.add_experimental_option("prefs", CONST_PREFS_DICT)
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])

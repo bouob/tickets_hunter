@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.25)"
+CONST_APP_VERSION = "MaxBot (2024.03.26)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1392,12 +1392,33 @@ def get_maxbot_plus_extension_path():
 
     return config_filepath
 
+def get_maxbot_block_extension_path():
+    extension_path = "webdriver/Maxblockplus_1.0.0/"
+    if platform.system() == 'Windows':
+        extension_path = extension_path.replace("/","\\")
+
+    app_root = util.get_app_root()
+    config_filepath = os.path.join(app_root, extension_path)
+    #print("config_filepath:", config_filepath)
+
+    # check extesion mainfest
+    path = pathlib.Path(config_filepath)
+    if path.exists():
+        if path.is_dir():
+            #print("found extension dir")
+            for item in path.rglob("manifest.*"):
+                path = item.parent
+            #print("final path:", path)
+
+    return config_filepath
+
 def get_extension_config(config_dict):
     default_lang = "zh-TW"
     no_sandbox=True
     conf = Config(browser_args=get_nodriver_browser_args(), lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
         conf.add_extension(get_maxbot_plus_extension_path())
+        conf.add_extension(get_maxbot_block_extension_path())
     return conf
 
 async def nodrver_block_urls(tab, config_dict):
@@ -1504,9 +1525,33 @@ def nodriver_overwrite_prefs(conf, prefs_dict={}):
     if not os.path.exists(prefs_filepath):
         os.mkdir(prefs_filepath)
     prefs_filepath = os.path.join(prefs_filepath,"Preferences")
+    prefs_dict["in_product_help"]={}
+    prefs_dict["in_product_help"]["snoozed_feature"]={}
+    prefs_dict["in_product_help"]["snoozed_feature"]["IPH_LiveCaption"]={}
+    prefs_dict["in_product_help"]["snoozed_feature"]["IPH_LiveCaption"]["is_dismissed"]=True
+    prefs_dict["in_product_help"]["snoozed_feature"]["IPH_LiveCaption"]["last_dismissed_by"]=4
+    prefs_dict["media_router"]={}
+    prefs_dict["media_router"]["show_cast_sessions_started_by_other_devices"]={}
+    prefs_dict["media_router"]["show_cast_sessions_started_by_other_devices"]["enabled"]=False
+    prefs_dict["net"]={}
+    prefs_dict["net"]["network_prediction_options"]=3
+    prefs_dict["privacy_guide"]={}
+    prefs_dict["privacy_guide"]["viewed"]=True
+    prefs_dict["privacy_sandbox"]={}
+    prefs_dict["privacy_sandbox"]["first_party_sets_enabled"]=False
     prefs_dict["profile"]={}
+    prefs_dict["profile"]["cookie_controls_mode"]=1
+    prefs_dict["profile"]["default_content_setting_values"]={}
+    prefs_dict["profile"]["default_content_setting_values"]["notifications"]=2
+    prefs_dict["profile"]["default_content_setting_values"]["sound"]=2
     prefs_dict["profile"]["name"]=CONST_APP_VERSION
     prefs_dict["profile"]["password_manager_enabled"]=False
+    prefs_dict["safebrowsing"]={}
+    prefs_dict["safebrowsing"]["enabled"]=False
+    prefs_dict["safebrowsing"]["enhanced"]=False
+    prefs_dict["sync"]={}
+    prefs_dict["sync"]["autofill_wallet_import_enabled_migrated"]=False
+
     json_str = json.dumps(prefs_dict)
     with open(prefs_filepath, 'w') as outfile:
         outfile.write(json_str)
@@ -1521,6 +1566,8 @@ def nodriver_overwrite_prefs(conf, prefs_dict={}):
         "memory-saver-multi-state-mode@1",
         "modal-memory-saver@1"
     ]
+    state_dict["dns_over_https"]={}
+    state_dict["dns_over_https"]["mode"]="off"
     json_str = json.dumps(state_dict)
     with open(state_filepath, 'w') as outfile:
         outfile.write(json_str)
@@ -1728,7 +1775,6 @@ async def main(args):
                 facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
             if len(facebook_account) > 4:
                 await nodriver_facebook_login(tab, facebook_account, facebook_password)
-
 
 def cli():
     parser = argparse.ArgumentParser(
