@@ -178,7 +178,7 @@ function kktix_force_auto_reload_by_timer()
             if(max_dwell_time <= 10) {
                 max_dwell_time = 10;
             }
-            //console.log('We are going to reload after few seconeds.');
+            console.log('We are going to force reload after few seconeds.');
             setTimeout(function () {
                 location.reload();
             }, max_dwell_time * 1000);

@@ -8,6 +8,7 @@ const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
+const max_dwell_time = document.querySelector('#max_dwell_time');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
@@ -58,6 +59,7 @@ async function saveChanges()
             settings.keyword_exclude = keyword_exclude.value;
 
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
+            settings.advanced.max_dwell_time = max_dwell_time.value;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
 
@@ -108,6 +110,7 @@ function loadChanges()
 
             keyword_exclude.value = settings.keyword_exclude;
             auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
+            max_dwell_time.value = settings.advanced.max_dwell_time;
             disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
             ocr_captcha_enable.checked = settings.ocr_captcha.enable;
 

@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.23)"
+CONST_APP_VERSION = "MaxBot (2024.03.24)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -10968,7 +10968,7 @@ def main(args):
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
-            kktix_dict = kktix_main(driver, url, config_dict, kktix_dict)
+            kktix_dict, is_quit_bot = kktix_main(driver, url, config_dict, kktix_dict)
 
         if 'famiticket.com' in url:
             fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
