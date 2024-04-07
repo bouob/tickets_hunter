@@ -46,9 +46,9 @@ function kktix_area_keyword(settings, base_info, register_info)
     }
     // console.log(area_keyword_array);
     let target_area = null;
+    let matched_block=[];
     if(area_keyword_array.length) {
         for (let i = 0; i < area_keyword_array.length; i++) {
-            let matched_block=[];
             $("div.ticket-unit").each(function ()
             {
                 let html_text=$(this).text();
@@ -64,7 +64,6 @@ function kktix_area_keyword(settings, base_info, register_info)
             }
         }
     } else {
-        let matched_block=[];
         $("div.ticket-unit").each(function ()
         {
             matched_block.push($(this));
@@ -147,6 +146,7 @@ function kktix_area_keyword(settings, base_info, register_info)
                     }
                 }
 
+                let hide_other_row = false;
                 if(auto_click_next_btn) {
                     let $next_btn = $('div.register-new-next-button-area > button');
                     if($next_btn) {
@@ -154,6 +154,17 @@ function kktix_area_keyword(settings, base_info, register_info)
                             $next_btn.last().click();
                         } else {
                             $next_btn.click();
+                        }
+                        hide_other_row = true;
+                    }
+                }
+
+                // due to racing with web driver.
+                if(hide_other_row) {
+                    for (let i = 0; i < matched_block.length; i++) {
+                        if(target_area!=matched_block[i])
+                        {
+                            matched_block[i].remove();
                         }
                     }
                 }
@@ -196,9 +207,8 @@ if(rootElement) {
     if(!dom_ready()) {
         myInterval = setInterval(() => {
             dom_ready();
-        }, 400);
+        }, 200);
     }
-
     $("footer").remove();
     $("div.banner-wrapper div.img-wrapper img").remove();
 }
