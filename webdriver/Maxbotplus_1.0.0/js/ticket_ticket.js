@@ -52,12 +52,12 @@ chrome.runtime.onMessage.addListener((message) => {
 
 function ticket_set_ocr_answer(answer)
 {
-    console.log("answer:"+answer);
+    //console.log("answer:"+answer);
     if(answer.length > 0) {
-        const currentUrl = window.location.href; 
+        const currentUrl = window.location.href;
         const domain = currentUrl.split('/')[2];
         const scrip_page = currentUrl.split('/')[5];
-        
+
         if(answer.length == 4) {
             answer = answer.toUpperCase();
             let query_string = "div.form-group input[autocomplete='off']";
@@ -82,11 +82,11 @@ function ticket_set_ocr_answer(answer)
             if(ocr_type && ocr_type.length > 0) {
                 let new_image_src = "/pic.aspx?TYPE="+ ocr_type +"&ts=" + new Date().getTime();
                 $("#chk_pic").attr("src", new_image_src);
-                
+
                 let remote_url_string = get_remote_url(settings);
                 myInterval = setInterval(() => {
                     ticket_orc_image_ready(remote_url_string);
-                }, 400);                
+                }, 400);
             }
         }
 
@@ -102,7 +102,7 @@ async function ticket_get_ocr_answer(api_url, image_data)
         'image_data':image_data,
       }
     };
-    
+
     let bundle_string = JSON.stringify(bundle);
     const return_answer = await chrome.runtime.sendMessage(bundle);
     //console.log(return_answer);
@@ -155,13 +155,22 @@ function get_remote_url(settings)
     return remote_url_string;
 }
 
+function ticket_assign_ticket(settings)
+{
+    if(settings) {
+        $('div.qty-select input[type="text"]').val(settings.ticket_number);
+    }
+}
+
 storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
     {
         //console.log("ticket_number:"+ settings.ticket_number);
         //ticket_assign_adjacent_seat(settings.advanced.disable_adjacent_seat);
-        
+
+        ticket_assign_ticket(settings);
+
         // ocr
         if(settings.ocr_captcha.enable) {
             let remote_url_string = get_remote_url(settings);
@@ -174,7 +183,7 @@ storage.get('status', function (items)
             // no orc, just focus;
             ticket_focus_on_captcha();
         }
-        } else {
+    } else {
         console.log('no status found');
     }
 });

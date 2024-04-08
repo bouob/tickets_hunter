@@ -2,7 +2,7 @@ const storage = chrome.storage.local;
 var settings = null;
 var myInterval = null;
 
-function kktix_clean_exclude(settings, register_info)
+function kktix_clean_exclude(settings)
 {
     let exclude_keyword_array = [];
     if(settings) {
@@ -63,7 +63,7 @@ function clean_sold_out_row(register_info, base_info)
             $("body").append(register_info_div);
             let base_info_div="<div style='display:none' id='base_info'>" + JSON.stringify(base_info) + "</div>";
             $("body").append(base_info_div);
-            kktix_clean_exclude(settings, register_info);
+            kktix_clean_exclude(settings);
             //kktix_area_keyword(settings, register_info);
         }
     }

@@ -209,7 +209,8 @@
         },
         {
             "matches": [
-                "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*"
+                "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*",
+                "https://kham.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=*&PRODUCT_ID=*"
             ],
             "run_at": "document_end",
             "js": [
