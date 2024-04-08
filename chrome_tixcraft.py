@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.27)"
+CONST_APP_VERSION = "MaxBot (2024.03.28)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -762,7 +762,7 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('*.azureedge.net/QWARE_TICKET//images/*')
                 NETWORK_BLOCKED_URLS.append('*static.ticketplus.com.tw/event/*')
 
-                NETWORK_BLOCKED_URLS.append('https://kktix.cc/change_locale?locale=*')
+                #NETWORK_BLOCKED_URLS.append('https://kktix.cc/change_locale?locale=*')
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/logo_*.png')
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/icon-*.png')
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/upload_images/*.jpg')
@@ -779,6 +779,12 @@ def get_driver_by_config(config_dict):
 
             if 'kktix.c' in homepage:
                 if len(config_dict["advanced"]["kktix_account"])>0:
+                    # for like human.
+                    try:
+                        driver.get(homepage)
+                        time.sleep(5)
+                    except Exception as e:
+                        pass
                     if not 'https://kktix.com/users/sign_in?' in homepage:
                         homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
@@ -5297,6 +5303,9 @@ def facebook_login(driver, account, password):
 
 def kktix_login(driver, account, password):
     ret = False
+    # for like human.
+    time.sleep(5)
+
     el_email = None
     try:
         el_email = driver.find_element(By.CSS_SELECTOR, '#user_login')
@@ -6110,7 +6119,8 @@ def kktix_main(driver, url, config_dict, kktix_dict):
         if '/registrations/new' in url:
             kktix_dict["start_time"] = time.time()
 
-            kktix_reg_auto_reload(driver, url, config_dict)
+            # call api, cuase add access log. DISABLE it.
+            # kktix_reg_auto_reload(driver, url, config_dict)
 
             is_dom_ready = False
             is_finish_checkbox_click = False

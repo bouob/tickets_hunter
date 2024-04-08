@@ -243,6 +243,9 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
 
 
 async def nodriver_kktix_signin(tab, url, config_dict):
+    # for like human.
+    time.sleep(5)
+
     kktix_account = config_dict["advanced"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
@@ -274,6 +277,14 @@ async def nodriver_kktix_paused_main(tab, url, config_dict, kktix_dict):
 async def nodriver_goto_homepage(driver, config_dict):
     homepage = config_dict["homepage"]
     if 'kktix.c' in homepage:
+        # for like human.
+        try:
+            tab = await driver.get(homepage)
+            time.sleep(5)
+        except Exception as e:
+            pass
+        
+
         if len(config_dict["advanced"]["kktix_account"])>0:
             if not 'https://kktix.com/users/sign_in?' in homepage:
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
@@ -306,8 +317,11 @@ async def nodriver_goto_homepage(driver, config_dict):
         if len(config_dict["advanced"]["ticketplus_account"]) > 1:
             homepage = "https://ticketplus.com.tw/"
 
-    tab = await driver.get(homepage)
-    time.sleep(1)
+    try:
+        tab = await driver.get(homepage)
+        time.sleep(3)
+    except Exception as e:
+        pass
 
     tixcraft_family = False
     if 'tixcraft.com' in homepage:
@@ -1732,7 +1746,7 @@ async def nodrver_block_urls(tab, config_dict):
         NETWORK_BLOCKED_URLS.append('*.azureedge.net/QWARE_TICKET//images/*')
         NETWORK_BLOCKED_URLS.append('*static.ticketplus.com.tw/event/*')
 
-        NETWORK_BLOCKED_URLS.append('https://kktix.cc/change_locale?locale=*')
+        #NETWORK_BLOCKED_URLS.append('https://kktix.cc/change_locale?locale=*')
         NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/logo_*.png')
         NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/icon-*.png')
         NETWORK_BLOCKED_URLS.append('https://t.kfs.io/upload_images/*.jpg')
@@ -1762,6 +1776,7 @@ async def nodriver_current_url(tab):
     exit_bot_error_strings = [
         "server rejected WebSocket connection: HTTP 500",
         "[Errno 61] Connect call failed ('127.0.0.1',",
+        "[WinError 1225] ",
     ]
 
     url = ""

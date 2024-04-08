@@ -114,7 +114,7 @@ function kktix_ajax_return_register_info(register_info)
     }
     else {
         kktix_event_base_info(register_info);
-        kktix_force_auto_reload_by_timer()
+        kktix_force_auto_reload_by_timer();
     }
 }
 
@@ -198,7 +198,9 @@ storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
     {
-        kktix_event_register_info();
+        // DISABLE this feature, to reduce access log.
+        //kktix_event_register_info();
+        kktix_force_auto_reload_by_timer();
     } else {
         //console.log('maxbot status is not ON');
     }
