@@ -122,8 +122,6 @@ function ibon_area_main() {
         if(settings) {
             auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
         }
-        const rootElement = document.documentElement;
-        rootElement.remove();
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();

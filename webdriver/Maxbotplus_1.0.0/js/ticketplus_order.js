@@ -34,8 +34,6 @@ function ajax_return_done(data, real_event_id, real_session_id) {
             auto_reload_page_interval = 0.7;
         }
 
-        //const rootElement = document.documentElement;
-        //rootElement.remove();
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();

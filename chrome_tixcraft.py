@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.26)"
+CONST_APP_VERSION = "MaxBot (2024.03.27)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -859,7 +859,7 @@ def force_press_button_iframe(driver, f, select_by, select_query, force_submit=T
         except Exception as exc:
             pass
 
-    is_clicked = force_press_button(driver, select_by, select_query, force_submit)
+    is_clicked = press_button(driver, select_by, select_query, force_submit)
 
     if f:
         # switch back to main content, otherwise we will get StaleElementReferenceException
@@ -902,7 +902,7 @@ selectSoldoutItems.forEach((eachItem) =>
         #print(exc)
         pass
 
-def force_press_button(driver, select_by, select_query, force_submit=True):
+def press_button(driver, select_by, select_query, force_submit=True):
     ret = False
     next_step_button = None
     try:
@@ -1148,7 +1148,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
         if show_debug_message:
             print("target_area got, start to press button.")
 
-        is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'button')
+        is_date_clicked = press_button(target_area, By.CSS_SELECTOR,'button')
         if not is_date_clicked:
             if show_debug_message:
                 print("press button fail, try to click hyperlink.")
@@ -1172,7 +1172,7 @@ def tixcraft_date_auto_select(driver, url, config_dict, domain_name):
 
 
             # for: ticketmaster.sg
-            is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
+            is_date_clicked = press_button(target_area, By.CSS_SELECTOR,'a')
 
     # [PS]: current reload condition only when
     if auto_reload_coming_soon_page_enable:
@@ -1297,7 +1297,7 @@ def ticketmaster_date_auto_select(driver, url, config_dict, domain_name):
 
     is_date_clicked = False
     if not target_area is None:
-        is_date_clicked = force_press_button(target_area, By.CSS_SELECTOR,'a')
+        is_date_clicked = press_button(target_area, By.CSS_SELECTOR,'a')
         if is_date_clicked:
             try:
                 window_handles_count = len(driver.window_handles)
@@ -1809,7 +1809,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                             form_input_1.send_keys(Keys.ENTER)
                             is_button_clicked = True
                         if len(next_step_button_css) > 0:
-                            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                            is_button_clicked = press_button(driver, By.CSS_SELECTOR, next_step_button_css)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
@@ -1854,7 +1854,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
             is_button_clicked = False
             form_input_2.send_keys(Keys.ENTER)
             if len(next_step_button_css) > 0:
-                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                is_button_clicked = press_button(driver, By.CSS_SELECTOR, next_step_button_css)
 
             if is_button_clicked:
                 is_answer_sent = True
@@ -2142,10 +2142,12 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main_agree(driver, config_dict):
+    is_finish_checkbox_click = False
     for i in range(3):
         is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
         if is_finish_checkbox_click:
             break
+    return is_finish_checkbox_click
 
 def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item):
     show_debug_message = True       # debug.
@@ -2401,7 +2403,7 @@ def kktix_confirm_order_button(driver):
 #   : 2: /events/xxx/registrations/new
 #   : This is ONLY for case-1, because case-2 lenght >5
 def kktix_events_press_next_button(driver):
-    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.tickets > a.btn-point')
+    is_button_clicked = press_button(driver, By.CSS_SELECTOR,'.tickets > a.btn-point')
     return is_button_clicked
 
 #   : This is for case-2 next button.
@@ -4703,7 +4705,7 @@ def cityline_purchase_button_press(driver, config_dict):
 
     is_button_clicked = False
     if is_date_assign_by_bot:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'button.purchase-btn')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'button.purchase-btn')
 
     return is_button_clicked
 
@@ -5207,7 +5209,7 @@ def ibon_performance(driver, config_dict):
     return is_price_assign_by_bot
 
 def ibon_purchase_button_press(driver):
-    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#ticket-wrap > a.btn')
+    is_button_clicked = press_button(driver, By.CSS_SELECTOR, '#ticket-wrap > a.btn')
     return is_button_clicked
 
 def assign_text(driver, by, query, val, overwrite = False, submit=False, overwrite_when = ""):
@@ -5355,7 +5357,7 @@ def cityline_login(driver, account, password):
 
     # press "click here" use password to login.
     if is_email_sent:
-        is_click_here_pressed = force_press_button(driver, By.CSS_SELECTOR,'.otp-box > ul > li:nth-child(3) > a')
+        is_click_here_pressed = press_button(driver, By.CSS_SELECTOR,'.otp-box > ul > li:nth-child(3) > a')
 
     is_password_sent = False
     if is_email_sent:
@@ -5482,7 +5484,7 @@ def kham_login(driver, account, password):
             pass
 
     if is_password_sent:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.memberContent > p > a > button.red')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.memberContent > p > a > button.red')
 
     ret = is_password_sent
 
@@ -5543,7 +5545,7 @@ def ticket_login(driver, account, password):
             pass
 
     if is_password_sent:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'input[value="登入"]')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR,'input[value="登入"]')
 
     ret = is_password_sent
 
@@ -5899,7 +5901,7 @@ def ticketmaster_assign_ticket_number(driver, config_dict):
 
         # must wait ticket number assign to focus captcha.
         if is_ticket_number_assigned:
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'#autoMode')
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR,'#autoMode')
 
 def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name):
     show_debug_message = True       # debug.
@@ -6432,7 +6434,7 @@ def urbtix_auto_survey(driver, config_dict):
                                 if question_direction in ['left','right']:
                                     for answer_item in util.synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
-                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            is_radio_clicked = press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
                                                 if show_debug_message:
                                                     print("fill answer:", answer_item)
@@ -6442,7 +6444,7 @@ def urbtix_auto_survey(driver, config_dict):
                                 if question_direction == "count":
                                     for answer_item in util.synonym_dict(question_answer_char):
                                         if answer_item in option_content_div_text:
-                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            is_radio_clicked = press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
                                                 if show_debug_message:
                                                     print("fill answer:", answer_item)
@@ -6456,7 +6458,7 @@ def urbtix_auto_survey(driver, config_dict):
                                         if 'LESS THEN ONE' in option_content_div_text.upper():
                                             is_match_none = True
                                         if is_match_none:
-                                            is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                            is_radio_clicked = press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                             if is_radio_clicked:
                                                 if show_debug_message:
                                                     print("fill answer:", '沒有')
@@ -6479,7 +6481,7 @@ def urbtix_auto_survey(driver, config_dict):
                                                 if 'MORE THEN' in option_content_div_text.upper() and answer_item + '個' in option_content_div_text:
                                                     is_match_more_then = True
                                                 if is_match_more_then:
-                                                    is_radio_clicked = force_press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
+                                                    is_radio_clicked = press_button(each_option_div, By.CSS_SELECTOR, 'div.radio-wrapper')
                                                     if is_radio_clicked:
                                                         if show_debug_message:
                                                             print("fill answer:", answer_item + '個或以上')
@@ -6520,7 +6522,7 @@ def urbtix_auto_survey(driver, config_dict):
 
         if questions_remain_text == "0" or questions_remain_text == "":
             is_button_clicked = False
-            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div')
+            #is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'div.button-wrapper > div.button-text-multi-lines > div')
 
             # Message: Element <div class="text-tc"> is not clickable at point (351,566) because another element <div class="modal-wrapper landing-question"> obscures it
             btn_submit = None
@@ -6660,7 +6662,7 @@ def cityline_shows_goto_cta(driver):
 
 
 def cityline_cookie_accept(driver):
-    is_btn_click = force_press_button(driver, By.CSS_SELECTOR,'.cookieWrapper_closeBtn')
+    is_btn_click = press_button(driver, By.CSS_SELECTOR,'.cookieWrapper_closeBtn')
 
 def cityline_auto_retry_access(driver, config_dict):
     btn_retry = None
@@ -6880,25 +6882,11 @@ def ibon_verification_question(driver, fail_list, config_dict):
 
 
 def ibon_ticket_agree(driver):
-    # check agree
-    form_checkbox = None
-    try:
-        form_checkbox = driver.find_element(By.CSS_SELECTOR, '#agreen')
-    except Exception as exc:
-        #print("find #agreen fail")
-        pass
-
     is_finish_checkbox_click = False
-    if not form_checkbox is None:
-        try:
-            if form_checkbox.is_enabled():
-                if not form_checkbox.is_selected():
-                    form_checkbox.click()
-                    is_finish_checkbox_click = True
-        except Exception as exc:
-            print("click #agreen fail, try plan_b click label.")
-            is_finish_checkbox_click = force_press_button(driver, By.CSS_SELECTOR,'label[for="agreen"]')
-
+    for i in range(3):
+        is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#agreen')
+        if is_finish_checkbox_click:
+            break
     return is_finish_checkbox_click
 
 def ibon_check_sold_out(driver):
@@ -6920,10 +6908,6 @@ def ibon_check_sold_out(driver):
             pass
 
     return is_sold_out
-
-def ibon_auto_signup(driver):
-    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '.btn.btn-signup')
-    return is_button_clicked
 
 def ibon_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
@@ -7144,9 +7128,9 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
         is_event_page = False
         if len(url.split('/'))==5:
             is_event_page = True
-
         if is_event_page:
-            ibon_auto_signup(driver)
+            # ibon auto press signup
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR, '.btn.btn-signup')
 
     is_match_target_feature = False
 
@@ -7263,7 +7247,7 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
                         if is_sold_out:
                             print("is_sold_out, go back , and refresh.")
                             # plan-A
-                            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                            #is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-primary')
                             # plan-B, easy and better than plan-A
                             try:
                                 driver.back()
@@ -7285,27 +7269,22 @@ def ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser):
             is_event_page = False
 
         if is_event_page:
-            is_finish_checkbox_click = False
             if is_event_page:
-                for i in range(3):
-                    is_finish_checkbox_click = ibon_ticket_agree(driver)
-                    if is_finish_checkbox_click:
-                        break
+                is_match_target_feature = True
+                is_finish_checkbox_click = ibon_ticket_agree(driver)
+                if is_finish_checkbox_click:
+                    is_name_based = False
+                    try:
+                        my_css_selector = "body"
+                        html_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                        if not html_body is None:
+                            if '實名制' in html_body.text:
+                                is_name_based = True
+                    except Exception as exc:
+                        pass
 
-            if is_finish_checkbox_click:
-                is_name_based = False
-                try:
-                    my_css_selector = "body"
-                    html_body = driver.find_element(By.CSS_SELECTOR, my_css_selector)
-                    if not html_body is None:
-                        if '實名制' in html_body.text:
-                            is_name_based = True
-                            is_match_target_feature = True
-                except Exception as exc:
-                    pass
-
-                if not is_name_based:
-                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
+                    if not is_name_based:
+                        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'a.btn.btn-pink.continue')
 
     return ibon_dict
 
@@ -7613,7 +7592,7 @@ def hkticketing_date_auto_select(driver, config_dict, fail_list):
 
     el_btn = None
     if is_auto_submit:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buyButton > input')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, '#buyButton > input')
         if show_debug_message:
             print("is_button_clicked:", is_button_clicked)
 
@@ -8309,15 +8288,15 @@ def softix_powerweb_main(driver, url, config_dict, hkticketing_dict):
 def khan_go_buy_redirect(driver, domain_name):
     is_button_clicked = False
     if 'kham.com' in domain_name:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'p > a > button.red')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'p > a > button.red')
     if 'ticket.com' in domain_name:
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, 'div.row > div > a.btn.btn-order.btn-block')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'div.row > div > a.btn.btn-order.btn-block')
     if 'udnfunlife.com' in domain_name:
         # udn 快速訂購
         my_css_selector = 'button[name="fastBuy"]'
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, my_css_selector)
         if not is_button_clicked:
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, '#buttonBuy')
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR, '#buttonBuy')
     return is_button_clicked
 
 def hkam_date_auto_select(driver, domain_name, config_dict):
@@ -8512,7 +8491,7 @@ def kham_product(driver, domain_name, config_dict):
 
     if not is_date_assign_by_bot:
         # click not on sale now.
-        is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
         pass
 
     return is_date_assign_by_bot
@@ -9115,7 +9094,7 @@ def kham_check_captcha_text_error(driver, config_dict):
             if el_message_text is None:
                 el_message_text = ""
             if "【驗證碼】輸入錯誤" in el_message_text:
-                is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+                is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
                 is_reset_password_text = True
                 kham_keyin_captcha_code(driver)
     except Exception as exc:
@@ -9161,7 +9140,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
     ]
     for each_url in home_url_list:
         if each_url == url.lower():
-            #is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'.closeBTN')
+            #is_button_clicked = press_button(driver, By.CSS_SELECTOR,'.closeBTN')
             clean_tag_by_selector(driver, ".popoutBG")
 
             if config_dict["ocr_captcha"]["enable"]:
@@ -9232,7 +9211,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 # layout format #1
                 is_ticket_number_assigned = assign_text(driver, By.CSS_SELECTOR, select_query, str(config_dict["ticket_number"]), overwrite_when="0")
                 if is_ticket_number_assigned:
-                    is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'#buttonNext')
+                    is_button_clicked = press_button(driver, By.CSS_SELECTOR,'#buttonNext')
             else:
                 # layout format #2
                 date_auto_select_enable = config_dict["date_auto_select"]["enable"]
@@ -9247,7 +9226,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
             is_ticket_number_sent = assign_text(driver, By.CSS_SELECTOR, 'input#QRY2', str(config_dict["ticket_number"]), overwrite_when="0")
             if is_ticket_number_sent:
-                is_fastbuy_pressed = force_press_button(driver, By.CSS_SELECTOR,'input#f_btn')
+                is_fastbuy_pressed = press_button(driver, By.CSS_SELECTOR,'input#f_btn')
 
     else:
         # kham / ticket.
@@ -9270,7 +9249,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                     is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
             my_css_selector = 'div.ui-dialog-buttonset > button.ui-button'
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR, my_css_selector)
             if config_dict["area_auto_select"]["enable"]:
                 if "ticket.com.tw" in url:
                     is_switch_to_auto_seat = ticket_switch_to_auto_seat(driver)
@@ -9342,7 +9321,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 else:
                     is_finish_checkbox_click = kham_allow_not_adjacent_seat(driver, config_dict)
 
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
             if config_dict["ocr_captcha"]["enable"]:
                 if not is_captcha_sent:
                     is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
@@ -9370,7 +9349,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                             pass
 
         if '/utk13/utk1306_.aspx' in url.lower():
-            is_button_clicked = force_press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+            is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
             if config_dict["ocr_captcha"]["enable"]:
                 model_name = url.split('/')[5]
                 if len(model_name) > 7:
@@ -10276,7 +10255,7 @@ svgToPng(svg, (imgData) => {
                     previous_answer = ocr_answer
                     print("refresh captcha...")
                     my_css_selector = "div.recaptcha-area > div > div > span > i"
-                    is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    is_refresh_button_pressed = press_button(driver, By.CSS_SELECTOR, my_css_selector)
                     # must have time to load captcha image.
                     time.sleep(0.4)
     else:
@@ -10308,7 +10287,7 @@ def ticketplus_check_and_renew_captcha(driver):
                     is_messages_popup = True
                     print("error message popup, refresh captcha images.")
                     my_css_selector = "div.recaptcha-area > div > div > span > i"
-                    is_refresh_button_pressed = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    is_refresh_button_pressed = press_button(driver, By.CSS_SELECTOR, my_css_selector)
                     # must have time to load captcha image.
                     time.sleep(0.4)
         except Exception as exc:
@@ -10414,11 +10393,11 @@ def ticketplus_keyin_captcha_code(driver, answer = "", auto_submit = False):
 
                     # for style_2
                     my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
-                    is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
                     if not is_form_sumbited:
                         # for style_1
                         my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
-                        is_form_sumbited = force_press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                        is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
 
                     if is_form_sumbited:
                         # must delay 0.5 second wait ajax return.
@@ -10607,17 +10586,17 @@ def ticketplus_account_sign_in(driver, config_dict):
 # 未結帳訂單 (order)
 def ticketplus_accept_realname_card(driver):
     select_query = 'div.v-dialog__content > div > div > div > div.row > div > button.primary'
-    return force_press_button(driver, By.CSS_SELECTOR, select_query)
+    return press_button(driver, By.CSS_SELECTOR, select_query)
 
 # 好玩其他活動
 def ticketplus_accept_other_activity(driver):
     select_query = 'div[role="dialog"] > div.v-dialog > button.primary-1 > span > i.v-icon'
-    return force_press_button(driver, By.CSS_SELECTOR, select_query)
+    return press_button(driver, By.CSS_SELECTOR, select_query)
 
 # 購票失敗 您選擇的票種已售完或本活動有限制購票總張數，請詳閱 注意事項
 def ticketplus_accept_order_fail(driver):
     select_query = 'div[role="dialog"] > div.v-dialog > div.v-card > div > div.row > div.col > button.v-btn'
-    return force_press_button(driver, By.CSS_SELECTOR, select_query)
+    return press_button(driver, By.CSS_SELECTOR, select_query)
 
 def ticketplus_ticket_agree(driver, config_dict):
     show_debug_message = True       # debug.
@@ -10726,6 +10705,15 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_d
         ticketplus_dict["is_popup_confirm"] = False
 
     return ticketplus_dict
+
+def facebook_main(driver, config_dict):
+    facebook_account = config_dict["advanced"]["facebook_account"].strip()
+    facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
+    if facebook_password == "":
+        facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+    if len(facebook_account) > 4:
+        facebook_login(driver, facebook_account, facebook_password)
+        time.sleep(2)
 
 def get_current_url(driver):
     DISCONNECTED_MSG = ': target window already closed'
@@ -10875,6 +10863,8 @@ def main(args):
     tixcraft_dict["elapsed_time"]=None
     tixcraft_dict["is_popup_checkout"] = False
     tixcraft_dict["area_retry_count"]=0
+    tixcraft_dict["played_sound_ticket"] = False
+    tixcraft_dict["played_sound_order"] = False
 
     # for kktix
     kktix_dict = {}
@@ -11023,16 +11013,10 @@ def main(args):
         if softix_family:
             hkticketing_dict = softix_powerweb_main(driver, url, config_dict, hkticketing_dict)
 
-        # for facebook
+        # for facebook signin
         facebook_login_url = 'https://www.facebook.com/login.php?'
         if url[:len(facebook_login_url)]==facebook_login_url:
-            facebook_account = config_dict["advanced"]["facebook_account"].strip()
-            facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
-            if facebook_password == "":
-                facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
-            if len(facebook_account) > 4:
-                facebook_login(driver, facebook_account, facebook_password)
-                time.sleep(2)
+            facebook_main(driver, config_dict)
 
 def cli():
     parser = argparse.ArgumentParser(

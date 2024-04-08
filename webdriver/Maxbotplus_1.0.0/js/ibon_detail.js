@@ -77,15 +77,13 @@ function ibon_detail_ajax_done(game_info)
 
     }
 
-    console.log("reload:"+reload);
-    console.log("target_href:"+target_href);
+    //console.log("reload:"+reload);
+    //console.log("target_href:"+target_href);
     if(reload) {
         let auto_reload_page_interval = 0.0;
         if(settings) {
             auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
         }
-        const rootElement = document.documentElement;
-        rootElement.remove();
         if(auto_reload_page_interval == 0) {
             //console.log('Start to reload now.');
             location.reload();

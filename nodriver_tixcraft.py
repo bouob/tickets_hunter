@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.26)"
+CONST_APP_VERSION = "MaxBot (2024.03.27)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -191,6 +191,34 @@ def play_sound_while_ordering(config_dict):
     captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
     util.play_mp3_async(captcha_sound_filename)
 
+async def nodriver_press_button(tab, select_query):
+    if tab:
+        try:
+            element = await tab.query_selector(select_query)
+            if element:
+                await element.click()
+            else:
+                #print("element not found:", select_query)
+                pass
+        except Exception as e:
+            #print("click fail for selector:", select_query)
+            print(e)
+            pass
+
+async def nodriver_check_checkbox(tab, select_query, value='true'):
+    is_checkbox_checked = False
+    if tab:
+        try:
+            element = await tab.query_selector(select_query)
+            if element:
+                await element.apply('function (element) { element.checked='+ value +'; } ')
+                is_checkbox_checked = True
+        except Exception as exc:
+            #print("check checkbox fail for selector:", select_query)
+            print(exc)
+            pass
+    return is_checkbox_checked
+
 async def nodriver_facebook_login(tab, facebook_account, facebook_password):
     if tab:
         try:
@@ -295,20 +323,30 @@ async def nodriver_goto_homepage(driver, config_dict):
         tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
             cookies  = await driver.cookies.get_all()
+            is_cookie_exist = False
             for cookie in cookies:
                 if cookie.name=='SID':
                     cookie.value=tixcraft_sid
+                    is_cookie_exist = True
                     break
+            if not is_cookie_exist:
+                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain="tixcraft.com", path="/", http_only=True, secure=True)
+                cookies.append(new_cookie)
             await driver.cookies.set_all(cookies)
 
     if 'ibon.com' in homepage:
         ibonqware = config_dict["advanced"]["ibonqware"]
         if len(ibonqware) > 1:
             cookies  = await driver.cookies.get_all()
+            is_cookie_exist = False
             for cookie in cookies:
                 if cookie.name=='ibonqware':
                     cookie.value=ibonqware
+                    is_cookie_exist = True
                     break
+            if not is_cookie_exist:
+                new_cookie = cdp.network.CookieParam("ibonqware",ibonqware, domain=".ibon.com.tw", path="/", http_only=True, secure=True)
+                cookies.append(new_cookie)
             await driver.cookies.set_all(cookies)
 
     return tab
@@ -776,12 +814,13 @@ async def nodriver_kktix_main(tab, url, config_dict, kktix_dict):
             try:
                 html_body = await tab.get_content()
                 #print("html_body:",len(html_body))
-                if len(html_body) > 10240:
-                    if "registrationsNewApp" in html_body:
-                        if not "{{'new.i_read_and_agree_to'" in html_body:
-                            is_dom_ready = True
+                if html_body:
+                    if len(html_body) > 10240:
+                        if "registrationsNewApp" in html_body:
+                            if not "{{'new.i_read_and_agree_to'" in html_body:
+                                is_dom_ready = True
             except Exception as exc:
-                print(exc)
+                #print(exc)
                 pass
 
             if not is_dom_ready:
@@ -977,6 +1016,26 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 
     return fail_list
 
+async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
+    for i in range(3):
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree')
+        if is_finish_checkbox_click:
+            break
+
+async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
+    is_agree_at_webdriver = False
+    if not config_dict["browser"] in CONST_CHROME_FAMILY:
+        is_agree_at_webdriver = True
+    else:
+        if not config_dict["advanced"]["chrome_extension"]:
+            is_agree_at_webdriver = True
+    #print("is_agree_at_webdriver:", is_agree_at_webdriver)
+    if is_agree_at_webdriver:
+        # use extension instead of selenium.
+        # checkbox javascrit code at chrome extension.
+        await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
+
+
 async def nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
     await nodriver_tixcraft_home_close_window(tab)
 
@@ -1054,8 +1113,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Capt
     # main app, to select ticket number.
     if '/ticket/ticket/' in url:
         domain_name = url.split('/')[2]
-        # TODO:
-        #tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
+        await nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_dict["done_time"] = time.time()
 
         if config_dict["advanced"]["play_sound"]["ticket"]:
@@ -1319,6 +1377,220 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser, 
 
     return ticketplus_dict
 
+async def nodriver_ibon_ticket_agree(tab):
+    for i in range(3):
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen')
+        if is_finish_checkbox_click:
+            break
+
+async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Browser):
+    home_url_list = ['https://ticket.ibon.com.tw/'
+    ,'https://ticket.ibon.com.tw/index/entertainment'
+    ]
+    for each_url in home_url_list:
+        if each_url == url.lower():
+            if config_dict["ocr_captcha"]["enable"]:
+                # TODO:
+                #set_non_browser_cookies(driver, url, Captcha_Browser)
+                pass
+            break
+
+    # https://tour.ibon.com.tw/event/e23010000300mxu
+    if 'tour' in url.lower() and '/event/' in url.lower():
+        is_event_page = False
+        if len(url.split('/'))==5:
+            is_event_page = True
+        if is_event_page:
+            # ibon auto press signup
+            await nodriver_press_button('.btn.btn-signup')
+
+    is_match_target_feature = False
+
+    #PS: ibon some utk is upper case, some is lower.
+    if not is_match_target_feature:
+        #https://ticket.ibon.com.tw/ActivityInfo/Details/0000?pattern=entertainment
+        if '/activityinfo/details/' in url.lower():
+            is_event_page = False
+            if len(url.split('/'))==6:
+                is_event_page = True
+
+            if is_event_page:
+                if config_dict["date_auto_select"]["enable"]:
+                    is_match_target_feature = True
+                    # TODO:
+                    #is_date_assign_by_bot = ibon_date_auto_select(driver, config_dict)
+                    pass
+
+    if 'ibon.com.tw/error.html?' in url.lower():
+        try:
+            tab.back()
+        except Exception as exc:
+            pass
+
+    is_enter_verify_mode = False
+    if not is_match_target_feature:
+        # validation question url:
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1180872370&PERFORMANCE_ID=B04M7XZT&PRODUCT_ID=B04KS88E&SHOW_PLACE_MAP=True
+        is_event_page = False
+        if '/UTK02/UTK0201_0.' in url.upper():
+            if '.aspx?' in url.lower():
+                if 'rn=' in url.lower():
+                    if 'PERFORMANCE_ID=' in url.upper():
+                        if "PRODUCT_ID=" in url.upper():
+                            is_event_page = True
+
+        if is_event_page:
+            is_enter_verify_mode = True
+            # TODO:
+            #ibon_dict["fail_list"] = ibon_verification_question(driver, ibon_dict["fail_list"], config_dict)
+            pass
+            is_match_target_feature = True
+
+    if not is_enter_verify_mode:
+        ibon_dict["fail_list"] = []
+
+    if not is_match_target_feature:
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?rn=1111&PERFORMANCE_ID=2222&PRODUCT_ID=BBBB
+        # https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=2222&GROUP_ID=4&PERFORMANCE_PRICE_AREA_ID=3333
+
+        is_event_page = False
+        if '/UTK02/UTK0201_' in url.upper():
+            if '.aspx?' in url.lower():
+                if 'PERFORMANCE_ID=' in url.upper():
+                    if len(url.split('/'))==6:
+                        is_event_page = True
+
+        if '/UTK02/UTK0202_' in url.upper():
+            if '.aspx?' in url.lower():
+                if 'PERFORMANCE_ID=' in url.upper():
+                    if len(url.split('/'))==6:
+                        is_event_page = True
+
+        if is_event_page:
+            if config_dict["area_auto_select"]["enable"]:
+                select_query = "tr.disbled"
+                # TODO:
+                #clean_tag_by_selector(driver,select_query)
+                
+                select_query = "tr.sold-out"
+                # TODO:
+                #clean_tag_by_selector(driver,select_query)
+
+                is_do_ibon_performance_with_ticket_number = False
+
+                if 'PRODUCT_ID=' in url.upper():
+                    # step 1: select area.
+                    is_match_target_feature = True
+                    # TODO:
+                    #is_price_assign_by_bot = ibon_performance(driver, config_dict)
+
+                    #print("is_price_assign_by_bot:", is_price_assign_by_bot)
+                    if not is_price_assign_by_bot:
+                        # this case show captcha and ticket-number in this page.
+                        # TODO:
+                        #if ibon_ticket_number_appear(driver, config_dict):
+                        #    is_do_ibon_performance_with_ticket_number = True
+                        pass
+
+                if 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
+                    is_do_ibon_performance_with_ticket_number = True
+
+                if is_do_ibon_performance_with_ticket_number:
+                    if config_dict["advanced"]["disable_adjacent_seat"]:
+                        # TODO:
+                        #is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
+                        pass
+
+                    # captcha
+                    is_captcha_sent = False
+                    if config_dict["ocr_captcha"]["enable"]:
+                        domain_name = url.split('/')[2]
+                        model_name = url.split('/')[5]
+                        if len(model_name) > 7:
+                            model_name=model_name[:7]
+                        captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+                        #PS: need set cookies once, if user change domain.
+                        if not Captcha_Browser is None:
+                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+
+                        # TODO:
+                        #is_captcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+                        pass
+
+                    # assign ticket number.
+                    is_match_target_feature = True
+                    is_ticket_number_assigned = False
+                    # TODO:
+                    #is_ticket_number_assigned = ibon_ticket_number_auto_select(driver, config_dict)
+                    
+                    #print("is_ticket_number_assigned:", is_ticket_number_assigned)
+                    if is_ticket_number_assigned:
+                        if is_captcha_sent:
+                            # TODO:
+                            #click_ret = ibon_purchase_button_press(driver)
+                            pass
+
+                            # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
+                            if click_ret:
+                                play_sound_while_ordering(config_dict)
+                    else:
+                        is_sold_out = False
+                        # TODO:
+                        #is_sold_out = ibon_check_sold_out(driver)
+                        if is_sold_out:
+                            print("is_sold_out, go back , and refresh.")
+                            # plan-A
+                            #is_button_clicked = press_button(tab, By.CSS_SELECTOR, 'a.btn.btn-primary')
+                            # plan-B, easy and better than plan-A
+                            try:
+                                tab.back()
+                                tab.reload()
+                            except Exception as exc:
+                                pass
+
+
+    if not is_match_target_feature:
+        #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
+        is_event_page = False
+        if '/UTK02/UTK020' in url.upper():
+            if '.aspx' in url.lower():
+                if len(url.split('/'))==6:
+                    is_event_page = True
+
+        # ignore "pay money" step.
+        if '/UTK02/UTK0207_.ASPX' in url.upper():
+            is_event_page = False
+
+        if is_event_page:
+            if is_event_page:
+                is_match_target_feature = True
+                is_finish_checkbox_click = await nodriver_ibon_ticket_agree(tab)
+                if is_finish_checkbox_click:
+                    is_name_based = False
+                    try:
+                        html_body = await tab.get_content()
+                        #print("html_body:",len(html_body))
+                        if html_body:
+                            if len(html_body) > 1024:
+                                if '實名制' in html_body:
+                                    is_name_based = True
+                    except Exception as exc:
+                        #print(exc)
+                        pass
+
+                    if not is_name_based:
+                        is_button_clicked = await nodriver_press_button(tab, 'a.btn.btn-pink.continue')
+
+    return ibon_dict
+
+async def nodriver_facebook_main(tab, config_dict):
+    facebook_account = config_dict["advanced"]["facebook_account"].strip()
+    facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
+    if facebook_password == "":
+        facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+    if len(facebook_account) > 4:
+        await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
 def get_nodriver_browser_args():
     browser_args = [
@@ -1519,12 +1791,17 @@ async def nodriver_current_url(tab):
             url = ''.join(url_array)
     return url, is_quit_bot
 
-def nodriver_overwrite_prefs(conf, prefs_dict={}):
+def nodriver_overwrite_prefs(conf):
     #print(conf.user_data_dir)
     prefs_filepath = os.path.join(conf.user_data_dir,"Default")
     if not os.path.exists(prefs_filepath):
         os.mkdir(prefs_filepath)
     prefs_filepath = os.path.join(prefs_filepath,"Preferences")
+    
+    prefs_dict = {
+        "credentials_enable_service": False,
+        "ack_existing_ntp_extensions": False,
+        "translate":{"enabled": False}}
     prefs_dict["in_product_help"]={}
     prefs_dict["in_product_help"]["snoozed_feature"]={}
     prefs_dict["in_product_help"]["snoozed_feature"]["IPH_LiveCaption"]={}
@@ -1580,10 +1857,7 @@ async def main(args):
     if not config_dict is None:
         sandbox = False
         conf = get_extension_config(config_dict)
-        prefs = {"credentials_enable_service": False,
-            "ack_existing_ntp_extensions": False,
-            "translate":{"enabled": False}}
-        nodriver_overwrite_prefs(conf, prefs)
+        nodriver_overwrite_prefs(conf)
         # PS: nodrirver run twice always cause error:
         # Failed to connect to browser
         # One of the causes could be when you are running as root.
@@ -1614,6 +1888,8 @@ async def main(args):
     tixcraft_dict["elapsed_time"]=None
     tixcraft_dict["is_popup_checkout"] = False
     tixcraft_dict["area_retry_count"]=0
+    tixcraft_dict["played_sound_ticket"] = False
+    tixcraft_dict["played_sound_order"] = False
 
     # for kktix
     kktix_dict = {}
@@ -1718,7 +1994,7 @@ async def main(args):
             tixcraft_family = True
 
         if tixcraft_family:
-            tixcraft_dict, is_quit_bot = await nodriver_tixcraft_main(driver, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
+            tixcraft_dict, is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
             pass
 
         if 'famiticket.com' in url:
@@ -1726,7 +2002,7 @@ async def main(args):
             pass
 
         if 'ibon.com' in url:
-            #ibon_dict = ibon_main(driver, url, config_dict, ibon_dict, ocr, Captcha_Browser)
+            ibon_dict = await nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Browser)
             pass
 
         kham_family = False
@@ -1769,12 +2045,7 @@ async def main(args):
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
         if url[:len(facebook_login_url)]==facebook_login_url:
-            facebook_account = config_dict["advanced"]["facebook_account"].strip()
-            facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
-            if facebook_password == "":
-                facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
-            if len(facebook_account) > 4:
-                await nodriver_facebook_login(tab, facebook_account, facebook_password)
+            await nodriver_facebook_main(tab, config_dict)
 
 def cli():
     parser = argparse.ArgumentParser(

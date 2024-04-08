@@ -1,16 +1,16 @@
 function getHtmlDocName() {
     var pathname = location.pathname;
-   var pathParts = pathname.split('/');
-   if(pathParts.length >= 3) return pathParts[2];
-   return null;
+    var pathParts = pathname.split('/');
+    if(pathParts.length >= 3) return pathParts[2];
+    return null;
 }
 
 function goToCityline(){
-   window.location="https://www.cityline.com";
+    window.location="https://www.cityline.com";
 }
 
 function setRetryUrl(requestUrl){
-   urlThrottler = requestUrl;
+    urlThrottler = requestUrl;
 }
 
 function startCountDownTimer() {
@@ -90,9 +90,6 @@ function begin()
     }
 
     if(status=='ON') {
-        const rootElement = document.documentElement;
-        rootElement.remove();
-
         let target_interval = auto_reload_page_interval * 1000;
         setInterval(() => {
             //retry();
