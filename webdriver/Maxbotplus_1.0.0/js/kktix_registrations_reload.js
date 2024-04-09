@@ -93,6 +93,10 @@ function kktix_ajax_return_register_info(register_info)
         if(settings) {
             auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
         }
+        // memory not able to release soon.
+        if (auto_reload_page_interval < 0.23) {
+            auto_reload_page_interval = 0.23;
+        }
         const rootElement = document.documentElement;
         rootElement.remove();
         register_info=null;
@@ -198,9 +202,15 @@ storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
     {
-        // DISABLE this feature, to reduce access log.
-        //kktix_event_register_info();
-        kktix_force_auto_reload_by_timer();
+        let kktix_status_api = false;
+        if(settings) {
+            kktix_status_api = settings.advanced.kktix_status_api;
+        }
+        if(kktix_status_api) {
+            kktix_event_register_info();
+        } else {
+            kktix_force_auto_reload_by_timer();
+        }
     } else {
         //console.log('maxbot status is not ON');
     }

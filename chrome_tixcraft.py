@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.28)"
+CONST_APP_VERSION = "MaxBot (2024.03.29)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -766,7 +766,6 @@ def get_driver_by_config(config_dict):
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/logo_*.png')
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/assets/icon-*.png')
                 NETWORK_BLOCKED_URLS.append('https://t.kfs.io/upload_images/*.jpg')
-
 
             if config_dict["advanced"]["block_facebook_network"]:
                 NETWORK_BLOCKED_URLS.append('*facebook.com/*')

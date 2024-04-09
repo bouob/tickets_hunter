@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.28)"
+CONST_APP_VERSION = "MaxBot (2024.03.29)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -136,7 +136,8 @@ def load_translate():
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
-    en_us["max_dwell_time"] = 'Max dwell time(sec.)'
+    en_us["kktix_status_api"] = 'KKTIX status API'
+    en_us["max_dwell_time"] = 'KKTIX dwell time(sec.)'
     en_us["reset_browser_interval"] = 'Reset browser interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
     en_us["window_size"] = 'Window size'
@@ -255,7 +256,8 @@ def load_translate():
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
-    zh_tw["max_dwell_time"] = '購票網頁最長停留(秒)'
+    zh_tw["kktix_status_api"] = 'KKTIX購票狀態API'
+    zh_tw["max_dwell_time"] = 'KKTIX購票最長停留(秒)'
     zh_tw["reset_browser_interval"] = '重新啟動瀏覽器間隔(秒)'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
     zh_tw["window_size"] = '瀏覽器視窗大小'
@@ -374,6 +376,7 @@ def load_translate():
     zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
+    zh_cn["kktix_status_api"] = 'KKTIX购票状态API'
     zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
     zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
@@ -494,6 +497,7 @@ def load_translate():
     ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
     ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
+    ja_jp["kktix_status_api"] = 'KKTIX status API'
     ja_jp["max_dwell_time"] = '最大滞留時間(秒)'
     ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
@@ -681,8 +685,9 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.4
+    config_dict["advanced"]["auto_reload_page_interval"] = 0
     config_dict["advanced"]["reset_browser_interval"] = 0
+    config_dict["advanced"]["kktix_status_api"] = False
     config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "480,1024"
@@ -791,6 +796,7 @@ def btn_save_act(slience_mode=False):
     global chk_state_pass_date_is_sold_out
     global chk_state_auto_reload_coming_soon_page
     global txt_auto_reload_page_interval
+    global chk_status_kktix_status_api
     global txt_max_dwell_time
     global txt_reset_browser_intervalv
     global txt_proxy_server_port
@@ -1073,11 +1079,12 @@ def btn_save_act(slience_mode=False):
 
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
-        config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
+        #config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
 
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
+        config_dict["advanced"]["kktix_status_api"] = bool(chk_state_kktix_status_api.get())
         config_dict["advanced"]["max_dwell_time"] = int(txt_max_dwell_time.get().strip())
         config_dict["advanced"]["reset_browser_interval"] = int(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
@@ -1324,6 +1331,7 @@ def applyNewLanguage():
     global lbl_block_facebook_network_recommand
 
     global lbl_auto_reload_page_interval
+    global lbl_kktix_status_api
     global lbl_max_dwell_time
     global lbl_reset_browser_interval
     global lbl_proxy_server_port
@@ -1364,6 +1372,7 @@ def applyNewLanguage():
     lbl_block_facebook_network_recommand.config(text=translate[language_code]["recommand_enable"])
 
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
+    lbl_kktix_status_api.config(text=translate[language_code]["kktix_status_api"])
     lbl_max_dwell_time.config(text=translate[language_code]["max_dwell_time"])
     lbl_reset_browser_interval.config(text=translate[language_code]["reset_browser_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
@@ -2028,6 +2037,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
+    global lbl_kktix_status_api
+    lbl_kktix_status_api = Label(frame_group_header, text=translate[language_code]['kktix_status_api'])
+    lbl_kktix_status_api.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_kktix_status_api
+    chk_state_kktix_status_api = BooleanVar()
+    chk_state_kktix_status_api.set(config_dict["advanced"]["kktix_status_api"])
+
+    global chk_kktix_status_api
+    chk_kktix_status_api = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_kktix_status_api)
+    chk_kktix_status_api.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
     global lbl_max_dwell_time
     lbl_max_dwell_time = Label(frame_group_header, text=translate[language_code]['max_dwell_time'])
     lbl_max_dwell_time.grid(column=0, row=group_row_count, sticky = E)
@@ -2152,7 +2175,8 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global lbl_verbose
     lbl_verbose = Label(frame_group_header, text=translate[language_code]['verbose'])
-    lbl_verbose.grid(column=0, row=group_row_count, sticky = E)
+    # maybe enable in future.
+    #lbl_verbose.grid(column=0, row=group_row_count, sticky = E)
 
     global chk_state_verbose
     chk_state_verbose = BooleanVar()
@@ -2160,19 +2184,20 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_verbose
     chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
-    chk_verbose.grid(column=1, row=group_row_count, sticky = W)
+    # maybe enable in future.
+    #chk_verbose.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
     global lbl_ocr_captcha
-    lbl_ocr_captcha = Label(frame_group_header, text=translate[language_code]['ocr_captcha'])
+    lbl_ocr_captcha = Label(frame_group_header, text=translate[language_code]["ocr_captcha"])
     lbl_ocr_captcha.grid(column=0, row=group_row_count, sticky = E)
 
     frame_group_ddddocr_enable = Frame(frame_group_header)
 
     global chk_state_ocr_captcha
     chk_state_ocr_captcha = BooleanVar()
-    chk_state_ocr_captcha.set(config_dict['ocr_captcha']["enable"])
+    chk_state_ocr_captcha.set(config_dict["ocr_captcha"]["enable"])
 
     global chk_ocr_captcha
     chk_ocr_captcha = Checkbutton(frame_group_ddddocr_enable, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
@@ -2193,7 +2218,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_ocr_captcha_ddddocr_beta
     chk_state_ocr_captcha_ddddocr_beta = BooleanVar()
-    chk_state_ocr_captcha_ddddocr_beta.set(config_dict['ocr_captcha']["beta"])
+    chk_state_ocr_captcha_ddddocr_beta.set(config_dict["ocr_captcha"]["beta"])
 
     global chk_ocr_captcha_ddddocr_beta
     chk_ocr_captcha_ddddocr_beta = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_ddddocr_beta)
@@ -2210,7 +2235,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_ocr_captcha_force_submit
     chk_state_ocr_captcha_force_submit = BooleanVar()
-    chk_state_ocr_captcha_force_submit.set(config_dict['ocr_captcha']["force_submit"])
+    chk_state_ocr_captcha_force_submit.set(config_dict["ocr_captcha"]["force_submit"])
 
     global chk_ocr_captcha_force_submit
     chk_ocr_captcha_force_submit = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha_force_submit)
