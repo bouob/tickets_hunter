@@ -98,10 +98,12 @@ function begin()
         }, target_interval);
     }
 
-    if(window.IsDuplicate()) {
-        window.IsDuplicate = function () {return false;};
-        document.getElementById("busy_zone").innerHTML = '<button id="btn-retry-en-1" class="btn_cta" type="button" disabled="disabled" onclick="javascript:goEvent()">請重試 Retry<span id="remainTime1"></span></button>';
-        setTimeout(startCountDownTimer, 1000);
+    if (typeof window.IsDuplicate !== "undefined") { 
+        if(window.IsDuplicate()) {
+            window.IsDuplicate = function () {return false;};
+            document.getElementById("busy_zone").innerHTML = '<button id="btn-retry-en-1" class="btn_cta" type="button" disabled="disabled" onclick="javascript:goEvent()">請重試 Retry<span id="remainTime1"></span></button>';
+            setTimeout(startCountDownTimer, 1000);
+        }
     }
 }
 
