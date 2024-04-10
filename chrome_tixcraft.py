@@ -6674,7 +6674,6 @@ def cityline_cookie_accept(driver):
     is_btn_click = press_button(driver, By.CSS_SELECTOR,'.cookieWrapper_closeBtn')
 
 def cityline_auto_retry_access(driver, config_dict):
-    btn_retry = None
     try:
         btn_retry = driver.find_element(By.CSS_SELECTOR, 'button')
         if not btn_retry is None:
@@ -6688,26 +6687,6 @@ def cityline_auto_retry_access(driver, config_dict):
     # 刷太快, 會被封IP?
     if config_dict["advanced"]["auto_reload_page_interval"] > 0:
         time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
-
-def cityline_go_venue(driver, url):
-    url_https = url.replace("http://","https://")
-    url_https_array = url_https.split("/")
-
-    is_match_venue_url = False
-    if url[-1:] == "/":
-        if len(url_https_array)==4:
-            domain_array = url_https_array[2].split(".")
-            if len(domain_array)==3:
-                is_match_venue_url = True
-
-    if is_match_venue_url:
-        try:
-            btn_next = driver.find_element(By.CSS_SELECTOR, 'div#eventDetail > div#btnDiv > a')
-            if not btn_next is None:
-                driver.set_script_timeout(1)
-                driver.execute_script("go_venue('TW');")
-        except Exception as exc:
-            pass
 
 def cityline_clean_ads(driver):
     ad_query_list = [
@@ -6777,7 +6756,6 @@ def cityline_main(driver, url, config_dict):
     if '.cityline.com/Events.html' in url:
         cityline_cookie_accept(driver)
 
-    cityline_go_venue(driver, url)
     cityline_clean_ads(driver)
 
     if 'cityline.com/queue?' in url:
@@ -6786,7 +6764,7 @@ def cityline_main(driver, url, config_dict):
 
     # https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2F
     # ignore url redirect
-    if '.com/Login.html' in url:
+    if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
         if cityline_password == "":

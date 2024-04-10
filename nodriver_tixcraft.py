@@ -1271,7 +1271,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
                     print(exc)
                     pass
 
-                print("is_sign_in_btn_pressed", is_sign_in_btn_pressed)
+                #print("is_sign_in_btn_pressed", is_sign_in_btn_pressed)
                 if not is_sign_in_btn_pressed:
                     #print("rwd mode")
                     action_btns = None
@@ -1595,8 +1595,79 @@ async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Brow
 
                     if not is_name_based:
                         is_button_clicked = await nodriver_press_button(tab, 'a.btn.btn-pink.continue')
-
     return ibon_dict
+
+
+async def nodriver_cityline_auto_retry_access(tab, url):
+    try:
+        btn_retry = await tab.query_selector('button')
+        if btn_retry:
+            btn_retry.click()
+    except Exception as exc:
+        print(exc)
+        pass
+
+    # 刷太快, 會被封IP?
+    # must wait...
+    auto_reload_page_interval = config_dict["advanced"]["auto_reload_page_interval"]
+    if auto_reload_page_interval <= 0.2:
+        auto_reload_page_interval = 0.2
+    if auto_reload_page_interval > 0:
+        time.sleep(auto_reload_page_interval)
+
+async def nodriver_cityline_login(tab, cityline_account):
+    global is_cityline_account_assigned
+    if not 'is_cityline_account_assigned' in globals():
+        is_cityline_account_assigned = False
+
+    #print("is_cityline_account_assigned", is_cityline_account_assigned)
+    if not is_cityline_account_assigned:
+        try:
+            #await tab.verify_cf()
+            el_account = await tab.query_selector('input[type="text"]')
+            if el_account:
+                await el_account.click()
+                await el_account.apply('function (element) {element.value = ""; } ')
+                await el_account.send_keys(cityline_account);
+                time.sleep(0.5)
+                is_cityline_account_assigned = True
+        except Exception as exc:
+            print(exc)
+            pass
+    else:
+        # after account inputed.
+        try:
+            #is_checkbox_checked = await nodriver_check_checkbox(tab, 'span.ant-checkbox input[type="checkbox"]')
+            #print("is_checkbox_checked", is_checkbox_checked)
+            # jquery solution.
+            #js="$('input:checkbox').prop('checked', true);"
+            # javascript solution.
+            #js = "for (const checkbox of document.querySelectorAll('input[type=checkbox]:not(:checked)')) { checkbox.checked = true;}"
+            #await tab.evaluate(js)
+            checkbox_readed = await tab.query_selector('input[type=checkbox]:not(:checked)')
+            if checkbox_readed:
+                print("click on readed.")
+                await checkbox_readed.click()
+            time.sleep(0.5)
+        except Exception as exc:
+            print(exc)
+            pass
+
+
+async def nodriver_cityline_main(tab, url, config_dict):
+    if 'msg.cityline.com' in url or 'event.cityline.com' in url:
+        await nodriver_cityline_auto_retry_access(tab, url)
+
+    if 'cityline.com/Login.html' in url:
+        cityline_account = config_dict["advanced"]["cityline_account"]
+        if len(cityline_account) > 4:
+            await nodriver_cityline_login(tab, cityline_account)
+
+    # main page:
+    # TODO:
+    #https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
+    pass
+
 
 async def nodriver_facebook_main(tab, config_dict):
     facebook_account = config_dict["advanced"]["facebook_account"].strip()
@@ -1701,7 +1772,10 @@ def get_maxbot_block_extension_path():
 def get_extension_config(config_dict):
     default_lang = "zh-TW"
     no_sandbox=True
-    conf = Config(browser_args=get_nodriver_browser_args(), lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
+    browser_args = get_nodriver_browser_args()
+    if len(config_dict["advanced"]["proxy_server_port"]) > 2:
+        browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
+    conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
         conf.add_extension(get_maxbot_plus_extension_path())
         conf.add_extension(get_maxbot_block_extension_path())
@@ -2043,7 +2117,7 @@ async def main(args):
             pass
 
         if 'cityline.com' in url:
-            #cityline_main(driver, url, config_dict)
+            await nodriver_cityline_main(tab, url, config_dict)
             pass
 
         softix_family = False
