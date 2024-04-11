@@ -1,7 +1,7 @@
 # Demo (示範影片)
 
 ### 2024-04-01
-MaxBot 2024-04-01 Cityline 自動輸入張數,票價,日期
+Cityline 自動輸入張數,票價,日期
 
 https://youtu.be/o32TJ6jcS1M
 
