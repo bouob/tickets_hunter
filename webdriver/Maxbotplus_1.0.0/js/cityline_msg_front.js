@@ -25,10 +25,10 @@ function begin()
             //retry();
             //console.log("trigger");
             $(".eventposter").off();
-            setRetryUrl(window.location.href);
+            if (typeof setRetryUrl !== "undefined") { 
+                setRetryUrl(window.location.href);
+            }
             $(".btn_cta").prop('disabled', false);
-            if (ddsScheduler != undefined)
-                clearInterval(ddsScheduler);
             //$(".btn_cta").prop('disabled', false).trigger("click");
             if (typeof goEvent !== "undefined") { 
                 if(location.href.indexOf('home?') > -1) {
@@ -91,7 +91,6 @@ setInterval(() => {
     SetItem(ItemType.Local, "");
 }, 100);
 
-
 function getHtmlDocName() {
     var pathname = location.pathname;
     var pathParts = pathname.split('/');
@@ -102,7 +101,6 @@ function getHtmlDocName() {
 if(getHtmlDocName()==null) {
     history.back();
 }
-$(".eventposter").off();
 if (typeof goEvent !== "undefined") { 
     if(location.href.indexOf('home?') > -1) {
         //goEvent();
@@ -110,3 +108,4 @@ if (typeof goEvent !== "undefined") {
         history.back();
     }
 }
+

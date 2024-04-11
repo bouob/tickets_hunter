@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.31)"
+CONST_APP_VERSION = "MaxBot (2024.04.01)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -46,6 +46,7 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.googlesyndication.com/*",
 "*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
+"*anymind360.com/*",
 "*adx.c.appier.net/*",
 "*cdn.cookielaw.org/*",
 "*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
@@ -380,7 +381,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     ticket_price_list = None
     try:
-        ticket_price_list = await tab.select_all('div.display-table-row')
+        ticket_price_list = await tab.query_selector_all('div.display-table-row')
     except Exception as exc:
         ticket_price_list = None
         print("find ticket-price Exception:")
@@ -420,13 +421,15 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
             row_input = None
             current_ticket_number = "0"
             try:
-                js_attr = await row.get_js_attributes()
-                row_html = js_attr["innerHTML"]
-                row_text = js_attr["innerText"]
+                #js_attr = await row.get_js_attributes()
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+
                 row_input = await row.query_selector("input")
-                if not row_input is None:
+                if row_input:
                     js_attr_input = await row_input.get_js_attributes()
-                    current_ticket_number = js_attr_input["value"]
+                    if js_attr_input:
+                        current_ticket_number = js_attr_input["value"]
             except Exception as exc:
                 is_dom_ready = False
                 if show_debug_message:
@@ -960,9 +963,12 @@ async def nodriver_get_text_by_selector(tab, my_css_selector, attribute='innerHT
     try:
         div_element = await tab.query_selector(my_css_selector)
         if div_element:
-            js_attr = await div_element.get_js_attributes()
-            if js_attr:
-                div_text = js_attr[attribute]
+            #js_attr = await div_element.get_js_attributes()
+            div_text = await div_element.get_html()
+            
+            # only this case to remove tags
+            if attribute=="innerText":
+                div_text = util.remove_html_tags(div_text)
     except Exception as exc:
         print("find verify textbox fail")
         pass
@@ -1654,6 +1660,128 @@ async def nodriver_cityline_login(tab, cityline_account):
             print(exc)
             pass
 
+async def nodriver_cityline_date_auto_select(tab, auto_select_mode, date_keyword):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    ret = False
+
+    area_list = None
+    try:
+        my_css_selector = "button.date-time-position"
+        area_list = await tab.query_selector_all(my_css_selector)
+    except Exception as exc:
+        print(exc)
+
+    matched_blocks = None
+    if area_list:
+        formated_area_list = None
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print("date_list_count:", area_list_count)
+
+        if area_list_count > 0:
+            formated_area_list = area_list
+            if show_debug_message:
+                print("formated_area_list count:", len(formated_area_list))
+
+            if len(date_keyword) == 0:
+                matched_blocks = formated_area_list
+            else:
+                # match keyword.
+                if show_debug_message:
+                    print("start to match keyword:", date_keyword)
+                matched_blocks = []
+
+                for row in formated_area_list:
+                    row_text = ""
+                    row_html = ""
+                    try:
+                        row_html = await row.get_html()
+                        row_text = util.remove_html_tags(row_html)
+                        # PS: get_js_attributes on cityline due to: the JSON object must be str, bytes or bytearray, not NoneType
+                        #js_attr = await row.get_js_attributes()
+                        #row_html = js_attr["innerHTML"]
+                        #row_text = js_attr["innerText"]
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(exc)
+                        # error, exit loop
+                        break
+
+                    if len(row_text) > 0:
+                        if show_debug_message:
+                            print("row_text:", row_text)
+                        is_match_area = util.is_row_match_keyword(date_keyword, row_text)
+                        if is_match_area:
+                            matched_blocks.append(row)
+                            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                                break
+
+                if show_debug_message:
+                    if not matched_blocks is None:
+                        print("after match keyword, found count:", len(matched_blocks))
+        else:
+            print("not found date-time-position")
+            pass
+    else:
+        print("date date-time-position is None")
+        pass
+
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    if not target_area is None:
+        try:
+            await target_area.scroll_into_view()
+            await target_area.click()
+            ret = True
+        except Exception as exc:
+            print(exc)
+
+    return ret
+
+async def nodriver_check_modal_dialog_popup(tab):
+    ret = False
+    try:
+        el_div = tab.query_selector('div.modal-dialog > div.modal-content')
+        if el_div:
+            ret = True
+    except Exception as exc:
+        print(exc)
+        pass
+    return ret
+
+async def nodriver_cityline_purchase_button_press(tab, config_dict):
+    date_auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    is_date_assign_by_bot = await nodriver_cityline_date_auto_select(tab, date_auto_select_mode, date_keyword)
+
+    is_button_clicked = False
+    if is_date_assign_by_bot:
+        print("press purchase button")
+        await nodriver_press_button(tab, 'button.purchase-btn')
+        is_button_clicked = True
+        # wait reCAPTCHA popup.
+        time.sleep(6)
+
+    return is_button_clicked
+
+async def nodriver_cityline_close_second_tab(tab, url):
+    new_tab = tab
+    #print("tab count:", len(tab.browser.tabs))
+    if len(tab.browser.tabs) > 1:
+        # wait page ready.
+        time.sleep(0.3)
+        for tmp_tab in tab.browser.tabs:
+            if tmp_tab != tab:
+                tmp_url, is_quit_bot = await nodriver_current_url(tmp_tab)
+                if len(tmp_url) > 0:
+                    if tmp_url[:5] == "https":
+                        await new_tab.activate()
+                        await tab.close()
+                        time.sleep(0.3)
+                        new_tab = tmp_tab
+                        break
+    return new_tab
 
 async def nodriver_cityline_main(tab, url, config_dict):
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
@@ -1664,10 +1792,32 @@ async def nodriver_cityline_main(tab, url, config_dict):
         if len(cityline_account) > 4:
             await nodriver_cityline_login(tab, cityline_account)
 
-    # main page:
+    tab = await nodriver_cityline_close_second_tab(tab, url)
+
+    # date page.
+    #https://venue.cityline.com/utsvInternet/EVENT_NAME/eventDetail?event=EVENT_CODE
+    global cityline_purchase_button_pressed
+    if not 'cityline_purchase_button_pressed' in globals():
+        cityline_purchase_button_pressed = False
+    if '/eventDetail?' in url:
+        # detect fail.
+        #is_modal_dialog_popup = await nodriver_check_modal_dialog_popup(tab)
+
+        if not cityline_purchase_button_pressed:
+            if config_dict["date_auto_select"]["enable"]:
+                is_button_clicked = await nodriver_cityline_purchase_button_press(tab, config_dict)
+                if is_button_clicked:
+                    cityline_purchase_button_pressed = True
+    else:
+        cityline_purchase_button_pressed = False
+
+
+    # area page:
     # TODO:
     #https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
     pass
+
+    return tab
 
 
 async def nodriver_facebook_main(tab, config_dict):
@@ -1766,27 +1916,31 @@ def get_extension_config(config_dict):
     return conf
 
 async def nodrver_block_urls(tab, config_dict):
-    NETWORK_BLOCKED_URLS = ['*/adblock.js'
-    ,'*/google_ad_block.js'
-    ,'*google-analytics.*'
-    ,'*googletagmanager.*'
-    ,'*googletagservices.*'
-    ,'*googlesyndication.*'
-    ,'*play.google.com/*'
-    ,'*cdn.cookielaw.org/*'
-    ,'*fundingchoicesmessages.google.com/*'
-    ,'*.doubleclick.net/*'
-    ,'*.rollbar.com/*'
-    ,'*.cloudfront.com/*'
-    ,'*.lndata.com/*'
-    ,'*.twitter.com/i/*'
-    ,'*platform.twitter.com/*'
-    ,'*syndication.twitter.com/*'
-    ,'*youtube.com/*'
-    ,'*player.youku.*'
-    ,'*.clarity.ms/*'
-    ,'*img.uniicreative.com/*'
-    ,'*e2elog.fetnet.net*']
+    NETWORK_BLOCKED_URLS = [
+        '*.clarity.ms/*',
+        '*.cloudfront.com/*',
+        '*.doubleclick.net/*',
+        '*.lndata.com/*',
+        '*.rollbar.com/*',
+        '*.twitter.com/i/*',
+        '*/adblock.js',
+        '*/google_ad_block.js',
+        '*cityline.com/js/others.min.js',
+        '*anymind360.com/*',
+        '*cdn.cookielaw.org/*',
+        '*e2elog.fetnet.net*',
+        '*fundingchoicesmessages.google.com/*',
+        '*google-analytics.*',
+        '*googlesyndication.*',
+        '*googletagmanager.*',
+        '*googletagservices.*',
+        '*img.uniicreative.com/*',
+        '*platform.twitter.com/*',
+        '*play.google.com/*',
+        '*player.youku.*',
+        '*syndication.twitter.com/*',
+        '*youtube.com/*',
+    ]
 
     if config_dict["advanced"]["hide_some_image"]:
         NETWORK_BLOCKED_URLS.append('*.woff')
@@ -1887,10 +2041,10 @@ def nodriver_overwrite_prefs(conf):
     prefs_dict["net"]["network_prediction_options"]=3
     prefs_dict["privacy_guide"]={}
     prefs_dict["privacy_guide"]["viewed"]=True
-    #prefs_dict["privacy_sandbox"]={}
-    #prefs_dict["privacy_sandbox"]["first_party_sets_enabled"]=False
+    prefs_dict["privacy_sandbox"]={}
+    prefs_dict["privacy_sandbox"]["first_party_sets_enabled"]=False
     prefs_dict["profile"]={}
-    prefs_dict["profile"]["cookie_controls_mode"]=1
+    #prefs_dict["profile"]["cookie_controls_mode"]=1
     prefs_dict["profile"]["default_content_setting_values"]={}
     prefs_dict["profile"]["default_content_setting_values"]["notifications"]=2
     prefs_dict["profile"]["default_content_setting_values"]["sound"]=2
@@ -2017,6 +2171,7 @@ async def main(args):
 
         if not is_quit_bot:
             url, is_quit_bot = await nodriver_current_url(tab)
+            #print("url:", url)
 
         if is_quit_bot:
             try:
@@ -2101,8 +2256,7 @@ async def main(args):
             pass
 
         if 'cityline.com' in url:
-            await nodriver_cityline_main(tab, url, config_dict)
-            pass
+            tab = await nodriver_cityline_main(tab, url, config_dict)
 
         softix_family = False
         if 'hkticketing.com' in url:

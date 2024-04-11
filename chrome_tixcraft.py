@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.31)"
+CONST_APP_VERSION = "MaxBot (2024.04.01)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -725,27 +725,31 @@ def get_driver_by_config(config_dict):
         print("create web driver object fail @_@;")
     else:
         try:
-            NETWORK_BLOCKED_URLS = ['*/adblock.js'
-            ,'*/google_ad_block.js'
-            ,'*google-analytics.*'
-            ,'*googletagmanager.*'
-            ,'*googletagservices.*'
-            ,'*googlesyndication.*'
-            ,'*play.google.com/*'
-            ,'*cdn.cookielaw.org/*'
-            ,'*fundingchoicesmessages.google.com/*'
-            ,'*.doubleclick.net/*'
-            ,'*.rollbar.com/*'
-            ,'*.cloudfront.com/*'
-            ,'*.lndata.com/*'
-            ,'*.twitter.com/i/*'
-            ,'*platform.twitter.com/*'
-            ,'*syndication.twitter.com/*'
-            ,'*youtube.com/*'
-            ,'*player.youku.*'
-            ,'*.clarity.ms/*'
-            ,'*img.uniicreative.com/*'
-            ,'*e2elog.fetnet.net*']
+            NETWORK_BLOCKED_URLS = [
+                '*.clarity.ms/*',
+                '*.cloudfront.com/*',
+                '*.doubleclick.net/*',
+                '*.lndata.com/*',
+                '*.rollbar.com/*',
+                '*.twitter.com/i/*',
+                '*/adblock.js',
+                '*/google_ad_block.js',
+                '*cityline.com/js/others.min.js',
+                '*anymind360.com/*',
+                '*cdn.cookielaw.org/*',
+                '*e2elog.fetnet.net*',
+                '*fundingchoicesmessages.google.com/*',
+                '*google-analytics.*',
+                '*googlesyndication.*',
+                '*googletagmanager.*',
+                '*googletagservices.*',
+                '*img.uniicreative.com/*',
+                '*platform.twitter.com/*',
+                '*play.google.com/*',
+                '*player.youku.*',
+                '*syndication.twitter.com/*',
+                '*youtube.com/*',
+            ]
 
             if config_dict["advanced"]["hide_some_image"]:
                 NETWORK_BLOCKED_URLS.append('*.woff')
@@ -4700,18 +4704,20 @@ def cityline_purchase_button_press(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-
     date_auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
         print("date_keyword:", date_keyword)
+    
     is_date_assign_by_bot = cityline_date_auto_select(driver, date_auto_select_mode, date_keyword, auto_reload_coming_soon_page_enable)
 
     is_button_clicked = False
     if is_date_assign_by_bot:
+        print("press purchase button")
         is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'button.purchase-btn')
+        time.sleep(0.2)
 
     return is_button_clicked
 
@@ -10906,6 +10912,7 @@ def main(args):
 
         if not is_quit_bot:
             url, is_quit_bot = get_current_url(driver)
+            #print("url:", url)
 
         if is_quit_bot:
             try:

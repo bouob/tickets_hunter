@@ -338,23 +338,36 @@
                 "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
             ],
             "run_at": "document_end",
+            "world": "MAIN",
             "js": [
-                "jquery.min.js",
-                "js/cityline_event_common.js"
+                "js/cityline_event_detail.js"
             ]
         },
         {
             "matches": [
                 "https://shows.cityline.com/tc/*",
-                "https://priority.cityline.com/tc/*",
                 "https://shows.cityline.com/en/*",
-                "https://priority.cityline.com/en/*"
+                "https://priority.cityline.com/tc/*",
+                "https://priority.cityline.com/en/*",
+                "https://cultural.cityline.com/tc/*",
+                "https://cultural.cityline.com/en/*"
             ],
             "run_at": "document_end",
             "world": "MAIN",
             "js": [
                 "jquery.min.js",
                 "js/cityline_shows_buy_front.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://venue.cityline.com/utsvInternet/*/performance?*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/common.js",
+                "js/cityline_performance.js"
             ]
         },
         {
