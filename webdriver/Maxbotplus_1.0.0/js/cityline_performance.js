@@ -1,6 +1,34 @@
 const storage = chrome.storage.local;
 var settings = null;
 
+function cityline_clean_exclude(settings)
+{
+    let exclude_keyword_array = [];
+    if(settings) {
+        if(settings.keyword_exclude.length > 0) {
+            if(settings.keyword_exclude != '""') {
+                exclude_keyword_array = JSON.parse('[' + settings.keyword_exclude +']');
+            }
+        }
+    }
+
+    let query_string = "div.price > div.form-check";
+    for (let i = 0; i < exclude_keyword_array.length; i++) {
+        $(query_string).each(function ()
+        {
+            let html_text=$(this).text();
+            let is_match_keyword=false;
+            if(html_text.indexOf(exclude_keyword_array[i])>-1) {
+                is_match_keyword=true;
+            }
+            if(is_match_keyword) {
+                $(this).remove();
+            }
+        }
+        );
+    }
+}
+
 function cityline_area_keyword(settings)
 {
     let area_keyword_array = [];
@@ -60,6 +88,7 @@ function cityline_area_keyword(settings)
 
 function cityline_performance()
 {
+    cityline_clean_exclude(settings);
     //console.log("cityline_performance");
     if(settings) {
         cityline_area_keyword(settings);
@@ -70,6 +99,10 @@ function cityline_performance()
           $('input[type=checkbox]:checked').each(function() {
               $(this).click();
           });
+        }
+
+        if($("#ticketType0").val()+"" != "0") {
+            $('#expressPurchaseBtn').click();
         }
     }
 
