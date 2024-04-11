@@ -334,7 +334,7 @@
         },
         {
             "matches": [
-                "https://*.cityline.com/utsvInternet/internet/eventDetail?event=*",
+                "https://*.cityline.com/utsvInternet/*/eventDetail?event=*",
                 "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
             ],
             "run_at": "document_end",
@@ -419,5 +419,5 @@
             ]
         }
     ],
-    "version": "1.0.20"
+    "version": "1.0.21"
 }

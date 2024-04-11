@@ -1,73 +1,3 @@
-function getHtmlDocName() {
-    var pathname = location.pathname;
-    var pathParts = pathname.split('/');
-    if(pathParts.length >= 3) return pathParts[2];
-    return null;
-}
-
-function goToCityline(){
-    window.location="https://www.cityline.com";
-}
-
-function setRetryUrl(requestUrl){
-    urlThrottler = requestUrl;
-}
-
-function startCountDownTimer() {
-   setRetryUrl(window.location.href);
-   
-   if (enableAutoRetry){
-      setRemainTime(remainTime); 
-      if (ddsScheduler == undefined) {
-         ddsScheduler = setInterval(function(){
-            updateRemainTime();
-         }, 1000);
-      }
-   }else{
-      document.getElementById("remainTime1").innerHTML = '';
-      $('#btn-retry-en-1').removeAttr('disabled');
-   }
-}
-
-function setRemainTime(sec) {
-   document.getElementById("remainTime1").innerHTML = '(' +sec+ ')';
-}
-
-function goEvent(){
-   window.location.href = urlThrottler;
-}
-
-/*
-function goEvent(){
-    if(urlThrottler) {
-        if(window.location.href.indexOf("https://msg.cityline.com/") > -1) {
-            if(urlThrottler == "https://event.cityline.com") {
-                if(window.location.href.indexOf("?") > -1) {
-                    urlThrottler = "https://event.cityline.com/queue?" + window.location.href.split("?")[1];
-                }
-                document.getElementById("multiple_tab_layout").innerHTML = '';
-                $('#busy_zone').removeClass('d-none')
-                document.getElementById("busy_zone").innerHTML = '<div class="event"><button id="btn-retry-en-1" class="btn_cta" type="button" onclick="javascript:goEvent()">請重試 Retry<span id="remainTime1"></span></button></div>';
-
-                var ddsScheduler = undefined;
-                setRemainTime(remainTime); 
-                if (ddsScheduler == undefined) {
-                 ddsScheduler = setInterval(function(){
-                    updateRemainTime();
-                 }, 1000);
-                }
-
-            }
-        }
-
-        if(urlThrottler.indexOf("?") > -1) {
-            document.getElementById("multiple_tab_layout").innerHTML = urlThrottler;
-            window.location.href = urlThrottler;
-        }
-    }
-}
-*/
-
 function begin()
 {
     let settings = JSON.parse($("#settings").html());
@@ -86,7 +16,7 @@ function begin()
 
     // too short to cause error.
     if(auto_reload_page_interval < 0.05) {
-        auto_reload_page_interval = 0.05;
+        auto_reload_page_interval = 0.1;
     }
 
     if(status=='ON') {
@@ -94,7 +24,17 @@ function begin()
         setInterval(() => {
             //retry();
             //console.log("trigger");
-            $(".btn_cta").prop('disabled', false).trigger("click");
+            $(".eventposter").off();
+            setRetryUrl(window.location.href);
+            $(".btn_cta").prop('disabled', false);
+            if (ddsScheduler != undefined)
+                clearInterval(ddsScheduler);
+            //$(".btn_cta").prop('disabled', false).trigger("click");
+            if (typeof goEvent !== "undefined") { 
+                if(location.href.indexOf('home?') > -1) {
+                    goEvent();
+                }
+            }
         }, target_interval);
     }
 
@@ -151,3 +91,22 @@ setInterval(() => {
     SetItem(ItemType.Local, "");
 }, 100);
 
+
+function getHtmlDocName() {
+    var pathname = location.pathname;
+    var pathParts = pathname.split('/');
+    if(pathParts.length >= 3) return pathParts[2];
+    return null;
+}
+
+if(getHtmlDocName()==null) {
+    history.back();
+}
+$(".eventposter").off();
+if (typeof goEvent !== "undefined") { 
+    if(location.href.indexOf('home?') > -1) {
+        //goEvent();
+    } else {
+        history.back();
+    }
+}

@@ -458,3 +458,10 @@ var doLikeThisEvent = function(evtId) {
 		});
 	}
 }
+/*
+var url = contextPath + "/[activityCode]/performance?event=[eventId]&perfId=[perfId]";
+url = url.replace("[activityCode]",activityCode)
+		.replace("[eventId]", eventId)
+		.replace("[perfId]",selectedPerfId)
+location.href = url;
+*/

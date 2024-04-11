@@ -473,11 +473,12 @@ def dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG
 
     if len(local_remote_url_array) > 0:
         is_manifest_changed = False
-        for remote_url_final in local_remote_url_array:
-            if not remote_url_final in manifest_dict["host_permissions"]:
-                #print("local remote_url not in manifest:", remote_url_final)
-                manifest_dict["host_permissions"].append(remote_url_final)
-                is_manifest_changed = True
+        if 'host_permissions' in manifest_dict:
+            for remote_url_final in local_remote_url_array:
+                if not remote_url_final in manifest_dict["host_permissions"]:
+                    #print("local remote_url not in manifest:", remote_url_final)
+                    manifest_dict["host_permissions"].append(remote_url_final)
+                    is_manifest_changed = True
 
         if is_manifest_changed:
             json_str = json.dumps(manifest_dict, indent=4)

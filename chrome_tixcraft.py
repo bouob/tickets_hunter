@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.30)"
+CONST_APP_VERSION = "MaxBot (2024.03.31)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -54,38 +54,39 @@ CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
 CONST_MAXBLOCK_EXTENSION_FILTER =[
-"*google-analytics.com/*",
-"*googletagmanager.com/*",
-"*googletagservices.com/*",
-"*lndata.com/*",
+"*.doubleclick.net/*",
+"*.googlesyndication.com/*",
+"*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
 "*adx.c.appier.net/*",
+"*cdn.cookielaw.org/*",
+"*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
 "*clarity.ms/*",
 "*cloudfront.com/*",
 "*cms.analytics.yahoo.com/*",
-"*doubleclick.net/*",
 "*e2elog.fetnet.net/*",
 "*fundingchoicesmessages.google.com/*",
 "*ghtinc.com/*",
+"*google-analytics.com/*",
+"*googletagmanager.com/*",
+"*googletagservices.com/*",
+"*img.uniicreative.com/*",
+"*lndata.com/*",
 "*match.adsrvr.org/*",
 "*onead.onevision.com.tw/*",
+"*play.google.com/log?*",
 "*popin.cc/*",
 "*rollbar.com/*",
 "*sb.scorecardresearch.com/*",
 "*tagtoo.co/*",
-"*.ssp.hinet.net/*",
 "*ticketmaster.sg/js/adblock*",
-"*.googlesyndication.com/*",
-"*treasuredata.com/*",
-"*play.google.com/log?*",
-"*www.youtube.com/youtubei/v1/player/heartbeat*",
-"*tixcraft.com/js/analytics.js*",
 "*ticketmaster.sg/js/adblock.js*",
-"*img.uniicreative.com/*",
-"*cdn.cookielaw.org/*",
-"*tixcraft.com/js/custom.js*",
+"*tixcraft.com/js/analytics.js*",
 "*tixcraft.com/js/common.js*",
-"*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*"]
+"*tixcraft.com/js/custom.js*",
+"*treasuredata.com/*",
+"*www.youtube.com/youtubei/v1/player/heartbeat*",
+]
 
 CONST_CHROME_VERSION_NOT_MATCH_EN="Please download the WebDriver version to match your browser version."
 CONST_CHROME_VERSION_NOT_MATCH_TW="請下載與您瀏覽器相同版本的WebDriver版本，或更新您的瀏覽器版本。"

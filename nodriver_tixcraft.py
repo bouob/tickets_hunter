@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.30)"
+CONST_APP_VERSION = "MaxBot (2024.03.31)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -42,38 +42,39 @@ CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
 CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
 CONST_MAXBLOCK_EXTENSION_FILTER =[
-"*google-analytics.com/*",
-"*googletagmanager.com/*",
-"*googletagservices.com/*",
-"*lndata.com/*",
+"*.doubleclick.net/*",
+"*.googlesyndication.com/*",
+"*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
 "*adx.c.appier.net/*",
+"*cdn.cookielaw.org/*",
+"*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
 "*clarity.ms/*",
 "*cloudfront.com/*",
 "*cms.analytics.yahoo.com/*",
-"*doubleclick.net/*",
 "*e2elog.fetnet.net/*",
 "*fundingchoicesmessages.google.com/*",
 "*ghtinc.com/*",
+"*google-analytics.com/*",
+"*googletagmanager.com/*",
+"*googletagservices.com/*",
+"*img.uniicreative.com/*",
+"*lndata.com/*",
 "*match.adsrvr.org/*",
 "*onead.onevision.com.tw/*",
+"*play.google.com/log?*",
 "*popin.cc/*",
 "*rollbar.com/*",
 "*sb.scorecardresearch.com/*",
 "*tagtoo.co/*",
-"*.ssp.hinet.net/*",
 "*ticketmaster.sg/js/adblock*",
-"*.googlesyndication.com/*",
-"*treasuredata.com/*",
-"*play.google.com/log?*",
-"*www.youtube.com/youtubei/v1/player/heartbeat*",
-"*tixcraft.com/js/analytics.js*",
 "*ticketmaster.sg/js/adblock.js*",
-"*img.uniicreative.com/*",
-"*cdn.cookielaw.org/*",
-"*tixcraft.com/js/custom.js*",
+"*tixcraft.com/js/analytics.js*",
 "*tixcraft.com/js/common.js*",
-"*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*"]
+"*tixcraft.com/js/custom.js*",
+"*treasuredata.com/*",
+"*www.youtube.com/youtubei/v1/player/heartbeat*",
+]
 
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
@@ -1729,16 +1730,14 @@ def get_nodriver_browser_args():
     ]
     return browser_args
 
-def get_maxbot_plus_extension_path():
-    extension_path = "webdriver/Maxbotplus_1.0.0/"
-    if platform.system() == 'Windows':
-        extension_path = extension_path.replace("/","\\")
-
+def get_maxbot_extension_path(extension_folder):
     app_root = util.get_app_root()
+    extension_path = "webdriver"
+    extension_path = os.path.join(extension_path, extension_folder)
     config_filepath = os.path.join(app_root, extension_path)
     #print("config_filepath:", config_filepath)
 
-    # check extesion mainfest
+    # double check extesion mainfest
     path = pathlib.Path(config_filepath)
     if path.exists():
         if path.is_dir():
@@ -1746,27 +1745,6 @@ def get_maxbot_plus_extension_path():
             for item in path.rglob("manifest.*"):
                 path = item.parent
             #print("final path:", path)
-
-    return config_filepath
-
-def get_maxbot_block_extension_path():
-    extension_path = "webdriver/Maxblockplus_1.0.0/"
-    if platform.system() == 'Windows':
-        extension_path = extension_path.replace("/","\\")
-
-    app_root = util.get_app_root()
-    config_filepath = os.path.join(app_root, extension_path)
-    #print("config_filepath:", config_filepath)
-
-    # check extesion mainfest
-    path = pathlib.Path(config_filepath)
-    if path.exists():
-        if path.is_dir():
-            #print("found extension dir")
-            for item in path.rglob("manifest.*"):
-                path = item.parent
-            #print("final path:", path)
-
     return config_filepath
 
 def get_extension_config(config_dict):
@@ -1777,8 +1755,14 @@ def get_extension_config(config_dict):
         browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
     conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
-        conf.add_extension(get_maxbot_plus_extension_path())
-        conf.add_extension(get_maxbot_block_extension_path())
+        ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
+        if len(ext) > 0:
+            conf.add_extension(ext)
+            util.dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE)
+        ext = get_maxbot_extension_path(CONST_MAXBLOCK_EXTENSION_NAME)
+        if len(ext) > 0:
+            conf.add_extension(ext)
+            util.dump_settings_to_maxblock_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE, CONST_MAXBLOCK_EXTENSION_FILTER)
     return conf
 
 async def nodrver_block_urls(tab, config_dict):
@@ -1903,8 +1887,8 @@ def nodriver_overwrite_prefs(conf):
     prefs_dict["net"]["network_prediction_options"]=3
     prefs_dict["privacy_guide"]={}
     prefs_dict["privacy_guide"]["viewed"]=True
-    prefs_dict["privacy_sandbox"]={}
-    prefs_dict["privacy_sandbox"]["first_party_sets_enabled"]=False
+    #prefs_dict["privacy_sandbox"]={}
+    #prefs_dict["privacy_sandbox"]["first_party_sets_enabled"]=False
     prefs_dict["profile"]={}
     prefs_dict["profile"]["cookie_controls_mode"]=1
     prefs_dict["profile"]["default_content_setting_values"]={}

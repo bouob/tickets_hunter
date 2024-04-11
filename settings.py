@@ -41,7 +41,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.03.30)"
+CONST_APP_VERSION = "MaxBot (2024.03.31)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1130,8 +1130,11 @@ def launch_maxbot():
         launch_counter += 1
     else:
         launch_counter = 0
+    
+    webdriver_type = ""
     global combo_webdriver_type
-    webdriver_type = combo_webdriver_type.get().strip()
+    if 'combo_webdriver_type' in globals():
+        webdriver_type = combo_webdriver_type.get().strip()
 
     script_name = "chrome_tixcraft"
     if webdriver_type == CONST_WEBDRIVER_TYPE_NODRIVER:
@@ -1535,6 +1538,11 @@ def showHideBlocks():
     BLOCK_STYLE_TIXCRAFT = 0
     BLOCK_STYLE_KKTIX = 1
     STYLE_KKTIX_DOMAIN_LIST = ['kktix']
+
+    global combo_webdriver_type
+    if 'combo_webdriver_type' in globals():
+        if 'cityline.com' in new_homepage:
+            combo_webdriver_type.set("nodriver")
 
     show_block_index = BLOCK_STYLE_TIXCRAFT
     for domain_name in STYLE_KKTIX_DOMAIN_LIST:
@@ -2465,13 +2473,13 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_cityline_account
     txt_cityline_account_value = StringVar(frame_group_header, value=config_dict["advanced"]["cityline_account"].strip())
-    txt_cityline_account = Entry(frame_group_header, width=15, textvariable = txt_cityline_account_value)
-    txt_cityline_account.grid(column=1, row=group_row_count, sticky = W)
+    txt_cityline_account = Entry(frame_group_header, width=30, textvariable = txt_cityline_account_value)
+    txt_cityline_account.grid(column=1, row=group_row_count, sticky = W, columnspan=2)
 
     global txt_cityline_password
     txt_cityline_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["cityline_password"].strip()))
     txt_cityline_password = Entry(frame_group_header, width=15, textvariable = txt_cityline_password_value, show="*")
-    txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
+    #txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
