@@ -6,11 +6,14 @@ async function ajax_return_done(data, event_id)
 {
     //console.log(data);
     if(settings) {
-        if(data.sessions.length==1) {
-            let session_id=data.sessions[0].sessionId;
-            if(session_id) {
-                let new_url = "https://ticketplus.com.tw/order/"+ event_id +"/" + session_id;
-                location.href = new_url;
+        if(data.sessions) {
+            // if, only one event, auto redirect.
+            if(data.sessions.length==1) {
+                let session_id=data.sessions[0].sessionId;
+                if(session_id) {
+                    let new_url = "https://ticketplus.com.tw/order/"+ event_id +"/" + session_id;
+                    location.href = new_url;
+                }
             }
         }
     }
@@ -27,7 +30,9 @@ async function wait_function_ready() {
         })
         .done(function(data) {
             //alert( "second success" );
-            ajax_return_done(data, event_id);
+            if(data) {
+                ajax_return_done(data, event_id);
+            }
         })
         .fail(function() {
             //alert( "error" );

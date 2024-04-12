@@ -117,7 +117,7 @@ def load_translate():
     en_us["enable"] = 'Enable'
     en_us["recommand_enable"] = "Recommended to enable"
 
-    en_us["auto_press_next_step_button"] = 'Auto Press Next Step Button'
+    en_us["auto_press_next_step_button"] = 'KKTIX Press Next Step Button'
     en_us["auto_fill_ticket_number"] = 'Auto Fill Ticket Number'
     en_us["and"] = 'And with'
 
@@ -237,7 +237,7 @@ def load_translate():
 
     zh_tw["enable"] = '啟用'
     zh_tw["recommand_enable"] = "建議啟用"
-    zh_tw["auto_press_next_step_button"] = '自動點選下一步按鈕'
+    zh_tw["auto_press_next_step_button"] = 'KKTIX點選下一步按鈕'
     zh_tw["auto_fill_ticket_number"] = '自動輸入張數'
     zh_tw["and"] = '而且（同列）'
 
@@ -357,7 +357,7 @@ def load_translate():
     zh_cn["enable"] = '启用'
     zh_cn["recommand_enable"] = "建议启用"
 
-    zh_cn["auto_press_next_step_button"] = '自动点选下一步按钮'
+    zh_cn["auto_press_next_step_button"] = 'KKTIX自动点选下一步按钮'
     zh_cn["auto_fill_ticket_number"] = '自动输入张数'
     zh_cn["and"] = '而且（同列）'
 
@@ -478,7 +478,7 @@ def load_translate():
     ja_jp["enable"] = '有効'
     ja_jp["recommand_enable"] = "有効化を推奨"
 
-    ja_jp["auto_press_next_step_button"] = '次を自動で押す'
+    ja_jp["auto_press_next_step_button"] = 'KKTIX次を自動で押す'
     ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
     ja_jp["and"] = 'そして（同列）'
 

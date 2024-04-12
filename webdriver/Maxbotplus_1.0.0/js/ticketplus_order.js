@@ -69,7 +69,9 @@ function get_event_status_core(real_event_id, real_session_id) {
     })
     .done(function(data) {
         //alert( "second success" );
-        ajax_return_done(data, real_event_id, real_session_id);
+        if(data) {
+            ajax_return_done(data, real_event_id, real_session_id);
+        }
     })
     .fail(function() {
         //alert( "error" );

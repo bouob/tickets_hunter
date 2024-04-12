@@ -139,13 +139,15 @@ function kktix_area_keyword(settings, base_info, register_info)
                     add_button.click();
                 }
 
-                let auto_click_next_btn = true;
+                let auto_click_next_btn = settings.kktix.auto_press_next_step_button;
 
-                if(is_verification_conditions_popup) {
-                    auto_click_next_btn = false;
-                    let is_text_sent = kktix_verification_conditions(settings);
-                    if(is_text_sent) {
-                        auto_click_next_btn = true;
+                if(auto_click_next_btn) {
+                    if(is_verification_conditions_popup) {
+                        auto_click_next_btn = false;
+                        let is_text_sent = kktix_verification_conditions(settings);
+                        if(is_text_sent) {
+                            auto_click_next_btn = true;
+                        }
                     }
                 }
 
