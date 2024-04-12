@@ -320,7 +320,7 @@
         },
         {
             "matches": [
-                "https://msg.cityline.com/*",
+                "https://msg.cityline.com/*.html*",
                 "https://*.cityline.com/utsvInternet/*/home?lang=TW",
                 "https://event.cityline.com/",
                 "https://event.cityline.com/queue?loc=*"
@@ -432,5 +432,5 @@
             ]
         }
     ],
-    "version": "1.0.22"
+    "version": "1.0.23"
 }

@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.01)"
+CONST_APP_VERSION = "MaxBot (2024.04.02)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1605,11 +1605,22 @@ async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Brow
     return ibon_dict
 
 
-async def nodriver_cityline_auto_retry_access(tab, url):
+async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
     try:
+        # https://event.cityline.com/utsvInternet/EVENT_NAME/home?lang=TW
+        if "home?lang=TW" in url:
+            url_array = url.split("home?lang=TW")
+            if len(url_array) > 2:
+                new_url = url_array[0] + "home?lang=TW"
+                print("redirect to url:", new_url)
+                tab = await tab.get(new_url)
+                time.sleep(0.1)
+        
         btn_retry = await tab.query_selector('button')
         if btn_retry:
+            #print("found button to click.")
             btn_retry.click()
+            time.sleep(0.1)
     except Exception as exc:
         print(exc)
         pass
@@ -1785,7 +1796,7 @@ async def nodriver_cityline_close_second_tab(tab, url):
 
 async def nodriver_cityline_main(tab, url, config_dict):
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
-        await nodriver_cityline_auto_retry_access(tab, url)
+        await nodriver_cityline_auto_retry_access(tab, url, config_dict)
 
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]

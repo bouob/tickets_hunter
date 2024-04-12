@@ -105,6 +105,7 @@ function cityline_performance()
             $('#expressPurchaseBtn').click();
         }
     }
+    $("#commonWarningMessageModal").hide();
 
     setTimeout(() => {
       cityline_performance()
