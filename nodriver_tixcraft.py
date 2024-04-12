@@ -22,6 +22,7 @@ import nodriver as uc
 from nodriver import cdp
 from nodriver.core.config import Config
 from urllib3.exceptions import InsecureRequestWarning
+import urllib.parse
 
 import util
 from NonBrowser import NonBrowser
@@ -32,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.02)"
+CONST_APP_VERSION = "MaxBot (2024.04.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1606,21 +1607,58 @@ async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Brow
 
 
 async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
-    try:
-        # https://event.cityline.com/utsvInternet/EVENT_NAME/home?lang=TW
-        if "home?lang=TW" in url:
-            url_array = url.split("home?lang=TW")
-            if len(url_array) > 2:
-                new_url = url_array[0] + "home?lang=TW"
-                print("redirect to url:", new_url)
-                tab = await tab.get(new_url)
-                time.sleep(0.1)
+    cookies  = await tab.browser.cookies.get_all()
+    is_cookie_exist = False
+    for cookie in cookies:
+        if 'my-' in cookie.name:
+            cookie.value=""
+            break
+    await tab.browser.cookies.set_all(cookies)
+
+
+    cityline_event_url = "https://event.cityline.com/"
+    if "?loc=" in url:
+        loc = url.split("?loc=")[1]
+        if len(loc) > 0:
+            if "&" in loc:
+                loc = url.split("&")[0]
+            loc_decode = urllib.parse.unquote(loc)
+            if len(loc_decode) > 0:
+                if loc_decode[:1]=="/":
+                    loc_decode = loc_decode[1:]
+                if loc_decode[:6] != "https:":
+                    new_url = cityline_event_url + loc_decode
+                    if not "&lang=" in new_url:
+                        new_url = new_url + "&lang=TW"
+                    if new_url != url:
+                        try:
+                            print("redirect to url:", new_url)
+                            tab = await tab.get(new_url)
+                            time.sleep(0.2)
+                        except Exception as e:
+                            print(e)
+                            pass
+
+    # https://event.cityline.com/utsvInternet/EVENT_NAME/home?lang=TW
+    if "lang=TW" in url:
+        url_array = url.split("lang=TW")
+        if len(url_array) > 2:
+            new_url = url_array[0] + "lang=TW"
+            if new_url != url:
+                try:
+                    print("redirect to url:", new_url)
+                    tab = await tab.get(new_url)
+                    time.sleep(0.2)
+                except Exception as exc:
+                    print(exc)
+                    pass
         
+    try:
         btn_retry = await tab.query_selector('button')
         if btn_retry:
             #print("found button to click.")
             btn_retry.click()
-            time.sleep(0.1)
+            time.sleep(0.2)
     except Exception as exc:
         print(exc)
         pass
@@ -1682,7 +1720,8 @@ async def nodriver_cityline_date_auto_select(tab, auto_select_mode, date_keyword
         my_css_selector = "button.date-time-position"
         area_list = await tab.query_selector_all(my_css_selector)
     except Exception as exc:
-        print(exc)
+        #print(exc)
+        pass
 
     matched_blocks = None
     if area_list:
@@ -1736,7 +1775,7 @@ async def nodriver_cityline_date_auto_select(tab, auto_select_mode, date_keyword
             print("not found date-time-position")
             pass
     else:
-        print("date date-time-position is None")
+        #print("date date-time-position is None")
         pass
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
