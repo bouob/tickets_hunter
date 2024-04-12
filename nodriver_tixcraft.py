@@ -2117,8 +2117,10 @@ def nodriver_overwrite_prefs(conf):
     state_dict["performance_tuning"]["high_efficiency_mode"]["state"]=1
     state_dict["browser"]={}
     state_dict["browser"]["enabled_labs_experiments"]=[
+        "history-journeys@4",
         "memory-saver-multi-state-mode@1",
-        "modal-memory-saver@1"
+        "modal-memory-saver@1",
+        "read-anything@2"
     ]
     state_dict["dns_over_https"]={}
     state_dict["dns_over_https"]["mode"]="off"
