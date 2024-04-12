@@ -6,19 +6,12 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected ti
 # Download 
 (搶票程式下載)
 
-目前有打包的「執行檔」，只有Windows 平台，其他作業系統需要使用原始碼來執行。當然Windows 平台也可以用原始碼執行MaxBot.
-
 https://github.com/max32002/tixcraft_bot/releases
 
-如果你是要用「原始碼」執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
-
-如果有辦法的話，建議使用原始碼來執行MaxBot，執行上的「效率」與「相容性」的問題會較少。
-
-使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
-
-請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
-
-https://max-everyday.com/2023/11/buy-ticket-by-vm/#maxbot
+下載說明:
+* 目前有打包的「執行檔」，只有Windows 平台，其他作業系統需要使用原始碼來執行。當然Windows 平台也可以用原始碼執行MaxBot.
+* 如果你是要用「原始碼」執行MaxBot, 在透過git clone 或在github按下載原始碼的 zip檔，你的python 版本可以使用3.7 / 3.8 / 3.9 / 3.10 這4個版號。
+* 如果有辦法的話，建議使用原始碼來執行MaxBot，執行上的「效率」與「相容性」的問題會較少。
 
 # Demo 
 (示範影片)
@@ -42,19 +35,26 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 透過原始碼執行MaxBot教學影片：
 https://youtu.be/HpVG91j0lbI
 
-Step 1: 取得source code:
+使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
+
+請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
+
+詳細的文字說明: 
+https://max-everyday.com/2023/11/buy-ticket-by-vm/
+
+### Step 1: 取得source code:
 
 <code>git clone https://github.com/max32002/tixcraft_bot.git</code>
 
-Step 2: 進入 clone 的資料夾: tixcraft_bot:
+### Step 2: 進入 clone 的資料夾: tixcraft_bot:
 
 <code>cd tixcraft_bot </code>
 
-Step 3: 安裝第三方套件:
+### Step 3: 安裝第三方套件:
 
 <code>python3 -m pip install -r pip-req.txt</code>
 
-Step 4: 執行設定介面主桯式:
+### Step 4: 執行設定介面主桯式:
 
 <code>python3 settings.py</code>
 
@@ -79,7 +79,7 @@ https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
 透過瀏覽器下載 github 上的 zip 檔, 在 Windows / macOS / Linux 平台, 預設的路徑在「下載」(~/Download) 的資料夾, 你在執行的 Terminal 視窗的路徑, 與你解壓縮的路徑可能不同, 直接執行上面的指令, 會無法進入到預期的資料夾內。
 
-Q: 取得source code後跑出來fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
+### Q: 取得source code後跑出來fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
 
 A: 執行 git clone 2次, 重覆取得 source code, 才會有這個問題, 如果 tixcraft_bot 目錄已經存在, 直接 cd tixcraft_bot 就可以了。
 如果你想把已下載的刪除, 可以直把把 tixcraft_bot 目錄刪掉即可。
@@ -96,7 +96,7 @@ PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。
 
 PS：「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
 
-Q: 是只有使用虛擬主機才要用程式碼執行搶票機器人嗎？
+### Q: 是只有使用虛擬主機才要用程式碼執行搶票機器人嗎？
 
 A: 除了 Window 有打包的執行檔之外, macOS / Linux 只能使用原始碼來執行, 當然 Windows 也可以用原始碼來執行.
 
