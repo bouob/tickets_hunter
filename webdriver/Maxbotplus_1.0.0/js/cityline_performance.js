@@ -93,7 +93,29 @@ function cityline_performance()
     if(settings) {
         cityline_area_keyword(settings);
 
-        $("#ticketType0").val(settings.ticket_number);
+        //$("#ticketType0").val(settings.ticket_number);
+        let target_row=$("#ticketType0");
+        let ticket_options = target_row.find("option");
+        if (ticket_options.length)
+        {
+            let is_ticket_number_assign = false;
+            if (settings.ticket_number > 0)
+            {
+                ticket_options.each(function ()
+                {
+                    if ($(this).val() == settings.ticket_number)
+                    {
+                        $(this).prop('selected', true);
+                        is_ticket_number_assign = true;
+                        return false;
+                    }
+                });
+            }
+            if (!is_ticket_number_assign)
+            {
+                ticket_options.last().prop('selected', true);
+            }
+        }
         
         if(settings.advanced.disable_adjacent_seat) {
           $('input[type=checkbox]:checked').each(function() {
