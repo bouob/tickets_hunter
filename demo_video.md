@@ -1,5 +1,10 @@
 # Demo (示範影片)
 
+### 2024-04-02
+(2024-04-12) cityline 撞牆心得
+
+https://youtu.be/cLFWyI1BLyw
+
 ### 2024-04-01
 Cityline 自動輸入張數,票價,日期
 
