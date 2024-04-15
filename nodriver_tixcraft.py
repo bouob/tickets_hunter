@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.06)"
+CONST_APP_VERSION = "MaxBot (2024.04.07)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -268,14 +268,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             print(e)
             pass
 
-async def nodriver_kktix_paused_main(tab, url, config_dict, kktix_dict):
+async def nodriver_kktix_paused_main(tab, url, config_dict):
     is_url_contain_sign_in = False
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         await nodriver_kktix_signin(tab, url, config_dict)
         is_url_contain_sign_in = True
-
-    return kktix_dict
 
 async def nodriver_goto_homepage(driver, config_dict):
     homepage = config_dict["homepage"]
@@ -737,7 +735,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
             is_need_refresh_final = True
 
             for area_keyword_item in area_keyword_array:
-                is_need_refresh_tmp = Falses
+                is_need_refresh_tmp = False
                 is_dom_ready, is_ticket_number_assigned, is_need_refresh_tmp = await nodriver_kktix_assign_ticket_number(tab, config_dict, area_keyword_item)
 
                 if not is_dom_ready:
@@ -815,7 +813,18 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
     return fail_list, played_sound_ticket
 
-async def nodriver_kktix_main(tab, url, config_dict, kktix_dict):
+async def nodriver_kktix_main(tab, url, config_dict):
+    global kktix_dict
+    if not 'kktix_dict' in globals():
+        kktix_dict = {}
+        kktix_dict["fail_list"]=[]
+        kktix_dict["start_time"]=None
+        kktix_dict["done_time"]=None
+        kktix_dict["elapsed_time"]=None
+        kktix_dict["is_popup_checkout"] = False
+        kktix_dict["played_sound_ticket"] = False
+        kktix_dict["played_sound_order"] = False
+
     is_url_contain_sign_in = False
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
@@ -944,7 +953,7 @@ async def nodriver_kktix_main(tab, url, config_dict, kktix_dict):
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
 
-    return kktix_dict, is_quit_bot
+    return is_quit_bot
 
 async def nodriver_tixcraft_home_close_window(tab):
     accept_all_cookies_btn = None
@@ -1055,7 +1064,20 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
 
-async def nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Captcha_Browser):
+async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
+    global tixcraft_dict
+    if not 'tixcraft_dict' in globals():
+        tixcraft_dict = {}
+        tixcraft_dict["fail_list"]=[]
+        tixcraft_dict["fail_promo_list"]=[]
+        tixcraft_dict["start_time"]=None
+        tixcraft_dict["done_time"]=None
+        tixcraft_dict["elapsed_time"]=None
+        tixcraft_dict["is_popup_checkout"] = False
+        tixcraft_dict["area_retry_count"]=0
+        tixcraft_dict["played_sound_ticket"] = False
+        tixcraft_dict["played_sound_order"] = False
+
     await nodriver_tixcraft_home_close_window(tab)
 
     # special case for same event re-open, redirect to user's homepage.
@@ -1171,7 +1193,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Capt
         tixcraft_dict["is_popup_checkout"] = False
         tixcraft_dict["played_sound_order"] = False
 
-    return tixcraft_dict, is_quit_bot
+    return is_quit_bot
 
 async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     print("nodriver_ticketplus_account_sign_in")
@@ -1301,7 +1323,13 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
 
     return is_user_signin
 
-async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser, ticketplus_dict):
+async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
+    global ticketplus_dict
+    if not 'ticketplus_dict' in globals():
+        ticketplus_dict = {}
+        ticketplus_dict["fail_list"]=[]
+        ticketplus_dict["is_popup_confirm"] = False
+
     home_url = 'https://ticketplus.com.tw/'
     is_user_signin = False
     if home_url == url.lower():
@@ -1394,15 +1422,21 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser, 
     else:
         ticketplus_dict["is_popup_confirm"] = False
 
-    return ticketplus_dict
-
 async def nodriver_ibon_ticket_agree(tab):
     for i in range(3):
         is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen')
         if is_finish_checkbox_click:
             break
 
-async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Browser):
+async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
+    global ibon_dict
+    if not 'ibon_dict' in globals():
+        ibon_dict = {}
+        ibon_dict["fail_list"]=[]
+        ibon_dict["start_time"]=None
+        ibon_dict["done_time"]=None
+        ibon_dict["elapsed_time"]=None
+
     home_url_list = ['https://ticket.ibon.com.tw/'
     ,'https://ticket.ibon.com.tw/index/entertainment'
     ]
@@ -1600,7 +1634,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Brow
 
                     if not is_name_based:
                         is_button_clicked = await nodriver_press_button(tab, 'a.btn.btn-pink.continue')
-    return ibon_dict
 
 
 async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
@@ -2171,41 +2204,9 @@ async def main(args):
     url = ""
     last_url = ""
 
-    # for tixcraft
-    tixcraft_dict = {}
-    tixcraft_dict["fail_list"]=[]
-    tixcraft_dict["fail_promo_list"]=[]
-    tixcraft_dict["start_time"]=None
-    tixcraft_dict["done_time"]=None
-    tixcraft_dict["elapsed_time"]=None
-    tixcraft_dict["is_popup_checkout"] = False
-    tixcraft_dict["area_retry_count"]=0
-    tixcraft_dict["played_sound_ticket"] = False
-    tixcraft_dict["played_sound_order"] = False
-
-    # for kktix
-    kktix_dict = {}
-    kktix_dict["fail_list"]=[]
-    kktix_dict["start_time"]=None
-    kktix_dict["done_time"]=None
-    kktix_dict["elapsed_time"]=None
-    kktix_dict["is_popup_checkout"] = False
-    kktix_dict["played_sound_ticket"] = False
-    kktix_dict["played_sound_order"] = False
-
     fami_dict = {}
     fami_dict["fail_list"] = []
     fami_dict["last_activity"]=""
-
-    ibon_dict = {}
-    ibon_dict["fail_list"]=[]
-    ibon_dict["start_time"]=None
-    ibon_dict["done_time"]=None
-    ibon_dict["elapsed_time"]=None
-
-    hkticketing_dict = {}
-    hkticketing_dict["is_date_submiting"] = False
-    hkticketing_dict["fail_list"]=[]
 
     ticketplus_dict = {}
     ticketplus_dict["fail_list"]=[]
@@ -2266,14 +2267,14 @@ async def main(args):
 
         if is_maxbot_paused:
             if 'kktix.c' in url:
-                kktix_dict = await nodriver_kktix_paused_main(tab, url, config_dict, kktix_dict)
+                await nodriver_kktix_paused_main(tab, url, config_dict)
             # sleep more when paused.
             time.sleep(0.1)
             continue
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
-            kktix_dict, is_quit_bot = await nodriver_kktix_main(tab, url, config_dict, kktix_dict)
+            is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             pass
 
         tixcraft_family = False
@@ -2287,16 +2288,14 @@ async def main(args):
             tixcraft_family = True
 
         if tixcraft_family:
-            tixcraft_dict, is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, tixcraft_dict, ocr, Captcha_Browser)
-            pass
+            is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
 
         if 'famiticket.com' in url:
             #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
             pass
 
         if 'ibon.com' in url:
-            ibon_dict = await nodriver_ibon_main(tab, url, config_dict, ibon_dict, ocr, Captcha_Browser)
-            pass
+            await nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser)
 
         kham_family = False
         if 'kham.com.tw' in url:
@@ -2313,8 +2312,7 @@ async def main(args):
             pass
 
         if 'ticketplus.com' in url:
-            ticketplus_dict = await nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser, ticketplus_dict)
-            pass
+            await nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser)
 
         if 'urbtix.hk' in url:
             #urbtix_main(driver, url, config_dict)
@@ -2331,7 +2329,7 @@ async def main(args):
         if 'ticketek.com' in url:
             softix_family = True
         if softix_family:
-            #hkticketing_dict = softix_powerweb_main(driver, url, config_dict, hkticketing_dict)
+            #softix_powerweb_main(driver, url, config_dict)
             pass
 
         # for facebook
