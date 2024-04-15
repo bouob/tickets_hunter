@@ -27,7 +27,7 @@ function begin()
             let url = window.location.href;
             if(url.indexOf('lang=TW') > -1) {
                 const myArray = url.split("lang=TW");
-                url = url[0]+"lang=TW";
+                //url = url[0]+"lang=TW";
             }
             $(".eventposter").off();
             if (typeof setRetryUrl !== "undefined") { 
@@ -109,7 +109,8 @@ if(getHtmlDocName()==null) {
     history.back();
 }
 if (typeof goEvent !== "undefined") { 
-    if(location.href.indexOf('home?') > -1) {
+    if(location.href.indexOf('home?') > -1
+        || location.href.indexOf('lang=') > -1) {
         //goEvent();
     } else {
         history.back();
