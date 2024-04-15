@@ -10655,7 +10655,7 @@ def ticketplus_ticket_agree(driver, config_dict):
 def ticketplus_confirm(driver, config_dict):
     is_checkbox_checked = ticketplus_ticket_agree(driver, config_dict)
 
-def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser, ticketplus_dict):
+def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
     global ticketplus_dict
     if not 'ticketplus_dict' in globals():
         ticketplus_dict = {}
