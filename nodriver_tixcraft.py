@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.04)"
+CONST_APP_VERSION = "MaxBot (2024.04.05)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -596,29 +596,26 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
     if not target_area is None:
         current_ticket_number = ""
         if show_debug_message:
-            print("try to get input box value.")
+            print("try to set input box value.")
         try:
-            current_ticket_number = str(target_area.attribute('value')).strip()
+            current_ticket_number = await target_area.apply('function (element) { return element.value; } ')
         except Exception as exc:
             pass
+
+        if show_debug_message:
+            print("current_ticket_number", current_ticket_number)
 
         if len(current_ticket_number) > 0:
             if current_ticket_number == "0":
                 try:
                     print("asssign ticket number:%s" % ticket_number_str)
-                    target_area.clear_input()
-                    target_area.send_keys(ticket_number_str)
+                    await target_area.click()
+                    await target_area.apply('function (element) {element.value = ""; } ')
+                    await target_area.send_keys(ticket_number_str);
                     is_ticket_number_assigned = True
                 except Exception as exc:
                     print("asssign ticket number to ticket-price field Exception:")
                     print(exc)
-                    try:
-                        target_area.clear()
-                        target_area.send_keys("1")
-                        is_ticket_number_assigned = True
-                    except Exception as exc2:
-                        print("asssign ticket number to ticket-price still failed.")
-                        pass
             else:
                 if show_debug_message:
                     print("value already assigned.")
@@ -1618,6 +1615,7 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
 
     cityline_event_url = "https://event.cityline.com/"
     if "?loc=" in url:
+        url = url.replace("%3Flang%3DTW%26lang%3DTW","%3Flang%3DTW")
         loc = url.split("?loc=")[1]
         if len(loc) > 0:
             if "&" in loc:
@@ -1630,11 +1628,14 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
                     new_url = cityline_event_url + loc_decode
                     if not "&lang=" in new_url:
                         new_url = new_url + "&lang=TW"
+                        new_url = new_url.replace("lang=TW&lang=TW","lang=TW")
                     if new_url != url:
                         try:
+                            #print("old url:", url)
                             print("redirect to url:", new_url)
                             tab = await tab.get(new_url)
                             time.sleep(0.2)
+                            pass
                         except Exception as e:
                             print(e)
                             pass
@@ -1646,6 +1647,7 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
             new_url = url_array[0] + "lang=TW"
             if new_url != url:
                 try:
+                    new_url = new_url.replace("lang=TW&lang=TW","lang=TW")
                     print("redirect to url:", new_url)
                     tab = await tab.get(new_url)
                     time.sleep(0.2)
@@ -1834,6 +1836,11 @@ async def nodriver_cityline_close_second_tab(tab, url):
     return new_tab
 
 async def nodriver_cityline_main(tab, url, config_dict):
+    global cityline_dict
+    if not 'cityline_dict' in globals():
+        cityline_dict = {}
+        cityline_dict["played_sound_ticket"] = False
+
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         await nodriver_cityline_auto_retry_access(tab, url, config_dict)
 
@@ -1865,7 +1872,13 @@ async def nodriver_cityline_main(tab, url, config_dict):
     # area page:
     # TODO:
     #https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
-    pass
+    if 'venue.cityline.com' in url and '/performance?':
+        if config_dict["advanced"]["play_sound"]["ticket"]:
+            if not cityline_dict["played_sound_ticket"]:
+                play_sound_while_ordering(config_dict)
+            cityline_dict["played_sound_ticket"] = True
+    else:
+        cityline_dict["played_sound_ticket"] = False
 
     return tab
 

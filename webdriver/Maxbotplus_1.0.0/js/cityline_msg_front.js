@@ -16,7 +16,7 @@ function begin()
 
     // too short to cause error.
     if(auto_reload_page_interval < 0.05) {
-        auto_reload_page_interval = 0.1;
+        auto_reload_page_interval = 0.2;
     }
 
     if(status=='ON') {
@@ -36,11 +36,15 @@ function begin()
             $(".btn_cta").prop('disabled', false);
             //$(".btn_cta").prop('disabled', false).trigger("click");
             if (typeof goEvent !== "undefined") { 
-                if(location.href.indexOf('home?') > -1
-                    || location.href.indexOf('lang=') > -1
-                    || location.href.indexOf('?loc=') > -1) {
+                let is_need_goEvent = false;
+                if(location.href.indexOf('home?') > -1) is_need_goEvent = true;
+                if(location.href.indexOf('?loc=') > -1) is_need_goEvent = true;
+                if(location.href.indexOf('lang=') > -1) is_need_goEvent = true;
+                if(is_need_goEvent) {
                     goEvent();
                 }
+            } else {
+                $("#btn-retry-en-1").prop('disabled', false).trigger("click");
             }
         }, target_interval);
     }
@@ -108,11 +112,12 @@ function getHtmlDocName() {
 if(getHtmlDocName()==null) {
     history.back();
 }
-if (typeof goEvent !== "undefined") { 
-    if(location.href.indexOf('home?') > -1
-        || location.href.indexOf('lang=') > -1) {
-        //goEvent();
-    } else {
+if (typeof goEvent !== "undefined") {
+    let is_need_back = true;
+    if(location.href.indexOf('home?') > -1) is_need_back = false;
+    if(location.href.indexOf('?loc=') > -1) is_need_back = false;
+    if(location.href.indexOf('lang=') > -1) is_need_back = false;
+    if (is_need_back) {
         history.back();
     }
 }
