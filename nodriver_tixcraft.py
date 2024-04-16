@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.07)"
+CONST_APP_VERSION = "MaxBot (2024.04.08)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1637,16 +1637,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
 
 async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
-    cookies  = await tab.browser.cookies.get_all()
-    is_cookie_exist = False
-    for cookie in cookies:
-        if 'my-' in cookie.name:
-            cookie.value=""
-            break
-    await tab.browser.cookies.set_all(cookies)
-
-
     cityline_event_url = "https://event.cityline.com/"
+    # from loc redirect.
     if "?loc=" in url:
         url = url.replace("%3Flang%3DTW%26lang%3DTW","%3Flang%3DTW")
         loc = url.split("?loc=")[1]
@@ -1699,10 +1691,8 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
         pass
 
     # 刷太快, 會被封IP?
-    # must wait...
+    # must wait...? no need to wait.
     auto_reload_page_interval = config_dict["advanced"]["auto_reload_page_interval"]
-    if auto_reload_page_interval <= 0.2:
-        auto_reload_page_interval = 0.2
     if auto_reload_page_interval > 0:
         time.sleep(auto_reload_page_interval)
 
@@ -1875,7 +1865,16 @@ async def nodriver_cityline_main(tab, url, config_dict):
         cityline_dict["played_sound_ticket"] = False
 
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
-        await nodriver_cityline_auto_retry_access(tab, url, config_dict)
+        is_dom_ready = False
+        try:
+            html_body = await tab.get_content()
+            if html_body:
+                if len(html_body) > 10240:
+                    is_dom_ready = True
+        except Exception as exc:
+            pass
+        if is_dom_ready:
+            await nodriver_cityline_auto_retry_access(tab, url, config_dict)
 
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
