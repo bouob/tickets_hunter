@@ -5,7 +5,7 @@ MaxBot是一個免費、開放原始碼的蛋黃酥/公車訂位機器人。祝�
 
 目前MaxBot 改名為：Max蛋黃酥上車機器人。
 
-文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
 
 MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
 
