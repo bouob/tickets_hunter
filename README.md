@@ -1,7 +1,13 @@
-# Max搶票機器人
-MaxBot是一個免費、開放原始碼的搶票機器人。祝您搶票成功。
+# Max蛋黃酥上車機器人
+MaxBot是一個免費、開放原始碼的蛋黃酥/公車訂位機器人。祝您搶購成功。
 
-MaxBot is a FREE and open source bot program. Good luck getting your expected ticket.
+目前搶票機制，就是在比誰的網路快、電腦配備好、手速快，或是在比誰的機器人跑的快。期待未來熱門演唱會可以使用「實名制」+「抽籤制」，來讓更多民眾可以公平地購買到門票。
+
+目前MaxBot 改名為：Max蛋黃酥上車機器人。
+
+文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+
+MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
 
 # Download 
 (搶票程式下載)
@@ -179,18 +185,3 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 * 特定的訂票網址, 自動置換為下一步的新網址。
 * 當訂票網頁內容已經無票或沒有符合的關鍵字時, 自動刷新網頁。
 * 特定網頁支援驗證碼功能, 需要同時開啟 MaxBot 主程式。
-
-# Supporting the Project 
-(贊助Max)
-
-如果這個項目對您有幫助，不妨請作者我喝杯咖啡 ：）
-
-## 目前支援的贊助方式：
-* 台灣的ATM匯款: 中國信託 (代碼：822) 帳號：071512949756
-* 7-11 ATM的無卡存款
-* 街口支付： 901643378
-* 悠遊付
-* PayPal： weng.32002@gmail.com
-* 支付寶: 13717075071
-
-詳細的圖文贊助教學如下： https://max-everyday.com/about/#donate
