@@ -2443,6 +2443,7 @@ def kktix_press_next_button(driver):
             try:
                 #print("click on last button")
                 but_button_list[button_count-1].click()
+                time.sleep(0.3)
                 ret = True
             except Exception as exc:
                 print(exc)

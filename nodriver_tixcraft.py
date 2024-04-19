@@ -692,6 +692,7 @@ async def nodriver_kktix_press_next_button(tab):
             try:
                 #print("click on last button")
                 await but_button_list[button_count-1].click()
+                time.sleep(0.3)
                 ret = True
             except Exception as exc:
                 print(exc)
@@ -767,6 +768,8 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     if not played_sound_ticket:
                         play_sound_while_ordering(config_dict)
                     played_sound_ticket = True
+
+                is_finish_checkbox_click = await nodriver_check_checkbox(tab, 'input[type="checkbox"]')
 
                 # whole event question.
                 fail_list, is_question_popup = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
