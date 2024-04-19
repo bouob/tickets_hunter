@@ -9,6 +9,7 @@ MaxBot 的出發點是讓一般民眾與售票、代購黃牛或懂得寫程式�
 
 台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
 
+以下文章出現的「搶票」指的是「非台灣的藝文活動或車票」。
 
 MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
 
@@ -32,8 +33,6 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 
 * tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
 * kktix: https://max-everyday.com/2018/12/kktix-bot/
-* FamiTicket: https://max-everyday.com/2019/01/maxbot-famiticket/
-* ibon: https://max-everyday.com/2023/01/ibon-bot/
 * cityline: https://max-everyday.com/2019/03/cityline-bot/
 * urbtix: https://max-everyday.com/2019/02/urbtix-bot/
 * hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
