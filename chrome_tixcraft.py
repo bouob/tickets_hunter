@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.08)"
+CONST_APP_VERSION = "MaxBot (2024.04.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -517,20 +517,28 @@ def load_chromdriver_uc(config_dict):
         is_cache_exist =  util.clean_uc_exe_cache()
 
         fail_1 = False
-        try:
-            options = get_uc_options(uc, config_dict, webdriver_path)
-            driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
-        except Exception as exc:
-            print(exc)
-            error_message = str(exc)
-            left_part = None
-            if "Stacktrace:" in error_message:
-                left_part = error_message.split("Stacktrace:")[0]
-                print(left_part)
+        lanch_uc_with_path = True
+        if "macos" in platform.platform().lower():
+            if "arm64" in platform.platform().lower():
+                lanch_uc_with_path = False
 
-            if "This version of ChromeDriver only supports Chrome version" in error_message:
-                print(CONST_CHROME_VERSION_NOT_MATCH_EN)
-                print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+        if lanch_uc_with_path:
+            try:
+                options = get_uc_options(uc, config_dict, webdriver_path)
+                driver = uc.Chrome(driver_executable_path=chromedriver_path, options=options, headless=config_dict["advanced"]["headless"])
+            except Exception as exc:
+                print(exc)
+                error_message = str(exc)
+                left_part = None
+                if "Stacktrace:" in error_message:
+                    left_part = error_message.split("Stacktrace:")[0]
+                    print(left_part)
+
+                if "This version of ChromeDriver only supports Chrome version" in error_message:
+                    print(CONST_CHROME_VERSION_NOT_MATCH_EN)
+                    print(CONST_CHROME_VERSION_NOT_MATCH_TW)
+                fail_1 = True
+        else:
             fail_1 = True
 
         fail_2 = False
@@ -3012,6 +3020,29 @@ def kktix_reg_new_main(driver, config_dict, fail_list, played_sound_ticket):
                     control_text = get_text_by_selector(driver, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
                     if show_debug_message:
                         print("control_text:", control_text)
+
+                    if len(control_text) > 0:
+                        input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
+                        input_text_element = None
+                        try:
+                            input_text_element = driver.find_element(By.CSS_SELECTOR, input_text_css)
+                        except Exception as exc:
+                            #print(exc)
+                            pass
+                        if input_text_element is None:
+                            radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
+                            try:
+                                radio_element = driver.find_element(By.CSS_SELECTOR, radio_css)
+                                if radio_element:
+                                    print("found radio")
+                                    joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
+                                    joined_element = driver.find_element(By.CSS_SELECTOR, joined_button_css)
+                                    if joined_element:
+                                        control_text = ""
+                                        print("member joined")
+                            except Exception as exc:
+                                print(exc)
+                                pass
 
                     if len(control_text) == 0:
                         click_ret = kktix_press_next_button(driver)
@@ -11074,32 +11105,7 @@ def cli():
 
 def test_captcha_model():
     #for test kktix answer.
-    captcha_text_div_text = "請回答下列問題,請在下方空格輸入DELIGHT（請以半形輸入法作答，大小寫需要一模一樣）"
-    #captcha_text_div_text = "請在下方空白處輸入引號內文字：「abc」"
-    #captcha_text_div_text = "請在下方空白處輸入引號內文字：「0118eveconcert」（請以半形小寫作答。）"
-    #captcha_text_div_text = "請在下方空白處輸入括號內數字(12 34)"
-    #captcha_text_div_text = "請輸入括弧內數字( 27８９41 )"
-    #captcha_text_div_text = "在《DEEP AWAKENING見過深淵的人》專輯中，哪一首為合唱曲目？ 【V6】深淵 、【Z5】浮木、【J8】無聲、【C1】以上皆非 （請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：A2）"
-    #captcha_text_div_text = "Super Junior 的隊長是以下哪位?  【v】神童 【w】藝聲 【x】利特 【y】始源  若你覺得答案為 a，請輸入 a  (英文為半形小寫)"
-    #captcha_text_div_text = "請問XXX, 請以英文為半形小寫(例如：a) a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
-    #captcha_text_div_text = "以下為選擇題：請問 「OHM NANON 1st Fan Meeting in Hong Kong」 舉行日期是？請以半形細楷英文於下方輸入答案 (例如：a)  a. 1月5日 b. 2月5日 c. 3月5日 d. 4月5日"
-    #captcha_text_div_text = "以下哪個「不是」正確的林俊傑與其他藝人合唱的歌曲組合？（選項為歌名/合作藝人 ，請以半形輸入法作答選項，大小寫需要一模一樣，範例:jju） 選項： (jja)小酒窩/A-Sa蔡卓妍 (jjb)被風吹過的夏天/金莎 (jjc)友人說/張懷秋 (jjd)全面開戰/五月天阿信 (jje)小說/阿杜"
-    #captcha_text_div_text = "請問《龍的傳人2060》演唱會是以下哪位藝人的演出？（請以半形輸入法作答，大小寫需要一模一樣，範例：B2）A1.周杰倫 B2.林俊傑 C3.張學友 D4.王力宏"
-    #captcha_text_div_text = "王力宏何時發行第一張專輯?（請以半形輸入法作答，大小寫需要一模一樣，範例:B2） A1.1985 B2.2005 C3.2015 D4.1995"
-    #captcha_text_div_text = "朴寶劍三月以歌手出道的日期和單曲名為？ Answer the single’s name & the debut date. *以半形輸入，大小寫/符號須都相同。例:(E1) Please use the same format given in the options.ex:(E1) (A1)20/Bloomin'(B1)2/Blossom(C1)2/Bloomin'(D1)20/Blossom"
-    #captcha_text_div_text = "以下哪位不是LOVELYZ成員? (請以半形輸入選項內的英文及數字，大小寫須符合)，範例:E5e。 (A1a)智愛 (B2b)美珠 (C3c)JON (D4d)叡仁"
-    #captcha_text_div_text = "題請問此次 RAVI的SOLO專輯名稱為?（請以半形輸入法作答，大小寫需要一模一樣，範例:Tt） Aa [ BOOK] 、 Bb [OOK BOOK.R] 、 Cc [R.OOK BOOK] 、 Dd [OOK R. BOOK]"
-    #captcha_text_div_text = "請問下列哪個選項皆為河成雲的創作歌曲？ Aa) Don’t Forget、Candle Bb) Don’t Forget、Forever+1 Cc) Don’t Forget、Flowerbomb Dd) Don’t Forget、One Love 請以半形輸入，大小寫含括號需一模一樣 【範例:答案為B需填入Bb)】"
-    #captcha_text_div_text = "魏如萱得過什麼獎?(1) 金馬獎 最佳女主角(2) 金鐘獎 戲劇節目女主角(3) 金曲獎 最佳華語女歌手(4) 走鐘獎 好好聽音樂獎 (請輸入半形數字)"
-    #captcha_text_div_text = "Love in the Air 是由哪兩本小說改篇而成呢？(A)Love Strom & Love Sky (B)Love Rain & Love Cloud (C)Love Wind & Love Sun (D)Love Dry & Love Cold (請輸入選項大寫英文單字 範例：E)"
-    #captcha_text_div_text = "請問以下哪一部戲劇是Off Gun合作出演的戲劇？【1G】Midnight Museum 【2F】10 Years Ticket 【8B】Not Me (請以半形輸入法作答，大小寫/阿拉伯數字需要一模一樣，範例：9A)"
-    #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H1】 After LIKE 【22】 I AM 【R3】 ELEVEN 【74】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A142X384"
-    #captcha_text_div_text = "請將以下【歌曲】已發行日期由「新到舊」依序排列 【H】 After LIKE 【2】 I AM 【R】 ELEVEN 【7】LOVE DIVE 請以半形輸入法輸入正確答案之\"選項\"，大小寫/阿拉伯數字需要一模一樣，範例：A4X8"
-    #captcha_text_div_text = "1. 以下哪個為正確的OffGun粉絲名稱？（請以半形數字及細楷英文字母於下方輸入答案）\n3f）Baby\n6r）Babii\n9e）Babe"
-    #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m）《我的貓貓男友》\n4v）《愛情理論》\n6k）《Not Me》"
-    #captcha_text_div_text = "2. 以下那齣並不是OffGun有份演出的劇集？（請以半形數字及細楷英文字母於下方輸入答案）\n2m:《我的貓貓男友》\n4v:《愛情理論》\n6k:《Not Me》"
-    #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   1. PET / 2. PAN / 3. PENCIL / 4. PEN （請填寫選項「純數字」/ Please only enter the number）"
-    #captcha_text_div_text = "夏賢尚的官方粉絲名稱為？ What is the name of Ha Hyun Sang's official fandom?   A. PET / B. PAN / C. PENCIL / D. PEN （請填寫選項「純數字」/ Please only enter the number）"
+    captcha_text_div_text = "請輸入括弧內數字( 27８９41 )"
     answer_list = util.get_answer_list_from_question_string(None, captcha_text_div_text)
     print("answer_list:", answer_list)
 

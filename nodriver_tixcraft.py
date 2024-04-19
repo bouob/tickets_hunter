@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.08)"
+CONST_APP_VERSION = "MaxBot (2024.04.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -680,7 +680,7 @@ async def nodriver_kktix_press_next_button(tab):
     css_select = "div.register-new-next-button-area > button"
     but_button_list = None
     try:
-        but_button_list = await tab.select_all(css_select)
+        but_button_list = await tab.query_selector_all(css_select)
     except Exception as exc:
         print(exc)
         pass
@@ -777,6 +777,29 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
                     if show_debug_message:
                         print("control_text:", control_text)
+
+                    if len(control_text) > 0:
+                        input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
+                        input_text_element = None
+                        try:
+                            input_text_element = await tab.query_selector(input_text_css)
+                        except Exception as exc:
+                            #print(exc)
+                            pass
+                        if input_text_element is None:
+                            radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
+                            try:
+                                radio_element = await tab.query_selector(radio_css)
+                                if radio_element:
+                                    print("found radio")
+                                    joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
+                                    joined_element = await tab.query_selector(joined_button_css)
+                                    if joined_element:
+                                        control_text = ""
+                                        print("member joined")
+                            except Exception as exc:
+                                print(exc)
+                                pass
 
                     if len(control_text) == 0:
                         click_ret = await nodriver_kktix_press_next_button(tab)
