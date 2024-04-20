@@ -152,7 +152,6 @@ def load_translate():
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     en_us["ocr_captcha_force_submit"] = 'Away from keyboard'
     en_us["ocr_captcha_image_source"] = 'OCR image source'
-    en_us["ocr_captcha_not_support_arm"] = 'ddddocr only supports Intel CPU'
     en_us["webdriver_type"] = 'WebDriver type'
     en_us["headless"] = 'Headless mode'
     # Make the operation more talkative
@@ -272,7 +271,6 @@ def load_translate():
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_tw["ocr_captcha_force_submit"] = '掛機模式'
     zh_tw["ocr_captcha_image_source"] = 'OCR圖片取得方式'
-    zh_tw["ocr_captcha_not_support_arm"] = 'ocr 只支援 Intel CPU'
     zh_tw["webdriver_type"] = 'WebDriver類別'
     zh_tw["headless"] = '無圖形界面模式'
     zh_tw["verbose"] = '輸出詳細除錯訊息'
@@ -392,7 +390,6 @@ def load_translate():
     zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     zh_cn["ocr_captcha_force_submit"] = '挂机模式'
     zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
-    zh_cn["ocr_captcha_not_support_arm"] = 'ddddocr 仅支持 Intel CPU'
     zh_cn["webdriver_type"] = 'WebDriver类别'
     zh_cn["headless"] = '无图形界面模式'
     zh_cn["verbose"] = '输出详细除错讯息'
@@ -513,7 +510,6 @@ def load_translate():
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
     ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
     ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
-    ja_jp["ocr_captcha_not_support_arm"] = 'Intel CPU のみをサポートします'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
     ja_jp["headless"] = 'ヘッドレスモード'
     ja_jp["verbose"] = '詳細モード'
@@ -608,10 +604,6 @@ def get_default_config():
     config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
-
-    if util.is_arm():
-        config_dict["ocr_captcha"]["enable"] = False
-        config_dict["ocr_captcha"]["force_submit"] = False
 
     config_dict["date_auto_select"] = {}
     config_dict["date_auto_select"]["enable"] = True
@@ -1073,10 +1065,6 @@ def btn_save_act(slience_mode=False):
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
 
-        if util.is_arm():
-            config_dict["ocr_captcha"]["enable"] = False
-            config_dict["ocr_captcha"]["force_submit"] = False
-
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         #config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
@@ -1278,7 +1266,6 @@ def applyNewLanguage():
     global lbl_ocr_captcha_ddddocr_beta
     global lbl_ocr_captcha_force_submit
     global lbl_ocr_captcha_image_source
-    global lbl_ocr_captcha_not_support_arm
     global lbl_webdriver_type
     global lbl_headless
     global lbl_verbose
@@ -1364,7 +1351,6 @@ def applyNewLanguage():
     lbl_ocr_captcha_ddddocr_beta.config(text=translate[language_code]["ocr_captcha_ddddocr_beta"])
     lbl_ocr_captcha_force_submit.config(text=translate[language_code]["ocr_captcha_force_submit"])
     lbl_ocr_captcha_image_source.config(text=translate[language_code]["ocr_captcha_image_source"])
-    lbl_ocr_captcha_not_support_arm.config(text=translate[language_code]["ocr_captcha_not_support_arm"])
     lbl_webdriver_type.config(text=translate[language_code]["webdriver_type"])
     lbl_chrome_extension.config(text=translate[language_code]["chrome_extension"])
     lbl_adjacent_seat.config(text=translate[language_code]["disable_adjacent_seat"])
@@ -2210,11 +2196,6 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     global chk_ocr_captcha
     chk_ocr_captcha = Checkbutton(frame_group_ddddocr_enable, text=translate[language_code]['enable'], variable=chk_state_ocr_captcha, command=showHideOcrCaptchaWithSubmit)
     chk_ocr_captcha.grid(column=0, row=0, sticky = W)
-
-    global lbl_ocr_captcha_not_support_arm
-    lbl_ocr_captcha_not_support_arm = Label(frame_group_ddddocr_enable, fg="red", text=translate[language_code]['ocr_captcha_not_support_arm'])
-    if util.is_arm():
-        lbl_ocr_captcha_not_support_arm.grid(column=1, row=0, sticky = E)
 
     frame_group_ddddocr_enable.grid(column=1, row=group_row_count, sticky = W)
 
