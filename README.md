@@ -15,6 +15,11 @@ MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有�
 
 MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
 
+# LEGAL NOTICE
+[法律聲明]
+
+使用此儲存庫或與之相關的任何程式碼，即表示您同意[法律聲明](https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md)。作者不對該儲存庫的使用負責，也不認可它，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。
+
 # Download 
 (搶票程式下載)
 
