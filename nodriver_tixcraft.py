@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 #encoding=utf-8
-#執行方式：python chrome_tixcraft.py 或 python3 chrome_tixcraft.py
 import argparse
 import base64
 import json
@@ -33,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.09)"
+CONST_APP_VERSION = "MaxBot (2024.04.10)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -214,7 +213,8 @@ async def nodriver_check_checkbox(tab, select_query, value='true'):
         try:
             element = await tab.query_selector(select_query)
             if element:
-                await element.apply('function (element) { element.checked='+ value +'; } ')
+                #await element.apply('function (element) { element.checked='+ value +'; } ')
+                await element.click()
                 is_checkbox_checked = True
         except Exception as exc:
             #print("check checkbox fail for selector:", select_query)
@@ -651,6 +651,9 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                 inferred_answer_string = answer_item
                 break
 
+        if len(answer_list) > 0:
+            answer_list = list(dict.fromkeys(answer_list))
+
         if show_debug_message:
             print("inferred_answer_string:", inferred_answer_string)
             print("question_text:", question_text)
@@ -658,18 +661,28 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
             print("fail_list:", fail_list)
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
-        input_text_css = 'div.custom-captcha-inner > div > div > input'
-        next_step_button_css = ''
-        submit_by_enter = False
-        check_input_interval = 0.2
-        #is_answer_sent, fail_list = fill_common_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
-        if len(answer_list) > 0:
-            input_text = await tab.query_selector(input_text_css)
-            if not input_text is None:
-                await input_text.send_keys(answer_list[0])
+        if len(inferred_answer_string) > 0:
+            input_text_css = 'div.custom-captcha-inner > div > div > input'
+            next_step_button_css = ''
+            submit_by_enter = False
+            check_input_interval = 0.2
+            #is_answer_sent, fail_list = fill_common_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+            if len(answer_list) > 0:
+                input_text = await tab.query_selector(input_text_css)
+                if not input_text is None:
 
-                # due multi next buttons(pick seats/best seats)
-                await nodriver_kktix_press_next_button(tab)
+                    await input_text.click()
+                    await input_text.apply('function (element) {element.value = ""; } ')
+                    await input_text.send_keys(inferred_answer_string)
+                    time.sleep(0.1)
+
+                    # due multi next buttons(pick seats/best seats)
+                    print("click")
+                    await nodriver_kktix_press_next_button(tab)
+                    time.sleep(0.75)
+
+                    fail_list.append(inferred_answer_string)
+
 
     return fail_list, is_question_popup
 
@@ -769,7 +782,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                         play_sound_while_ordering(config_dict)
                     played_sound_ticket = True
 
-                is_finish_checkbox_click = await nodriver_check_checkbox(tab, 'input[type="checkbox"]')
+                is_finish_checkbox_click = await nodriver_check_checkbox(tab, 'input[type="checkbox"]:not(:checked)')
 
                 # whole event question.
                 fail_list, is_question_popup = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
@@ -1072,7 +1085,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree')
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree:not(:checked)')
         if is_finish_checkbox_click:
             break
 
@@ -1450,7 +1463,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
 
 async def nodriver_ibon_ticket_agree(tab):
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen')
+        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#agreen:not(:checked)')
         if is_finish_checkbox_click:
             break
 
@@ -1481,7 +1494,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
         if is_event_page:
             # ibon auto press signup
-            await nodriver_press_button('.btn.btn-signup')
+            await nodriver_press_button(tab, '.btn.btn-signup')
 
     is_match_target_feature = False
 
@@ -1560,7 +1573,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                 if 'PRODUCT_ID=' in url.upper():
                     # step 1: select area.
-                    is_match_target_feature = True
+                    is_price_assign_by_bot = False
                     # TODO:
                     #is_price_assign_by_bot = ibon_performance(driver, config_dict)
 
@@ -1578,8 +1591,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if is_do_ibon_performance_with_ticket_number:
                     if config_dict["advanced"]["disable_adjacent_seat"]:
                         # TODO:
-                        #is_finish_checkbox_click = ibon_allow_not_adjacent_seat(driver, config_dict)
-                        pass
+                        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '.asp-checkbox > input[type="checkbox"]:not(:checked)')
 
                     # captcha
                     is_captcha_sent = False

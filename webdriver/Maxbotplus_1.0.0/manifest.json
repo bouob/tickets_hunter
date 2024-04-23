@@ -122,7 +122,8 @@
         },
         {
             "matches": [
-                "https://ticket.com.tw/application/utk01/utk0101_.aspx"
+                "https://ticket.com.tw/application/utk01/utk0101_.aspx",
+                "https://ticket.com.tw/application/UTK01/utk0101_.aspx"
             ],
             "run_at": "document_end",
             "js": [
@@ -132,6 +133,7 @@
         },
         {
             "matches": [
+                "https://ticket.com.tw/application/utk02/UTK0201_.aspx?PRODUCT_ID=*",
                 "https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*"
             ],
             "run_at": "document_end",
@@ -143,6 +145,7 @@
         },
         {
             "matches": [
+                "https://ticket.com.tw/application/utk02/UTK0201_00.aspx?PRODUCT_ID=*",
                 "https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
             ],
             "run_at": "document_end",
@@ -154,6 +157,7 @@
         },
         {
             "matches": [
+                "https://ticket.com.tw/application/utk02/UTK0204_.aspx?*",
                 "https://ticket.com.tw/application/UTK02/UTK0204_.aspx?*"
             ],
             "run_at": "document_end",
@@ -165,9 +169,13 @@
         {
             "matches": [
                 "https://ticket.com.tw/application/UTK02/UTK0205_.aspx?*",
-                "https://ticket.com.tw/application/UTK02/UTK0202_.aspx?*",
+                "https://ticket.com.tw/application/utk02/UTK0202_.aspx?*",
+                "https://ticket.com.tw/application/UTK02/UTK0205_.aspx?*",
+                "https://ticket.com.tw/application/utk02/UTK0202_.aspx?*",
                 "https://kham.com.tw/application/UTK02/UTK0205_.aspx?*",
-                "https://kham.com.tw/application/UTK02/UTK0202_.aspx?*"
+                "https://kham.com.tw/application/utk02/UTK0205_.aspx?*",
+                "https://kham.com.tw/application/UTK02/UTK0202_.aspx?*",
+                "https://kham.com.tw/application/utk02/UTK0202_.aspx?*"
             ],
             "run_at": "document_end",
             "js": [
@@ -177,7 +185,8 @@
         },
         {
             "matches": [
-                "https://kham.com.tw/application/utk01/UTK0101_03.aspx"
+                "https://kham.com.tw/application/utk01/UTK0101_03.aspx",
+                "https://kham.com.tw/application/UTK01/UTK0101_03.aspx"
             ],
             "run_at": "document_end",
             "js": [
@@ -187,6 +196,7 @@
         },
         {
             "matches": [
+                "https://kham.com.tw/application/utk02/UTK0201_.aspx?PRODUCT_ID=*",
                 "https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=*"
             ],
             "run_at": "document_end",
@@ -198,6 +208,7 @@
         },
         {
             "matches": [
+                "https://kham.com.tw/application/utk02/UTK0201_00.aspx?PRODUCT_ID=*",
                 "https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=*"
             ],
             "run_at": "document_end",
@@ -209,7 +220,9 @@
         },
         {
             "matches": [
+                "https://kham.com.tw/application/utk02/UTK0204_.aspx?*",
                 "https://kham.com.tw/application/UTK02/UTK0204_.aspx?*",
+                "https://kham.com.tw/application/utk02/UTK0201_000.aspx?PERFORMANCE_ID=*&PRODUCT_ID=*",
                 "https://kham.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=*&PRODUCT_ID=*"
             ],
             "run_at": "document_end",
@@ -230,6 +243,7 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_000.aspx?*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
             ],
             "run_at": "document_end",
@@ -240,6 +254,7 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_000.aspx?*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
             ],
             "run_at": "document_end",
@@ -251,7 +266,9 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
+                "https://orders.ibon.com.tw/application/utk02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
             ],
             "run_at": "document_end",
@@ -262,7 +279,9 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/utkK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
+                "https://orders.ibon.com.tw/application/utk02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
             ],
             "run_at": "document_end",
@@ -274,7 +293,9 @@
         },
         {
             "matches": [
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_0.aspx?*PERFORMANCE_ID=*PRODUCT_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?*PERFORMANCE_ID=*PRODUCT_ID=*",
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_0.aspx?*PRODUCT_ID=*PERFORMANCE_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?*PRODUCT_ID=*PERFORMANCE_ID=*"
             ],
             "run_at": "document_end",
@@ -434,5 +455,5 @@
             ]
         }
     ],
-    "version": "1.0.24"
+    "version": "1.0.25"
 }
