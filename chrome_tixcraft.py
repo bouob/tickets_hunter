@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.09)"
+CONST_APP_VERSION = "MaxBot (2024.04.10)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1826,12 +1826,14 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                         if submit_by_enter:
                             form_input_1.send_keys(Keys.ENTER)
                             is_button_clicked = True
-                        if len(next_step_button_css) > 0:
-                            is_button_clicked = press_button(driver, By.CSS_SELECTOR, next_step_button_css)
+                        else:
+                            if len(next_step_button_css) > 0:
+                                is_button_clicked = press_button(driver, By.CSS_SELECTOR, next_step_button_css)
                 except Exception as exc:
                     if show_debug_message:
                         print(exc)
                     pass
+                
                 if is_button_clicked:
                     is_answer_sent = True
                     fail_list.append(inferred_answer_string)
@@ -1841,7 +1843,6 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                 if is_answer_sent:
                     for i in range(3):
                         time.sleep(0.1)
-
                         alert_ret = check_pop_alert(driver)
                         if alert_ret:
                             if show_debug_message:
@@ -2441,7 +2442,7 @@ def kktix_press_next_button(driver):
         #print("button_count:",button_count)
         if button_count > 0:
             try:
-                #print("click on last button")
+                #print("click on last button:", button_count)
                 but_button_list[button_count-1].click()
                 time.sleep(0.3)
                 ret = True
@@ -2451,59 +2452,6 @@ def kktix_press_next_button(driver):
 
     return ret
 
-def kktix_captcha_inputed_text(captcha_inner_div):
-    ret = ""
-    if not captcha_inner_div is None:
-        try:
-            captcha_password_text = captcha_inner_div.find_element(By.TAG_NAME, "input")
-            if not captcha_password_text is None:
-                ret = captcha_password_text.get_attribute('value')
-            else:
-                print("find captcha input field fail")
-        except Exception as exc:
-            print("find captcha_inner_div Exception:")
-            #print(exc)
-            pass
-
-    return ret
-
-def kktix_input_captcha_text(captcha_password_input_element, inferred_answer_string, force_overwrite = False):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    is_captcha_sent = False
-    inputed_captcha_text = ""
-
-    if not captcha_password_input_element is None:
-        if force_overwrite:
-            try:
-                captcha_password_input_element.send_keys(inferred_answer_string)
-                print("send captcha keys:" + inferred_answer_string)
-                is_captcha_sent = True
-            except Exception as exc:
-                pass
-        else:
-            # not force overwrite:
-            inputed_captcha_text = None
-            try:
-                inputed_captcha_text = captcha_password_input_element.get_attribute('value')
-            except Exception as exc:
-                pass
-            if inputed_captcha_text is None:
-                inputed_captcha_text = ""
-
-            if len(inputed_captcha_text) == 0:
-                try:
-                    captcha_password_input_element.send_keys(inferred_answer_string)
-                    print("send captcha keys:" + inferred_answer_string)
-                    is_captcha_sent = True
-                except Exception as exc:
-                    pass
-            else:
-                if inputed_captcha_text == inferred_answer_string:
-                    is_captcha_sent = True
-
-    return is_captcha_sent
 
 def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword):
     show_debug_message = True       # debug.
@@ -2929,20 +2877,28 @@ def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
                 inferred_answer_string = answer_item
                 break
 
+        if len(answer_list) > 0:
+            answer_list = list(dict.fromkeys(answer_list))
+
         if show_debug_message:
             print("inferred_answer_string:", inferred_answer_string)
             print("answer_list:", answer_list)
             print("fail_list:", fail_list)
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
-        input_text_css = 'div.custom-captcha-inner > div > div > input'
-        next_step_button_css = ''
-        submit_by_enter = False
-        check_input_interval = 0.2
-        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+        if len(inferred_answer_string) > 0:
+            input_text_css = 'div.custom-captcha-inner > div > div > input'
+            next_step_button_css = ''
+            submit_by_enter = False
+            check_input_interval = 0.2
+            is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
-        # due multi next buttons(pick seats/best seats)
-        kktix_press_next_button(driver)
+            # due multi next buttons(pick seats/best seats)
+            kktix_press_next_button(driver)
+            time.sleep(0.75)
+
+            fail_list.append(inferred_answer_string)
+        #print("new fail_list:", fail_list)
 
     return fail_list, is_question_popup
 
@@ -8354,7 +8310,7 @@ def softix_powerweb_main(driver, url, config_dict):
 def khan_go_buy_redirect(driver, domain_name):
     is_button_clicked = False
     if 'kham.com' in domain_name:
-        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'p > a > button.red')
+        is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'div#content > p > a > button[onclick].red')
     if 'ticket.com' in domain_name:
         is_button_clicked = press_button(driver, By.CSS_SELECTOR, 'div.row > div > a.btn.btn-order.btn-block')
     if 'udnfunlife.com' in domain_name:
@@ -8386,8 +8342,10 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
     try:
         # for kham.com
         my_css_selector = "table.eventTABLE > tbody > tr"
+        
         if 'ticket.com' in domain_name:
             my_css_selector = "div.description > table.table.table-striped.itable > tbody > tr"
+        
         if 'udnfunlife.com' in domain_name:
             my_css_selector = "div.yd_session-block"
 
@@ -8454,19 +8412,19 @@ def hkam_date_auto_select(driver, domain_name, config_dict):
                     else:
                         # kham.
                         price_disabled_html = '"lightblue"'
+                        
                         if 'ticket.com' in domain_name:
                             price_disabled_html = '<del>'
 
                         if "<td" in row_html:
                             td_array = row_html.split("<td")
                             if len(td_array) > 3:
-                                td_target = "<td" + td_array[3]
+                                td_target = td_array[3]
                                 price_array = td_target.split("、")
                                 is_all_priece_disabled = True
                                 for each_price in price_array:
                                     if not (price_disabled_html in each_price):
                                         is_all_priece_disabled = False
-
                                 if is_all_priece_disabled:
                                     row_text = ""
 
@@ -9222,7 +9180,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
-            khan_go_buy_redirect(driver, domain_name)
+            #khan_go_buy_redirect(driver, domain_name)
+            pass
 
     # https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=N28TFATD
     if 'utk0201_00.aspx?product_id=' in url.lower():
