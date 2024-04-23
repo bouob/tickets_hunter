@@ -20,7 +20,7 @@ MaxBot is a FREE and open source bot program. Good luck getting your expected fo
 
 作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的相關的非法行為負責。
 
-使用此儲存庫或與之相關的任何程式碼，即表示您同意[法律聲明](https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md)。作者不對該儲存庫的使用負責，也不認可它，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 Apache 授權。
+使用此儲存庫或與之相關的任何程式碼，即表示您同意[法律聲明](https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md)。作者不對該儲存庫的使用負責，也不認可它，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。
 
 # Download 
 (搶票程式下載)
