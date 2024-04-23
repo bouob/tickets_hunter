@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 #encoding=utf-8
 try:
-    # for Python2
-    import tkMessageBox as messagebox
-    import ttk
-    from Tkinter import *
-except ImportError:
-    # for Python3
-    try:
-        import tkinter.font as tkfont
-        from tkinter import *
-        from tkinter import messagebox, ttk
-        from tkinter.filedialog import asksaveasfilename
-    except Exception as e:
-        pass
+    import tkinter.font as tkfont
+    from tkinter import *
+    from tkinter import messagebox, ttk
+    from tkinter.filedialog import asksaveasfilename
+except Exception as e:
+    pass
 
 import asyncio
 import base64
@@ -41,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.09)"
+CONST_APP_VERSION = "MaxBot (2024.04.10)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -694,8 +687,11 @@ def get_default_config():
 def read_last_url_from_file():
     ret = ""
     if os.path.exists(CONST_MAXBOT_LAST_URL_FILE):
-        with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
-            ret = text_file.readline()
+        try:
+            with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
+                ret = text_file.readline()
+        except Exception as e:
+            pass
     return ret
 
 def load_json():
@@ -706,13 +702,16 @@ def load_json():
 
     config_dict = None
     if os.path.isfile(config_filepath):
-        with open(config_filepath) as json_data:
-            config_dict = json.load(json_data)
+        try:
+            with open(config_filepath) as json_data:
+                config_dict = json.load(json_data)
+        except Exception as e:
+            pass
     else:
         config_dict = get_default_config()
     return config_filepath, config_dict
 
-def btn_restore_defaults_clicked(language_code):
+def btn_restore_defaults_clicked():
     app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
     if os.path.exists(str(config_filepath)):
@@ -723,6 +722,8 @@ def btn_restore_defaults_clicked(language_code):
             pass
 
     config_dict = get_default_config()
+    language_code = get_language_code_by_name(config_dict["language"])
+
     messagebox.showinfo(translate[language_code]["restore_defaults"], translate[language_code]["done"])
 
     global root
@@ -731,8 +732,11 @@ def btn_restore_defaults_clicked(language_code):
 def do_maxbot_idle():
     app_root = util.get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
-    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-        text_file.write("")
+    try:
+        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
+            text_file.write("")
+    except Exception as e:
+        pass
 
 def btn_idle_clicked(language_code):
     do_maxbot_idle()
@@ -748,7 +752,7 @@ def btn_resume_clicked(language_code):
     do_maxbot_resume()
     update_maxbot_runtime_status()
 
-def btn_launcher_clicked(language_code):
+def btn_launcher_clicked():
     Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
     if save_ret:
@@ -1087,7 +1091,6 @@ def btn_save_act(slience_mode=False):
                 # min value is 20 seconds.
                 config_dict["advanced"]["reset_browser_interval"] = 20
 
-
     # save config.
     if is_all_data_correct:
         if not slience_mode:
@@ -1104,7 +1107,7 @@ def btn_save_act(slience_mode=False):
     return is_all_data_correct
 
 
-def btn_run_clicked(language_code):
+def btn_run_clicked():
     print('run button pressed.')
     Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
@@ -1146,10 +1149,14 @@ def launch_maxbot():
 def show_preview_text():
     if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
         answer_text = ""
-        with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
-            answer_text = text_file.readline()
+        try:
+            with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+                answer_text = text_file.readline()
+        except Exception as e:
+            pass
 
-        answer_text = util.format_config_keyword_for_json(answer_text)
+        if len(answer_text) > 0:
+            answer_text = util.format_config_keyword_for_json(answer_text)
 
         date_array = []
         try:
@@ -1157,12 +1164,14 @@ def show_preview_text():
         except Exception as exc:
             date_array = []
 
-        global lbl_online_dictionary_preview_data
-        if 'lbl_online_dictionary_preview_data' in globals():
-            try:
-                lbl_online_dictionary_preview_data.config(text=','.join(date_array))
-            except Exception as exc:
-                pass
+        if len(date_array) > 0:
+            preview_string = text=','.join(date_array)
+            global lbl_online_dictionary_preview_data
+            if 'lbl_online_dictionary_preview_data' in globals():
+                try:
+                    lbl_online_dictionary_preview_data.config(preview_string)
+                except Exception as exc:
+                    pass
 
 def btn_preview_text_clicked():
     global txt_remote_url
@@ -1182,13 +1191,14 @@ def btn_preview_text_clicked():
             url_array = []
 
         force_write = False
-        if len(url_array)==1:
-            force_write = True
-        for each_url in url_array:
-            #print("new_remote_url:", new_remote_url)
-            is_write_to_file = util.save_url_to_file(each_url, CONST_MAXBOT_ANSWER_ONLINE_FILE, force_write=force_write)
-            if is_write_to_file:
-                break
+        if len(url_array)>0:
+            if len(url_array)==1:
+                force_write = True
+            for each_url in url_array:
+                #print("new_remote_url:", new_remote_url)
+                is_write_to_file = util.save_url_to_file(each_url, CONST_MAXBOT_ANSWER_ONLINE_FILE, force_write=force_write)
+                if is_write_to_file:
+                    break
     show_preview_text()
 
 
@@ -2600,108 +2610,138 @@ def change_maxbot_status_by_keyword():
 
 def check_maxbot_config_unsaved(config_dict):
     # alert not saved config.
-    global combo_homepage
-    global combo_ticket_number
+    selected_tab_index = -1
 
-    global txt_date_keyword
-    global txt_area_keyword
-    global txt_keyword_exclude
+    global tabControl
+    if 'tabControl' in globals():
+        selected_tab_index = tabControl.index(tabControl.select())
 
-    global txt_idle_keyword
-    global txt_resume_keyword
-    global txt_idle_keyword_second
-    global txt_resume_keyword_second
+    if selected_tab_index==0:
+        global combo_homepage
+        global combo_ticket_number
 
-    try:
-        date_keyword = ""
-        if 'txt_date_keyword' in globals():
-            date_keyword = txt_date_keyword.get("1.0",END).strip()
-            date_keyword = util.format_config_keyword_for_json(date_keyword)
+        global txt_date_keyword
+        global txt_area_keyword
+        global txt_keyword_exclude
 
-        area_keyword = ""
-        if 'txt_area_keyword' in globals():
-            area_keyword = txt_area_keyword.get("1.0",END).strip()
-            area_keyword = util.format_config_keyword_for_json(area_keyword)
+        global txt_date_keyword_highlightthickness
+        if not 'txt_date_keyword_highlightthickness' in globals():
+            txt_date_keyword_highlightthickness = 0
 
-        keyword_exclude = ""
-        if 'txt_keyword_exclude' in globals():
-            keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
-            keyword_exclude = util.format_config_keyword_for_json(keyword_exclude)
+        global txt_area_keyword_highlightthickness
+        if not 'txt_area_keyword_highlightthickness' in globals():
+            txt_area_keyword_highlightthickness = 0
 
-        idle_keyword = ""
-        if 'txt_idle_keyword' in globals():
-            idle_keyword = txt_idle_keyword.get("1.0",END).strip()
-            idle_keyword = util.format_config_keyword_for_json(idle_keyword)
+        global txt_keyword_exclude_highlightthickness
+        if not 'txt_keyword_exclude_highlightthickness' in globals():
+            txt_keyword_exclude_highlightthickness = 0
 
-        resume_keyword = ""
-        if 'txt_resume_keyword' in globals():
-            resume_keyword = txt_resume_keyword.get("1.0",END).strip()
-            resume_keyword = util.format_config_keyword_for_json(resume_keyword)
+        try:
+            date_keyword = ""
+            if 'txt_date_keyword' in globals():
+                date_keyword = txt_date_keyword.get("1.0",END).strip()
+                date_keyword = util.format_config_keyword_for_json(date_keyword)
 
-        idle_keyword_second = ""
-        if 'txt_idle_keyword_second' in globals():
-            idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
-            idle_keyword_second = util.format_config_keyword_for_json(idle_keyword_second)
+            area_keyword = ""
+            if 'txt_area_keyword' in globals():
+                area_keyword = txt_area_keyword.get("1.0",END).strip()
+                area_keyword = util.format_config_keyword_for_json(area_keyword)
 
-        resume_keyword_second = ""
-        if 'txt_resume_keyword_second' in globals():
-            resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
-            resume_keyword_second = util.format_config_keyword_for_json(resume_keyword_second)
+            keyword_exclude = ""
+            if 'txt_keyword_exclude' in globals():
+                keyword_exclude = txt_keyword_exclude.get("1.0",END).strip()
+                keyword_exclude = util.format_config_keyword_for_json(keyword_exclude)
 
-        highlightthickness = 0
-        if 'combo_homepage' in globals():
-            if len(combo_homepage.get().strip())>0:
-                if config_dict["homepage"] != combo_homepage.get().strip():
-                    highlightthickness = 2
-        
-        if highlightthickness > 0:
-            showHideBlocks()
+            highlightthickness = 0
+            if 'combo_homepage' in globals():
+                if len(combo_homepage.get().strip())>0:
+                    if config_dict["homepage"] != combo_homepage.get().strip():
+                        highlightthickness = 2
+            
+            highlightthickness = 0
+            if 'combo_ticket_number' in globals():
+                if len(combo_ticket_number.get().strip())>0:
+                    if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
+                        highlightthickness = 2
+            # fail, tkinter combobox border style is not working anymore
+            #combo_ticket_number.config(highlightthickness=highlightthickness, highlightbackground="red")
 
-        highlightthickness = 0
-        if 'combo_ticket_number' in globals():
-            if len(combo_ticket_number.get().strip())>0:
-                if config_dict["ticket_number"] != int(combo_ticket_number.get().strip()):
-                    highlightthickness = 2
-        # fail, tkinter combobox border style is not working anymore
-        #combo_ticket_number.config(highlightthickness=highlightthickness, highlightbackground="red")
+            highlightthickness = 0
+            if config_dict["date_auto_select"]["date_keyword"] != date_keyword:
+                highlightthickness = 2
 
-        highlightthickness = 0
-        if config_dict["date_auto_select"]["date_keyword"] != date_keyword:
-            highlightthickness = 2
-        txt_date_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+            if txt_date_keyword_highlightthickness != highlightthickness:
+                txt_date_keyword_highlightthickness = highlightthickness
+                txt_date_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
 
-        highlightthickness = 0
-        if config_dict["area_auto_select"]["area_keyword"] != area_keyword:
-            highlightthickness = 2
-        txt_area_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+            highlightthickness = 0
+            if config_dict["area_auto_select"]["area_keyword"] != area_keyword:
+                highlightthickness = 2
 
-        highlightthickness = 0
-        if config_dict["keyword_exclude"] != keyword_exclude:
-            highlightthickness = 2
-        txt_keyword_exclude.config(highlightthickness=highlightthickness, highlightbackground="red")
+            if txt_area_keyword_highlightthickness != highlightthickness:
+                txt_area_keyword_highlightthickness = highlightthickness
+                txt_area_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
 
-        highlightthickness = 0
-        if config_dict["advanced"]["idle_keyword"] != idle_keyword:
-            highlightthickness = 2
-        txt_idle_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+            highlightthickness = 0
+            if config_dict["keyword_exclude"] != keyword_exclude:
+                highlightthickness = 2
 
-        highlightthickness = 0
-        if config_dict["advanced"]["resume_keyword"] != resume_keyword:
-            highlightthickness = 2
-        txt_resume_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+            if txt_keyword_exclude_highlightthickness != highlightthickness:
+                txt_keyword_exclude_highlightthickness = highlightthickness
+                txt_keyword_exclude.config(highlightthickness=highlightthickness, highlightbackground="red")
+        except Exception as exc:
+            #print(exc)
+            pass
 
-        highlightthickness = 0
-        if config_dict["advanced"]["idle_keyword_second"] != idle_keyword_second:
-            highlightthickness = 2
-        txt_idle_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
+    if selected_tab_index==5:
+        global txt_idle_keyword
+        global txt_resume_keyword
+        global txt_idle_keyword_second
+        global txt_resume_keyword_second
 
-        highlightthickness = 0
-        if config_dict["advanced"]["resume_keyword_second"] != resume_keyword_second:
-            highlightthickness = 2
-        txt_resume_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
-    except Exception as exc:
-        #print(exc)
-        pass
+        try:
+            idle_keyword = ""
+            if 'txt_idle_keyword' in globals():
+                idle_keyword = txt_idle_keyword.get("1.0",END).strip()
+                idle_keyword = util.format_config_keyword_for_json(idle_keyword)
+
+            resume_keyword = ""
+            if 'txt_resume_keyword' in globals():
+                resume_keyword = txt_resume_keyword.get("1.0",END).strip()
+                resume_keyword = util.format_config_keyword_for_json(resume_keyword)
+
+            idle_keyword_second = ""
+            if 'txt_idle_keyword_second' in globals():
+                idle_keyword_second = txt_idle_keyword_second.get("1.0",END).strip()
+                idle_keyword_second = util.format_config_keyword_for_json(idle_keyword_second)
+
+            resume_keyword_second = ""
+            if 'txt_resume_keyword_second' in globals():
+                resume_keyword_second = txt_resume_keyword_second.get("1.0",END).strip()
+                resume_keyword_second = util.format_config_keyword_for_json(resume_keyword_second)
+
+            highlightthickness = 0
+            if config_dict["advanced"]["idle_keyword"] != idle_keyword:
+                highlightthickness = 2
+            txt_idle_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+            highlightthickness = 0
+            if config_dict["advanced"]["resume_keyword"] != resume_keyword:
+                highlightthickness = 2
+            txt_resume_keyword.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+            highlightthickness = 0
+            if config_dict["advanced"]["idle_keyword_second"] != idle_keyword_second:
+                highlightthickness = 2
+            txt_idle_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
+
+            highlightthickness = 0
+            if config_dict["advanced"]["resume_keyword_second"] != resume_keyword_second:
+                highlightthickness = 2
+            txt_resume_keyword_second.config(highlightthickness=highlightthickness, highlightbackground="red")
+        except Exception as exc:
+            #print(exc)
+            pass
 
 def settgins_gui_timer():
     while True:
@@ -2737,8 +2777,11 @@ def sync_status_to_extension(status):
         status_json={}
         status_json["status"]=status
         #print("dump json to path:", target_path)
-        with open(target_path, 'w') as outfile:
-            json.dump(status_json, outfile)
+        try:
+            with open(target_path, 'w') as outfile:
+                json.dump(status_json, outfile)
+        except Exception as e:
+            pass
 
 def update_maxbot_runtime_status():
     is_paused = False
@@ -2989,19 +3032,19 @@ def get_action_bar(root, language_code):
     global btn_restore_defaults
     global btn_launcher
 
-    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command= lambda: btn_run_clicked(language_code))
+    btn_run = ttk.Button(frame_action, text=translate[language_code]['run'], command=btn_run_clicked)
     btn_run.grid(column=0, row=0)
 
-    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command= lambda: btn_save_clicked() )
+    btn_save = ttk.Button(frame_action, text=translate[language_code]['save'], command=btn_save_clicked)
     btn_save.grid(column=1, row=0)
 
     btn_exit = ttk.Button(frame_action, text=translate[language_code]['exit'], command=btn_exit_clicked)
     #btn_exit.grid(column=2, row=0)
 
-    btn_launcher = ttk.Button(frame_action, text=translate[language_code]['config_launcher'], command= lambda: btn_launcher_clicked(language_code))
+    btn_launcher = ttk.Button(frame_action, text=translate[language_code]['config_launcher'], command= btn_launcher_clicked)
     btn_launcher.grid(column=2, row=0)
 
-    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= lambda: btn_restore_defaults_clicked(language_code))
+    btn_restore_defaults = ttk.Button(frame_action, text=translate[language_code]['restore_defaults'], command= btn_restore_defaults_clicked)
     btn_restore_defaults.grid(column=3, row=0)
 
     return frame_action
