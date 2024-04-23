@@ -16,7 +16,7 @@ MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有�
 MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
 
 # LEGAL NOTICE
-[法律聲明]
+(法律聲明)
 
 作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的相關的非法行為負責。
 
