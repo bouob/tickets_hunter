@@ -8154,7 +8154,7 @@ def hkticketing_content_refresh(driver, url, config_dict):
     , "System.ComponentModel.Win32Exception"
     , "Access Denied"
     , "Your attempt to access the web site has been blocked by"
-    , "This requset was blocked by"
+    , "This request was blocked by"
     ]
     if is_check_access_deined:
         domain_name = url.split('/')[2]
