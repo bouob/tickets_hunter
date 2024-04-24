@@ -69,7 +69,7 @@ https://max-everyday.com/2023/11/buy-ticket-by-vm/
 
 ### Step 3: 安裝第三方套件:
 
-<code>python3 -m pip install -r pip-req.txt</code>
+<code>python3 -m pip install -r requirement.txt</code>
 
 ### Step 4: 執行設定介面主桯式:
 
