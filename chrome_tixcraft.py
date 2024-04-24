@@ -2039,7 +2039,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
 
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
-                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
 
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'TicketForm_verifyCode-image'
@@ -2073,7 +2073,7 @@ def tixcraft_get_ocr_answer(driver, ocr, ocr_captcha_image_source, Captcha_Brows
                     if img_base64 is None:
                         if not Captcha_Browser is None:
                             print("canvas get image fail, use plan_b: NonBrowser")
-                            img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                            img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
                 except Exception as exc:
                     if show_debug_message:
                         print("canvas exception:", str(exc))
@@ -2152,7 +2152,7 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
                         else:
                             # Non_Browser solution.
                             if not Captcha_Browser is None:
-                                new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                                new_captcha_url = Captcha_Browser.request_refresh_captcha() #取得新的CAPTCHA
                                 if new_captcha_url != "":
                                     tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
     else:
@@ -5730,10 +5730,10 @@ def set_non_browser_cookies(driver, url, Captcha_Browser):
         #PS: need set cookies once, if user change domain.
         if not Captcha_Browser is None:
             try:
-                Captcha_Browser.Set_cookies(driver.get_cookies())
+                Captcha_Browser.set_cookies(driver.get_cookies())
             except Exception as e:
                 pass
-            Captcha_Browser.Set_Domain(domain_name)
+            Captcha_Browser.set_domain(domain_name)
 
 def ticketmaster_parse_zone_info(driver, config_dict):
     show_debug_message = True       # debug.
@@ -7007,7 +7007,7 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
         img_base64 = None
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
-                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'chk_pic'
             image_element = None
@@ -7072,7 +7072,7 @@ def ibon_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                     else:
                         # Non_Browser solution.
                         if not Captcha_Browser is None:
-                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                            new_captcha_url = Captcha_Browser.request_refresh_captcha() #取得新的CAPTCHA
                             if new_captcha_url != "":
                                 #PS:[TODO]
                                 #tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
@@ -7245,7 +7245,7 @@ def ibon_main(driver, url, config_dict, ocr, Captcha_Browser):
                         captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
                         #PS: need set cookies once, if user change domain.
                         if not Captcha_Browser is None:
-                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                            Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
                         is_captcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
@@ -8984,7 +8984,7 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
         img_base64 = None
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
-                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'chk_pic'
             image_element = None
@@ -9049,7 +9049,7 @@ def kham_auto_ocr(driver, config_dict, ocr, away_from_keyboard_enable, previous_
                     else:
                         # Non_Browser solution.
                         if not Captcha_Browser is None:
-                            new_captcha_url = Captcha_Browser.Request_Refresh_Captcha() #取得新的CAPTCHA
+                            new_captcha_url = Captcha_Browser.request_refresh_captcha() #取得新的CAPTCHA
                             if new_captcha_url != "":
                                 #PS:[TODO]
                                 #tixcraft_change_captcha(driver, new_captcha_url) #更改CAPTCHA圖
@@ -9169,8 +9169,8 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
 
             if config_dict["ocr_captcha"]["enable"]:
                 if not Captcha_Browser is None:
-                    Captcha_Browser.Set_cookies(driver.get_cookies())
-                    Captcha_Browser.Set_Domain(domain_name)
+                    Captcha_Browser.set_cookies(driver.get_cookies())
+                    Captcha_Browser.set_domain(domain_name)
             break
 
     #https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=XXX
@@ -9264,7 +9264,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
             #PS: need set cookies once, if user change domain.
             if not Captcha_Browser is None:
-                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
             is_captcha_sent = False
 
@@ -9332,7 +9332,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
             #PS: need set cookies once, if user change domain.
             if not Captcha_Browser is None:
-                Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
             is_captcha_sent = False
             if config_dict["ocr_captcha"]["enable"]:
@@ -9382,7 +9382,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
                 #PS: need set cookies once, if user change domain.
                 if not Captcha_Browser is None:
-                    Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                    Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
                 kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
@@ -10197,7 +10197,7 @@ def ticketplus_auto_ocr(driver, config_dict, ocr, previous_answer, Captcha_Brows
         img_base64 = None
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
             if not Captcha_Browser is None:
-                img_base64 = base64.b64decode(Captcha_Browser.Request_Captcha())
+                img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
             image_id = 'span.captcha-img'
             image_element = None
@@ -10660,8 +10660,8 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
             if config_dict["ocr_captcha"]["enable"]:
                 domain_name = url.split('/')[2]
                 if not Captcha_Browser is None:
-                    Captcha_Browser.Set_cookies(driver.get_cookies())
-                    Captcha_Browser.Set_Domain(domain_name)
+                    Captcha_Browser.set_cookies(driver.get_cookies())
+                    Captcha_Browser.set_domain(domain_name)
 
             is_user_signin = ticketplus_account_auto_fill(driver, config_dict)
             if is_user_signin:

@@ -111,9 +111,8 @@ def get_config_dict(args):
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     # allow assign config by command line.
-    if not args.input is None:
-        if len(args.input) > 0:
-            config_filepath = args.input
+    if args.input and len(args.input) > 0:
+        config_filepath = args.input
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -121,48 +120,33 @@ def get_config_dict(args):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
 
-            if not args.headless is None:
-                config_dict["advanced"]["headless"] = util.t_or_f(args.headless)
+            # Define a dictionary to map argument names to their paths in the config_dict
+            arg_to_path = {
+                "headless": ["advanced", "headless"],
+                "homepage": ["homepage"],
+                "ticket_number": ["ticket_number"],
+                "browser": ["browser"],
+                "tixcraft_sid": ["advanced", "tixcraft_sid"],
+                "ibonqware": ["advanced", "ibonqware"],
+                "kktix_account": ["advanced", "kktix_account"],
+                "kktix_password": ["advanced", "kktix_password_plaintext"],
+                "proxy_server": ["advanced", "proxy_server_port"],
+                "window_size": ["advanced", "window_size"]
+            }
 
-            if not args.homepage is None:
-                if len(args.homepage) > 0:
-                    config_dict["homepage"] = args.homepage
-
-            if not args.ticket_number is None:
-                if args.ticket_number > 0:
-                    config_dict["ticket_number"] = args.ticket_number
-
-            if not args.browser is None:
-                if len(args.browser) > 0:
-                    config_dict["browser"] = args.browser
-
-            if not args.tixcraft_sid is None:
-                if len(args.tixcraft_sid) > 0:
-                    config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
-            if not args.ibonqware is None:
-                if len(args.ibonqware) > 0:
-                    config_dict["advanced"]["ibonqware"] = args.ibonqware
-
-            if not args.kktix_account is None:
-                if len(args.kktix_account) > 0:
-                    config_dict["advanced"]["kktix_account"] = args.kktix_account
-            if not args.kktix_password is None:
-                if len(args.kktix_password) > 0:
-                    config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
-
-            if not args.proxy_server is None:
-                if len(args.proxy_server) > 2:
-                    config_dict["advanced"]["proxy_server_port"] = args.proxy_server
-
-            if not args.window_size is None:
-                if len(args.window_size) > 2:
-                    config_dict["advanced"]["window_size"] = args.window_size
+            # Update the config_dict based on the arguments
+            for arg, path in arg_to_path.items():
+                value = getattr(args, arg)
+                if value and len(str(value)) > 0:
+                    d = config_dict
+                    for key in path[:-1]:
+                        d = d[key]
+                    d[path[-1]] = value
 
             # special case for headless to enable away from keyboard mode.
             is_headless_enable_ocr = False
             if config_dict["advanced"]["headless"]:
                 # for tixcraft headless.
-                #print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
                     is_headless_enable_ocr = True
 
@@ -207,20 +191,18 @@ async def nodriver_press_button(tab, select_query):
             print(e)
             pass
 
-async def nodriver_check_checkbox(tab, select_query, value='true'):
-    is_checkbox_checked = False
+from typing import Optional
+
+async def nodriver_check_checkbox(tab: Optional[object], select_query: str, value: str = 'true') -> bool:
     if tab:
         try:
             element = await tab.query_selector(select_query)
             if element:
-                #await element.apply('function (element) { element.checked='+ value +'; } ')
                 await element.click()
-                is_checkbox_checked = True
+                return True
         except Exception as exc:
-            #print("check checkbox fail for selector:", select_query)
             print(exc)
-            pass
-    return is_checkbox_checked
+    return False
 
 async def nodriver_facebook_login(tab, facebook_account, facebook_password):
     if tab:
@@ -1376,8 +1358,8 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             domain_name = url.split('/')[2]
             if not Captcha_Browser is None:
                 # TODO:
-                #Captcha_Browser.Set_cookies(driver.get_cookies())
-                Captcha_Browser.Set_Domain(domain_name)
+                #Captcha_Browser.set_cookies(driver.get_cookies())
+                Captcha_Browser.set_domain(domain_name)
 
         is_user_signin = await nodriver_ticketplus_account_auto_fill(tab, config_dict)
 
@@ -1603,7 +1585,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
                         #PS: need set cookies once, if user change domain.
                         if not Captcha_Browser is None:
-                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                            Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
                         # TODO:
                         #is_captcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
