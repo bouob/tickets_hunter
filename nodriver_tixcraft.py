@@ -1376,8 +1376,8 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             domain_name = url.split('/')[2]
             if not Captcha_Browser is None:
                 # TODO:
-                #Captcha_Browser.Set_cookies(driver.get_cookies())
-                Captcha_Browser.Set_Domain(domain_name)
+                #Captcha_Browser.set_cookies(driver.get_cookies())
+                Captcha_Browser.set_domain(domain_name)
 
         is_user_signin = await nodriver_ticketplus_account_auto_fill(tab, config_dict)
 
@@ -1603,7 +1603,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
                         #PS: need set cookies once, if user change domain.
                         if not Captcha_Browser is None:
-                            Captcha_Browser.Set_Domain(domain_name, captcha_url=captcha_url)
+                            Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
                         # TODO:
                         #is_captcha_sent = ibon_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
