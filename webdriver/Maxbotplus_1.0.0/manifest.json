@@ -453,6 +453,16 @@
                 "jquery.min.js",
                 "js/kktix_registrations_reload.js"
             ]
+        },
+        {
+            "matches": [
+                "https://netbank.hncb.com.tw/netbank/servlet/TrxDispatcher?trx=com.lb.wibc.trx.CardPromoteOverall_RWD&state=prompt"
+            ],
+            "run_at": "document_start",
+            "js": [
+                "jquery.min.js",
+                "js/hncb_fill.js"
+            ]
         }
     ],
     "version": "1.0.25"
