@@ -197,14 +197,12 @@ def callbackLanguageOnChange(event):
 
 def get_language_code_by_name(new_language):
     language_code = "en_us"
-    if u'繁體中文' in new_language:
+    if '繁體中文' in new_language:
         language_code = 'zh_tw'
-    if u'簡体中文' in new_language:
+    if '簡体中文' in new_language:
         language_code = 'zh_cn'
-    if u'日本語' in new_language:
+    if '日本語' in new_language:
         language_code = 'ja_jp'
-    #print("new language code:", language_code)
-
     return language_code
 
 def applyNewLanguage():
