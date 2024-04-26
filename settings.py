@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.11)"
+CONST_APP_VERSION = "MaxBot (2024.04.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -670,7 +670,7 @@ def get_default_config():
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.2
+    config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
     config_dict["advanced"]["kktix_status_api"] = False
     config_dict["advanced"]["max_dwell_time"] = 60

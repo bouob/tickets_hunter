@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.11)"
+CONST_APP_VERSION = "MaxBot (2024.04.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2422,25 +2422,30 @@ def kktix_press_next_button(driver):
         button_count = len(but_button_list)
         #print("button_count:",button_count)
         if button_count > 0:
+            btn = but_button_list[button_count-1]
             try:
-                #print("click on last button:", button_count)
-                but_button_list[button_count-1].click()
-                time.sleep(0.3)
+                driver.set_script_timeout(0.1)
+                driver.execute_script("arguments[0].focus();", btn)
                 ret = True
             except Exception as exc:
-                print(exc)
                 pass
+            for retry_idx in range(4):
+                try:
+                    #print("click on last button:", button_count)
+                    btn.click()
+                    time.sleep(0.2)
+                    ret = True
+                except Exception as exc:
+                    print(exc)
+                    pass
+                if ret:
+                    break
 
     return ret
 
 
 def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
+    show_debug_message = config_dict["advanced"]["verbose"]:
     ticket_number = config_dict["ticket_number"]
 
     areas = None
@@ -2645,11 +2650,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
     return is_dom_ready, is_ticket_number_assigned, areas
 
 def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    show_debug_message = config_dict["advanced"]["verbose"]:
 
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -2708,11 +2709,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
 
 def kktix_check_agree_checkbox(driver, config_dict):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    show_debug_message = config_dict["advanced"]["verbose"]:
 
     is_finish_checkbox_click = False
     is_dom_ready = False
@@ -2833,11 +2830,7 @@ def set_kktix_control_label_text(driver, config_dict):
 
 
 def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    show_debug_message = config_dict["advanced"]["verbose"]:
 
     answer_list = []
 
@@ -2876,7 +2869,7 @@ def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
 
             # due multi next buttons(pick seats/best seats)
             kktix_press_next_button(driver)
-            time.sleep(0.75)
+            time.sleep(0.5)
 
             fail_list.append(inferred_answer_string)
         #print("new fail_list:", fail_list)
