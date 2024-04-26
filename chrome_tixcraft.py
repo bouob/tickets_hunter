@@ -315,11 +315,7 @@ def get_chrome_options(webdriver_path, config_dict):
     return chrome_options
 
 def load_chromdriver_normal(config_dict, driver_type):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    show_debug_message = config_dict["advanced"]["verbose"]
 
     driver = None
 
@@ -327,8 +323,7 @@ def load_chromdriver_normal(config_dict, driver_type):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
-    if not os.path.exists(webdriver_path):
-        os.mkdir(webdriver_path)
+    os.makedirs(webdriver_path, exist_ok=True)
 
     if not os.path.exists(chromedriver_path):
         print("WebDriver not exist, try to download to:", webdriver_path)
@@ -347,11 +342,7 @@ def load_chromdriver_normal(config_dict, driver_type):
             error_message = str(exc)
             if show_debug_message:
                 print(exc)
-            left_part = None
-            if "Stacktrace:" in error_message:
-                left_part = error_message.split("Stacktrace:")[0]
-                print(left_part)
-
+            left_part = error_message.split("Stacktrace:")[0] if "Stacktrace:" in error_message else None
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
