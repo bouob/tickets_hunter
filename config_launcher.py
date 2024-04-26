@@ -297,50 +297,33 @@ def btn_items_run_event(event):
     threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
-
-    # output to GUI.
-    row_count = 0
-
     frame_group_header = Frame(root)
-    group_row_count = 0
+    widgets = {
+        'lbl_file_name': {},
+        'txt_file_name': {},
+        'txt_file_name_value': {},
+        'btn_browse': {},
+        'btn_run': {},
+    }
 
-    global lbl_file_name
-    global txt_file_name
-    global txt_file_name_value
-    global btn_browse
-    global btn_run
-    lbl_file_name = {}
-    txt_file_name = {}
-    txt_file_name_value = {}
-    btn_browse = {}
-    btn_run = {}
+    for i, filename in enumerate(config_dict["list"][:15]):
+        widgets['lbl_file_name'][i] = Label(frame_group_header, text=str(i+1))
+        widgets['lbl_file_name'][i].grid(column=0, row=i, sticky=E)
 
-    print("config_dict[list]:",config_dict["list"])
-    print("config_dict[list]:",len(config_dict["list"]))
-    for i in range(15):
-        filename = ""
-        if i <= len(config_dict["list"])-1:
-            filename = config_dict["list"][i]
-        lbl_file_name[i] = Label(frame_group_header, text=str(i+1))
-        lbl_file_name[i].grid(column=0, row=group_row_count, sticky = E)
+        widgets['txt_file_name_value'][i] = StringVar(frame_group_header, value=filename)
+        widgets['txt_file_name'][i] = Entry(frame_group_header, width=20, textvariable=widgets['txt_file_name_value'][i])
+        widgets['txt_file_name'][i].grid(column=1, row=i, sticky=W)
 
-        txt_file_name_value[i] = StringVar(frame_group_header, value=filename)
-        txt_file_name[i] = Entry(frame_group_header, width=20, textvariable = txt_file_name_value[i])
-        txt_file_name[i].grid(column=1, row=group_row_count, sticky = W)
+        widgets['btn_browse'][i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
+        widgets['btn_browse'][i].grid(column=2, row=i, sticky=W)
+        widgets['btn_browse'][i].bind('<Button-1>', btn_items_browse_event)
 
-        btn_browse[i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
-        btn_browse[i].grid(column=2, row=group_row_count, sticky = W)
-        btn_browse[i].bind('<Button-1>', btn_items_browse_event)
+        widgets['btn_run'][i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
+        widgets['btn_run'][i].grid(column=3, row=i, sticky=W)
+        widgets['btn_run'][i].bind('<Button-1>', btn_items_run_event)
 
-        btn_run[i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
-        btn_run[i].grid(column=3, row=group_row_count, sticky = W)
-        btn_run[i].bind('<Button-1>', btn_items_run_event)
-
-        group_row_count+=1
-
-
-    # add first block to UI.
-    frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+    frame_group_header.grid(column=0, row=0, sticky=W, padx=UI_PADDING_X)
+    return widgets
 
 
 def AboutTab(root, language_code):
