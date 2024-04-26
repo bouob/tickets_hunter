@@ -142,9 +142,8 @@ def get_config_dict(args):
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
 
     # allow assign config by command line.
-    if not args.input is None:
-        if len(args.input) > 0:
-            config_filepath = args.input
+    if args.input:
+        config_filepath = args.input
 
     config_dict = None
     if os.path.isfile(config_filepath):
@@ -152,43 +151,34 @@ def get_config_dict(args):
         with open(config_filepath) as json_data:
             config_dict = json.load(json_data)
 
-            if not args.headless is None:
+            if args.headless is not None:
                 config_dict["advanced"]["headless"] = util.t_or_f(args.headless)
 
-            if not args.homepage is None:
-                if len(args.homepage) > 0:
-                    config_dict["homepage"] = args.homepage
+            if args.homepage:
+                config_dict["homepage"] = args.homepage
 
-            if not args.ticket_number is None:
-                if args.ticket_number > 0:
-                    config_dict["ticket_number"] = args.ticket_number
+            if args.ticket_number:
+                config_dict["ticket_number"] = args.ticket_number
 
-            if not args.browser is None:
-                if len(args.browser) > 0:
-                    config_dict["browser"] = args.browser
+            if args.browser:
+                config_dict["browser"] = args.browser
 
-            if not args.tixcraft_sid is None:
-                if len(args.tixcraft_sid) > 0:
-                    config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
+            if args.tixcraft_sid:
+                config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
 
-            if not args.ibonqware is None:
-                if len(args.ibonqware) > 0:
-                    config_dict["advanced"]["ibonqware"] = args.ibonqware
+            if args.ibonqware:
+                config_dict["advanced"]["ibonqware"] = args.ibonqware
 
-            if not args.kktix_account is None:
-                if len(args.kktix_account) > 0:
-                    config_dict["advanced"]["kktix_account"] = args.kktix_account
-            if not args.kktix_password is None:
-                if len(args.kktix_password) > 0:
-                    config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
+            if args.kktix_account:
+                config_dict["advanced"]["kktix_account"] = args.kktix_account
+            if args.kktix_password:
+                config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
 
-            if not args.proxy_server is None:
-                if len(args.proxy_server) > 2:
-                    config_dict["advanced"]["proxy_server_port"] = args.proxy_server
+            if args.proxy_server:
+                config_dict["advanced"]["proxy_server_port"] = args.proxy_server
 
-            if not args.window_size is None:
-                if len(args.window_size) > 2:
-                    config_dict["advanced"]["window_size"] = args.window_size
+            if args.window_size:
+                config_dict["advanced"]["window_size"] = args.window_size
 
             # special case for headless to enable away from keyboard mode.
             is_headless_enable_ocr = False
@@ -325,11 +315,7 @@ def get_chrome_options(webdriver_path, config_dict):
     return chrome_options
 
 def load_chromdriver_normal(config_dict, driver_type):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    show_debug_message = config_dict["advanced"]["verbose"]
 
     driver = None
 
@@ -337,8 +323,7 @@ def load_chromdriver_normal(config_dict, driver_type):
     webdriver_path = os.path.join(Root_Dir, "webdriver")
     chromedriver_path = get_chromedriver_path(webdriver_path)
 
-    if not os.path.exists(webdriver_path):
-        os.mkdir(webdriver_path)
+    os.makedirs(webdriver_path, exist_ok=True)
 
     if not os.path.exists(chromedriver_path):
         print("WebDriver not exist, try to download to:", webdriver_path)
@@ -353,15 +338,11 @@ def load_chromdriver_normal(config_dict, driver_type):
         chrome_options = get_chrome_options(webdriver_path, config_dict)
         try:
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-        except Exception as exc:
+        except WebDriverException as exc:
             error_message = str(exc)
             if show_debug_message:
                 print(exc)
-            left_part = None
-            if "Stacktrace:" in error_message:
-                left_part = error_message.split("Stacktrace:")[0]
-                print(left_part)
-
+            left_part = error_message.split("Stacktrace:")[0] if "Stacktrace:" in error_message else None
             if "This version of ChromeDriver only supports Chrome version" in error_message:
                 print(CONST_CHROME_VERSION_NOT_MATCH_EN)
                 print(CONST_CHROME_VERSION_NOT_MATCH_TW)
@@ -379,12 +360,12 @@ def load_chromdriver_normal(config_dict, driver_type):
                 try:
                     chrome_options = get_chrome_options(webdriver_path, config_dict)
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-                except Exception as exc2:
+                except WebDriverException as exc2:
                     print("Selenium 4.11.0 Release with Chrome For Testing Browser.")
                     try:
                         chrome_options = get_chrome_options(webdriver_path, config_dict)
                         driver = webdriver.Chrome(service=Service(), options=chrome_options)
-                    except Exception as exc3:
+                    except WebDriverException as exc3:
                         print(exc3)
                         pass
 

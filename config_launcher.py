@@ -40,99 +40,83 @@ URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
 
 def load_translate():
-    translate = {}
-    en_us={}
-    en_us["language"] = 'Language'
-    en_us["enable"] = 'Enable'
-
-    en_us["config_list"] = 'Config List'
-    en_us["advanced"] = 'Advanced'
-    en_us["about"] = 'About'
-
-    en_us["run"] = 'Run'
-    en_us["browse"] = 'Browse...'
-    en_us["save"] = 'Save'
-    en_us["exit"] = 'Close'
-    en_us["copy"] = 'Copy'
-    en_us["restore_defaults"] = 'Restore Defaults'
-    en_us["done"] = 'Done'
-
-    en_us["maxbot_slogan"] = 'MaxRegBot is a FREE and open source bot program. Wish you good luck.'
-    en_us["donate"] = 'Donate'
-    en_us["help"] = 'Help'
-    en_us["release"] = 'Release'
-
-    zh_tw={}
-    zh_tw["language"] = '語言'
-    zh_tw["enable"] = '啟用'
-
-    zh_tw["config_list"] = '設定檔管理'
-    zh_tw["advanced"] = '進階設定'
-    zh_tw["autofill"] = '自動填表單'
-    zh_tw["about"] = '關於'
-
-    zh_tw["run"] = '搶票'
-    zh_tw["browse"] = '開啟...'
-    zh_tw["save"] = '存檔'
-    zh_tw["exit"] = '關閉'
-    zh_tw["copy"] = '複製'
-    zh_tw["restore_defaults"] = '恢復預設值'
-    zh_tw["done"] = '完成'
-
-    zh_tw["maxbot_slogan"] = 'MaxRegBot是一個免費、開放原始碼的搶票機器人。\n祝您掛號成功。'
-    zh_tw["donate"] = '打賞'
-    zh_tw["release"] = '所有可用版本'
-    zh_tw["help"] = '使用教學'
-
-    zh_cn={}
-    zh_cn["language"] = '语言'
-    zh_cn["enable"] = '启用'
-
-    zh_cn["config_list"] = '设定档管理'
-    zh_cn["advanced"] = '進階設定'
-    zh_cn["autofill"] = '自动填表单'
-    zh_cn["about"] = '关于'
-    zh_cn["copy"] = '复制'
-
-    zh_cn["run"] = '抢票'
-    zh_cn["browse"] = '开启...'
-    zh_cn["save"] = '存档'
-    zh_cn["exit"] = '关闭'
-    zh_cn["copy"] = '复制'
-    zh_cn["restore_defaults"] = '恢复默认值'
-    zh_cn["done"] = '完成'
-
-    zh_cn["maxbot_slogan"] = 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。'
-    zh_cn["donate"] = '打赏'
-    zh_cn["help"] = '使用教学'
-    zh_cn["release"] = '所有可用版本'
-
-    ja_jp={}
-    ja_jp["language"] = '言語'
-    ja_jp["enable"] = '有効'
-
-    ja_jp["config_list"] = 'Config List'
-    ja_jp["advanced"] = '高度な設定'
-    ja_jp["autofill"] = 'オートフィル'
-    ja_jp["about"] = '情報'
-
-    ja_jp["run"] = 'チケットを取る'
-    ja_jp["browse"] = '開ける...'
-    ja_jp["save"] = '保存'
-    ja_jp["exit"] = '閉じる'
-    ja_jp["copy"] = 'コピー'
-    ja_jp["restore_defaults"] = 'デフォルトに戻す'
-    ja_jp["done"] = '終わり'
-
-    ja_jp["maxbot_slogan"] = 'MaxRegBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
-    ja_jp["donate"] = '寄付'
-    ja_jp["help"] = '利用方法'
-    ja_jp["release"] = 'リリース'
-
-    translate['en_us']=en_us
-    translate['zh_tw']=zh_tw
-    translate['zh_cn']=zh_cn
-    translate['ja_jp']=ja_jp
+    translate = {
+        'en_us': {
+            "language": 'Language',
+            "enable": 'Enable',
+            "config_list": 'Config List',
+            "advanced": 'Advanced',
+            "about": 'About',
+            "run": 'Run',
+            "browse": 'Browse...',
+            "save": 'Save',
+            "exit": 'Close',
+            "copy": 'Copy',
+            "restore_defaults": 'Restore Defaults',
+            "done": 'Done',
+            "maxbot_slogan": 'MaxRegBot is a FREE and open source bot program. Wish you good luck.',
+            "donate": 'Donate',
+            "help": 'Help',
+            "release": 'Release'
+        },
+        'zh_tw': {
+            "language": '語言',
+            "enable": '啟用',
+            "config_list": '設定檔管理',
+            "advanced": '進階設定',
+            "autofill": '自動填表單',
+            "about": '關於',
+            "run": '搶票',
+            "browse": '開啟...',
+            "save": '存檔',
+            "exit": '關閉',
+            "copy": '複製',
+            "restore_defaults": '恢復預設值',
+            "done": '完成',
+            "maxbot_slogan": 'MaxRegBot是一個免費、開放原始碼的搶票機器人。\n祝您掛號成功。',
+            "donate": '打賞',
+            "release": '所有可用版本',
+            "help": '使用教學'
+        },
+        'zh_cn': {
+            "language": '语言',
+            "enable": '启用',
+            "config_list": '设定档管理',
+            "advanced": '進階設定',
+            "autofill": '自动填表单',
+            "about": '关于',
+            "run": '抢票',
+            "browse": '开启...',
+            "save": '存档',
+            "exit": '关闭',
+            "copy": '复制',
+            "restore_defaults": '恢复默认值',
+            "done": '完成',
+            "maxbot_slogan": 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。',
+            "donate": '打赏',
+            "help": '使用教学',
+            "release": '所有可用版本'
+        },
+        'ja_jp': {
+            "language": '言語',
+            "enable": '有効',
+            "config_list": 'Config List',
+            "advanced": '高度な設定',
+            "autofill": 'オートフィル',
+            "about": '情報',
+            "run": 'チケットを取る',
+            "browse": '開ける...',
+            "save": '保存',
+            "exit": '閉じる',
+            "copy": 'コピー',
+            "restore_defaults": 'デフォルトに戻す',
+            "done": '終わり',
+            "maxbot_slogan": 'MaxRegBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。',
+            "donate": '寄付',
+            "help": '利用方法',
+            "release": 'リリース'
+        }
+    }
     return translate
 
 def get_default_config():
@@ -183,32 +167,18 @@ def btn_save_act(slience_mode=True):
     config_dict = get_default_config()
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    is_all_data_correct = True
+    config_dict["advanced"]["language"] = combo_language.get().strip()
+    language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    global combo_language
-    if is_all_data_correct:
-        config_dict["advanced"]["language"] = combo_language.get().strip()
-        # display as new language.
-        language_code = get_language_code_by_name(config_dict["advanced"]["language"])
+    filelist = [txt_file_name[i].get().strip() for i in range(15)]
+    config_dict["list"] = filelist
 
+    util.save_json(config_dict, config_filepath)
+    
+    if not slience_mode:
+        messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
-    global txt_file_name
-    filelist = []
-    for i in range(15):
-        filelist.append(txt_file_name[i].get().strip())
-
-    if is_all_data_correct:
-        config_dict["list"]=filelist
-
-    # save config.
-    if is_all_data_correct:
-        # slience
-        util.save_json(config_dict, config_filepath)
-        
-        if not slience_mode:
-            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
-
-    return is_all_data_correct
+    return True
 
 def open_url(url):
     webbrowser.open_new(url)
@@ -227,14 +197,12 @@ def callbackLanguageOnChange(event):
 
 def get_language_code_by_name(new_language):
     language_code = "en_us"
-    if u'繁體中文' in new_language:
+    if '繁體中文' in new_language:
         language_code = 'zh_tw'
-    if u'簡体中文' in new_language:
+    if '簡体中文' in new_language:
         language_code = 'zh_cn'
-    if u'日本語' in new_language:
+    if '日本語' in new_language:
         language_code = 'ja_jp'
-    #print("new language code:", language_code)
-
     return language_code
 
 def applyNewLanguage():
@@ -307,50 +275,33 @@ def btn_items_run_event(event):
     threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
-
-    # output to GUI.
-    row_count = 0
-
     frame_group_header = Frame(root)
-    group_row_count = 0
+    widgets = {
+        'lbl_file_name': {},
+        'txt_file_name': {},
+        'txt_file_name_value': {},
+        'btn_browse': {},
+        'btn_run': {},
+    }
 
-    global lbl_file_name
-    global txt_file_name
-    global txt_file_name_value
-    global btn_browse
-    global btn_run
-    lbl_file_name = {}
-    txt_file_name = {}
-    txt_file_name_value = {}
-    btn_browse = {}
-    btn_run = {}
+    for i, filename in enumerate(config_dict["list"][:15]):
+        widgets['lbl_file_name'][i] = Label(frame_group_header, text=str(i+1))
+        widgets['lbl_file_name'][i].grid(column=0, row=i, sticky=E)
 
-    print("config_dict[list]:",config_dict["list"])
-    print("config_dict[list]:",len(config_dict["list"]))
-    for i in range(15):
-        filename = ""
-        if i <= len(config_dict["list"])-1:
-            filename = config_dict["list"][i]
-        lbl_file_name[i] = Label(frame_group_header, text=str(i+1))
-        lbl_file_name[i].grid(column=0, row=group_row_count, sticky = E)
+        widgets['txt_file_name_value'][i] = StringVar(frame_group_header, value=filename)
+        widgets['txt_file_name'][i] = Entry(frame_group_header, width=20, textvariable=widgets['txt_file_name_value'][i])
+        widgets['txt_file_name'][i].grid(column=1, row=i, sticky=W)
 
-        txt_file_name_value[i] = StringVar(frame_group_header, value=filename)
-        txt_file_name[i] = Entry(frame_group_header, width=20, textvariable = txt_file_name_value[i])
-        txt_file_name[i].grid(column=1, row=group_row_count, sticky = W)
+        widgets['btn_browse'][i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
+        widgets['btn_browse'][i].grid(column=2, row=i, sticky=W)
+        widgets['btn_browse'][i].bind('<Button-1>', btn_items_browse_event)
 
-        btn_browse[i] = ttk.Button(frame_group_header, text=translate[language_code]['browse'] + " " + str(i+1))
-        btn_browse[i].grid(column=2, row=group_row_count, sticky = W)
-        btn_browse[i].bind('<Button-1>', btn_items_browse_event)
+        widgets['btn_run'][i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
+        widgets['btn_run'][i].grid(column=3, row=i, sticky=W)
+        widgets['btn_run'][i].bind('<Button-1>', btn_items_run_event)
 
-        btn_run[i] = ttk.Button(frame_group_header, text=translate[language_code]['run'] + " " + str(i+1))
-        btn_run[i].grid(column=3, row=group_row_count, sticky = W)
-        btn_run[i].bind('<Button-1>', btn_items_run_event)
-
-        group_row_count+=1
-
-
-    # add first block to UI.
-    frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+    frame_group_header.grid(column=0, row=0, sticky=W, padx=UI_PADDING_X)
+    return widgets
 
 
 def AboutTab(root, language_code):
