@@ -183,32 +183,22 @@ def btn_save_act(slience_mode=True):
     config_dict = get_default_config()
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    is_all_data_correct = True
-
     global combo_language
-    if is_all_data_correct:
-        config_dict["advanced"]["language"] = combo_language.get().strip()
-        # display as new language.
-        language_code = get_language_code_by_name(config_dict["advanced"]["language"])
-
+    config_dict["advanced"]["language"] = combo_language.get().strip()
+    # display as new language.
+    language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
     global txt_file_name
-    filelist = []
-    for i in range(15):
-        filelist.append(txt_file_name[i].get().strip())
-
-    if is_all_data_correct:
-        config_dict["list"]=filelist
+    filelist = [txt_file_name[i].get().strip() for i in range(15)]
+    config_dict["list"] = filelist
 
     # save config.
-    if is_all_data_correct:
-        # slience
-        util.save_json(config_dict, config_filepath)
-        
-        if not slience_mode:
-            messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
+    util.save_json(config_dict, config_filepath)
+    
+    if not slience_mode:
+        messagebox.showinfo(translate[language_code]["save"], translate[language_code]["done"])
 
-    return is_all_data_correct
+    return True
 
 def open_url(url):
     webbrowser.open_new(url)
