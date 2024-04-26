@@ -2445,7 +2445,7 @@ def kktix_press_next_button(driver):
 
 
 def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kktix_area_keyword):
-    show_debug_message = config_dict["advanced"]["verbose"]:
+    show_debug_message = config_dict["advanced"]["verbose"]
     ticket_number = config_dict["ticket_number"]
 
     areas = None
@@ -2650,7 +2650,7 @@ def kktix_travel_price_list(driver, config_dict, kktix_area_auto_select_mode, kk
     return is_dom_ready, is_ticket_number_assigned, areas
 
 def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
-    show_debug_message = config_dict["advanced"]["verbose"]:
+    show_debug_message = config_dict["advanced"]["verbose"]
 
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -2709,7 +2709,7 @@ def kktix_assign_ticket_number(driver, config_dict, kktix_area_keyword):
 
 
 def kktix_check_agree_checkbox(driver, config_dict):
-    show_debug_message = config_dict["advanced"]["verbose"]:
+    show_debug_message = config_dict["advanced"]["verbose"]
 
     is_finish_checkbox_click = False
     is_dom_ready = False
@@ -2830,7 +2830,7 @@ def set_kktix_control_label_text(driver, config_dict):
 
 
 def kktix_reg_captcha(driver, config_dict, fail_list, registrationsNewApp_div):
-    show_debug_message = config_dict["advanced"]["verbose"]:
+    show_debug_message = config_dict["advanced"]["verbose"]
 
     answer_list = []
 
