@@ -338,7 +338,7 @@ def load_chromdriver_normal(config_dict, driver_type):
         chrome_options = get_chrome_options(webdriver_path, config_dict)
         try:
             driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-        except Exception as exc:
+        except WebDriverException as exc:
             error_message = str(exc)
             if show_debug_message:
                 print(exc)
@@ -360,12 +360,12 @@ def load_chromdriver_normal(config_dict, driver_type):
                 try:
                     chrome_options = get_chrome_options(webdriver_path, config_dict)
                     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
-                except Exception as exc2:
+                except WebDriverException as exc2:
                     print("Selenium 4.11.0 Release with Chrome For Testing Browser.")
                     try:
                         chrome_options = get_chrome_options(webdriver_path, config_dict)
                         driver = webdriver.Chrome(service=Service(), options=chrome_options)
-                    except Exception as exc3:
+                    except WebDriverException as exc3:
                         print(exc3)
                         pass
 
