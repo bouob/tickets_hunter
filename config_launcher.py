@@ -167,16 +167,12 @@ def btn_save_act(slience_mode=True):
     config_dict = get_default_config()
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    global combo_language
     config_dict["advanced"]["language"] = combo_language.get().strip()
-    # display as new language.
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    global txt_file_name
     filelist = [txt_file_name[i].get().strip() for i in range(15)]
     config_dict["list"] = filelist
 
-    # save config.
     util.save_json(config_dict, config_filepath)
     
     if not slience_mode:
