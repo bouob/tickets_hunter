@@ -135,10 +135,10 @@ A: 除了 Window 有打包的執行檔之外, macOS / Linux 只能使用原始�
 
 # File Description
 (檔案說明)
-* chrome_tixcraft.py : 搶票機器人主程式, 用來自動化網頁的操作。
-* config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
-* kktix_status.py : kktix 售票狀態監控，可以在有票時提發出提醒。
+* chrome_tixcraft.py : 搶票機器人主程式，用來自動化網頁的操作，使用元件是selenium。
+* nodriver_tixcraft.py : 也是搶票機器人主程式，用來自動化網頁的操作，使用的元件是nodriver。
 * settings.py : 編輯 settings.json 的 GUI 介面。提供圖片OCR功能給chrome擴充功能。支援定時啟用/停用MaxBot。
+* config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
 
 # Introduce the Implement 
 (實作方法)
@@ -160,12 +160,11 @@ please run this source code with high performance hardware computer and high spe
 https://github.com/sml2h3/ddddocr
 
 附註：
-* macOS 新的電腦 arm 系列, 暫時沒有提供自動輸入驗證碼功能, 使用上的限制和 ddddocr 相同. 暫時的解法是透過Rosetta來模擬 Intel CPU 環境. 請參考: https://github.com/max32002/tixcraft_bot/issues/82
-* macOS 舊款intel CPU 的電腦裡的 python 版本要降到低於等於 3.9版 或 3.10版, 例如:
+* 由於 ddddocr 元件的因素，python 版本要降到3.10.11版, 傳送門:
 https://www.python.org/downloads/release/python-31011/
 * 猜測驗證碼時比較容易出錯的是字英 f 和 t，還有 q 和 g, v 和 u 還有 w.
 
-想自動輸入驗證碼，可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
+想自動輸入驗證碼，除了可以使用 ddddocr 提供的 trainer, 也可以參考看看：實作基於CNN的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
 
 https://github.com/JasonLiTW/simple-railway-captcha-solver
 
