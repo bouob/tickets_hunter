@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.12)"
+CONST_APP_VERSION = "MaxBot (2024.04.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -263,6 +263,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         # for like human.
         try:
             tab = await driver.get(homepage)
+            await tab.get_content()
             time.sleep(5)
         except Exception as e:
             pass
@@ -302,6 +303,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     try:
         tab = await driver.get(homepage)
+        await tab.get_content()
         time.sleep(3)
     except Exception as e:
         pass
@@ -1657,55 +1659,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
 
 async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
-    cityline_event_url = "https://event.cityline.com/"
-    # from loc redirect.
-    if "?loc=" in url:
-        url = url.replace("%3Flang%3DTW%26lang%3DTW","%3Flang%3DTW")
-        loc = url.split("?loc=")[1]
-        if len(loc) > 0:
-            if "&" in loc:
-                loc = url.split("&")[0]
-            loc_decode = urllib.parse.unquote(loc)
-            if len(loc_decode) > 0:
-                if loc_decode[:1]=="/":
-                    loc_decode = loc_decode[1:]
-                if loc_decode[:6] != "https:":
-                    new_url = cityline_event_url + loc_decode
-                    if not "&lang=" in new_url:
-                        new_url = new_url + "&lang=TW"
-                        new_url = new_url.replace("lang=TW&lang=TW","lang=TW")
-                    if new_url != url:
-                        try:
-                            #print("old url:", url)
-                            print("redirect to url:", new_url)
-                            tab = await tab.get(new_url)
-                            time.sleep(0.2)
-                            pass
-                        except Exception as e:
-                            print(e)
-                            pass
-
-    # https://event.cityline.com/utsvInternet/EVENT_NAME/home?lang=TW
-    if "lang=TW" in url:
-        url_array = url.split("lang=TW")
-        if len(url_array) > 2:
-            new_url = url_array[0] + "lang=TW"
-            if new_url != url:
-                try:
-                    new_url = new_url.replace("lang=TW&lang=TW","lang=TW")
-                    print("redirect to url:", new_url)
-                    tab = await tab.get(new_url)
-                    time.sleep(0.2)
-                except Exception as exc:
-                    print(exc)
-                    pass
-        
     try:
-        btn_retry = await tab.query_selector('button')
-        if btn_retry:
-            #print("found button to click.")
-            btn_retry.click()
-            time.sleep(0.2)
+        js = "goEvent();"
+        await tab.evaluate(js)
     except Exception as exc:
         print(exc)
         pass
@@ -1894,7 +1850,8 @@ async def nodriver_cityline_main(tab, url, config_dict):
         except Exception as exc:
             pass
         if is_dom_ready:
-            await nodriver_cityline_auto_retry_access(tab, url, config_dict)
+            #await nodriver_cityline_auto_retry_access(tab, url, config_dict)
+            pass
 
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]

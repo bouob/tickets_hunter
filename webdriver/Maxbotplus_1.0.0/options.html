@@ -13,24 +13,24 @@
   <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Perference</button>
+        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">偏好設定</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">Advanced</button>
+        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">進階設定</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false">Verification</button>
+        <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false">驗證問題</button>
       </li>
     </ul>
     <div class="tab-content" id="myTabContent">
       <!-- tab 1 -->
       <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
         <div class="row mb-3">
-          <label for="ticket_number" class="col-sm-2 col-form-label">Ticket Number</label>
+          <label for="ticket_number" class="col-sm-2 col-form-label">張數</label>
           <div class="col-sm-10">
             <select id="ticket_number" class="form-select" aria-label="Default select">
               <option selected="selected">
-                Ticket Number
+                張數
               </option>
               <option value="1">
                 1
@@ -66,7 +66,7 @@
           </div>
         </div>
         <div class="row mb-3">
-          <label for="date_select_mode" class="col-sm-2 col-form-label">Date Select Order</label>
+          <label for="date_select_mode" class="col-sm-2 col-form-label">日期排序方式</label>
           <div class="col-sm-10">
             <select id="date_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
@@ -85,13 +85,13 @@
           </div>
         </div>
         <div class="row mb-3">
-          <label for="date_keyword" class="col-sm-2 col-form-label">Date Keywords</label>
+          <label for="date_keyword" class="col-sm-2 col-form-label">日期關鍵字</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="date_keyword" rows="3"></textarea>
           </div>
         </div>
         <div class="row mb-3">
-          <label for="area_select_mode" class="col-sm-2 col-form-label">Area Select Order</label>
+          <label for="area_select_mode" class="col-sm-2 col-form-label">區域排序方式</label>
           <div class="col-sm-10">
             <select id="area_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
@@ -110,13 +110,13 @@
           </div>
         </div>
         <div class="row mb-3">
-          <label for="area_keyword" class="col-sm-2 col-form-label">Area Keywords</label>
+          <label for="area_keyword" class="col-sm-2 col-form-label">區域關鍵字</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
           </div>
         </div>
         <div class="row mb-3">
-          <label for="keyword_exclude" class="col-sm-2 col-form-label">Exclude Keywords</label>
+          <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
           </div>
@@ -125,32 +125,32 @@
       <!-- tab 2 -->
       <div class="tab-pane fade" id="advanced-tab-pane" role="tabpanel" aria-labelledby="advanced-tab" tabindex="1">
         <div class="row mb-3">
-          <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">Reload page interval(sec.)</label>
+          <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
           <div class="col-sm-10">
             <input class="form-control" id="auto_reload_page_interval" value="" />
           </div>
         </div>
         
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="auto_press_next_step_button">KKTIX Press Next Step Button</label>
+          <label class="col-sm-2 col-form-label form-check-label" for="auto_press_next_step_button">KKTIX點選下一步按鈕</label>
           <div class="col-sm-10">
             <input class="form-check-input" type="checkbox" id="auto_press_next_step_button" />
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="kktix_status_api">KKTIX Status API</label>
+          <label class="col-sm-2 col-form-label form-check-label" for="kktix_status_api">KKTIX購票狀態API</label>
           <div class="col-sm-10">
             <input class="form-check-input" type="checkbox" id="kktix_status_api" />
           </div>
         </div>
         <div class="row mb-3">
-          <label for="max_dwell_time" class="col-sm-2 col-form-label">KKTIX dwell time(sec.)</label>
+          <label for="max_dwell_time" class="col-sm-2 col-form-label">KKTIX購票最長停留(秒)</label>
           <div class="col-sm-10">
             <input class="form-control" id="max_dwell_time" value="" />
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">Disable Adjacent Seat</label>
+          <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">允許不連續座位</label>
           <div class="col-sm-10">
             <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
           </div>
@@ -177,7 +177,7 @@
       <!-- tab 3 -->
       <div class="tab-pane fade" id="verification-tab-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="2">
         <div class="row mb-3">
-          <label for="user_guess_string" class="col-sm-2 col-form-label">Local Dictionary</label>
+          <label for="user_guess_string" class="col-sm-2 col-form-label">使用者自定字典</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="user_guess_string" rows="3"></textarea>
           </div>
@@ -185,7 +185,7 @@
       </div>
     </div>
     <div class="col-12">
-      <button class="btn btn-primary" id="save_btn">Save</button>
+      <button class="btn btn-primary" id="save_btn">存檔</button>
     </div>
   </div>
   <script src="options.js"></script>

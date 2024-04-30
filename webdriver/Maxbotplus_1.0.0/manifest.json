@@ -328,8 +328,9 @@
         },
         {
             "matches": [
-                "https://msg.cityline.com/*.html*",
-                "https://*.cityline.com/utsvInternet/*/home?lang=TW",
+                "https://msg.cityline.com/*",
+                "https://event.cityline.com/utsvInternet/*/home?*",
+                "https://event.cityline.com/utsvInternet/*/login?*",
                 "https://event.cityline.com/",
                 "https://event.cityline.com/queue?loc=*"
             ],
@@ -341,8 +342,9 @@
         },
         {
             "matches": [
-                "https://msg.cityline.com/*.html*",
-                "https://*.cityline.com/utsvInternet/*/home?lang=TW",
+                "https://msg.cityline.com/*",
+                "https://event.cityline.com/utsvInternet/*/home?*",
+                "https://event.cityline.com/utsvInternet/*/login?*",
                 "https://event.cityline.com/",
                 "https://event.cityline.com/queue?loc=*"
             ],
@@ -465,5 +467,5 @@
             ]
         }
     ],
-    "version": "1.0.25"
+    "version": "1.0.26"
 }

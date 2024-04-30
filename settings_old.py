@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.12)"
+CONST_APP_VERSION = "MaxBot (2024.04.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2745,7 +2745,7 @@ def check_maxbot_config_unsaved(config_dict):
 
 def settgins_gui_timer():
     while True:
-        btn_preview_text_clicked()
+        #btn_preview_text_clicked()
         preview_question_text_file()
         update_maxbot_runtime_status()
         change_maxbot_status_by_keyword()

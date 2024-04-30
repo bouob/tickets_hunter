@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.12)"
+CONST_APP_VERSION = "MaxBot (2024.04.13)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -6746,7 +6746,8 @@ def cityline_close_second_tab(driver):
 def cityline_main(driver, url, config_dict):
     # https://msg.cityline.com/ https://event.cityline.com/
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
-        cityline_auto_retry_access(driver, config_dict)
+        #cityline_auto_retry_access(driver, config_dict)
+        pass
 
     cityline_close_second_tab(driver)
 
