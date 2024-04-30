@@ -13,7 +13,10 @@
   <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">偏好設定</button>
+        <button class="nav-link active" id="readme-tab" data-bs-toggle="tab" data-bs-target="#readme-tab-pane" type="button" role="tab" aria-controls="readme-tab-pane" aria-selected="true">使用需知</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false">偏好設定</button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">進階設定</button>
@@ -24,7 +27,33 @@
     </ul>
     <div class="tab-content" id="myTabContent">
       <!-- tab 1 -->
-      <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+      <div class="tab-pane fade show active" id="readme-tab-pane" role="tabpanel" aria-labelledby="readme-tab" tabindex="0">
+
+<p>MaxBot是一個免費、開放原始碼的蛋黃酥/公車訂位機器人。祝您搶購成功。</p>
+
+<p>搶票機制，就是在比誰的網路快、電腦配備好、手速快，或是在比誰的機器人跑的快。</p>
+
+<p>售票系統完全無法阻擋機器人進行搶票，也無法透過驗證碼確定為真人，因此售票系統的「驗證碼」機制只是讓一般民眾更難公平地購買到預期的門票。</p>
+
+<p>目前售票系統還有另一個問題，就是可以透過「人海戰術」來提升買到票的機率，因此建議大家可以麻煩親朋好友去註冊售票系統的帳號。注意，在借用他人帳號前，一定要告知當事人用途，並徵詢同意與授權。</p>
+
+<p>MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有類似的基準點或類似的起跑線上，用魔法對抗魔法，當某一天大家都是透過機器人來搶票時，當機器人數量已多到影響一般民眾購票的權利時，售票業者才比較有可能會對未來熱門演唱會改採「實名制」+「抽籤制」，讓更多民眾可以公平地購買到門票，就可以跟「人海戰術」與「搶票機器人」說 bye-bye 。</p>
+
+<p>台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。</p>
+
+<p>以下文章出現的「搶票」指的是「非台灣的藝文活動或車票」。</p>
+
+<hr/>
+
+<h2>法律聲明</h2>
+
+<p>作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。</p>
+
+<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+</div>
+
+      <!-- tab 2 -->
+      <div class="tab-pane fade" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
         <div class="row mb-3">
           <label for="ticket_number" class="col-sm-2 col-form-label">張數</label>
           <div class="col-sm-10">
