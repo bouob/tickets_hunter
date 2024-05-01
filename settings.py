@@ -323,6 +323,7 @@ def change_maxbot_status_by_keyword():
         if is_matched:
             #print("match to idle:", current_time)
             maxbot_idle()
+    #print("resume_keyword", config_dict["advanced"]["resume_keyword"])
     if len(config_dict["advanced"]["resume_keyword"]) > 0:
         is_matched =  util.is_text_match_keyword(config_dict["advanced"]["resume_keyword"], current_time)
         if is_matched:
