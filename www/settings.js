@@ -1,11 +1,13 @@
-//const storage = chrome.storage.local;
 
+// action bar
 const run_button = document.querySelector('#run_btn');
 const save_button = document.querySelector('#save_btn');
+const reset_button = document.querySelector('#reset_btn');
 const exit_button = document.querySelector('#exit_btn');
 const pause_button = document.querySelector('#pause_btn');
 const resume_button = document.querySelector('#resume_btn');
 
+// preference
 const homepage = document.querySelector('#homepage');
 const ticket_number = document.querySelector('#ticket_number');
 const date_select_mode = document.querySelector('#date_select_mode');
@@ -14,19 +16,40 @@ const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 
+// advance
+const browser = document.querySelector('#browser');
+const webdriver_type = document.querySelector('#webdriver_type');
+const play_ticket_sound = document.querySelector('#play_ticket_sound');
+const play_order_sound = document.querySelector('#play_order_sound');
+const play_sound_filename = document.querySelector('#play_sound_filename');
+
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const kktix_status_api = document.querySelector('#kktix_status_api');
 const max_dwell_time = document.querySelector('#max_dwell_time');
+const reset_browser_interval = document.querySelector('#reset_browser_interval');
+const proxy_server_port = document.querySelector('#proxy_server_port');
+const window_size = document.querySelector('#window_size');
+const chrome_extension = document.querySelector('#chrome_extension');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
+
+const hide_some_image = document.querySelector('#hide_some_image');
+const block_facebook_network = document.querySelector('#block_facebook_network');
+const headless = document.querySelector('#headless');
+const verbose = document.querySelector('#verbose');
+
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
+const ocr_captcha_image_source = document.querySelector('#ocr_captcha_image_source');
+const ocr_captcha_force_submit = document.querySelector('#ocr_captcha_force_submit');
 const remote_url = document.querySelector('#remote_url');
-const user_guess_string = document.querySelector('#user_guess_string');
-
 const PUBLIC_SERVER_URL = "http://maxbot.dropboxlike.com:16888/";
 
+// dictionary
+const user_guess_string = document.querySelector('#user_guess_string');
 
+
+// auto fill
 const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
 const facebook_account = document.querySelector('#facebook_account');
@@ -50,6 +73,7 @@ const ticketplus_password = document.querySelector('#ticketplus_password');
 const urbtix_password = document.querySelector('#urbtix_password');
 const hkticketing_password = document.querySelector('#hkticketing_password');
 
+// runtime
 const idle_keyword = document.querySelector('#idle_keyword');
 const resume_keyword = document.querySelector('#resume_keyword');
 const idle_keyword_second = document.querySelector('#idle_keyword_second');
@@ -57,18 +81,121 @@ const resume_keyword_second = document.querySelector('#resume_keyword_second');
 
 var settings = null;
 
-load_changes();
+maxbot_load_api();
 
-run_button.addEventListener('click', maxbot_launch);
-save_button.addEventListener('click', maxbot_save);
-exit_button.addEventListener('click', maxbot_shutdown);
-pause_button.addEventListener('click', maxbot_pause_api);
-resume_button.addEventListener('click', maxbot_resume_api);
+function load_settins_to_form(settings)
+{
+    if (settings)
+    {
+        //console.log("ticket_number:"+ settings.ticket_number);
+        // preference
+        homepage.value = settings.homepage;
+        ticket_number.value = settings.ticket_number;
+        date_select_mode.value = settings.date_auto_select.mode;
+        date_keyword.value = settings.date_auto_select.date_keyword;
+        if(date_keyword.value=='""') {
+            date_keyword.value='';
+        }
 
-ocr_captcha_use_public_server.addEventListener('change', checkUsePublicServer);
+        area_select_mode.value = settings.area_auto_select.mode;
+        area_keyword.value = settings.area_auto_select.area_keyword;
+        if(area_keyword.value=='""') {
+            area_keyword.value='';
+        }
 
+        keyword_exclude.value = settings.keyword_exclude;
+        
+        // advanced
+        browser.value = settings.browser;
+        webdriver_type.value = settings.webdriver_type;
+        
+        play_ticket_sound.checked = settings.advanced.play_sound.ticket;
+        play_order_sound.checked = settings.advanced.play_sound.order;
+        play_sound_filename.value = settings.advanced.play_sound.filename;
 
-function load_changes()
+        auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
+        auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
+        kktix_status_api.checked = settings.advanced.kktix_status_api;
+        max_dwell_time.value = settings.advanced.max_dwell_time;
+        reset_browser_interval.value = settings.advanced.reset_browser_interval;
+        proxy_server_port.value  = settings.advanced.proxy_server_port;
+        window_size.value  = settings.advanced.window_size;
+
+        chrome_extension.checked = settings.advanced.chrome_extension;
+        disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
+
+        hide_some_image.checked = settings.advanced.hide_some_image;
+        block_facebook_network.checked = settings.advanced.block_facebook_network;
+        headless.checked = settings.advanced.headless;
+        verbose.checked = settings.advanced.verbose;
+
+        ocr_captcha_enable.checked = settings.ocr_captcha.enable;
+        ocr_captcha_image_source.value  = settings.ocr_captcha.image_source;
+        ocr_captcha_force_submit.checked = settings.ocr_captcha.force_submit;
+
+        let remote_url_string = "";
+        let remote_url_array = [];
+        if(settings.advanced.remote_url.length > 0) {
+            remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
+        }
+        if(remote_url_array.length) {
+            remote_url_string = remote_url_array[0];
+        }
+        remote_url.value = remote_url_string;
+
+        // dictionary
+        user_guess_string.value = settings.advanced.user_guess_string;
+        if(user_guess_string.value=='""') {
+            user_guess_string.value='';
+        }
+
+        // auto fill
+        tixcraft_sid.value = settings.advanced.tixcraft_sid;
+        ibonqware.value = settings.advanced.ibonqware;
+        facebook_account.value = settings.advanced.facebook_account;
+        kktix_account.value = settings.advanced.kktix_account;
+        fami_account.value = settings.advanced.fami_account;
+        kham_account.value = settings.advanced.kham_account;
+        ticket_account.value = settings.advanced.ticket_account;
+        udn_account.value = settings.advanced.udn_account;
+        ticketplus_account.value = settings.advanced.ticketplus_account;
+        cityline_account.value = settings.advanced.cityline_account;
+        urbtix_account.value = settings.advanced.urbtix_account;
+        hkticketing_account.value = settings.advanced.hkticketing_account;
+
+        facebook_password.value = settings.advanced.facebook_password;
+        kktix_password.value = settings.advanced.kktix_password;
+        fami_password.value = settings.advanced.fami_password;
+        kham_password.value = settings.advanced.kham_password;
+        ticket_password.value = settings.advanced.ticket_password;
+        udn_password.value = settings.advanced.udn_password;
+        ticketplus_password.value = settings.advanced.ticketplus_password;
+        urbtix_password.value = settings.advanced.urbtix_password;
+        hkticketing_password.value = settings.advanced.hkticketing_password;
+
+        // runtime
+        idle_keyword.value = settings.advanced.idle_keyword;
+        if(idle_keyword.value=='""') {
+            idle_keyword.value='';
+        }
+        resume_keyword.value = settings.advanced.resume_keyword;
+        if(resume_keyword.value=='""') {
+            resume_keyword.value='';
+        }
+        idle_keyword_second.value = settings.advanced.idle_keyword_second;
+        if(idle_keyword_second.value=='""') {
+            idle_keyword_second.value='';
+        }
+        resume_keyword_second.value = settings.advanced.resume_keyword_second;
+        if(resume_keyword_second.value=='""') {
+            resume_keyword_second.value='';
+        }
+    } else {
+        console.log('no settings found');
+    }
+}
+
+function maxbot_load_api()
 {
     let api_url = "http://127.0.0.1:16888/load";
     $.get( api_url, function() {
@@ -78,92 +205,7 @@ function load_changes()
         //alert( "second success" );
         //console.log(data);
         settings = data;
-        if (settings)
-        {
-            //console.log("ticket_number:"+ settings.ticket_number);
-            homepage.value = settings.homepage;
-            ticket_number.value = settings.ticket_number;
-            date_select_mode.value = settings.date_auto_select.mode;
-            date_keyword.value = settings.date_auto_select.date_keyword;
-            if(date_keyword.value=='""') {
-                date_keyword.value='';
-            }
-
-            area_select_mode.value = settings.area_auto_select.mode;
-            area_keyword.value = settings.area_auto_select.area_keyword;
-            if(area_keyword.value=='""') {
-                area_keyword.value='';
-            }
-
-            user_guess_string.value = settings.advanced.user_guess_string;
-            if(user_guess_string.value=='""') {
-                user_guess_string.value='';
-            }
-
-            keyword_exclude.value = settings.keyword_exclude;
-            auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
-            auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
-            kktix_status_api.checked = settings.advanced.kktix_status_api;
-            max_dwell_time.value = settings.advanced.max_dwell_time;
-            disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
-            ocr_captcha_enable.checked = settings.ocr_captcha.enable;
-
-            let remote_url_string = "";
-            let remote_url_array = [];
-            if(settings.advanced.remote_url.length > 0) {
-                remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
-            }
-            if(remote_url_array.length) {
-                remote_url_string = remote_url_array[0];
-            }
-            remote_url.value = remote_url_string;
-
-            tixcraft_sid.value = settings.advanced.tixcraft_sid;
-            ibonqware.value = settings.advanced.ibonqware;
-            facebook_account.value = settings.advanced.facebook_account;
-            kktix_account.value = settings.advanced.kktix_account;
-            fami_account.value = settings.advanced.fami_account;
-            kham_account.value = settings.advanced.kham_account;
-            ticket_account.value = settings.advanced.ticket_account;
-            udn_account.value = settings.advanced.udn_account;
-            ticketplus_account.value = settings.advanced.ticketplus_account;
-            cityline_account.value = settings.advanced.cityline_account;
-            urbtix_account.value = settings.advanced.urbtix_account;
-            hkticketing_account.value = settings.advanced.hkticketing_account;
-
-            facebook_password.value = settings.advanced.facebook_password;
-            kktix_password.value = settings.advanced.kktix_password;
-            fami_password.value = settings.advanced.fami_password;
-            kham_password.value = settings.advanced.kham_password;
-            ticket_password.value = settings.advanced.ticket_password;
-            udn_password.value = settings.advanced.udn_password;
-            ticketplus_password.value = settings.advanced.ticketplus_password;
-            urbtix_password.value = settings.advanced.urbtix_password;
-            hkticketing_password.value = settings.advanced.hkticketing_password;
-
-            idle_keyword.value = settings.advanced.idle_keyword;
-            if(idle_keyword.value=='""') {
-                idle_keyword.value='';
-            }
-            resume_keyword.value = settings.advanced.resume_keyword;
-            if(resume_keyword.value=='""') {
-                resume_keyword.value='';
-            }
-            idle_keyword_second.value = settings.advanced.idle_keyword_second;
-            if(idle_keyword_second.value=='""') {
-                idle_keyword_second.value='';
-            }
-            resume_keyword_second.value = settings.advanced.resume_keyword_second;
-            if(resume_keyword_second.value=='""') {
-                resume_keyword_second.value='';
-            }
-
-
-            //message('Loaded saved settings.');
-        } else {
-            console.log('no settings found');
-        }
-
+        load_settins_to_form(data);
     })
     .fail(function() {
         //alert( "error" );
@@ -171,8 +213,26 @@ function load_changes()
     .always(function() {
         //alert( "finished" );
     });
+}
 
-
+function maxbot_reset_api()
+{
+    let api_url = "http://127.0.0.1:16888/reset";
+    $.get( api_url, function() {
+        //alert( "success" );
+    })
+    .done(function(data) {
+        //alert( "second success" );
+        //console.log(data);
+        settings = data;
+        load_settins_to_form(data);
+    })
+    .fail(function() {
+        //alert( "error" );
+    })
+    .always(function() {
+        //alert( "finished" );
+    });
 }
 
 async function checkUsePublicServer()
@@ -185,7 +245,14 @@ async function checkUsePublicServer()
 }
 
 let messageClearTimer;
+
 function message(msg)
+{
+    $("#message_detail").html("存檔完成");
+    $("#message_modal").modal("show");
+}
+
+function message_old(msg)
 {
     clearTimeout(messageClearTimer);
     const message = document.querySelector('#message');
@@ -196,8 +263,14 @@ function message(msg)
         }, 3000);
 }
 
-
 function maxbot_launch()
+{
+    save_changes_to_dict(true);
+    maxbot_save_api(maxbot_run_api());
+    check_unsaved_fields();
+}
+
+function maxbot_run_api()
 {
     let api_url = "http://127.0.0.1:16888/run";
     $.get( api_url, function() {
@@ -214,7 +287,7 @@ function maxbot_launch()
     });
 }
 
-function maxbot_shutdown()
+function maxbot_shutdown_api()
 {
     let api_url = "http://127.0.0.1:16888/shutdown";
     $.get( api_url, function() {
@@ -232,15 +305,17 @@ function maxbot_shutdown()
     });
 }
 
-function save_changes_to_dict()
+function save_changes_to_dict(silent_flag)
 {
     const ticket_number_value = ticket_number.value;
     //console.log(ticket_number_value);
     if (!ticket_number_value)
     {
-        message('Error: No ticket_number specified');
+        message('提示: 請指定張數');
     } else {
         if(settings) {
+
+            // preference
             settings.homepage = homepage.value;
             settings.ticket_number = ticket_number_value;
             settings.date_auto_select.mode = date_select_mode.value;
@@ -259,20 +334,36 @@ function save_changes_to_dict()
             }
             settings.area_auto_select.area_keyword = area_keyword_string;
 
-            let user_guess_string_string = user_guess_string.value;
-            if(user_guess_string_string.indexOf('"')==-1) {
-                user_guess_string_string = '"' + user_guess_string_string + '"';
-            }
-            settings.advanced.user_guess_string = user_guess_string_string;
-
             settings.keyword_exclude = keyword_exclude.value;
+
+            // advanced
+            settings.browser = browser.value;
+            settings.webdriver_type = webdriver_type.value;
+        
+            settings.advanced.play_sound.ticket = play_ticket_sound.checked;
+            settings.advanced.play_sound.order = play_order_sound.checked;
+            settings.advanced.play_sound.filename = play_sound_filename.value;
 
             settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.advanced.kktix_status_api = kktix_status_api.checked;
             settings.advanced.max_dwell_time = max_dwell_time.value;
+
+            settings.advanced.reset_browser_interval = reset_browser_interval.value;
+            settings.advanced.proxy_server_port = proxy_server_port.value;
+            settings.advanced.window_size = window_size.value;
+
+            settings.advanced.chrome_extension = chrome_extension.checked;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
+
+            settings.advanced.hide_some_image = hide_some_image.checked;
+            settings.advanced.block_facebook_network = block_facebook_network.checked;
+            settings.advanced.headless = headless.checked;
+            settings.advanced.verbose = verbose.checked;
+
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
+            settings.ocr_captcha.image_source = ocr_captcha_image_source.value;
+            settings.ocr_captcha.force_submit = ocr_captcha_force_submit.checked;
 
             let remote_url_array = [];
             remote_url_array.push(remote_url.value);
@@ -282,40 +373,50 @@ function save_changes_to_dict()
             //console.log("final remote_url_string:"+remote_url_string);
             settings.advanced.remote_url = remote_url_string;
 
-            settings.tixcraft_sid = tixcraft_sid.value;
-            settings.ibonqware = ibonqware.value;
-            settings.facebook_account = facebook_account.value;
-            settings.kktix_account = kktix_account.value;
-            settings.fami_account = fami_account.value;
-            settings.kham_account = kham_account.value;
-            settings.ticket_account = ticket_account.value;
-            settings.udn_account = udn_account.value;
-            settings.ticketplus_account = ticketplus_account.value;
-            settings.cityline_account = cityline_account.value;
-            settings.urbtix_account = urbtix_account.value;
-            settings.hkticketing_account = hkticketing_account.value;
+            // dictionary
+            let user_guess_string_string = user_guess_string.value;
+            if(user_guess_string_string.indexOf('"')==-1) {
+                user_guess_string_string = '"' + user_guess_string_string + '"';
+            }
+            settings.advanced.user_guess_string = user_guess_string_string;
 
-            settings.facebook_password = facebook_password.value;
-            settings.kktix_password = kktix_password.value;
-            settings.fami_password = fami_password.value;
-            settings.kham_password = kham_password.value;
-            settings.ticket_password = ticket_password.value;
-            settings.udn_password = udn_password.value;
-            settings.ticketplus_password = ticketplus_password.value;
-            settings.urbtix_password = urbtix_password.value;
-            settings.hkticketing_password = hkticketing_password.value;
+            // auto fill
+            settings.advanced.tixcraft_sid = tixcraft_sid.value;
+            settings.advanced.ibonqware = ibonqware.value;
+            settings.advanced.facebook_account = facebook_account.value;
+            settings.advanced.kktix_account = kktix_account.value;
+            settings.advanced.fami_account = fami_account.value;
+            settings.advanced.kham_account = kham_account.value;
+            settings.advanced.ticket_account = ticket_account.value;
+            settings.advanced.udn_account = udn_account.value;
+            settings.advanced.ticketplus_account = ticketplus_account.value;
+            settings.advanced.cityline_account = cityline_account.value;
+            settings.advanced.urbtix_account = urbtix_account.value;
+            settings.advanced.hkticketing_account = hkticketing_account.value;
 
+            settings.advanced.facebook_password = facebook_password.value;
+            settings.advanced.kktix_password = kktix_password.value;
+            settings.advanced.fami_password = fami_password.value;
+            settings.advanced.kham_password = kham_password.value;
+            settings.advanced.ticket_password = ticket_password.value;
+            settings.advanced.udn_password = udn_password.value;
+            settings.advanced.ticketplus_password = ticketplus_password.value;
+            settings.advanced.urbtix_password = urbtix_password.value;
+            settings.advanced.hkticketing_password = hkticketing_password.value;
+
+            // runtime
             settings.advanced.idle_keyword = idle_keyword.value;
             settings.advanced.resume_keyword = resume_keyword.value;
             settings.advanced.idle_keyword_second = idle_keyword_second.value;
             settings.advanced.resume_keyword_second = resume_keyword_second.value;
-
         }
-        message('Settings saved');
+        if(!silent_flag) {
+            message('已存檔');
+        }
     }
 }
 
-function maxbot_save_api()
+function maxbot_save_api(callback)
 {
     let api_url = "http://127.0.0.1:16888/save";
     if(settings) {
@@ -324,6 +425,7 @@ function maxbot_save_api()
         })
         .done(function(data) {
             //alert( "second success" );
+            if(callback) callback;
         })
         .fail(function() {
             //alert( "error" );
@@ -373,9 +475,77 @@ function maxbot_resume_api()
 }
 function maxbot_save()
 {
-    //$('#saveModal').modal('show')
-    save_changes_to_dict();
+    save_changes_to_dict(false);
     maxbot_save_api();
+    check_unsaved_fields();
+}
+
+function check_unsaved_fields()
+{
+    if(settings) {
+        const field_list_basic = ["homepage","ticket_number","browser","webdriver_type"];
+        field_list_basic.forEach(f => {
+            const field = document.querySelector('#'+f);
+            if(field.value != settings[f]) {
+                $("#"+f).addClass("is-invalid");
+            } else {
+                $("#"+f).removeClass("is-invalid");
+            }
+        });
+        const field_list_advance = [
+            "tixcraft_sid",
+            "ibonqware",
+            "facebook_account",
+            "kktix_account",
+            "fami_account",
+            "cityline_account",
+            "urbtix_account",
+            "hkticketing_account",
+            "kham_account",
+            "ticket_account",
+            "udn_account",
+            "ticketplus_account",
+            "facebook_password",
+            "kktix_password",
+            "fami_password",
+            "urbtix_password",
+            "hkticketing_password",
+            "kham_password",
+            "ticket_password",
+            "udn_password",
+            "ticketplus_password",
+            "user_guess_string",
+            "remote_url",
+            "auto_reload_page_interval",
+            "reset_browser_interval",
+            "max_dwell_time",
+            "proxy_server_port",
+            "window_size",
+            "idle_keyword",
+            "resume_keyword",
+            "idle_keyword_second",
+            "resume_keyword_second"
+        ];
+        field_list_advance.forEach(f => {
+            const field = document.querySelector('#'+f);
+            let formated_saved_value = settings["advanced"][f];
+            if(formated_saved_value=='""') formated_saved_value="";
+            //console.log(f);
+            //console.log(field.value);
+            //console.log(formated_saved_value);
+            let compare_resule = (field.value != formated_saved_value);
+            if(!compare_resule) {
+                if(field.value.indexOf('"') > -1) {
+                    compare_resule = (field.value != '"' + formated_saved_value + '"');
+                }
+            }
+            if(compare_resule) {
+                $("#"+f).addClass("is-invalid");
+            } else {
+                $("#"+f).removeClass("is-invalid");
+            }
+        });
+    }
 }
 
 function maxbot_status_api()
@@ -411,13 +581,29 @@ function maxbot_status_api()
 function update_system_time()
 {
     var currentdate = new Date(); 
-    var datetime = currentdate.getHours() + ":"  
-                + currentdate.getMinutes() + ":" 
-                + currentdate.getSeconds();
+    var datetime = ("0" + currentdate.getHours()).slice(-2) + ":"  
+                + ("0" + currentdate.getMinutes()).slice(-2) + ":" 
+                + ("0" + currentdate.getSeconds()).slice(-2);
     $("#system_time").html(datetime);
 }
 
 var status_interval= setInterval(() => {
     maxbot_status_api();
     update_system_time();
-}, 200);
+}, 500);
+
+run_button.addEventListener('click', maxbot_launch);
+save_button.addEventListener('click', maxbot_save);
+reset_button.addEventListener('click', maxbot_reset_api);
+exit_button.addEventListener('click', maxbot_shutdown_api);
+pause_button.addEventListener('click', maxbot_pause_api);
+resume_button.addEventListener('click', maxbot_resume_api);
+ocr_captcha_use_public_server.addEventListener('change', checkUsePublicServer);
+
+const onchange_tag_list = ["input","select","textarea"];
+onchange_tag_list.forEach((tag) => {
+    const input_items = document.querySelectorAll(tag);
+    input_items.forEach((userItem) => {
+        userItem.addEventListener('change', check_unsaved_fields);
+    });
+});

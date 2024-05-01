@@ -54,17 +54,24 @@
 
 <p>MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有類似的基準點或類似的起跑線上，用魔法對抗魔法，當某一天大家都是透過機器人來搶票時，當機器人數量已多到影響一般民眾購票的權利時，售票業者才比較有可能會對未來熱門演唱會改採「實名制」+「抽籤制」，讓更多民眾可以公平地購買到門票，就可以跟「人海戰術」與「搶票機器人」說 bye-bye 。</p>
 
-<p>台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。</p>
+<p>MaxBot 系統裡出現的「搶票」指的是「非台灣的藝文活動或車票」。</p>
 
-<p>以下文章出現的「搶票」指的是「非台灣的藝文活動或車票」。</p>
+<p></p>
+
+<div class="bd-callout bd-callout-info">
+  台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+</div>            
 
 <hr/>
 
-<h2>法律聲明</h2>
-
-<p>作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。</p>
+<h3>法律聲明</h3>
 
 <p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+
+<div class="bd-callout bd-callout-info">
+  作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
+</div>            
+
 </div>
 
       <!-- tab 2 -->
@@ -73,6 +80,33 @@
           <label for="homepage" class="col-sm-2 col-form-label">網址</label>
           <div class="col-sm-10">
             <input class="form-control" id="homepage" value="" />
+            
+            <div class="accordion mt-1" id="accordionExample">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSites" aria-expanded="true" aria-controls="collapseSites">
+                    部份支援的網站清單
+                  </button>
+                </h2>
+                <div id="collapseSites" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <ul>
+                      <li>拓元</li>
+                      <li>KKTIX</li>
+                      <li>ibon</li>
+                      <li>Fami</li>
+                      <li>UND</li>
+                      <li>年代</li>
+                      <li>寬宏</li>
+                      <li>cityline</li>
+                      <li>hkticketing</li>
+                      <li>urbtix</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -170,9 +204,10 @@
           <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
-            <p>
-              每組關鍵字需要用「雙引號」包起來, 用「逗號」分隔, 在關鍵字中使用「空格」為 AND 邏輯。完全不輸入或是加入 「,""」 代表符合所有關鍵字
-            </p>
+            <div class="bd-callout bd-callout-info">
+              <strong>提示：</strong> 
+                每組關鍵字需要用「<code>雙引號</code>」包起來, 用「<code>逗號</code>」分隔, 在關鍵字中使用「<code>空格</code>」為 AND 邏輯。完全不輸入或是加入 「<code>,""</code>」 代表符合所有關鍵字。
+            </div>            
           </div>
         </div>
       </div>
@@ -184,8 +219,8 @@
           <label for="browser" class="col-sm-2 col-form-label">瀏覽器</label>
           <div class="col-sm-10">
             <select id="browser" class="form-select" aria-label="Default select">
-              <option value="chrome">Chrome</option>
-              <option value="edge">Edge</option>
+              <option value="chrome">Google Chrome</option>
+              <option value="edge">Microsoft Edge</option>
               <option value="brave">Brave</option>
               <option value="firefox">Firefox</option>
               <option value="safari">Safari</option>
@@ -197,30 +232,10 @@
           <label for="webdriver_type" class="col-sm-2 col-form-label">WebDriver類別</label>
           <div class="col-sm-10">
             <select id="webdriver_type" class="form-select" aria-label="Default select">
-              <option value="selenium">selenium</option>
-              <option value="undetected_chromedriver">undetected chromedriver</option>
+              <option value="selenium">Selenium</option>
+              <option value="undetected_chromedriver">Undetected Chromedriver</option>
               <option value="nodriver">NODRIVER</option>
               <!-- option value="DrissionPage">DrissionPage</option -->
-            </select>
-          </div>
-        </div>
-
-        <div class="row mb-3">
-          <label for="area_select_mode" class="col-sm-2 col-form-label">區域排序方式</label>
-          <div class="col-sm-10">
-            <select id="area_select_mode" class="form-select" aria-label="Default select">
-              <option value="from top to bottom">
-                from top to bottom
-              </option>
-              <option value="from bottom to top">
-                from bottom to top
-              </option>
-              <option value="center">
-                center
-              </option>
-              <option value="random">
-                random
-              </option>
             </select>
           </div>
         </div>
@@ -396,7 +411,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="facebook_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="facebook_password" value="" class="form-control">
+              <input type="password" id="facebook_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -408,7 +423,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kktix_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="kktix_password" value="" class="form-control">
+              <input type="password" id="kktix_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -420,7 +435,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="fami_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="fami_password" value="" class="form-control">
+              <input type="password" id="fami_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -432,7 +447,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kham_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="kham_password" value="" class="form-control">
+              <input type="password" id="kham_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -444,7 +459,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticket_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="ticket_password" value="" class="form-control">
+              <input type="password" id="ticket_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -456,7 +471,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="udn_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="udn_password" value="" class="form-control">
+              <input type="password" id="udn_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -468,7 +483,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticketplus_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="ticketplus_password" value="" class="form-control">
+              <input type="password" id="ticketplus_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -490,7 +505,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="urbtix_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="urbtix_password" value="" class="form-control">
+              <input type="password" id="urbtix_password" value="" class="form-control">
             </div>
           </div>
         </div>
@@ -502,8 +517,13 @@
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="hkticketing_account" value="" class="form-control">
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
-              <input type="text" id="hkticketing_password" value="" class="form-control">
+              <input type="password" id="hkticketing_password" value="" class="form-control">
             </div>
+
+            <div class="bd-callout bd-callout-info">
+              <strong>提示：</strong> 
+                將密碼保存到設定檔中可能會讓您的密碼被盜。
+            </div>            
           </div>
         </div>
 
@@ -570,24 +590,23 @@
     <div class="col-12">
       <button class="btn btn-primary" id="run_btn">搶票</button>
       <button class="btn btn-primary" id="save_btn">存檔</button>
-      <button class="btn btn-primary" id="exit_btn">結束</button>
+      <button class="btn btn-primary" id="reset_btn">重設為預設值</button>
+      <button class="btn btn-danger" id="exit_btn">結束</button>
     </div>
   </div>
 
-<div class="modal" id="saveModal" tabindex="-1" role="dialog">
+<div class="modal" id="message_modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">MaxBot 存檔</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <h2 class="modal-title fs-5" id="message_modal_title">MaxBot</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>存檔完成</p>
+        <p id="message_detail"></p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
       </div>
     </div>
   </div>

@@ -1,8 +1,8 @@
 {
-    "homepage": "https://tixcraft.com",
+    "homepage": "about:blank",
     "browser": "chrome",
-    "language": "\u7e41\u9ad4\u4e2d\u6587",
-    "ticket_number": 2,
+    "language": "English",
+    "ticket_number": "2",
     "ocr_captcha": {
         "enable": true,
         "beta": true,
@@ -12,13 +12,13 @@
     "webdriver_type": "undetected_chromedriver",
     "date_auto_select": {
         "enable": true,
-        "date_keyword": "",
+        "date_keyword": "\"\"",
         "mode": "random"
     },
     "area_auto_select": {
         "enable": true,
         "mode": "random",
-        "area_keyword": ""
+        "area_keyword": "\"\""
     },
     "keyword_exclude": "\"\u8f2a\u6905\",\"\u8eab\u969c\",\"\u8eab\u5fc3 \u969c\u7919\",\"Restricted View\",\"\u71c8\u67f1\u906e\u853d\",\"\u8996\u7dda\u4e0d\u5b8c\u6574\"",
     "kktix": {
@@ -74,12 +74,12 @@
         "headless": false,
         "verbose": false,
         "auto_guess_options": true,
-        "user_guess_string": "",
+        "user_guess_string": "\"\"",
         "remote_url": "\"http://127.0.0.1:16888/\"",
-        "auto_reload_page_interval": 0.1,
-        "reset_browser_interval": 0,
+        "auto_reload_page_interval": "0.1",
+        "reset_browser_interval": "0",
         "kktix_status_api": false,
-        "max_dwell_time": 60,
+        "max_dwell_time": "60",
         "proxy_server_port": "",
         "window_size": "480,1024",
         "idle_keyword": "",

@@ -141,6 +141,12 @@ def format_config_keyword_for_json(user_input):
 def is_text_match_keyword(keyword_string, text):
     is_match_keyword = True
     if len(keyword_string) > 0 and len(text) > 0:
+
+        # directly input text into arrray field.
+        if len(keyword_string) > 0:
+            if not '"' in keyword_string:
+                keyword_string = '"' + keyword_string + '"'
+        
         is_match_keyword = False
         keyword_array = []
         try:
