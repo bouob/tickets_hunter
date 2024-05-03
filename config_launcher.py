@@ -24,7 +24,7 @@ import webbrowser
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.04.14)"
+CONST_APP_VERSION = "MaxBot (2024.04.15)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -246,33 +246,30 @@ def applyNewLanguage():
     btn_save.config(text=translate[language_code]["save"])
     btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
 
-# PS: nothing need to do, at current process.
-def callbackHomepageOnChange(event):
-    showHideBlocks()
-
-def showHideBlocks(all_layout_visible=False):
-    pass
-
 def btn_items_browse_event(event):
     working_dir = os.path.dirname(os.path.realpath(__file__))
     btn_index = int(str(event.widget['text']).split(" ")[1])
-    global txt_file_name_value
-    file_path = filedialog.askopenfilename(initialdir=working_dir, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
-    if not file_path is None:
-        display_path = file_path
-        if len(file_path) > len(working_dir):
-            if file_path[:len(working_dir)]==working_dir:
-                display_path = file_path[len(working_dir)+1:]
-        #print("json file path:", file_path)
-        txt_file_name_value[btn_index-1].set(display_path)
-        #print("new json file path:", txt_file_name[btn_index-1].get().strip())
+
+    global widgets
+    if "widgets" in globals():
+        file_path = filedialog.askopenfilename(initialdir=working_dir, defaultextension=".json",filetypes=[("json Documents","*.json"),("All Files","*.*")])
+        if not file_path is None:
+            display_path = file_path
+            if len(file_path) > len(working_dir):
+                if file_path[:len(working_dir)]==working_dir:
+                    display_path = file_path[len(working_dir)+1:]
+            #print("json file path:", file_path)
+            widgets['txt_file_name_value'][btn_index-1].set(display_path)
+            #print("new json file path:", txt_file_name[btn_index-1].get().strip())
 
 def btn_items_run_event(event):
     btn_index = int(str(event.widget['text']).split(" ")[1])
-    global txt_file_name
-    filename=txt_file_name[btn_index-1].get().strip()
-    script_name = "chrome_tixcraft"
-    threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
+
+    global widgets
+    if "widgets" in globals():
+        filename=widgets['txt_file_name_value'][btn_index-1].get().strip()
+        script_name = "chrome_tixcraft"
+        threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):
     frame_group_header = Frame(root)
@@ -463,9 +460,10 @@ def load_GUI(root, config_dict):
     frame_action.grid(column=0, row=row_count)
 
     global UI_PADDING_X
-    ConfigListTab(tab1, config_dict, language_code, UI_PADDING_X)
+    widgets = ConfigListTab(tab1, config_dict, language_code, UI_PADDING_X)
     AdvancedTab(tab2, config_dict, language_code, UI_PADDING_X)
     AboutTab(tab3, language_code)
+    return widgets
 
 def main_gui():
     global translate
@@ -484,7 +482,8 @@ def main_gui():
     global UI_PADDING_X
     UI_PADDING_X = 15
 
-    load_GUI(root, config_dict)
+    global widgets
+    widgets = load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 580
     GUI_SIZE_HEIGHT = 580
@@ -513,11 +512,6 @@ def main_gui():
     tmpIcon.close()
     if platform.system() == 'Windows':
         root.iconbitmap(icon_filepath)
-    if platform.system() == 'Darwin':
-        #from PIL import Image, ImageTk
-        #logo = ImageTk.PhotoImage(Image.open(icon_filepath).convert('RGB'))
-        #root.call('wm', 'iconphoto', root._w, logo)
-        pass
     if platform.system() == 'Linux':
         logo = PhotoImage(file=icon_filepath)
         root.call('wm', 'iconphoto', root._w, logo)

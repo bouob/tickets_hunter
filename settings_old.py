@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.14)"
+CONST_APP_VERSION = "MaxBot (2024.04.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -131,6 +131,7 @@ def load_translate():
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
     en_us["kktix_status_api"] = 'KKTIX status API'
     en_us["max_dwell_time"] = 'KKTIX dwell time(sec.)'
+    en_us["cityline_queue_retry"] = 'cityline queue retry'
     en_us["reset_browser_interval"] = 'Reset browser interval(sec.)'
     en_us["proxy_server_port"] = 'Proxy IP:PORT'
     en_us["window_size"] = 'Window size'
@@ -250,7 +251,8 @@ def load_translate():
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
     zh_tw["kktix_status_api"] = 'KKTIX購票狀態API'
     zh_tw["max_dwell_time"] = 'KKTIX購票最長停留(秒)'
-    zh_tw["reset_browser_interval"] = '重新啟動瀏覽器間隔(秒)'
+    zh_tw["reset_browser_interval"] = '重新啓動瀏覽器間隔(秒)'
+    zh_tw["cityline_queue_retry"] = 'cityline queue retry'
     zh_tw["proxy_server_port"] = 'Proxy IP:PORT'
     zh_tw["window_size"] = '瀏覽器視窗大小'
 
@@ -368,6 +370,7 @@ def load_translate():
     zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
     zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
     zh_cn["kktix_status_api"] = 'KKTIX购票状态API'
+    zh_cn["cityline_queue_retry"] = 'cityline queue retry'
     zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
     zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
     zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
@@ -489,6 +492,7 @@ def load_translate():
     ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
     ja_jp["kktix_status_api"] = 'KKTIX status API'
     ja_jp["max_dwell_time"] = '最大滞留時間(秒)'
+    ja_jp["cityline_queue_retry"] = 'cityline queue retry'
     ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
     ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
     ja_jp["window_size"] = 'ウィンドウサイズ'
@@ -612,6 +616,11 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
+    config_dict["kktix"]["kktix_status_api"] = False
+    config_dict["kktix"]["max_dwell_time"] = 60
+
+    config_dict['cityline']={}
+    config_dict["cityline"]["cityline_queue_retry"] = True
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
@@ -672,8 +681,6 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
-    config_dict["advanced"]["kktix_status_api"] = False
-    config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "480,1024"
 
@@ -794,6 +801,7 @@ def btn_save_act(slience_mode=False):
     global txt_auto_reload_page_interval
     global chk_status_kktix_status_api
     global txt_max_dwell_time
+    global chk_status_cityline_queue_retry
     global txt_reset_browser_intervalv
     global txt_proxy_server_port
     global txt_window_size
@@ -882,6 +890,14 @@ def btn_save_act(slience_mode=False):
     if is_all_data_correct:
         config_dict["kktix"]["auto_press_next_step_button"] = bool(chk_state_auto_press_next_step_button.get())
         config_dict["kktix"]["auto_fill_ticket_number"] = bool(chk_state_auto_fill_ticket_number.get())
+        config_dict["kktix"]["kktix_status_api"] = bool(chk_state_kktix_status_api.get())
+
+        config_dict["kktix"]["max_dwell_time"] = int(txt_max_dwell_time.get().strip())
+        if config_dict["kktix"]["max_dwell_time"] > 0:
+            if config_dict["kktix"]["max_dwell_time"] < 15:
+                config_dict["kktix"]["max_dwell_time"] = 15
+
+        config_dict["cityline"]["cityline_queue_retry"] = bool(chk_state_cityline_queue_retry.get())
 
         config_dict["date_auto_select"]["enable"] = bool(chk_state_date_auto_select.get())
         config_dict["date_auto_select"]["mode"] = combo_date_auto_select_mode.get().strip()
@@ -1076,15 +1092,9 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
         config_dict["advanced"]["auto_reload_page_interval"] = float(txt_auto_reload_page_interval.get().strip())
-        config_dict["advanced"]["kktix_status_api"] = bool(chk_state_kktix_status_api.get())
-        config_dict["advanced"]["max_dwell_time"] = int(txt_max_dwell_time.get().strip())
         config_dict["advanced"]["reset_browser_interval"] = int(txt_reset_browser_interval.get().strip())
         config_dict["advanced"]["proxy_server_port"] = txt_proxy_server_port.get().strip()
         config_dict["advanced"]["window_size"] = txt_window_size.get().strip()
-
-        if config_dict["advanced"]["max_dwell_time"] > 0:
-            if config_dict["advanced"]["max_dwell_time"] < 15:
-                config_dict["advanced"]["max_dwell_time"] = 15
 
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             if config_dict["advanced"]["reset_browser_interval"] < 20:
@@ -1332,7 +1342,10 @@ def applyNewLanguage():
 
     global lbl_auto_reload_page_interval
     global lbl_kktix_status_api
+    global chk_kktix_status_api
     global lbl_max_dwell_time
+    global lbl_cityline_queue_retry
+    global chk_cityline_queue_retry
     global lbl_reset_browser_interval
     global lbl_proxy_server_port
     global lbl_window_size
@@ -1373,6 +1386,7 @@ def applyNewLanguage():
     lbl_auto_reload_page_interval.config(text=translate[language_code]["auto_reload_page_interval"])
     lbl_kktix_status_api.config(text=translate[language_code]["kktix_status_api"])
     lbl_max_dwell_time.config(text=translate[language_code]["max_dwell_time"])
+    lbl_cityline_queue_retry.config(text=translate[language_code]["cityline_queue_retry"])
     lbl_reset_browser_interval.config(text=translate[language_code]["reset_browser_interval"])
     lbl_proxy_server_port.config(text=translate[language_code]["proxy_server_port"])
     lbl_window_size.config(text=translate[language_code]["window_size"])
@@ -1414,6 +1428,8 @@ def applyNewLanguage():
     chk_headless.config(text=translate[language_code]["enable"])
     chk_verbose.config(text=translate[language_code]["enable"])
     chk_auto_guess_options.config(text=translate[language_code]["enable"])
+    chk_kktix_status_api.config(text=translate[language_code]["enable"])
+    chk_cityline_queue_retry.config(text=translate[language_code]["enable"])
 
     tabControl.tab(0, text=translate[language_code]["preference"])
     tabControl.tab(1, text=translate[language_code]["advanced"])
@@ -2047,7 +2063,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_state_kktix_status_api
     chk_state_kktix_status_api = BooleanVar()
-    chk_state_kktix_status_api.set(config_dict["advanced"]["kktix_status_api"])
+    chk_state_kktix_status_api.set(config_dict["kktix"]["kktix_status_api"])
 
     global chk_kktix_status_api
     chk_kktix_status_api = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_kktix_status_api)
@@ -2060,9 +2076,23 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_max_dwell_time.grid(column=0, row=group_row_count, sticky = E)
 
     global txt_max_dwell_time
-    txt_max_dwell_time_value = StringVar(frame_group_header, value=config_dict["advanced"]["max_dwell_time"])
+    txt_max_dwell_time_value = StringVar(frame_group_header, value=config_dict["kktix"]["max_dwell_time"])
     txt_max_dwell_time = Entry(frame_group_header, width=30, textvariable = txt_max_dwell_time_value)
     txt_max_dwell_time.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
+    global lbl_cityline_queue_retry
+    lbl_cityline_queue_retry = Label(frame_group_header, text=translate[language_code]['cityline_queue_retry'])
+    lbl_cityline_queue_retry.grid(column=0, row=group_row_count, sticky = E)
+
+    global chk_state_cityline_queue_retry
+    chk_state_cityline_queue_retry = BooleanVar()
+    chk_state_cityline_queue_retry.set(config_dict["cityline"]["cityline_queue_retry"])
+
+    global chk_cityline_queue_retry
+    chk_cityline_queue_retry = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_cityline_queue_retry)
+    chk_cityline_queue_retry.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
@@ -3124,7 +3154,7 @@ def main_gui():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 590
-    GUI_SIZE_HEIGHT = 645
+    GUI_SIZE_HEIGHT = 665
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-70) + 'x' + str(GUI_SIZE_HEIGHT-80)

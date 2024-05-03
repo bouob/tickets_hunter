@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.14)"
+CONST_APP_VERSION = "MaxBot (2024.04.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -127,6 +127,11 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
+    config_dict["kktix"]["kktix_status_api"] = False
+    config_dict["kktix"]["max_dwell_time"] = 60
+
+    config_dict['cityline']={}
+    config_dict["cityline"]["cityline_queue_retry"] = True
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
@@ -187,8 +192,6 @@ def get_default_config():
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
     config_dict["advanced"]["reset_browser_interval"] = 0
-    config_dict["advanced"]["kktix_status_api"] = False
-    config_dict["advanced"]["max_dwell_time"] = 60
     config_dict["advanced"]["proxy_server_port"] = ""
     config_dict["advanced"]["window_size"] = "480,1024"
 
@@ -429,6 +432,7 @@ class LoadJsonHandler(tornado.web.RequestHandler):
 class ResetJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = reset_json()
+        util.save_json(config_dict, config_filepath)
         self.write(config_dict)
 
 class SaveJsonHandler(tornado.web.RequestHandler):
@@ -452,6 +456,21 @@ class SaveJsonHandler(tornado.web.RequestHandler):
             app_root = util.get_app_root()
             config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
             config_dict = encrypt_password(_body)
+
+            if config_dict["kktix"]["max_dwell_time"] > 0:
+                if config_dict["kktix"]["max_dwell_time"] < 15:
+                    # min value is 15 seconds.
+                    config_dict["kktix"]["max_dwell_time"] = 15
+
+            if config_dict["advanced"]["reset_browser_interval"] > 0:
+                if config_dict["advanced"]["reset_browser_interval"] < 20:
+                    # min value is 20 seconds.
+                    config_dict["advanced"]["reset_browser_interval"] = 20
+
+            # due to cloudflare.
+            if ".cityline.com" in config_dict["homepage"]:
+                config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_NODRIVER
+
             util.save_json(config_dict, config_filepath)
 
         if not is_pass_check:

@@ -177,7 +177,7 @@ function kktix_force_auto_reload_by_timer()
         if(settings.advanced.kktix_account.length > 0) {
             let max_dwell_time = 120;
             if(settings) {
-                max_dwell_time = settings.advanced.max_dwell_time;
+                max_dwell_time = settings.kktix.max_dwell_time;
             }
             if(max_dwell_time <= 10) {
                 max_dwell_time = 10;
@@ -204,7 +204,7 @@ storage.get('status', function (items)
     {
         let kktix_status_api = false;
         if(settings) {
-            kktix_status_api = settings.advanced.kktix_status_api;
+            kktix_status_api = settings.kktix.kktix_status_api;
         }
         if(kktix_status_api) {
             kktix_event_register_info();

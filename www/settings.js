@@ -23,10 +23,13 @@ const play_ticket_sound = document.querySelector('#play_ticket_sound');
 const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
 
-const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const kktix_status_api = document.querySelector('#kktix_status_api');
 const max_dwell_time = document.querySelector('#max_dwell_time');
+
+const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
+
+const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
 const proxy_server_port = document.querySelector('#proxy_server_port');
 const window_size = document.querySelector('#window_size');
@@ -113,10 +116,13 @@ function load_settins_to_form(settings)
         play_order_sound.checked = settings.advanced.play_sound.order;
         play_sound_filename.value = settings.advanced.play_sound.filename;
 
-        auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
-        kktix_status_api.checked = settings.advanced.kktix_status_api;
-        max_dwell_time.value = settings.advanced.max_dwell_time;
+        kktix_status_api.checked = settings.kktix.kktix_status_api;
+        max_dwell_time.value = settings.kktix.max_dwell_time;
+
+        cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
+
+        auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
         proxy_server_port.value  = settings.advanced.proxy_server_port;
         window_size.value  = settings.advanced.window_size;
@@ -226,6 +232,7 @@ function maxbot_reset_api()
         //console.log(data);
         settings = data;
         load_settins_to_form(data);
+        check_unsaved_fields();
     })
     .fail(function() {
         //alert( "error" );
@@ -267,7 +274,6 @@ function maxbot_launch()
 {
     save_changes_to_dict(true);
     maxbot_save_api(maxbot_run_api());
-    check_unsaved_fields();
 }
 
 function maxbot_run_api()
@@ -307,7 +313,7 @@ function maxbot_shutdown_api()
 
 function save_changes_to_dict(silent_flag)
 {
-    const ticket_number_value = ticket_number.value;
+    const ticket_number_value = parseInt(ticket_number.value);
     //console.log(ticket_number_value);
     if (!ticket_number_value)
     {
@@ -344,12 +350,15 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.play_sound.order = play_order_sound.checked;
             settings.advanced.play_sound.filename = play_sound_filename.value;
 
-            settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
-            settings.advanced.kktix_status_api = kktix_status_api.checked;
-            settings.advanced.max_dwell_time = max_dwell_time.value;
+            settings.kktix.kktix_status_api = kktix_status_api.checked;
+            settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
 
-            settings.advanced.reset_browser_interval = reset_browser_interval.value;
+            settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;
+
+
+            settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
+            settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
             settings.advanced.proxy_server_port = proxy_server_port.value;
             settings.advanced.window_size = window_size.value;
 
@@ -425,6 +434,7 @@ function maxbot_save_api(callback)
         })
         .done(function(data) {
             //alert( "second success" );
+            check_unsaved_fields();
             if(callback) callback;
         })
         .fail(function() {
@@ -477,7 +487,6 @@ function maxbot_save()
 {
     save_changes_to_dict(false);
     maxbot_save_api();
-    check_unsaved_fields();
 }
 
 function check_unsaved_fields()
@@ -518,7 +527,6 @@ function check_unsaved_fields()
             "remote_url",
             "auto_reload_page_interval",
             "reset_browser_interval",
-            "max_dwell_time",
             "proxy_server_port",
             "window_size",
             "idle_keyword",
@@ -528,23 +536,53 @@ function check_unsaved_fields()
         ];
         field_list_advance.forEach(f => {
             const field = document.querySelector('#'+f);
+            let formated_input = field.value;
             let formated_saved_value = settings["advanced"][f];
-            if(formated_saved_value=='""') formated_saved_value="";
             //console.log(f);
             //console.log(field.value);
             //console.log(formated_saved_value);
-            let compare_resule = (field.value != formated_saved_value);
-            if(!compare_resule) {
-                if(field.value.indexOf('"') > -1) {
-                    compare_resule = (field.value != '"' + formated_saved_value + '"');
+            if(typeof formated_saved_value == "string") {
+                if(formated_input=='') 
+                    formated_input='""';
+                if(formated_saved_value=='') 
+                    formated_saved_value='""';
+                if(formated_saved_value.indexOf('"') > -1) {
+                    if(formated_input.length) {
+                        if(formated_input != '""') {
+                            formated_input = '"' + formated_input + '"';
+                        }
+                    }
                 }
             }
-            if(compare_resule) {
+            let is_not_match = (formated_input != formated_saved_value);
+            if(is_not_match) {
+                //console.log(f);
+                //console.log(formated_input);
+                //console.log(formated_saved_value);
                 $("#"+f).addClass("is-invalid");
             } else {
                 $("#"+f).removeClass("is-invalid");
             }
         });
+
+        // check spcial feature for sites.
+        if(homepage.value.length) {
+            let special_site = "";
+            const special_site_list = ["kktix", "cityline"];
+            for(let i=0; i<special_site_list.length; i++) {
+                const site=special_site_list[i];
+                const match_url_1 = "." + site + ".com/";
+                const match_url_2 = "/" + site + ".com/";
+                //console.log(match_url);
+                if(homepage.value.indexOf(match_url_1) > 0 || homepage.value.indexOf(match_url_2) > 0) {
+                    special_site = site;
+                }
+            }
+            $('div[data-under]').addClass("disappear");
+            if(special_site.length) {
+                $('div[data-under="'+ special_site +'"]').removeClass("disappear");
+            }
+        }
     }
 }
 
@@ -607,3 +645,5 @@ onchange_tag_list.forEach((tag) => {
         userItem.addEventListener('change', check_unsaved_fields);
     });
 });
+
+homepage.addEventListener('keyup', check_unsaved_fields);
