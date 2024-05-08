@@ -88,8 +88,6 @@ CONST_SUPPORTED_SITES = ["https://kktix.com"
     ,"http://premier.ticketek.com.au"
     ]
 
-translate={}
-
 URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
 URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
