@@ -68,7 +68,7 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 透過原始碼執行MaxBot教學影片：
 https://youtu.be/HpVG91j0lbI
 
-使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
+使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal(終端機) 視窗來下指令，應該是4行指令就可以了。
 
 請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
