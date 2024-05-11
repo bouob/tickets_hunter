@@ -68,7 +68,7 @@ https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md
 透過原始碼執行MaxBot教學影片：
 https://youtu.be/HpVG91j0lbI
 
-使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal 視窗來下指令，應該是4行指令就可以了。
+使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal(終端機) 視窗來下指令，應該是4行指令就可以了。
 
 請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
 
@@ -120,12 +120,13 @@ A: 執行 git clone 2次, 重覆取得 source code, 才會有這個問題, 如�
 
 
 PS:
-* 請先確定你的python 執行環境下已安裝 selenium 及相關的套件，請參考 pip-req.txt 檔案內容。
+* 請先確定你的python 執行環境下已安裝 selenium 或 nodriver 及相關的套件，請參考 requirement.txt 檔案內容。
 * 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
 * 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站([https://www.python.org/downloads/](https://www.python.org/downloads/))來安裝 python3.
 * 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有2個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
 
-PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。
+PS：搶票程式可以多開chrome瀏覽器，如果你電腦效能高。但如果開太多瀏覽器會顯示 Out of Memory, 請增加 Windows 的虛擬記憶體:
+https://zh-tw.emeditor.com/increase-virtual-memory/
 
 PS：「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
 
