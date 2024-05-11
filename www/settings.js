@@ -24,7 +24,6 @@ const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
 
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
-const kktix_status_api = document.querySelector('#kktix_status_api');
 const max_dwell_time = document.querySelector('#max_dwell_time');
 
 const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
@@ -117,7 +116,6 @@ function load_settins_to_form(settings)
         play_sound_filename.value = settings.advanced.play_sound.filename;
 
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
-        kktix_status_api.checked = settings.kktix.kktix_status_api;
         max_dwell_time.value = settings.kktix.max_dwell_time;
 
         cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
@@ -242,7 +240,7 @@ function maxbot_reset_api()
     });
 }
 
-async function checkUsePublicServer()
+function checkUsePublicServer()
 {
     if(ocr_captcha_enable.checked) {
         remote_url.value = PUBLIC_SERVER_URL;
@@ -351,7 +349,6 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.play_sound.filename = play_sound_filename.value;
 
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
-            settings.kktix.kktix_status_api = kktix_status_api.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
 
             settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;

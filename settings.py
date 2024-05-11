@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.15)"
+CONST_APP_VERSION = "MaxBot (2024.04.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -125,7 +125,6 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["kktix_status_api"] = False
     config_dict["kktix"]["max_dwell_time"] = 60
 
     config_dict['cityline']={}
@@ -186,6 +185,8 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
+    
+    # remote_url not under ocr, due to not only support ocr features.
     config_dict["advanced"]["remote_url"] = "\"http://127.0.0.1:%d/\"" % (CONST_SERVER_PORT)
 
     config_dict["advanced"]["auto_reload_page_interval"] = 0.1
@@ -287,18 +288,15 @@ def launch_maxbot():
         launch_counter += 1
     else:
         launch_counter = 0
-    
-    #webdriver_type = ""
-    webdriver_type = CONST_WEBDRIVER_TYPE_NODRIVER
-    #webdriver_type = combo_webdriver_type.get().strip()
 
+    config_filepath, config_dict = load_json()
+    config_dict = decrypt_password(config_dict)
+    
     script_name = "chrome_tixcraft"
-    if webdriver_type == CONST_WEBDRIVER_TYPE_NODRIVER:
+    if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
         script_name = "nodriver_tixcraft"
 
-    #global txt_window_size
-    #window_size = txt_window_size.get().strip()
-    window_size = "480,1024"
+    window_size = config_dict["advanced"]["window_size"]
     if len(window_size) > 0:
         if "," in window_size:
             size_array = window_size.split(",")

@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.15)"
+CONST_APP_VERSION = "MaxBot (2024.04.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -115,7 +115,7 @@ CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 CONST_PREFS_DICT = {
     "credentials_enable_service": False, 
     "in_product_help.snoozed_feature.IPH_LiveCaption.is_dismissed": True,
