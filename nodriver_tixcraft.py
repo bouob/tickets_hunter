@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.16)"
+CONST_APP_VERSION = "MaxBot (2024.04.17)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -944,7 +944,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     print("搶票成功, 帳號:", kktix_account)
 
                     script_name = "chrome_tixcraft"
-                    if config_dict["advanced"]["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
+                    if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
                         script_name = "nodriver_tixcraft"
 
                     threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
