@@ -147,15 +147,11 @@ https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
 
 ### Q: 取得 source code 後跑出來 fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
 
-<details>
-<summary><code><b>排解方法</b>（點我查看）</code></summary>
 <b>A: </b>執行 git clone 2 次, 重覆取得 source code, 才會有這個問題, 如果 tixcraft_bot 目錄已經存在, 直接
 <code>cd tixcraft_bot</code>
 就可以了。
 如果你想把已下載的刪除, 可以直接把 tixcraft_bot 目錄刪掉即可。
 如果你想更新 source code, 可以重新下載, 或是先 <code>cd tixcraft_bot</code> 目錄後, 再執行<code>git pull</code>, 可以更新 source code 為新的版本。
-
-</details>
 
 #### PS:
 
