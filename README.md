@@ -190,7 +190,7 @@ https://zh-tw.emeditor.com/increase-virtual-memory/
 
 [實作方法 點我查看](https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/)
 
-## Execute Suggestio 蛋黃酥上車相關建議
+## Execute Suggestion 蛋黃酥上車相關建議
 
 <details>
 <summary><code><b>蛋黃酥上車相關建議</b>（點我展開）</code></summary>
