@@ -183,6 +183,7 @@ https://zh-tw.emeditor.com/increase-virtual-memory/
 - chrome_tixcraft.py : 搶票機器人主程式，用來自動化網頁的操作，使用元件是 selenium。
 - nodriver_tixcraft.py : 也是搶票機器人主程式，用來自動化網頁的操作，使用的元件是 nodriver。
 - settings.py : 編輯 settings.json 的 GUI 介面。提供圖片 OCR 功能給 chrome 擴充功能。支援定時啟用/停用 MaxBot。
+- settings_old.py : 舊版本的編輯 settings.json 的 GUI 介面，與 settings.py 的差別在介面一個是網頁形式，old 的用的是視窗形式。
 - config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
 </details>
 
@@ -227,25 +228,24 @@ https://github.com/JasonLiTW/simple-railway-captcha-solver
 <details>
 <summary><code><b>常見問題整理</b>（點我展開）</code></summary>
 
-詳全文：https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/
-
 ### 整理大家在搶票時常遇到的問題：
 
-- 使用搶票程式有違法嗎？
-- 沒講清楚成功後的報酬
-- 買到太多票
-- 如何處理多的票？
-- 使用搶票程式會讓自己的帳號被鎖住嗎？
-- 如何恢復拓元的「購票權限」？
-- 網頁刷新速度有推薦幾秒刷新一次嗎？
-- 拓元的搶票，要多少的網路頻寬才夠？
-- 使用 VPN/代理伺服器(Proxy)來搶票會有用嗎？
-- 同一個 IP 短時間重試被系統視為惡意程式而封鎖怎麼辦？
-- Firefox 和 chrome 搶票上有差距嗎？我看大家基本上都用 chrome 很少用 Firefox.
-- 為什麼要設計搶票的機制？
-- 為什麼網頁會有驗證碼？
-- 你的硬體設備該不該升級？
-- 想組一台新的電腦，是不是可以給我一些建議呢？
+- [使用搶票程式有違法嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#law)
+- [沒講清楚成功後的報酬](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#reward)
+- [買到太多票](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#too_many_ticket)
+- [如何處理多的票？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#many_tickets)
+- [讓票要注意的詐騙](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#ticket-fraud)
+- [使用搶票程式會讓自己的帳號被鎖住嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#account_locked)
+- [如何恢復拓元的「購票權限」？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#unlock)
+- [網頁刷新速度有推薦幾秒刷新一次嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#refresh)
+- [搶票的電腦需要多少的網路頻寬才夠？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#bandwidth)
+- [使用VPN/代理伺服器(Proxy)來搶票會有用嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#proxy)
+- [同一個IP短時間重試被系統視為惡意程式而封鎖怎麼辦？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#ip_blocked)
+- [Firefox和chrome搶票上有差距嗎？我看大家基本上都用chrome 很少用Firefox.](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#firefox_vs_chrome)
+- [為什麼要設計搶票的機制？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#race_game)
+- [為什麼網頁會有驗證碼？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#captcha)
+- [你的硬體設備該不該升級？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#hardware)
+- [想組一台新的電腦，是不是可以給我一些建議呢？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#new_compute_suggestion)
 </details>
 
 ## Extension Privacy 擴充功能隱私權政策
