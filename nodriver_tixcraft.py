@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.18)"
+CONST_APP_VERSION = "MaxBot (2024.04.19)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -490,6 +490,8 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                         row_text = ""
 
             if not row_input is None:
+                is_match_area = False
+                
                 # check ticket input textbox.
                 if len(current_ticket_number) > 0:
                     if current_ticket_number != "0":

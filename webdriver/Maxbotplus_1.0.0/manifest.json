@@ -465,7 +465,18 @@
                 "jquery.min.js",
                 "js/hncb_fill.js"
             ]
+        },
+        {
+            "matches": [
+                "https://fantopia.io/events-tickets?eventsKey=*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/fantopia_fill.js"
+            ]
         }
+        
     ],
-    "version": "1.0.26"
+    "version": "1.0.27"
 }

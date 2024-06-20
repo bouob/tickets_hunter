@@ -19,15 +19,15 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="readme-tab" data-bs-toggle="tab" data-bs-target="#readme-tab-pane" type="button" role="tab" aria-controls="readme-tab-pane" aria-selected="true">使用需知</button>
       </li>
-      
+
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false">偏好設定</button>
       </li>
-      
+
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">進階設定</button>
       </li>
-      
+
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false">驗證問題</button>
       </li>
@@ -60,7 +60,7 @@
 
 <div class="bd-callout bd-callout-info">
   台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
-</div>            
+</div>
 
 <hr/>
 
@@ -70,7 +70,7 @@
 
 <div class="bd-callout bd-callout-info">
   作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
-</div>            
+</div>
 
 </div>
 
@@ -80,7 +80,7 @@
           <label for="homepage" class="col-sm-2 col-form-label">網址</label>
           <div class="col-sm-10">
             <input class="form-control" id="homepage" value="" />
-            
+
             <div class="accordion mt-1" id="accordionExample">
               <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -131,7 +131,7 @@
         </div>
         <div class="row mb-3 bd-callout bd-callout-info disappear" data-under="cityline">
           <div class="col">
-              <strong>備註：</strong> 
+              <strong>備註：</strong>
                 Cityline 只能使用 <code>chrome 瀏覽器</code> + <code>nodriver</code>。
           </div>
         </div>
@@ -226,14 +226,19 @@
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row">
           <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
           <div class="col-sm-10">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
-              <strong>提示：</strong> 
+              <strong>提示：</strong>
                 每組關鍵字需要用「<code>雙引號</code>」包起來, 用「<code>逗號</code>」分隔, 在關鍵字中使用「<code>空格</code>」為 AND 邏輯。完全不輸入或是加入 「<code>,""</code>」 代表符合所有關鍵字。
-            </div>            
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <label for="homepage" class="col-sm-2 col-form-label">版本</label>
+          <div class="col-sm-10"><p id="maxbot_version" class="text-secondary mt-2"></p>
           </div>
         </div>
       </div>
@@ -292,7 +297,7 @@
             <input class="form-control" id="auto_reload_page_interval" value="" />
           </div>
         </div>
-        
+
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
           <div class="col-sm-10">
@@ -529,9 +534,9 @@
             </div>
 
             <div class="bd-callout bd-callout-info">
-              <strong>提示：</strong> 
+              <strong>提示：</strong>
                 將密碼保存到設定檔中可能會讓您的密碼被盜。
-            </div>            
+            </div>
           </div>
         </div>
 
@@ -600,6 +605,9 @@
       <button class="btn btn-primary" id="save_btn">存檔</button>
       <button class="btn btn-primary" id="reset_btn">重設為預設值</button>
       <button class="btn btn-danger" id="exit_btn">結束</button>
+    </div>
+    <div class="col-12">
+      <span class="text-danger" id="run_btn_pressed_message"></span>
     </div>
   </div>
 

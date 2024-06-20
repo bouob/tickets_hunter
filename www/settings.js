@@ -270,6 +270,7 @@ function message_old(msg)
 
 function maxbot_launch()
 {
+    run_message("啟動 MaxBot 主程式中...");
     save_changes_to_dict(true);
     maxbot_save_api(maxbot_run_api());
 }
@@ -579,6 +580,10 @@ function check_unsaved_fields()
             if(special_site.length) {
                 $('div[data-under="'+ special_site +'"]').removeClass("disappear");
             }
+            // for cityline.
+            if(homepage.value.indexOf("cityline.com") > 0) {
+                $("#webdriver_type").val("nodriver");
+            }
         }
     }
 }
@@ -613,6 +618,23 @@ function maxbot_status_api()
     });
 }
 
+function maxbot_version_api()
+{
+    let api_url = "http://127.0.0.1:16888/version";
+    $.get( api_url, function() {
+        //alert( "success" );
+    })
+    .done(function(data) {
+        $("#maxbot_version").html(data.version);
+    })
+    .fail(function() {
+        //alert( "error" );
+    })
+    .always(function() {
+        //alert( "finished" );
+    });
+}
+
 function update_system_time()
 {
     var currentdate = new Date(); 
@@ -626,6 +648,8 @@ var status_interval= setInterval(() => {
     maxbot_status_api();
     update_system_time();
 }, 500);
+
+maxbot_version_api();
 
 run_button.addEventListener('click', maxbot_launch);
 save_button.addEventListener('click', maxbot_save);
@@ -644,3 +668,16 @@ onchange_tag_list.forEach((tag) => {
 });
 
 homepage.addEventListener('keyup', check_unsaved_fields);
+
+
+let runMessageClearTimer;
+function run_message(msg)
+{
+    clearTimeout(runMessageClearTimer);
+    const message = document.querySelector('#run_btn_pressed_message');
+    message.innerText = msg;
+    messageClearTimer = setTimeout(function ()
+        {
+            message.innerText = '';
+        }, 3000);
+}

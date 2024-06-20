@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.18)"
+CONST_APP_VERSION = "MaxBot (2024.04.19)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -600,6 +600,7 @@ def get_driver_by_config(config_dict):
     homepage = config_dict["homepage"]
 
     # output config:
+    print("current time:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print("maxbot app version:", CONST_APP_VERSION)
     print("python version:", platform.python_version())
     print("platform:", platform.platform())
