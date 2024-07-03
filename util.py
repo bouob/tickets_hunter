@@ -1814,6 +1814,51 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
                 inferred_answer_string = temp_answer
 
+    # 請將括弧內文字轉換為阿拉伯數字
+    if inferred_answer_string is None:
+        formated_html_text = captcha_text_div_text.strip()
+        formated_html_text = format_quota_string(formated_html_text)
+        formated_html_text = formated_html_text.replace('請輸入','輸入')
+
+        formated_html_text = formated_html_text.replace('的','')
+        formated_html_text = formated_html_text.replace('之內','內')
+        formated_html_text = formated_html_text.replace('之中','中')
+
+        formated_html_text = formated_html_text.replace('括弧','括號')
+        formated_html_text = formated_html_text.replace('引號','括號')
+
+        formated_html_text = formated_html_text.replace('括號中','括號內')
+
+        formated_html_text = formated_html_text.replace('修改','轉換')
+        formated_html_text = formated_html_text.replace('調整','轉換')
+        formated_html_text = formated_html_text.replace('改變','轉換')
+        formated_html_text = formated_html_text.replace('改為','轉換')
+        formated_html_text = formated_html_text.replace('置換','轉換')
+        formated_html_text = formated_html_text.replace('換成','轉換')
+
+        is_match_input_quota_text = False
+        if len(formated_html_text) <= 30:
+            print("formated_html_text:", formated_html_text)
+            if not '\n' in formated_html_text:
+                if '【' in formated_html_text and '】' in formated_html_text:
+                    is_match_input_quota_text = True
+
+        # check target text terms.
+        if is_match_input_quota_text:
+            target_text_list = ["轉換","數字","文字"]
+            for item in target_text_list:
+                if not item in formated_html_text:
+                    is_match_input_quota_text = False
+                    break
+
+        if is_match_input_quota_text:
+            temp_answer = find_between(formated_html_text, "【", "】")
+            temp_answer = temp_answer.strip()
+            if len(temp_answer) > 0:
+                temp_answer = temp_answer.replace(' ','')
+                temp_answer = normalize_chinese_numeric(temp_answer)
+                inferred_answer_string = temp_answer
+
     if inferred_answer_string is None:
         is_use_quota_message = False
         if "【" in captcha_text_div_text and "】" in captcha_text_div_text:

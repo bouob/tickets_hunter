@@ -153,11 +153,19 @@ async function ocr(data_url, image_data, tabId)
     );
 }
 
+// for avoid overheat.
+chrome.storage.local.set(
+{
+    last_reload_timestamp: []
+}
+);
+
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     let request_json = request;
     let result_json={"answer": "pong from background"};
     if(request_json.action=="decrypt") {
-        console.log(typeof crypto_decrypt);
+        //console.log(typeof crypto_decrypt);
         let answer="";
         if(typeof crypto_decrypt === 'function') {
             answer=crypto_decrypt(request_json.data.text,request_json.data.key,request_json.data.iv);

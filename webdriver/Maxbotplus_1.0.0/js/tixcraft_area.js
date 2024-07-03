@@ -107,6 +107,48 @@ function tixcraft_area_main(settings) {
     }
 }
 
+async function do_reload_if_not_overheat(settings) {
+    let auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
+    const auto_reload_overheat_count = settings.advanced.auto_reload_overheat_count;
+    const auto_reload_overheat_cd = settings.advanced.auto_reload_overheat_cd;
+    chrome.storage.local.get('last_reload_timestamp', function(items) {
+        if (items.last_reload_timestamp) {
+            let new_timestamp = [];
+            const now = new Date().getTime();
+            const overheat_second = 2.5;
+            //for (let i = items.last_reload_timestamp.length - 1; i >= 0; i--) {
+            for (let i = 0; i < items.last_reload_timestamp.length; i++) {
+                let each_time = items.last_reload_timestamp[i];
+                let current_diff = now - each_time;
+                if (current_diff <= overheat_second * 1000) {
+                    //last_reload_timestamp.splice(i, 1);
+                    new_timestamp.push(each_time);
+                }
+            }
+            if(new_timestamp.length >= auto_reload_overheat_count) {
+                console.log("overheat, slow down!");
+                auto_reload_page_interval = auto_reload_overheat_cd;
+            }
+            new_timestamp.push(now);
+            chrome.storage.local.set({
+                last_reload_timestamp: new_timestamp
+            });
+
+            //const rootElement = document.documentElement;
+            //rootElement.remove();
+            if(auto_reload_page_interval == 0) {
+                //console.log('Start to reload now.');
+                location.reload();
+            } else {
+                //console.log('We are going to reload after few seconeds.');
+                setTimeout(function () {
+                    location.reload();
+                }, auto_reload_page_interval * 1000);
+            }
+        }
+    });
+}
+
 function area_auto_reload()
 {
     let reload=false;
@@ -120,20 +162,8 @@ function area_auto_reload()
     }
     
     if(reload) {
-        let auto_reload_page_interval = 0.0;
         if(settings) {
-            auto_reload_page_interval = settings.advanced.auto_reload_page_interval;
-        }
-        const rootElement = document.documentElement;
-        rootElement.remove();
-        if(auto_reload_page_interval == 0) {
-            //console.log('Start to reload now.');
-            location.reload();
-        } else {
-            console.log('We are going to reload after few seconeds.');
-            setTimeout(function () {
-                location.reload();
-            }, auto_reload_page_interval * 1000);
+            do_reload_if_not_overheat(settings);
         }
     }
 }

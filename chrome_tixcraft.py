@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.19)"
+CONST_APP_VERSION = "MaxBot (2024.04.20)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -11042,6 +11042,7 @@ def cli():
 def test_captcha_model():
     #for test kktix answer.
     captcha_text_div_text = "請輸入括弧內數字( 27８９41 )"
+    captcha_text_div_text = "請將括弧內文字轉換為阿拉伯數字(一二三四五六)"
     answer_list = util.get_answer_list_from_question_string(None, captcha_text_div_text)
     print("answer_list:", answer_list)
 

@@ -8,6 +8,8 @@ const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
+const auto_reload_overheat_count = document.querySelector('#auto_reload_overheat_count');
+const auto_reload_overheat_cd = document.querySelector('#auto_reload_overheat_cd');
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
@@ -59,9 +61,12 @@ async function saveChanges()
 
             settings.keyword_exclude = keyword_exclude.value;
 
-            settings.advanced.auto_reload_page_interval = auto_reload_page_interval.value;
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
-            settings.kktix.max_dwell_time = max_dwell_time.value;
+            settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
+
+            settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
+            settings.advanced.auto_reload_overheat_count = Number(auto_reload_overheat_count.value);
+            settings.advanced.auto_reload_overheat_cd = Number(auto_reload_overheat_cd.value);
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
 
@@ -112,6 +117,8 @@ function loadChanges()
 
             keyword_exclude.value = settings.keyword_exclude;
             auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
+            auto_reload_overheat_count.value = settings.advanced.auto_reload_overheat_count;
+            auto_reload_overheat_cd.value = settings.advanced.auto_reload_overheat_cd;
             auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
             max_dwell_time.value = settings.kktix.max_dwell_time;
             disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;

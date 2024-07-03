@@ -81,6 +81,8 @@
         "user_guess_string": "",
         "remote_url": "\"http://127.0.0.1:16888/\"",
         "auto_reload_page_interval": 0.1,
+        "auto_reload_overheat_count": 4,
+        "auto_reload_overheat_cd": 1,
         "reset_browser_interval": 0,
         "proxy_server_port": "",
         "window_size": "480,1024",
