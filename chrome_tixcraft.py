@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.20)"
+CONST_APP_VERSION = "MaxBot (2024.04.21)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -10079,20 +10079,24 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
         is_question_popup = False
         is_answer_sent = False
+        #print("is_price_assign_by_bot", is_price_assign_by_bot)
         if is_price_assign_by_bot:
             is_answer_sent, ticketplus_dict["fail_list"], is_question_popup = ticketplus_order_exclusive_code(driver, config_dict, ticketplus_dict["fail_list"])
 
-        if is_price_assign_by_bot:
-            if config_dict["ocr_captcha"]["enable"]:
-                is_captcha_sent =  ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser)
+            auto_submit = True
+            if auto_submit:
+                my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
+                is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                if not is_form_sumbited:
+                    # for style_1
+                    my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
+                    is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
 
-                if is_captcha_sent:
-                    # after submit captcha, due to exclusive code not correct, should not auto press next button.
-                    if is_question_popup:
-                        if not is_answer_sent:
-                            is_captcha_sent = False
+                if is_form_sumbited:
+                    time.sleep(0.5)
+                print("is_form_sumbited", is_form_sumbited)
 
-    return is_captcha_sent, ticketplus_dict
+    return ticketplus_dict
 
 def ticketplus_order_ocr(driver, config_dict, ocr, Captcha_Browser):
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
@@ -10689,7 +10693,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
                 is_reloading = ticketplus_order_auto_reload_coming_soon(driver)
 
             if not is_reloading:
-                is_captcha_sent, ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
+                ticketplus_dict = ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
     else:
         ticketplus_dict["fail_list"]=[]
