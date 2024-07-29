@@ -235,6 +235,7 @@ function maxbot_reset_api()
         settings = data;
         load_settins_to_form(data);
         check_unsaved_fields();
+        run_message("已重設為預設值");
     })
     .fail(function() {
         //alert( "error" );
@@ -698,4 +699,9 @@ function run_message(msg)
         {
             message.innerText = '';
         }, 3000);
+}
+
+function home_tab_clicked() {
+    console.log("clicked");
+    document.getElementById("homepage").focus();
 }
