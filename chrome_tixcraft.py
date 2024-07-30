@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.21)"
+CONST_APP_VERSION = "MaxBot (2024.04.22)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1923,12 +1923,13 @@ def tixcraft_change_captcha(driver,url):
 def tixcraft_toast(driver, message):
     toast_element = None
     try:
-        my_css_selector = ".remark-word"
+        my_css_selector = "p.remark-word"
         toast_element = driver.find_element(By.CSS_SELECTOR, my_css_selector)
         if not toast_element is None:
             driver.execute_script("arguments[0].innerHTML='%s';" % message, toast_element)
     except Exception as exc:
-        print("find toast element fail")
+        #print("find toast element fail")
+        pass
 
 def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
     is_verifyCode_editing = False
@@ -1962,22 +1963,28 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
             is_visible = False
 
         if is_visible:
-            try:
-                form_verifyCode.click()
-                is_verifyCode_editing = True
-            except Exception as exc:
-                print("click form_verifyCode fail, trying to use javascript.")
-                # plan B
+            is_text_clicked = False
+
+            if inputed_value == "":
                 try:
-                    driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
+                    form_verifyCode.click()
+                    is_text_clicked = True
                     is_verifyCode_editing = True
                 except Exception as exc:
-                    #print("click form_verifyCode fail.")
-                    pass
+                    print("click form_verifyCode fail, trying to use javascript.")
+                    # plan B
+                    try:
+                        driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").focus();")
+                        is_verifyCode_editing = True
+                    except Exception as exc:
+                        #print("click form_verifyCode fail.")
+                        pass
 
             if len(answer) > 0:
                 #print("start to fill answer.")
                 try:
+                    if not is_text_clicked:
+                        form_verifyCode.click()
                     form_verifyCode.clear()
                     form_verifyCode.send_keys(answer)
 
@@ -1987,6 +1994,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                         is_form_sumbited = True
                     else:
                         driver.execute_script("document.getElementById(\"TicketForm_verifyCode\").select();")
+                        # TODO: show text message on ticketmaster web page.
                         tixcraft_toast(driver, "※ 按 Enter 如果答案是: " + answer)
                 except Exception as exc:
                     print("send_keys ocr answer fail.")
@@ -2118,7 +2126,6 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
             else:
                 if not away_from_keyboard_enable:
                     tixcraft_keyin_captcha_code(driver)
-                    tixcraft_toast(driver, "※ OCR辨識失敗Q_Q，驗證碼請手動輸入...")
                 else:
                     is_need_redo_ocr = True
                     if previous_answer != ocr_answer:
