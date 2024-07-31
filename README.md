@@ -44,24 +44,24 @@ A：從之前 MaxBot 執行秒數來看，較好的電腦花費秒數大約 8 �
 
 如果說你想增加在伺服器上存取記錄的變化程度，可以使用秒數的關鍵字功能，讓 MaxBot 在特定秒數時啟動與暫停。參考影片：https://youtu.be/u3YQCZZu6kE
 
-MaxBot 的出發點是幫助大家在購票時，可以有效率地自動化在花時間、重覆又無聊的刷新網頁。如果有任何違法，必定立即修正。
+MaxBot 的出發點是幫助大家在購票時，可以有效率地自動化在花時間、重覆又無聊的刷新網頁。
+
+如果有任何違法，必定立即修正。
 
 </details>
 
 ## Download 蛋黃酥上車程式下載
 
-<details>
-<summary><code><b>蛋黃酥上車程式下載</b>（點我展開）</code></summary>
-
+蛋黃酥上車程式下載:
 https://github.com/max32002/tixcraft_bot/releases
 
 下載說明:
 
 - 目前有打包的「執行檔」，只有 Windows 平台，其他作業系統需要使用原始碼來執行。當然 Windows 平台也可以用原始碼執行 MaxBot.
-- 如果你是要用「原始碼」執行 MaxBot, 在透過 git clone 或在 github 按下載原始碼的 zip 檔，你的 python 版本可以使用 3.7 / 3.8 / 3.9 / 3.10 這 4 個版號。
+- 如果你是要用「原始碼」執行 MaxBot, 在透過 git clone 或在 github 按下載原始碼的 zip 檔， python 版本使用 3.7 / 3.8 / 3.9 / 3.10 這 4 個版號測試功能正常。
 - 如果有辦法的話，建議使用原始碼來執行 MaxBot，執行上的「效率」與「相容性」的問題會較少。
 
-</details>
+
 
 ## Demo 示範影片
 
@@ -69,16 +69,12 @@ https://github.com/max32002/tixcraft_bot/releases
 
 ## How to Use 如何使用
 
-<details>
-<summary><code><b>如何使用</b>（點我展開）</code></summary>
-
+如何使用網頁說明:
 - tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
 - kktix: https://max-everyday.com/2018/12/kktix-bot/
 - cityline: https://max-everyday.com/2019/03/cityline-bot/
 - urbtix: https://max-everyday.com/2019/02/urbtix-bot/
 - hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
-
-</details>
 
 ## How to Execute Source Code 透過原始碼的執行方法
 
@@ -176,99 +172,29 @@ https://zh-tw.emeditor.com/increase-virtual-memory/
 </details>
 
 ## File Description 檔案說明
-
-<details>
-<summary><code><b>檔案說明</b>（點我展開）</code></summary>
-
+主要的檔案說明:
 - chrome_tixcraft.py : 搶票機器人主程式，用來自動化網頁的操作，使用元件是 selenium。
 - nodriver_tixcraft.py : 也是搶票機器人主程式，用來自動化網頁的操作，使用的元件是 nodriver。
 - settings.py : 編輯 settings.json 的 GUI 介面。提供圖片 OCR 功能給 chrome 擴充功能。支援定時啟用/停用 MaxBot。
 - settings_old.py : 舊版本的編輯 settings.json 的 GUI 介面，與 settings.py 的差別在介面一個是網頁形式，old 的用的是視窗形式。
 - config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
-</details>
 
 ## Introduce the Implement 實作方法
 
-[實作方法 點我查看](https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/)
+https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
 
-## Execute Suggestion 蛋黃酥上車相關建議
-
-<details>
-<summary><code><b>蛋黃酥上車相關建議</b>（點我展開）</code></summary>
-
-please run this source code with high performance hardware computer and high speed + stable network.
-
-門票的「限量」是很殘酷的，建議不要用破舊的電腦或連線不穩的手機網路來搶票，因為只要比別人慢個 0.1 秒，票可能就沒了。為了要搶到限量的票真心建議去一下網咖或找一個網路連線穩定且快的地方並使用硬體不差的電腦來搶票。
-
-</details>
 
 ## TODO about Cpatcha 關於驗證碼
 
-<details>
-<summary><code><b>關於驗證碼</b>（點我展開）</code></summary>
-
 目前自動輸入驗證碼用的元件是:
-
 https://github.com/sml2h3/ddddocr
 
-附註：
-
-- 由於 ddddocr 元件的因素，python 版本要降到 3.10.11 版, 傳送門:
-  https://www.python.org/downloads/release/python-31011/
-- 猜測驗證碼時比較容易出錯的是字英 f 和 t，還有 q 和 g, v 和 u 還有 w.
-
-想自動輸入驗證碼，除了可以使用 ddddocr 提供的 trainer, 也可以參考看看：實作基於 CNN 的台鐵訂票驗證碼辨識以及透過模仿及資料增強的訓練集產生器 (Simple captcha solver based on CNN and a training set generator by imitating the style of captcha and data augmentation)
-
-https://github.com/JasonLiTW/simple-railway-captcha-solver
-
-</details>
 
 ## Common Problems 常見問題整理
 
-<details>
-<summary><code><b>常見問題整理</b>（點我展開）</code></summary>
-
-### 整理大家在搶票時常遇到的問題：
-
-- [使用搶票程式有違法嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#law)
-- [沒講清楚成功後的報酬](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#reward)
-- [買到太多票](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#too_many_ticket)
-- [如何處理多的票？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#many_tickets)
-- [讓票要注意的詐騙](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#ticket-fraud)
-- [使用搶票程式會讓自己的帳號被鎖住嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#account_locked)
-- [如何恢復拓元的「購票權限」？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#unlock)
-- [網頁刷新速度有推薦幾秒刷新一次嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#refresh)
-- [搶票的電腦需要多少的網路頻寬才夠？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#bandwidth)
-- [使用VPN/代理伺服器(Proxy)來搶票會有用嗎？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#proxy)
-- [同一個IP短時間重試被系統視為惡意程式而封鎖怎麼辦？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#ip_blocked)
-- [Firefox和chrome搶票上有差距嗎？我看大家基本上都用chrome 很少用Firefox.](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#firefox_vs_chrome)
-- [為什麼要設計搶票的機制？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#race_game)
-- [為什麼網頁會有驗證碼？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#captcha)
-- [你的硬體設備該不該升級？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#hardware)
-- [想組一台新的電腦，是不是可以給我一些建議呢？](https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket/#new_compute_suggestion)
-</details>
+整理大家在搶票時常遇到的問題：
+https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket
 
 ## Extension Privacy 擴充功能隱私權政策
 
-<details>
-<summary><code><b>MaxBot Plus擴充功能隱私權政策</b>（點我展開）</code></summary>
-
-### 產品如何收集、使用及分享使用者資料
-
-- 擴充取得會取得特定網頁內容, 並且自動輸入張數。
-- 擴充功能會移除特定網頁內容裡已售完的網頁區塊。
-- 擴充功能會取得特定網址資訊, 並置換為下一個新的網址。
-- 擴充取得會取得特定網頁內容, 判斷為需要重新整理時, 自動刷新頁面。
-
-### 使用者資料的所有分享對象。
-
-- 擴充功能沒有分享使用者資料。
-
-### 擴充功能主要功能：
-
-- 特定的訂票網頁內容, 並且自動輸入張數。
-- 移除特定的訂票網頁內容裡已售完的網頁區塊。
-- 特定的訂票網址, 自動置換為下一步的新網址。
-- 當訂票網頁內容已經無票或沒有符合的關鍵字時, 自動刷新網頁。
-- 特定網頁支援驗證碼功能, 需要同時開啟 MaxBot 主程式。
-</details>
+https://github.com/max32002/tixcraft_bot/blob/master/README_EXTENSION.md
