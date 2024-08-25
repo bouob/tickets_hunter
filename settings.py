@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.22)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -104,6 +104,8 @@ def get_default_config():
     config_dict["browser"] = "chrome"
     config_dict["language"] = "English"
     config_dict["ticket_number"] = 2
+    config_dict["refresh_datetime"] = ""
+
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
     config_dict["ocr_captcha"]["beta"] = True

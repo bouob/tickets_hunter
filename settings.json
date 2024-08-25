@@ -1,8 +1,9 @@
 {
     "homepage": "about:blank",
     "browser": "chrome",
-    "language": "English",
+    "language": "\u7e41\u9ad4\u4e2d\u6587",
     "ticket_number": 2,
+    "refresh_datetime": "",
     "ocr_captcha": {
         "enable": true,
         "beta": true,
@@ -82,7 +83,7 @@
         "remote_url": "\"http://127.0.0.1:16888/\"",
         "auto_reload_page_interval": 0.1,
         "auto_reload_overheat_count": 4,
-        "auto_reload_overheat_cd": 1,
+        "auto_reload_overheat_cd": 1.0,
         "reset_browser_interval": 0,
         "proxy_server_port": "",
         "window_size": "480,1024",

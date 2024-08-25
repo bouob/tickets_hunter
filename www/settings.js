@@ -10,6 +10,7 @@ const resume_button = document.querySelector('#resume_btn');
 // preference
 const homepage = document.querySelector('#homepage');
 const ticket_number = document.querySelector('#ticket_number');
+const refresh_datetime = document.querySelector('#refresh_datetime');
 const date_select_mode = document.querySelector('#date_select_mode');
 const date_keyword = document.querySelector('#date_keyword');
 const area_select_mode = document.querySelector('#area_select_mode');
@@ -95,6 +96,7 @@ function load_settins_to_form(settings)
         // preference
         homepage.value = settings.homepage;
         ticket_number.value = settings.ticket_number;
+        refresh_datetime.value = settings.refresh_datetime;
         date_select_mode.value = settings.date_auto_select.mode;
         date_keyword.value = settings.date_auto_select.date_keyword;
         if(date_keyword.value=='""') {
@@ -328,6 +330,7 @@ function save_changes_to_dict(silent_flag)
             // preference
             settings.homepage = homepage.value;
             settings.ticket_number = ticket_number_value;
+            settings.refresh_datetime = refresh_datetime.value;
             settings.date_auto_select.mode = date_select_mode.value;
 
             let date_keyword_string = date_keyword.value;
@@ -507,7 +510,7 @@ function maxbot_save()
 function check_unsaved_fields()
 {
     if(settings) {
-        const field_list_basic = ["homepage","ticket_number","browser","webdriver_type"];
+        const field_list_basic = ["homepage","ticket_number","refresh_datetime","browser","webdriver_type"];
         field_list_basic.forEach(f => {
             const field = document.querySelector('#'+f);
             if(field.value != settings[f]) {

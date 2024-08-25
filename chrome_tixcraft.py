@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.22)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -10851,6 +10851,20 @@ def resize_window(driver, config_dict):
             driver.set_window_size(int(size_array[0]), int(size_array[1]))
             driver.set_window_position(position_left, 30)
 
+def check_refresh_datetime_occur(driver, target_time):
+    is_refresh_datetime_sent = False
+
+    system_clock_data = datetime.now()
+    current_time = system_clock_data.strftime('%H:%M:%S')
+    if target_time == current_time:
+        try:
+            driver.refresh()
+            is_refresh_datetime_sent = True
+            print("send refresh at time:", current_time)
+        except Exception as exc:
+            pass
+
+    return is_refresh_datetime_sent
 
 def main(args):
     config_dict = get_config_dict(args)
@@ -10885,6 +10899,8 @@ def main(args):
 
     maxbot_last_reset_time = time.time()
     is_quit_bot = False
+    is_refresh_datetime_sent = False
+
     while True:
         time.sleep(0.05)
 
@@ -10935,6 +10951,9 @@ def main(args):
             if maxbot_running_time > config_dict["advanced"]["reset_browser_interval"]:
                 driver = reset_webdriver(driver, config_dict, url)
                 maxbot_last_reset_time = time.time()
+
+        if not is_refresh_datetime_sent:
+            is_refresh_datetime_sent = check_refresh_datetime_occur(driver, config_dict["refresh_datetime"])
 
         tixcraft_family = False
         if 'tixcraft.com' in url:

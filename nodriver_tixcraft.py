@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.22)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2152,6 +2152,23 @@ def nodriver_overwrite_prefs(conf):
     with open(state_filepath, 'w') as outfile:
         outfile.write(json_str)
 
+
+async def check_refresh_datetime_occur(tab, target_time):
+    is_refresh_datetime_sent = False
+
+    system_clock_data = datetime.now()
+    current_time = system_clock_data.strftime('%H:%M:%S')
+    if target_time == current_time:
+        try:
+            await tab.reload()
+            is_refresh_datetime_sent = True
+            print("send refresh at time:", current_time)
+        except Exception as exc:
+            pass
+
+    return is_refresh_datetime_sent
+
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -2205,6 +2222,8 @@ async def main(args):
 
     maxbot_last_reset_time = time.time()
     is_quit_bot = False
+    is_refresh_datetime_sent = False
+
     while True:
         time.sleep(0.05)
 
@@ -2249,6 +2268,9 @@ async def main(args):
             # sleep more when paused.
             time.sleep(0.1)
             continue
+
+        if not is_refresh_datetime_sent:
+            is_refresh_datetime_sent = await check_refresh_datetime_occur(tab, config_dict["refresh_datetime"])
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:

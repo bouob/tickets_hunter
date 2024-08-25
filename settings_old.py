@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.22)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -106,6 +106,7 @@ def load_translate():
     en_us["browser"] = 'Browser'
     en_us["language"] = 'Language'
     en_us["ticket_number"] = 'Ticker Number'
+    en_us["refresh_datetime"] = 'Refresh at specified time'
 
     en_us["enable"] = 'Enable'
     en_us["recommand_enable"] = "Recommended to enable"
@@ -226,6 +227,7 @@ def load_translate():
     zh_tw["browser"] = '瀏覽器'
     zh_tw["language"] = '語言'
     zh_tw["ticket_number"] = '門票張數'
+    zh_tw["refresh_datetime"] = '刷新在指定時間'
 
     zh_tw["enable"] = '啟用'
     zh_tw["recommand_enable"] = "建議啟用"
@@ -344,6 +346,7 @@ def load_translate():
     zh_cn["browser"] = '浏览器'
     zh_cn["language"] = '语言'
     zh_cn["ticket_number"] = '门票张数'
+    zh_cn["refresh_datetime"] = '刷新在指定时间'
 
     zh_cn["enable"] = '启用'
     zh_cn["recommand_enable"] = "建议启用"
@@ -464,6 +467,7 @@ def load_translate():
     ja_jp["browser"] = 'ブラウザ'
     ja_jp["language"] = '言語'
     ja_jp["ticket_number"] = '枚数'
+    ja_jp["refresh_datetime"] = '目標時間にリフレッシュ'
 
     ja_jp["enable"] = '有効'
     ja_jp["recommand_enable"] = "有効化を推奨"
@@ -591,6 +595,8 @@ def get_default_config():
     config_dict["browser"] = "chrome"
     config_dict["language"] = "English"
     config_dict["ticket_number"] = 2
+    config_dict["refresh_datetime"] = ""
+
     config_dict["ocr_captcha"] = {}
     config_dict["ocr_captcha"]["enable"] = True
     config_dict["ocr_captcha"]["beta"] = True
@@ -1023,6 +1029,7 @@ def btn_save_act(slience_mode=False):
             txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
 
     if is_all_data_correct:
+        config_dict["refresh_datetime"] = txt_refresh_datetime.get().strip()
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
 
@@ -1258,6 +1265,7 @@ def applyNewLanguage():
     global lbl_browser
     global lbl_language
     global lbl_ticket_number
+    global lbl_refresh_datetime
 
     # for kktix
     global lbl_auto_press_next_step_button
@@ -1347,6 +1355,7 @@ def applyNewLanguage():
     lbl_browser.config(text=translate[language_code]["browser"])
     lbl_language.config(text=translate[language_code]["language"])
     lbl_ticket_number.config(text=translate[language_code]["ticket_number"])
+    lbl_refresh_datetime.config(text=translate[language_code]["refresh_datetime"])
 
     lbl_auto_press_next_step_button.config(text=translate[language_code]["auto_press_next_step_button"])
     lbl_auto_fill_ticket_number.config(text=translate[language_code]["auto_fill_ticket_number"])
@@ -1674,9 +1683,6 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     print("python version:", platform.python_version())
     print("platform:", platform.platform())
 
-    global lbl_homepage
-    global lbl_ticket_number
-
     global lbl_kktix
     global lbl_tixcraft
 
@@ -1686,6 +1692,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     group_row_count = 0
 
     # first row need padding Y
+    global lbl_homepage
     lbl_homepage = Label(frame_group_header, text=translate[language_code]['homepage'])
     lbl_homepage.grid(column=0, row=group_row_count, sticky = E)
 
@@ -1699,6 +1706,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count+=1
 
+    global lbl_ticket_number
     lbl_ticket_number = Label(frame_group_header, text=translate[language_code]['ticket_number'])
     lbl_ticket_number.grid(column=0, row=group_row_count, sticky = E)
 
@@ -1718,6 +1726,17 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     combo_ticket_number.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
+
+    group_row_count+=1
+
+    global lbl_refresh_datetime
+    lbl_refresh_datetime = Label(frame_group_header, text=translate[language_code]['refresh_datetime'])
+    lbl_refresh_datetime.grid(column=0, row=group_row_count, sticky = E)
+
+    global txt_refresh_datetime
+    txt_refresh_datetime_value = StringVar(frame_group_header, value=str(config_dict["refresh_datetime"]))
+    txt_refresh_datetime = Entry(frame_group_header, width=30, textvariable = txt_refresh_datetime_value)
+    txt_refresh_datetime.grid(column=1, row=group_row_count, sticky = W)
 
     row_count+=1
 
@@ -3130,7 +3149,7 @@ def main_gui():
 
     load_GUI(root, config_dict)
 
-    GUI_SIZE_WIDTH = 590
+    GUI_SIZE_WIDTH = 610
     GUI_SIZE_HEIGHT = 645
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
