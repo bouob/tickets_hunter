@@ -2152,7 +2152,6 @@ def nodriver_overwrite_prefs(conf):
     with open(state_filepath, 'w') as outfile:
         outfile.write(json_str)
 
-
 async def check_refresh_datetime_occur(tab, target_time):
     is_refresh_datetime_sent = False
 
@@ -2167,7 +2166,6 @@ async def check_refresh_datetime_occur(tab, target_time):
             pass
 
     return is_refresh_datetime_sent
-
 
 async def main(args):
     config_dict = get_config_dict(args)
@@ -2195,7 +2193,6 @@ async def main(args):
     else:
         print("Load config error!")
 
-    # internal variable. 說明：這是一個內部變數，請略過。
     url = ""
     last_url = ""
 
@@ -2250,6 +2247,9 @@ async def main(args):
             if len(url) == 0:
                 continue
 
+        if not is_refresh_datetime_sent:
+            is_refresh_datetime_sent = await check_refresh_datetime_occur(tab, config_dict["refresh_datetime"])
+
         is_maxbot_paused = False
         if os.path.exists(CONST_MAXBOT_INT28_FILE):
             is_maxbot_paused = True
@@ -2268,9 +2268,6 @@ async def main(args):
             # sleep more when paused.
             time.sleep(0.1)
             continue
-
-        if not is_refresh_datetime_sent:
-            is_refresh_datetime_sent = await check_refresh_datetime_occur(tab, config_dict["refresh_datetime"])
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:

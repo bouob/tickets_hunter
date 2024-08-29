@@ -10881,7 +10881,6 @@ def main(args):
     else:
         print("Load config error!")
 
-    # internal variable. 說明：這是一個內部變數，請略過。
     url = ""
     last_url = ""
 
@@ -10927,6 +10926,9 @@ def main(args):
             if len(url) == 0:
                 continue
 
+        if not is_refresh_datetime_sent:
+            is_refresh_datetime_sent = check_refresh_datetime_occur(driver, config_dict["refresh_datetime"])
+
         is_maxbot_paused = False
         if os.path.exists(CONST_MAXBOT_INT28_FILE):
             is_maxbot_paused = True
@@ -10951,9 +10953,6 @@ def main(args):
             if maxbot_running_time > config_dict["advanced"]["reset_browser_interval"]:
                 driver = reset_webdriver(driver, config_dict, url)
                 maxbot_last_reset_time = time.time()
-
-        if not is_refresh_datetime_sent:
-            is_refresh_datetime_sent = check_refresh_datetime_occur(driver, config_dict["refresh_datetime"])
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
