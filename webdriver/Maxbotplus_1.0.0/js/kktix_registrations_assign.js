@@ -1,6 +1,4 @@
 var myInterval = null;
-var checkboxInterval = null;
-//console.log("assign appear");
 
 function kktix_verification_conditions(settings)
 {
@@ -33,14 +31,6 @@ function kktix_verification_conditions(settings)
     }
 
     return is_text_sent;
-}
-
-function kktix_agree()
-{
-    $('input[type=checkbox]:not(:checked)').each(function() {
-        $(this).click();
-        if(checkboxInterval) clearInterval(checkboxInterval);
-    });
 }
 
 function kktix_area_keyword(settings)
@@ -91,20 +81,6 @@ function kktix_area_keyword(settings)
             let ticket_number = settings.ticket_number;
 
             if(ticket_number>0) {
-                /*
-                // trigger events by jQuery.
-                let target_input = target_area.find("input");
-                target_input.click();
-                target_input.prop("value", ticket_number);
-                let down = $.Event('keydown');
-                down.key=""+ticket_number;
-                target_input.trigger(down);
-
-                let up = $.Event('keyup');
-                up.key=""+ticket_number;
-                target_input.trigger(up);
-                */
-
                 //console.log(base_info);
                 let is_verification_conditions_popup = false;
 
@@ -176,20 +152,8 @@ function dom_ready()
     return ret;
 }
 
-const rootElement = document.documentElement;
-if(rootElement) {
-    if(!dom_ready()) {
-        myInterval = setInterval(() => {
-            dom_ready();
-        }, 200);
-        
-        checkboxInterval= setInterval(() => {
-            //console.log("kktix_agree")
-            kktix_agree();
-        }, 200);
-    }
-    $("footer").remove();
-    $("div.banner-wrapper div.img-wrapper img").remove();
+if(!dom_ready()) {
+    myInterval = setInterval(() => {
+        dom_ready();
+    }, 200);
 }
-
-

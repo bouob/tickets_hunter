@@ -1,6 +1,19 @@
 const storage = chrome.storage.local;
 var settings = null;
-var myInterval = null;
+var checkboxInterval = null;
+var notNowInterval = null;
+
+function kktix_agree()
+{
+    $('input[type=checkbox]:not(:checked)').each(function() {
+        $(this).click();
+    });
+}
+
+function kktix_not_now()
+{
+    $("#guestModal.modal.in > div.modal-dialog > div > div.modal-footer > button.btn-default.pull-right").click();
+}
 
 function kktix_clean_exclude(settings)
 {
@@ -42,7 +55,7 @@ function kktix_force_auto_reload_by_timer()
             if(max_dwell_time <= 10) {
                 max_dwell_time = 10;
             }
-            console.log('We are going to force reload after few seconeds.');
+            console.log('We are going to force reload after '+ max_dwell_time +' seconeds.');
             setTimeout(function () {
                 location.reload();
             }, max_dwell_time * 1000);
@@ -62,6 +75,13 @@ storage.get('status', function (items)
 {
     if (items.status && items.status=='ON')
     {
+        checkboxInterval = setInterval(() => {
+            kktix_agree();
+        }, 100);
+
+        notNowInterval = setInterval(() => {
+            kktix_not_now();
+        }, 200);
         
         kktix_force_auto_reload_by_timer();
         setTimeout(function () {

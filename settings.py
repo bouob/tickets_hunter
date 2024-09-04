@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.23)"
+CONST_APP_VERSION = "MaxBot (2024.04.24)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -48,6 +48,7 @@ CONST_MAXBOT_EXTENSION_STATUS_JSON = "status.json"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+CONST_MAXBOT_SENDKEY_FILE = "MAXBOT_SENDKEY.txt"
 
 CONST_SERVER_PORT = 16888
 
@@ -127,7 +128,7 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["max_dwell_time"] = 60
+    config_dict["kktix"]["max_dwell_time"] = 90
 
     config_dict['cityline']={}
     config_dict["cityline"]["cityline_queue_retry"] = True
@@ -185,7 +186,7 @@ def get_default_config():
 
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
-    config_dict["advanced"]["auto_guess_options"] = True
+    config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
     
     # remote_url not under ocr, due to not only support ocr features.
@@ -380,6 +381,7 @@ def clean_tmp_file():
         ,CONST_MAXBOT_INT28_FILE
         ,CONST_MAXBOT_ANSWER_ONLINE_FILE
         ,CONST_MAXBOT_QUESTION_FILE
+        ,CONST_MAXBOT_SENDKEY_FILE
     ]
     for filepath in remove_file_list:
          util.force_remove_file(filepath)
@@ -479,6 +481,34 @@ class SaveJsonHandler(tornado.web.RequestHandler):
 
         self.finish()
 
+class SendkeyHandler(tornado.web.RequestHandler):
+    def post(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
+        _body = None
+        is_pass_check = True
+        errorMessage = ""
+        errorCode = 0
+
+        if is_pass_check:
+            is_pass_check = False
+            try :
+                _body = json.loads(self.request.body)
+                is_pass_check = True
+            except Exception:
+                errorMessage = "wrong json format"
+                errorCode = 1001
+                pass
+
+        if is_pass_check:
+            app_root = util.get_app_root()
+            config_filepath = os.path.join(app_root, CONST_MAXBOT_SENDKEY_FILE)
+            util.save_json(_body, config_filepath)
+
+        self.write({"return": True})
+
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
@@ -560,6 +590,7 @@ async def main_server():
     app = Application([
         ("/version", VersionHandler),
         ("/shutdown", ShutdownHandler),
+        ("/sendkey", SendkeyHandler),
 
         # status api
         ("/status", StatusHandler),

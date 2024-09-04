@@ -1,7 +1,7 @@
 {
     "homepage": "about:blank",
     "browser": "chrome",
-    "language": "\u7e41\u9ad4\u4e2d\u6587",
+    "language": "English",
     "ticket_number": 2,
     "refresh_datetime": "",
     "ocr_captcha": {
@@ -25,7 +25,7 @@
     "kktix": {
         "auto_press_next_step_button": true,
         "auto_fill_ticket_number": true,
-        "max_dwell_time": 60
+        "max_dwell_time": 90
     },
     "cityline": {
         "cityline_queue_retry": true
@@ -78,12 +78,12 @@
         "block_facebook_network": false,
         "headless": false,
         "verbose": false,
-        "auto_guess_options": true,
+        "auto_guess_options": false,
         "user_guess_string": "",
         "remote_url": "\"http://127.0.0.1:16888/\"",
         "auto_reload_page_interval": 0.1,
         "auto_reload_overheat_count": 4,
-        "auto_reload_overheat_cd": 1.0,
+        "auto_reload_overheat_cd": 1,
         "reset_browser_interval": 0,
         "proxy_server_port": "",
         "window_size": "480,1024",

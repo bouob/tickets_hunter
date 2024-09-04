@@ -52,6 +52,7 @@ const PUBLIC_SERVER_URL = "http://maxbot.dropboxlike.com:16888/";
 
 // dictionary
 const user_guess_string = document.querySelector('#user_guess_string');
+const auto_guess_options = document.querySelector('#auto_guess_options');
 
 
 // auto fill
@@ -158,6 +159,7 @@ function load_settins_to_form(settings)
         if(user_guess_string.value=='""') {
             user_guess_string.value='';
         }
+        auto_guess_options.checked = settings.advanced.auto_guess_options;
 
         // auto fill
         tixcraft_sid.value = settings.advanced.tixcraft_sid;
@@ -404,6 +406,8 @@ function save_changes_to_dict(silent_flag)
                 user_guess_string_string='';
             }
             settings.advanced.user_guess_string = user_guess_string_string;
+
+            settings.advanced.auto_guess_options = auto_guess_options.checked;
 
             // auto fill
             settings.advanced.tixcraft_sid = tixcraft_sid.value;

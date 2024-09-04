@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.23)"
+CONST_APP_VERSION = "MaxBot (2024.04.24)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -52,6 +52,7 @@ CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
+CONST_MAXBOT_SENDKEY_FILE = "MAXBOT_SENDKEY.txt"
 CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
 CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.doubleclick.net/*",
@@ -10866,6 +10867,54 @@ def check_refresh_datetime_occur(driver, target_time):
 
     return is_refresh_datetime_sent
 
+def sendkey_to_browser(driver):
+    all_command_done = True
+
+    sendkey_dict = None
+    try:
+        with open(CONST_MAXBOT_SENDKEY_FILE) as json_data:
+            sendkey_dict = json.load(json_data)
+            print(sendkey_dict)
+        #os.unlink(CONST_MAXBOT_SENDKEY_FILE)
+    except Exception as e:
+        print("error on open file")
+        print(e)
+        pass
+
+    if sendkey_dict:
+        if "command" in sendkey_dict:
+            for cmd_dict in sendkey_dict["command"]:
+                print("cmd_dict", cmd_dict)
+                if cmd_dict["type"] == "sendkey":
+                    print("sendkey")
+                    try:
+                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                        form_input_1.clear()
+                        form_input_1.click()
+                        form_input_1.send_keys(cmd_dict["text"])
+                    except Exception as exc:
+                        all_command_done = False
+                        print("error on sendkey")
+                        print(exc)
+                        pass
+                if cmd_dict["type"] == "click":
+                    print("click")
+                    try:
+                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                        form_input_1.click()
+                    except Exception as exc:
+                        all_command_done = False
+                        print("error on click")
+                        print(exc)
+                        pass
+                time.sleep(0.05)
+
+    if all_command_done:
+        try:
+            os.unlink(CONST_MAXBOT_SENDKEY_FILE)
+        except Exception as e:
+            pass
+
 def main(args):
     config_dict = get_config_dict(args)
 
@@ -10947,6 +10996,9 @@ def main(args):
             # sleep more when paused.
             time.sleep(0.1)
             continue
+
+        if os.path.exists(CONST_MAXBOT_SENDKEY_FILE):
+            sendkey_to_browser(driver)
 
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             maxbot_running_time = time.time() - maxbot_last_reset_time
