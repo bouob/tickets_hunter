@@ -12,6 +12,7 @@ import threading
 from typing import Optional
 
 import requests
+import uuid
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
@@ -2041,3 +2042,6 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
                 msg=str(exc)
                 print("exeption:", msg)
                 pass
+
+def get_token():
+    return str(uuid.uuid4().hex)

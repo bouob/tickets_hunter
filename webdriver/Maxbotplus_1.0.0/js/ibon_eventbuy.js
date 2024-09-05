@@ -113,8 +113,8 @@ async function ibon_set_ocr_answer_api(answer) {
     let api_url = get_remote_url(settings);
     let body = {
         command: [
-        {type: 'sendkey', selector: "div.editor-box > div > input[type='text']", text: answer},
-        {type: 'click', selector: 'div#ticket-wrap a.btn.btn-primary[href]'}
+        {type: 'sendkey', selector: "div.editor-box > div > input[type='text']", text: answer, token: settings.token},
+        {type: 'click', selector: 'div#ticket-wrap a.btn.btn-primary[href]', token: settings.token}
     ]};
     body = JSON.stringify(body);
 

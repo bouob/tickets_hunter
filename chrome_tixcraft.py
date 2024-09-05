@@ -10867,7 +10867,7 @@ def check_refresh_datetime_occur(driver, target_time):
 
     return is_refresh_datetime_sent
 
-def sendkey_to_browser(driver):
+def sendkey_to_browser(driver, config_dict):
     all_command_done = True
 
     sendkey_dict = None
@@ -10875,48 +10875,54 @@ def sendkey_to_browser(driver):
         with open(CONST_MAXBOT_SENDKEY_FILE) as json_data:
             sendkey_dict = json.load(json_data)
             print(sendkey_dict)
-        #os.unlink(CONST_MAXBOT_SENDKEY_FILE)
     except Exception as e:
         print("error on open file")
         print(e)
         pass
 
+    is_command_accepted = False
     if sendkey_dict:
         if "command" in sendkey_dict:
             for cmd_dict in sendkey_dict["command"]:
-                print("cmd_dict", cmd_dict)
-                if cmd_dict["type"] == "sendkey":
-                    print("sendkey")
-                    try:
-                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
-                        form_input_1.clear()
-                        form_input_1.click()
-                        form_input_1.send_keys(cmd_dict["text"])
-                    except Exception as exc:
-                        all_command_done = False
-                        print("error on sendkey")
-                        print(exc)
-                        pass
-                if cmd_dict["type"] == "click":
-                    print("click")
-                    try:
-                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
-                        form_input_1.click()
-                    except Exception as exc:
-                        all_command_done = False
-                        print("error on click")
-                        print(exc)
-                        pass
+                #print("cmd_dict", cmd_dict)
+                if cmd_dict["token"] == config_dict["token"]:
+                    is_command_accepted = True
+
+                    if cmd_dict["type"] == "sendkey":
+                        print("sendkey")
+                        try:
+                            form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                            form_input_1.clear()
+                            form_input_1.click()
+                            form_input_1.send_keys(cmd_dict["text"])
+                        except Exception as exc:
+                            all_command_done = False
+                            print("error on sendkey")
+                            print(exc)
+                            pass
+                    
+                    if cmd_dict["type"] == "click":
+                        print("click")
+                        try:
+                            form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                            form_input_1.click()
+                        except Exception as exc:
+                            all_command_done = False
+                            print("error on click")
+                            print(exc)
+                            pass
                 time.sleep(0.05)
 
-    if all_command_done:
-        try:
-            os.unlink(CONST_MAXBOT_SENDKEY_FILE)
-        except Exception as e:
-            pass
+    if is_command_accepted:
+        if all_command_done:
+            try:
+                os.unlink(CONST_MAXBOT_SENDKEY_FILE)
+            except Exception as e:
+                pass
 
 def main(args):
     config_dict = get_config_dict(args)
+    config_dict["token"] = util.get_token()
 
     driver = None
     if not config_dict is None:
@@ -10998,8 +11004,9 @@ def main(args):
             continue
 
         if os.path.exists(CONST_MAXBOT_SENDKEY_FILE):
-            sendkey_to_browser(driver)
+            sendkey_to_browser(driver, config_dict)
 
+        # default is 0, not reset.
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             maxbot_running_time = time.time() - maxbot_last_reset_time
             if maxbot_running_time > config_dict["advanced"]["reset_browser_interval"]:
