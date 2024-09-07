@@ -48,7 +48,6 @@ CONST_MAXBOT_EXTENSION_STATUS_JSON = "status.json"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
-CONST_MAXBOT_SENDKEY_FILE = "MAXBOT_SENDKEY.txt"
 
 CONST_SERVER_PORT = 16888
 
@@ -381,10 +380,15 @@ def clean_tmp_file():
         ,CONST_MAXBOT_INT28_FILE
         ,CONST_MAXBOT_ANSWER_ONLINE_FILE
         ,CONST_MAXBOT_QUESTION_FILE
-        ,CONST_MAXBOT_SENDKEY_FILE
     ]
     for filepath in remove_file_list:
          util.force_remove_file(filepath)
+
+    Root_Dir = util.get_app_root()
+    target_folder = os.listdir(Root_Dir)
+    for item in target_folder:
+        if item.endswith(".tmp"):
+            os.remove(os.path.join(Root_Dir, item))
 
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
@@ -504,8 +508,10 @@ class SendkeyHandler(tornado.web.RequestHandler):
 
         if is_pass_check:
             app_root = util.get_app_root()
-            config_filepath = os.path.join(app_root, CONST_MAXBOT_SENDKEY_FILE)
-            util.save_json(_body, config_filepath)
+            if "token" in _body:
+                tmp_file = _body["token"] + ".tmp"
+                config_filepath = os.path.join(app_root, tmp_file)
+                util.save_json(_body, config_filepath)
 
         self.write({"return": True})
 

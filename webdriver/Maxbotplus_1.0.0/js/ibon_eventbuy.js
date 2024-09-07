@@ -111,24 +111,27 @@ function ibon_set_ocr_answer(answer) {
 
 async function ibon_set_ocr_answer_api(answer) {
     let api_url = get_remote_url(settings);
-    let body = {
-        command: [
-        {type: 'sendkey', selector: "div.editor-box > div > input[type='text']", text: answer, token: settings.token},
-        {type: 'click', selector: 'div#ticket-wrap a.btn.btn-primary[href]', token: settings.token}
-    ]};
-    body = JSON.stringify(body);
+    if(api_url.indexOf("127.0.0.")>-1) {
+        let body = {
+            token: settings.token,
+            command: [
+            {type: 'sendkey', selector: "div.editor-box > div > input[type='text']", text: answer},
+            {type: 'click', selector: 'div#ticket-wrap a.btn.btn-primary[href]'}
+        ]};
+        body = JSON.stringify(body);
 
-    let bundle = {
-        action: 'post',
-        data: {
-            'url': api_url + 'sendkey',
-            'post_data': body,
-        }
-    };
+        let bundle = {
+            action: 'post',
+            data: {
+                'url': api_url + 'sendkey',
+                'post_data': body,
+            }
+        };
 
-    let bundle_string = JSON.stringify(bundle);
-    const return_answer = await chrome.runtime.sendMessage(bundle);
-    //console.log(return_answer);
+        let bundle_string = JSON.stringify(bundle);
+        const return_answer = await chrome.runtime.sendMessage(bundle);
+        //console.log(return_answer);
+    }
 }
 
 async function ibon_get_ocr_answer(api_url, image_data) {

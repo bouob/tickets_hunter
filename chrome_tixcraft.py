@@ -52,7 +52,6 @@ CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
-CONST_MAXBOT_SENDKEY_FILE = "MAXBOT_SENDKEY.txt"
 CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
 CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.doubleclick.net/*",
@@ -10868,11 +10867,19 @@ def check_refresh_datetime_occur(driver, target_time):
     return is_refresh_datetime_sent
 
 def sendkey_to_browser(driver, config_dict):
-    all_command_done = True
+    tmp_filepath = ""
+    if "token" in config_dict:
+        app_root = util.get_app_root()
+        tmp_file = config_dict["token"] + ".tmp"
+        tmp_filepath = os.path.join(app_root, tmp_file)
 
+    if os.path.exists(tmp_filepath):
+        sendkey_to_browser_exist(driver, tmp_filepath)
+
+def sendkey_to_browser_exist(driver, tmp_filepath):
     sendkey_dict = None
     try:
-        with open(CONST_MAXBOT_SENDKEY_FILE) as json_data:
+        with open(tmp_filepath) as json_data:
             sendkey_dict = json.load(json_data)
             print(sendkey_dict)
     except Exception as e:
@@ -10880,43 +10887,43 @@ def sendkey_to_browser(driver, config_dict):
         print(e)
         pass
 
-    is_command_accepted = False
     if sendkey_dict:
+        all_command_done = True
         if "command" in sendkey_dict:
             for cmd_dict in sendkey_dict["command"]:
                 #print("cmd_dict", cmd_dict)
-                if cmd_dict["token"] == config_dict["token"]:
-                    is_command_accepted = True
-
-                    if cmd_dict["type"] == "sendkey":
-                        print("sendkey")
-                        try:
-                            form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                if cmd_dict["type"] == "sendkey":
+                    print("sendkey")
+                    target_text = cmd_dict["text"]
+                    try:
+                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                        inputed_value_1 = form_input_1.get_attribute('value')
+                        if not inputed_value_1 == target_text:
                             form_input_1.clear()
                             form_input_1.click()
                             form_input_1.send_keys(cmd_dict["text"])
-                        except Exception as exc:
-                            all_command_done = False
-                            print("error on sendkey")
-                            print(exc)
-                            pass
-                    
-                    if cmd_dict["type"] == "click":
-                        print("click")
-                        try:
-                            form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
-                            form_input_1.click()
-                        except Exception as exc:
-                            all_command_done = False
-                            print("error on click")
-                            print(exc)
-                            pass
+                    except Exception as exc:
+                        all_command_done = False
+                        print("error on sendkey")
+                        print(exc)
+                        pass
+                
+                if cmd_dict["type"] == "click":
+                    print("click")
+                    try:
+                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
+                        form_input_1.click()
+                    except Exception as exc:
+                        all_command_done = False
+                        print("error on click")
+                        print(exc)
+                        pass
                 time.sleep(0.05)
 
-    if is_command_accepted:
+        # must all command success to delete tmp file.
         if all_command_done:
             try:
-                os.unlink(CONST_MAXBOT_SENDKEY_FILE)
+                os.unlink(tmp_filepath)
             except Exception as e:
                 pass
 
@@ -11003,8 +11010,7 @@ def main(args):
             time.sleep(0.1)
             continue
 
-        if os.path.exists(CONST_MAXBOT_SENDKEY_FILE):
-            sendkey_to_browser(driver, config_dict)
+        sendkey_to_browser(driver, config_dict)
 
         # default is 0, not reset.
         if config_dict["advanced"]["reset_browser_interval"] > 0:
