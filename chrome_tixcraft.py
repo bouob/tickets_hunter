@@ -115,7 +115,7 @@ CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 CONST_PREFS_DICT = {
     "credentials_enable_service": False, 
     "in_product_help.snoozed_feature.IPH_LiveCaption.is_dismissed": True,
@@ -1989,6 +1989,7 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                     form_verifyCode.send_keys(answer)
 
                     if auto_submit:
+                        check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
                         form_verifyCode.send_keys(Keys.ENTER)
                         is_verifyCode_editing = False
                         is_form_sumbited = True
@@ -9537,6 +9538,7 @@ def ticketplus_date_auto_select(driver, config_dict):
                     if len(formated_area_list) == 0:
                         # in fact, no need reload on /activity/ page, should reload in /order/ page.
                         try:
+                            print('!!!!!!! Refreshing !!!!!!!')
                             driver.refresh()
                             time.sleep(0.3)
                         except Exception as exc:
@@ -9623,7 +9625,7 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
     return is_price_assign_by_bot
 
 def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style):
-    show_debug_message = True       # debug.
+    # show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
@@ -9731,6 +9733,10 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
                 if len(row_text) > 0:
                     formated_area_list.append(row)
+                    
+                if len(row_text) > 0:
+                    if '開賣時間' in row_text:
+                        is_need_refresh = True
 
             if soldout_count > 0:
                 if show_debug_message:
@@ -9825,6 +9831,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             if not target_area is None:
                 try:
                     #PS: must click on button instead of div to expand lay.
+                    print(f'Try selecting {target_area.text}')
                     my_css_selector = 'button'
                     target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
                     target_button.click()
@@ -9834,7 +9841,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     #target_area.click()
                 except Exception as exc:
                     print("click target_area link fail")
-                    print(exc)
+                    # print(exc)
                     # use plan B
                     try:
                         print("force to click by js.")
@@ -9911,17 +9918,26 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             # empty keyword, match all.
             is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
 
+        print(f'!!!!!!!!!!!! 尚未開賣, 刷新啦 !!!!!!!!!!!!')
         if is_need_refresh:
             # vue mode, refresh need to check more conditions to check.
             print('start to refresh page.')
-            try:
-                driver.refresh()
-                time.sleep(0.3)
-            except Exception as exc:
-                pass
+            
+            overlays = driver.find_elements(By.CSS_SELECTOR, 'div.v-overlay')
+            for overlay in overlays:
+                refresh_button = driver.find_element(By.CSS_SELECTOR, 'button.float-btn')
+                if refresh_button:
+                    refresh_button.click()
+                    break
+  
+            # try:
+            #     driver.refresh()
+            #     time.sleep(0.3)
+            # except Exception as exc:
+            #     pass
 
-            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            # if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+            #     time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 
