@@ -12,14 +12,13 @@ import threading
 from typing import Optional
 
 import requests
-import uuid
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
 
 def get_ip_address():
     gethostname = None
@@ -2042,6 +2041,3 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
                 msg=str(exc)
                 print("exeption:", msg)
                 pass
-
-def get_token():
-    return str(uuid.uuid4().hex)

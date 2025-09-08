@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2025.09.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -206,6 +206,7 @@ def load_translate():
     en_us["ticket_password"] = 'TICKET password'
     en_us["udn_password"] = 'UDN password'
     en_us["ticketplus_password"] = 'TicketPlus password'
+    en_us["ticketplus_use_culture_coin"] = 'Use Culture Coin discount'
     en_us["save_password_alert"] = 'Saving passwords to config file may expose your passwords.'
 
     en_us["play_ticket_sound"] = 'Play sound when ticketing'
@@ -325,6 +326,7 @@ def load_translate():
     zh_tw["ticket_password"] = '年代 密碼'
     zh_tw["udn_password"] = 'UDN 密碼'
     zh_tw["ticketplus_password"] = '遠大 密碼'
+    zh_tw["ticketplus_use_culture_coin"] = '使用文化幣折抵'
     zh_tw["save_password_alert"] = '將密碼保存到設定檔中可能會讓您的密碼被盜。'
 
     zh_tw["play_ticket_sound"] = '有票時播放音效'
@@ -341,251 +343,10 @@ def load_translate():
     zh_tw["release"] = '所有可用版本'
     zh_tw["help"] = '使用教學'
 
-    zh_cn={}
-    zh_cn["homepage"] = '售票网站'
-    zh_cn["browser"] = '浏览器'
-    zh_cn["language"] = '语言'
-    zh_cn["ticket_number"] = '门票张数'
-    zh_cn["refresh_datetime"] = '刷新在指定时间'
 
-    zh_cn["enable"] = '启用'
-    zh_cn["recommand_enable"] = "建议启用"
-
-    zh_cn["auto_press_next_step_button"] = 'KKTIX自动点选下一步按钮'
-    zh_cn["auto_fill_ticket_number"] = '自动输入张数'
-    zh_cn["and"] = '而且（同列）'
-
-    zh_cn["local_dictionary"] = '本地字典'
-    zh_cn["remote_url"] = '远端网址'
-    zh_cn["server_url"] = '服务器地址'
-    zh_cn["auto_guess_options"] = '自动猜测验证问题'
-    zh_cn["user_guess_string"] = '验证问题的答案列表'
-    zh_cn["preview"] = '预览'
-    zh_cn["question"] = '验证问题'
-    zh_cn["answer"] = '答案'
-
-    zh_cn["date_auto_select"] = '日期自动点选'
-    zh_cn["date_select_order"] = '日期排序方式'
-    zh_cn["date_keyword"] = '日期关键字'
-    zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
-    zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
-    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
-    zh_cn["cityline_queue_retry"] = 'cityline queue retry'
-    zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
-    zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
-    zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
-    zh_cn["window_size"] = '浏览器窗口大小'
-
-    zh_cn["area_select_order"] = '区域排序方式'
-    zh_cn["area_keyword"] = '区域关键字'
-    zh_cn["area_auto_select"] = '区域自动点选'
-    zh_cn["keyword_exclude"] = '排除关键字'
-    zh_cn["keyword_usage"] = '每组关键字需要双引号, 用逗号分隔, \n在关键字中使用空格作为 AND 逻辑。\n附加 ,\"\" 以匹配所有结果。'
-
-    zh_cn["ocr_captcha"] = '猜测验证码'
-    zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
-    zh_cn["ocr_captcha_force_submit"] = '挂机模式'
-    zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
-    zh_cn["webdriver_type"] = 'WebDriver类别'
-    zh_cn["headless"] = '无图形界面模式'
-    zh_cn["verbose"] = '输出详细除错讯息'
-    zh_cn["running_status"] = '执行状态'
-    zh_cn["running_url"] = '执行网址'
-    zh_cn["system_clock"] = '系统时钟'
-    zh_cn["idle_keyword"] = '暂停关键字'
-    zh_cn["resume_keyword"] = '接续关键字'
-    zh_cn["idle_keyword_second"] = '暂停关键字(秒)'
-    zh_cn["resume_keyword_second"] = '接续关键字(秒)'
-    
-    zh_cn["status_idle"] = '闲置中'
-    zh_cn["status_paused"] = '已暂停'
-    zh_cn["status_enabled"] = '已启用'
-    zh_cn["status_running"] = '执行中'
-
-    zh_cn["idle"] = '暂停抢票'
-    zh_cn["resume"] = '接续抢票'
-
-    zh_cn["preference"] = '偏好设定'
-    zh_cn["advanced"] = '进阶设定'
-    zh_cn["verification_word"] = "验证字"
-    zh_cn["maxbot_server"] = '伺服器'
-    zh_cn["autofill"] = '自动填表单'
-    zh_cn["runtime"] = '运行'
-    zh_cn["about"] = '关于'
-    zh_cn["copy"] = '复制'
-
-    zh_cn["run"] = '抢票'
-    zh_cn["save"] = '存档'
-    zh_cn["exit"] = '关闭'
-    zh_cn["copy"] = '复制'
-    zh_cn["restore_defaults"] = '恢复默认值'
-    zh_cn["config_launcher"] = '设定档管理'
-    zh_cn["done"] = '完成'
-
-    zh_cn["tixcraft_sid"] = '拓元家族 cookie SID'
-    zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
-    zh_cn["facebook_account"] = 'Facebook 帐号'
-    zh_cn["kktix_account"] = 'KKTIX 帐号'
-    zh_cn["fami_account"] = 'FamiTicket 帐号'
-    zh_cn["cityline_account"] = 'cityline 帐号'
-    zh_cn["urbtix_account"] = 'URBTIX 帐号'
-    zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
-    zh_cn["kham_account"] = '宽宏 帐号'
-    zh_cn["ticket_account"] = '年代 帐号'
-    zh_cn["udn_account"] = 'UDN 帐号'
-    zh_cn["ticketplus_account"] = '远大 帐号'
-
-    zh_cn["password"] = '密码'
-    zh_cn["facebook_password"] = 'Facebook 密码'
-    zh_cn["kktix_password"] = 'KKTIX 密码'
-    zh_cn["fami_password"] = 'FamiTicket 密码'
-    zh_cn["cityline_password"] = 'cityline 密码'
-    zh_cn["urbtix_password"] = 'URBTIX 密码'
-    zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
-    zh_cn["kham_password"] = '宽宏 密码'
-    zh_cn["ticket_password"] = '年代 密码'
-    zh_cn["udn_password"] = 'UDN 密码'
-    zh_cn["ticketplus_password"] = '远大 密码'
-    zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
-
-    zh_cn["play_ticket_sound"] = '有票时播放音效'
-    zh_cn["play_order_sound"] = '订购时播放音效'
-    zh_cn["play_sound_filename"] = '音效档'
-    
-    zh_cn["chrome_extension"] = "Chrome 浏览器扩展程序"
-    zh_cn["disable_adjacent_seat"] = "允许不连续座位"
-    zh_cn["hide_some_image"] = "隐藏一些图像"
-    zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
-
-    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
-    zh_cn["donate"] = '打赏'
-    zh_cn["help"] = '使用教学'
-    zh_cn["release"] = '所有可用版本'
-
-    ja_jp={}
-    ja_jp["homepage"] = 'ホームページ'
-    ja_jp["browser"] = 'ブラウザ'
-    ja_jp["language"] = '言語'
-    ja_jp["ticket_number"] = '枚数'
-    ja_jp["refresh_datetime"] = '目標時間にリフレッシュ'
-
-    ja_jp["enable"] = '有効'
-    ja_jp["recommand_enable"] = "有効化を推奨"
-
-    ja_jp["auto_press_next_step_button"] = 'KKTIX次を自動で押す'
-    ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
-    ja_jp["and"] = 'そして（同列）'
-
-    ja_jp["local_dictionary"] = 'ローカル辞書'
-    ja_jp["remote_url"] = 'リモートURL'
-    ja_jp["server_url"] = 'サーバーURL'
-    ja_jp["auto_guess_options"] = '自動推測検証問題'
-    ja_jp["user_guess_string"] = '検証用の質問の回答リスト'
-    ja_jp["preview"] = 'プレビュー'
-    ja_jp["question"] = '質問'
-    ja_jp["answer"] = '答え'
-
-    ja_jp["date_auto_select"] = '日付自動選択'
-    ja_jp["date_select_order"] = '日付のソート方法'
-    ja_jp["date_keyword"] = '日付キーワード'
-    ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
-    ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
-    ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
-    ja_jp["max_dwell_time"] = '最大滞留時間(秒)'
-    ja_jp["cityline_queue_retry"] = 'cityline queue retry'
-    ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
-    ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
-    ja_jp["window_size"] = 'ウィンドウサイズ'
-
-    ja_jp["area_select_order"] = 'エリアソート方法'
-    ja_jp["area_keyword"] = 'エリアキーワード'
-    ja_jp["area_auto_select"] = 'エリア自動選択'
-    ja_jp["keyword_exclude"] = '除外キーワード'
-    ja_jp["keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
-
-    ja_jp["ocr_captcha"] = 'キャプチャを推測する'
-    ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
-    ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
-    ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
-    ja_jp["webdriver_type"] = 'WebDriverタイプ'
-    ja_jp["headless"] = 'ヘッドレスモード'
-    ja_jp["verbose"] = '詳細モード'
-    ja_jp["running_status"] = 'スターテス'
-    ja_jp["running_url"] = '現在の URL'
-    ja_jp["system_clock"] = 'システムクロック'
-    ja_jp["idle_keyword"] = 'アイドルキーワード'
-    ja_jp["resume_keyword"] = '再起動キーワード'
-    ja_jp["idle_keyword_second"] = 'アイドルキーワード（秒）'
-    ja_jp["resume_keyword_second"] = '再起動キーワード（秒）'
-    
-    ja_jp["status_idle"] = 'アイドル状態'
-    ja_jp["status_paused"] = '一時停止'
-    ja_jp["status_enabled"] = '有効'
-    ja_jp["status_running"] = 'ランニング'
-
-    ja_jp["idle"] = 'アイドル'
-    ja_jp["resume"] = '再起動'
-
-    ja_jp["preference"] = '設定'
-    ja_jp["advanced"] = '高度な設定'
-    ja_jp["verification_word"] = "確認の言葉"
-    ja_jp["maxbot_server"] = 'サーバ'
-    ja_jp["autofill"] = 'オートフィル'
-    ja_jp["runtime"] = 'ランタイム'
-    ja_jp["about"] = '情報'
-
-    ja_jp["run"] = 'チケットを取る'
-    ja_jp["save"] = '保存'
-    ja_jp["exit"] = '閉じる'
-    ja_jp["copy"] = 'コピー'
-    ja_jp["restore_defaults"] = 'デフォルトに戻す'
-    ja_jp["config_launcher"] = 'ランチャー'
-    ja_jp["done"] = '終わり'
-
-    ja_jp["tixcraft_sid"] = '拓元家 cookie SID'
-    ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
-    ja_jp["facebook_account"] = 'Facebookのアカウント'
-    ja_jp["kktix_account"] = 'KKTIXのアカウント'
-    ja_jp["fami_account"] = 'FamiTicketのアカウント'
-    ja_jp["cityline_account"] = 'citylineのアカウント'
-    ja_jp["urbtix_account"] = 'URBTIXのアカウント'
-    ja_jp["hkticketing_account"] = 'HKTICKETINGのアカウント'
-    ja_jp["kham_account"] = 'KHAMのアカウント'
-    ja_jp["ticket_account"] = 'TICKETのアカウント'
-    ja_jp["udn_account"] = 'UDNのアカウント'
-    ja_jp["ticketplus_account"] = '遠大のアカウント'
-
-    ja_jp["password"] = 'パスワード'
-    ja_jp["facebook_password"] = 'Facebookのパスワード'
-    ja_jp["kktix_password"] = 'KKTIXのパスワード'
-    ja_jp["fami_password"] = 'FamiTicketのパスワード'
-    ja_jp["cityline_password"] = 'citylineのパスワード'
-    ja_jp["urbtix_password"] = 'URBTIXのパスワード'
-    ja_jp["hkticketing_password"] = 'HKTICKETINGのパスワード'
-    ja_jp["kham_password"] = 'KHAMのパスワード'
-    ja_jp["ticket_password"] = 'TICKETのパスワード'
-    ja_jp["udn_password"] = 'UDNのパスワード'
-    ja_jp["ticketplus_password"] = '遠大のパスワード'
-    ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
-
-    ja_jp["play_ticket_sound"] = '有票時に音を鳴らす'
-    ja_jp["play_order_sound"] = '注文時に音を鳴らす'
-    ja_jp["play_sound_filename"] = 'サウンドファイル'
-    
-    ja_jp["chrome_extension"] = "Chrome ブラウザ拡張機能"
-    ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
-    ja_jp["hide_some_image"] = "一部の画像を非表示にする"
-    ja_jp["block_facebook_network"] = "Facebookをブロックする"
-
-    ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
-    ja_jp["donate"] = '寄付'
-    ja_jp["help"] = '利用方法'
-    ja_jp["release"] = 'リリース'
 
     translate['en_us']=en_us
     translate['zh_tw']=zh_tw
-    translate['zh_cn']=zh_cn
-    translate['ja_jp']=ja_jp
     return translate
 
 def get_default_config():
@@ -618,7 +379,7 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["max_dwell_time"] = 90
+    config_dict["kktix"]["max_dwell_time"] = 60
 
     config_dict['cityline']={}
     config_dict["cityline"]["cityline_queue_retry"] = True
@@ -626,6 +387,9 @@ def get_default_config():
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
+
+    config_dict['ticketplus']={}
+    config_dict["ticketplus"]["use_culture_coin"] = False
 
     config_dict['advanced']={}
 
@@ -676,7 +440,7 @@ def get_default_config():
 
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
-    config_dict["advanced"]["auto_guess_options"] = False
+    config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
 
@@ -831,6 +595,8 @@ def btn_save_act(slience_mode=False):
     global txt_ticket_password
     global txt_udn_password
     global txt_ticketplus_password
+
+    global chk_state_ticketplus_use_culture_coin
 
     global chk_state_play_ticket_sound
     global chk_state_play_order_sound
@@ -1062,6 +828,8 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["udn_password"] = txt_udn_password.get().strip()
         config_dict["advanced"]["ticketplus_password"] = txt_ticketplus_password.get().strip()
 
+        config_dict["ticketplus"]["use_culture_coin"] = bool(chk_state_ticketplus_use_culture_coin.get())
+
         config_dict["advanced"]["tixcraft_sid"] = config_dict["advanced"]["tixcraft_sid"]
         config_dict["advanced"]["ibonqware"] = config_dict["advanced"]["ibonqware"]
 
@@ -1133,6 +901,69 @@ def launch_maxbot():
         launch_counter += 1
     else:
         launch_counter = 0
+    
+    # 讀取設定檔案以偵測 KKTIX 網站
+    config_dict = None
+    try:
+        config_dict = get_config_dict()
+    except Exception as e:
+        print(f"讀取設定檔案時發生錯誤: {e}")
+    
+    # 偵測是否為 KKTIX 網站並檢查 Chrome Debug 模式
+    if config_dict:
+        homepage = config_dict.get("homepage", "")
+        is_kktix_site = 'kktix.c' in homepage.lower()
+        
+        if is_kktix_site:
+            print("偵測到 KKTIX 網站，檢查 Chrome Debug 模式...")
+            
+            # 檢查是否有可用的 Chrome Debug 實例
+            chrome_debug_available = False
+            debug_port = None
+            
+            # 檢查端口檔案
+            if os.path.exists('maxbot_chrome_port.txt'):
+                try:
+                    with open('maxbot_chrome_port.txt', 'r') as f:
+                        debug_port = int(f.read().strip())
+                    
+                    # 測試連接
+                    import requests
+                    response = requests.get(f"http://localhost:{debug_port}/json", timeout=2)
+                    if response.status_code == 200:
+                        chrome_debug_available = True
+                        print(f"找到可用的 Chrome Debug 實例（端口: {debug_port}）")
+                    
+                except Exception as e:
+                    print(f"Chrome Debug 檢查失敗: {e}")
+            
+            if not chrome_debug_available:
+                print("未找到 Chrome Debug 實例")
+                print("請先執行: python kktix_launcher.py")
+                print("   或手動啟動 Chrome Debug 模式")
+                
+                # 詢問是否要自動啟動 Chrome Debug
+                import tkinter.messagebox as msgbox
+                result = msgbox.askyesno(
+                    "KKTIX Chrome Debug 模式", 
+                    "偵測到 KKTIX 網站，但未找到 Chrome Debug 實例。\n\n是否要自動啟動 Chrome Debug 模式？"
+                )
+                
+                if result:
+                    try:
+                        # 呼叫 kktix_launcher 的函數
+                        import subprocess
+                        import sys
+                        subprocess.Popen([sys.executable, 'kktix_launcher.py'])
+                        print("已啟動 KKTIX Chrome Debug 工具")
+                        msgbox.showinfo("提示", "Chrome Debug 工具已啟動，請完成設定後重新點擊執行")
+                        return
+                    except Exception as e:
+                        print(f"啟動 Chrome Debug 工具失敗: {e}")
+                        msgbox.showerror("錯誤", f"啟動 Chrome Debug 工具失敗: {e}")
+                        return
+                else:
+                    return
     
     webdriver_type = ""
     global combo_webdriver_type
@@ -1246,10 +1077,6 @@ def get_language_code_by_name(new_language):
     language_code = "en_us"
     if u'繁體中文' in new_language:
         language_code = 'zh_tw'
-    if u'簡体中文' in new_language:
-        language_code = 'zh_cn'
-    if u'日本語' in new_language:
-        language_code = 'ja_jp'
     #print("new language code:", language_code)
 
     return language_code
@@ -1978,7 +1805,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
+    combo_language['values']= ("English","繁體中文")
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
@@ -2594,6 +2421,17 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_ticketplus_password = Entry(frame_group_header, width=15, textvariable = txt_ticketplus_password_value, show="*")
     txt_ticketplus_password.grid(column=2, row=group_row_count, sticky = W)
 
+    # 文化幣選項
+    global chk_state_ticketplus_use_culture_coin
+    chk_state_ticketplus_use_culture_coin = BooleanVar()
+    try:
+        chk_state_ticketplus_use_culture_coin.set(config_dict["ticketplus"]["use_culture_coin"])
+    except:
+        chk_state_ticketplus_use_culture_coin.set(False)
+    
+    chk_ticketplus_use_culture_coin = Checkbutton(frame_group_header, text=translate[language_code]['ticketplus_use_culture_coin'], variable=chk_state_ticketplus_use_culture_coin)
+    chk_ticketplus_use_culture_coin.grid(column=3, row=group_row_count, sticky = W)
+
     group_row_count +=1
 
     global lbl_save_password_alert
@@ -3198,12 +3036,6 @@ def clean_tmp_file():
     for filepath in remove_file_list:
          util.force_remove_file(filepath)
 
-    Root_Dir = util.get_app_root()
-    target_folder = os.listdir(Root_Dir)
-    for item in target_folder:
-        if item.endswith(".tmp"):
-            os.remove(os.path.join(Root_Dir, item))
-
 def btn_copy_ip_clicked():
     local_ip = util.get_ip_address()
     ip_address = "http://%s:%d/" % (local_ip,CONST_SERVER_PORT)
@@ -3251,36 +3083,6 @@ class QuestionHandler(tornado.web.RequestHandler):
 class VersionHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"version":self.application.version})
-
-class SendkeyHandler(tornado.web.RequestHandler):
-    def post(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-
-        _body = None
-        is_pass_check = True
-        errorMessage = ""
-        errorCode = 0
-
-        if is_pass_check:
-            is_pass_check = False
-            try :
-                _body = json.loads(self.request.body)
-                is_pass_check = True
-            except Exception:
-                errorMessage = "wrong json format"
-                errorCode = 1001
-                pass
-
-        if is_pass_check:
-            app_root = util.get_app_root()
-            if "token" in _body:
-                tmp_file = _body["token"] + ".tmp"
-                config_filepath = os.path.join(app_root, tmp_file)
-                util.save_json(_body, config_filepath)
-
-        self.write({"return": True})
 
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
@@ -3341,8 +3143,6 @@ async def main_server():
     app = Application([
         ("/", MainHandler),
         ("/version", VersionHandler),
-        ("/sendkey", SendkeyHandler),
-
         ("/ocr", OcrHandler),
         ("/query", MainHandler),
         ("/question", QuestionHandler),

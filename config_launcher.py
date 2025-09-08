@@ -24,7 +24,7 @@ import webbrowser
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -78,44 +78,6 @@ def load_translate():
             "release": '所有可用版本',
             "help": '使用教學'
         },
-        'zh_cn': {
-            "language": '语言',
-            "enable": '启用',
-            "config_list": '设定档管理',
-            "advanced": '進階設定',
-            "autofill": '自动填表单',
-            "about": '关于',
-            "run": '抢票',
-            "browse": '开启...',
-            "save": '存档',
-            "exit": '关闭',
-            "copy": '复制',
-            "restore_defaults": '恢复默认值',
-            "done": '完成',
-            "maxbot_slogan": 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。',
-            "donate": '打赏',
-            "help": '使用教学',
-            "release": '所有可用版本'
-        },
-        'ja_jp': {
-            "language": '言語',
-            "enable": '有効',
-            "config_list": 'Config List',
-            "advanced": '高度な設定',
-            "autofill": 'オートフィル',
-            "about": '情報',
-            "run": 'チケットを取る',
-            "browse": '開ける...',
-            "save": '保存',
-            "exit": '閉じる',
-            "copy": 'コピー',
-            "restore_defaults": 'デフォルトに戻す',
-            "done": '終わり',
-            "maxbot_slogan": 'MaxRegBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。',
-            "donate": '寄付',
-            "help": '利用方法',
-            "release": 'リリース'
-        }
     }
     return translate
 
@@ -199,10 +161,6 @@ def get_language_code_by_name(new_language):
     language_code = "en_us"
     if '繁體中文' in new_language:
         language_code = 'zh_tw'
-    if '簡体中文' in new_language:
-        language_code = 'zh_cn'
-    if '日本語' in new_language:
-        language_code = 'ja_jp'
     return language_code
 
 def applyNewLanguage():
@@ -406,7 +364,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly")
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
+    combo_language['values']= ("English","繁體中文")
     combo_language.set(config_dict["advanced"]['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)

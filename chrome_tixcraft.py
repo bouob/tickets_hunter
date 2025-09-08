@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -115,7 +115,7 @@ CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
 CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
 CONST_PREFS_DICT = {
     "credentials_enable_service": False, 
     "in_product_help.snoozed_feature.IPH_LiveCaption.is_dismissed": True,
@@ -294,10 +294,26 @@ def get_chrome_options(webdriver_path, config_dict):
     chrome_options.add_argument("--no-service-autorun")
     chrome_options.add_argument("--password-store=basic")
 
-    # for navigator.webdriver
+    # 檢查是否為 KKTIX 網站，決定是否套用反機器人檢測設定
+    homepage = config_dict["homepage"]
+    is_kktix_site = 'kktix.c' in homepage
+    
+    # 隱藏自動化控制標識（所有網站都需要）
     chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
-    # Deprecated chrome option is ignored: useAutomationExtension
-    #chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    
+    if not is_kktix_site:
+        # 額外的 Cloudflare 反偵測參數 (僅非 KKTIX 網站)
+        chrome_options.add_argument("--disable-extensions-http-throttling")
+        chrome_options.add_argument("--disable-ipc-flooding-protection")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--allow-running-insecure-content")
+        chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+        print("套用完整反機器人檢測設定")
+    else:
+        print("偵測到 KKTIX 網站，僅套用基本隱藏自動化設定")
+    
     chrome_options.add_experimental_option("prefs", CONST_PREFS_DICT)
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
@@ -453,6 +469,21 @@ def get_uc_options(uc, config_dict, webdriver_path):
     options.add_argument("--no-service-autorun")
     options.add_argument("--password-store=basic")
     options.add_experimental_option("prefs", CONST_PREFS_DICT)
+    
+    # 檢查是否為 KKTIX 網站，決定是否套用反機器人檢測設定
+    homepage = config_dict["homepage"]
+    is_kktix_site = 'kktix.c' in homepage
+    
+    # 基本隱藏自動化設定（所有網站都需要）
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    
+    if not is_kktix_site:
+        # 額外的 Cloudflare 反偵測參數 (僅非 KKTIX 網站)
+        options.add_argument("--disable-extensions-http-throttling")
+        options.add_argument("--disable-ipc-flooding-protection")
+        pass  # UC 模式：套用完整反機器人檢測設定
+    else:
+        pass  # UC 模式：偵測到 KKTIX 網站，僅套用基本隱藏自動化設定
 
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         options.add_argument('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
@@ -463,6 +494,88 @@ def get_uc_options(uc, config_dict, webdriver_path):
             options.binary_location = brave_path
 
     return options
+
+def connect_existing_chrome():
+    """
+    連接現有的 Chrome 瀏覽器實例
+    需要先手動啟動 Chrome 並開啟遠端除錯功能：
+    chrome.exe --remote-debugging-port=9222
+    """
+    try:
+        from selenium.webdriver.chrome.options import Options
+        
+        # 檢查是否有 MaxBot 專用的 Chrome debugging 實例
+        import requests
+        
+        # 優先檢查 MaxBot 啟動器建立的 Chrome 實例
+        debug_port = 9222  # 預設端口
+        port_file = "maxbot_chrome_port.txt"
+        
+        if os.path.exists(port_file):
+            try:
+                with open(port_file, 'r') as f:
+                    debug_port = int(f.read().strip())
+                print(f"📍 偵測到 MaxBot 專用 Chrome 端口: {debug_port}")
+            except:
+                print("⚠️ 無法讀取 Chrome 端口檔案，使用預設端口 9222")
+        
+        try:
+            print(f"正在檢查 Chrome 實例（端口: {debug_port}）...")
+            response = requests.get(f"http://localhost:{debug_port}/json", timeout=5)
+            if response.status_code == 200:
+                tabs = response.json()
+                if len(tabs) > 0:
+                    print(f"找到 {len(tabs)} 個現有 Chrome 分頁")
+                    
+                    # 取得 ChromeDriver 路徑
+                    Root_Dir = util.get_app_root()
+                    webdriver_path = os.path.join(Root_Dir, "webdriver")
+                    chromedriver_path = get_chromedriver_path(webdriver_path)
+                    
+                    # 連接到現有的 Chrome 實例
+                    chrome_options = Options()
+                    chrome_options.add_experimental_option("debuggerAddress", f"localhost:{debug_port}")
+                    
+                    # 設定服務並指定 ChromeDriver 路徑
+                    from selenium.webdriver.chrome.service import Service
+                    service = Service(chromedriver_path)
+                    
+                    print("正在連接現有 Chrome 瀏覽器...")
+                    try:
+                        # 設定短超時來避免卡住
+                        import time
+                        start_time = time.time()
+                        
+                        driver = webdriver.Chrome(service=service, options=chrome_options)
+                        
+                        # 測試連接是否成功
+                        driver.execute_script("return document.readyState;")
+                        
+                        elapsed = time.time() - start_time
+                        print(f"✅ 成功連接到現有 Chrome 瀏覽器 (耗時: {elapsed:.1f}s)")
+                        
+                        # 檢查當前 URL，如果不是目標頁面則自動導航
+                        try:
+                            current_url = driver.current_url
+                            print(f"📍 目前頁面: {current_url}")
+                        except:
+                            print("📍 目前頁面: 未知")
+                            
+                        return driver
+                    except Exception as driver_error:
+                        print(f"WebDriver 連接失敗: {driver_error}")
+                        return None
+                else:
+                    print("Chrome 實例存在但沒有分頁")
+            else:
+                print(f"Chrome 除錯端口回應異常: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"無法連接到 Chrome 除錯端口: {e}")
+            
+    except Exception as e:
+        print(f"連接現有瀏覽器失敗: {e}")
+    
+    return None
 
 def load_chromdriver_uc(config_dict):
     import undetected_chromedriver as uc
@@ -624,10 +737,44 @@ def get_driver_by_config(config_dict):
     #print("platform.system().lower():", platform.system().lower())
 
     if config_dict["browser"] in ["chrome","brave"]:
+        # 針對 KKTIX 網站使用普通 Selenium 避免 Cloudflare 檢測
+        homepage = config_dict["homepage"]
+        is_kktix_site = 'kktix.c' in homepage
+        
+        # 對 KKTIX 網站優先嘗試連接現有瀏覽器
+        if is_kktix_site:
+            print("偵測到 KKTIX 網站，嘗試連接現有 Chrome 瀏覽器...")
+            driver = connect_existing_chrome()
+            if driver is not None:
+                print("✅ 成功使用現有瀏覽器，避免被檢測為機器人")
+                
+                # 檢查是否需要導航到目標頁面
+                try:
+                    current_url = driver.current_url
+                    if homepage and homepage not in current_url:
+                        print(f"🌐 自動導航到目標頁面: {homepage}")
+                        driver.get(homepage)
+                        time.sleep(2)  # 等待頁面載入
+                        
+                        # 檢查是否需要登入
+                        if '/users/sign_in' in driver.current_url:
+                            print("⚠️  頁面要求登入，請手動登入後繼續")
+                            print("💡 搶票程式將等待您完成登入...")
+                except Exception as e:
+                    print(f"導航頁面時出錯: {e}")
+                
+                return driver
+            else:
+                print("⚠️  無法連接現有瀏覽器，改用 Selenium")
+                print("💡 提示：可以使用 kktix_launcher.py 自動啟動，或手動執行:")
+                print("   chrome.exe --remote-debugging-port=9222")
+        
         # method 6: Selenium Stealth
-        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_SELENIUM:
-            driver = load_chromdriver_normal(config_dict, config_dict["webdriver_type"])
-        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_UC:
+        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_SELENIUM or is_kktix_site:
+            if is_kktix_site:
+                print("偵測到 KKTIX 網站，使用普通 Selenium WebDriver")
+            driver = load_chromdriver_normal(config_dict, CONST_WEBDRIVER_TYPE_SELENIUM)
+        elif config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_UC:
             # method 5: uc
             # multiprocessing not work bug.
             if platform.system().lower()=="windows":
@@ -812,6 +959,47 @@ def get_driver_by_config(config_dict):
 
             print("goto url:", homepage)
             driver.get(homepage)
+            
+            # 針對所有網站注入基本反檢測腳本
+            is_kktix_site = 'kktix.c' in homepage
+            
+            if is_kktix_site:
+                # KKTIX 專用溫和反檢測腳本
+                stealth_js = """
+                // 只隱藏最基本的 webdriver 屬性
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+                """
+                print("偵測到 KKTIX 網站，使用溫和反檢測腳本")
+            else:
+                # 其他網站使用完整反檢測腳本
+                stealth_js = """
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => false,
+                });
+                
+                // 隱藏 Chrome 自動化標識
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+                
+                // 覆蓋 window.chrome
+                window.chrome = {
+                    runtime: {},
+                    csi: function() {}
+                };
+                
+                // 隱藏自動化控制相關屬性
+                delete window.navigator.__proto__.webdriver;
+                """
+                pass  # 使用正常用戶模式，保留 cookie 和瀏覽記錄
+                
+            try:
+                driver.execute_script(stealth_js)
+            except:
+                pass
+                
             time.sleep(3.0)
 
             tixcraft_family = False
@@ -1989,7 +2177,6 @@ def tixcraft_keyin_captcha_code(driver, answer = "", auto_submit = False):
                     form_verifyCode.send_keys(answer)
 
                     if auto_submit:
-                        check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
                         form_verifyCode.send_keys(Keys.ENTER)
                         is_verifyCode_editing = False
                         is_form_sumbited = True
@@ -2151,11 +2338,74 @@ def tixcraft_auto_ocr(driver, ocr, away_from_keyboard_enable, previous_answer, C
     return is_need_redo_ocr, previous_answer, is_form_sumbited
 
 def tixcraft_ticket_main_agree(driver, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_finish_checkbox_click = False
-    for i in range(3):
-        is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
+    
+    # 嘗試多種選擇器來找到同意條款checkbox
+    selectors = [
+        '#TicketForm_agree',
+        'input[name="TicketForm[agree]"]',
+        'input[type="checkbox"][value="1"]',
+        '.form-check-input[name="TicketForm[agree]"]'
+    ]
+    
+    for selector in selectors:
+        if show_debug_message:
+            print(f"嘗試選擇器: {selector}")
+        
+        for attempt in range(5):  # 增加重試次數
+            try:
+                # 等待元素出現
+                import time
+                time.sleep(0.5)
+                
+                agree_checkbox = driver.find_element(By.CSS_SELECTOR, selector)
+                if show_debug_message:
+                    print(f"找到同意條款checkbox: {selector}")
+                
+                # 檢查是否已經勾選
+                if agree_checkbox.is_selected():
+                    if show_debug_message:
+                        print("checkbox已經勾選")
+                    is_finish_checkbox_click = True
+                    break
+                
+                # 嘗試勾選
+                try:
+                    agree_checkbox.click()
+                    if show_debug_message:
+                        print("成功點擊checkbox")
+                    is_finish_checkbox_click = True
+                    break
+                except Exception as exc:
+                    try:
+                        driver.execute_script("arguments[0].click();", agree_checkbox)
+                        if show_debug_message:
+                            print("使用JS成功點擊checkbox")
+                        is_finish_checkbox_click = True
+                        break
+                    except Exception as exc2:
+                        if show_debug_message:
+                            print(f"點擊失敗: {exc2}")
+                        
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"選擇器 {selector} 找不到元素: {exc}")
+        
         if is_finish_checkbox_click:
             break
+    
+    if show_debug_message:
+        if is_finish_checkbox_click:
+            print("同意條款勾選成功")
+        else:
+            print("同意條款勾選失敗")
+    
     return is_finish_checkbox_click
 
 def get_tixcraft_ticket_select_by_keyword(driver, config_dict, area_keyword_item):
@@ -2335,16 +2585,8 @@ def tixcraft_assign_ticket_number(driver, config_dict):
 
 
 def tixcraft_ticket_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
-    is_agree_at_webdriver = False
-    if not config_dict["browser"] in CONST_CHROME_FAMILY:
-        is_agree_at_webdriver = True
-    else:
-        if not config_dict["advanced"]["chrome_extension"]:
-            is_agree_at_webdriver = True
-    if is_agree_at_webdriver:
-        # use extension instead of selenium.
-        # checkbox javascrit code at chrome extension.
-        tixcraft_ticket_main_agree(driver, config_dict)
+    # 確保同意條款勾選框總是會被處理
+    tixcraft_ticket_main_agree(driver, config_dict)
 
     is_ticket_number_assigned = False
 
@@ -5901,7 +6143,8 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
         away_from_keyboard_enable = False
     ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
 
-    for i in range(2):
+    # 自動勾選同意條款選取框
+    for i in range(3):
         is_finish_checkbox_click = check_checkbox(driver, By.CSS_SELECTOR, '#TicketForm_agree')
         if is_finish_checkbox_click:
             break
@@ -5926,6 +6169,7 @@ def ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
             current_url, is_quit_bot = get_current_url(driver)
             if current_url != last_url:
                 break
+
 
 def tixcraft_main(driver, url, config_dict, ocr, Captcha_Browser):
     global tixcraft_dict
@@ -6006,8 +6250,10 @@ def tixcraft_main(driver, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["area_retry_count"]=0
 
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
+    # https://tixcraft.com/ticket/check-captcha/...
     if '/ticket/check-captcha/' in url:
         domain_name = url.split('/')[2]
+        # 注意：雖然函數名叫ticketmaster_captcha，但實際上是處理tixcraft的captcha
         ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
 
     if '/ticket/verify/' in url:
@@ -6111,8 +6357,29 @@ def kktix_main(driver, url, config_dict):
         kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
         if kktix_password == "":
             kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+        
         if len(kktix_account) > 0:
+            # 有設定帳密，自動登入
             kktix_login(driver, kktix_account, kktix_password)
+        else:
+            # 沒有設定帳密，等待手動登入
+            print("⏳ 等待手動登入 KKTIX...")
+            print("💡 請在瀏覽器中完成登入，程式會自動繼續")
+            
+            # 等待離開登入頁面
+            max_wait_time = 300  # 最多等 5 分鐘
+            wait_count = 0
+            while '/users/sign_in' in driver.current_url and wait_count < max_wait_time:
+                time.sleep(1)
+                wait_count += 1
+                if wait_count % 10 == 0:  # 每 10 秒提示一次
+                    print(f"⏳ 等待登入中... ({wait_count}/{max_wait_time}秒)")
+            
+            if '/users/sign_in' not in driver.current_url:
+                print("✅ 登入完成，繼續執行搶票")
+            else:
+                print("⚠️ 等待登入逾時，程式繼續執行")
+                
         is_url_contain_sign_in = True
 
     if not is_url_contain_sign_in:
@@ -9538,7 +9805,6 @@ def ticketplus_date_auto_select(driver, config_dict):
                     if len(formated_area_list) == 0:
                         # in fact, no need reload on /activity/ page, should reload in /order/ page.
                         try:
-                            print('!!!!!!! Refreshing !!!!!!!')
                             driver.refresh()
                             time.sleep(0.3)
                         except Exception as exc:
@@ -9625,7 +9891,7 @@ def ticketplus_assign_ticket_number(target_area, config_dict):
     return is_price_assign_by_bot
 
 def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_item, current_layout_style):
-    # show_debug_message = True       # debug.
+    show_debug_message = True       # debug.
     show_debug_message = False      # online
 
     if config_dict["advanced"]["verbose"]:
@@ -9733,10 +9999,6 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
                 if len(row_text) > 0:
                     formated_area_list.append(row)
-                    
-                if len(row_text) > 0:
-                    if '開賣時間' in row_text:
-                        is_need_refresh = True
 
             if soldout_count > 0:
                 if show_debug_message:
@@ -9831,7 +10093,6 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             if not target_area is None:
                 try:
                     #PS: must click on button instead of div to expand lay.
-                    print(f'Try selecting {target_area.text}')
                     my_css_selector = 'button'
                     target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
                     target_button.click()
@@ -9841,7 +10102,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     #target_area.click()
                 except Exception as exc:
                     print("click target_area link fail")
-                    # print(exc)
+                    print(exc)
                     # use plan B
                     try:
                         print("force to click by js.")
@@ -9918,26 +10179,17 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             # empty keyword, match all.
             is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
 
-        print(f'!!!!!!!!!!!! 尚未開賣, 刷新啦 !!!!!!!!!!!!')
         if is_need_refresh:
             # vue mode, refresh need to check more conditions to check.
             print('start to refresh page.')
-            
-            overlays = driver.find_elements(By.CSS_SELECTOR, 'div.v-overlay')
-            for overlay in overlays:
-                refresh_button = driver.find_element(By.CSS_SELECTOR, 'button.float-btn')
-                if refresh_button:
-                    refresh_button.click()
-                    break
-  
-            # try:
-            #     driver.refresh()
-            #     time.sleep(0.3)
-            # except Exception as exc:
-            #     pass
+            try:
+                driver.refresh()
+                time.sleep(0.3)
+            except Exception as exc:
+                pass
 
-            # if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-            #     time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 
@@ -10633,13 +10885,67 @@ def ticketplus_ticket_agree(driver, config_dict):
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # 處理文化幣 checkbox
+    use_culture_coin = False
+    try:
+        use_culture_coin = config_dict["ticketplus"]["use_culture_coin"]
+    except:
+        pass
+
+    if use_culture_coin:
+        # 如果設定要使用文化幣，則勾選文化幣 checkbox
+        culture_coin_checkbox = None
+        try:
+            my_css_selector = 'div.art-coupon-container input[type="checkbox"]'
+            culture_coin_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+            if culture_coin_checkbox:
+                if show_debug_message:
+                    print("勾選文化幣 checkbox")
+                force_check_checkbox(driver, culture_coin_checkbox)
+        except Exception as exc:
+            if show_debug_message:
+                print("find culture coin checkbox fail:", exc)
+            pass
+
+    # 處理同意條款 checkbox（避開文化幣）
     agree_checkbox = None
     try:
+        # 先找所有 checkbox
         my_css_selector = 'div.v-input__slot > div > input[type="checkbox"]'
-        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        checkbox_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
+        
+        for checkbox in checkbox_list:
+            # 檢查是否為文化幣 checkbox，如果是就跳過
+            try:
+                parent_container = checkbox.find_element(By.XPATH, "./ancestor::div[contains(@class,'art-coupon-container')]")
+                if show_debug_message:
+                    print("跳過文化幣 checkbox")
+                continue
+            except:
+                # 不是文化幣 checkbox，檢查是否為同意條款
+                try:
+                    label_element = checkbox.find_element(By.XPATH, "./following-sibling::*//*[contains(text(),'同意')]")
+                    if label_element:
+                        agree_checkbox = checkbox
+                        if show_debug_message:
+                            print("找到同意條款 checkbox")
+                        break
+                except:
+                    continue
+                
+        # 如果沒找到同意條款的 checkbox，使用第一個非文化幣的 checkbox
+        if agree_checkbox is None:
+            for checkbox in checkbox_list:
+                try:
+                    parent_container = checkbox.find_element(By.XPATH, "./ancestor::div[contains(@class,'art-coupon-container')]")
+                    continue  # 跳過文化幣
+                except:
+                    agree_checkbox = checkbox
+                    break
+                    
     except Exception as exc:
         if show_debug_message:
-            print("find ticketplus agree checkbox fail")
+            print("find ticketplus agree checkbox fail:", exc)
         pass
 
     is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
@@ -10882,70 +11188,8 @@ def check_refresh_datetime_occur(driver, target_time):
 
     return is_refresh_datetime_sent
 
-def sendkey_to_browser(driver, config_dict):
-    tmp_filepath = ""
-    if "token" in config_dict:
-        app_root = util.get_app_root()
-        tmp_file = config_dict["token"] + ".tmp"
-        tmp_filepath = os.path.join(app_root, tmp_file)
-
-    if os.path.exists(tmp_filepath):
-        sendkey_to_browser_exist(driver, tmp_filepath)
-
-def sendkey_to_browser_exist(driver, tmp_filepath):
-    sendkey_dict = None
-    try:
-        with open(tmp_filepath) as json_data:
-            sendkey_dict = json.load(json_data)
-            print(sendkey_dict)
-    except Exception as e:
-        print("error on open file")
-        print(e)
-        pass
-
-    if sendkey_dict:
-        all_command_done = True
-        if "command" in sendkey_dict:
-            for cmd_dict in sendkey_dict["command"]:
-                #print("cmd_dict", cmd_dict)
-                if cmd_dict["type"] == "sendkey":
-                    print("sendkey")
-                    target_text = cmd_dict["text"]
-                    try:
-                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
-                        inputed_value_1 = form_input_1.get_attribute('value')
-                        if not inputed_value_1 == target_text:
-                            form_input_1.clear()
-                            form_input_1.click()
-                            form_input_1.send_keys(cmd_dict["text"])
-                    except Exception as exc:
-                        all_command_done = False
-                        print("error on sendkey")
-                        print(exc)
-                        pass
-                
-                if cmd_dict["type"] == "click":
-                    print("click")
-                    try:
-                        form_input_1 = driver.find_element(By.CSS_SELECTOR, cmd_dict["selector"])
-                        form_input_1.click()
-                    except Exception as exc:
-                        all_command_done = False
-                        print("error on click")
-                        print(exc)
-                        pass
-                time.sleep(0.05)
-
-        # must all command success to delete tmp file.
-        if all_command_done:
-            try:
-                os.unlink(tmp_filepath)
-            except Exception as e:
-                pass
-
 def main(args):
     config_dict = get_config_dict(args)
-    config_dict["token"] = util.get_token()
 
     driver = None
     if not config_dict is None:
@@ -11026,9 +11270,6 @@ def main(args):
             time.sleep(0.1)
             continue
 
-        sendkey_to_browser(driver, config_dict)
-
-        # default is 0, not reset.
         if config_dict["advanced"]["reset_browser_interval"] > 0:
             maxbot_running_time = time.time() - maxbot_last_reset_time
             if maxbot_running_time > config_dict["advanced"]["reset_browser_interval"]:

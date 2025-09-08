@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MaxBot specific files
+MAXBOT_INT28_IDLE.txt
+MAXBOT_LAST_URL.txt
+maxbot_chrome_port.txt
+settings.json
+webdriver/Maxblockplus_1.0.0/data/settings.json
+webdriver/Maxbotplus_1.0.0/data/settings.json
+
+# Claude Code settings
+.claude/settings.local.json

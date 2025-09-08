@@ -293,16 +293,6 @@
         },
         {
             "matches": [
-                "https://ticket.ibon.com.tw/EventBuy/*/*/*"
-            ],
-            "run_at": "document_end",
-            "js": [
-                "jquery.min.js",
-                "js/ibon_eventbuy.js"
-            ]
-        },
-        {
-            "matches": [
                 "https://orders.ibon.com.tw/application/utk02/UTK0201_0.aspx?*PERFORMANCE_ID=*PRODUCT_ID=*",
                 "https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?*PERFORMANCE_ID=*PRODUCT_ID=*",
                 "https://orders.ibon.com.tw/application/utk02/UTK0201_0.aspx?*PRODUCT_ID=*PERFORMANCE_ID=*",
@@ -427,12 +417,33 @@
         },
         {
             "matches": [
+                "https://kktix.com/"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "jquery.min.js",
+                "js/kktix_home.js"
+            ]
+        },
+        {
+            "matches": [
                 "https://*.kktix.cc/events/*"
             ],
             "run_at": "document_end",
             "js": [
                 "jquery.min.js",
                 "js/kktix_events.js"
+            ]
+        },
+        {
+            "matches": [
+                "https://kktix.com/events/*/registrations/new"
+            ],
+            "world": "MAIN",
+            "run_at": "document_end",
+            "js": [
+                "js/common.js",
+                "js/kktix_registrations_assign.js"
             ]
         },
         {
@@ -465,7 +476,7 @@
                 "js/fantopia_fill.js"
             ]
         }
-
+        
     ],
-    "version": "1.0.29"
+    "version": "1.0.28"
 }

@@ -1,8 +1,8 @@
 {
-    "homepage": "about:blank",
+    "homepage": "https://ctfa.kktix.cc/events/b9b85d5e",
     "browser": "chrome",
-    "language": "English",
-    "ticket_number": 2,
+    "language": "\u7e41\u9ad4\u4e2d\u6587",
+    "ticket_number": 1,
     "refresh_datetime": "",
     "ocr_captcha": {
         "enable": true,
@@ -10,7 +10,7 @@
         "force_submit": true,
         "image_source": "canvas"
     },
-    "webdriver_type": "undetected_chromedriver",
+    "webdriver_type": "nodriver",
     "date_auto_select": {
         "enable": true,
         "date_keyword": "",
@@ -25,7 +25,7 @@
     "kktix": {
         "auto_press_next_step_button": true,
         "auto_fill_ticket_number": true,
-        "max_dwell_time": 90
+        "max_dwell_time": 60
     },
     "cityline": {
         "cityline_queue_retry": true
@@ -34,10 +34,13 @@
         "pass_date_is_sold_out": true,
         "auto_reload_coming_soon_page": true
     },
+    "ticketplus": {
+        "use_culture_coin": false
+    },
     "advanced": {
         "play_sound": {
-            "ticket": true,
-            "order": true,
+            "ticket": false,
+            "order": false,
             "filename": "ding-dong.wav"
         },
         "tixcraft_sid": "",
@@ -78,15 +81,15 @@
         "block_facebook_network": false,
         "headless": false,
         "verbose": false,
-        "auto_guess_options": false,
+        "auto_guess_options": true,
         "user_guess_string": "",
         "remote_url": "\"http://127.0.0.1:16888/\"",
         "auto_reload_page_interval": 0.1,
         "auto_reload_overheat_count": 4,
-        "auto_reload_overheat_cd": 1,
+        "auto_reload_overheat_cd": 1.0,
         "reset_browser_interval": 0,
         "proxy_server_port": "",
-        "window_size": "480,1024",
+        "window_size": "640,1024",
         "idle_keyword": "",
         "resume_keyword": "",
         "idle_keyword_second": "",

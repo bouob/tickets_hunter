@@ -1,200 +1,252 @@
-# Max 蛋黃酥上車機器人
+# 🎫 Ticket Hunter - 票券獵人 智慧搶票系統
 
-## 總覽
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.9+-green.svg)](https://python.org)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/bouob/ticket-hunter)
 
-MaxBot 是一個開放原始碼的蛋黃酥/公車訂位機器人。祝您搶購成功。
+> **⚠️ 重要聲明：本專案僅供教育研究用途，使用者需自行承擔相關法律責任並遵守各售票平台服務條款。**
 
-搶票機制，就是在比誰的比較快送出訂單，機器人一定比純手工點擊的快。
+## 📋 專案概述
 
-售票系統的「驗證碼」機制會讓一般不會寫程式的民眾更難公平地購買到預期的門票，因為機器人可以自動填入驗證碼內容。
+Ticket Hunter (票券獵人) 是一個強大的自動化搶票系統，支援台灣及香港地區多個主流售票平台。透過先進的 OCR 技術和智慧化自動操作，大幅提升搶票成功率。
 
-部份的售票系統可以透過「人海戰術」來提升買到票的機率，因此建議大家可以麻煩親朋好友去註冊售票系統的帳號。注意：在使用他人的帳號搶票之前，一定要告知當事人用途，並徵詢同意與授權。
+> **📍 專案源起**：本專案前身為知名的 [MaxBot 搶票機器人](https://github.com/max32002/tixcraft_bot)，由於原作者 [max32002](https://github.com/max32002) 已關閉專案，此為社群維護的衍生版本，持續為廣大使用者提供搶票服務。
+> 
+> **🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援，確保程式碼品質與功能穩定性。
 
-MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有類似的基準點或類似的起跑線上，用魔法對抗魔法，當某一天大家都是透過機器人來搶票時，當機器人數量已多到影響一般民眾購票的權利時，售票業者才比較有可能會對未來熱門演唱會改採「實名制」+「抽籤制」，讓更多民眾可以公平地購買到門票，就可以跟「人海戰術」與「搶票機器人」說 bye-bye 。
+### 🎯 支援平台
 
-台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+- **🎪 TixCraft (拓元售票)**
+- **🎵 KKTIX**
+- **🎭 Cityline (城市售票)**
+- **🎨 iBon**
+- **🎬 FamiTicket**
+- **🎪 Urbtix**
+- **🎫 HKTicketing (快達票)**
+- **🌟 Ticketmaster Singapore**
+- **🎰 Galaxy Macau (澳門銀河)**
+- **🎪 年代售票系統**
+- **🎫 遠大售票系統**
+- **🎵 IndieVox**
 
-以下文章出現的「搶票」指的是「非台灣的藝文活動或車票」。
+## ✨ 核心功能
 
-MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
+### 🤖 智慧自動化
+- **自動登入**：支援帳號密碼 & Cookie 登入
+- **智慧選票**：自動選擇日期、場次、區域、票價
+- **OCR 驗證碼**：使用 DDDDOCR 自動識別驗證碼
+- **關鍵字匹配**：支援多組關鍵字與優先順序設定
+- **自動重試**：網路異常或失敗時自動重新嘗試
 
-## LEGAL NOTICE 法律聲明
+### 🛠️ 進階功能
+- **多開支援**：同時運行多個瀏覽器實例
+- **聲音提醒**：重要操作時播放音效通知
+- **視窗大小調整**：方便多開時的視窗管理
+- **代理伺服器**：支援 Proxy 設定 (HTTP/HTTPS)
+- **擴充功能**：內建瀏覽器擴充功能輔助
 
-<details>
-<summary><code><b>法律聲明</b>（點我展開）</code></summary>
+### 🔧 技術特色
+- **Stealth 模式**：使用 undetected-chromedriver 避開偵測
+- **nodriver 支援**：更進階的反偵測技術
+- **多重 WebDriver**：Chrome、Edge、Firefox 支援
+- **設定檔管理**：支援多設定檔切換
 
-作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
+## 🚀 快速開始
 
-使用此儲存庫或與之相關的任何程式碼，即表示您同意[法律聲明](https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md)。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。
+### 📦 系統需求
 
-</details>
+- **Python 3.9+**
+- **Chrome 瀏覽器** (建議最新版本)
+- **Windows / macOS / Linux**
 
-## Protect Account 保護你的帳戶
+### ⚡ 安裝步驟
 
-<details>
-<summary><code><b>保護你的帳戶</b>（點我展開）</code></summary>
+1. **複製專案**
+   ```bash
+   git clone https://github.com/bouob/ticket-hunter.git
+   cd ticket-hunter
+   ```
 
-目前的售票系統售票無法阻擋機器人進行購票，官方只能從伺服器存取記錄來看到速度過快的記錄，並將之視之為機器人，對其封鎖帳號，短時間刷新幾秒會被鎖帳號並沒有明確的遊戲規則。
+2. **安裝相依套件**
+   ```bash
+   pip install -r requirement.txt
+   
+   # nodriver 特殊版本 (需要 Python 3.9+)
+   python -m pip install git+https://github.com/max32002/nodriver
+   ```
 
-Q：在沒有違法的前提下，要搶拓元的蛋黃酥與 KKTIX 的（非台灣）海外活動，怎麼才不會被官方鎖帳號？
+3. **設定參數**
+   ```bash
+   # 啟動設定介面
+   python settings.py
+   ```
 
-A：從之前 MaxBot 執行秒數來看，較好的電腦花費秒數大約 8 秒，一般電腦大約花費 10 ～ 12 秒，以秒殺的蛋黃酥來說，建議設定機器人啟動時間為開搶前 2 秒，停止時間為開搶後的 15 秒，是可以降低被官方鎖帳號的機率。
+4. **開始使用**
+   ```bash
+   # 使用 Selenium Chrome WebDriver (預設)
+   python chrome_tixcraft.py
+   
+   # 使用 nodriver (進階反偵測)
+   python nodriver_tixcraft.py
+   
+   # 多設定檔管理
+   python config_launcher.py
+   ```
 
-而清票，需要長時間地重新整理，請以自然人能處理的前提下，設定重新整理的延遲時間為一般人可以處理的 2 秒以上。
+## ⚙️ 設定指南
 
-如果說你想增加在伺服器上存取記錄的變化程度，可以使用秒數的關鍵字功能，讓 MaxBot 在特定秒數時啟動與暫停。參考影片：https://youtu.be/u3YQCZZu6kE
+### 🎛️ 基本設定
 
-MaxBot 的出發點是幫助大家在購票時，可以有效率地自動化在花時間、重覆又無聊的刷新網頁。
+透過 `settings.py` 開啟網頁設定介面，主要設定項目：
 
-如果有任何違法，必定立即修正。
+- **瀏覽器設定**：WebDriver 類型、視窗大小、無頭模式
+- **帳號資訊**：登入帳號密碼或 Cookie
+- **搶票偏好**：日期關鍵字、區域關鍵字、票價偏好
+- **驗證碼處理**：OCR 自動識別設定
+- **聲音提醒**：成功/失敗音效設定
 
-</details>
+### 📝 設定檔說明
 
-## Download 蛋黃酥上車程式下載
+主要設定檔 `settings.json` 包含：
 
-蛋黃酥上車程式下載:
-https://github.com/max32002/tixcraft_bot/releases
-
-下載說明:
-
-- 目前有打包的「執行檔」，只有 Windows 平台，其他作業系統需要使用原始碼來執行。當然 Windows 平台也可以用原始碼執行 MaxBot.
-- 如果你是要用「原始碼」執行 MaxBot, 在透過 git clone 或在 github 按下載原始碼的 zip 檔， python 版本使用 3.7 / 3.8 / 3.9 / 3.10 這 4 個版號測試功能正常。
-- 如果有辦法的話，建議使用原始碼來執行 MaxBot，執行上的「效率」與「相容性」的問題會較少。
-
-
-
-## Demo 示範影片
-
-[點此查看示範影片](https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md)
-
-## How to Use 如何使用
-
-如何使用網頁說明:
-- tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
-- kktix: https://max-everyday.com/2018/12/kktix-bot/
-- cityline: https://max-everyday.com/2019/03/cityline-bot/
-- urbtix: https://max-everyday.com/2019/02/urbtix-bot/
-- hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
-
-## How to Execute Source Code 透過原始碼的執行方法
-
-<details>
-<summary><code><b>透過原始碼的執行方法</b>（點我展開）</code></summary>
-
-透過原始碼執行 MaxBot 教學影片：
-https://youtu.be/HpVG91j0lbI
-
-使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal(終端機) 視窗來下指令，應該是 4 行指令就可以了。
-
-請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
-
-詳細的文字說明:
-https://max-everyday.com/2023/11/buy-ticket-by-vm/
-
-### Step 1: 取得 source code:
-
-```bash
-git clone https://github.com/max32002/tixcraft_bot.git
+```json
+{
+  "homepage": "https://tixcraft.com",
+  "browser": "chrome",
+  "webdriver_type": "undetected_chromedriver",
+  "ocr_captcha": {
+    "enable": true,
+    "module": "ddddocr"
+  },
+  "advanced": {
+    "auto_login": true,
+    "play_sound": true,
+    "sound_filename": "ding-dong.wav"
+  }
+}
 ```
 
-### Step 2: 進入 clone 的資料夾: tixcraft_bot:
+### 🔧 進階設定
 
-```bash
-cd tixcraft_bot
-```
+- **多設定檔**：使用 `config_launcher.json` 管理多個設定組合
+- **代理設定**：支援 HTTP/HTTPS Proxy
+- **Cookie 登入**：避開帳號密碼登入的風險
+- **關鍵字優先級**：設定多組關鍵字的搜尋順序
 
-### Step 3: 安裝第三方套件:
+## 💡 使用技巧
 
-```bash
-python3 -m pip install -r requirement.txt
-```
+### 基本操作
+1. 首次使用建議執行 `python settings.py` 進行設定
+2. 設定完成後執行 `python chrome_tixcraft.py` 開始搶票
+3. 支援多視窗同時搶票，每個視窗可設定不同參數
 
-### Step 4: 執行設定介面主桯式:
+### 🎯 KKTIX 專用模式（重要！）
 
-```bash
-python3 settings.py
-```
+**針對 KKTIX 網站，需要使用特殊的 Chrome Debug 模式避免 Cloudflare 檢測：**
 
-- 如果不使用設定介面，直接執行主程式:
+#### 使用流程：
+1. **第一步：啟動 Chrome Debug 模式**
+   ```bash
+   python kktix_launcher.py
+   ```
+   - 會自動啟動獨立的 Chrome Debug 實例
+   - 請在新開的 Chrome 中前往 KKTIX 網站並完成登入
 
-```bash
-python3 chrome_tixcraft.py
-```
+2. **第二步：執行設定介面**
+   ```bash
+   # 網頁版設定介面（推薦）
+   python settings.py
+   
+   # 或桌面版設定介面
+   python settings_old.py
+   ```
+   - 程式會自動偵測 KKTIX 網站
+   - 自動檢查 Chrome Debug 模式是否就緒
+   - 點擊「執行」開始搶票
 
-- 如果不使用設定介面，直接執行主程式並套用特定的設定檔:
+#### 優點：
+- 避免被 Cloudflare 識別為機器人
+- 保留真實的 Cookie 和登入狀態
+- 大幅提升 KKTIX 搶票成功率
 
-```bash
-python3 chrome_tixcraft.py --input settings.json
-```
+#### 限制：
+- **KKTIX 不支援多視窗搶票** - 一次只能開啟一個 KKTIX 搶票視窗
+- 其他售票網站仍可正常使用多視窗功能
 
-#### 如果遇到 MaxBot 改版, 請重新操作上面 4 個步驟一次, 即可取得新的版本.
+## 📱 瀏覽器擴充功能
 
-#### 如果 MaxBot 沒改版, 第二次要再執行的話, 使用 Step 2 + Step 4, 這 2 行指令, 就可以執行 MaxBot.
+內建 **Ticket Hunter Plus** 擴充功能提供：
 
-#### 如果你是 ARM CPU 應該會在 Step 3 就顯示錯誤訊息, 解法:
+- **廣告攔截**：提升頁面載入速度
+- **DOM 操作**：輔助票券選擇
+- **自動重新整理**：避開頁面逾時
+- **驗證碼輔助**：提升識別準確率
 
-https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
+擴充功能位置：`webdriver/Maxblockplus_1.0.0/`
 
-不管是 macOS 還是 Windows 預設都是沒有 git 這個指令，如果 Step 1 執行後, 沒有檔案被下載, 請先安裝 git 到你的作業系統。或是使用 github 網頁裡的 Download 功能把 python 腳本下載。
+## 🎥 示範影片
 
-如果你選擇下載 github 上的 zip 檔, 在 Step 2 進入目錄的指令可能會遇到問題, 因為「直接解壓縮」後的目錄名稱並不是 tixcraft_bot 而是 tixcraft_bot-master, 你在進入的資料夾名稱, 需要調整為你實際解壓縮後的目錄名稱。
+詳細的操作示範與功能介紹，請參考 [demo_video.md](demo_video.md)
 
-透過瀏覽器下載 github 上的 zip 檔, 在 Windows / macOS / Linux 平台, 預設的路徑在「下載」(~/Download) 的資料夾, 你在執行的 Terminal 視窗的路徑, 與你解壓縮的路徑可能不同, 直接執行上面的指令, 會無法進入到預期的資料夾內。
+最新功能展示：
+- 信用卡活動自動填寫
+- Cityline 自動購票  
+- KKTIX 多開技巧
 
-### Q: 取得 source code 後跑出來 fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
+## 🛡️ 安全注意事項
 
-<b>A: </b>執行 git clone 2 次, 重覆取得 source code, 才會有這個問題, 如果 tixcraft_bot 目錄已經存在, 直接
-<code>cd tixcraft_bot</code>
-就可以了。
-如果你想把已下載的刪除, 可以直接把 tixcraft_bot 目錄刪掉即可。
-如果你想更新 source code, 可以重新下載, 或是先 <code>cd tixcraft_bot</code> 目錄後, 再執行<code>git pull</code>, 可以更新 source code 為新的版本。
+### ⚠️ 重要提醒
 
-#### PS:
+1. **使用限制**：
+   - 遵守各平台服務條款與使用規範
+   - 避免大量頻繁請求造成伺服器負擔
+   - 尊重其他使用者權益，理性搶票
 
-- 請先確定你的 python 執行環境下已安裝 selenium 或 nodriver 及相關的套件，請參考 requirement.txt 檔案內容。
-- 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
-- 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站([https://www.python.org/downloads/](https://www.python.org/downloads/))來安裝 python3.
-- 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有 2 個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
+2. **法律責任**：
+   - 本工具僅供研究學習使用
+   - 使用者需自行承擔所有法律風險
+   - 不得用於商業營利目的
 
-#### PS：
+## 🤝 貢獻指南
 
-搶票程式可以多開 chrome 瀏覽器，如果你電腦效能高。但如果開太多瀏覽器會顯示 Out of Memory, 請增加 Windows 的虛擬記憶體:
-https://zh-tw.emeditor.com/increase-virtual-memory/
+歡迎貢獻程式碼、回報問題或提出建議！
 
-#### PS：
+### 📋 貢獻方式
 
-「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
+1. **Fork** 本專案
+2. 建立功能分支：`git checkout -b feature/amazing-feature`
+3. 提交變更：`git commit -m '✨ 新增超棒功能'`
+4. 推送分支：`git push origin feature/amazing-feature`
+5. 開啟 **Pull Request**
 
-### Q: 是只有使用虛擬主機才要用程式碼執行搶票機器人嗎？
+### 🐛 問題回報
 
-**A:** 除了 Window 有打包的執行檔之外, macOS / Linux 只能使用原始碼來執行, 當然 Windows 也可以用原始碼來執行.
+請使用 [GitHub Issues](https://github.com/bouob/ticket-hunter/issues) 回報問題，並提供：
 
-</details>
+- 作業系統版本
+- Python 版本
+- 詳細錯誤訊息
+- 重現步驟
 
-## File Description 檔案說明
-主要的檔案說明:
-- chrome_tixcraft.py : 搶票機器人主程式，用來自動化網頁的操作，使用元件是 selenium。
-- nodriver_tixcraft.py : 也是搶票機器人主程式，用來自動化網頁的操作，使用的元件是 nodriver。
-- settings.py : 編輯 settings.json 的 GUI 介面。提供圖片 OCR 功能給 chrome 擴充功能。支援定時啟用/停用 MaxBot。
-- settings_old.py : 舊版本的編輯 settings.json 的 GUI 介面，與 settings.py 的差別在介面一個是網頁形式，old 的用的是視窗形式。
-- config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
+## 📄 授權條款
 
-## Introduce the Implement 實作方法
+本專案採用 [GNU General Public License v3.0](LICENSE) 授權。
 
-https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
+詳細法律聲明請參閱 [LEGAL_NOTICE.md](LEGAL_NOTICE.md)
 
+## 🙏 致謝
 
-## TODO about Cpatcha 關於驗證碼
+- 感謝 [max32002](https://github.com/max32002) 的原始專案 [tixcraft_bot](https://github.com/max32002/tixcraft_bot)
+- 感謝所有貢獻者的無私奉獻
+- 感謝社群使用者的回饋與建議
 
-目前自動輸入驗證碼用的元件是:
-https://github.com/sml2h3/ddddocr
+## 📞 聯絡資訊
 
+- **專案維護**：[GitHub Issues](https://github.com/bouob/ticket-hunter/issues)
+- **技術討論**：[GitHub Discussions](https://github.com/bouob/ticket-hunter/discussions)
 
-## Common Problems 常見問題整理
+---
 
-整理大家在搶票時常遇到的問題：
-https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket
+**⭐ 如果這個專案對你有幫助，請給我們一顆星星！**
 
-## Extension Privacy 擴充功能隱私權政策
-
-https://github.com/max32002/tixcraft_bot/blob/master/README_EXTENSION.md
+**🔗 更多資訊請參閱 [Wiki](https://github.com/bouob/ticket-hunter/wiki)**

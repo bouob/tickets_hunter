@@ -1,5 +1,8 @@
 const storage = chrome.storage.local;
 
+$("div.description").remove();
+$("footer").remove();
+
 function kktix_event_redirect()
 {
     const currentUrl = window.location.href; 

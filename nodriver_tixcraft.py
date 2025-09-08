@@ -32,7 +32,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1945,7 +1945,7 @@ def get_nodriver_browser_args():
         "--no-default-browser-check",
         "--no-first-run",
         "--no-pings",
-        "--no-sandbox"
+        "--no-sandbox",
         "--no-service-autorun",
         "--password-store=basic",
         "--remote-allow-origins=*",

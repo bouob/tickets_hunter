@@ -153,48 +153,6 @@ async function ocr(data_url, image_data, tabId)
     );
 }
 
-async function post(data_url, post_body, tabId)
-{
-    //console.log("data_url:"+data_url);
-    fetch(data_url,{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: post_body
-    })
-    .then(response =>
-    {
-        if (response.ok)
-        {
-            return response.json();
-        }
-        else if (response.status === 404)
-        {
-            let result_json={"answer": "", "fail": 'error 404'};
-            //console.log(result_json);
-            //sendResponse(result_json);
-            return Promise.reject('error 404')
-        }
-    }
-    )
-    .then((data) =>
-    {
-        if (data)
-        {
-            let result_json=data;
-            console.log(result_json);
-            chrome.tabs.sendMessage(tabId, result_json);
-        }
-    }
-    )
-    .catch(error =>
-    {
-        console.log('error is', error)
-    }
-    );
-}
-
 // for avoid overheat.
 chrome.storage.local.set(
 {
@@ -219,11 +177,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if(request_json.action=="ocr") {
         const tabId = sender.tab.id;
         ocr(request_json.data.url, request_json.data.image_data, tabId);
-    }
-
-    if(request_json.action=="post") {
-        const tabId = sender.tab.id;
-        post(request_json.data.url, request_json.data.post_data, tabId);
     }
 
     if(request_json.action=="status") {

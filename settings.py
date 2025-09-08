@@ -39,7 +39,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2024.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -127,7 +127,7 @@ def get_default_config():
     config_dict['kktix']={}
     config_dict["kktix"]["auto_press_next_step_button"] = True
     config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["max_dwell_time"] = 90
+    config_dict["kktix"]["max_dwell_time"] = 60
 
     config_dict['cityline']={}
     config_dict["cityline"]["cityline_queue_retry"] = True
@@ -135,6 +135,9 @@ def get_default_config():
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
+
+    config_dict['ticketplus']={}
+    config_dict["ticketplus"]["use_culture_coin"] = False
 
     config_dict['advanced']={}
 
@@ -185,7 +188,7 @@ def get_default_config():
 
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
-    config_dict["advanced"]["auto_guess_options"] = False
+    config_dict["advanced"]["auto_guess_options"] = True
     config_dict["advanced"]["user_guess_string"] = ""
     
     # remote_url not under ocr, due to not only support ocr features.
@@ -296,6 +299,35 @@ def launch_maxbot():
     config_filepath, config_dict = load_json()
     config_dict = decrypt_password(config_dict)
     
+    # 偵測是否為 KKTIX 網站並檢查 Chrome Debug 模式
+    homepage = config_dict.get("homepage", "")
+    is_kktix_site = 'kktix.c' in homepage.lower()
+    
+    if is_kktix_site:
+        print("偵測到 KKTIX 網站，檢查 Chrome Debug 模式...")
+        
+        # 檢查是否有 Chrome Debug 模式運行
+        port_file = "maxbot_chrome_port.txt"
+        if os.path.exists(port_file):
+            try:
+                with open(port_file, 'r') as f:
+                    debug_port = int(f.read().strip())
+                    
+                import requests
+                try:
+                    response = requests.get(f"http://localhost:{debug_port}/json", timeout=3)
+                    if response.status_code == 200:
+                        print(f"找到 Chrome Debug 模式（端口: {debug_port}），直接啟動搶票")
+                    else:
+                        print("Chrome Debug 模式無回應，建議重新執行 kktix_launcher.py")
+                except:
+                    print("無法連接 Chrome Debug 模式，建議重新執行 kktix_launcher.py")
+            except:
+                print("無法讀取 Chrome Debug 端口檔案")
+        else:
+            print("未找到 Chrome Debug 模式，建議先執行:")
+            print("   python kktix_launcher.py")
+    
     script_name = "chrome_tixcraft"
     if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
         script_name = "nodriver_tixcraft"
@@ -383,12 +415,6 @@ def clean_tmp_file():
     ]
     for filepath in remove_file_list:
          util.force_remove_file(filepath)
-
-    Root_Dir = util.get_app_root()
-    target_folder = os.listdir(Root_Dir)
-    for item in target_folder:
-        if item.endswith(".tmp"):
-            os.remove(os.path.join(Root_Dir, item))
 
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
@@ -485,36 +511,6 @@ class SaveJsonHandler(tornado.web.RequestHandler):
 
         self.finish()
 
-class SendkeyHandler(tornado.web.RequestHandler):
-    def post(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-
-        _body = None
-        is_pass_check = True
-        errorMessage = ""
-        errorCode = 0
-
-        if is_pass_check:
-            is_pass_check = False
-            try :
-                _body = json.loads(self.request.body)
-                is_pass_check = True
-            except Exception:
-                errorMessage = "wrong json format"
-                errorCode = 1001
-                pass
-
-        if is_pass_check:
-            app_root = util.get_app_root()
-            if "token" in _body:
-                tmp_file = _body["token"] + ".tmp"
-                config_filepath = os.path.join(app_root, tmp_file)
-                util.save_json(_body, config_filepath)
-
-        self.write({"return": True})
-
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
@@ -596,7 +592,6 @@ async def main_server():
     app = Application([
         ("/version", VersionHandler),
         ("/shutdown", ShutdownHandler),
-        ("/sendkey", SendkeyHandler),
 
         # status api
         ("/status", StatusHandler),
