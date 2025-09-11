@@ -13,6 +13,7 @@ __pycache__/
 /MAXBOT_LAST_URL.txt
 /MAXBOT_INT28_IDLE.txt
 webdriver/*/data/settings.json
+webdriver/*/data/settings.json.bak
 webdriver/*/data/status.json
 
 # Browser data
