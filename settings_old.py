@@ -91,7 +91,7 @@ translate={}
 
 URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
-URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
+URL_RELEASE = 'https://github.com/bouob/tickets_hunter/releases'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
