@@ -967,7 +967,7 @@ def btn_save_act(slience_mode=False):
 
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
-        #config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
+        config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
 
         config_dict["advanced"]["auto_guess_options"] = bool(chk_state_auto_guess_options.get())
 
@@ -2081,8 +2081,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global lbl_verbose
     lbl_verbose = Label(frame_group_header, text=translate[language_code]['verbose'])
-    # maybe enable in future.
-    #lbl_verbose.grid(column=0, row=group_row_count, sticky = E)
+    lbl_verbose.grid(column=0, row=group_row_count, sticky = E)
 
     global chk_state_verbose
     chk_state_verbose = BooleanVar()
@@ -2090,8 +2089,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global chk_verbose
     chk_verbose = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_verbose)
-    # maybe enable in future.
-    #chk_verbose.grid(column=1, row=group_row_count, sticky = W)
+    chk_verbose.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count +=1
 
