@@ -8510,6 +8510,11 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
 
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
+    
+    # Temporary: Force debug for dropdown testing
+    if "UTK0202" in driver.current_url.upper():
+        show_debug_message = True
+        print("DEBUG: UTK0202 page detected, enabling debug mode")
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
@@ -8542,12 +8547,67 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
         if len(area_list)==0:
             readme_table_mode = True
     if readme_table_mode:
-        # TODO://
-        # ...
-        pass
+        # Handle UTK0202 page with PRICE select dropdown
+        try:
+            price_select = driver.find_element(By.ID, "PRICE")
+            if price_select:
+                select_options = price_select.find_elements(By.CSS_SELECTOR, "option:not([value='-1'])")
+                if select_options:
+                    if show_debug_message:
+                        print(f"Found {len(select_options)} price options in dropdown")
+                    
+                    # Create formated_area_list from dropdown options with keyword matching
+                    formated_area_list = []
+                    for option in select_options:
+                        option_text = option.text.strip()
+                        option_value = option.get_attribute('value')
+                        if show_debug_message:
+                            print(f"Found option: '{option_text}' (value: {option_value})")
+                        
+                        if len(option_text) > 0 and option.is_enabled():
+                            # Apply same filtering logic as table rows
+                            row_text = util.format_keyword_string(option_text)
+                            if show_debug_message:
+                                print(f"Formatted option text: '{row_text}'")
+                            
+                            # Check keyword match
+                            is_match_area = True
+                            if len(area_keyword_item) > 0:
+                                area_keyword_array = area_keyword_item.split(' ')
+                                for area_keyword in area_keyword_array:
+                                    area_keyword = util.format_keyword_string(area_keyword)
+                                    if show_debug_message:
+                                        print(f"Checking keyword '{area_keyword}' in '{row_text}'")
+                                    if not area_keyword in row_text:
+                                        is_match_area = False
+                                        if show_debug_message:
+                                            print(f"Keyword '{area_keyword}' not found in '{row_text}'")
+                                        break
+                            
+                            if is_match_area:
+                                formated_area_list.append(option)
+                                if show_debug_message:
+                                    print(f"✓ Option matched: '{option_text}'")
+                            else:
+                                if show_debug_message:
+                                    print(f"✗ Option filtered out: '{option_text}'")
+                        else:
+                            if show_debug_message:
+                                print(f"Option disabled or empty: '{option_text}'")
+                    
+                    if show_debug_message:
+                        print(f"Final matched options: {len(formated_area_list)}")
+                        
+        except Exception as exc:
+            if show_debug_message:
+                print("No PRICE select found or error:", exc)
+            pass
 
-    formated_area_list = None
-    if not area_list is None:
+    # Only reset formated_area_list if not already set by dropdown handling
+    if 'formated_area_list' not in locals():
+        formated_area_list = None
+    
+    if not area_list is None and formated_area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
             print("area_list_count:", area_list_count)
@@ -8661,8 +8721,20 @@ def kham_area_auto_select(driver, domain_name, config_dict, area_keyword_item):
         try:
             if not("udnfunlife" in domain_name):
                 if target_area.is_enabled():
-                    target_area.click()
-                    is_price_assign_by_bot = True
+                    # Check if this is a select option (for UTK0202 dropdown)
+                    if target_area.tag_name.lower() == 'option':
+                        from selenium.webdriver.support.ui import Select
+                        select_element = driver.find_element(By.ID, "PRICE")
+                        select = Select(select_element)
+                        option_value = target_area.get_attribute('value')
+                        select.select_by_value(option_value)
+                        is_price_assign_by_bot = True
+                        if show_debug_message:
+                            print(f"Selected dropdown option: {target_area.text}")
+                    else:
+                        # Original table row click
+                        target_area.click()
+                        is_price_assign_by_bot = True
             else:
                 # manually click.
                 """
