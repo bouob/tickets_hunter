@@ -9110,6 +9110,37 @@ def kham_check_captcha_text_error(driver, config_dict):
 
     return is_reset_password_text
 
+def kham_check_realname_dialog(driver, config_dict):
+    show_debug_message = True    # debug.
+    show_debug_message = False   # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_realname_dialog_found = False
+    el_message = None
+    try:
+        my_css_selector = 'div.ui-dialog > div#dialog-message.ui-dialog-content'
+        el_message = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        if not el_message is None:
+            el_message_text = el_message.text
+            if show_debug_message:
+                print("dialog message:", el_message_text)
+            if el_message_text is None:
+                el_message_text = ""
+            # 檢查是否為實名制通知彈窗
+            if "個人實名制入場" in el_message_text or "實名制" in el_message_text:
+                if show_debug_message:
+                    print("Found realname dialog, clicking OK button...")
+                is_button_clicked = press_button(driver, By.CSS_SELECTOR,'div.ui-dialog-buttonset > button.ui-button')
+                is_realname_dialog_found = True
+    except Exception as exc:
+        if show_debug_message:
+            print("kham_check_realname_dialog exception:", exc)
+        pass
+
+    return is_realname_dialog_found
+
 def kham_allow_not_adjacent_seat(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -9132,6 +9163,12 @@ def kham_allow_not_adjacent_seat(driver, config_dict):
     return is_finish_checkbox_click
 
 def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
+    global kham_dict
+    if not 'kham_dict' in globals():
+        kham_dict = {}
+        kham_dict["is_popup_checkout"] = False
+        kham_dict["played_sound_order"] = False
+
     domain_name = url.split('/')[2]
 
     show_debug_message = True    # debug.
@@ -9155,7 +9192,21 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 if not Captcha_Browser is None:
                     Captcha_Browser.set_cookies(driver.get_cookies())
                     Captcha_Browser.set_domain(domain_name)
+            
+            # 登入後自動跳轉回原始購票頁面
+            if config_dict["homepage"] != url:
+                if show_debug_message:
+                    print(f"Login completed, redirecting to target page: {config_dict['homepage']}")
+                try:
+                    driver.get(config_dict["homepage"])
+                    return  # 結束函式，讓主迴圈重新處理目標頁面
+                except Exception as e:
+                    if show_debug_message:
+                        print(f"Redirect failed: {e}")
             break
+
+    # 檢查並處理實名制通知彈窗
+    kham_check_realname_dialog(driver, config_dict)
 
     #https://kham.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=XXX
     if 'utk0201_.aspx?product_id=' in url.lower():
@@ -9164,8 +9215,47 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
-            #khan_go_buy_redirect(driver, domain_name)
-            pass
+            # 檢查實名制彈窗
+            kham_check_realname_dialog(driver, config_dict)
+            # 點擊購票按鈕
+            khan_go_buy_redirect(driver, domain_name)
+            
+            # 等待頁面載入後處理驗證碼
+            time.sleep(1.0)
+            
+            # 再次檢查實名制彈窗（頁面載入後可能出現）
+            kham_check_realname_dialog(driver, config_dict)
+            
+            # 檢查是否有驗證碼需要處理
+            if config_dict["ocr_captcha"]["enable"]:
+                if show_debug_message:
+                    print("Starting captcha processing for purchase page...")
+                model_name = url.split('/')[5] if len(url.split('/')) > 5 else "UTK0201"
+                if len(model_name) > 7:
+                    model_name = model_name[:7]
+                
+                # 設定 captcha 相關參數
+                captcha_url = '/pic.aspx?TYPE=%s_001' % (model_name)
+                if not Captcha_Browser is None:
+                    Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
+                
+                # 執行 OCR 驗證碼處理
+                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
+                
+                # 驗證碼處理完成後，輸入票券數量並提交
+                if is_captcha_sent:
+                    # 輸入票券數量
+                    select_query = '#AMOUNT'
+                    is_ticket_number_assigned = assign_text(driver, By.CSS_SELECTOR, select_query, str(config_dict["ticket_number"]), overwrite_when="0")
+                    
+                    if is_ticket_number_assigned:
+                        # 點擊加入購物車按鈕
+                        my_css_selector = 'button[onclick="addShoppingCart();return false;"]'
+                        is_button_clicked = press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                        if not is_button_clicked:
+                            # 備用選取器
+                            my_css_selector = '#addcart button.red'
+                            is_button_clicked = press_button(driver, By.CSS_SELECTOR, my_css_selector)
 
     # https://kham.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=N28TFATD
     if 'utk0201_00.aspx?product_id=' in url.lower():
@@ -9251,6 +9341,9 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
             is_captcha_sent = False
+
+            # 檢查實名制通知彈窗
+            kham_check_realname_dialog(driver, config_dict)
 
             if config_dict["ocr_captcha"]["enable"]:
                 is_reset_password_text = kham_check_captcha_text_error(driver, config_dict)
@@ -9384,6 +9477,29 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                     ticket_password = util.decryptMe(config_dict["advanced"]["ticket_password"])
                 if len(ticket_account) > 4:
                     ticket_login(driver, ticket_account, ticket_password)
+
+    # 檢查是否到達結帳頁面 (搶票成功)
+    if '/utk02/utk0206_.aspx' in url.lower():
+        if show_debug_message:
+            print("Reached checkout page - ticket purchase successful!")
+        
+        # 播放搶票成功通知音效 (只播放一次)
+        if config_dict["advanced"]["play_sound"]["order"]:
+            if not kham_dict["played_sound_order"]:
+                play_sound_while_ordering(config_dict)
+            kham_dict["played_sound_order"] = True
+        
+        # 如果是無頭模式，開啟瀏覽器顯示結帳頁面 (只開啟一次)
+        if config_dict["advanced"]["headless"]:
+            if not kham_dict["is_popup_checkout"]:
+                checkout_url = url
+                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                webbrowser.open_new(checkout_url)
+                kham_dict["is_popup_checkout"] = True
+    else:
+        # 重置狀態（當離開結帳頁面時）
+        kham_dict["is_popup_checkout"] = False
+        kham_dict["played_sound_order"] = False
 
 
 def ticketplus_date_auto_select(driver, config_dict):
