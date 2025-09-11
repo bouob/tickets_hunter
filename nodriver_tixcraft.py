@@ -4,6 +4,7 @@ import argparse
 import base64
 import json
 import logging
+import asyncio
 import os
 import pathlib
 import platform
@@ -32,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2025.09.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -2390,4 +2391,3 @@ def cli():
 
 if __name__ == "__main__":
     cli()
-

@@ -24,7 +24,7 @@ import webbrowser
 
 import util
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2025.09.09)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -34,7 +34,6 @@ translate={}
 URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/08/max-auto-reg-bot/'
 URL_RELEASE = 'https://github.com/max32002/joint_bot/releases'
-URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
@@ -78,42 +77,23 @@ def load_translate():
             "release": '所有可用版本',
             "help": '使用教學'
         },
-        'zh_cn': {
-            "language": '语言',
-            "enable": '启用',
-            "config_list": '设定档管理',
-            "advanced": '進階設定',
-            "autofill": '自动填表单',
-            "about": '关于',
-            "run": '抢票',
-            "browse": '开启...',
-            "save": '存档',
-            "exit": '关闭',
-            "copy": '复制',
-            "restore_defaults": '恢复默认值',
-            "done": '完成',
-            "maxbot_slogan": 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。',
-            "donate": '打赏',
-            "help": '使用教学',
-            "release": '所有可用版本'
-        },
         'ja_jp': {
             "language": '言語',
             "enable": '有効',
-            "config_list": 'Config List',
-            "advanced": '高度な設定',
-            "autofill": 'オートフィル',
-            "about": '情報',
-            "run": 'チケットを取る',
-            "browse": '開ける...',
+            "config_list": '設定ファイル管理',
+            "advanced": '詳細設定',
+            "autofill": '自動入力',
+            "about": 'について',
+            "run": 'チケット購入',
+            "browse": '参照...',
             "save": '保存',
             "exit": '閉じる',
             "copy": 'コピー',
-            "restore_defaults": 'デフォルトに戻す',
-            "done": '終わり',
-            "maxbot_slogan": 'MaxRegBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。',
+            "restore_defaults": 'デフォルトに復元',
+            "done": '完了',
+            "maxbot_slogan": 'MaxRegBotは無料のオープンソースチケット購入ボットです。\nチケット購入の成功をお祈りします。',
             "donate": '寄付',
-            "help": '利用方法',
+            "help": '使用方法',
             "release": 'リリース'
         }
     }
@@ -199,8 +179,6 @@ def get_language_code_by_name(new_language):
     language_code = "en_us"
     if '繁體中文' in new_language:
         language_code = 'zh_tw'
-    if '簡体中文' in new_language:
-        language_code = 'zh_cn'
     if '日本語' in new_language:
         language_code = 'ja_jp'
     return language_code
@@ -353,16 +331,6 @@ def AboutTab(root, language_code):
 
     group_row_count +=1
 
-    lbl_fb_fans = Label(frame_group_header, text=u'Facebook')
-    lbl_fb_fans.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_fb_fans_url = Label(frame_group_header, text=URL_FB, fg="blue", cursor="hand2")
-    lbl_fb_fans_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_fb_fans_url.bind("<Button-1>", lambda e: open_url(URL_FB))
-
-
-    group_row_count +=1
-
     lbl_chrome_driver = Label(frame_group_header, text=u'Chrome Driver')
     lbl_chrome_driver.grid(column=0, row=group_row_count, sticky = E)
 
@@ -406,7 +374,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly")
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
+    combo_language['values']= ("English","繁體中文","日本語")
     combo_language.set(config_dict["advanced"]['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)

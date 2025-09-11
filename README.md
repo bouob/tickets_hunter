@@ -1,200 +1,276 @@
-# Max 蛋黃酥上車機器人
+# MaxBot 搶票機器人 🎫
 
-## 總覽
+**📖 前言**：因原專案 作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
+**🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援  
+**⚡ 版本**：TicketHunter (2025.09.09)  
+**🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！
 
-MaxBot 是一個開放原始碼的蛋黃酥/公車訂位機器人。祝您搶購成功。
+---
 
-搶票機制，就是在比誰的比較快送出訂單，機器人一定比純手工點擊的快。
+## 📋 專案概述
 
-售票系統的「驗證碼」機制會讓一般不會寫程式的民眾更難公平地購買到預期的門票，因為機器人可以自動填入驗證碼內容。
+MaxBot 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。採用 Python + Selenium/NoDriver 雙引擎架構，搭配瀏覽器擴充套件，提供完整的自動化購票解決方案。
 
-部份的售票系統可以透過「人海戰術」來提升買到票的機率，因此建議大家可以麻煩親朋好友去註冊售票系統的帳號。注意：在使用他人的帳號搶票之前，一定要告知當事人用途，並徵詢同意與授權。
+### 🎪 支援平台
+- **🎭 拓元 (TixCraft/Indievox)** - 完整流程自動化
+- **🎨 KKTIX** - 活動報名與表單填寫  
+- **🎪 Cityline** - 排隊處理與活動預訂
+- **🎫 iBon** - 完整購票流程
+- **🎵 TicketPlus** - 活動與訂單管理
+- **🏟️ Urbtix / HKTicketing** - 港澳地區票務
+- **🎤 其他平台** - Ticket.com.tw, Kham, FamiTicket 等
 
-MaxBot 的出發點是讓一般民眾與代購黃牛或懂得寫程式的人有類似的基準點或類似的起跑線上，用魔法對抗魔法，當某一天大家都是透過機器人來搶票時，當機器人數量已多到影響一般民眾購票的權利時，售票業者才比較有可能會對未來熱門演唱會改採「實名制」+「抽籤制」，讓更多民眾可以公平地購買到門票，就可以跟「人海戰術」與「搶票機器人」說 bye-bye 。
+### 🚀 核心特色
+- **雙引擎架構** - Selenium (穩定) + NoDriver (反偵測)
+- **OCR 驗證碼辨識** - 整合 ddddocr 自動處理驗證碼
+- **智慧化選取** - 日期、區域、票數自動選擇
+- **擴充套件輔助** - 廣告阻擋 + DOM 操作加速
+- **多設定檔管理** - 不同活動快速切換設定
+- **網頁設定介面** - 現代化回應式管理介面
 
-台灣藝文活動的文創法第十條中的「不正方式」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+---
 
-以下文章出現的「搶票」指的是「非台灣的藝文活動或車票」。
+## ⚖️ 法律聲明
 
-MaxBot is a FREE and open source bot program. Good luck getting your expected food or bus seat.
-
-## LEGAL NOTICE 法律聲明
+**🚨 重要提醒**：本軟體僅供教育研究用途，使用者需自行承擔法律責任。
 
 <details>
-<summary><code><b>法律聲明</b>（點我展開）</code></summary>
+<summary><code><b>詳細法律聲明</b>（點擊展開）</code></summary>
 
-作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
+作者沒有意圖要他人購得的票券進行加價轉售或使用在違法事情上。使用此程式即表示您同意[法律聲明](https://github.com/bouob/tixcraft_bot/blob/Main/LEGAL_NOTICE.md)。
 
-使用此儲存庫或與之相關的任何程式碼，即表示您同意[法律聲明](https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md)。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。
+**📍 台灣地區重要法規告知**：
+
+<details>
+<summary><code><b>🚨 文化創意產業發展法第10-1條</b>（點擊展開查看完整條文）</code></summary>
+
+**第 10-1 條** （[法規來源](https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=H0170075&flno=10-1)）
+
+政府應致力於保障民眾近用文化創意活動之權益，確保藝文表演票券正常流通。
+
+**第二項**：將藝文表演票券以超過票面金額或定價販售者，按票券張數，由主管機關處票面金額或定價之十倍至五十倍罰鍰。
+
+**第三項**：**以虛偽資料或其他不正方式，利用電腦或其他相關設備購買藝文表演票券，取得訂票或取票憑證者，處三年以下有期徒刑，或科或併科新臺幣三百萬元以下罰金。**
+
+第四項：主管機關為調查或取締前二項違規事實，得洽請警察機關派員協助。
+
+第五項：主管機關對於檢舉查獲第二項、第三項規定之行為，除應對檢舉人身分資料嚴守秘密外，並得酌予獎勵。對於檢舉人身分資料之保密，於訴訟程序，亦同。
+
+第六項：前項主管機關受理檢舉案件之管轄、處理期間、保密、檢舉人獎勵及其他應遵行事項之辦法，由中央主管機關定之。
 
 </details>
 
-## Protect Account 保護你的帳戶
+**⚠️ 台灣地區適用範圍說明**：
 
-<details>
-<summary><code><b>保護你的帳戶</b>（點我展開）</code></summary>
+**❌ 禁止用於文創法涵蓋之文化創意產業票券**：
+- 🎭 **音樂及表演藝術**：演唱會、音樂劇、舞台劇、戲劇、舞蹈表演等
+- 🎨 **視覺藝術**：美術展覽、藝術博覽會等
+- 🏛️ **文化資產應用及展演設施**：博物館、展覽館特展等
+- 🎬 **電影產業**：電影首映會、影展等
+- 🎵 **流行音樂及文化內容**：演唱會、音樂節等
+- 📺 **廣播電視產業**：電視節目錄製、廣播活動等
+- 🎪 **創意生活產業**：文創市集、藝術節慶等
+- 📱 **數位內容產業**：遊戲展、動漫展等
+- 其他文創法第3條所列15項產業相關活動
 
-目前的售票系統售票無法阻擋機器人進行購票，官方只能從伺服器存取記錄來看到速度過快的記錄，並將之視之為機器人，對其封鎖帳號，短時間刷新幾秒會被鎖帳號並沒有明確的遊戲規則。
+**✅ 適用範圍**：
+- 🏀 **體育競技**：職棒、職籃、桌球、網球、足球等純體育賽事
+- 🚌 **交通運輸**：高鐵、台鐵、客運、捷運等交通票券  
+- ✈️ **旅遊服務**：機票、飯店、遊樂園等旅遊票券
+- 🏢 **商業活動**：商展、會議、講座等非文創商業活動
+- 🌍 **海外活動**：非台灣地區舉辦之各類活動票券
+- 📚 **教育研究**：學術研究、技術測試等合法用途
 
-Q：在沒有違法的前提下，要搶拓元的蛋黃酥與 KKTIX 的（非台灣）海外活動，怎麼才不會被官方鎖帳號？
-
-A：從之前 MaxBot 執行秒數來看，較好的電腦花費秒數大約 8 秒，一般電腦大約花費 10 ～ 12 秒，以秒殺的蛋黃酥來說，建議設定機器人啟動時間為開搶前 2 秒，停止時間為開搶後的 15 秒，是可以降低被官方鎖帳號的機率。
-
-而清票，需要長時間地重新整理，請以自然人能處理的前提下，設定重新整理的延遲時間為一般人可以處理的 2 秒以上。
-
-如果說你想增加在伺服器上存取記錄的變化程度，可以使用秒數的關鍵字功能，讓 MaxBot 在特定秒數時啟動與暫停。參考影片：https://youtu.be/u3YQCZZu6kE
-
-MaxBot 的出發點是幫助大家在購票時，可以有效率地自動化在花時間、重覆又無聊的刷新網頁。
-
-如果有任何違法，必定立即修正。
+**使用原則**：
+- 勿以身試法，了解當地法規
+- 不得用於商業牟利或惡意囤票
+- 尊重售票平台使用條款
 
 </details>
 
-## Download 蛋黃酥上車程式下載
+---
 
-蛋黃酥上車程式下載:
-https://github.com/max32002/tixcraft_bot/releases
-
-下載說明:
-
-- 目前有打包的「執行檔」，只有 Windows 平台，其他作業系統需要使用原始碼來執行。當然 Windows 平台也可以用原始碼執行 MaxBot.
-- 如果你是要用「原始碼」執行 MaxBot, 在透過 git clone 或在 github 按下載原始碼的 zip 檔， python 版本使用 3.7 / 3.8 / 3.9 / 3.10 這 4 個版號測試功能正常。
-- 如果有辦法的話，建議使用原始碼來執行 MaxBot，執行上的「效率」與「相容性」的問題會較少。
-
-
-
-## Demo 示範影片
-
-[點此查看示範影片](https://github.com/max32002/tixcraft_bot/blob/master/demo_video.md)
-
-## How to Use 如何使用
-
-如何使用網頁說明:
-- tixcraft / indievox / ticketmaster: https://max-everyday.com/2018/03/tixcraft-bot/
-- kktix: https://max-everyday.com/2018/12/kktix-bot/
-- cityline: https://max-everyday.com/2019/03/cityline-bot/
-- urbtix: https://max-everyday.com/2019/02/urbtix-bot/
-- hkticketing / galaxymacau: https://max-everyday.com/2023/01/hkticketing-bot/
-
-## How to Execute Source Code 透過原始碼的執行方法
+## 🛡️ 帳號安全指南
 
 <details>
-<summary><code><b>透過原始碼的執行方法</b>（點我展開）</code></summary>
+<summary><code><b>如何避免帳號被封鎖</b>（點擊展開）</code></summary>
 
-透過原始碼執行 MaxBot 教學影片：
-https://youtu.be/HpVG91j0lbI
+### 🔍 風險評估
+售票系統主要透過伺服器存取記錄判斷機器人行為，過快的操作會導致帳號被封鎖。
 
-使用原始碼的解法，第一步是先取得原始碼後，開啟 Terminal(終端機) 視窗來下指令，應該是 4 行指令就可以了。
+### ⏱️ 建議時間設定
+- **秒殺活動**：開搶前 2 秒啟動，開搶後 15 秒停止
+- **清票模式**：重新整理間隔設為 2 秒以上
+- **執行速度**：一般電腦約 10-12 秒完成流程
 
-請參看看文章: 如何用虛擬主機搶拓元的門票，這篇文章是以虛擬主機來示範，在 Windows / macOS / Linux 平台裡的 python 操作方式幾乎相同。
+### 🎛️ 進階技巧
+- 使用關鍵字功能讓機器人在特定時間啟動/暫停
+- 模擬自然人操作節奏，避免規律性太強
+- 分散多個帳號使用，降低單一帳號風險
 
-詳細的文字說明:
-https://max-everyday.com/2023/11/buy-ticket-by-vm/
+</details>
 
-### Step 1: 取得 source code:
+---
 
-```bash
-git clone https://github.com/max32002/tixcraft_bot.git
+## 💻 安裝與執行
+
+### 📦 下載方式
+
+**1. 執行檔版本（僅 Windows）**
+```
+TODO
 ```
 
-### Step 2: 進入 clone 的資料夾: tixcraft_bot:
-
+**2. 原始碼版本（推薦，跨平台）**
 ```bash
+git clone https://github.com/bouob/tixcraft_bot.git
 cd tixcraft_bot
 ```
 
-### Step 3: 安裝第三方套件:
+### 🔧 環境設定
 
+**系統需求**
+- Python 3.7-3.10 (NoDriver 需 3.9+)
+- Chrome 瀏覽器
+- 4GB+ RAM (多開瀏覽器需更多)
+
+**安裝套件**
 ```bash
-python3 -m pip install -r requirement.txt
+# 基本套件安裝
+pip install -r requirement.txt
+
+# NoDriver
+python -m pip install git+https://github.com/max32002/nodriver
 ```
 
-### Step 4: 執行設定介面主桯式:
+### 🚀 執行方式
 
+**1. 網頁設定介面（推薦）**
 ```bash
-python3 settings.py
+python settings.py
+# 開啟 http://127.0.0.1:16888/
 ```
 
-- 如果不使用設定介面，直接執行主程式:
-
+**2. 直接執行主程式**
 ```bash
-python3 chrome_tixcraft.py
+# Selenium 版本 (穩定)
+python chrome_tixcraft.py
+
+# NoDriver 版本
+python nodriver_tixcraft.py
+
+# 指定設定檔
+python chrome_tixcraft.py --input settings.json
 ```
 
-- 如果不使用設定介面，直接執行主程式並套用特定的設定檔:
-
+**3. 多設定檔管理**
 ```bash
-python3 chrome_tixcraft.py --input settings.json
+python config_launcher.py
 ```
 
-#### 如果遇到 MaxBot 改版, 請重新操作上面 4 個步驟一次, 即可取得新的版本.
+---
 
-#### 如果 MaxBot 沒改版, 第二次要再執行的話, 使用 Step 2 + Step 4, 這 2 行指令, 就可以執行 MaxBot.
+## 🏗️ 專案架構
 
-#### 如果你是 ARM CPU 應該會在 Step 3 就顯示錯誤訊息, 解法:
+### 🎯 核心程式
+| 檔案 | 功能 | 特色 |
+|------|------|------|
+| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 |
+| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 |
+| `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
+| `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
+| `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
 
-https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084
+### 🔧 輔助工具
+| 檔案 | 功能 |
+|------|------|
+| `util.py` | 核心工具函式庫 |
+| `NonBrowser.py` | HTTP 請求自動化 |
+| `settings.json` | 主設定檔 |
 
-不管是 macOS 還是 Windows 預設都是沒有 git 這個指令，如果 Step 1 執行後, 沒有檔案被下載, 請先安裝 git 到你的作業系統。或是使用 github 網頁裡的 Download 功能把 python 腳本下載。
+### 🔌 瀏覽器擴充套件
+- **Maxblockplus** - 廣告阻擋，加速頁面載入
+- **Maxbotplus** - DOM 操作輔助，支援 15+ 平台
 
-如果你選擇下載 github 上的 zip 檔, 在 Step 2 進入目錄的指令可能會遇到問題, 因為「直接解壓縮」後的目錄名稱並不是 tixcraft_bot 而是 tixcraft_bot-master, 你在進入的資料夾名稱, 需要調整為你實際解壓縮後的目錄名稱。
+---
 
-透過瀏覽器下載 github 上的 zip 檔, 在 Windows / macOS / Linux 平台, 預設的路徑在「下載」(~/Download) 的資料夾, 你在執行的 Terminal 視窗的路徑, 與你解壓縮的路徑可能不同, 直接執行上面的指令, 會無法進入到預期的資料夾內。
+## 🎬 教學資源
 
-### Q: 取得 source code 後跑出來 fatal: destination path 'tixcraft_bot' already exists and is not an empty directory.想問是什麼意思?
+### 📺 示範影片
+- [虛擬主機搶票教學](https://max-everyday.com/2023/11/buy-ticket-by-vm/)
 
-<b>A: </b>執行 git clone 2 次, 重覆取得 source code, 才會有這個問題, 如果 tixcraft_bot 目錄已經存在, 直接
-<code>cd tixcraft_bot</code>
-就可以了。
-如果你想把已下載的刪除, 可以直接把 tixcraft_bot 目錄刪掉即可。
-如果你想更新 source code, 可以重新下載, 或是先 <code>cd tixcraft_bot</code> 目錄後, 再執行<code>git pull</code>, 可以更新 source code 為新的版本。
+### 📖 平台專用教學
+- [拓元/Ticketmaster 教學](https://max-everyday.com/2018/03/tixcraft-bot/)
+- [KKTIX 教學](https://max-everyday.com/2018/12/kktix-bot/)
+- [Cityline 教學](https://max-everyday.com/2019/03/cityline-bot/)
+- [Urbtix 教學](https://max-everyday.com/2019/02/urbtix-bot/)
+- [HKTicketing 教學](https://max-everyday.com/2023/01/hkticketing-bot/)
 
-#### PS:
+---
 
-- 請先確定你的 python 執行環境下已安裝 selenium 或 nodriver 及相關的套件，請參考 requirement.txt 檔案內容。
-- 透過 python3 執行 settings.py 就可以有 GUI 的設定介面。
-- 如果你是使用 macOS 並且執行環境沒有 python3，請 python 官方網站([https://www.python.org/downloads/](https://www.python.org/downloads/))來安裝 python3.
-- 如果你是使用 Firefox, ChromeDriver 的元件是叫 geckodriver，下載點在：https://github.com/mozilla/geckodriver/releases ，與 ChromeDriver 的處理方式是一樣，如果是 mac 電腦，要在元件按右鍵開啟，做一次授權的動作，mac 有 2 個版本，-macos.tar.gz 與 -macos-aarch64.tar.gz ，如果是 intel CPU 的版本，請服用前面沒有 aarch64 的版本。
+## 🔧 技術實作
 
-#### PS：
+### 🛠️ WebDriver 策略
+1. **undetected_chromedriver** (主要) - 隱蔽性最佳
+2. **Selenium ChromeDriver** (備用) - 穩定性最高  
+3. **NoDriver** (進階) - 反偵測能力最強
 
-搶票程式可以多開 chrome 瀏覽器，如果你電腦效能高。但如果開太多瀏覽器會顯示 Out of Memory, 請增加 Windows 的虛擬記憶體:
-https://zh-tw.emeditor.com/increase-virtual-memory/
+### 🧠 OCR 驗證碼辨識
+- 使用 [ddddocr](https://github.com/sml2h3/ddddocr) 進行圖像辨識
+- 支援 Canvas 和 Image 兩種驗證碼格式
+- 可調整辨識精度與提交策略
 
-#### PS：
+### 🎯 智慧選取邏輯
+- **關鍵字匹配**：支援正則表達式和模糊匹配
+- **排除邏輯**：自動避開輪椅席、視線不良等位置
+- **隨機模式**：模擬真人選擇行為
 
-「掛機模式」的選項，指人不需要在電腦前，驗證碼會猜到對為止。
+---
 
-### Q: 是只有使用虛擬主機才要用程式碼執行搶票機器人嗎？
+## ❓ 常見問題
 
-**A:** 除了 Window 有打包的執行檔之外, macOS / Linux 只能使用原始碼來執行, 當然 Windows 也可以用原始碼來執行.
+### 🐛 安裝問題
+**Q: ARM CPU 在 Step 3 顯示錯誤？**  
+A: 參考 [Issue #82](https://github.com/max32002/tixcraft_bot/issues/82#issuecomment-1878986084) 解決方案
 
-</details>
+**Q: fatal: destination path already exists？**  
+A: 目錄已存在，直接 `cd tixcraft_bot` 即可
 
-## File Description 檔案說明
-主要的檔案說明:
-- chrome_tixcraft.py : 搶票機器人主程式，用來自動化網頁的操作，使用元件是 selenium。
-- nodriver_tixcraft.py : 也是搶票機器人主程式，用來自動化網頁的操作，使用的元件是 nodriver。
-- settings.py : 編輯 settings.json 的 GUI 介面。提供圖片 OCR 功能給 chrome 擴充功能。支援定時啟用/停用 MaxBot。
-- settings_old.py : 舊版本的編輯 settings.json 的 GUI 介面，與 settings.py 的差別在介面一個是網頁形式，old 的用的是視窗形式。
-- config_launcher.py : 設定檔管理, 方便對多個設定檔案搶票。
+**Q: Out of Memory 錯誤？**  
+A: 增加 Windows 虛擬記憶體或減少瀏覽器數量
 
-## Introduce the Implement 實作方法
+### ⚡ 效能最佳化
+- 使用原始碼執行比執行檔效率更高
+- 關閉不必要的瀏覽器擴充套件
+- 調整自動重載間隔避免過度佔用資源
 
-https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/
+---
 
+## 🤝 貢獻與支援
 
-## TODO about Cpatcha 關於驗證碼
+### 💡 技術實作參考
+- [Selenium WebDriver 實作方法](https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/)
+- [擴充套件隱私權政策](https://github.com/bouob/tixcraft_bot/blob/Main/README_EXTENSION.md)
 
-目前自動輸入驗證碼用的元件是:
-https://github.com/sml2h3/ddddocr
+### 🔄 更新方式
+```bash
+# 取得最新版本
+git pull
 
+# 或重新下載
+git clone https://github.com/bouob/tixcraft_bot.git
+```
+---
 
-## Common Problems 常見問題整理
+## 📄 授權條款
 
-整理大家在搶票時常遇到的問題：
-https://max-everyday.com/2023/02/common-problem-when-you-buy-ticket
+本專案採用 GNU GPL 授權，遵循開源精神。使用時請遵守：
+- 保持開源授權條款
+- 標註原作者資訊  
+- 不得用於商業牟利
 
-## Extension Privacy 擴充功能隱私權政策
+**祝您搶票成功！** 🎉
 
-https://github.com/max32002/tixcraft_bot/blob/master/README_EXTENSION.md
+---
+
+*最後更新：2025.09.09 | 由 Claude Code AI 輔助維護*

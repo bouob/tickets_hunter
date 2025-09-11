@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2025.09.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -9918,7 +9918,6 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
             # empty keyword, match all.
             is_need_refresh, is_price_assign_by_bot, is_reset_query = ticketplus_order_expansion_auto_select(driver, config_dict, "", current_layout_style)
 
-        print(f'!!!!!!!!!!!! 尚未開賣, 刷新啦 !!!!!!!!!!!!')
         if is_need_refresh:
             # vue mode, refresh need to check more conditions to check.
             print('start to refresh page.')
@@ -10635,11 +10634,30 @@ def ticketplus_ticket_agree(driver, config_dict):
 
     agree_checkbox = None
     try:
-        my_css_selector = 'div.v-input__slot > div > input[type="checkbox"]'
-        agree_checkbox = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+        # 優先選擇同意條款，避免文化幣選項
+        culture_keywords = ['文化幣', 'culture', '折抵']
+        
+        # 獲取所有 checkbox，逐一檢查
+        all_checkboxes = driver.find_elements(By.CSS_SELECTOR, 'input[type="checkbox"]')
+        for checkbox in all_checkboxes:
+            try:
+                # 檢查父容器是否包含文化幣相關文字
+                parent = checkbox.find_element(By.XPATH, '../..')
+                parent_content = (parent.get_attribute('outerHTML') or '') + (parent.text or '')
+                
+                # 跳過文化幣相關的 checkbox
+                if any(keyword in parent_content for keyword in culture_keywords):
+                    continue
+                    
+                # 找到非文化幣的 checkbox 就使用
+                agree_checkbox = checkbox
+                break
+            except:
+                continue
+                    
     except Exception as exc:
         if show_debug_message:
-            print("find ticketplus agree checkbox fail")
+            print("find ticketplus agree checkbox fail:", exc)
         pass
 
     is_finish_checkbox_click = force_check_checkbox(driver, agree_checkbox)
