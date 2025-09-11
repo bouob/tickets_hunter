@@ -37,7 +37,7 @@ MaxBot 是一個開放原始碼的多平台搶票自動化系統，支援台灣�
 <details>
 <summary><code><b>詳細法律聲明</b>（點擊展開）</code></summary>
 
-作者沒有意圖要他人購得的票券進行加價轉售或使用在違法事情上。使用此程式即表示您同意[法律聲明](https://github.com/bouob/tixcraft_bot/blob/Main/LEGAL_NOTICE.md)。
+作者沒有意圖要他人購得的票券進行加價轉售或使用在違法事情上。使用此程式即表示您同意[法律聲明](https://github.com/bouob/tickets_hunter/blob/Main/LEGAL_NOTICE.md)。
 
 **📍 台灣地區重要法規告知**：
 
@@ -123,8 +123,8 @@ TODO
 
 **2. 原始碼版本（推薦，跨平台）**
 ```bash
-git clone https://github.com/bouob/tixcraft_bot.git
-cd tixcraft_bot
+git clone https://github.com/bouob/tickets_hunter.git
+cd tickets_hunter
 ```
 
 ### 🔧 環境設定
@@ -250,7 +250,7 @@ A: 增加 Windows 虛擬記憶體或減少瀏覽器數量
 
 ### 💡 技術實作參考
 - [Selenium WebDriver 實作方法](https://stackoverflow.max-everyday.com/2018/03/selenium-chrome-webdriver/)
-- [擴充套件隱私權政策](https://github.com/bouob/tixcraft_bot/blob/Main/README_EXTENSION.md)
+- [擴充套件隱私權政策](https://github.com/bouob/tickets_hunter/blob/Main/README_EXTENSION.md)
 
 ### 🔄 更新方式
 ```bash
@@ -258,7 +258,7 @@ A: 增加 Windows 虛擬記憶體或減少瀏覽器數量
 git pull
 
 # 或重新下載
-git clone https://github.com/bouob/tixcraft_bot.git
+git clone https://github.com/bouob/tickets_hunter.git
 ```
 ---
 
