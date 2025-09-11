@@ -1,0 +1,33 @@
+# IDE files
+/.vscode
+/.idea
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Sensitive config files
+/settings.json
+/settings.json.bak
+/config_launcher.json
+/MAXBOT_LAST_URL.txt
+/MAXBOT_INT28_IDLE.txt
+webdriver/*/data/settings.json
+
+# Browser data
+chrome_profile/
+user_data/
+
+# WebDriver executables
+webdriver/*.exe
+webdriver/chromedriver*
+webdriver/geckodriver*
+webdriver/msedgedriver*
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Claude Code
+.claude/
+CLAUDE.md

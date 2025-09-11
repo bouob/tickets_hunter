@@ -34,7 +34,7 @@ try:
 except Exception as exc:
     pass
 
-CONST_APP_VERSION = "MaxBot (2024.04.24)"
+CONST_APP_VERSION = "MaxBot (2025.09.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -92,7 +92,6 @@ translate={}
 URL_DONATE = 'https://max-everyday.com/about/#donate'
 URL_HELP = 'https://max-everyday.com/2018/03/tixcraft-bot/'
 URL_RELEASE = 'https://github.com/max32002/tixcraft_bot/releases'
-URL_FB = 'https://www.facebook.com/maxbot.ticket'
 URL_CHROME_DRIVER = 'https://chromedriver.chromium.org/'
 URL_FIREFOX_DRIVER = 'https://github.com/mozilla/geckodriver/releases'
 URL_EDGE_DRIVER = 'https://developer.microsoft.com/zh-tw/microsoft-edge/tools/webdriver/'
@@ -341,146 +340,26 @@ def load_translate():
     zh_tw["release"] = '所有可用版本'
     zh_tw["help"] = '使用教學'
 
-    zh_cn={}
-    zh_cn["homepage"] = '售票网站'
-    zh_cn["browser"] = '浏览器'
-    zh_cn["language"] = '语言'
-    zh_cn["ticket_number"] = '门票张数'
-    zh_cn["refresh_datetime"] = '刷新在指定时间'
-
-    zh_cn["enable"] = '启用'
-    zh_cn["recommand_enable"] = "建议启用"
-
-    zh_cn["auto_press_next_step_button"] = 'KKTIX自动点选下一步按钮'
-    zh_cn["auto_fill_ticket_number"] = '自动输入张数'
-    zh_cn["and"] = '而且（同列）'
-
-    zh_cn["local_dictionary"] = '本地字典'
-    zh_cn["remote_url"] = '远端网址'
-    zh_cn["server_url"] = '服务器地址'
-    zh_cn["auto_guess_options"] = '自动猜测验证问题'
-    zh_cn["user_guess_string"] = '验证问题的答案列表'
-    zh_cn["preview"] = '预览'
-    zh_cn["question"] = '验证问题'
-    zh_cn["answer"] = '答案'
-
-    zh_cn["date_auto_select"] = '日期自动点选'
-    zh_cn["date_select_order"] = '日期排序方式'
-    zh_cn["date_keyword"] = '日期关键字'
-    zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
-    zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
-    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
-    zh_cn["cityline_queue_retry"] = 'cityline queue retry'
-    zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
-    zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
-    zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
-    zh_cn["window_size"] = '浏览器窗口大小'
-
-    zh_cn["area_select_order"] = '区域排序方式'
-    zh_cn["area_keyword"] = '区域关键字'
-    zh_cn["area_auto_select"] = '区域自动点选'
-    zh_cn["keyword_exclude"] = '排除关键字'
-    zh_cn["keyword_usage"] = '每组关键字需要双引号, 用逗号分隔, \n在关键字中使用空格作为 AND 逻辑。\n附加 ,\"\" 以匹配所有结果。'
-
-    zh_cn["ocr_captcha"] = '猜测验证码'
-    zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
-    zh_cn["ocr_captcha_force_submit"] = '挂机模式'
-    zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
-    zh_cn["webdriver_type"] = 'WebDriver类别'
-    zh_cn["headless"] = '无图形界面模式'
-    zh_cn["verbose"] = '输出详细除错讯息'
-    zh_cn["running_status"] = '执行状态'
-    zh_cn["running_url"] = '执行网址'
-    zh_cn["system_clock"] = '系统时钟'
-    zh_cn["idle_keyword"] = '暂停关键字'
-    zh_cn["resume_keyword"] = '接续关键字'
-    zh_cn["idle_keyword_second"] = '暂停关键字(秒)'
-    zh_cn["resume_keyword_second"] = '接续关键字(秒)'
-    
-    zh_cn["status_idle"] = '闲置中'
-    zh_cn["status_paused"] = '已暂停'
-    zh_cn["status_enabled"] = '已启用'
-    zh_cn["status_running"] = '执行中'
-
-    zh_cn["idle"] = '暂停抢票'
-    zh_cn["resume"] = '接续抢票'
-
-    zh_cn["preference"] = '偏好设定'
-    zh_cn["advanced"] = '进阶设定'
-    zh_cn["verification_word"] = "验证字"
-    zh_cn["maxbot_server"] = '伺服器'
-    zh_cn["autofill"] = '自动填表单'
-    zh_cn["runtime"] = '运行'
-    zh_cn["about"] = '关于'
-    zh_cn["copy"] = '复制'
-
-    zh_cn["run"] = '抢票'
-    zh_cn["save"] = '存档'
-    zh_cn["exit"] = '关闭'
-    zh_cn["copy"] = '复制'
-    zh_cn["restore_defaults"] = '恢复默认值'
-    zh_cn["config_launcher"] = '设定档管理'
-    zh_cn["done"] = '完成'
-
-    zh_cn["tixcraft_sid"] = '拓元家族 cookie SID'
-    zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
-    zh_cn["facebook_account"] = 'Facebook 帐号'
-    zh_cn["kktix_account"] = 'KKTIX 帐号'
-    zh_cn["fami_account"] = 'FamiTicket 帐号'
-    zh_cn["cityline_account"] = 'cityline 帐号'
-    zh_cn["urbtix_account"] = 'URBTIX 帐号'
-    zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
-    zh_cn["kham_account"] = '宽宏 帐号'
-    zh_cn["ticket_account"] = '年代 帐号'
-    zh_cn["udn_account"] = 'UDN 帐号'
-    zh_cn["ticketplus_account"] = '远大 帐号'
-
-    zh_cn["password"] = '密码'
-    zh_cn["facebook_password"] = 'Facebook 密码'
-    zh_cn["kktix_password"] = 'KKTIX 密码'
-    zh_cn["fami_password"] = 'FamiTicket 密码'
-    zh_cn["cityline_password"] = 'cityline 密码'
-    zh_cn["urbtix_password"] = 'URBTIX 密码'
-    zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
-    zh_cn["kham_password"] = '宽宏 密码'
-    zh_cn["ticket_password"] = '年代 密码'
-    zh_cn["udn_password"] = 'UDN 密码'
-    zh_cn["ticketplus_password"] = '远大 密码'
-    zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
-
-    zh_cn["play_ticket_sound"] = '有票时播放音效'
-    zh_cn["play_order_sound"] = '订购时播放音效'
-    zh_cn["play_sound_filename"] = '音效档'
-    
-    zh_cn["chrome_extension"] = "Chrome 浏览器扩展程序"
-    zh_cn["disable_adjacent_seat"] = "允许不连续座位"
-    zh_cn["hide_some_image"] = "隐藏一些图像"
-    zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
-
-    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
-    zh_cn["donate"] = '打赏'
-    zh_cn["help"] = '使用教学'
-    zh_cn["release"] = '所有可用版本'
 
     ja_jp={}
     ja_jp["homepage"] = 'ホームページ'
     ja_jp["browser"] = 'ブラウザ'
     ja_jp["language"] = '言語'
-    ja_jp["ticket_number"] = '枚数'
-    ja_jp["refresh_datetime"] = '目標時間にリフレッシュ'
+    ja_jp["ticket_number"] = 'チケット枚数'
+    ja_jp["refresh_datetime"] = '指定時間にリフレッシュ'
 
-    ja_jp["enable"] = '有効'
+    ja_jp["enable"] = '有効にする'
     ja_jp["recommand_enable"] = "有効化を推奨"
 
-    ja_jp["auto_press_next_step_button"] = 'KKTIX次を自動で押す'
-    ja_jp["auto_fill_ticket_number"] = '枚数自動入力'
-    ja_jp["and"] = 'そして（同列）'
+    ja_jp["auto_press_next_step_button"] = 'KKTIX次のステップボタンを押す'
+    ja_jp["auto_fill_ticket_number"] = '自動チケット番号入力'
+    ja_jp["and"] = '組み合わせ'
 
     ja_jp["local_dictionary"] = 'ローカル辞書'
     ja_jp["remote_url"] = 'リモートURL'
     ja_jp["server_url"] = 'サーバーURL'
-    ja_jp["auto_guess_options"] = '自動推測検証問題'
-    ja_jp["user_guess_string"] = '検証用の質問の回答リスト'
+    ja_jp["auto_guess_options"] = '質問オプションを推測'
+    ja_jp["user_guess_string"] = '質問の答えを入力'
     ja_jp["preview"] = 'プレビュー'
     ja_jp["question"] = '質問'
     ja_jp["answer"] = '答え'
@@ -488,103 +367,102 @@ def load_translate():
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
     ja_jp["date_keyword"] = '日付キーワード'
-    ja_jp["pass_date_is_sold_out"] = '「売り切れ」公演を避ける'
-    ja_jp["auto_reload_coming_soon_page"] = '公開予定のページをリロード'
-    ja_jp["auto_reload_page_interval"] = 'リロード間隔(秒)'
-    ja_jp["max_dwell_time"] = '最大滞留時間(秒)'
-    ja_jp["cityline_queue_retry"] = 'cityline queue retry'
-    ja_jp["reset_browser_interval"] = 'ブラウザの再起動間隔（秒）'
-    ja_jp["proxy_server_port"] = 'Proxy IP:PORT'
+    ja_jp["pass_date_is_sold_out"] = '売り切れ日付をスキップ'
+    ja_jp["auto_reload_coming_soon_page"] = '準備中ページをリロード'
+    ja_jp["auto_reload_page_interval"] = 'ページリロード間隔(秒)'
+    ja_jp["max_dwell_time"] = 'KKTIX滞在時間(秒)'
+    ja_jp["cityline_queue_retry"] = 'citylineキューリトライ'
+    ja_jp["reset_browser_interval"] = 'ブラウザリセット間隔(秒)'
+    ja_jp["proxy_server_port"] = 'プロキシ IP:PORT'
     ja_jp["window_size"] = 'ウィンドウサイズ'
 
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
     ja_jp["keyword_exclude"] = '除外キーワード'
-    ja_jp["keyword_usage"] = '各キーワードはカンマで区切られた二重引用符が必要です。\nキーワード内のスペースを AND ロジックとして使用します。\nすべてに一致するように ,\"\" を追加します。'
+    ja_jp["keyword_usage"] = '各キーワードにダブルクォートが必要です。カンマで区切ります。\nキーワード内のスペースはANDロジックとして使用されます。\nすべてにマッチさせるには,\"\"を追加してください。'
 
-    ja_jp["ocr_captcha"] = 'キャプチャを推測する'
+    ja_jp["ocr_captcha"] = 'OCR認証'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
-    ja_jp["ocr_captcha_force_submit"] = 'キーボードから離れて'
-    ja_jp["ocr_captcha_image_source"] = 'OCR 画像ソース'
+    ja_jp["ocr_captcha_force_submit"] = '自動送信モード'
+    ja_jp["ocr_captcha_image_source"] = 'OCR画像ソース'
     ja_jp["webdriver_type"] = 'WebDriverタイプ'
     ja_jp["headless"] = 'ヘッドレスモード'
     ja_jp["verbose"] = '詳細モード'
-    ja_jp["running_status"] = 'スターテス'
-    ja_jp["running_url"] = '現在の URL'
-    ja_jp["system_clock"] = 'システムクロック'
-    ja_jp["idle_keyword"] = 'アイドルキーワード'
-    ja_jp["resume_keyword"] = '再起動キーワード'
-    ja_jp["idle_keyword_second"] = 'アイドルキーワード（秒）'
-    ja_jp["resume_keyword_second"] = '再起動キーワード（秒）'
+    ja_jp["running_status"] = '実行状態'
+    ja_jp["running_url"] = '実行URL'
+    ja_jp["system_clock"] = 'システム時刻'
+    ja_jp["idle_keyword"] = '待機キーワード'
+    ja_jp["resume_keyword"] = '再開キーワード'
+    ja_jp["idle_keyword_second"] = '待機キーワード(秒)'
+    ja_jp["resume_keyword_second"] = '再開キーワード(秒)'
     
-    ja_jp["status_idle"] = 'アイドル状態'
-    ja_jp["status_paused"] = '一時停止'
+    ja_jp["status_idle"] = '待機中'
+    ja_jp["status_paused"] = '一時停止中'
     ja_jp["status_enabled"] = '有効'
-    ja_jp["status_running"] = 'ランニング'
+    ja_jp["status_running"] = '実行中'
 
-    ja_jp["idle"] = 'アイドル'
-    ja_jp["resume"] = '再起動'
+    ja_jp["idle"] = '待機'
+    ja_jp["resume"] = '再開'
 
-    ja_jp["preference"] = '設定'
-    ja_jp["advanced"] = '高度な設定'
-    ja_jp["verification_word"] = "確認の言葉"
-    ja_jp["maxbot_server"] = 'サーバ'
-    ja_jp["autofill"] = 'オートフィル'
+    ja_jp["preference"] = '基本設定'
+    ja_jp["advanced"] = '詳細設定'
+    ja_jp["verification_word"] = "認証"
+    ja_jp["maxbot_server"] = 'サーバー'
+    ja_jp["autofill"] = '自動入力'
     ja_jp["runtime"] = 'ランタイム'
-    ja_jp["about"] = '情報'
+    ja_jp["about"] = 'このアプリについて'
 
-    ja_jp["run"] = 'チケットを取る'
+    ja_jp["run"] = '実行'
     ja_jp["save"] = '保存'
     ja_jp["exit"] = '閉じる'
     ja_jp["copy"] = 'コピー'
     ja_jp["restore_defaults"] = 'デフォルトに戻す'
     ja_jp["config_launcher"] = 'ランチャー'
-    ja_jp["done"] = '終わり'
+    ja_jp["done"] = '完了'
 
-    ja_jp["tixcraft_sid"] = '拓元家 cookie SID'
+    ja_jp["tixcraft_sid"] = 'Tixcraftファミリー cookie SID'
     ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
-    ja_jp["facebook_account"] = 'Facebookのアカウント'
-    ja_jp["kktix_account"] = 'KKTIXのアカウント'
-    ja_jp["fami_account"] = 'FamiTicketのアカウント'
-    ja_jp["cityline_account"] = 'citylineのアカウント'
-    ja_jp["urbtix_account"] = 'URBTIXのアカウント'
-    ja_jp["hkticketing_account"] = 'HKTICKETINGのアカウント'
-    ja_jp["kham_account"] = 'KHAMのアカウント'
-    ja_jp["ticket_account"] = 'TICKETのアカウント'
-    ja_jp["udn_account"] = 'UDNのアカウント'
-    ja_jp["ticketplus_account"] = '遠大のアカウント'
+    ja_jp["facebook_account"] = 'Facebookアカウント'
+    ja_jp["kktix_account"] = 'KKTIXアカウント'
+    ja_jp["fami_account"] = 'FamiTicketアカウント'
+    ja_jp["cityline_account"] = 'citylineアカウント'
+    ja_jp["urbtix_account"] = 'URBTIXアカウント'
+    ja_jp["hkticketing_account"] = 'HKTICKETINGアカウント'
+    ja_jp["kham_account"] = 'KHAMアカウント'
+    ja_jp["ticket_account"] = 'TICKETアカウント'
+    ja_jp["udn_account"] = 'UDNアカウント'
+    ja_jp["ticketplus_account"] = 'TicketPlusアカウント'
 
     ja_jp["password"] = 'パスワード'
-    ja_jp["facebook_password"] = 'Facebookのパスワード'
-    ja_jp["kktix_password"] = 'KKTIXのパスワード'
-    ja_jp["fami_password"] = 'FamiTicketのパスワード'
-    ja_jp["cityline_password"] = 'citylineのパスワード'
-    ja_jp["urbtix_password"] = 'URBTIXのパスワード'
-    ja_jp["hkticketing_password"] = 'HKTICKETINGのパスワード'
-    ja_jp["kham_password"] = 'KHAMのパスワード'
-    ja_jp["ticket_password"] = 'TICKETのパスワード'
-    ja_jp["udn_password"] = 'UDNのパスワード'
-    ja_jp["ticketplus_password"] = '遠大のパスワード'
-    ja_jp["save_password_alert"] = 'パスワードをファイルに保存すると、パスワードが公開される可能性があります。'
+    ja_jp["facebook_password"] = 'Facebookパスワード'
+    ja_jp["kktix_password"] = 'KKTIXパスワード'
+    ja_jp["fami_password"] = 'FamiTicketパスワード'
+    ja_jp["cityline_password"] = 'citylineパスワード'
+    ja_jp["urbtix_password"] = 'URBTIXパスワード'
+    ja_jp["hkticketing_password"] = 'HKTICKETINGパスワード'
+    ja_jp["kham_password"] = 'KHAMパスワード'
+    ja_jp["ticket_password"] = 'TICKETパスワード'
+    ja_jp["udn_password"] = 'UDNパスワード'
+    ja_jp["ticketplus_password"] = 'TicketPlusパスワード'
+    ja_jp["save_password_alert"] = '設定ファイルにパスワードを保存すると、パスワードが漏洩する可能性があります。'
 
-    ja_jp["play_ticket_sound"] = '有票時に音を鳴らす'
-    ja_jp["play_order_sound"] = '注文時に音を鳴らす'
-    ja_jp["play_sound_filename"] = 'サウンドファイル'
+    ja_jp["play_ticket_sound"] = 'チケット購入時にサウンドを再生'
+    ja_jp["play_order_sound"] = '注文時にサウンドを再生'
+    ja_jp["play_sound_filename"] = 'サウンドファイル名'
     
-    ja_jp["chrome_extension"] = "Chrome ブラウザ拡張機能"
-    ja_jp["disable_adjacent_seat"] = "連続しない座席も可"
-    ja_jp["hide_some_image"] = "一部の画像を非表示にする"
-    ja_jp["block_facebook_network"] = "Facebookをブロックする"
+    ja_jp["chrome_extension"] = "Chromeブラウザー拡張機能"
+    ja_jp["disable_adjacent_seat"] = "隣接座席を無効にする"
+    ja_jp["hide_some_image"] = "一部の画像を隠す"
+    ja_jp["block_facebook_network"] = "Facebookネットワークをブロック"
 
-    ja_jp["maxbot_slogan"] = 'MaxBot は無料のオープン ソース ボット プログラムです。チケットの成功をお祈りします。'
+    ja_jp["maxbot_slogan"] = 'MaxBotは無料のオープンソースボットプログラムです。幸運をお祈りします。'
     ja_jp["donate"] = '寄付'
-    ja_jp["help"] = '利用方法'
+    ja_jp["help"] = 'ヘルプ'
     ja_jp["release"] = 'リリース'
 
     translate['en_us']=en_us
     translate['zh_tw']=zh_tw
-    translate['zh_cn']=zh_cn
     translate['ja_jp']=ja_jp
     return translate
 
@@ -1246,8 +1124,6 @@ def get_language_code_by_name(new_language):
     language_code = "en_us"
     if u'繁體中文' in new_language:
         language_code = 'zh_tw'
-    if u'簡体中文' in new_language:
-        language_code = 'zh_cn'
     if u'日本語' in new_language:
         language_code = 'ja_jp'
     #print("new language code:", language_code)
@@ -1978,7 +1854,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
+    combo_language['values']= ("English","繁體中文","日本語")
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
@@ -3012,15 +2888,6 @@ def AboutTab(root, language_code):
 
     group_row_count +=1
 
-    lbl_fb_fans = Label(frame_group_header, text=u'Facebook')
-    lbl_fb_fans.grid(column=0, row=group_row_count, sticky = E)
-
-    lbl_fb_fans_url = Label(frame_group_header, text=URL_FB, fg="blue", bg="gray", cursor="hand2")
-    lbl_fb_fans_url.grid(column=1, row=group_row_count, sticky = W)
-    lbl_fb_fans_url.bind("<Button-1>", lambda e: open_url(URL_FB))
-
-
-    group_row_count +=1
 
     lbl_chrome_driver = Label(frame_group_header, text=u'Chrome Driver')
     lbl_chrome_driver.grid(column=0, row=group_row_count, sticky = E)
