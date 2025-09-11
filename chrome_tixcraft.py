@@ -8799,6 +8799,258 @@ if(data.d.ReturnData.script.indexOf('該場次目前無法購買。 ')>-1){locat
     return is_need_refresh, is_price_assign_by_bot
 
 
+def ticket_seat_type_auto_select(driver, config_dict, area_keyword_item):
+    """
+    年代售票 - 自動選擇票別 (UTK0205 座位選擇頁面)
+    選擇票價類型，如原價、身障、陪同者等
+    """
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_seat_type_assigned = False
+    
+    try:
+        # 查找所有票別按鈕
+        seat_type_buttons = driver.find_elements(By.CSS_SELECTOR, ".ticketType .buttonGroup button")
+        
+        if show_debug_message:
+            print(f"Found {len(seat_type_buttons)} seat type buttons")
+        
+        if len(seat_type_buttons) > 0:
+            matched_buttons = []
+            
+            for button in seat_type_buttons:
+                try:
+                    button_text = button.text.strip()
+                    button_class = button.get_attribute('class')
+                    button_value = button.get_attribute('value')
+                    onclick_attr = button.get_attribute('onclick')
+                    
+                    if show_debug_message:
+                        print(f"Button text: '{button_text}', class: '{button_class}', onclick: '{onclick_attr}'")
+                    
+                    if button.is_enabled() and len(button_text) > 0:
+                        # 關鍵字篩選
+                        is_match_keyword = True
+                        if len(area_keyword_item) > 0:
+                            area_keyword_array = area_keyword_item.split(' ')
+                            for area_keyword in area_keyword_array:
+                                area_keyword = util.format_keyword_string(area_keyword)
+                                formatted_text = util.format_keyword_string(button_text)
+                                if not area_keyword in formatted_text:
+                                    is_match_keyword = False
+                                    break
+                        
+                        # 排除身障相關票種 (如果沒有特別指定)
+                        if len(area_keyword_item) == 0:
+                            if any(keyword in button_text for keyword in ['身心障礙', '身障', '陪同者']):
+                                is_match_keyword = False
+                        
+                        if is_match_keyword:
+                            matched_buttons.append(button)
+                            if show_debug_message:
+                                print(f"✓ Matched button: '{button_text}'")
+                        else:
+                            if show_debug_message:
+                                print(f"✗ Filtered button: '{button_text}'")
+                    
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"Error processing button: {exc}")
+                    pass
+            
+            # 選擇第一個符合條件的票別
+            if len(matched_buttons) > 0:
+                target_button = matched_buttons[0]  # 預設選第一個
+                
+                try:
+                    target_button.click()
+                    is_seat_type_assigned = True
+                    if show_debug_message:
+                        print(f"✓ Clicked seat type button: '{target_button.text}'")
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"Failed to click seat type button: {exc}")
+                    try:
+                        driver.execute_script("arguments[0].click();", target_button)
+                        is_seat_type_assigned = True
+                        if show_debug_message:
+                            print(f"✓ Force clicked seat type button by JS")
+                    except Exception as exc2:
+                        if show_debug_message:
+                            print(f"Failed to force click: {exc2}")
+            else:
+                if show_debug_message:
+                    print("No matching seat type buttons found")
+        
+    except Exception as exc:
+        if show_debug_message:
+            print(f"Error in seat type selection: {exc}")
+    
+    return is_seat_type_assigned
+
+
+def ticket_find_best_seats(available_seats, ticket_number, allow_non_adjacent):
+    """
+    簡化版座位選擇：優先選擇座位密度高的排，然後選中間位置
+    """
+    if len(available_seats) < ticket_number:
+        return []
+    
+    # 分析座位分布
+    rows = {}
+    for seat in available_seats:
+        try:
+            seat_title = seat.get_attribute('title')
+            if seat_title and '排' in seat_title and '號' in seat_title:
+                parts = seat_title.split('-')
+                if len(parts) >= 3:
+                    row_num = int(parts[1].replace('排', ''))
+                    seat_num = int(parts[2].replace('號', ''))
+                    
+                    if row_num not in rows:
+                        rows[row_num] = []
+                    rows[row_num].append((seat, seat_num))
+        except:
+            continue
+    
+    # 按座位數量排序（座位多的排優先）
+    sorted_rows = sorted(rows.items(), key=lambda x: -len(x[1]))
+    
+    selected_seats = []
+    for row_num, row_seats in sorted_rows:
+        # 按座位號排序，選中間位置
+        row_seats.sort(key=lambda x: x[1])
+        seat_count = len(row_seats)
+        
+        if allow_non_adjacent:
+            # 非連續模式：選中間位置開始的座位
+            start_idx = max(0, (seat_count - ticket_number) // 2)
+            for i in range(min(ticket_number, seat_count)):
+                if start_idx + i < len(row_seats):
+                    selected_seats.append(row_seats[start_idx + i][0])
+                    if len(selected_seats) >= ticket_number:
+                        break
+        else:
+            # 連續模式：找連續座位
+            for start_idx in range(len(row_seats) - ticket_number + 1):
+                continuous = True
+                for i in range(ticket_number - 1):
+                    current_num = row_seats[start_idx + i][1]
+                    next_num = row_seats[start_idx + i + 1][1]
+                    if abs(next_num - current_num) > 2:  # 允許奇偶號連續
+                        continuous = False
+                        break
+                
+                if continuous:
+                    for i in range(ticket_number):
+                        selected_seats.append(row_seats[start_idx + i][0])
+                    break
+        
+        if len(selected_seats) >= ticket_number:
+            break
+    
+    return selected_seats[:ticket_number]
+
+
+def ticket_seat_auto_select(driver, config_dict):
+    """
+    年代售票 - 自動選擇座位，優化策略：熱門排優先、中間優先
+    """
+    is_seat_assigned = False
+    ticket_number = config_dict["ticket_number"]
+    allow_non_adjacent = config_dict["advanced"]["disable_adjacent_seat"]
+    show_debug = config_dict["advanced"]["verbose"]
+    
+    try:
+        # 查找可選座位
+        available_seats = driver.find_elements(By.CSS_SELECTOR, '#locationChoice table td[title][style*="cursor: pointer"]')
+        
+        if len(available_seats) >= ticket_number:
+            # 使用優化策略選擇座位
+            selected_seats = ticket_find_best_seats(available_seats, ticket_number, allow_non_adjacent)
+            
+            # 點擊選中的座位
+            selected_count = 0
+            for seat in selected_seats:
+                try:
+                    seat_style = seat.get_attribute('style')
+                    if 'cursor: pointer' in seat_style and 'icon_chair_empty' in seat_style:
+                        seat.click()
+                        selected_count += 1
+                        if show_debug:
+                            print(f"✓ Selected seat: {seat.get_attribute('title')}")
+                        time.sleep(0.3)
+                except Exception:
+                    continue
+            
+            is_seat_assigned = selected_count > 0
+            if show_debug:
+                print(f"Selected {selected_count}/{ticket_number} seats")
+    
+    except Exception as exc:
+        if show_debug:
+            print(f"Seat selection error: {exc}")
+    
+    return is_seat_assigned
+
+
+def ticket_seat_main(driver, config_dict, ocr, Captcha_Browser, domain_name):
+    """
+    年代售票座位選擇主流程：票別選擇 -> 座位選擇 -> 驗證碼 -> 提交
+    """
+    show_debug = config_dict["advanced"]["verbose"]
+    
+    # Step 1: 選擇票別
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    is_seat_type_assigned = ticket_seat_type_auto_select(driver, config_dict, area_keyword)
+    
+    if not is_seat_type_assigned:
+        is_seat_type_assigned = ticket_seat_type_auto_select(driver, config_dict, "原價")
+    
+    # Step 2: 選擇座位
+    is_seat_assigned = False
+    if is_seat_type_assigned:
+        is_seat_assigned = ticket_seat_auto_select(driver, config_dict)
+    
+    # Step 3: 處理驗證碼
+    is_captcha_sent = False
+    if is_seat_assigned and config_dict["ocr_captcha"]["enable"]:
+        try:
+            captcha_input = driver.find_element(By.ID, "ctl00_ContentPlaceHolder1_CHK")
+            if captcha_input:
+                if Captcha_Browser:
+                    Captcha_Browser.set_domain(domain_name, captcha_url="/pic.aspx?TYPE=UTK0205")
+                is_captcha_sent = kham_captcha(driver, config_dict, ocr, Captcha_Browser, "UTK0205")
+        except Exception:
+            pass
+    
+    # Step 4: 提交
+    is_submit_success = False
+    if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
+        try:
+            submit_button = driver.find_element(By.CSS_SELECTOR, 'button.sumitButton[onclick*="addShoppingCart1"]')
+            if submit_button and submit_button.is_enabled():
+                submit_button.click()
+                is_submit_success = True
+                play_sound_while_ordering(config_dict)
+        except Exception:
+            try:
+                driver.execute_script("addShoppingCart1();")
+                is_submit_success = True
+                play_sound_while_ordering(config_dict)
+            except Exception:
+                pass
+    
+    if show_debug:
+        print(f"年代售票結果: 票別{is_seat_type_assigned} 座位{is_seat_assigned} 提交{is_submit_success}")
+    
+    return is_submit_success
+
+
 def ticket_allow_not_adjacent_seat(driver, config_dict):
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -9472,6 +9724,17 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                                 print(exc)
                             pass
 
+
+        # 年代售票座位選擇頁面 (UTK0205) - 針對 ticket.com.tw
+        if "ticket.com.tw" in domain_name and 'utk0205' in url.lower():
+            if show_debug_message:
+                print("Detected ticket.com.tw UTK0205 seat selection page")
+            
+            # 呼叫年代售票座位選擇主函式
+            is_seat_selection_success = ticket_seat_main(driver, config_dict, ocr, Captcha_Browser, domain_name)
+            
+            if show_debug_message:
+                print(f"Seat selection result: {is_seat_selection_success}")
 
         #https://kham.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=XXX&GROUP_ID=30&PERFORMANCE_PRICE_AREA_ID=XXX
         if '.aspx?performance_id=' in url.lower() and 'performance_price_area_id=' in url.lower():
