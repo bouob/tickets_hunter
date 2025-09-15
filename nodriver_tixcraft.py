@@ -1071,451 +1071,257 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
     return fail_list
 
 async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
+    show_debug_message = config_dict["advanced"].get("verbose", False)
 
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    # read config.
+    # read config
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-    # PS: for big events, check sold out text maybe not helpful, due to database is too busy.
     sold_out_text_list = ["選購一空","已售完","No tickets available","Sold out","空席なし","完売した"]
-    # PS: "Start ordering" for indievox.com.
     find_ticket_text_list = ['立即訂購','Find tickets', 'Start ordering','お申込みへ進む']
 
     game_name = ""
-
     if "/activity/game/" in url:
         url_split = url.split("/")
         if len(url_split) >= 6:
             game_name = url_split[5]
 
-    if show_debug_message:
-        print('get date game_name:', game_name)
-        print("date_auto_select_mode:", auto_select_mode)
-        print("date_keyword:", date_keyword)
-
-    check_game_detail = False
-    # choose date
-    if "/activity/game/%s" % (game_name,) in url:
-        if show_debug_message:
-            if len(date_keyword) == 0:
-                print("date keyword is empty.")
-            else:
-                print("date keyword:", date_keyword)
-        check_game_detail = True
+    check_game_detail = "/activity/game/%s" % (game_name,) in url
 
     area_list = None
     if check_game_detail:
-        if show_debug_message:
-            print("start to query #gameList info.")
-        my_css_selector = '#gameList > table > tbody > tr'
         try:
-            area_list = await tab.query_selector_all(my_css_selector)
-        except Exception as exc:
-            print("find #gameList fail")
+            area_list = await tab.query_selector_all('#gameList > table > tbody > tr')
+        except:
+            pass
 
+    # Language detection for coming soon
     is_coming_soon = False
-    coming_soon_condictions_list_en = [' day(s)', ' hrs.',' min',' sec',' till sale starts!','0',':','/']
-    coming_soon_condictions_list_tw = ['開賣','剩餘',' 天',' 小時',' 分鐘',' 秒','0',':','/','20']
-    coming_soon_condictions_list_ja = ['発売開始', ' 日', ' 時間',' 分',' 秒','0',':','/','20']
-    coming_soon_condictions_list = coming_soon_condictions_list_en
-    html_lang="en-US"
+    coming_soon_conditions = {
+        'en-US': [' day(s)', ' hrs.',' min',' sec',' till sale starts!','0',':','/'],
+        'zh-TW': ['開賣','剩餘',' 天',' 小時',' 分鐘',' 秒','0',':','/','20'],
+        'ja': ['発売開始', ' 日', ' 時間',' 分',' 秒','0',':','/','20']
+    }
+
+    html_lang = "en-US"
     try:
         html_body = await tab.evaluate('document.documentElement.outerHTML')
-        if not html_body is None:
-            if len(html_body) > 0:
-                if '<head' in html_body:
-                    html = html_body.split("<head")[0]
-                    html_lang = html.split('"')[1]
-                    if show_debug_message:
-                        print("html lang:" , html_lang)
-                    if html_lang == "zh-TW":
-                        coming_soon_condictions_list = coming_soon_condictions_list_tw
-                    if html_lang == "ja":
-                        coming_soon_condictions_list = coming_soon_condictions_list_ja
-    except Exception as e:
+        if html_body and '<head' in html_body:
+            html_lang = html_body.split('<head')[0].split('"')[1]
+    except:
         pass
+
+    coming_soon_condictions_list = coming_soon_conditions.get(html_lang, coming_soon_conditions['en-US'])
 
     matched_blocks = None
     formated_area_list = None
 
-    if not area_list is None:
-        area_list_count = len(area_list)
-        if show_debug_message:
-            print("date_list_count:", area_list_count)
+    if area_list and len(area_list) > 0:
+        formated_area_list = []
+        formated_area_list_text = []
+        for row in area_list:
+            try:
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+            except:
+                break
 
-        if area_list_count > 0:
-            formated_area_list = []
-            formated_area_list_text = []
-            for row in area_list:
-                row_text = ""
-                row_html = ""
-                try:
-                    row_html = await row.get_html()
-                    row_text = util.remove_html_tags(row_html)
-                except Exception as exc:
-                    if show_debug_message:
-                        print("get_html error:", exc)
-                    # error, exit loop
-                    break
-                
-                if show_debug_message:
-                    print(f"row_text length: {len(row_text)}")
-                    if len(row_text) > 0:
-                        print(f"row_text preview: {row_text[:100]}")
+            if row_text and not util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                # Check coming soon
+                if all(cond in row_text for cond in coming_soon_condictions_list):
+                    is_coming_soon = True
+                    if auto_reload_coming_soon_page_enable:
+                        break
 
-                if len(row_text) > 0:
-                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                        row_text = ""
+                # Check if row has ticket text
+                row_is_enabled = any(text in row_text for text in find_ticket_text_list)
 
-                if len(row_text) > 0:
-
-                    # check is coming soon events in list.
-                    is_match_all_coming_soon_condiction = True
-                    for condiction_string in coming_soon_condictions_list:
-                        if not condiction_string in row_text:
-                            is_match_all_coming_soon_condiction = False
+                # Check sold out
+                if row_is_enabled and pass_date_is_sold_out_enable:
+                    for sold_out_item in sold_out_text_list:
+                        if sold_out_item in row_text[-(len(sold_out_item)+5):]:
+                            row_is_enabled = False
                             break
 
-                    if is_match_all_coming_soon_condiction:
-                        if show_debug_message:
-                            print("match coming soon condiction at row:", row_text)
-                        is_coming_soon = True
+                if row_is_enabled:
+                    formated_area_list.append(row)
+                    formated_area_list_text.append(row_text)
 
-                    if is_coming_soon:
-                        if auto_reload_coming_soon_page_enable:
-                            break
+        if not date_keyword:
+            matched_blocks = formated_area_list
+        else:
+            # Keyword matching
+            matched_blocks = []
+            try:
+                import json
+                keyword_array = json.loads("[" + date_keyword + "]")
 
-                    row_is_enabled=False
-                    for text_item in find_ticket_text_list:
-                        if text_item in row_text:
-                            row_is_enabled = True
-                            if show_debug_message:
-                                print(f"Found ticket text '{text_item}' in row")
-                            break
-
-                    if show_debug_message:
-                        print(f"row_is_enabled after ticket text check: {row_is_enabled}")
-
-                    # check sold out text.
-                    if row_is_enabled:
-                        if pass_date_is_sold_out_enable:
-                            for sold_out_item in sold_out_text_list:
-                                row_text_right_part = row_text[(len(sold_out_item)+5)*-1:]
-                                if show_debug_message:
-                                    print("check right part text:", row_text_right_part)
-                                if sold_out_item in row_text_right_part:
-                                    row_is_enabled = False
-                                    if show_debug_message:
-                                        print("match sold out text: %s, skip this row." % (sold_out_item))
-                                    break
-
-                    if show_debug_message:
-                        print(f"Final row_is_enabled: {row_is_enabled}")
-
-                    if row_is_enabled:
-                        formated_area_list.append(row)
-                        formated_area_list_text.append(row_text)
-                        if show_debug_message:
-                            print("Row added to formated_area_list")
-
-            if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
-
-            if len(date_keyword) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # match keyword.
-                if show_debug_message:
-                    print("start to match formated keyword:", date_keyword)
-
-                # Simple keyword matching for NoDriver (avoid util function which expects Selenium elements)
-                matched_blocks = []
-                try:
-                    import json
-                    keyword_array = json.loads("["+ date_keyword +"]")
-                    
-                    if show_debug_message:
-                        print("keyword_array:", keyword_array)
-                    
-                    for i, row_text in enumerate(formated_area_list_text):
+                for i, row_text in enumerate(formated_area_list_text):
+                    for keyword_item_set in keyword_array:
                         is_match = False
-                        for keyword_item_set in keyword_array:
-                            if isinstance(keyword_item_set, str):
-                                # Single keyword
-                                if keyword_item_set in row_text:
-                                    is_match = True
-                                    if show_debug_message:
-                                        print(f"Found keyword '{keyword_item_set}' in row: {row_text[:50]}")
-                                    break
-                            elif isinstance(keyword_item_set, list):
-                                # Multiple keywords (AND logic)
-                                match_all = True
-                                for keyword in keyword_item_set:
-                                    if keyword not in row_text:
-                                        match_all = False
-                                        break
-                                if match_all:
-                                    is_match = True
-                                    if show_debug_message:
-                                        print(f"Found all keywords {keyword_item_set} in row: {row_text[:50]}")
-                                    break
-                        
+                        if isinstance(keyword_item_set, str):
+                            is_match = keyword_item_set in row_text
+                        elif isinstance(keyword_item_set, list):
+                            is_match = all(kw in row_text for kw in keyword_item_set)
+
                         if is_match:
                             matched_blocks.append(formated_area_list[i])
-                            
-                except Exception as exc:
-                    if show_debug_message:
-                        print("keyword parsing error:", exc)
-                    # Fallback: no keyword filter
-                    matched_blocks = formated_area_list
-
-                if show_debug_message:
-                    if not matched_blocks is None:
-                        print("after match keyword, found count:", len(matched_blocks))
-        else:
-            print("not found date-time-position")
-            pass
-    else:
-        print("date date-time-position is None")
-        pass
+                            break
+            except:
+                matched_blocks = formated_area_list
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-
     is_date_clicked = False
-    if not target_area is None:
-        if show_debug_message:
-            print("target_area got, start to press button.")
 
-        # Try to click button first
+    if target_area:
+        # Try button first
         try:
             button = await target_area.query_selector('button')
             if button:
                 await button.click()
                 is_date_clicked = True
-            else:
-                if show_debug_message:
-                    print("button not found, try data-href")
-        except Exception as exc:
-            if show_debug_message:
-                print("button click failed:", exc)
+        except:
+            pass
 
+        # Try data-href for tixcraft
+        if not is_date_clicked and "tixcraft" in domain_name:
+            try:
+                data_href = await target_area.evaluate('el => el.getAttribute("data-href")')
+                if data_href:
+                    if show_debug_message:
+                        print("goto:", data_href)
+                    await tab.get(data_href)
+                    is_date_clicked = True
+            except:
+                pass
+
+        # Try link for ticketmaster
         if not is_date_clicked:
-            if show_debug_message:
-                print("press button fail, try to click hyperlink.")
-
-            if "tixcraft" in domain_name:
-                try:
-                    # NoDriver doesn't have get_attribute, use evaluate instead
-                    data_href = await target_area.evaluate('element => element.getAttribute("data-href")')
-                    if not data_href is None:
-                        print("goto url:", data_href)
-                        await tab.get(data_href)
-                        is_date_clicked = True
-                    else:
-                        if show_debug_message:
-                            print("data-href not ready")
-                except Exception as exc:
-                    if show_debug_message:
-                        print("data-href click failed:", exc)
-
-            # for: ticketmaster.sg
-            if not is_date_clicked:
-                try:
-                    link = await target_area.query_selector('a')
-                    if link:
-                        await link.click()
-                        is_date_clicked = True
-                except Exception as exc:
-                    if show_debug_message:
-                        print("link click failed:", exc)
+            try:
+                link = await target_area.query_selector('a')
+                if link:
+                    await link.click()
+                    is_date_clicked = True
+            except:
+                pass
 
     return is_date_clicked
 
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
     import json
 
-    # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
-    ticket_number = config_dict["ticket_number"]
-
-    if show_debug_message:
-        print("area_keyword:", area_keyword)
-
-    el = None
     try:
         el = await tab.query_selector('.zone')
-    except Exception as exc:
-        print("find .zone fail, do nothing.")
+    except:
+        return
 
-    if not el is None:
-        is_need_refresh = False
-        matched_blocks = None
-
-        if len(area_keyword) > 0:
-            area_keyword_array = []
-            try:
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                area_keyword_array = []
-            for area_keyword_item in area_keyword_array:
-                is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-                if not is_need_refresh:
-                    break
-                else:
-                    print("is_need_refresh for keyword:", area_keyword_item)
-        else:
-            # empty keyword, match all.
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-
-        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-        if not target_area is None:
-            try:
-                await target_area.click()
-            except Exception as exc:
-                print("click area a link fail, start to retry...")
-                try:
-                    await target_area.evaluate('element => element.click()')
-                except Exception as exc:
-                    print("click area a link fail, after retry still fail.")
-                    print(exc)
-                    pass
-
-        # auto refresh for area list page.
-        if is_need_refresh:
-            try:
-                await tab.reload()
-            except Exception as exc:
-                pass
-
-            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                import time
-                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
-
-async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
-
-    # read config.
-    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    if not el:
+        return
 
     is_need_refresh = False
     matched_blocks = None
 
-    area_list = None
-    area_list_count = 0
-    if not el is None:
+    if area_keyword:
         try:
-            area_list = await el.query_selector_all('a')
-        except Exception as exc:
-            #print("find area list a tag fail")
+            area_keyword_array = json.loads("[" + area_keyword + "]")
+        except:
+            area_keyword_array = []
+
+        for area_keyword_item in area_keyword_array:
+            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
+            if not is_need_refresh:
+                break
+    else:
+        is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    if target_area:
+        try:
+            await target_area.click()
+        except:
+            try:
+                await target_area.evaluate('el => el.click()')
+            except:
+                pass
+
+    # Auto refresh if needed
+    if is_need_refresh:
+        try:
+            await tab.reload()
+        except:
             pass
 
-        if not area_list is None:
-            area_list_count = len(area_list)
-            if area_list_count == 0:
-                print("area list is empty, do refresh!")
-                is_need_refresh = True
-        else:
-            print("area list is None, do refresh!")
-            is_need_refresh = True
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            import time
+            time.sleep(interval)
 
-    if area_list_count > 0:
-        matched_blocks = []
-        for row in area_list:
-            row_text = ""
-            row_html = ""
+async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
+    area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    is_need_refresh = False
+    matched_blocks = None
+
+    if not el:
+        return True, None
+
+    try:
+        area_list = await el.query_selector_all('a')
+    except:
+        return True, None
+
+    if not area_list or len(area_list) == 0:
+        return True, None
+
+    matched_blocks = []
+    for row in area_list:
+        try:
+            row_html = await row.get_html()
+            row_text = util.remove_html_tags(row_html)
+        except:
+            break
+
+        if not row_text or util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+            continue
+
+        row_text = util.format_keyword_string(row_text)
+
+        # Check keyword match
+        if area_keyword_item:
+            is_match = all(
+                util.format_keyword_string(kw) in row_text
+                for kw in area_keyword_item.split(' ')
+            )
+            if not is_match:
+                continue
+
+        # Check seat availability for multiple tickets
+        if config_dict["ticket_number"] > 1:
             try:
-                row_html = await row.get_html()
-                row_text = util.remove_html_tags(row_html)
-            except Exception as exc:
-                if show_debug_message:
-                    print(exc)
-                # error, exit loop
-                break
+                font_el = await row.query_selector('font')
+                if font_el:
+                    font_text = await font_el.evaluate('el => el.textContent')
+                    if font_text:
+                        font_text = "@%s@" % font_text
+                        # Skip if only 1-9 seats remaining
+                        SEATS_1_9 = ["@%d@" % i for i in range(1, 10)]
+                        if any(seat in font_text for seat in SEATS_1_9):
+                            continue
+            except:
+                pass
 
-            if len(row_text) > 0:
-                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                    row_text = ""
+        matched_blocks.append(row)
 
-            if len(row_text) > 0:
-                # clean stop word.
-                row_text = util.format_keyword_string(row_text)
+        if area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
+            break
 
-                is_append_this_row = False
-
-                if len(area_keyword_item) > 0:
-                    # must match keyword.
-                    is_append_this_row = True
-                    area_keyword_array = area_keyword_item.split(' ')
-                    for area_keyword in area_keyword_array:
-                        area_keyword = util.format_keyword_string(area_keyword)
-                        if not area_keyword in row_text:
-                            is_append_this_row = False
-                            break
-                else:
-                    # without keyword.
-                    is_append_this_row = True
-
-                if is_append_this_row:
-                    if config_dict["ticket_number"] > 1:
-                        area_item_font_el = None
-                        try:
-                            #print('try to find font tag at row:', row_text)
-                            area_item_font_el = await row.query_selector('font')
-                            if not area_item_font_el is None:
-                                font_el_text = await area_item_font_el.evaluate('element => element.textContent')
-                                if font_el_text is None:
-                                    font_el_text = ""
-                                font_el_text = "@%s@" % (font_el_text)
-                                if show_debug_message:
-                                    print('font tag text:', font_el_text)
-                                    pass
-                                # Check seats remaining (from util.py constants)
-                                CONT_STRING_1_SEATS_REMAINING = ["@1@","@2@","@3@","@4@","@5@","@6@","@7@","@8@","@9@"]
-                                for check_item in CONT_STRING_1_SEATS_REMAINING:
-                                    if check_item in font_el_text:
-                                        if show_debug_message:
-                                            print("match pass 1 seats remaining 1 full text:", row_text)
-                                            print("match pass 1 seats remaining 2 font text:", font_el_text)
-                                        is_append_this_row = False
-                            else:
-                                #print("row without font tag.")
-                                pass
-                        except Exception as exc:
-                            #print("find font text in a tag fail:", exc)
-                            pass
-
-                if show_debug_message:
-                    print("is_append_this_row:", is_append_this_row)
-
-                if is_append_this_row:
-                    matched_blocks.append(row)
-
-                    if area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                        #print("only need first item, break area list loop.")
-                        break
-
-        if len(matched_blocks) == 0:
-            matched_blocks = None
-            is_need_refresh = True
+    if not matched_blocks:
+        is_need_refresh = True
+        matched_blocks = None
 
     return is_need_refresh, matched_blocks
 
