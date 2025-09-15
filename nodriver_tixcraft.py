@@ -1325,6 +1325,133 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
 
     return is_need_refresh, matched_blocks
 
+async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+    is_ticket_number_assigned = False
+
+    if select_obj:
+        if show_debug_message:
+            print(f"嘗試選擇票券數量: {ticket_number}")
+
+        try:
+            result = await tab.evaluate(f'''
+                (function() {{
+                    const select = document.querySelector('#TicketForm_ticketPrice_01');
+                    if (!select) return {{ success: false, error: "Select not found" }};
+
+                    const targetOption = Array.from(select.options).find(option => option.value === "{ticket_number}");
+                    if (targetOption) {{
+                        select.value = "{ticket_number}";
+                        select.selectedIndex = targetOption.index;
+                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{ success: true, selected: "{ticket_number}" }};
+                    }} else {{
+                        // Fallback to "1" if target not available
+                        const fallbackOption = Array.from(select.options).find(option => option.value === "1");
+                        if (fallbackOption) {{
+                            select.value = "1";
+                            select.selectedIndex = fallbackOption.index;
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            return {{ success: true, selected: "1" }};
+                        }}
+                    }}
+                    return {{ success: false, selected: null }};
+                }})();
+            ''')
+
+            is_ticket_number_assigned = result.get('success', False) if isinstance(result, dict) else bool(result)
+
+            if show_debug_message:
+                if is_ticket_number_assigned:
+                    selected_value = result.get('selected', 'unknown') if isinstance(result, dict) else 'unknown'
+                    print(f"票券數量選擇成功: {selected_value}")
+                else:
+                    print("票券數量選擇失敗")
+
+        except Exception as e:
+            print(f"nodriver_ticket_number_select_fill error: {e}")
+
+    return is_ticket_number_assigned
+
+async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_ticket_number_assigned = False
+
+    # Find select elements for ticket number
+    form_select_list = None
+    try:
+        form_select_list = await tab.query_selector_all('.mobile-select')
+    except:
+        pass
+
+    form_select = None
+    form_select_count = 0
+    if form_select_list:
+        form_select_count = len(form_select_list)
+        if form_select_count >= 1:
+            form_select = form_select_list[0]
+
+    if show_debug_message:
+        print(f"發現 {form_select_count} 個票券選擇元素")
+
+    # Handle multi select box
+    if form_select_count > 1 and config_dict["area_auto_select"]["enable"]:
+        area_keyword_array = []
+        try:
+            import json
+            area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+            if area_keyword:
+                area_keyword_array = json.loads("[" + area_keyword + "]")
+        except:
+            pass
+
+        if area_keyword_array:
+            for keyword_item in area_keyword_array:
+                for select_el in form_select_list:
+                    try:
+                        select_html = await select_el.get_html()
+                        if keyword_item in select_html:
+                            form_select = select_el
+                            break
+                    except:
+                        continue
+                if form_select:
+                    break
+
+    # Create Select-like object for NoDriver
+    select_obj = None
+    if form_select is not None:
+        try:
+            # Check if select has options and get current selection
+            current_value = await tab.evaluate('''
+                (function() {
+                    const select = document.querySelector('#TicketForm_ticketPrice_01');
+                    return select ? select.value : "0";
+                })();
+            ''')
+
+            if show_debug_message:
+                print(f"目前票券數量設定: {current_value}")
+
+            if current_value and current_value != "0":
+                # Already assigned
+                is_ticket_number_assigned = True
+                if show_debug_message:
+                    print("票券數量已設定，跳過")
+            else:
+                select_obj = form_select
+        except Exception as e:
+            if show_debug_message:
+                print(f"檢查票券數量狀態時發生錯誤: {e}")
+
+    return is_ticket_number_assigned, select_obj
+
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
     for i in range(3):
         is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree:not(:checked)')
@@ -1332,17 +1459,45 @@ async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
             break
 
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
     is_agree_at_webdriver = False
     if not config_dict["browser"] in CONST_CHROME_FAMILY:
         is_agree_at_webdriver = True
     else:
         if not config_dict["advanced"]["chrome_extension"]:
             is_agree_at_webdriver = True
-    #print("is_agree_at_webdriver:", is_agree_at_webdriver)
+
     if is_agree_at_webdriver:
-        # use extension instead of selenium.
-        # checkbox javascrit code at chrome extension.
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
+
+    is_ticket_number_assigned = False
+
+    # PS: some events on tixcraft have multi <select>.
+    is_ticket_number_assigned, select_obj = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
+
+    if not is_ticket_number_assigned:
+        ticket_number = str(config_dict["ticket_number"])
+        if show_debug_message:
+            print(f"準備設定票券數量: {ticket_number}")
+        is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number)
+
+    # must wait ticket number assign to focus captcha.
+    if is_ticket_number_assigned:
+        if show_debug_message:
+            print("票券數量設定完成，開始OCR驗證碼處理")
+        await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
+    else:
+        if show_debug_message:
+            print("警告：票券數量設定失敗")
+
+async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name):
+    # TODO: Implement OCR handling for NoDriver
+    pass
 
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
