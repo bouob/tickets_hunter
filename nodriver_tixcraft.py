@@ -1119,6 +1119,8 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     formated_area_list = None
 
     if area_list and len(area_list) > 0:
+        if show_debug_message:
+            print(f"found {len(area_list)} date rows")
         formated_area_list = []
         formated_area_list_text = []
         for row in area_list:
@@ -1143,11 +1145,15 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                     for sold_out_item in sold_out_text_list:
                         if sold_out_item in row_text[-(len(sold_out_item)+5):]:
                             row_is_enabled = False
+                            if show_debug_message:
+                                print(f"row is sold out: {row_text[:50]}...")
                             break
 
                 if row_is_enabled:
                     formated_area_list.append(row)
                     formated_area_list_text.append(row_text)
+                    if show_debug_message:
+                        print(f"enabled row: {row_text[:80]}...")
 
         if not date_keyword:
             matched_blocks = formated_area_list
@@ -1156,56 +1162,91 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
             matched_blocks = []
             try:
                 import json
+                import re
                 keyword_array = json.loads("[" + date_keyword + "]")
+                if show_debug_message:
+                    print(f"date_keyword array: {keyword_array}")
 
                 for i, row_text in enumerate(formated_area_list_text):
+                    # Normalize spaces for better matching
+                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
+
                     for keyword_item_set in keyword_array:
                         is_match = False
                         if isinstance(keyword_item_set, str):
-                            is_match = keyword_item_set in row_text
+                            # Normalize keyword spaces too
+                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
+                            is_match = normalized_keyword in normalized_row_text
+                            if show_debug_message:
+                                if is_match:
+                                    print(f"matched keyword '{keyword_item_set}' in row: {row_text[:60]}...")
+                                elif normalized_keyword != keyword_item_set:
+                                    # Check original too for debugging
+                                    if keyword_item_set in row_text:
+                                        print(f"keyword would match without normalization")
                         elif isinstance(keyword_item_set, list):
-                            is_match = all(kw in row_text for kw in keyword_item_set)
+                            # Normalize all keywords in list
+                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
+                            is_match = all(kw in normalized_row_text for kw in normalized_keywords)
+                            if show_debug_message and is_match:
+                                print(f"matched all keywords {keyword_item_set} in row: {row_text[:60]}...")
 
                         if is_match:
                             matched_blocks.append(formated_area_list[i])
                             break
-            except:
+            except Exception as e:
+                if show_debug_message:
+                    print(f"keyword parsing error: {e}")
                 matched_blocks = formated_area_list
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     is_date_clicked = False
 
-    if target_area:
-        # Try button first
-        try:
-            button = await target_area.query_selector('button')
-            if button:
-                await button.click()
-                is_date_clicked = True
-        except:
-            pass
+    if show_debug_message:
+        if matched_blocks:
+            print(f"matched {len(matched_blocks)} blocks for date selection")
+        else:
+            print("no matched blocks for date selection")
+        if target_area:
+            print("target_area selected for clicking")
 
-        # Try data-href for tixcraft
-        if not is_date_clicked and "tixcraft" in domain_name:
-            try:
-                data_href = await target_area.evaluate('el => el.getAttribute("data-href")')
+    if target_area:
+        # Priority: button with data-href (tixcraft) > regular link > regular button
+        try:
+            # For tixcraft - button with data-href
+            button = await target_area.query_selector('button[data-href]')
+            if button:
+                data_href = await button.evaluate('el => el.getAttribute("data-href")')
                 if data_href:
                     if show_debug_message:
-                        print("goto:", data_href)
+                        print(f"navigating via button data-href: {data_href}")
                     await tab.get(data_href)
                     is_date_clicked = True
-            except:
-                pass
+        except Exception as e:
+            if show_debug_message:
+                print(f"button data-href error: {e}")
 
-        # Try link for ticketmaster
+        # For other platforms - regular link or button click
         if not is_date_clicked:
             try:
-                link = await target_area.query_selector('a')
+                # Try link first (ticketmaster, etc)
+                link = await target_area.query_selector('a[href]')
                 if link:
+                    if show_debug_message:
+                        print("clicking link")
                     await link.click()
                     is_date_clicked = True
-            except:
-                pass
+                else:
+                    # Try regular button
+                    button = await target_area.query_selector('button')
+                    if button:
+                        if show_debug_message:
+                            print("clicking button")
+                        await button.click()
+                        is_date_clicked = True
+            except Exception as e:
+                if show_debug_message:
+                    print(f"click error: {e}")
 
     return is_date_clicked
 
