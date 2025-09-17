@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2025.09.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -3087,7 +3087,6 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
         show_debug_message = True
 
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-    date_keyword = util.format_keyword_string(date_keyword)
 
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
@@ -3174,9 +3173,32 @@ def get_fami_target_area(driver, config_dict, area_keyword_item):
                         # check date.
                         is_match_date = False
                         if len(date_keyword) > 0:
-                            if date_keyword in date_html_text:
-                                #print("is_match_date")
-                                is_match_date = True
+                            # Support OR logic: "9/11","9/22","3/3"
+                            date_keyword_array = []
+                            try:
+                                date_keyword_array = json.loads("["+ date_keyword +"]")
+                            except Exception as exc:
+                                date_keyword_array = []
+
+                            for date_keyword_item in date_keyword_array:
+                                if ' ' in date_keyword_item:
+                                    # AND logic within each item
+                                    keyword_item_array = date_keyword_item.split(' ')
+                                    is_match_all = True
+                                    for keyword_item in keyword_item_array:
+                                        keyword_item = util.format_keyword_string(keyword_item)
+                                        if not keyword_item in date_html_text:
+                                            is_match_all = False
+                                            break
+                                    if is_match_all:
+                                        is_match_date = True
+                                        break
+                                else:
+                                    # Single keyword
+                                    formatted_date_keyword = util.format_keyword_string(date_keyword_item)
+                                    if formatted_date_keyword in date_html_text:
+                                        is_match_date = True
+                                        break
                         else:
                             is_match_date = True
 
