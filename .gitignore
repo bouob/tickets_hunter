@@ -33,3 +33,4 @@ webdriver/msedgedriver*
 # Claude Code
 .claude/
 CLAUDE.md
+/docs/
