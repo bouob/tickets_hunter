@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2025.09.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.16)"
 
 def parse_nodriver_result(result):
     """
@@ -238,6 +238,76 @@ async def nodriver_check_checkbox(tab: Optional[object], select_query: str, valu
         except Exception as exc:
             print(exc)
     return False
+
+async def nodriver_force_check_checkbox(tab, checkbox_element):
+    """強制勾選 checkbox，參考 Chrome 版本的 force_check_checkbox 邏輯"""
+    is_finish_checkbox_click = False
+
+    if checkbox_element:
+        try:
+            # 使用 JavaScript 檢查和設定 checkbox 狀態
+            result = await tab.evaluate('''
+                (function(element) {
+                    if (!element) return false;
+
+                    // 檢查是否已勾選
+                    if (element.checked) return true;
+
+                    // 嘗試點擊勾選
+                    try {
+                        element.click();
+                        return element.checked;
+                    } catch(e) {
+                        // fallback: 直接設定 checked 屬性
+                        element.checked = true;
+                        return element.checked;
+                    }
+                })(arguments[0]);
+            ''', checkbox_element)
+
+            is_finish_checkbox_click = bool(result)
+
+        except Exception as exc:
+            pass
+
+    return is_finish_checkbox_click
+
+async def nodriver_check_checkbox_enhanced(tab, select_query, show_debug_message=False):
+    """增強版勾選函式，直接使用 JavaScript 操作"""
+    is_checkbox_checked = False
+
+    try:
+        if show_debug_message:
+            print(f"執行勾選 checkbox: {select_query}")
+
+        # 直接使用 JavaScript 查找並勾選
+        result = await tab.evaluate(f'''
+            (function() {{
+                const checkbox = document.querySelector('{select_query}');
+                if (!checkbox) return false;
+
+                if (checkbox.checked) return true;
+
+                try {{
+                    checkbox.click();
+                    return checkbox.checked;
+                }} catch(e) {{
+                    checkbox.checked = true;
+                    return checkbox.checked;
+                }}
+            }})();
+        ''')
+
+        is_checkbox_checked = bool(result)
+
+        if show_debug_message:
+            print(f"勾選結果: {is_checkbox_checked}")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"勾選異常: {exc}")
+
+    return is_checkbox_checked
 
 async def nodriver_facebook_login(tab, facebook_account, facebook_password):
     if tab:
@@ -1506,10 +1576,22 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     return is_ticket_number_assigned, select_obj
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    if show_debug_message:
+        print("開始執行勾選同意條款")
+
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree:not(:checked)')
+        is_finish_checkbox_click = await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', show_debug_message)
         if is_finish_checkbox_click:
+            if show_debug_message:
+                print("勾選同意條款成功")
             break
+        elif show_debug_message:
+            print(f"勾選同意條款失敗，重試 {i+1}/3")
+
+    if not is_finish_checkbox_click and show_debug_message:
+        print("警告：同意條款勾選失敗")
 
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
     global tixcraft_dict
@@ -1527,18 +1609,15 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     if ticket_state_key in tixcraft_dict and tixcraft_dict[ticket_state_key]:
         if show_debug_message:
             print(f"票券數量已設定過 ({ticket_number} 張)，跳過重複設定")
+
+        # 確保勾選同意條款（即使票券已設定）
+        await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
+
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
         return
 
-    is_agree_at_webdriver = False
-    if not config_dict["browser"] in CONST_CHROME_FAMILY:
-        is_agree_at_webdriver = True
-    else:
-        if not config_dict["advanced"]["chrome_extension"]:
-            is_agree_at_webdriver = True
-
-    if is_agree_at_webdriver:
-        await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
+    # NoDriver 模式下總是執行勾選同意條款
+    await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
     is_ticket_number_assigned = False
 
