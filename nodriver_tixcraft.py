@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "MaxBot (2025.09.09)"
+CONST_APP_VERSION = "Tickets Hunter (2025.09.16)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -99,7 +99,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 warnings.simplefilter('ignore',InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -228,6 +228,80 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
             pass
 
 
+async def launch_debug_chrome_for_kktix():
+    """
+    為 KKTIX 專門啟動 debug 模式的 Chrome
+    減少反偵測機制干擾
+    """
+    import subprocess
+    import time
+
+    try:
+        # 啟動 Chrome debug 模式
+        debug_port = 9222
+        chrome_cmd = [
+            "chrome.exe",  # Windows
+            f"--remote-debugging-port={debug_port}",
+            # "--disable-blink-features=AutomationControlled",
+            # "--disable-features=VizDisplayCompositor",
+            # "--disable-extensions",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--user-data-dir=./chrome-debug-profile",
+            "https://kktix.com"
+        ]
+
+        # 嘗試 Windows Chrome 路徑
+        chrome_paths = [
+            "chrome.exe",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        ]
+
+        launched = False
+        for chrome_path in chrome_paths:
+            try:
+                chrome_cmd[0] = chrome_path
+                subprocess.Popen(chrome_cmd)
+                launched = True
+                print(f"Debug Chrome 已啟動在 port {debug_port}")
+                break
+            except FileNotFoundError:
+                continue
+
+        if not launched:
+            print("無法找到 Chrome 執行檔")
+            return None
+
+        time.sleep(3)  # 等待 Chrome 啟動
+        return debug_port
+
+    except Exception as e:
+        print(f"啟動 debug Chrome 失敗: {e}")
+        return None
+
+async def connect_to_debug_chrome(debug_port=9222):
+    """
+    連接到 debug 模式的 Chrome
+    """
+    try:
+        import nodriver as uc
+
+        # 連接到現有的 Chrome 實例
+        config = uc.Config(
+            browser_port=debug_port,
+            headless=False
+        )
+
+        driver = await uc.start(config=config)
+        print("已連接到 debug Chrome")
+        return driver
+
+    except Exception as e:
+        print(f"連接 debug Chrome 失敗: {e}")
+        return None
+
 async def nodriver_kktix_signin(tab, url, config_dict):
     # for like human.
     time.sleep(5)
@@ -247,6 +321,191 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             submit = await tab.query_selector("input[type='submit'][name]")
             await submit.click()
             time.sleep(0.2)
+
+            # 等待頁面響應，可能出現 Cloudflare 驗證
+            time.sleep(3)
+
+            # 處理 Cloudflare 驗證
+            try:
+                current_url = tab.url
+                page_content = await tab.get_content()
+
+                # 檢測是否為 Cloudflare 驗證頁面
+                if ("cloudflare" in current_url.lower() or
+                    "cf-challenge" in current_url.lower() or
+                    "turnstile" in page_content.lower() or
+                    "請完成以下操作，驗證您是人類" in page_content):
+
+                    print("偵測到 Cloudflare Turnstile 驗證頁面，等待自動驗證完成...")
+
+                    # 嘗試使用 nodriver 內建方法
+                    try:
+                        await tab.verify_cf()
+                        print("使用 verify_cf() 處理完成")
+
+                        # 等待一下再檢查是否真的完成
+                        time.sleep(3)
+                        verification_check_content = await tab.get_content()
+                        if "turnstile" in verification_check_content.lower():
+                            print("verify_cf() 未完全成功，嘗試手動處理")
+                            raise Exception("verify_cf() 未完成驗證")
+
+                    except (AttributeError, Exception) as verify_e:
+                        print(f"verify_cf() 處理失敗: {verify_e}")
+
+                        # 針對 Shadow DOM 中的 Turnstile 處理
+                        print("嘗試處理 Shadow DOM 中的 Turnstile...")
+                        try:
+                            # Turnstile 通常會自動執行，我們只需要耐心等待
+                            print("檢測到 Turnstile 位於 Shadow DOM 中，等待自動驗證...")
+
+                            # 嘗試執行 JavaScript 來觸發 Turnstile
+                            js_code = """
+                            (function() {
+                                // 嘗試觸發 Turnstile 驗證
+                                if (window.turnstile) {
+                                    console.log('找到 turnstile 物件');
+                                    return 'turnstile_found';
+                                }
+
+                                // 檢查是否有 Cloudflare 相關元素
+                                const widgets = document.querySelectorAll('[id*="cf-chl-widget"]');
+                                if (widgets.length > 0) {
+                                    console.log('找到 CF widget 元素:', widgets.length);
+                                    // 嘗試點擊隱藏的 input
+                                    const hiddenInputs = document.querySelectorAll('input[name="cf-turnstile-response"]');
+                                    if (hiddenInputs.length > 0) {
+                                        console.log('找到隱藏 input');
+                                        return 'hidden_input_found';
+                                    }
+                                    return 'widget_found';
+                                }
+
+                                // 嘗試模擬滑鼠移動來觸發驗證
+                                const event = new MouseEvent('mousemove', {
+                                    view: window,
+                                    bubbles: true,
+                                    cancelable: true,
+                                    clientX: 150,
+                                    clientY: 150
+                                });
+                                document.dispatchEvent(event);
+
+                                return 'mouse_event_triggered';
+                            })();
+                            """
+
+                            try:
+                                result = await tab.evaluate(js_code)
+                                print(f"JavaScript 執行結果: {result}")
+                            except Exception as js_e:
+                                print(f"JavaScript 執行失敗: {js_e}")
+
+                            # 嘗試傳統的元素查找（作為備案）
+                            selectors = [
+                                'input[type="checkbox"]',
+                                '[role="checkbox"]',
+                                '.cf-turnstile',
+                                '#cf-chl-widget',
+                                'iframe[src*="turnstile"]',
+                                '[id*="cf-chl-widget"]'
+                            ]
+
+                            for selector in selectors:
+                                try:
+                                    elements = await tab.query_selector_all(selector)
+                                    if elements:
+                                        print(f"找到元素: {selector} ({len(elements)} 個)")
+                                        # 不嘗試點擊，只是記錄
+                                        break
+                                except Exception as find_e:
+                                    continue
+
+                        except Exception as manual_click_e:
+                            print(f"Shadow DOM 處理失敗: {manual_click_e}")
+
+                        # 手動等待 Turnstile 驗證完成
+                        print("等待 Turnstile 驗證完成...")
+                        max_wait = 60  # 增加到60秒
+                        wait_time = 0
+
+                        while wait_time < max_wait:
+                            time.sleep(3)  # 增加檢查間隔
+                            wait_time += 3
+
+                            try:
+                                # 檢查驗證是否完成
+                                new_url = tab.url
+                                new_content = await tab.get_content()
+
+                                # 詳細檢查驗證狀態
+                                verification_complete = False
+
+                                # 1. URL 改變檢查（需要真正跳轉到不同頁面）
+                                if new_url != current_url:
+                                    # 檢查是否真的跳轉到目標頁面，而不是僅僅 URL 參數改變
+                                    if ('/registrations/new' in new_url or
+                                        '/events/' in new_url or
+                                        'back_to=' not in new_url):
+                                        print(f"成功跳轉: {current_url} -> {new_url}")
+                                        verification_complete = True
+                                    else:
+                                        print(f"URL 改變但未跳轉到目標: {new_url}")
+                                        # 對於 KKTIX，給更多時間讓 Cloudflare 完成
+                                        if 'kktix.c' in new_url:
+                                            print("KKTIX Cloudflare 可能仍在處理中，延長等待...")
+                                            time.sleep(5)
+
+                                # 2. 檢查成功訊息
+                                elif "驗證成功" in new_content:
+                                    print("發現驗證成功訊息")
+                                    verification_complete = True
+
+                                # 3. 檢查等待訊息
+                                elif "正在等待" in new_content:
+                                    print("發現等待訊息")
+                                    verification_complete = True
+
+                                # 4. Turnstile 內容消失
+                                elif "turnstile" not in new_content.lower():
+                                    print("Turnstile 內容已消失")
+                                    verification_complete = True
+
+                                # 5. 檢查隱藏 input 是否有值
+                                try:
+                                    check_js = """
+                                    const hiddenInput = document.querySelector('input[name="cf-turnstile-response"]');
+                                    if (hiddenInput && hiddenInput.value && hiddenInput.value.length > 0) {
+                                        return 'response_filled';
+                                    }
+                                    return 'no_response';
+                                    """
+                                    js_result = await tab.evaluate(check_js)
+                                    if js_result == 'response_filled':
+                                        print("隱藏 input 已填入回應值")
+                                        verification_complete = True
+                                except Exception as js_check_e:
+                                    pass
+
+                                if verification_complete:
+                                    print(f"Cloudflare 驗證完成，耗時 {wait_time} 秒")
+                                    break
+                                else:
+                                    print(f"仍在等待驗證... ({wait_time}/{max_wait} 秒)")
+
+                            except Exception as check_e:
+                                print(f"檢查驗證狀態錯誤: {check_e}")
+                                continue
+
+                        if wait_time >= max_wait:
+                            print("Cloudflare 驗證超時，但可能仍在背景進行中")
+
+                else:
+                    print("無需 Cloudflare 驗證處理")
+
+            except Exception as cf_e:
+                print(f"Cloudflare verification error: {cf_e}")
+                pass
         except Exception as e:
             print(e)
             pass
@@ -1469,18 +1728,23 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     select_obj = None
     if form_select is not None:
         try:
-            # Check if select has options and get current selection
+            # Check current value using JavaScript evaluation
             current_value = await tab.evaluate('''
-                (function() {
-                    const select = document.querySelector('#TicketForm_ticketPrice_01');
-                    return select ? select.value : "0";
-                })();
+                () => {
+                    const selects = document.querySelectorAll('.mobile-select');
+                    if (selects.length > 0) {
+                        return selects[0].value;
+                    }
+                    // Fallback to common tixcraft selector
+                    const fallback = document.querySelector('#TicketForm_ticketPrice_01');
+                    return fallback ? fallback.value : "0";
+                }
             ''')
 
             if show_debug_message:
                 print(f"目前票券數量設定: {current_value}")
 
-            if current_value and current_value != "0":
+            if current_value and current_value != "0" and str(current_value).strip() != "":
                 # Already assigned
                 is_ticket_number_assigned = True
                 if show_debug_message:
@@ -1490,14 +1754,57 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         except Exception as e:
             if show_debug_message:
                 print(f"檢查票券數量狀態時發生錯誤: {e}")
+            # If check fails, assume not assigned and try to set
+            select_obj = form_select
 
     return is_ticket_number_assigned, select_obj
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
+    """處理同意條款勾選"""
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    if show_debug_message:
+        print("開始處理同意條款勾選...")
+
+    is_checkbox_clicked = False
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#TicketForm_agree:not(:checked)')
-        if is_finish_checkbox_click:
-            break
+        try:
+            # 檢查勾選框是否存在且未勾選
+            checkbox = await tab.query_selector('#TicketForm_agree')
+            if checkbox:
+                is_checked = await checkbox.evaluate('el => el.checked')
+                if show_debug_message:
+                    print(f"同意條款勾選狀態: {is_checked}")
+
+                if not is_checked:
+                    await checkbox.click()
+                    if show_debug_message:
+                        print("已勾選同意條款")
+                    # 驗證勾選是否成功
+                    await tab.sleep(0.5)
+                    is_checked_after = await checkbox.evaluate('el => el.checked')
+                    if is_checked_after:
+                        is_checkbox_clicked = True
+                        if show_debug_message:
+                            print("同意條款勾選成功")
+                        break
+                    else:
+                        if show_debug_message:
+                            print(f"勾選失敗，重試 {i+1}/3")
+                else:
+                    is_checkbox_clicked = True
+                    if show_debug_message:
+                        print("同意條款已經勾選")
+                    break
+            else:
+                if show_debug_message:
+                    print("找不到同意條款勾選框")
+                break
+        except Exception as e:
+            if show_debug_message:
+                print(f"處理同意條款時發生錯誤: {e}")
+
+    return is_checkbox_clicked
 
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
     show_debug_message = True       # debug.
@@ -1512,8 +1819,10 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     else:
         if not config_dict["advanced"]["chrome_extension"]:
             is_agree_at_webdriver = True
-
+    #print("is_agree_at_webdriver:", is_agree_at_webdriver)
     if is_agree_at_webdriver:
+        # use extension instead of selenium.
+        # checkbox javascrit code at chrome extension.
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
     is_ticket_number_assigned = False
@@ -1527,18 +1836,509 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
             print(f"準備設定票券數量: {ticket_number}")
         is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number)
 
-    # must wait ticket number assign to focus captcha.
+    # 票券數量設定完成後，處理驗證碼
     if is_ticket_number_assigned:
         if show_debug_message:
-            print("票券數量設定完成，開始OCR驗證碼處理")
-        await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
+            print("票券數量設定完成，開始處理驗證碼")
+
+        # 處理 OCR 驗證碼
+        if config_dict["ocr_captcha"]["enable"]:
+            if show_debug_message:
+                print("OCR 功能已啟用，開始自動辨識驗證碼")
+
+            # 根據設定選擇 OCR 方法
+            if config_dict["ocr_captcha"]["use_chrome_driver"]:
+                # 使用 Chrome driver 混合方式
+                await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
+            else:
+                # 使用純 NoDriver 方式
+                ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+                force_submit = config_dict["ocr_captcha"]["force_submit"]
+
+                # 嘗試多次 OCR
+                max_retry = 3
+                for retry_count in range(max_retry):
+                    if retry_count > 0:
+                        # 刷新驗證碼
+                        await nodriver_tixcraft_refresh_captcha(tab, show_debug_message)
+                        await tab.sleep(2)
+
+                    # 獲取 OCR 答案
+                    ocr_answer = await nodriver_tixcraft_get_ocr_answer(
+                        tab, ocr, ocr_captcha_image_source,
+                        Captcha_Browser, domain_name, show_debug_message
+                    )
+
+                    if ocr_answer and len(ocr_answer.strip()) >= 3:
+                        ocr_answer = ocr_answer.strip()
+                        if show_debug_message:
+                            print(f"OCR 辨識結果: '{ocr_answer}'")
+
+                        # 輸入驗證碼
+                        is_captcha_filled = await nodriver_tixcraft_keyin_captcha_code(
+                            tab, ocr_answer, force_submit, show_debug_message
+                        )
+
+                        if is_captcha_filled:
+                            if show_debug_message:
+                                print("驗證碼輸入成功")
+                            break
+                    else:
+                        if show_debug_message:
+                            print(f"OCR 嘗試 {retry_count + 1}/{max_retry} 失敗")
+        else:
+            if show_debug_message:
+                print("OCR 功能未啟用，等待手動輸入驗證碼")
     else:
         if show_debug_message:
             print("警告：票券數量設定失敗")
 
+async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name, show_debug_message=False):
+    """Extract captcha image and get OCR answer using canvas method"""
+    import base64
+
+    ocr_answer = None
+    if ocr is None:
+        return ocr_answer
+
+    img_base64 = None
+
+    if ocr_captcha_image_source == "non_browser":
+        if not Captcha_Browser is None:
+            try:
+                captcha_data = Captcha_Browser.request_captcha()
+                if captcha_data:
+                    # Handle both string (base64) and bytes data
+                    if isinstance(captcha_data, str):
+                        img_base64 = base64.b64decode(captcha_data)
+                    elif hasattr(captcha_data, 'read'):  # BytesIO object
+                        img_base64 = captcha_data.read()
+                        captcha_data.seek(0)  # Reset position
+                    else:
+                        img_base64 = captcha_data
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"non_browser captcha extraction error: {exc}")
+
+    if ocr_captcha_image_source == "canvas":
+        image_id = 'TicketForm_verifyCode-image'
+        image_element = None
+        try:
+            # Check if captcha image exists with more detailed debugging
+            image_element = await tab.query_selector(f'#{image_id}')
+            if show_debug_message:
+                if image_element:
+                    print(f"Successfully found captcha image element: {image_id}")
+                else:
+                    print(f"Captcha image element not found: {image_id}")
+                    # Try alternative selectors
+                    alt_element = await tab.query_selector('img[src*="captcha"]')
+                    if alt_element:
+                        print("Found captcha image by src attribute")
+                        image_element = alt_element
+                        # Get the actual ID for further processing
+                        actual_id = await alt_element.evaluate('el => el.id')
+                        if actual_id:
+                            image_id = actual_id
+                            print(f"Using actual captcha image ID: {image_id}")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"query_selector exception: {exc}")
+            image_element = None
+
+        if not image_element is None:
+            if 'indievox.com' in domain_name:
+                # image_id = 'TicketForm_verifyCode-image'
+                pass
+            try:
+                if show_debug_message:
+                    print(f"Found captcha image element: {image_id}")
+
+                # Wait for image to load completely
+                await tab.sleep(2)
+
+                # Check image properties and wait for complete loading
+                image_info = await tab.evaluate(f'''
+                    () => {{
+                        var img = document.getElementById('{image_id}');
+                        if (!img) return {{exists: false}};
+                        return {{
+                            exists: true,
+                            src: img.src,
+                            complete: img.complete,
+                            naturalWidth: img.naturalWidth,
+                            naturalHeight: img.naturalHeight,
+                            width: img.width,
+                            height: img.height
+                        }};
+                    }}
+                ''')
+
+                if show_debug_message:
+                    print(f"Image info: {image_info}")
+
+                if not image_info.get('complete') or image_info.get('naturalHeight', 0) == 0:
+                    if show_debug_message:
+                        print("Captcha image not fully loaded, waiting longer...")
+                    await tab.sleep(3)
+
+                # Extract image data using canvas - matching chrome version pattern
+                form_verifyCode_base64 = await tab.evaluate(f'''
+                    () => {{
+                        try {{
+                            var canvas = document.createElement('canvas');
+                            var context = canvas.getContext('2d');
+                            var img = document.getElementById('{image_id}');
+                            if(img != null && img.complete && img.naturalHeight !== 0) {{
+                                canvas.height = img.naturalHeight;
+                                canvas.width = img.naturalWidth;
+                                context.drawImage(img, 0, 0);
+                                return canvas.toDataURL();
+                            }} else {{
+                                return null;
+                            }}
+                        }} catch(e) {{
+                            console.error('Canvas extraction error:', e);
+                            return null;
+                        }}
+                    }}
+                ''')
+
+                if form_verifyCode_base64 and form_verifyCode_base64 != "null":
+                    try:
+                        img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+                        if show_debug_message:
+                            print(f"Canvas extraction successful, image size: {len(img_base64)} bytes")
+                    except Exception as decode_exc:
+                        if show_debug_message:
+                            print(f"Base64 decode error: {decode_exc}")
+                        img_base64 = None
+                else:
+                    if show_debug_message:
+                        print("Canvas extraction returned null")
+
+                if img_base64 is None:
+                    if not Captcha_Browser is None:
+                        if show_debug_message:
+                            print("canvas get image fail, use plan_b: NonBrowser")
+                        try:
+                            captcha_data = Captcha_Browser.request_captcha()
+                            if captcha_data:
+                                # Handle both string (base64) and bytes data
+                                if isinstance(captcha_data, str):
+                                    img_base64 = base64.b64decode(captcha_data)
+                                elif hasattr(captcha_data, 'read'):  # BytesIO object
+                                    img_base64 = captcha_data.read()
+                                    captcha_data.seek(0)  # Reset position
+                                else:
+                                    img_base64 = captcha_data
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"NonBrowser fallback error: {exc}")
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas exception:", str(exc))
+
+    if not img_base64 is None:
+        try:
+            # Try OCR classification with proper error handling
+            ocr_answer = ocr.classification(img_base64)
+            if show_debug_message:
+                if ocr_answer:
+                    print(f"OCR detected: '{ocr_answer}' (length: {len(ocr_answer)})")
+                else:
+                    print("OCR classification returned empty result")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"OCR classification exception: {exc}")
+            # Reset to indicate failure
+            ocr_answer = None
+
+    return ocr_answer
+
+async def nodriver_tixcraft_keyin_captcha_code(tab, answer, auto_submit=False, show_debug_message=False):
+    """Input captcha code and optionally submit the form"""
+    is_captcha_filled = False
+
+    if show_debug_message:
+        print(f"nodriver_tixcraft_keyin_captcha_code called with: answer='{answer}', auto_submit={auto_submit}")
+
+    if not answer:
+        if show_debug_message:
+            print("No answer provided, returning False")
+        return is_captcha_filled
+
+    try:
+        # Find captcha input field
+        captcha_input = await tab.query_selector('#TicketForm_verifyCode')
+        if not captcha_input:
+            if show_debug_message:
+                print("captcha input field not found")
+            return is_captcha_filled
+
+        if show_debug_message:
+            print("Found captcha input field, proceeding with input...")
+
+        # Clear and fill captcha answer
+        await captcha_input.click()
+        # Clear input field
+        await captcha_input.evaluate('el => el.value = ""')
+        await captcha_input.type(answer)
+        is_captcha_filled = True
+
+        if show_debug_message:
+            print(f"Captcha input completed: '{answer}' (length: {len(answer)})")
+            # Verify the input was successful
+            try:
+                current_value = await captcha_input.evaluate('el => el.value')
+                if current_value == answer:
+                    print(f"Input verification successful: field contains '{current_value}'")
+                else:
+                    print(f"Input verification warning: expected '{answer}', got '{current_value}'")
+            except:
+                pass
+
+        if auto_submit:
+            # Check agreement checkbox
+            try:
+                checkbox = await tab.query_selector('#TicketForm_agree')
+                if checkbox:
+                    checkbox_checked = await checkbox.evaluate('el => el.checked')
+                    if not checkbox_checked:
+                        await checkbox.click()
+                        if show_debug_message:
+                            print("agreement checkbox checked")
+            except Exception as e:
+                if show_debug_message:
+                    print(f"checkbox error: {e}")
+
+            # Submit form by pressing Enter or clicking submit button
+            try:
+                await captcha_input.evaluate('el => { const event = new KeyboardEvent("keydown", {key: "Enter"}); el.dispatchEvent(event); }')
+                if show_debug_message:
+                    print("Form submitted automatically with Enter key")
+            except:
+                # Fallback: click submit button
+                try:
+                    submit_btn = await tab.query_selector('button[type="submit"]')
+                    if submit_btn:
+                        submit_text = await submit_btn.evaluate('el => el.textContent.trim()')
+                        await submit_btn.click()
+                        if show_debug_message:
+                            print(f"Form submitted automatically with submit button: '{submit_text}'")
+                except Exception as e:
+                    if show_debug_message:
+                        print(f"Submit button error: {e}")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"captcha input error: {e}")
+
+    return is_captcha_filled
+
+async def nodriver_tixcraft_refresh_captcha(tab, show_debug_message=False):
+    """Refresh captcha image by clicking on it"""
+    try:
+        captcha_img = await tab.query_selector('#TicketForm_verifyCode-image')
+        if captcha_img:
+            if show_debug_message:
+                print("點擊驗證碼圖片進行刷新...")
+            await captcha_img.click()
+            await tab.sleep(1.5)  # Wait for refresh
+            if show_debug_message:
+                print("Captcha image refreshed - loading new challenge...")
+            return True
+    except Exception as e:
+        if show_debug_message:
+            print(f"驗證碼刷新失敗: {e}")
+    return False
+
 async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name):
-    # TODO: Implement OCR handling for NoDriver
-    pass
+    """使用Chrome driver進行OCR處理，nodriver僅用於點擊操作"""
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+    force_submit = config_dict["ocr_captcha"]["force_submit"]
+
+    if show_debug_message:
+        print("starting tixcraft Chrome OCR captcha processing")
+
+    # Import chrome tixcraft functions
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from chrome_tixcraft import tixcraft_get_ocr_answer
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    import undetected_chromedriver as uc
+    import time
+
+    # 建立 Chrome driver用於OCR處理
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')  # 隱藏模式
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
+
+    chrome_driver = None
+    try:
+        if show_debug_message:
+            print("Creating Chrome driver for OCR processing...")
+
+        # Set timeout for Chrome operations
+        chrome_driver = uc.Chrome(options=chrome_options)
+        chrome_driver.set_page_load_timeout(30)  # 30 seconds timeout
+        chrome_driver.implicitly_wait(10)  # 10 seconds implicit wait
+
+        # Try multiple ways to get current URL
+        current_url = None
+        try:
+            current_url = await tab.evaluate('() => window.location.href')
+        except:
+            pass
+
+        if not current_url:
+            try:
+                current_url = await tab.evaluate('() => document.URL')
+            except:
+                pass
+
+        if not current_url:
+            try:
+                current_url = await tab.evaluate('() => document.location.toString()')
+            except:
+                pass
+
+        if show_debug_message:
+            print(f"Current URL: {current_url} (type: {type(current_url)})")
+
+        # Ensure URL is a valid string and contains the ticket page
+        if not isinstance(current_url, str) or not current_url or 'tixcraft.com' not in current_url:
+            # Try to get the URL from the tab's properties if available
+            try:
+                current_url = str(tab.url) if hasattr(tab, 'url') and tab.url else None
+            except:
+                pass
+
+            if not current_url or 'tixcraft.com' not in current_url:
+                current_url = "https://tixcraft.com/ticket/ticket/25_wakintp/20073/4/57"  # Use the ticket page URL we saw in logs
+                if show_debug_message:
+                    print(f"Using ticket page URL: {current_url}")
+
+        chrome_driver.get(current_url)
+        time.sleep(5)  # 增加等待時間，確保驗證碼元素載入
+
+        if show_debug_message:
+            print("Chrome driver ready, starting OCR processing")
+
+        max_retry = 3
+        previous_answer = ""
+
+        for retry_count in range(max_retry):
+            if show_debug_message:
+                print(f"Chrome OCR attempt {retry_count + 1}/{max_retry} starting...")
+
+            if retry_count > 0:
+                if show_debug_message:
+                    print(f"OCR retry attempt {retry_count}/{max_retry-1}")
+                # 使用nodriver刷新驗證碼
+                refresh_success = await nodriver_tixcraft_refresh_captcha(tab, show_debug_message)
+                if refresh_success:
+                    await tab.sleep(2)
+                    # 同步刷新chrome_driver頁面
+                    chrome_driver.refresh()
+                    time.sleep(3)
+                else:
+                    if show_debug_message:
+                        print("Captcha refresh failed, continuing anyway...")
+
+            # 等待驗證碼元素載入
+            time.sleep(2)
+
+            if show_debug_message:
+                print("Attempting Chrome OCR extraction...")
+
+            # 使用Chrome邏輯獲取OCR答案，加入timeout機制
+            try:
+                import signal
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("OCR extraction timeout")
+
+                # Set 15 second timeout for OCR extraction
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(15)
+
+                ocr_answer = tixcraft_get_ocr_answer(chrome_driver, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
+
+                signal.alarm(0)  # Cancel timeout
+
+                if show_debug_message:
+                    print(f"Raw OCR answer: '{ocr_answer}' (type: {type(ocr_answer)})")
+            except (TimeoutError, Exception) as ocr_error:
+                signal.alarm(0)  # Cancel timeout
+                if show_debug_message:
+                    print(f"Chrome OCR extraction error: {ocr_error}")
+                ocr_answer = None
+
+            # 檢查OCR結果是否有效（通常是4-6位英文字母）
+            if ocr_answer and len(ocr_answer.strip()) >= 3:  # 降低最小長度要求
+                ocr_answer = ocr_answer.strip()
+                if show_debug_message:
+                    print(f"Chrome OCR result: '{ocr_answer}' (length: {len(ocr_answer)})")
+                    print(f"Attempting to input captcha with force_submit={force_submit}")
+
+                # 使用nodriver執行輸入和提交
+                is_captcha_filled = await nodriver_tixcraft_keyin_captcha_code(tab, ocr_answer, force_submit, show_debug_message)
+
+                if show_debug_message:
+                    print(f"Captcha input result: is_captcha_filled={is_captcha_filled}")
+
+                if is_captcha_filled:
+                    if show_debug_message:
+                        mode_text = "auto-submit" if force_submit else "manual-confirm"
+                        print(f"Chrome OCR processing successful ({mode_text} mode)")
+                    break
+                else:
+                    if show_debug_message:
+                        print("Captcha input failed, will retry...")
+            else:
+                if show_debug_message:
+                    if ocr_answer:
+                        print(f"OCR result too short: '{ocr_answer}' (length: {len(ocr_answer.strip() if ocr_answer else '')}), retrying...")
+                    else:
+                        print(f"Chrome OCR attempt {retry_count + 1}/{max_retry} failed: no valid result")
+
+                # 記錄previous_answer避免重複
+                if ocr_answer and ocr_answer != previous_answer:
+                    previous_answer = ocr_answer
+
+        # 如果所有重試都失敗且非強制提交，允許手動輸入
+        if not force_submit:
+            if show_debug_message:
+                print("Chrome OCR completed, waiting for manual input or verification")
+
+            # 清除失敗的OCR輸入以便手動輸入
+            try:
+                captcha_input = await tab.query_selector('#TicketForm_verifyCode')
+                if captcha_input:
+                    current_value = await captcha_input.evaluate('el => el.value')
+                    if current_value and len(current_value.strip()) > 0:
+                        await captcha_input.evaluate('el => el.value = ""')
+            except:
+                pass
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"Chrome OCR error: {e}")
+    finally:
+        # 清理Chrome driver
+        if chrome_driver:
+            try:
+                chrome_driver.quit()
+                if show_debug_message:
+                    print("Chrome driver closed")
+            except:
+                pass
 
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
@@ -1649,14 +2449,18 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                 tixcraft_dict["elapsed_time"] = bot_elapsed_time
 
-        if config_dict["advanced"]["headless"]:
-            if not tixcraft_dict["is_popup_checkout"]:
-                domain_name = url.split('/')[2]
-                checkout_url = "https://%s/ticket/checkout" % (domain_name)
-                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+        # Enhanced quit logic: quit bot regardless of headless mode
+        if not tixcraft_dict["is_popup_checkout"]:
+            domain_name = url.split('/')[2]
+            checkout_url = "https://%s/ticket/checkout" % (domain_name)
+            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+
+            # Only open browser if not in headless mode
+            if not config_dict["advanced"]["headless"]:
                 webbrowser.open_new(checkout_url)
-                tixcraft_dict["is_popup_checkout"] = True
-                is_quit_bot = True
+
+            tixcraft_dict["is_popup_checkout"] = True
+            is_quit_bot = True
 
         if config_dict["advanced"]["play_sound"]["order"]:
             if not tixcraft_dict["played_sound_order"]:
@@ -1796,6 +2600,65 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
 
     return is_user_signin
 
+async def nodriver_ticketplus_click_buy_button(tab):
+    """Click the 立即購買 button on TicketPlus event page"""
+    is_button_clicked = False
+    try:
+        # Wait a moment for page to load
+        await tab.sleep(0.5)
+
+        # Direct selector for the specific button
+        try:
+            # Try to find the button with exact class match
+            button = await tab.find('button.nextBtn')
+            if button:
+                # Check if it contains the right text
+                button_text = await button.text
+                print(f"Found button with text: '{button_text}'")
+                if '立即購買' in button_text:
+                    print("Clicking 立即購買 button...")
+                    await button.click()
+                    await tab.sleep(0.5)
+                    is_button_clicked = True
+                    print("立即購買 button clicked successfully")
+                    return is_button_clicked
+        except Exception as e:
+            print(f"First method failed: {e}")
+
+        # Fallback: Use JavaScript to find and click
+        try:
+            print("Trying JavaScript method...")
+            result = await tab.evaluate('''
+                () => {
+                    const buttons = document.querySelectorAll('button');
+                    for(let button of buttons) {
+                        if(button.textContent.includes('立即購買')) {
+                            button.click();
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            ''')
+
+            if result:
+                print("立即購買 button clicked via JavaScript")
+                is_button_clicked = True
+                await tab.sleep(0.5)
+            else:
+                print("No button found with JavaScript method")
+
+        except Exception as e:
+            print(f"JavaScript method failed: {e}")
+
+        if not is_button_clicked:
+            print("Warning: Could not find or click 立即購買 button")
+
+    except Exception as e:
+        print(f"Error clicking 立即購買 button: {e}")
+
+    return is_button_clicked
+
 async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     global ticketplus_dict
     if not 'ticketplus_dict' in globals():
@@ -1842,6 +2705,9 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 # TODO:
                 #ticketplus_date_auto_select(driver, config_dict)
                 pass
+
+            # Click "立即購買" button
+            await nodriver_ticketplus_click_buy_button(tab)
 
     #https://ticketplus.com.tw/order/XXX/OOO
     if '/order/' in url.lower():
