@@ -54,8 +54,8 @@ python chrome_tixcraft.py --help
 ```bash
 # 同步最新版本
 git fetch upstream
-git checkout Main
-git merge upstream/Main
+git checkout main
+git merge upstream/main
 
 # 建立功能分支
 git checkout -b feature/your-feature-name
