@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.16)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.18)"
 
 def parse_nodriver_result(result):
     """
