@@ -1639,9 +1639,284 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         if show_debug_message:
             print("警告：票券數量設定失敗")
 
+async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False):
+    """輸入驗證碼到表單"""
+    is_verifyCode_editing = False
+    is_form_submitted = False
+
+    # 找到驗證碼輸入框
+    form_verifyCode = await tab.query_selector('#TicketForm_verifyCode')
+
+    if form_verifyCode:
+        is_visible = False
+        try:
+            # 檢查元素是否可見和可用
+            is_visible = await tab.evaluate('''
+                (function() {
+                    const element = document.querySelector('#TicketForm_verifyCode');
+                    return element && !element.disabled && element.offsetParent !== null;
+                })();
+            ''')
+        except Exception as exc:
+            pass
+
+        if is_visible:
+            # 取得當前輸入值
+            inputed_value = ""
+            try:
+                inputed_value = await form_verifyCode.get_property('value') or ""
+            except Exception as exc:
+                pass
+
+            is_text_clicked = False
+
+            if not inputed_value and not answer:
+                # 聚焦到輸入框等待手動輸入
+                try:
+                    await form_verifyCode.click()
+                    is_text_clicked = True
+                    is_verifyCode_editing = True
+                except Exception as exc:
+                    print("點擊驗證碼輸入框失敗，嘗試使用 JavaScript")
+                    try:
+                        await tab.evaluate('''
+                            document.getElementById("TicketForm_verifyCode").focus();
+                        ''')
+                        is_verifyCode_editing = True
+                    except Exception as exc:
+                        pass
+
+            if answer:
+                print("開始填入驗證碼...")
+                try:
+                    if not is_text_clicked:
+                        await form_verifyCode.click()
+
+                    # 清空並輸入答案
+                    await form_verifyCode.clear()
+                    await form_verifyCode.send_keys(answer)
+
+                    if auto_submit:
+                        # 勾選同意條款
+                        await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree')
+                        # 提交表單 (按 Enter)
+                        await form_verifyCode.send_keys('\n')  # Enter key
+                        is_verifyCode_editing = False
+                        is_form_submitted = True
+                    else:
+                        # 選取輸入框內容並顯示提示
+                        await tab.evaluate('''
+                            document.getElementById("TicketForm_verifyCode").select();
+                        ''')
+                        # 顯示提示訊息
+                        await nodriver_tixcraft_toast(tab, f"※ 按 Enter 如果答案是: {answer}")
+
+                except Exception as exc:
+                    print("輸入驗證碼失敗:", exc)
+
+    return is_verifyCode_editing, is_form_submitted
+
+async def nodriver_tixcraft_toast(tab, message):
+    """顯示提示訊息"""
+    try:
+        await tab.evaluate(f'''
+            (function() {{
+                const toast = document.querySelector('p.remark-word');
+                if (toast) {{
+                    toast.innerHTML = '{message}';
+                }}
+            }})();
+        ''')
+    except Exception as exc:
+        pass
+
+async def nodriver_tixcraft_reload_captcha(tab, domain_name):
+    """點擊重新載入驗證碼"""
+    ret = False
+    image_id = 'TicketForm_verifyCode-image'
+
+    if 'indievox.com' in domain_name:
+        image_id = 'TicketForm_verifyCode-image'
+
+    try:
+        form_captcha = await tab.query_selector(f"#{image_id}")
+        if form_captcha:
+            await form_captcha.click()
+            ret = True
+    except Exception as exc:
+        print(f"重新載入驗證碼失敗: {exc}")
+
+    return ret
+
+async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
+    """取得驗證碼圖片並進行 OCR 識別"""
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    ocr_answer = None
+    if not ocr is None:
+        img_base64 = None
+
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER:
+            if not Captcha_Browser is None:
+                img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
+
+        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+            image_id = 'TicketForm_verifyCode-image'
+            if 'indievox.com' in domain_name:
+                image_id = 'TicketForm_verifyCode-image'
+
+            try:
+                # 使用 JavaScript 從 canvas 取得圖片
+                form_verifyCode_base64 = await tab.evaluate(f'''
+                    (function() {{
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        var img = document.getElementById('{image_id}');
+                        if(img) {{
+                            canvas.height = img.naturalHeight;
+                            canvas.width = img.naturalWidth;
+                            context.drawImage(img, 0, 0);
+                            return canvas.toDataURL();
+                        }}
+                        return null;
+                    }})();
+                ''')
+
+                if form_verifyCode_base64:
+                    img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
+
+                if img_base64 is None:
+                    if not Captcha_Browser is None:
+                        print("canvas 取得圖片失敗，使用方案 B: NonBrowser")
+                        img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
+
+            except Exception as exc:
+                if show_debug_message:
+                    print("canvas 處理異常:", str(exc))
+
+        # OCR 識別
+        if not img_base64 is None:
+            try:
+                ocr_answer = ocr.classification(img_base64)
+            except Exception as exc:
+                if show_debug_message:
+                    print("OCR 識別失敗:", exc)
+
+    return ocr_answer
+
+async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enable,
+                                     previous_answer, Captcha_Browser,
+                                     ocr_captcha_image_source, domain_name):
+    """OCR 自動識別主邏輯"""
+    show_debug_message = True       # debug.
+    show_debug_message = False      # online
+
+    if config_dict["advanced"]["verbose"]:
+        show_debug_message = True
+
+    is_need_redo_ocr = False
+    is_form_submitted = False
+
+    is_input_box_exist = False
+    if not ocr is None:
+        form_verifyCode = None
+        try:
+            form_verifyCode = await tab.query_selector('#TicketForm_verifyCode')
+            is_input_box_exist = True
+        except Exception as exc:
+            pass
+    else:
+        print("ddddocr 組件無法使用，您可能在 ARM 環境下運行")
+
+    if is_input_box_exist:
+        if show_debug_message:
+            print("away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("previous_answer:", previous_answer)
+            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+
+        ocr_start_time = time.time()
+        ocr_answer = await nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
+        ocr_done_time = time.time()
+        ocr_elapsed_time = ocr_done_time - ocr_start_time
+        if show_debug_message:
+            print("OCR 處理時間:", "{:.3f}".format(ocr_elapsed_time))
+
+        if ocr_answer is None:
+            if away_from_keyboard_enable:
+                # 頁面尚未準備好，重試
+                # PS: 通常發生在非同步腳本取得驗證碼圖片時
+                is_need_redo_ocr = True
+                await asyncio.sleep(0.1)
+            else:
+                await nodriver_tixcraft_keyin_captcha_code(tab)
+        else:
+            ocr_answer = ocr_answer.strip()
+            if show_debug_message:
+                print("OCR 識別結果:", ocr_answer)
+            if len(ocr_answer) == 4:
+                who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable)
+            else:
+                if not away_from_keyboard_enable:
+                    await nodriver_tixcraft_keyin_captcha_code(tab)
+                else:
+                    is_need_redo_ocr = True
+                    if previous_answer != ocr_answer:
+                        previous_answer = ocr_answer
+                        if show_debug_message:
+                            print("重新點擊驗證碼")
+
+                        # selenium 解決方案
+                        await nodriver_tixcraft_reload_captcha(tab, domain_name)
+
+                        if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
+                            await asyncio.sleep(0.1)
+    else:
+        print("輸入框不存在，退出 OCR...")
+
+    return is_need_redo_ocr, previous_answer, is_form_submitted
+
 async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name):
-    # TODO: Implement OCR handling for NoDriver
-    pass
+    """票券頁面 OCR 處理主函數"""
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
+    if not config_dict["ocr_captcha"]["enable"]:
+        away_from_keyboard_enable = False
+    ocr_captcha_image_source = config_dict["ocr_captcha"]["image_source"]
+
+    if not config_dict["ocr_captcha"]["enable"]:
+        # 手動模式
+        await nodriver_tixcraft_keyin_captcha_code(tab)
+    else:
+        # 自動 OCR 模式
+        previous_answer = None
+        current_url, _ = await nodriver_current_url(tab)
+
+        for redo_ocr in range(19):
+            is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
+                tab, config_dict, ocr, away_from_keyboard_enable,
+                previous_answer, Captcha_Browser, ocr_captcha_image_source, domain_name
+            )
+
+            if is_form_submitted:
+                if show_debug_message:
+                    print("表單已提交")
+                break
+
+            if not away_from_keyboard_enable:
+                break
+
+            if not is_need_redo_ocr:
+                break
+
+            # 檢查是否還在同一頁面
+            new_url, _ = await nodriver_current_url(tab)
+            if new_url != current_url:
+                break
+
+            if show_debug_message:
+                print(f"OCR 重試 {redo_ocr + 1}/19")
 
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
