@@ -135,6 +135,7 @@ def get_default_config():
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
 
+
     config_dict['advanced']={}
 
     config_dict['advanced']['play_sound']={}
@@ -565,6 +566,12 @@ class OcrHandler(tornado.web.RequestHandler):
 class QueryHandler(tornado.web.RequestHandler):
     def format_config_keyword_for_json(self, user_input):
         if len(user_input) > 0:
+            # 新增：偵測並轉換簡化格式
+            if ',' in user_input and not '"' in user_input:
+                items = user_input.split(',')
+                user_input = ','.join([f'"{item.strip()}"' for item in items])
+                return user_input  # 已經是正確格式，直接返回
+
             if not ('\"' in user_input):
                 user_input = '"' + user_input + '"'
         return user_input
