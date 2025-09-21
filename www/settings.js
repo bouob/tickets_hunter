@@ -43,6 +43,7 @@ const block_facebook_network = document.querySelector('#block_facebook_network')
 const headless = document.querySelector('#headless');
 const verbose = document.querySelector('#verbose');
 
+
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
 const ocr_captcha_image_source = document.querySelector('#ocr_captcha_image_source');
@@ -140,6 +141,7 @@ function load_settins_to_form(settings)
         headless.checked = settings.advanced.headless;
         verbose.checked = settings.advanced.verbose;
 
+
         ocr_captcha_enable.checked = settings.ocr_captcha.enable;
         ocr_captcha_image_source.value  = settings.ocr_captcha.image_source;
         ocr_captcha_force_submit.checked = settings.ocr_captcha.force_submit;
@@ -197,10 +199,16 @@ function load_settins_to_form(settings)
         idle_keyword_second.value = settings.advanced.idle_keyword_second;
         if(idle_keyword_second.value=='""') {
             idle_keyword_second.value='';
+        } else if(idle_keyword_second.value && idle_keyword_second.value.includes('","')) {
+            // 新增：簡化顯示格式 "00","30","50" → 00,30,50
+            idle_keyword_second.value = idle_keyword_second.value.replace(/"/g, '');
         }
         resume_keyword_second.value = settings.advanced.resume_keyword_second;
         if(resume_keyword_second.value=='""') {
             resume_keyword_second.value='';
+        } else if(resume_keyword_second.value && resume_keyword_second.value.includes('","')) {
+            // 新增：簡化顯示格式
+            resume_keyword_second.value = resume_keyword_second.value.replace(/"/g, '');
         }
     } else {
         console.log('no settings found');
@@ -384,6 +392,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.block_facebook_network = block_facebook_network.checked;
             settings.advanced.headless = headless.checked;
             settings.advanced.verbose = verbose.checked;
+
 
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
             settings.ocr_captcha.image_source = ocr_captcha_image_source.value;
@@ -694,6 +703,7 @@ onchange_tag_list.forEach((tag) => {
 });
 
 homepage.addEventListener('keyup', check_unsaved_fields);
+
 
 
 let runMessageClearTimer;

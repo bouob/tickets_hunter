@@ -113,26 +113,27 @@
                 <div id="collapseSites" class="accordion-collapse collapse">
                   <div class="accordion-body">
                     <h6><strong>台灣地區</strong></h6>
-                    <ul>
-                      <li>Tixcraft 拓元售票</li>
-                      <li>添翼 Teamear</li>
-                      <li>Indievox 獨立音樂</li>
-                      <li>KKTIX</li>
-                      <li>iBon</li>
-                      <li>FamiTicket 全網</li>
-                      <li>Kham 寬宏售票</li>
-                      <li>Ticket.com.tw 年代</li>
-                      <li>UDN售票網</li>
-                      <li>TicketPlus 遠大</li>
+                    <ul class="mb-3">
+                      <li><strong>Tixcraft 拓元售票</strong> - tixcraft.com</li>
+                      <li><strong>添翼 Teamear</strong> - www.teamear.com</li>
+                      <li><strong>Indievox 獨立音樂</strong> - www.indievox.com</li>
+                      <li><strong>KKTIX</strong> - kktix.com</li>
+                      <li><strong>iBon</strong> - ticket.ibon.com.tw</li>
+                      <li><strong>FamiTicket 全網</strong> - www.famiticket.com.tw</li>
+                      <li><strong>Kham 寬宏售票</strong> - kham.com.tw</li>
+                      <li><strong>Ticket.com.tw 年代</strong> - ticket.com.tw</li>
+                      <li><strong>UDN售票網</strong> - tickets.udn.com</li>
+                      <li><strong>TicketPlus 遠大</strong> - ticketplus.com.tw</li>
                     </ul>
+
                     <h6><strong>海外地區</strong></h6>
-                    <ul>
-                      <li>Urbtix 城市</li>
-                      <li>Cityline 買飛</li>
-                      <li>HKTicketing 快達票</li>
-                      <li>澳門銀河</li>
-                      <li>TicketMaster Singapore</li>
-                      <li>Ticketek Australia</li>
+                    <ul class="mb-0">
+                      <li><strong>Urbtix 城市</strong> - ticket.urbtix.hk</li>
+                      <li><strong>Cityline 買飛</strong> - www.cityline.com</li>
+                      <li><strong>HKTicketing 快達票</strong> - hkticketing.com</li>
+                      <li><strong>澳門銀河</strong> - www.galaxymacau.com</li>
+                      <li><strong>TicketMaster Singapore</strong> - www.ticketmaster.sg</li>
+                      <li><strong>Ticketek Australia</strong> - www.ticketek.com.au</li>
                     </ul>
                   </div>
                 </div>
@@ -446,6 +447,7 @@
           </div>
         </div>
 
+
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">OCR</label>
           <div class="col-sm-10">
@@ -670,28 +672,28 @@
         <div class="row mb-3">
           <label for="idle_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-danger">暫停</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword" rows="3"></textarea>
+            <textarea class="form-control" id="idle_keyword" rows="3" placeholder="例如：09:30:00,14:15:30 或 &quot;09:30:00&quot;,&quot;14:15:30&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-success">接繼</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword" rows="3"></textarea>
+            <textarea class="form-control" id="resume_keyword" rows="3" placeholder="例如：09:35:00,14:20:30 或 &quot;09:35:00&quot;,&quot;14:20:30&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-danger">暫停</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword_second" rows="3"></textarea>
+            <textarea class="form-control" id="idle_keyword_second" rows="3" placeholder="例如：00,30,50 或 &quot;00&quot;,&quot;30&quot;,&quot;50&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-success">接繼</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword_second" rows="3"></textarea>
+            <textarea class="form-control" id="resume_keyword_second" rows="3" placeholder="例如：05,35,55 或 &quot;05&quot;,&quot;35&quot;,&quot;55&quot;"></textarea>
           </div>
         </div>
 
@@ -700,12 +702,32 @@
             <div class="bd-callout bd-callout-info">
               <strong>時間控制功能說明：</strong>
               <ul class="mb-2">
-                <li><strong>系統時間關鍵字：</strong>使用 <code>HH:MM:SS</code> 格式（時:分:秒），例如：<code>"09:30:00"</code>、<code>"14:15:30"</code></li>
-                <li><strong>秒數關鍵字：</strong>只使用秒數 <code>SS</code> 格式，例如：<code>"00"</code>、<code>"30"</code>（每分鐘的指定秒數觸發）</li>
-                <li><strong>多個時間設定：</strong>用逗號分隔，每個時間要用雙引號包圍，例如：<code>"09:30:00","14:00:00","18:30:00"</code></li>
+                <li><strong>系統時間關鍵字：</strong>使用 <code>HH:MM:SS</code> 格式（時:分:秒）</li>
+                <li><strong>秒數關鍵字：</strong>只使用秒數 <code>SS</code> 格式（每分鐘的指定秒數觸發）</li>
                 <li><strong>暫停功能：</strong>當系統時間符合暫停關鍵字時，自動暫停搶票動作</li>
                 <li><strong>接繼功能：</strong>當系統時間符合接繼關鍵字時，自動恢復搶票動作</li>
               </ul>
+              <div class="alert alert-success mb-2">
+                <strong>📝 輸入格式範例：</strong>
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>系統時間：</strong>
+                    <ul class="mb-1">
+                      <li><code>09:30:00,15:55:00</code> <span class="badge bg-primary">簡化格式</span></li>
+                      <li><code>"09:30:00","15:55:00"</code> <span class="badge bg-secondary">完整格式</span></li>
+                      <li><code>14:30:00</code> <span class="badge bg-info">單一時間</span></li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>秒數：</strong>
+                    <ul class="mb-1">
+                      <li><code>00,30,50</code> <span class="badge bg-primary">簡化格式</span></li>
+                      <li><code>"00","30","50"</code> <span class="badge bg-secondary">完整格式</span></li>
+                      <li><code>30</code> <span class="badge bg-info">單一秒數</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
               <div class="alert alert-warning mb-0">
                 <strong>注意事項：</strong>
                 <ul class="mb-0">
