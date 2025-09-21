@@ -121,6 +121,12 @@ def get_app_root():
 
 def format_config_keyword_for_json(user_input):
     if len(user_input) > 0:
+        # 新增：偵測並轉換簡化格式
+        if ',' in user_input and not '"' in user_input:
+            items = user_input.split(',')
+            user_input = ','.join([f'"{item.strip()}"' for item in items])
+            return user_input  # 已經是正確格式，直接返回
+
         if not ('\"' in user_input):
             user_input = '"' + user_input + '"'
 
@@ -142,6 +148,12 @@ def format_config_keyword_for_json(user_input):
 def is_text_match_keyword(keyword_string, text):
     is_match_keyword = True
     if len(keyword_string) > 0 and len(text) > 0:
+
+        # 新增：處理簡化的逗號分隔格式
+        if ',' in keyword_string and not '"' in keyword_string:
+            # 將 "00,30,50" 轉換為 "00","30","50"
+            items = keyword_string.split(',')
+            keyword_string = ','.join([f'"{item.strip()}"' for item in items])
 
         # directly input text into arrray field.
         if len(keyword_string) > 0:
@@ -2042,6 +2054,87 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
                 msg=str(exc)
                 print("exeption:", msg)
                 pass
+
+def parse_nodriver_result(result):
+    """
+    解析 NoDriver evaluate() 返回的特殊格式
+    將 [['key', {'type': 'type', 'value': value}], ...] 轉換為標準 dict
+    """
+    # DEBUG 訊息
+    debug_enabled = False  # 暫時啟用除錯來找出問題
+
+    if debug_enabled:
+        print(f"DEBUG parse_nodriver_result: 輸入類型 {type(result)}, 長度: {len(result) if isinstance(result, (list, dict)) else 'N/A'}")
+
+    if not isinstance(result, list):
+        return result
+
+    if len(result) == 0:
+        return {}
+
+    # 檢查是否為 NoDriver 格式 [['key', {'type': 'type', 'value': value}], ...]
+    if (isinstance(result[0], list) and len(result[0]) == 2 and
+        isinstance(result[0][1], dict) and 'type' in result[0][1] and 'value' in result[0][1]):
+
+        parsed = {}
+        for item in result:
+            if isinstance(item, list) and len(item) == 2:
+                key = item[0]
+                value_info = item[1]
+                if isinstance(value_info, dict) and 'value' in value_info:
+                    value = value_info['value']
+
+                    # 遞迴處理巢狀結構
+                    if value_info.get('type') == 'array' and isinstance(value, list):
+                        if debug_enabled:
+                            print(f"DEBUG: 處理陣列 {key}, 長度: {len(value)}")
+                        parsed_array = []
+                        for i, v in enumerate(value):
+                            if debug_enabled:
+                                print(f"DEBUG: 陣列元素[{i}] 類型: {type(v)}, 內容: {v}")
+                            # 檢查陣列元素是否為 NoDriver 物件格式
+                            if isinstance(v, dict) and v.get('type') == 'object' and 'value' in v:
+                                # Dict型 NoDriver 物件格式：{'type': 'object', 'value': [['key', {'type': 'type', 'value': value}], ...]}
+                                if debug_enabled:
+                                    print(f"DEBUG: 陣列元素[{i}] 為 Dict 型 NoDriver 物件格式，遞迴解析")
+                                parsed_result = parse_nodriver_result(v['value'])
+                                parsed_array.append(parsed_result)
+                                if debug_enabled:
+                                    print(f"DEBUG: 解析後結果: {parsed_result}")
+                            elif isinstance(v, list) and len(v) > 0:
+                                if (isinstance(v[0], list) and len(v[0]) == 2 and
+                                    isinstance(v[0][1], dict) and v[0][1].get('type') == 'object'):
+                                    # List型 NoDriver 物件格式：[['key', {'type': 'object', 'value': [...]}], ...]
+                                    if debug_enabled:
+                                        print(f"DEBUG: 陣列元素[{i}] 為 List 型 NoDriver 物件格式，遞迴解析")
+                                    parsed_result = parse_nodriver_result(v)
+                                    parsed_array.append(parsed_result)
+                                    if debug_enabled:
+                                        print(f"DEBUG: 解析後結果: {parsed_result}")
+                                elif isinstance(v[0], list) and len(v[0]) == 2:
+                                    # 其他格式的 NoDriver 資料
+                                    if debug_enabled:
+                                        print(f"DEBUG: 陣列元素[{i}] 為其他 NoDriver 格式，遞迴解析")
+                                    parsed_array.append(parse_nodriver_result(v))
+                                else:
+                                    if debug_enabled:
+                                        print(f"DEBUG: 陣列元素[{i}] 為普通陣列，直接使用")
+                                    parsed_array.append(v)
+                            else:
+                                if debug_enabled:
+                                    print(f"DEBUG: 陣列元素[{i}] 為非陣列，直接使用")
+                                parsed_array.append(v)
+                        parsed[key] = parsed_array
+                        if debug_enabled:
+                            print(f"DEBUG: 陣列 {key} 最終結果: {parsed[key]}")
+                    elif value_info.get('type') == 'object' and isinstance(value, list):
+                        parsed[key] = parse_nodriver_result(value)
+                    else:
+                        parsed[key] = value
+        return parsed
+
+    # 若不是標準格式，原樣返回
+    return result
 
 def get_token():
     return str(uuid.uuid4().hex)

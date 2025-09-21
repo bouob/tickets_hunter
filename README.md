@@ -1,6 +1,6 @@
-# MaxBot 搶票機器人 🎫
+# Tickets Hunter 搶票機器人 🎫
 
-**📖 前言**：因原專案 作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
+**📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
 **🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援  
 **⚡ 版本**：Tickets Hunter (2025.09.18)  
 **🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！
@@ -9,7 +9,7 @@
 
 ## 📋 專案概述
 
-MaxBot 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。採用 Python + Selenium/NoDriver 雙引擎架構，搭配瀏覽器擴充套件，提供完整的自動化購票解決方案。
+Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。採用 Python + Selenium/NoDriver 雙引擎架構，搭配瀏覽器擴充套件，提供完整的自動化購票解決方案。
 
 ### 🎪 支援平台
 - **🎭 拓元 (TixCraft/Indievox)** - 完整流程自動化
@@ -163,19 +163,11 @@ python config_launcher.py
 ### 🎯 核心程式
 | 檔案 | 功能 | 特色 |
 |------|------|------|
-| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 (11,646 行) |
-| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 (3,039 行) 🚧 |
+| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 |
+| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧 |
 | `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
 | `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
 | `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
-
-### 🔧 輔助工具
-| 檔案 | 功能 | 大小 |
-|------|------|------|
-| `util.py` | 核心工具函式庫 | 2,047 行 |
-| `NonBrowser.py` | HTTP 請求自動化 | 43 行 |
-| `settings.json` | 主設定檔 | JSON 格式 |
-| `config_launcher.py` | 多設定檔管理器 | 491 行 |
 
 ### 🔌 瀏覽器擴充套件
 - **Maxblockplus** - 廣告阻擋，加速頁面載入
@@ -365,11 +357,29 @@ python chrome_tixcraft.py --input settings.json
 }
 ```
 
-**暫停/恢復關鍵字**
+**⏰ 時間控制功能**
+
+支援精確的時間控制，可設定特定時間自動暫停/恢復搶票：
+
 ```json
-"idle_keyword": "暫停",      // 遇到此關鍵字時暫停執行
-"resume_keyword": "繼續"     // 遇到此關鍵字時恢復執行
+// 系統時間控制 (HH:MM:SS)
+"idle_keyword": "09:30:00,14:15:30",      // 在 09:30:00 和 14:15:30 暫停
+"resume_keyword": "09:35:00,14:20:30",    // 在 09:35:00 和 14:20:30 恢復
+
+// 秒數控制 (每分鐘觸發)
+"idle_keyword_second": "00,30,50",        // 每分鐘的 00、30、50 秒暫停
+"resume_keyword_second": "05,35,55"       // 每分鐘的 05、35、55 秒恢復
 ```
+
+**💡 支援簡化格式輸入：**
+- ✅ 簡化格式：`09:30:00,14:15:30` 或 `00,30,50`
+- ✅ 完整格式：`"09:30:00","14:15:30"` 或 `"00","30","50"`
+- ✅ 單一時間：`14:30:00` 或 `30`
+
+**使用場景：**
+- 🎯 **秒殺場景**：在開搶前後精確控制啟動時機
+- 🔄 **定時休息**：避免長時間運行被系統偵測
+- ⚡ **流量分散**：錯開高峰時段減輕伺服器負載
 
 ---
 
@@ -378,18 +388,11 @@ python chrome_tixcraft.py --input settings.json
 ### 🎯 核心程式
 | 檔案 | 功能 | 特色 |
 |------|------|------|
-| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 (11,646 行) |
-| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 (3,039 行) 🚧 |
+| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 |
+| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧 |
 | `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
 | `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
 | `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
-
-### 🔧 輔助工具
-| 檔案 | 功能 | 大小 |
-|------|------|------|
-| `util.py` | 核心工具函式庫 | 2,047 行 |
-| `NonBrowser.py` | HTTP 請求自動化 | 43 行 |
-| `settings.json` | 主設定檔 | JSON 格式 |
 
 ### 🔌 瀏覽器擴充套件
 - **Maxblockplus** - 廣告阻擋，加速頁面載入
