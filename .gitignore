@@ -30,6 +30,7 @@ webdriver/msedgedriver*
 # Logs and temp files
 *.log
 *.tmp
+.temp/
 
 # Claude Code
 .claude/

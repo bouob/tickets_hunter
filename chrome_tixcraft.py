@@ -9884,10 +9884,12 @@ def ticketplus_date_auto_select(driver, config_dict):
         if not area_list is None:
             area_list_count = len(area_list)
             if area_list_count == 0:
-                print("empty date item, need retry.")
+                if show_debug_message:
+                    print("[TicketPlus] Empty date list, retrying...")
                 time.sleep(0.2)
     except Exception as exc:
-        print("find #buyTicket fail")
+        if show_debug_message:
+            print("[TicketPlus] Failed to find #buyTicket element:", exc)
 
     url_keyword='apis.ticketplus.com.tw/config/api/'
     url_list = get_performance_log(driver, url_keyword)
@@ -9986,15 +9988,15 @@ def ticketplus_date_auto_select(driver, config_dict):
                 if not target_button is None:
                     if target_button.is_enabled():
                         if show_debug_message:
-                            print("start to press button...")
+                            print("[TicketPlus] Clicking date button")
                         target_button.click()
                         is_date_clicked = True
                 else:
                     if show_debug_message:
-                        print("target_button in target row is None.")
+                        print("[TicketPlus] Target button not found in row")
             except Exception as exc:
                 if show_debug_message:
-                    print("find or press button fail:", exc)
+                    print("[TicketPlus] Button interaction failed:", exc)
 
                 if not target_button is None:
                     #print("try to click button fail, force click by js.")
@@ -10011,11 +10013,13 @@ def ticketplus_date_auto_select(driver, config_dict):
                     if len(formated_area_list) == 0:
                         # in fact, no need reload on /activity/ page, should reload in /order/ page.
                         try:
-                            print('!!!!!!! Refreshing !!!!!!!')
+                            if show_debug_message:
+                                print("[TicketPlus] Refreshing page due to no available dates")
                             driver.refresh()
                             time.sleep(0.3)
                         except Exception as exc:
-                            pass
+                            if show_debug_message:
+                                print("[TicketPlus] Page refresh failed:", exc)
 
                         if config_dict["advanced"]["auto_reload_page_interval"] > 0:
                             time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
@@ -10112,7 +10116,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     matched_blocks = None
 
     if show_debug_message:
-        print("current_layout_style:", current_layout_style)
+        print(f"[TicketPlus] Layout style: {current_layout_style}")
 
     area_list = None
     try:
@@ -10128,7 +10132,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             if len(area_list)==0:
                 # not found closed-folder button, try scan opened-text-title.
                 if show_debug_message:
-                    print("not found closed-folder button, try scan opened-text-title")
+                    print("[TicketPlus] No closed folders found, scanning opened areas")
 
                 my_css_selector = 'div.price-group > div'
                 price_group_list = driver.find_elements(By.CSS_SELECTOR, my_css_selector)
@@ -10144,17 +10148,17 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                     is_click_on_folder = True
 
     except Exception as exc:
-        if current_layout_style == 1:
-            print("find .v-expansion-panels date list fail")
-        if current_layout_style == 2:
-            print("find .text-title date list fail")
+        if show_debug_message:
+            if current_layout_style == 1:
+                print("[TicketPlus] Failed to find .v-expansion-panels area list")
+            if current_layout_style == 2:
+                print("[TicketPlus] Failed to find .text-title area list")
 
     formated_area_list = None
     if not area_list is None:
         area_list_count = len(area_list)
         if show_debug_message:
-            print("area_list_count:", area_list_count)
-            print("area_keyword_item:", area_keyword_item)
+            print(f"[TicketPlus] Found {area_list_count} areas, keyword: '{area_keyword_item}'")
 
         if area_list_count > 0:
             formated_area_list = []
@@ -10213,24 +10217,22 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
 
             if soldout_count > 0:
                 if show_debug_message:
-                    print("soldout_count:", soldout_count)
+                    print(f"[TicketPlus] {soldout_count} areas sold out")
                 if area_list_count == soldout_count:
                     formated_area_list = None
                     is_need_refresh = True
         else:
             if show_debug_message:
-                print("area_list_count is empty.")
-            pass
+                print("[TicketPlus] Area list is empty")
     else:
         if show_debug_message:
-            print("area_list_count is None.")
-        pass
+            print("[TicketPlus] Area list is None")
 
     is_price_panel_expanded = False
     if not formated_area_list is None:
         area_list_count = len(formated_area_list)
         if show_debug_message:
-            print("formated_area_list count:", area_list_count)
+            print(f"[TicketPlus] {area_list_count} available areas after filtering")
 
         if area_list_count > 0:
             matched_blocks = []
@@ -10280,7 +10282,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
                                 break
 
             if show_debug_message:
-                print("after match keyword, found count:", len(matched_blocks))
+                print(f"[TicketPlus] Matched {len(matched_blocks)} areas")
 
             if len(matched_blocks) == 0:
                 matched_blocks = None
@@ -10291,12 +10293,11 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
         if len(matched_blocks) == 0:
             is_need_refresh = True
             if show_debug_message:
-                print("matched_blocks is empty, is_need_refresh")
+                print("[TicketPlus] No matched areas, refreshing needed")
 
     # for style_1, need click once.
     if show_debug_message:
-        print("current_layout_style:", current_layout_style)
-        print("is_price_panel_expanded:", is_price_panel_expanded)
+        print(f"[TicketPlus] Layout style: {current_layout_style}, panel expanded: {is_price_panel_expanded}")
 
     is_clicked = False
     if not is_price_panel_expanded:
@@ -10304,20 +10305,22 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
             if not target_area is None:
                 try:
                     #PS: must click on button instead of div to expand lay.
-                    print(f'Try selecting {target_area.text}')
+                    if show_debug_message:
+                        print(f'[TicketPlus] Selecting area: {target_area.text}')
                     my_css_selector = 'button'
                     target_button = target_area.find_element(By.CSS_SELECTOR, my_css_selector)
                     target_button.click()
                     is_clicked = True
-                    print("clicked on button.")
+                    if show_debug_message:
+                        print("[TicketPlus] Area button clicked")
 
                     #target_area.click()
                 except Exception as exc:
-                    print("click target_area link fail")
-                    # print(exc)
+                    if show_debug_message:
+                        print("[TicketPlus] Area click failed, using JavaScript fallback")
+                        print(exc)
                     # use plan B
                     try:
-                        print("force to click by js.")
                         js = """let titleBar = document.getElementById("titleBar");
                         if(titleBar!=null) {titleBar.innerHTML="";}
                         arguments[0].scrollIntoView();
@@ -10361,7 +10364,7 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
         # click price row.
         area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
         if show_debug_message:
-            print("area_keyword:", area_keyword)
+            print(f"[TicketPlus] Area keyword: '{area_keyword}'")
 
         is_need_refresh = False
 
@@ -10381,7 +10384,8 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
                     if not is_need_refresh:
                         break
                     else:
-                        print("is_need_refresh for keyword:", area_keyword_item)
+                        if show_debug_message:
+                            print(f"[TicketPlus] Refresh needed for keyword: '{area_keyword_item}'")
 
                 # when reset query, do query again.
                 if not is_reset_query:
@@ -10393,23 +10397,37 @@ def ticketplus_order_expansion_panel(driver, config_dict, current_layout_style):
 
         if is_need_refresh:
             # vue mode, refresh need to check more conditions to check.
-            print('start to refresh page.')
+            if show_debug_message:
+                print('[TicketPlus] Starting page refresh')
             
+            refresh_clicked = False
             overlays = driver.find_elements(By.CSS_SELECTOR, 'div.v-overlay')
             for overlay in overlays:
-                refresh_button = driver.find_element(By.CSS_SELECTOR, 'button.float-btn')
-                if refresh_button:
-                    refresh_button.click()
-                    break
-  
-            # try:
-            #     driver.refresh()
-            #     time.sleep(0.3)
-            # except Exception as exc:
-            #     pass
+                try:
+                    refresh_button = driver.find_element(By.CSS_SELECTOR, 'button.float-btn')
+                    if refresh_button:
+                        refresh_button.click()
+                        refresh_clicked = True
+                        break
+                except Exception as exc:
+                    if show_debug_message:
+                        print("[TicketPlus] Float button not found in overlay")
+                    pass
 
-            # if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-            #     time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            # 如果找不到 float-btn，使用標準的頁面刷新
+            if not refresh_clicked:
+                try:
+                    if show_debug_message:
+                        print("[TicketPlus] Using browser refresh as fallback")
+                    driver.refresh()
+                    time.sleep(0.3)
+                except Exception as exc:
+                    if show_debug_message:
+                        print("[TicketPlus] Browser refresh failed:", exc)
+                    pass
+
+            if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                time.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_price_assign_by_bot
 
@@ -10530,6 +10548,22 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # 等待頁面載入完成，避免找不到按鈕
+    time.sleep(0.5)
+
+    # 關閉登入 dialog（如果存在）
+    try:
+        login_dialog_close = driver.find_element(By.CSS_SELECTOR, 'div.v-dialog__content button.mdi-close')
+        if login_dialog_close:
+            if show_debug_message:
+                print("closing login dialog...")
+            login_dialog_close.click()
+            time.sleep(0.5)
+    except Exception as exc:
+        if show_debug_message:
+            print("no login dialog found or failed to close")
+        pass
+
     next_step_button = None
     # PS: only button disabled = True to continue.
     is_button_disabled = False
@@ -10562,6 +10596,21 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
                 #print(exc2)
                 pass
 
+        # for style_3 (data3-like structure)
+        if not is_button_disabled:
+            try:
+                my_css_selector = "div.order-footer button.nextBtn"
+                next_step_button = driver.find_element(By.CSS_SELECTOR, my_css_selector)
+                if not next_step_button is None:
+                    if not next_step_button.is_enabled():
+                        is_button_disabled = True
+                        current_layout_style = 3
+            except Exception as exc3:
+                if show_debug_message:
+                    print("find next_step_button (style_3) fail")
+                    #print(exc3)
+                    pass
+
 
     #print("is_button_disabled:", is_button_disabled)
     is_captcha_sent = False
@@ -10580,12 +10629,58 @@ def ticketplus_order(driver, config_dict, ocr, Captcha_Browser, ticketplus_dict)
 
             auto_submit = True
             if auto_submit:
-                my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
-                is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
-                if not is_form_sumbited:
-                    # for style_1
+                # 等待按鈕從 disabled 變成 enabled
+                if show_debug_message:
+                    print("waiting for button to become enabled...")
+                for wait_idx in range(10):  # 最多等待 5 秒
+                    try:
+                        next_btn = None
+                        # 按照 current_layout_style 選擇對應的按鈕
+                        if current_layout_style == 2:
+                            next_btn = driver.find_element(By.CSS_SELECTOR, "div.order-footer > div.container > div.row > div > button.nextBtn")
+                        elif current_layout_style == 1:
+                            next_btn = driver.find_element(By.CSS_SELECTOR, "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn")
+                        elif current_layout_style == 3:
+                            next_btn = driver.find_element(By.CSS_SELECTOR, "div.order-footer button.nextBtn")
+
+                        if next_btn and next_btn.is_enabled():
+                            if show_debug_message:
+                                print(f"button is enabled after {wait_idx * 0.5} seconds")
+                            break
+                    except Exception as exc:
+                        pass
+                    time.sleep(0.5)
+                else:
+                    if show_debug_message:
+                        print("button still disabled after 5 seconds, proceeding anyway")
+
+                # 多次嘗試點擊按鈕，增加重試機制
+                is_form_sumbited = False
+                for retry in range(3):
+                    if show_debug_message and retry > 0:
+                        print(f"button click retry #{retry}")
+
+                    # 嘗試 style_2
+                    my_css_selector = "div.order-footer > div.container > div.row > div > button.nextBtn"
+                    is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    if is_form_sumbited:
+                        break
+
+                    # 嘗試 style_1
                     my_css_selector = "div.order-footer > div.container > div.row > div > div.row > div > button.nextBtn"
                     is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    if is_form_sumbited:
+                        break
+
+                    # 嘗試 style_3 (data3-like structure)
+                    my_css_selector = "div.order-footer button.nextBtn"
+                    is_form_sumbited = press_button(driver, By.CSS_SELECTOR, my_css_selector)
+                    if is_form_sumbited:
+                        break
+
+                    # 如果還沒成功，等待一下再重試
+                    if retry < 2:
+                        time.sleep(1)
 
                 if is_form_sumbited:
                     time.sleep(0.5)
@@ -11222,7 +11317,8 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
             #print("is_popup_confirm",ticketplus_dict["is_popup_confirm"])
             if not ticketplus_dict["is_popup_confirm"]:
                 ticketplus_dict["is_popup_confirm"] = True
-                play_sound_while_ordering(config_dict)
+                if config_dict["advanced"]["play_sound"]["order"]:
+                    play_sound_while_ordering(config_dict)
             ticketplus_confirm(driver, config_dict)
         else:
             ticketplus_dict["is_popup_confirm"] = False

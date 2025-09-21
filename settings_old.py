@@ -139,7 +139,7 @@ def load_translate():
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
     en_us["keyword_exclude"] = 'Keyword Exclude'
-    en_us["keyword_usage"] = 'Each keyword need double quotes, separated by comma,\nUse space in keyword as AND logic.\nAppend ,\"\" to match all.'
+    en_us["keyword_usage"] = 'Keywords separated by comma (e.g: wheelchair,restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nQuotes supported but not required'
 
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -259,7 +259,7 @@ def load_translate():
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
     zh_tw["keyword_exclude"] = '排除關鍵字'
-    zh_tw["keyword_usage"] = '每組關鍵字需要雙引號, 用逗號分隔, \n在關鍵字中使用空格作為 AND 邏輯。\n加入 ,\"\" 代表符合所有關鍵字'
+    zh_tw["keyword_usage"] = '關鍵字用逗號分隔 (如: 輪椅,不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n支援引號格式，但非必需'
 
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -380,7 +380,7 @@ def load_translate():
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
     ja_jp["keyword_exclude"] = '除外キーワード'
-    ja_jp["keyword_usage"] = '各キーワードにダブルクォートが必要です。カンマで区切ります。\nキーワード内のスペースはANDロジックとして使用されます。\nすべてにマッチさせるには,\"\"を追加してください。'
+    ja_jp["keyword_usage"] = 'キーワードはカンマで区切る (例: 車椅子,制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nクォートは対応していますが必須ではありません'
 
     ja_jp["ocr_captcha"] = 'OCR認証'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -504,6 +504,7 @@ def get_default_config():
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
+
 
     config_dict['advanced']={}
 
@@ -686,6 +687,7 @@ def btn_save_act(slience_mode=False):
     global txt_proxy_server_port
     global txt_window_size
 
+
     global txt_tixcraft_sid
     global txt_ibon_ibonqware
     global txt_facebook_account
@@ -787,6 +789,7 @@ def btn_save_act(slience_mode=False):
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
+
 
         area_keyword = txt_area_keyword.get("1.0",END).strip()
         area_keyword = util.format_config_keyword_for_json(area_keyword)
@@ -1408,6 +1411,7 @@ def callbackDateAutoOnChange():
 def callbackAreaAutoOnChange():
     showHideAreaBlocks()
 
+
 def showHideBlocks():
     global UI_PADDING_X
 
@@ -1809,6 +1813,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
 
     showHideAreaBlocks()
 
+
 def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     browser_options = ("chrome","firefox","edge","safari","brave")
     webdriver_type_options = (CONST_WEBDRIVER_TYPE_SELENIUM, CONST_WEBDRIVER_TYPE_UC)
@@ -1834,7 +1839,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
     if play_sound_filename is None:
         play_sound_filename = ""
     if len(play_sound_filename)==0:
-        play_sound_filename = play_sound_filename_default
+        play_sound_filename = "ding-dong.wav"
 
     global lbl_browser
     lbl_browser = Label(frame_group_header, text=translate[language_code]['browser'])
@@ -2271,7 +2276,8 @@ def ServerTab(root, config_dict, language_code, UI_PADDING_X):
     txt_answer_value = StringVar(frame_group_header, value="")
     txt_answer = Entry(frame_group_header, width=30, textvariable = txt_answer_value)
     txt_answer.grid(column=1, row=group_row_count, sticky = W)
-    txt_answer.bind('<Control-v>', lambda e: btn_paste_answer_by_user())
+    # TODO: Implement paste answer function
+    # txt_answer.bind('<Control-v>', lambda e: btn_paste_answer_by_user())
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X, pady=15)
 
@@ -2810,6 +2816,11 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
 
     group_row_count +=1
 
+    lbl_time_example = Label(frame_group_header, text="例: 11:55:00,15:00:00", font=('Arial', 8), fg='#666666')
+    lbl_time_example.grid(column=1, row=group_row_count, sticky = W)
+
+    group_row_count +=1
+
     global lbl_idle_keyword_second
     lbl_idle_keyword_second = Label(frame_group_header, text=translate[language_code]['idle_keyword_second'])
     lbl_idle_keyword_second.grid(column=0, row=group_row_count, sticky = E+N)
@@ -2829,6 +2840,11 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     txt_resume_keyword_second = Text(frame_group_header, width=30, height=4)
     txt_resume_keyword_second.grid(column=1, row=group_row_count, sticky = W)
     txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
+
+    group_row_count +=1
+
+    lbl_second_example = Label(frame_group_header, text="例: 50,00", font=('Arial', 8), fg='#666666')
+    lbl_second_example.grid(column=1, row=group_row_count, sticky = W)
 
     frame_group_header.grid(column=0, row=row_count, padx=UI_PADDING_X)
     update_maxbot_runtime_status()
@@ -3015,7 +3031,7 @@ def main_gui():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 610
-    GUI_SIZE_HEIGHT = 645
+    GUI_SIZE_HEIGHT = 660
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-70) + 'x' + str(GUI_SIZE_HEIGHT-80)
