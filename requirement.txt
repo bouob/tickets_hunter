@@ -18,4 +18,4 @@ opencv-python
 #PS: nodriver need python 3.9+
 # nodriver max modified version:
 # python -m pip install git+https://github.com/max32002/nodriver
-git+https://github.com/ultrafunkamsterdam/nodriver
+# git+https://github.com/ultrafunkamsterdam/nodriver
