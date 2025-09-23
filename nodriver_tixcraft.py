@@ -33,7 +33,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.24)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -100,7 +100,18 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+# ===== Cloudflare 繞過模式設定 =====
+# 模式說明：
+# "auto"   - 自動靜默執行，無額外輸出（建議日常使用）
+# "debug"  - 顯示詳細處理過程，適合除錯
+# "manual" - 只偵測並提示，不自動處理
+# "off"    - 完全停用 Cloudflare 繞過功能
+CLOUDFLARE_BYPASS_MODE = "auto"
+CLOUDFLARE_MAX_RETRY = 3         # 最大重試次數
+CLOUDFLARE_WAIT_TIME = 3         # 每次嘗試後的等待時間（秒）
+CLOUDFLARE_ENABLE_EXPERT_MODE = False  # True 會啟用更激進的瀏覽器參數（參考 stackoverflow.max-everyday.com）
 
 warnings.simplefilter('ignore',InsecureRequestWarning)
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -198,10 +209,53 @@ from typing import Optional
 async def nodriver_check_checkbox(tab: Optional[object], select_query: str, value: str = 'true') -> bool:
     if tab:
         try:
-            element = await tab.query_selector(select_query)
-            if element:
-                await element.click()
-                return True
+            # 使用 JavaScript 檢查 checkbox 狀態並避免重複點擊
+            result = await tab.evaluate(f'''
+                (function() {{
+                    const checkboxes = document.querySelectorAll('{select_query}');
+                    let targetCheckbox = null;
+
+                    // 尋找第一個非記得密碼的 checkbox
+                    for (let i = 0; i < checkboxes.length; i++) {{
+                        const checkbox = checkboxes[i];
+                        const id = checkbox.id || '';
+                        const name = checkbox.name || '';
+                        const className = checkbox.className || '';
+                        const labelText = checkbox.labels && checkbox.labels[0] ? checkbox.labels[0].textContent : '';
+
+                        // 檢查是否為記得密碼相關的 checkbox
+                        const isRememberCheckbox =
+                            id.toLowerCase().includes('remember') ||
+                            name.toLowerCase().includes('remember') ||
+                            className.toLowerCase().includes('remember') ||
+                            labelText.includes('記得') ||
+                            labelText.includes('記住') ||
+                            labelText.includes('Remember') ||
+                            labelText.includes('密碼');
+
+                        if (!isRememberCheckbox) {{
+                            targetCheckbox = checkbox;
+                            break;
+                        }}
+                    }}
+
+                    if (!targetCheckbox) return false;
+
+                    // 如果已經勾選，直接回傳成功
+                    if (targetCheckbox.checked) return true;
+
+                    // 只在未勾選時才點擊
+                    try {{
+                        targetCheckbox.click();
+                        return targetCheckbox.checked;
+                    }} catch(e) {{
+                        // fallback: 直接設定 checked 屬性
+                        targetCheckbox.checked = true;
+                        return targetCheckbox.checked;
+                    }}
+                }})();
+            ''')
+            return bool(result)
         except Exception as exc:
             print(exc)
     return False
@@ -299,7 +353,179 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
             pass
 
 
+async def detect_cloudflare_challenge(tab, show_debug=False):
+    """
+    偵測是否遇到 Cloudflare 挑戰頁面
+
+    Returns:
+        bool: True 如果偵測到 Cloudflare 挑戰頁面
+    """
+    try:
+        html_content = await tab.get_content()
+        if not html_content:
+            return False
+
+        html_lower = html_content.lower()
+
+        # Cloudflare 挑戰頁面的特徵標記
+        cloudflare_indicators = [
+            "cloudflare",
+            "cf-browser-verification",
+            "challenge-platform",
+            "checking your browser",
+            "please wait while we verify",
+            "verify you are human",
+            "正在驗證",
+            "驗證你是人類",
+            "cf-challenge-running",
+            "cf-spinner-allow-5-secs"
+        ]
+
+        detected = any(indicator in html_lower for indicator in cloudflare_indicators)
+
+        if detected:
+            # 只在首次偵測到時顯示訊息，避免重複輸出
+            # print("[CLOUDFLARE] 偵測到 Cloudflare 挑戰頁面")  # 移除重複訊息
+            pass
+
+        return detected
+
+    except Exception as exc:
+        if show_debug:
+            print(f"Cloudflare 偵測過程發生錯誤: {exc}")
+        return False
+
+
+async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
+    """
+    處理 Cloudflare 挑戰頁面 - 增強版
+
+    Args:
+        tab: nodriver tab 物件
+        config_dict: 設定字典
+        max_retry: 最大重試次數（若為 None 則使用全域設定）
+
+    Returns:
+        bool: True 如果成功繞過 Cloudflare
+    """
+    # 使用全域設定或傳入值
+    max_retry = max_retry or CLOUDFLARE_MAX_RETRY
+
+    # 根據模式決定是否顯示訊息
+    show_debug_message = (config_dict["advanced"]["verbose"] or
+                         CLOUDFLARE_BYPASS_MODE == "debug")
+
+    # 自動模式下靜默執行
+    if CLOUDFLARE_BYPASS_MODE == "auto":
+        show_debug_message = False
+
+    if show_debug_message:
+        print("[CLOUDFLARE] 開始處理 Cloudflare 挑戰...")
+
+    for retry_count in range(max_retry):
+        try:
+            if retry_count > 0:
+                if show_debug_message:
+                    print(f"[CLOUDFLARE] 重試第 {retry_count} 次...")
+                # 增加重試間隔
+                await tab.sleep(3 + retry_count)
+
+            # 方法一：使用 nodriver 內建的 Cloudflare 繞過功能
+            try:
+                cf_result = await tab.cf_verify()
+                if show_debug_message:
+                    print(f"cf_verify 結果: {cf_result}")
+            except Exception as cf_exc:
+                if show_debug_message:
+                    print(f"cf_verify 不可用: {cf_exc}")
+                # 方法二：嘗試點擊驗證框（如果存在）
+                try:
+                    # 尋找 Cloudflare 驗證框
+                    verify_box = await tab.query_selector('input[type="checkbox"]')
+                    if verify_box:
+                        await verify_box.click()
+                        if show_debug_message:
+                            print("[CLOUDFLARE] 嘗試點擊驗證框")
+                except Exception:
+                    pass
+
+            # 等待挑戰完成（動態調整等待時間）
+            wait_time = CLOUDFLARE_WAIT_TIME + (retry_count * 2)
+            await tab.sleep(wait_time)
+
+            # 檢查是否成功繞過
+            if not await detect_cloudflare_challenge(tab, show_debug_message):
+                if show_debug_message:
+                    print("[CLOUDFLARE] Cloudflare 挑戰繞過成功")
+                return True
+            else:
+                if show_debug_message:
+                    print(f"[CLOUDFLARE] 第 {retry_count + 1} 次嘗試未成功")
+
+                # 最後一次嘗試：刷新頁面
+                if retry_count == max_retry - 1:
+                    try:
+                        if show_debug_message:
+                            print("[CLOUDFLARE] 最後嘗試：刷新頁面")
+                        await tab.reload()
+                        await tab.sleep(5)
+                        if not await detect_cloudflare_challenge(tab, show_debug_message):
+                            return True
+                    except Exception:
+                        pass
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[CLOUDFLARE] 處理過程發生錯誤: {exc}")
+
+    if show_debug_message:
+        print("[CLOUDFLARE] Cloudflare 挑戰處理失敗，已達最大重試次數")
+        print("[CLOUDFLARE] 建議：檢查網路連線或稍後再試")
+    return False
+
+
+async def handle_cloudflare_with_expert_mode(tab, config_dict, driver=None):
+    """
+    使用專家模式處理 Cloudflare 挑戰的緩降策略
+
+    Args:
+        tab: 當前 tab 物件
+        config_dict: 設定字典
+        driver: 瀏覽器驅動程式物件
+
+    Returns:
+        bool: True 如果建議重啟並啟用專家模式
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    if show_debug_message:
+        print("[EXPERT] 啟動專家模式緩降策略...")
+        print("[EXPERT] 注意：專家模式會降低安全性，但可能提高繞過成功率")
+        print("[EXPERT] 建議操作：")
+        print("   1. 重新啟動程式")
+        print("   2. 在 settings.json 中設定 expert_mode: true")
+        print("   3. 或使用 --expert 參數啟動")
+
+    return True
+
+
 async def nodriver_kktix_signin(tab, url, config_dict):
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    if show_debug_message:
+        print("nodriver_kktix_signin:", url)
+
+    # 解析 back_to 參數取得真正的目標頁面
+    import urllib.parse
+    target_url = config_dict["homepage"]  # 預設值
+    try:
+        parsed_url = urllib.parse.urlparse(url)
+        params = urllib.parse.parse_qs(parsed_url.query)
+        if 'back_to' in params and len(params['back_to']) > 0:
+            target_url = params['back_to'][0]
+    except Exception as exc:
+        print(f"解析 back_to 參數失敗: {exc}")
+
     # for like human.
     time.sleep(5)
 
@@ -307,27 +533,67 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
         kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+
+    has_redirected = False
     if len(kktix_account) > 4:
         try:
+            # 輸入帳號
             account = await tab.query_selector("#user_login")
-            await account.send_keys(kktix_account)
+            if account:
+                await account.send_keys(kktix_account)
+                # 隨機延遲 0.8-1.5 秒
+                await asyncio.sleep(random.uniform(0.8, 1.5))
 
+            # 輸入密碼
             password = await tab.query_selector("#user_password")
-            await password.send_keys(kktix_password)
+            if password:
+                await password.send_keys(kktix_password)
+                # 隨機延遲 0.8-2 秒
+                await asyncio.sleep(random.uniform(0.8, 2.0))
 
-            submit = await tab.query_selector("input[type='submit'][name]")
-            await submit.click()
-            time.sleep(0.2)
+            # 確保只點擊登入按鈕，避免誤點其他按鈕
+            await tab.evaluate('''
+                const loginBtn = document.querySelector('input[type="submit"][value="登入"]');
+                if (loginBtn) {
+                    loginBtn.click();
+                }
+            ''')
+
+            # 等待驗證處理 5-10 秒
+            await asyncio.sleep(random.uniform(5.0, 10.0))
+
+            # 檢查是否需要跳轉回目標頁面
+            try:
+                current_url = await tab.evaluate('window.location.href')
+                if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
+                    # 檢查是否跳轉到首頁或登入頁面
+                    if (current_url.endswith('/') or '/users/' in current_url) and target_url != current_url:
+                        # print(f"登入成功，自動跳轉至目標頁面: {target_url}")  # 移除重複訊息
+                        await tab.get(target_url)
+                        await asyncio.sleep(random.uniform(2.0, 4.0))  # 等待頁面載入
+                        has_redirected = True
+            except Exception as redirect_error:
+                print(f"跳轉失敗: {redirect_error}")
+
         except Exception as e:
             print(e)
             pass
 
+    return has_redirected
+
 async def nodriver_kktix_paused_main(tab, url, config_dict):
+    show_debug_message = config_dict["advanced"]["verbose"]
+
     is_url_contain_sign_in = False
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
-        await nodriver_kktix_signin(tab, url, config_dict)
+        redirect_needed = await nodriver_kktix_signin(tab, url, config_dict)
         is_url_contain_sign_in = True
+
+        # 登入成功後返回跳轉狀態，讓主迴圈知道需要重新處理
+        return redirect_needed
+
+    return False
 
 async def nodriver_goto_homepage(driver, config_dict):
     homepage = config_dict["homepage"]
@@ -455,6 +721,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     if price_list_count > 0:
         areas = []
+        input_index = 0  # 追蹤有效 input 的索引
 
         kktix_area_keyword_array = kktix_area_keyword.split(' ')
         kktix_area_keyword_1 = kktix_area_keyword_array[0]
@@ -470,25 +737,42 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
             print('kktix_area_keyword_1:', kktix_area_keyword_1)
             print('kktix_area_keyword_1_and:', kktix_area_keyword_1_and)
 
-        for row in ticket_price_list:
+        for i, row in enumerate(ticket_price_list):
             row_text = ""
             row_html = ""
             row_input = None
             current_ticket_number = "0"
             try:
-                #js_attr = await row.get_js_attributes()
-                row_html = await row.get_html()
-                row_text = util.remove_html_tags(row_html)
+                # 使用 JavaScript 一次取得所有資料，避免使用元素物件方法
+                result = await tab.evaluate(f'''
+                    (function() {{
+                        const rows = document.querySelectorAll('div.display-table-row');
+                        if (rows[{i}]) {{
+                            const row = rows[{i}];
+                            const input = row.querySelector('input');
+                            return {{
+                                html: row.innerHTML,
+                                text: row.textContent || row.innerText || "",
+                                hasInput: !!input,
+                                inputValue: input ? input.value : "0"
+                            }};
+                        }}
+                        return {{ html: "", text: "", hasInput: false, inputValue: "0" }};
+                    }})();
+                ''')
 
-                row_input = await row.query_selector("input")
-                if row_input:
-                    js_attr_input = await row_input.get_js_attributes()
-                    if js_attr_input:
-                        current_ticket_number = js_attr_input["value"]
+                # 使用統一解析函數處理返回值
+                result = util.parse_nodriver_result(result)
+                if result:
+                    row_html = result.get('html', '')
+                    row_text = util.remove_html_tags(row_html)
+                    current_ticket_number = result.get('inputValue', '0')
+                    if result.get('hasInput'):
+                        row_input = input_index  # 儲存有效 input 的索引
             except Exception as exc:
                 is_dom_ready = False
                 if show_debug_message:
-                    print(exc)
+                    print(f"Error in nodriver_kktix_travel_price_list: {exc}")
                 # error, exit loop
                 break
 
@@ -561,9 +845,22 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                             print("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
                         row_text = ""
 
-            if not row_input is None:
+            # 處理有 input 的票種
+            if row_input is not None:
+                if show_debug_message:
+                    original_text = util.remove_html_tags(result.get('html', '')) if result else ""
+                    print(f"票種索引 {i} (input索引 {input_index}): {original_text[:50]}")
+
+                # 檢查票種是否被排除關鍵字過濾掉
+                if len(row_text) == 0:
+                    if show_debug_message:
+                        print(f"  -> 被排除關鍵字過濾，跳過")
+                    input_index += 1  # 仍需遞增 input_index
+                    continue
+
+                # 只有當票種文字未被排除關鍵字過濾時才處理
                 is_match_area = False
-                
+
                 # check ticket input textbox.
                 if len(current_ticket_number) > 0:
                     if current_ticket_number != "0":
@@ -601,15 +898,18 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                         pass
 
                 if show_debug_message:
-                    print("is_match_area:", is_match_area)
-                    print("match_area_code:", match_area_code)
+                    print(f"  -> 是否符合條件: {is_match_area}, 配對代碼: {match_area_code if is_match_area else 'N/A'}")
 
                 if is_match_area:
-                    areas.append(row_input)
+                    areas.append(row_input)  # 現在儲存的是有效 input 索引
+                    if show_debug_message:
+                        print(f"  -> 加入選擇清單，input索引: {row_input}")
 
                     # from top to bottom, match first to break.
                     if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
+
+                input_index += 1  # 遞增有效 input 的索引
 
             if not is_dom_ready:
                 # not sure to break or continue..., maybe break better.
@@ -653,35 +953,100 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
         current_ticket_number = ""
         if show_debug_message:
             print("try to set input box value.")
+
         try:
-            current_ticket_number = await target_area.apply('function (element) { return element.value; } ')
-        except Exception as exc:
-            pass
+            # target_area 現在是索引，直接使用
+            target_index = target_area
 
-        if show_debug_message:
-            print("current_ticket_number", current_ticket_number)
+            # 使用 JavaScript 操作，避免使用元素物件方法
+            assign_result = await tab.evaluate(f'''
+                (function() {{
+                    const inputs = document.querySelectorAll('div.display-table-row input');
+                    const targetInput = inputs[{target_index}];
 
-        if len(current_ticket_number) > 0:
-            if current_ticket_number == "0":
-                try:
-                    print("asssign ticket number:%s" % ticket_number_str)
-                    await target_area.click()
-                    await target_area.apply('function (element) {element.value = ""; } ')
-                    await target_area.send_keys(ticket_number_str);
+                    if (!targetInput) {{
+                        return {{ success: false, error: "Input not found", inputCount: inputs.length, targetIndex: {target_index} }};
+                    }}
+
+                    // 取得對應的票種名稱，清理多餘空白
+                    const parentRow = targetInput.closest('div.display-table-row');
+                    let ticketName = "未知票種";
+                    if (parentRow) {{
+                        ticketName = parentRow.textContent
+                            .replace(/\\s+/g, ' ')  // 將多個空白字符替換為單個空格
+                            .replace(/\\n/g, ' ')   // 替換換行符
+                            .trim();                // 移除前後空白
+                    }}
+
+                    const currentValue = targetInput.value;
+
+                    if (currentValue === "0") {{
+                        targetInput.focus();
+                        targetInput.select();
+                        targetInput.value = "{ticket_number_str}";
+
+                        // 更完整的事件觸發
+                        targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        targetInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        targetInput.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                        // 確保 Angular 模型更新
+                        if (window.angular) {{
+                            const scope = window.angular.element(targetInput).scope();
+                            if (scope) {{
+                                scope.$apply();
+                            }}
+                        }}
+
+                        return {{ success: true, assigned: true, value: "{ticket_number_str}", ticketName: ticketName }};
+                    }} else {{
+                        return {{ success: true, assigned: false, value: currentValue, alreadySet: true, ticketName: ticketName }};
+                    }}
+                }})();
+            ''')
+
+            # 使用統一解析函數處理返回值
+            assign_result = util.parse_nodriver_result(assign_result)
+
+            # 如果成功輸入票數，等待短暫時間讓事件處理完成
+            if assign_result and assign_result.get('success') and assign_result.get('assigned'):
+                await asyncio.sleep(0.2)
+
+            if assign_result and assign_result.get('success'):
+                current_ticket_number = assign_result.get('value', '')
+                ticket_name = assign_result.get('ticketName', '未知票種')
+
+                if assign_result.get('assigned'):
+                    # 清理票種名稱中的換行符號和多餘空白
+                    clean_ticket_name = ' '.join(ticket_name.split())
+                    print("assign ticket number:%s to [%s]" % (ticket_number_str, clean_ticket_name))
                     is_ticket_number_assigned = True
-                except Exception as exc:
-                    print("asssign ticket number to ticket-price field Exception:")
-                    print(exc)
+                elif assign_result.get('alreadySet'):
+                    if show_debug_message:
+                        print("value already assigned to [%s]" % ticket_name)
+                    is_ticket_number_assigned = True
+
+                if show_debug_message:
+                    print(f"🎫 current_ticket_number: {current_ticket_number}")
+                    print(f"🎫 selected_ticket_name: {ticket_name}")
+
+                # 票券分配成功，跳過雙重檢查（已確認輸入成功）
+                if is_ticket_number_assigned and show_debug_message:
+                    print("✅ KKTIX 票數輸入完成，跳過驗證步驟")
             else:
                 if show_debug_message:
-                    print("value already assigned.")
-                # already assigned.
-                is_ticket_number_assigned = True
+                    error_msg = assign_result.get('error', 'Unknown error') if assign_result else 'No result'
+                    print(f"Error in nodriver_kktix_assign_ticket_number: {error_msg}")
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"Error in nodriver_kktix_assign_ticket_number: {exc}")
 
     return is_dom_ready, is_ticket_number_assigned, is_need_refresh
 
 
 async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div):
+    """增強版驗證碼處理，包含重試機制和人類化延遲"""
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
@@ -689,87 +1054,493 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
         show_debug_message = True
 
     answer_list = []
+    success = False  # 初始化按鈕點擊狀態
+
+    # 批次檢查頁面元素狀態
+    elements_check = await tab.evaluate('''
+        (function() {
+            return {
+                hasQuestion: !!document.querySelector('div.custom-captcha-inner p'),
+                hasInput: !!document.querySelector('div.custom-captcha-inner > div > div > input'),
+                hasButtons: document.querySelectorAll('div.register-new-next-button-area > button').length,
+                questionText: document.querySelector('div.custom-captcha-inner p')?.innerText || ''
+            };
+        })();
+    ''')
+    elements_check = util.parse_nodriver_result(elements_check)
 
     is_question_popup = False
-    question_text = await nodriver_get_text_by_selector(tab, 'div.custom-captcha-inner p', 'innerText')
-    if len(question_text) > 0:
-        is_question_popup = True
-        write_question_to_file(question_text)
+    if elements_check and elements_check.get('hasQuestion'):
+        question_text = elements_check.get('questionText', '')
 
-        answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
-        if len(answer_list)==0:
-            if config_dict["advanced"]["auto_guess_options"]:
-                #answer_list = util.get_answer_list_from_question_string(registrationsNewApp_div, question_text)
-                # due to selenium forat.
-                answer_list = util.get_answer_list_from_question_string(None, question_text)
+        if len(question_text) > 0:
+            is_question_popup = True
+            write_question_to_file(question_text)
 
-        inferred_answer_string = ""
-        for answer_item in answer_list:
-            if not answer_item in fail_list:
-                inferred_answer_string = answer_item
-                break
+            answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+            if len(answer_list)==0:
+                if config_dict["advanced"]["auto_guess_options"]:
+                    answer_list = util.get_answer_list_from_question_string(None, question_text)
 
-        if len(answer_list) > 0:
-            answer_list = list(dict.fromkeys(answer_list))
+            inferred_answer_string = ""
+            for answer_item in answer_list:
+                if not answer_item in fail_list:
+                    inferred_answer_string = answer_item
+                    break
 
-        if show_debug_message:
-            print("inferred_answer_string:", inferred_answer_string)
-            print("question_text:", question_text)
-            print("answer_list:", answer_list)
-            print("fail_list:", fail_list)
-
-        # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
-        if len(inferred_answer_string) > 0:
-            input_text_css = 'div.custom-captcha-inner > div > div > input'
-            next_step_button_css = ''
-            submit_by_enter = False
-            check_input_interval = 0.2
-            #is_answer_sent, fail_list = fill_common_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
             if len(answer_list) > 0:
-                input_text = await tab.query_selector(input_text_css)
-                if not input_text is None:
+                answer_list = list(dict.fromkeys(answer_list))
 
-                    await input_text.click()
-                    await input_text.apply('function (element) {element.value = ""; } ')
-                    await input_text.send_keys(inferred_answer_string)
-                    time.sleep(0.1)
+            if show_debug_message:
+                print("inferred_answer_string:", inferred_answer_string)
+                print("question_text:", question_text)
+                print("answer_list:", answer_list)
+                print("fail_list:", fail_list)
 
-                    # due multi next buttons(pick seats/best seats)
-                    print("click")
-                    await nodriver_kktix_press_next_button(tab)
-                    time.sleep(0.75)
+            # 增強版答案填寫流程，包含重試機制
+            if len(inferred_answer_string) > 0 and elements_check.get('hasInput'):
+                success = False
+                max_retries = 3
 
-                    fail_list.append(inferred_answer_string)
+                for retry_count in range(max_retries):
+                    if show_debug_message and retry_count > 0:
+                        print(f"Captcha filling retry {retry_count}/{max_retries}")
 
+                    try:
+                        # 人類化延遲：0.3-1秒隨機延遲
+                        human_delay = random.uniform(0.3, 1.0)
+                        await tab.sleep(human_delay)
 
-    return fail_list, is_question_popup
+                        # 填寫驗證碼答案
+                        fill_result = await tab.evaluate(f'''
+                            (function() {{
+                                const input = document.querySelector('div.custom-captcha-inner > div > div > input');
+                                if (!input) {{
+                                    return {{ success: false, error: "Input not found" }};
+                                }}
+
+                                // 確保輸入框可見和可用
+                                if (input.disabled || input.readOnly) {{
+                                    return {{ success: false, error: "Input is disabled or readonly" }};
+                                }}
+
+                                // 模擬人類打字
+                                input.focus();
+                                input.value = "";
+
+                                // 逐字輸入模擬真實打字
+                                const answer = "{inferred_answer_string}";
+                                for (let i = 0; i < answer.length; i++) {{
+                                    input.value += answer[i];
+                                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                }}
+
+                                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                input.blur();
+
+                                return {{
+                                    success: true,
+                                    value: input.value,
+                                    focused: document.activeElement === input
+                                }};
+                            }})();
+                        ''')
+
+                        fill_result = util.parse_nodriver_result(fill_result)
+
+                        if fill_result and fill_result.get('success'):
+                            if show_debug_message:
+                                print(f"Captcha answer filled successfully: {inferred_answer_string}")
+
+                            # 短暫延遲後點擊按鈕
+                            button_delay = random.uniform(0.5, 1.2)
+                            await tab.sleep(button_delay)
+
+                            # 點擊下一步按鈕
+                            button_click_success = await nodriver_kktix_press_next_button(tab, config_dict)
+
+                            if button_click_success:
+                                success = True
+                                # 最終延遲
+                                final_delay = random.uniform(0.75, 1.5)
+                                await tab.sleep(final_delay)
+
+                                fail_list.append(inferred_answer_string)
+                                break
+                            else:
+                                if show_debug_message:
+                                    print("Button click failed, retrying...")
+                        else:
+                            error_msg = fill_result.get('error', 'Unknown error') if fill_result else 'No result'
+                            if show_debug_message:
+                                print(f"Input filling failed: {error_msg}")
+
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"Captcha retry {retry_count + 1} failed: {exc}")
+
+                    # 重試前的等待
+                    if not success and retry_count < max_retries - 1:
+                        retry_delay = random.uniform(0.8, 1.5)
+                        await tab.sleep(retry_delay)
+
+                if not success and show_debug_message:
+                    print("All captcha filling attempts failed")
+
+    return fail_list, is_question_popup, success
+
+async def wait_for_kktix_element(tab, selector, timeout=10, check_visible=True):
+    """等待 KKTIX 元素載入並確保可見，參考 NoDriver API 指南"""
+    try:
+        result = await tab.evaluate(f'''
+            (function() {{
+                return new Promise((resolve) => {{
+                    let retryCount = 0;
+                    const maxRetries = {timeout * 5};  // 每200ms檢查一次
+
+                    function checkElement() {{
+                        const element = document.querySelector('{selector}');
+                        if (element) {{
+                            let isVisible = true;
+
+                            // 檢查可見性（如果需要）
+                            if ({str(check_visible).lower()}) {{
+                                const rect = element.getBoundingClientRect();
+                                const style = window.getComputedStyle(element);
+                                isVisible = rect.width > 0 && rect.height > 0 &&
+                                          style.display !== 'none' &&
+                                          style.visibility !== 'hidden' &&
+                                          style.opacity !== '0';
+                            }}
+
+                            if (isVisible) {{
+                                resolve({{
+                                    success: true,
+                                    found: true,
+                                    visible: isVisible,
+                                    dimensions: element.getBoundingClientRect(),
+                                    retries: retryCount
+                                }});
+                                return;
+                            }}
+                        }}
+
+                        if (retryCount < maxRetries) {{
+                            retryCount++;
+                            setTimeout(checkElement, 200);
+                        }} else {{
+                            resolve({{
+                                success: false,
+                                error: "Timeout waiting for element",
+                                selector: '{selector}',
+                                timeout: {timeout},
+                                retries: retryCount
+                            }});
+                        }}
+                    }}
+
+                    checkElement();
+                }});
+            }})();
+        ''')
+
+        # 解析結果
+        result = util.parse_nodriver_result(result)
+        return result
+
+    except Exception as exc:
+        return {
+            'success': False,
+            'error': f'Exception in wait_for_kktix_element: {exc}',
+            'selector': selector
+        }
+
+async def debug_kktix_page_state(tab, show_debug=True):
+    """收集 KKTIX 頁面狀態供除錯，參考 NoDriver API 指南"""
+    try:
+        state = await tab.evaluate('''
+            (function() {
+                // 基本頁面資訊
+                const basicInfo = {
+                    url: window.location.href,
+                    title: document.title,
+                    readyState: document.readyState,
+                    documentHeight: document.documentElement.scrollHeight,
+                    viewportHeight: window.innerHeight
+                };
+
+                // KKTIX 特定元素檢查
+                const kktixElements = {
+                    hasRegistrationDiv: !!document.querySelector('#registrationsNewApp'),
+                    hasTicketAreas: document.querySelectorAll('div.display-table-row').length,
+                    hasPriceList: document.querySelectorAll('.display-table-row').length
+                };
+
+                // 驗證碼相關元素
+                const captchaElements = {
+                    hasQuestion: !!document.querySelector('div.custom-captcha-inner p'),
+                    questionText: document.querySelector('div.custom-captcha-inner p')?.innerText || '',
+                    hasInput: !!document.querySelector('div.custom-captcha-inner input'),
+                    inputValue: document.querySelector('div.custom-captcha-inner input')?.value || '',
+                    inputDisabled: document.querySelector('div.custom-captcha-inner input')?.disabled || false
+                };
+
+                // 按鈕和表單元素
+                const formElements = {
+                    nextButtons: document.querySelectorAll('div.register-new-next-button-area > button').length,
+                    checkboxes: document.querySelectorAll('input[type="checkbox"]').length,
+                    radioButtons: document.querySelectorAll('input[type="radio"]').length,
+                    textInputs: document.querySelectorAll('input[type="text"]').length,
+                    submitButtons: document.querySelectorAll('input[type="submit"], button[type="submit"]').length
+                };
+
+                // 錯誤訊息檢查 - 更精確地檢查實際的錯誤訊息
+                const errorMessages = {
+                    hasErrorMessages: !!document.querySelector('.alert-danger, .error, .warning'),
+                    errorText: document.querySelector('.alert-danger, .error, .warning')?.innerText || '',
+                    soldOut: !!document.querySelector('.alert-danger, .error')?.innerText?.includes('售完') ||
+                            !!document.querySelector('.alert-danger, .error')?.innerText?.includes('已售完') ||
+                            !!document.querySelector('.sold-out, .unavailable'),
+                    notYetOpen: !!document.querySelector('.alert-danger, .error')?.innerText?.includes('未開賣') ||
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('尚未開始') ||
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('即將開賣')
+                };
+
+                // 頁面載入狀態
+                const loadingState = {
+                    hasLoadingSpinner: !!document.querySelector('.loading, .spinner, [class*="load"]'),
+                    scriptsLoaded: document.scripts.length,
+                    stylesheetsLoaded: document.styleSheets.length,
+                    imagesLoaded: Array.from(document.images).filter(img => img.complete).length,
+                    totalImages: document.images.length
+                };
+
+                return {
+                    timestamp: new Date().toISOString(),
+                    basic: basicInfo,
+                    kktix: kktixElements,
+                    captcha: captchaElements,
+                    forms: formElements,
+                    errors: errorMessages,
+                    loading: loadingState
+                };
+            })();
+        ''')
+
+        # 解析結果
+        state = util.parse_nodriver_result(state)
+
+        if show_debug and state:
+            print("=== KKTIX Page Debug State ===")
+            print(f"URL: {state.get('basic', {}).get('url', 'N/A')}")
+            print(f"Ready State: {state.get('basic', {}).get('readyState', 'N/A')}")
+            print(f"Registration Div: {state.get('kktix', {}).get('hasRegistrationDiv', False)}")
+            print(f"Ticket Areas: {state.get('kktix', {}).get('hasTicketAreas', 0)}")
+            print(f"Captcha Question: {state.get('captcha', {}).get('hasQuestion', False)}")
+            if state.get('captcha', {}).get('questionText'):
+                print(f"Question Text: {state.get('captcha', {}).get('questionText', '')[:50]}...")
+            print(f"Next Buttons: {state.get('forms', {}).get('nextButtons', 0)}")
+            print(f"Error Messages: {state.get('errors', {}).get('hasErrorMessages', False)}")
+            if state.get('errors', {}).get('soldOut'):
+                print("🔴 Sold Out detected")
+            if state.get('errors', {}).get('notYetOpen'):
+                print("⏰ Not yet open detected")
+            print("=" * 30)
+
+        return state
+
+    except Exception as exc:
+        error_state = {
+            'success': False,
+            'error': f'Exception in debug_kktix_page_state: {exc}',
+            'timestamp': datetime.now().isoformat()
+        }
+        if show_debug:
+            print(f"Debug failed: {exc}")
+        return error_state
 
 #   : This is for case-2 next button.
-async def nodriver_kktix_press_next_button(tab):
-    ret = False
-
-    css_select = "div.register-new-next-button-area > button"
-    but_button_list = None
+async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
+    """點擊活動頁面的「立即購票」按鈕"""
+    show_debug_message = config_dict["advanced"]["verbose"] if config_dict else False
     try:
-        but_button_list = await tab.query_selector_all(css_select)
+        result = await tab.evaluate('''
+            (function() {
+                const button = document.querySelector('.tickets > a.btn-point');
+                if (button) {
+                    button.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    button.click();
+                    return { success: true, message: '成功點擊立即購票按鈕' };
+                } else {
+                    return { success: false, message: '找不到立即購票按鈕' };
+                }
+            })()
+        ''')
+
+        result = util.parse_nodriver_result(result)
+
+        if result and result.get('success'):
+            return True
+        else:
+            return False
+
     except Exception as exc:
-        print(exc)
-        pass
+        print(f"Error clicking events next button: {exc}")
+        return False
 
-    if not but_button_list is None:
-        button_count = len(but_button_list)
-        #print("button_count:",button_count)
-        if button_count > 0:
-            try:
-                #print("click on last button")
-                await but_button_list[button_count-1].click()
-                time.sleep(0.3)
-                ret = True
-            except Exception as exc:
-                print(exc)
-                pass
+async def nodriver_kktix_press_next_button(tab, config_dict=None):
+    """使用 JavaScript 點擊下一步按鈕，包含重試和等待機制"""
+    show_debug_message = config_dict["advanced"]["verbose"] if config_dict else False
 
-    return ret
+    # 重試機制：最多嘗試 3 次
+    for retry_count in range(3):
+        try:
+            # 如果不是第一次嘗試，等待一下
+            if retry_count > 0:
+                await asyncio.sleep(0.5)
+                if show_debug_message:
+                    print(f"KKTIX 按鈕點擊重試 {retry_count + 1}/3")
+
+            result = await tab.evaluate('''
+                (function() {
+                    const buttons = document.querySelectorAll('div.register-new-next-button-area > button');
+                    if (buttons.length === 0) {
+                        return { success: false, error: 'No buttons found', buttonCount: 0 };
+                    }
+
+                    // 點擊最後一個按鈕
+                    const targetButton = buttons[buttons.length - 1];
+
+                    // 詳細檢查按鈕狀態
+                    const buttonText = targetButton.innerText || targetButton.textContent || '';
+                    const isDisabled = targetButton.disabled ||
+                                      targetButton.classList.contains('disabled') ||
+                                      targetButton.getAttribute('disabled') !== null;
+
+                    // 檢查是否正在處理中
+                    const isProcessing = buttonText.includes('查詢空位中') ||
+                                        buttonText.includes('處理中') ||
+                                        buttonText.includes('請稍候') ||
+                                        buttonText.includes('請勿重新整理');
+
+                    if (isDisabled) {
+                        if (isProcessing) {
+                            return {
+                                success: true,
+                                processing: true,
+                                error: 'Processing seats',
+                                buttonCount: buttons.length,
+                                buttonText: buttonText
+                            };
+                        } else {
+                            return {
+                                success: false,
+                                error: 'Button is disabled',
+                                buttonCount: buttons.length,
+                                buttonText: buttonText
+                            };
+                        }
+                    }
+
+                    // 模擬真實點擊事件
+                    const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+
+                    targetButton.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    targetButton.focus();
+                    targetButton.dispatchEvent(event);
+
+                    return {
+                        success: true,
+                        clicked: true,
+                        buttonText: targetButton.innerText || targetButton.textContent || '',
+                        buttonCount: buttons.length
+                    };
+                })();
+            ''')
+
+            # 使用統一解析函數處理返回值
+            result = util.parse_nodriver_result(result)
+
+            if result and result.get('success'):
+                button_text = result.get('buttonText', '').strip()
+
+                # 檢查是否是處理中狀態
+                if result.get('processing'):
+                    if show_debug_message:
+                        print(f"🔄 KKTIX 正在處理中: [{button_text}]")
+
+                    # 等待較長時間給 KKTIX 處理
+                    await asyncio.sleep(1.5)
+
+                    try:
+                        # 檢查是否已跳轉到訂單頁面
+                        current_url = await tab.evaluate('window.location.href')
+                        if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                            if show_debug_message:
+                                print(f"🎯 處理完成，已跳轉到訂單頁面")
+                            return True
+                    except Exception:
+                        pass
+
+                    # 如果還沒跳轉，可能還在處理，返回成功
+                    return True
+                else:
+                    # 正常的按鈕點擊成功
+                    if show_debug_message:
+                        print(f"✅ KKTIX 按鈕點擊成功: [{button_text}]")
+
+                    # 等待頁面處理並檢查是否跳轉
+                    await asyncio.sleep(0.8)  # 給 KKTIX 伺服器時間處理
+
+                    try:
+                        # 檢查是否已跳轉到訂單頁面
+                        current_url = await tab.evaluate('window.location.href')
+                        if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                            if show_debug_message:
+                                print(f"🎯 按鈕點擊後已跳轉到訂單頁面")
+                            return True
+                    except Exception:
+                        pass
+
+                    # 如果沒有跳轉，等待原有時間並返回成功
+                    time.sleep(0.2)
+                    return True
+            else:
+                error_msg = result.get('error', 'Unknown error') if result else 'No result'
+                button_text = result.get('buttonText', '') if result else ''
+                if show_debug_message:
+                    print(f"⚠️ KKTIX 按鈕點擊失敗: {error_msg} [{button_text}]")
+
+                # 如果是按鈕被禁用或處理中，檢查是否已跳轉
+                if 'disabled' in error_msg.lower() or 'processing' in error_msg.lower():
+                    try:
+                        current_url = await tab.evaluate('window.location.href')
+                        if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                            if show_debug_message:
+                                print(f"🎯 系統處理中但已跳轉到訂單頁面，視為成功")
+                            return True
+                    except Exception:
+                        pass
+
+                    # 如果是處理中狀態，等待較長時間再重試
+                    if 'processing' in error_msg.lower():
+                        await asyncio.sleep(1.0)
+
+                    # 繼續重試
+                    continue
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"KKTIX 按鈕點擊例外 (重試 {retry_count + 1}/3): {exc}")
+
+    # 所有重試都失敗
+    if show_debug_message:
+        print("❌ KKTIX 按鈕點擊最終失敗，已重試 3 次")
+    return False
 
 
 async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_ticket):
@@ -795,6 +1566,40 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if not registrationsNewApp_div is None:
         is_dom_ready = True
         is_need_refresh = False
+
+        # 檢查頁面狀態，如果偵測到售罄或未開賣，設定重新載入標記
+        try:
+            page_state_raw = await tab.evaluate('''
+                () => {
+                    // 只檢查票券區域內的售罄狀態，避免誤判
+                    const ticketArea = document.querySelector('#registrationsNewApp') || document.body;
+                    const areaHTML = ticketArea.innerHTML;
+
+                    const soldOut = areaHTML.includes('售完') ||
+                                   areaHTML.includes('Sold Out') ||
+                                   areaHTML.includes('已售完') ||
+                                   areaHTML.includes('sold out');
+
+                    const notYetOpen = areaHTML.includes('未開賣') ||
+                                      areaHTML.includes('尚未開始') ||
+                                      areaHTML.includes('即將開賣') ||
+                                      areaHTML.includes('coming soon');
+
+                    return { soldOut, notYetOpen };
+                }
+            ''')
+
+            # 使用統一的結果處理函數
+            page_state = util.parse_nodriver_result(page_state_raw)
+
+            if page_state and (page_state.get('soldOut') or page_state.get('notYetOpen')):
+                is_need_refresh = True
+                if show_debug_message:
+                    status = "售罄" if page_state.get('soldOut') else "未開賣"
+                    print(f"KKTIX 偵測到 {status} 狀態，將重新載入頁面")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"檢查頁面狀態失敗: {exc}")
 
         if len(area_keyword) > 0:
             area_keyword_array = []
@@ -828,9 +1633,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 is_need_refresh = is_need_refresh_final
         else:
             # empty keyword, match all.
-            # TODO:
             is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
-            pass
 
         if is_dom_ready:
             # part 3: captcha
@@ -840,10 +1643,12 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                         play_sound_while_ordering(config_dict)
                     played_sound_ticket = True
 
-                is_finish_checkbox_click = await nodriver_check_checkbox(tab, 'input[type="checkbox"]:not(:checked)')
+                # 收集除錯資訊（僅在 debug 模式下）
+                if show_debug_message:
+                    debug_state = await debug_kktix_page_state(tab, show_debug_message)
 
                 # whole event question.
-                fail_list, is_question_popup = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
+                fail_list, is_question_popup, button_clicked_in_captcha = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
 
                 # single option question
                 if not is_question_popup:
@@ -876,7 +1681,22 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                 pass
 
                     if len(control_text) == 0:
-                        click_ret = await nodriver_kktix_press_next_button(tab)
+                        # 檢查是否在驗證碼處理時已經點擊過按鈕
+                        if button_clicked_in_captcha:
+                            if show_debug_message:
+                                print("🎯 驗證碼處理時已點擊按鈕，跳過重複點擊")
+                        else:
+                            # 檢查是否已經跳轉到成功頁面，避免重複點擊
+                            try:
+                                current_url = await tab.evaluate('window.location.href')
+                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                                    if show_debug_message:
+                                        print("🎯 已跳轉到訂單頁面，跳過按鈕點擊")
+                                else:
+                                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
+                            except Exception as exc:
+                                # 如果檢查失敗，還是嘗試點擊
+                                click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
                     else:
                         # input by maxbox plus extension.
                         is_fill_at_webdriver = False
@@ -910,8 +1730,46 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
     return fail_list, played_sound_ticket
 
+def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
+    """檢查是否已成功取得 KKTIX 票券
+
+    Args:
+        url: 當前頁面 URL
+        config_dict: 設定字典
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: True 表示已成功取得票券
+    """
+    is_kktix_got_ticket = False
+
+    # 檢查 URL 模式：包含 events、registrations 和訂單編號（含 -）
+    if '/events/' in url and '/registrations/' in url and "-" in url:
+        # 排除新註冊頁面和登入頁面
+        if not '/registrations/new' in url:
+            if not 'https://kktix.com/users/sign_in?' in url:
+                is_kktix_got_ticket = True
+                if show_debug_message:
+                    print(f"偵測到搶票成功頁面: {url}")
+
+    # 處理重複進入的特殊情況
+    if is_kktix_got_ticket:
+        if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
+            # 如果首頁設定也是訂單頁面，避免重複處理
+            if len(url.split('/')) >= 7:
+                if len(config_dict["homepage"].split('/')) >= 7:
+                    # 比對活動代碼，如果相同則表示重複進入
+                    if url.split('/')[4] == config_dict["homepage"].split('/')[4]:
+                        is_kktix_got_ticket = False
+                        if show_debug_message:
+                            print("重複進入相同活動的訂單頁面，跳過處理")
+
+    return is_kktix_got_ticket
+
 async def nodriver_kktix_main(tab, url, config_dict):
     global kktix_dict
+    show_debug_message = config_dict["advanced"]["verbose"]
+
     if not 'kktix_dict' in globals():
         kktix_dict = {}
         kktix_dict["fail_list"]=[]
@@ -921,12 +1779,26 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_ticket"] = False
         kktix_dict["played_sound_order"] = False
+        kktix_dict["got_ticket_detected"] = False
+        kktix_dict["success_actions_done"] = False
 
     is_url_contain_sign_in = False
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
-        await nodriver_kktix_signin(tab, url, config_dict)
+        redirect_needed = await nodriver_kktix_signin(tab, url, config_dict)
         is_url_contain_sign_in = True
+
+        # 如果登入後有跳轉，需要重新取得當前 URL 並繼續處理
+        if redirect_needed:
+            await asyncio.sleep(3)  # 增加等待時間確保頁面完全載入
+            try:
+                url = await tab.evaluate('window.location.href')
+                is_url_contain_sign_in = False  # 重置標記以繼續處理新頁面
+                # 額外等待，確保 DOM 完全載入
+                await asyncio.sleep(1)
+                # print(f"登入跳轉後的新 URL: {url}")  # 移除重複訊息
+            except Exception as exc:
+                print(f"取得跳轉後 URL 失敗: {exc}")
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
@@ -950,8 +1822,8 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 kktix_dict["fail_list"] = []
                 kktix_dict["played_sound_ticket"] = False
             else:
-                is_finish_checkbox_click = False
-                #TODO: check checkbox here.
+                # 勾選同意條款 - 使用精確的 ID 選擇器
+                is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#person_agree_terms:not(:checked)')
 
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
@@ -965,92 +1837,308 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     is_event_page = True
 
             if is_event_page:
+                # 檢查是否需要自動重載（Chrome 擴充功能未啟用時）
+                if not config_dict["advanced"]["chrome_extension"]:
+                    await nodriver_kktix_reg_auto_reload(tab, config_dict)
+
                 if config_dict["kktix"]["auto_press_next_step_button"]:
-                    # pass switch check.
-                    #print("should press next here.")
-                    #kktix_events_press_next_button(driver)
-                    pass
+                    # 自動點擊「立即購票」按鈕
+                    await nodriver_kktix_events_press_next_button(tab, config_dict)
 
             # reset answer fail list.
             kktix_dict["fail_list"] = []
             kktix_dict["played_sound_ticket"] = False
 
+    # 檢查是否已經偵測過成功頁面，避免重複偵測
     is_kktix_got_ticket = False
-    if '/events/' in url and '/registrations/' in url and "-" in url:
-        if not '/registrations/new' in url:
-            if not 'https://kktix.com/users/sign_in?' in url:
-                is_kktix_got_ticket = True
-
-    if is_kktix_got_ticket:
-        if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
-            # do nothing when second time come in.
-            if len(url.split('/'))>=7:
-                if len(config_dict["homepage"].split('/'))>=7:
-                    # match event code.
-                    if url.split('/')[4]==config_dict["homepage"].split('/')[4]:
-                        # break loop.
-                        is_kktix_got_ticket = False
+    if not kktix_dict["got_ticket_detected"]:
+        is_kktix_got_ticket = check_kktix_got_ticket(url, config_dict, show_debug_message)
+        if is_kktix_got_ticket:
+            kktix_dict["got_ticket_detected"] = True
+    elif kktix_dict["got_ticket_detected"]:
+        # 已經偵測過成功頁面，直接設定為 True 但不重複輸出
+        is_kktix_got_ticket = True
 
     is_quit_bot = False
     if is_kktix_got_ticket:
-        if not kktix_dict["start_time"] is None:
-            if not kktix_dict["done_time"] is None:
-                bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
-                if kktix_dict["elapsed_time"] != bot_elapsed_time:
-                    print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
-                kktix_dict["elapsed_time"] = bot_elapsed_time
+        # 搶票成功，設定結束標記
+        is_quit_bot = True
 
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not kktix_dict["played_sound_order"]:
-                play_sound_while_ordering(config_dict)
+        # 只在第一次偵測成功時執行動作
+        if not kktix_dict["success_actions_done"]:
+            if not kktix_dict["start_time"] is None:
+                if not kktix_dict["done_time"] is None:
+                    bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
+                    if kktix_dict["elapsed_time"] != bot_elapsed_time:
+                        print("搶票完成，耗時: {:.3f} 秒".format(bot_elapsed_time))
+                    kktix_dict["elapsed_time"] = bot_elapsed_time
 
-        kktix_dict["played_sound_order"] = True
+            if config_dict["advanced"]["play_sound"]["order"]:
+                if not kktix_dict["played_sound_order"]:
+                    play_sound_while_ordering(config_dict)
 
-        if config_dict["advanced"]["headless"]:
-            if not kktix_dict["is_popup_checkout"]:
-                kktix_account = config_dict["advanced"]["kktix_account"]
-                kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-                if kktix_password == "":
-                    kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+            kktix_dict["played_sound_order"] = True
 
-                print("基本資料(或實名制)網址:", url)
-                if len(kktix_account) > 0:
-                    print("搶票成功, 帳號:", kktix_account)
+            if config_dict["advanced"]["headless"]:
+                if not kktix_dict["is_popup_checkout"]:
+                    kktix_account = config_dict["advanced"]["kktix_account"]
+                    kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
+                    if kktix_password == "":
+                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
 
-                    script_name = "chrome_tixcraft"
-                    if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
-                        script_name = "nodriver_tixcraft"
+                    print("基本資料(或實名制)網址:", url)
+                    if len(kktix_account) > 0:
+                        print("搶票成功, 帳號:", kktix_account)
 
-                    threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
-                    #driver.quit()
-                    #sys.exit()
+                        script_name = "chrome_tixcraft"
+                        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
+                            script_name = "nodriver_tixcraft"
 
-                is_event_page = False
-                if len(url.split('/'))>=7:
-                    is_event_page = True
-                if is_event_page:
-                    confirm_clicked = False
+                        threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
+                        #driver.quit()
+                        #sys.exit()
 
-                    try:
-                        submit = await tab.query_selector("div.form-actions a.btn-primary")
-                        await submit.click()
-                        confirm_clicked = True
-                    except Exception as exc:
-                        print(exc)
+                    is_event_page = False
+                    if len(url.split('/'))>=7:
+                        is_event_page = True
+                    if is_event_page:
+                        # 使用改良的訂單確認按鈕功能
+                        confirm_clicked = await nodriver_kktix_confirm_order_button(tab, config_dict)
 
-                    if confirm_clicked:
-                        domain_name = url.split('/')[2]
-                        checkout_url = "https://%s/account/orders" % (domain_name)
-                        print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
-                        webbrowser.open_new(checkout_url)
+                        if confirm_clicked:
+                            domain_name = url.split('/')[2]
+                            checkout_url = "https://%s/account/orders" % (domain_name)
+                            print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                            webbrowser.open_new(checkout_url)
 
-                kktix_dict["is_popup_checkout"] = True
-                is_quit_bot = True
+                    kktix_dict["is_popup_checkout"] = True
+
+            # 標記動作已完成，避免重複執行
+            kktix_dict["success_actions_done"] = True
     else:
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
 
     return is_quit_bot
+
+async def nodriver_kktix_confirm_order_button(tab, config_dict):
+    """
+    KKTIX 訂單確認按鈕自動點擊功能
+    對應 Chrome 版本的 kktix_confirm_order_button()
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+    ret = False
+
+    try:
+        # 尋找訂單確認按鈕: div.form-actions a.btn-primary
+        confirm_button = await tab.query_selector('div.form-actions a.btn-primary')
+        if confirm_button:
+            # 檢查按鈕是否可點擊
+            is_enabled = await tab.evaluate('''
+                (button) => {
+                    return button && !button.disabled && button.offsetParent !== null;
+                }
+            ''', confirm_button)
+
+            if is_enabled:
+                await confirm_button.click()
+                ret = True
+                if show_debug_message:
+                    print("KKTIX 訂單確認按鈕已點擊")
+            elif show_debug_message:
+                print("KKTIX 訂單確認按鈕存在但不可點擊")
+        elif show_debug_message:
+            print("未找到 KKTIX 訂單確認按鈕")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"KKTIX 訂單確認按鈕點擊失敗: {exc}")
+
+    return ret
+
+async def nodriver_kktix_double_check_all_text_value(tab, config_dict, ticket_number):
+    """
+    KKTIX 雙重檢查票數輸入功能
+    對應 Chrome 版本的 kktix_double_check_all_text_value()
+    確認票數輸入正確後才自動按下一步
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+    is_do_press_next_button = False
+
+    try:
+        # 檢查所有票數輸入框的值 - 使用與填入相同的選擇器
+        ticket_values = await tab.evaluate('''
+            () => {
+                const inputs = document.querySelectorAll('div.display-table-row input');
+                const values = [];
+                inputs.forEach(input => {
+                    const value = input.value ? input.value.trim() : '';
+                    if (value.length > 0 && value !== '0') {
+                        values.push(value);
+                    }
+                });
+                return values;
+            }
+        ''')
+
+        if ticket_values:
+            target_ticket_str = str(ticket_number)
+            for current_value in ticket_values:
+                if current_value == target_ticket_str:
+                    if show_debug_message:
+                        print(f"✅ KKTIX 票數檢查通過: 找到目標票數 {target_ticket_str}")
+                    is_do_press_next_button = True
+                    break
+
+            if show_debug_message and not is_do_press_next_button:
+                print(f"⚠️ KKTIX 票數檢查警告: 目標票數 {target_ticket_str}, 實際值 {ticket_values}")
+        elif show_debug_message:
+            # 加入更詳細的除錯資訊，確保數量正確處理
+            try:
+                input_count_raw = await tab.evaluate('() => document.querySelectorAll("div.display-table-row input").length')
+                input_count = util.parse_nodriver_result(input_count_raw)
+                input_count = input_count if isinstance(input_count, int) else 0
+                print(f"⚠️ KKTIX 票數檢查警告: 未找到有效票數值 (找到 {input_count} 個輸入框)")
+            except Exception as exc:
+                print(f"⚠️ KKTIX 票數檢查警告: 無法取得輸入框數量 ({exc})")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"KKTIX 票數檢查失敗: {exc}")
+
+    return is_do_press_next_button
+
+async def nodriver_kktix_check_register_status(tab, config_dict):
+    """
+    KKTIX 註冊狀態檢查功能
+    對應 Chrome 版本的 kktix_check_register_status()
+    使用 JavaScript 呼叫 KKTIX API 檢查票券狀態
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+    is_need_refresh = False
+
+    try:
+        # 取得當前 URL 來構建 API 請求
+        current_url = await tab.evaluate('() => window.location.href')
+
+        # 使用 JavaScript 呼叫 KKTIX API 檢查狀態
+        status_result = await tab.evaluate('''
+            async () => {
+                try {
+                    const currentUrl = window.location.href;
+                    const urlParts = currentUrl.split('/');
+
+                    // 從 URL 提取 event_id
+                    let eventId = '';
+                    const eventsIndex = urlParts.findIndex(part => part === 'events');
+                    if (eventsIndex !== -1 && eventsIndex + 1 < urlParts.length) {
+                        eventId = urlParts[eventsIndex + 1];
+                    }
+
+                    if (!eventId) {
+                        return { success: false, error: 'Cannot extract event ID from URL' };
+                    }
+
+                    // 構建 API URL
+                    const apiUrl = `https://kktix.com/events/${eventId}.json`;
+
+                    // 發送 API 請求
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        return { success: false, error: `API request failed: ${response.status}` };
+                    }
+
+                    const data = await response.json();
+
+                    // 檢查票券狀態
+                    const tickets = data.event?.tickets || [];
+                    const statusList = [];
+
+                    tickets.forEach(ticket => {
+                        if (ticket.inventory_id) {
+                            statusList.push({
+                                name: ticket.name,
+                                inventory_id: ticket.inventory_id,
+                                status: ticket.status
+                            });
+                        }
+                    });
+
+                    return { success: true, tickets: statusList };
+
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+        ''')
+
+        if status_result and status_result.get('success'):
+            tickets = status_result.get('tickets', [])
+            if tickets:
+                # 檢查是否有售罄或即將開賣的票券
+                for ticket in tickets:
+                    status = ticket.get('status', '')
+                    ticket_name = ticket.get('name', '')
+
+                    if status in ['OUT_OF_STOCK', 'COMING_SOON', 'SOLD_OUT']:
+                        if show_debug_message:
+                            print(f"KKTIX 狀態檢查: {ticket_name} - {status}")
+                        is_need_refresh = True
+                        break
+
+                if show_debug_message and not is_need_refresh:
+                    print("KKTIX 狀態檢查: 票券狀態正常，無需重新載入")
+            elif show_debug_message:
+                print("KKTIX 狀態檢查: 未找到票券資訊")
+        else:
+            error_msg = status_result.get('error', '未知錯誤') if status_result else '無回應'
+            if show_debug_message:
+                print(f"KKTIX 狀態檢查失敗: {error_msg}")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"KKTIX 狀態檢查例外: {exc}")
+
+    return is_need_refresh
+
+async def nodriver_kktix_reg_auto_reload(tab, config_dict):
+    """
+    KKTIX 自動重載功能
+    對應 Chrome 版本的 kktix_reg_auto_reload()
+    當票券售罄時自動重新載入頁面
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+    is_need_reload = False
+
+    try:
+        # 使用註冊狀態檢查來決定是否需要重新載入
+        is_need_reload = await nodriver_kktix_check_register_status(tab, config_dict)
+
+        if is_need_reload:
+            if show_debug_message:
+                print("KKTIX 自動重載: 偵測到票券售罄，準備重新載入頁面")
+
+            # 重新載入頁面
+            await tab.reload()
+
+            # 等待頁面載入完成
+            await asyncio.sleep(2)
+
+            if show_debug_message:
+                print("KKTIX 自動重載: 頁面重新載入完成")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"KKTIX 自動重載失敗: {exc}")
+
+    return is_need_reload
 
 async def nodriver_tixcraft_home_close_window(tab):
     accept_all_cookies_btn = None
@@ -2171,7 +3259,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
                 await el_password.click()
                 await el_password.apply('function (element) {element.value = ""; } ')
                 await el_password.send_keys(ticketplus_password);
-                time.sleep(0.1)
+                await asyncio.sleep(random.uniform(0.1, 0.3))
                 is_filled_form = True
 
                 if country_code=="+886":
@@ -2179,7 +3267,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
                     print("press enter")
                     await tab.send(cdp.input_.dispatch_key_event("keyDown", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
                     await tab.send(cdp.input_.dispatch_key_event("keyUp", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
-                    time.sleep(1)
+                    await asyncio.sleep(random.uniform(0.8, 1.2))
                     # PS: ticketplus country field may not located at your target country.
                     is_submited = True
         except Exception as exc:
@@ -2215,7 +3303,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
     is_user_signin = False
     if len(config_dict["advanced"]["ticketplus_account"]) > 0:
         is_user_signin = await nodriver_ticketplus_is_signin(tab)
-        print("is_user_signin:", is_user_signin)
+        #print("is_user_signin:", is_user_signin)
         if not is_user_signin:
             time.sleep(0.1)
             if not is_filled_ticketplus_singin_form:
@@ -2391,233 +3479,349 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
     return is_date_clicked
 
 async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area_keyword_item, current_layout_style):
-    """TicketPlus 座位區域自動選擇功能"""
+    """TicketPlus 座位區域自動選擇功能 - 重構版使用純 JavaScript"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
-
     auto_select_mode = config_dict["area_auto_select"]["mode"]
-    is_need_refresh = False
-    is_click_on_folder = False
-    matched_blocks = None
+    ticket_number = config_dict["ticket_number"]
 
     if show_debug_message:
         print("current_layout_style:", current_layout_style)
         print("area_keyword_item:", area_keyword_item)
+        print(f"target_ticket_number: {ticket_number}")
 
-    # 根據不同版面樣式查找區域列表
-    area_list = None
-    try:
-        if current_layout_style == 1:
-            # 樣式 1: 展開面板式
-            my_css_selector = "div.seats-area > div.v-expansion-panel > div.v-expansion-panel-content > div.v-expansion-panel-content__wrap > div.text-title"
-            area_list = await tab.query_selector_all(my_css_selector)
-
-            if len(area_list) == 0:
-                if show_debug_message:
-                    print("not found closed-folder button, try scan opened-text-title")
-
-                # 嘗試價格群組樣式
-                price_group_list = await tab.query_selector_all('div.price-group > div')
-                if len(price_group_list) > 0:
-                    my_css_selector = 'div.seats-area > div.v-expansion-panel'
-                else:
-                    my_css_selector = 'div.seats-area > div.v-expansion-panel[aria-expanded="false"]'
-                    is_click_on_folder = True
-
-                area_list = await tab.query_selector_all(my_css_selector)
-        else:
-            # 樣式 2: 簡單標題式
-            my_css_selector = "div.rwd-margin > div.text-title"
-            area_list = await tab.query_selector_all(my_css_selector)
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"find area list fail for style {current_layout_style}:", exc)
-
-    formated_area_list = None
-    if area_list and len(area_list) > 0:
-        if show_debug_message:
-            print("area_list_count:", len(area_list))
-
-        formated_area_list = []
-        soldout_count = 0
-
-        # 過濾區域列表
-        for i, row in enumerate(area_list):
-            row_text = ""
-            row_html = ""
-            try:
-                # 使用 tab.evaluate 取得元素內容，避免使用元素物件方法
-                element_info = await tab.evaluate(f'''
-                    (function() {{
-                        const elements = document.querySelectorAll("{my_css_selector}");
-                        if ({i} < elements.length) {{
-                            const element = elements[{i}];
-                            return {{
-                                html: element.outerHTML,
-                                text: element.textContent || element.innerText || ""
-                            }};
-                        }}
-                        return {{ html: "", text: "" }};
-                    }})();
-                ''')
-
-                if isinstance(element_info, dict):
-                    row_html = element_info.get('html', '')
-                    row_text = element_info.get('text', '').strip()
-                    # 移除多餘的空白字符
-                    row_text = util.remove_html_tags(row_html) if row_html else row_text
-            except Exception as exc:
-                if show_debug_message:
-                    print("處理區域項目失敗:", exc)
-                break
-
-            # 檢查是否已售完
-            if len(row_text) > 0:
-                soldout_patterns = ['剩餘 0', '已售完', '剩餘：0']
-                is_soldout = any(pattern in row_text for pattern in soldout_patterns)
-
-                if ' soldout"' in row_html or ' soldout ' in row_html:
-                    is_soldout = True
-
-                if is_soldout:
-                    soldout_count += 1
-                    row_text = ""
-
-            # 檢查排除關鍵字
-            if len(row_text) > 0:
-                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                    row_text = ""
-
-            # 檢查開賣時間
-            if len(row_text) > 0:
-                if '開賣時間' in row_text:
-                    is_need_refresh = True
-
-            if len(row_text) > 0:
-                formated_area_list.append(row)
-
-        if soldout_count > 0:
-            if show_debug_message:
-                print("soldout_count:", soldout_count)
-            if len(area_list) == soldout_count:
-                formated_area_list = None
-                is_need_refresh = True
-
-    else:
-        if show_debug_message:
-            print("area_list is None or empty")
-
-    # 進行關鍵字匹配
+    is_need_refresh = False
     is_price_panel_expanded = False
-    if formated_area_list and len(formated_area_list) > 0:
-        if show_debug_message:
-            print("formated_area_list count:", len(formated_area_list))
 
-        matched_blocks = []
-        if len(area_keyword_item) == 0:
-            # 如果沒有關鍵字，使用所有區域的索引
-            matched_blocks = list(range(len(formated_area_list)))
-        else:
-            # 關鍵字匹配
-            for i, row in enumerate(formated_area_list):
-                try:
-                    # 使用 tab.evaluate 取得元素內容
-                    element_info = await tab.evaluate(f'''
-                        (function() {{
-                            const elements = document.querySelectorAll("{my_css_selector}");
-                            if ({i} < elements.length) {{
-                                const element = elements[{i}];
-                                return {{
-                                    html: element.outerHTML,
-                                    text: element.textContent || element.innerText || ""
-                                }};
-                            }}
-                            return {{ html: "", text: "" }};
-                        }})();
-                    ''')
+    try:
+        # 使用純 JavaScript 處理展開面板選擇和票數設定
+        result = await tab.evaluate(f'''
+            (function() {{
+                try {{
+                const ticketAreas = [];
+                console.log('=== TicketPlus 票種區域檢測開始 ===');
+                console.log('版面樣式: {current_layout_style}');
 
-                    if isinstance(element_info, dict):
-                        row_html = element_info.get('html', '')
-                        row_text = element_info.get('text', '').strip()
-                        row_text = util.remove_html_tags(row_html) if row_html else row_text
-                    else:
-                        continue
+                let elements = [];
+                let isExpansionPanel = false;
 
-                except Exception as exc:
-                    if show_debug_message:
-                        print("處理關鍵字匹配失敗:", exc)
-                    continue
+                // 嘗試找 expansion panel 版面
+                const expansionPanels = document.querySelectorAll('.v-expansion-panels.seats-area .v-expansion-panel');
+                if (expansionPanels.length > 0) {{
+                    console.log('找到 expansion panels 數量:', expansionPanels.length);
+                    elements = Array.from(expansionPanels);
+                    isExpansionPanel = true;
+                }} else {{
+                    // 使用簡單 row 版面 - 嘗試多種選擇器
+                    let ticketRows = document.querySelectorAll('.row.py-1.py-md-4.rwd-margin.no-gutters.text-title');
+                    console.log('選擇器1 找到 ticket rows 數量:', ticketRows.length);
 
-                if len(row_text) > 0:
-                    row_text = util.format_keyword_string(row_text)
+                    if (ticketRows.length === 0) {{
+                        // Page3 樣式的票種選擇
+                        ticketRows = document.querySelectorAll('.rwd-margin .row.py-1.py-md-4');
+                        console.log('選擇器2 找到 ticket rows 數量:', ticketRows.length);
+                    }}
 
-                    is_match_area = False
-                    if len(area_keyword_item) > 0:
-                        area_keyword_array = area_keyword_item.split(' ')
-                        area_keyword_1 = util.format_keyword_string(area_keyword_array[0])
-                        area_keyword_1_and = ""
-                        if len(area_keyword_array) > 1:
-                            area_keyword_1_and = util.format_keyword_string(area_keyword_array[1])
+                    if (ticketRows.length === 0) {{
+                        // 通用選擇器 - 尋找包含票數控制項的 row
+                        const countButtons = document.querySelectorAll('.count-button');
+                        if (countButtons.length > 0) {{
+                            const rows = new Set();
+                            countButtons.forEach(cb => {{
+                                const row = cb.closest('.row');
+                                if (row) rows.add(row);
+                            }});
+                            ticketRows = Array.from(rows);
+                        }} else {{
+                            ticketRows = document.querySelectorAll('[class*="row"][class*="py-"]');
+                        }}
+                        console.log('選擇器3 找到 ticket rows 數量:', ticketRows.length);
+                    }}
 
-                        if area_keyword_1 in row_text:
-                            if len(area_keyword_1_and) == 0:
-                                is_match_area = True
-                            elif area_keyword_1_and in row_text:
-                                is_match_area = True
+                    elements = Array.from(ticketRows);
+                    isExpansionPanel = false;
+                }}
 
-                    if is_match_area:
-                        matched_blocks.append(i)  # 儲存索引而非元素物件
-                        if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                            break
+                if (elements.length > 0) {{
+                    for (let i = 0; i < elements.length; i++) {{
+                        const element = elements[i];
+                        let text = '';
+                        let areaName = '';
+                        let priceMatch = null;
 
-        # 執行點擊
-        if len(matched_blocks) > 0:
-            target_index = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-            if target_index is not None:
-                try:
-                    # 使用 JavaScript 執行點擊
-                    click_result = await tab.evaluate(f'''
-                        (function() {{
-                            const elements = document.querySelectorAll("{my_css_selector}");
-                            if ({target_index} < elements.length) {{
-                                const target_element = elements[{target_index}];
+                        if (isExpansionPanel) {{
+                            // expansion panel 版面
+                            const header = element.querySelector('.v-expansion-panel-header');
+                            if (header) {{
+                                text = header.textContent?.trim() || '';
+                                priceMatch = text.match(/NT\\.?([\\d,]+)/);
 
-                                // 檢查是否為展開式面板
-                                if ({current_layout_style} === 1 && {str(is_click_on_folder).lower()}) {{
-                                    // 展開面板模式
-                                    target_element.click();
-                                    return {{ success: true, action: "expanded", element_text: target_element.textContent }};
-                                }} else {{
-                                    // 直接選擇模式
-                                    target_element.click();
-                                    return {{ success: true, action: "selected", element_text: target_element.textContent }};
+                                const areaDiv = header.querySelector('.d-flex.align-center');
+                                if (areaDiv) {{
+                                    const textContent = areaDiv.textContent?.trim() || '';
+                                    const nameMatch = textContent.match(/^([^剩餘熱賣]+?)(?:剩餘|熱賣|$)/);
+                                    areaName = nameMatch ? nameMatch[1].trim() : textContent.split('\\n')[0].trim();
                                 }}
                             }}
-                            return {{ success: false, error: "目標元素不存在" }};
-                        }})();
-                    ''')
+                        }} else {{
+                            // 簡單 row 版面
+                            text = element.textContent?.trim() || '';
 
-                    if isinstance(click_result, dict) and click_result.get('success'):
-                        is_price_panel_expanded = True
-                        action = click_result.get('action', 'clicked')
-                        element_text = click_result.get('element_text', '')
-                        if show_debug_message:
-                            print(f"{action} area: {element_text}")
+                            // 從第一個 col 取得票種名稱
+                            const nameDiv = element.querySelector('.font-weight-medium');
+                            if (nameDiv) {{
+                                areaName = nameDiv.textContent?.trim() || '';
+                                // 移除狀態標籤（如 "熱賣中"）
+                                areaName = areaName.replace(/\\s*(熱賣中|已售完|剩餘.*?)\\s*$/, '').trim();
+                            }}
 
-                        if action == "expanded":
-                            await tab.sleep(0.3)  # 等待展開動畫
-                    else:
-                        if show_debug_message:
-                            print("點擊區域失敗:", click_result.get('error', '未知錯誤'))
+                            // 從價格 col 取得價格
+                            const priceDiv = element.querySelector('.font-weight-bold');
+                            if (priceDiv) {{
+                                const priceText = priceDiv.textContent?.trim() || '';
+                                priceMatch = priceText.match(/NT\\.?\\s*([\\d,]+)/);
+                            }}
+                        }}
 
-                except Exception as exc:
-                    if show_debug_message:
-                        print("click area fail:", exc)
+                        console.log('Element ' + (i + 1) + ': 區域="' + areaName + '", 價格匹配=' + !!priceMatch + ', 版面=' + (isExpansionPanel ? 'expansion' : 'row'));
 
-        if len(matched_blocks) == 0:
+                        // 檢查是否售完
+                        const isSoldOut = element.querySelector('.soldout') !== null ||
+                                        text.includes('剩餘 0') ||
+                                        text.includes('已售完') ||
+                                        element.querySelector('button[disabled]');
+
+                        console.log('  - 售完狀態: ' + isSoldOut);
+
+                        // 檢查排除關鍵字
+                        const excludeKeywords = "{config_dict.get('keyword_exclude', '')}";
+                        const isExcluded = excludeKeywords && excludeKeywords.split(',').some(keyword => {{
+                            const cleanKeyword = keyword.trim().replace(/"/g, '');
+                            return cleanKeyword && (text.includes(cleanKeyword) || areaName.includes(cleanKeyword));
+                        }});
+
+                        // 檢查是否有票數控制項
+                        const hasCounter = element.querySelector('.count-button') !== null;
+
+                        if (priceMatch && areaName && areaName.length > 0 &&
+                            !areaName.includes('票區一覽') && !isSoldOut && !isExcluded && hasCounter) {{
+                            ticketAreas.push({{
+                                element: element,
+                                text: text,
+                                areaName: areaName,
+                                price: priceMatch[1],
+                                hasCounter: hasCounter,
+                                isExpansionPanel: isExpansionPanel
+                            }});
+                            console.log('  - 有效票種區域已加入');
+                        }} else {{
+                            console.log('  - 跳過: 售完=' + isSoldOut + ', 排除=' + isExcluded + ', 有控制項=' + hasCounter);
+                        }}
+                    }}
+                }}
+
+                console.log('總共找到有效票種區域:', ticketAreas.length);
+
+                if (ticketAreas.length === 0) {{
+                    return {{
+                        success: false,
+                        error: "沒有找到可用的票種區域",
+                        needRefresh: true,
+                        panelExpanded: false
+                    }};
+                }}
+
+                // 關鍵字匹配邏輯
+                let selectedArea = null;
+                const areaKeyword = "{area_keyword_item}".trim();
+
+                if (areaKeyword) {{
+                    console.log('使用關鍵字搜尋:', areaKeyword);
+                    const keywordArray = areaKeyword.split(' ').map(k => k.trim()).filter(k => k);
+
+                    for (const area of ticketAreas) {{
+                        let isMatch = true;
+                        for (const keyword of keywordArray) {{
+                            if (!area.text.includes(keyword) && !area.areaName.includes(keyword)) {{
+                                isMatch = false;
+                                break;
+                            }}
+                        }}
+                        if (isMatch) {{
+                            selectedArea = area;
+                            console.log('關鍵字匹配成功:', area.areaName);
+                            break;
+                        }}
+                    }}
+                }} else {{
+                    console.log('沒有關鍵字，使用自動選擇模式: {auto_select_mode}');
+                    if (ticketAreas.length > 0) {{
+                        const mode = "{auto_select_mode}";
+                        if (mode === "from bottom to top") {{
+                            selectedArea = ticketAreas[ticketAreas.length - 1];
+                        }} else if (mode === "random") {{
+                            const randomIndex = Math.floor(Math.random() * ticketAreas.length);
+                            selectedArea = ticketAreas[randomIndex];
+                        }} else {{
+                            selectedArea = ticketAreas[0];
+                        }}
+                    }}
+                }}
+
+                if (!selectedArea) {{
+                    return {{
+                        success: false,
+                        error: "找不到符合條件的票種區域",
+                        needRefresh: true,
+                        panelExpanded: false,
+                        foundAreas: ticketAreas.length,
+                        keywords: areaKeyword ? areaKeyword.split(' ') : []
+                    }};
+                }}
+
+                console.log('最終選中區域:', selectedArea.areaName);
+
+                // 處理展開面板或直接選擇
+                const area = selectedArea.element;
+                let ticketSet = false;
+
+                if (selectedArea.isExpansionPanel) {{
+                    // expansion panel 版面：需要先展開
+                    const header = area.querySelector('.v-expansion-panel-header');
+                    if (header) {{
+                        console.log('開始展開票種區域: ' + selectedArea.areaName);
+
+                        // 1. 先點擊 header 展開面板
+                        header.click();
+
+                        // 2. 設置選中狀態（修復 seats-area is-select 問題）
+                        const seatsArea = area.closest('.seats-area') || area.parentElement;
+                        if (seatsArea) {{
+                            // 移除其他選中狀態
+                            document.querySelectorAll('.seats-area.is-select').forEach(el => {{
+                                el.classList.remove('is-select');
+                            }});
+
+                            // 設置當前選中
+                            seatsArea.classList.add('is-select');
+                            console.log('已設置選中狀態: seats-area is-select');
+
+                            // 觸發 Vue 事件確保狀態同步
+                            seatsArea.dispatchEvent(new Event('click', {{bubbles: true}}));
+                        }}
+
+                        // 等待展開動畫完成
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        console.log('展開完成，開始設定票數');
+                    }}
+
+                    // 尋找展開後的票數控制項
+                    const content = area.querySelector('.v-expansion-panel-content');
+                    if (content) {{
+                        const countButtons = content.querySelectorAll('.count-button');
+                        ticketSet = await setTicketCount(countButtons, {ticket_number});
+                    }}
+                }} else {{
+                    // 簡單 row 版面：直接設定票數
+                    console.log('簡單版面，直接設定票數: ' + selectedArea.areaName);
+                    const countButtons = area.querySelectorAll('.count-button');
+                    ticketSet = await setTicketCount(countButtons, {ticket_number});
+                }}
+
+                // 票數設定輔助函數
+                async function setTicketCount(countButtons, targetCount) {{
+                    for (const countButton of countButtons) {{
+                        // 多種選擇器策略
+                        const countDiv = countButton.querySelector('div:not(.v-btn__content):not(.v-btn)') ||
+                                       countButton.querySelector('div') ||
+                                       countButton.querySelector('input[readonly]');
+
+                        const plusButton = countButton.querySelector('button[class*="plus"]') ||
+                                         countButton.querySelector('button .mdi-plus') ||
+                                         countButton.querySelector('button:not([disabled]):last-child');
+
+                        if (countDiv && plusButton && !plusButton.disabled) {{
+                            let currentCount = 0;
+                            const countText = countDiv.textContent?.trim() || countDiv.value || '0';
+                            if (/^\\d+$/.test(countText)) {{
+                                currentCount = parseInt(countText);
+                            }}
+
+                            console.log('找到票數控制項，當前數量:', currentCount, '目標數量:', targetCount);
+
+                            if (currentCount < targetCount) {{
+                                const clicksNeeded = Math.min(targetCount - currentCount, 10);
+                                console.log('需要點擊加號', clicksNeeded, '次');
+
+                                for (let i = 0; i < clicksNeeded; i++) {{
+                                    if (!plusButton.disabled) {{
+                                        plusButton.click();
+                                        await new Promise(resolve => setTimeout(resolve, 150));
+                                    }}
+                                }}
+                                console.log('票數設定完成');
+                                return true;
+                            }} else {{
+                                console.log('票數已足夠');
+                                return true;
+                            }}
+                        }}
+                    }}
+                    console.log('警告：未找到有效的票數控制項');
+                    return false;
+                }}
+
+                return {{
+                    success: true,
+                    areaName: selectedArea.areaName,
+                    ticketSet: ticketSet,
+                    needRefresh: false,
+                    panelExpanded: true
+                }};
+                }} catch (error) {{
+                    console.error('JavaScript 執行錯誤:', error);
+                    return {{
+                        success: false,
+                        error: 'JavaScript 執行錯誤: ' + error.message,
+                        needRefresh: true,
+                        panelExpanded: false
+                    }};
+                }}
+            }})();
+        ''')
+
+        # 處理 JavaScript 執行結果
+        parsed_result = util.parse_nodriver_result(result)
+
+        if show_debug_message:
+            print(f"JavaScript 執行原始結果類型: {type(result)}")
+            print(f"解析後結果類型: {type(parsed_result)}")
+
+        if isinstance(parsed_result, dict):
+            if parsed_result.get('success'):
+                is_price_panel_expanded = parsed_result.get('panelExpanded', True)
+                is_need_refresh = parsed_result.get('needRefresh', False)
+                if show_debug_message:
+                    area_name = parsed_result.get('areaName', '未知')
+                    ticket_set = parsed_result.get('ticketSet', False)
+                    print(f"✅ 成功選中區域: {area_name}")
+                    print(f"✅ 票數設定: {'完成' if ticket_set else '失敗'}")
+            else:
+                is_need_refresh = parsed_result.get('needRefresh', True)
+                error_msg = parsed_result.get('error', '未知錯誤')
+                if show_debug_message:
+                    print(f"❌ 選擇失敗: {error_msg}")
+                    if 'foundAreas' in parsed_result:
+                        print(f"找到 {parsed_result['foundAreas']} 個區域")
+        else:
             is_need_refresh = True
             if show_debug_message:
-                print("no matched area blocks found")
+                print(f"❌ JavaScript 執行結果格式錯誤: {parsed_result}")
+                print(f"原始結果: {result}")
+
+    except Exception as exc:
+        is_need_refresh = True
+        if show_debug_message:
+            print(f"❌ 展開面板選擇失敗: {exc}")
 
     return is_need_refresh, is_price_panel_expanded
 
@@ -2973,12 +4177,25 @@ async def nodriver_ticketplus_confirm(tab, config_dict):
     return is_confirm_clicked
 
 async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict):
-    """TicketPlus 訂單處理 - 簡化版"""
+    """TicketPlus 訂單處理 - 支援三種佈局偵測"""
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     if show_debug_message:
-        print("=== TicketPlus 簡化版搶票開始 ===")
+        print("=== TicketPlus 自動佈局偵測搶票開始 ===")
+
+    # 等待頁面載入完成，避免找不到按鈕
+    await tab.sleep(0.8)
+
+    # 偵測頁面佈局樣式
+    layout_info = await nodriver_ticketplus_detect_layout_style(tab)
+    current_layout_style = layout_info.get('style', 0) if isinstance(layout_info, dict) else 0
+
+    if show_debug_message:
+        layout_names = {1: "展開面板型 (Page3)", 2: "座位選擇型 (Page2)", 3: "簡化型 (Page1)"}
+        button_status = "啟用" if layout_info.get('button_enabled', False) else "禁用"
+        print(f"偵測到佈局樣式: {current_layout_style} - {layout_names.get(current_layout_style, '未知')}")
+        print(f"佈局偵測詳細資訊: 按鈕找到={layout_info.get('found', False)}, 按鈕狀態={button_status}")
 
     # 檢查下一步按鈕是否啟用
     is_button_enabled = await nodriver_ticketplus_check_next_button(tab)
@@ -3004,8 +4221,19 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         if show_debug_message:
             print(f"需要選票：按鈕禁用={not is_button_enabled}, 有關鍵字={has_keyword}")
 
-        # 執行簡化的票種選擇（傳入原始關鍵字，讓函數內部解析）
-        is_price_assign_by_bot = await nodriver_ticketplus_select_ticket_simplified(tab, config_dict, area_keyword)
+        # 根據佈局樣式選擇對應的處理方式
+        if current_layout_style == 1:
+            # 展開面板型 (Page3) - 使用展開面板處理邏輯
+            is_need_refresh, is_price_assign_by_bot = await nodriver_ticketplus_order_expansion_panel(
+                tab, config_dict, current_layout_style)
+        elif current_layout_style == 2:
+            # 座位選擇型 (Page2) - 使用座位區域選擇邏輯
+            is_need_refresh, is_price_assign_by_bot = await nodriver_ticketplus_order_expansion_auto_select(
+                tab, config_dict, area_keyword, current_layout_style)
+        else:
+            # 簡化型 (Page1) 或備用邏輯 - 使用通用選擇邏輯
+            is_need_refresh, is_price_assign_by_bot = await nodriver_ticketplus_order_expansion_auto_select(
+                tab, config_dict, area_keyword, current_layout_style)
 
 
     # 如果票種選擇成功，處理後續步驟
@@ -3020,8 +4248,12 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         await tab.sleep(0.3)
         await nodriver_ticketplus_ticket_agree(tab, config_dict)
 
-        # 點擊下一步
-        is_form_submitted = await nodriver_ticketplus_click_next_button_simplified(tab)
+        # 根據佈局樣式點擊下一步按鈕
+        if current_layout_style in [1, 2, 3]:
+            is_form_submitted = await nodriver_ticketplus_click_next_button(tab, current_layout_style)
+        else:
+            # 備用：使用簡化版本
+            is_form_submitted = await nodriver_ticketplus_click_next_button_simplified(tab)
 
         if is_form_submitted:
             await tab.sleep(0.5)
@@ -3070,259 +4302,6 @@ async def nodriver_ticketplus_check_next_button(tab):
 
     except Exception as exc:
         return False
-
-async def nodriver_ticketplus_select_ticket_simplified(tab, config_dict, area_keyword):
-    """簡化的票種選擇函數"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    if show_debug_message:
-        print("=== 簡化票種選擇開始 ===")
-
-    try:
-        # 獲取票種數量設定
-        ticket_number = str(config_dict.get("ticket_number", 1))
-        auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "from top to bottom")
-
-        # 解析關鍵字（按照 Chrome 版本標準）
-        area_keyword_array = []
-        if area_keyword:
-            try:
-                import json
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                if show_debug_message:
-                    print(f"關鍵字解析失敗: {exc}")
-                area_keyword_array = []
-
-        if show_debug_message:
-            print(f"解析後的關鍵字陣列: {area_keyword_array}")
-
-        result = await tab.evaluate(f'''
-            (function() {{
-                // 找出所有票種區域（更精確的選擇器）
-                const ticketAreas = [];
-
-                // 優先使用 TicketPlus 特定選擇器
-                const ticketRows = document.querySelectorAll('.row.py-1.py-md-4.rwd-margin.no-gutters');
-
-                if (ticketRows.length > 0) {{
-                    console.log('使用 TicketPlus 特定選擇器，找到', ticketRows.length, '個票種');
-                    for (let row of ticketRows) {{
-                        const hasCounter = row.querySelector('.count-button');
-                        const priceDiv = row.querySelector('.font-weight-medium');
-                        const text = row.textContent?.trim() || '';
-
-                        if (hasCounter && priceDiv && text) {{
-                            ticketAreas.push({{
-                                element: row,
-                                text: text,
-                                hasCounter: true
-                            }});
-                        }}
-                    }}
-                }} else {{
-                    console.log('備用選擇器搜尋');
-                    // 備用選擇器
-                    const fallbackSelectors = [
-                        '.rwd-margin',
-                        '[class*="ticket"]',
-                        '[class*="price"]',
-                        '.v-expansion-panel'
-                    ];
-
-                    for (let selector of fallbackSelectors) {{
-                        const areas = document.querySelectorAll(selector);
-                        for (let area of areas) {{
-                            const hasCounter = area.querySelector('.count-button, input[type="number"], button[class*="plus"]');
-                            const hasPrice = area.textContent && /\\$|NT|元|票/.test(area.textContent);
-
-                            if (hasCounter || hasPrice) {{
-                                ticketAreas.push({{
-                                    element: area,
-                                    text: area.textContent?.trim() || '',
-                                    hasCounter: !!hasCounter
-                                }});
-                            }}
-                        }}
-                        if (ticketAreas.length > 0) break;
-                    }}
-                }}
-
-                console.log('總共找到票種區域數量:', ticketAreas.length);
-                if (ticketAreas.length > 0) {{
-                    console.log('票種區域內容:');
-                    ticketAreas.forEach((area, index) => {{
-                        console.log(`區域 ${{index}}: ${{area.text.substring(0, 30)}}...`);
-                    }});
-                }}
-
-                // 關鍵字匹配（按照 Chrome 版本邏輯）
-                let selectedArea = null;
-                const keywordArray = {str(area_keyword_array)};
-
-                if (keywordArray.length > 0) {{
-                    console.log('使用關鍵字選擇:', keywordArray);
-
-                    for (let keyword_item of keywordArray) {{
-                        console.log('嘗試關鍵字:', keyword_item);
-
-                        for (let area of ticketAreas) {{
-                            const areaText = area.text;
-
-                            // 支援 AND 邏輯（空格分隔）
-                            const keyword_and_array = keyword_item.split(' ');
-                            let isMatch = true;
-
-                            for (let and_keyword of keyword_and_array) {{
-                                if (!areaText.includes(and_keyword)) {{
-                                    isMatch = false;
-                                    break;
-                                }}
-                            }}
-
-                            if (isMatch) {{
-                                selectedArea = area;
-                                console.log('找到匹配區域:', areaText.substring(0, 50));
-                                break;
-                            }}
-                        }}
-
-                        if (selectedArea) break;
-                    }}
-                }} else {{
-                    console.log('使用自動選擇模式:', "{auto_select_mode}");
-                    if (ticketAreas.length > 0) {{
-                        const mode = "{auto_select_mode}";
-                        if (mode === "from bottom to top") {{
-                            selectedArea = ticketAreas[ticketAreas.length - 1];
-                        }} else if (mode === "random") {{
-                            const randomIndex = Math.floor(Math.random() * ticketAreas.length);
-                            selectedArea = ticketAreas[randomIndex];
-                        }} else {{
-                            selectedArea = ticketAreas[0];
-                        }}
-                    }}
-                }}
-
-                if (!selectedArea) {{
-                    return {{
-                        success: false,
-                        error: "找不到符合條件的票種區域",
-                        foundAreas: ticketAreas.length,
-                        keywords: keywordArray,
-                        allAreaTexts: ticketAreas.map(a => a.text.substring(0, 50))
-                    }};
-                }}
-
-                console.log('最終選中區域:', selectedArea.text.substring(0, 50));
-
-                // 在選中的區域內設定票數（改進按鈕定位）
-                const area = selectedArea.element;
-
-                // 更精確的計數器和按鈕定位
-                const countDiv = area.querySelector('.count-button div');
-                const allButtons = area.querySelectorAll('.count-button button');
-
-                // 找到加號按鈕
-                let plusButton = null;
-                for (let btn of allButtons) {{
-                    const icon = btn.querySelector('i.mdi-plus');
-                    if (icon && !btn.disabled) {{
-                        plusButton = btn;
-                        break;
-                    }}
-                }}
-
-                if (!countDiv || !plusButton) {{
-                    return {{
-                        success: false,
-                        error: "在選中區域找不到計數器或加號按鈕",
-                        hasCounter: selectedArea.hasCounter,
-                        areaText: selectedArea.text.substring(0, 100),
-                        foundCountDiv: !!countDiv,
-                        foundPlusButton: !!plusButton,
-                        totalButtons: allButtons.length
-                    }};
-                }}
-
-                // 獲取目前數量
-                let currentCount = 0;
-                const countText = countDiv.textContent?.trim() || '0';
-                if (/^\\d+$/.test(countText)) {{
-                    currentCount = parseInt(countText);
-                }}
-
-                const targetNumber = parseInt("{ticket_number}");
-
-                if (currentCount >= targetNumber) {{
-                    return {{
-                        success: true,
-                        message: "數量已足夠",
-                        currentCount: currentCount,
-                        targetCount: targetNumber,
-                        selectedAreaText: selectedArea.text.substring(0, 100)
-                    }};
-                }}
-
-                // 點擊加號按鈕增加數量
-                let clickCount = 0;
-                const needClicks = targetNumber - currentCount;
-
-                for (let i = 0; i < needClicks && i < 10; i++) {{
-                    if (plusButton.disabled) break;
-
-                    plusButton.click();
-                    clickCount++;
-
-                    // 等待UI更新
-                    const start = Date.now();
-                    while (Date.now() - start < 100) {{ /* 等待 */ }}
-                }}
-
-                // 檢查最終結果
-                const finalText = countDiv.textContent?.trim() || '0';
-                const finalCount = /^\\d+$/.test(finalText) ? parseInt(finalText) : 0;
-
-                return {{
-                    success: finalCount > currentCount,
-                    currentCount: currentCount,
-                    finalCount: finalCount,
-                    targetCount: targetNumber,
-                    clickCount: clickCount,
-                    selectedAreaText: selectedArea.text.substring(0, 100)
-                }};
-
-            }})();
-        ''')
-
-        result = util.parse_nodriver_result(result)
-
-        if isinstance(result, dict):
-            success = result.get('success', False)
-            if show_debug_message:
-                if success:
-                    print(f"✓ 票種選擇成功")
-                    print(f"  選中區域: {result.get('selectedAreaText', 'N/A')}")
-                    print(f"  數量: {result.get('currentCount', 0)} → {result.get('finalCount', 0)}")
-                    print(f"  點擊次數: {result.get('clickCount', 0)}")
-                else:
-                    print(f"✗ 票種選擇失敗: {result.get('error', '未知錯誤')}")
-                    if 'foundAreas' in result:
-                        print(f"  找到區域數: {result.get('foundAreas', 0)}")
-                    if 'areaText' in result:
-                        print(f"  區域內容: {result.get('areaText', 'N/A')}")
-            return success
-
-        return False
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"✗ 票種選擇異常: {exc}")
-        return False
-
-    finally:
-        if show_debug_message:
-            print("=== 簡化票種選擇結束 ===")
 
 async def nodriver_ticketplus_click_next_button_simplified(tab):
     """簡化的下一步按鈕點擊"""
@@ -3510,16 +4489,7 @@ async def nodriver_ticketplus_order_expansion_panel(tab, config_dict, current_la
     if show_debug_message:
         print(f"=== expansion_panel END (結果: {'成功' if is_price_assign_by_bot else '失敗'}) ===")
 
-    return is_price_assign_by_bot
-
-async def nodriver_ticketplus_handle_culture_coin(tab, config_dict):
-    """處理文化幣折抵選項 - 直接跳過處理"""
-    show_debug_message = config_dict["advanced"]["verbose"]
-
-    if show_debug_message:
-        print("跳過文化幣折抵處理")
-
-    # 直接返回，不做任何處理
+    return is_need_refresh, is_price_assign_by_bot
 
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
     """處理活動專屬代碼 - 直接跳過處理"""
@@ -3904,7 +4874,7 @@ async def nodriver_cityline_login(tab, cityline_account):
                 await el_account.click()
                 await el_account.apply('function (element) {element.value = ""; } ')
                 await el_account.send_keys(cityline_account);
-                time.sleep(0.5)
+                await asyncio.sleep(random.uniform(0.4, 0.7))
                 is_cityline_account_assigned = True
         except Exception as exc:
             print(exc)
@@ -3912,18 +4882,67 @@ async def nodriver_cityline_login(tab, cityline_account):
     else:
         # after account inputed.
         try:
-            #is_checkbox_checked = await nodriver_check_checkbox(tab, 'span.ant-checkbox input[type="checkbox"]')
-            #print("is_checkbox_checked", is_checkbox_checked)
-            # jquery solution.
-            #js="$('input:checkbox').prop('checked', true);"
-            # javascript solution.
-            #js = "for (const checkbox of document.querySelectorAll('input[type=checkbox]:not(:checked)')) { checkbox.checked = true;}"
-            #await tab.evaluate(js)
-            checkbox_readed = await tab.query_selector('input[type=checkbox]:not(:checked)')
-            if checkbox_readed:
-                print("click on readed.")
-                await checkbox_readed.click()
-            time.sleep(0.5)
+            # 使用 JavaScript 更安全地處理 checkbox，避免誤勾記得密碼
+            checkbox_result = await tab.evaluate('''
+                (function() {
+                    const results = [];
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked)');
+
+                    for (let i = 0; i < checkboxes.length; i++) {
+                        const checkbox = checkboxes[i];
+                        const id = checkbox.id || '';
+                        const name = checkbox.name || '';
+                        const className = checkbox.className || '';
+                        const labelText = checkbox.labels && checkbox.labels[0] ? checkbox.labels[0].textContent : '';
+
+                        // 檢查是否為記得密碼相關的 checkbox
+                        const isRememberCheckbox =
+                            id.toLowerCase().includes('remember') ||
+                            name.toLowerCase().includes('remember') ||
+                            className.toLowerCase().includes('remember') ||
+                            labelText.includes('記得') ||
+                            labelText.includes('記住') ||
+                            labelText.includes('Remember');
+
+                        results.push({
+                            index: i,
+                            id: id,
+                            name: name,
+                            className: className,
+                            labelText: labelText,
+                            isRemember: isRememberCheckbox
+                        });
+                    }
+
+                    return results;
+                })();
+            ''')
+
+            # 檢查結果並只勾選非記得密碼的 checkbox
+            if checkbox_result:
+                for item in checkbox_result:
+                    if not item.get('isRemember', False):
+                        click_result = await tab.evaluate(f'''
+                            (function() {{
+                                const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked)');
+                                const checkbox = checkboxes[{item['index']}];
+                                if (checkbox) {{
+                                    checkbox.click();
+                                    return true;
+                                }}
+                                return false;
+                            }})();
+                        ''')
+                        if click_result:
+                            print(f"clicked on agreement checkbox: {item.get('labelText', 'unknown')}")
+                            break  # 只勾選第一個非記得密碼的 checkbox
+                    else:
+                        print(f"skipped remember checkbox: {item.get('labelText', 'unknown')}")
+        except Exception as e:
+            print(f"checkbox handling error: {e}")
+
+            # 人性化延遲
+            await asyncio.sleep(random.uniform(0.3, 0.8))
         except Exception as exc:
             print(exc)
             pass
@@ -4119,23 +5138,18 @@ async def nodriver_facebook_main(tab, config_dict):
         await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
 def get_nodriver_browser_args():
+    """
+    取得 nodriver 瀏覽器參數
+    參考 stackoverflow.max-everyday.com，使用經過驗證可通過 Cloudflare 的參數
+    """
+    # 基於文章驗證的可通過 Cloudflare 檢查的參數
     browser_args = [
-        "--user-agent=%s" % (USER_AGENT),
-        "--disable-2d-canvas-clip-aa",
-        "--disable-3d-apis",
         "--disable-animations",
         "--disable-app-info-dialog-mac",
         "--disable-background-networking",
         "--disable-backgrounding-occluded-windows",
-        "--disable-bookmark-reordering",
-        "--disable-boot-animation",
         "--disable-breakpad",
-        "--disable-canvas-aa",
-        "--disable-client-side-phishing-detection",
-        "--disable-cloud-import",
-        "--disable-component-cloud-policy",
         "--disable-component-update",
-        "--disable-composited-antialiasing",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
         "--disable-device-discovery-notifications",
@@ -4147,7 +5161,6 @@ def get_nodriver_browser_args():
         "--disable-login-animations",
         "--disable-login-screen-apps",
         "--disable-notifications",
-        "--disable-office-editing-component-extension",
         "--disable-password-generation",
         "--disable-popup-blocking",
         "--disable-renderer-backgrounding",
@@ -4161,13 +5174,21 @@ def get_nodriver_browser_args():
         "--no-default-browser-check",
         "--no-first-run",
         "--no-pings",
-        "--no-sandbox"
         "--no-service-autorun",
         "--password-store=basic",
-        "--remote-allow-origins=*",
+        "--remote-debugging-host=127.0.0.1",
         "--lang=zh-TW",
-        #"--disable-remote-fonts",
     ]
+
+    # 如果啟用專家模式，謹慎加入額外的高風險參數
+    if CLOUDFLARE_ENABLE_EXPERT_MODE:
+        # 注意：這些參數可能增加被偵測的風險，但提供更強的繞過能力
+        expert_args = [
+            "--no-sandbox",  # 某些環境需要，有被偵測風險
+            "--disable-web-security",  # 高風險但強效的參數
+        ]
+        browser_args.extend(expert_args)
+
     return browser_args
 
 def get_maxbot_extension_path(extension_folder):
@@ -4488,7 +5509,18 @@ async def main(args):
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
-            pass
+            if is_quit_bot:
+                print("KKTIX 搶票完成，進入暫停模式")
+                # 建立暫停檔案，讓程式進入暫停狀態而不是結束
+                try:
+                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
+                        text_file.write("")
+                    print("已自動暫停，可透過 Web 介面繼續執行")
+                    # 重置 is_quit_bot 避免程式結束
+                    is_quit_bot = False
+                except Exception as e:
+                    print(f"建立暫停檔案失敗: {e}")
+                # 不執行 break，讓程式繼續執行並進入暫停模式
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
