@@ -134,7 +134,7 @@ def tixcraft_auto_select_date():
     pass
 
 # 常數命名：全大寫
-CONST_APP_VERSION = "TicketsHunter (2025.09.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.24)"
 
 # 除錯輸出格式
 show_debug_message = config_dict["advanced"]["verbose"]
@@ -256,4 +256,4 @@ except Exception as exc:
 
 ---
 
-*最後更新：2025.09.18 | 由 Claude Code AI 輔助撰寫*
+*最後更新：2025.09.24 | 由 Claude Code AI 輔助撰寫*

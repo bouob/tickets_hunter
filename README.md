@@ -2,7 +2,7 @@
 
 **📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
 **🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援  
-**⚡ 版本**：Tickets Hunter (2025.09.18)  
+**⚡ 版本**：Tickets Hunter (2025.09.24)  
 **🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！
 
 ---
@@ -160,14 +160,64 @@ python config_launcher.py
 
 ## 🏗️ 專案架構
 
-### 🎯 核心程式
+```
+tickets_hunter/
+├── 🎯 核心搶票引擎
+│   ├── chrome_tixcraft.py      # Selenium WebDriver 主引擎 (穩定版本)
+│   ├── nodriver_tixcraft.py    # NoDriver 反偵測引擎 (實驗版本 🚧)
+│   └── util.py                 # 共用函式庫與平台抽象層
+├── ⚙️ 設定介面
+│   ├── settings.py             # 現代網頁設定介面 (Tornado 伺服器)
+│   ├── settings_old.py         # 傳統桌面介面 (Tkinter GUI)
+│   └── config_launcher.py      # 多設定檔管理器
+├── 📋 設定檔
+│   ├── settings.json           # 主要設定檔 (搶票參數)
+│   ├── config_launcher.json    # 多設定檔清單
+│   └── requirement.txt         # Python 相依套件
+├── 🌐 網頁介面                   # Web UI 資源
+│   └── www/
+│       ├── settings.html       # 設定介面前端
+│       ├── settings.js         # 前端互動邏輯
+│       ├── css/                # 樣式表
+│       ├── dist/               # 編譯後檔案
+│       └── icons/              # 圖示資源
+├── 🔌 瀏覽器擴充套件              # Chrome Extension
+│   └── webdriver/
+│       ├── chromedriver.exe    # Chrome WebDriver 執行檔
+│       ├── Maxblockplus_1.0.0/ # 廣告阻擋擴充套件
+│       └── Maxbotplus_1.0.0/   # DOM 操作輔助擴充套件
+├── 📚 技術文件                   # 開發文件
+│   └── docs/
+│       ├── selenium_api_guide.md    # Selenium WebDriver 使用指南
+│       ├── chrome_api_guide.md      # Undetected-ChromeDriver 指南
+│       ├── nodriver_api_guide.md    # NoDriver 進階反偵測指南
+│       ├── coding_templates.md      # 程式寫法範本與規範
+│       ├── structure.md             # 平台支援狀態表
+│       ├── setup.md                 # 安裝與環境設定
+│       └── todo.md                  # 待實作功能清單
+├── 🔧 輔助工具
+│   ├── NonBrowser.py           # 非瀏覽器模式處理
+│   ├── MAXBOT_*.txt           # 執行狀態記錄
+│   └── *.wav                  # 搶票成功音效檔
+└── 📋 專案資訊
+    ├── README.md               # 專案說明文件
+    ├── CLAUDE.md               # AI 開發協作指引
+    ├── CONTRIBUTING.md         # 貢獻指南
+    ├── LEGAL_NOTICE.md         # 法律聲明
+    └── LICENSE                 # 授權條款
+```
+
+### 🎯 核心 Python 模組說明
+
 | 檔案 | 功能 | 特色 |
 |------|------|------|
-| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 |
+| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台，**完整參考標準** |
 | `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧 |
+| `util.py` | 共用函式庫 | 平台抽象層，OCR、瀏覽器控制、設定處理 |
 | `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
 | `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
 | `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
+| `NonBrowser.py` | 非瀏覽器模式 | 純 HTTP 請求處理 |
 
 ### 🔌 瀏覽器擴充套件
 - **Maxblockplus** - 廣告阻擋，加速頁面載入
@@ -340,23 +390,6 @@ python chrome_tixcraft.py --input settings.json
 
 ---
 
-## 🏗️ 專案架構
-
-### 🎯 核心程式
-| 檔案 | 功能 | 特色 |
-|------|------|------|
-| `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台 |
-| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧 |
-| `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
-| `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
-| `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
-
-### 🔌 瀏覽器擴充套件
-- **Maxblockplus** - 廣告阻擋，加速頁面載入
-- **Maxbotplus** - DOM 操作輔助，支援 15+ 平台
-
----
-
 ## 🔧 技術實作
 
 ### 🛠️ WebDriver 策略
@@ -428,6 +461,19 @@ git pull
 # 或重新下載
 git clone https://github.com/bouob/tickets_hunter.git
 ```
+
+### 📝 版本更新記錄
+```
+2025.09.24 - TicketPlus NoDriver 重大修正與優化
+  • 修正頁面載入延遲問題，加入 0.8 秒等待時間
+  • 修正 JavaScript 執行結果格式錯誤，加入 parse_nodriver_result 處理
+  • 實作無關鍵字時的自動選擇邏輯（上到下、下到上、隨機）
+  • 改善簡化型頁面(style 3)處理，支援多重選擇器策略
+  • 增強錯誤處理和除錯訊息，提供詳細診斷資訊
+  • 統一版本號更新至 TicketsHunter (2025.09.24)
+
+2025.09.18 - 專案版本統一更新為 TicketsHunter (2025.09.18)
+```
 ---
 
 ## 📄 授權條款
@@ -441,4 +487,4 @@ git clone https://github.com/bouob/tickets_hunter.git
 
 ---
 
-*最後更新：2025.09.18 | 由 Claude Code AI 輔助維護*
+*最後更新：2025.09.24 | 由 Claude Code AI 輔助維護*
