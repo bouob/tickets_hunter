@@ -11,22 +11,35 @@
 
 Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。採用 Python + Selenium/NoDriver 雙引擎架構，搭配瀏覽器擴充套件，提供完整的自動化購票解決方案。
 
-### 🎪 支援平台
-- **🎭 拓元 (TixCraft/Indievox)** - 完整流程自動化
-- **🎨 KKTIX** - 活動報名與表單填寫  
-- **🎪 Cityline** - 排隊處理與活動預訂
-- **🎫 iBon** - 完整購票流程
-- **🎵 TicketPlus** - 活動與訂單管理
-- **🏟️ Urbtix / HKTicketing** - 港澳地區票務
-- **🎤 其他平台** - Ticket.com.tw, Kham, FamiTicket 等
+### 🎪 平台支援狀態
+
+| 平台 | Chrome/Selenium | NoDriver | 實測狀況 | 備註 |
+|------|:---------------:|:--------:|:--------:|------|
+| **🎭 TixCraft** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | 雙引擎皆可正常搶票 |
+| **🎨 KKTIX** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | 雙引擎皆可正常搶票 |
+| **🎵 TicketPlus** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | 雙引擎皆可正常搶票 |
+| **🎪 Cityline** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 |
+| **🎫 iBon** | ⚠️ 待處理 | ⚠️ 部分支援 | 🔴 問題回報 | 建議避免使用 |
+| **🎤 TicketMaster** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 |
+| **🏟️ Urbtix** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+| **🎭 年代售票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+| **🎪 寬宏售票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+| **🏟️ HKTicketing** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+| **🎪 FamiTicket** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+
 
 ### 🚀 核心特色
-- **雙引擎架構** - Selenium (穩定) + NoDriver (反偵測，完成率 44.4% 🚧)
+- **雙引擎架構** - Selenium (穩定) + NoDriver
 - **OCR 驗證碼辨識** - 整合 ddddocr 自動處理驗證碼
 - **智慧化選取** - 日期、區域、票數自動選擇
 - **擴充套件輔助** - 廣告阻擋 + DOM 操作加速
 - **多設定檔管理** - 不同活動快速切換設定
 - **網頁設定介面** - 現代化回應式管理介面
+
+> **✅ NoDriver 引擎狀態更新**
+> NoDriver 引擎三大主流平台（TixCraft、KKTIX、TicketPlus）已實測搶票成功。
+> 特別適合需要反偵測功能的情境，如遇到任何問題請至 [GitHub Issues](https://github.com/bouob/tickets_hunter/issues) 回報。
+> 一般使用者建議使用 Chrome/UC 驅動，有反偵測需求可選擇 NoDriver。 ✅
 
 ---
 
@@ -118,7 +131,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 **1. 執行檔版本（僅 Windows）**
 ```
-TODO
+TODO - 尚未計畫打包，請從原始碼執行
 ```
 
 **2. 原始碼版本（推薦，跨平台）**
@@ -130,7 +143,7 @@ cd tickets_hunter
 ### 🔧 環境設定
 
 **系統需求**
-- Python 3.7-3.10 (NoDriver 需 3.9+)
+- Python 3.9-3.10 (NoDriver 需 3.9+)
 - Chrome 瀏覽器
 - 4GB+ RAM (多開瀏覽器需更多)
 
@@ -139,9 +152,6 @@ cd tickets_hunter
 # 基本套件安裝
 pip install -r requirement.txt
 
-# NoDriver (推薦最新版本)
-python -m pip install git+https://github.com/ultrafunkamsterdam/nodriver
-```
 
 ### 🚀 執行方式
 
@@ -183,25 +193,14 @@ tickets_hunter/
 │       └── icons/              # 圖示資源
 ├── 🔌 瀏覽器擴充套件              # Chrome Extension
 │   └── webdriver/
-│       ├── chromedriver.exe    # Chrome WebDriver 執行檔
 │       ├── Maxblockplus_1.0.0/ # 廣告阻擋擴充套件
 │       └── Maxbotplus_1.0.0/   # DOM 操作輔助擴充套件
-├── 📚 技術文件                   # 開發文件
-│   └── docs/
-│       ├── selenium_api_guide.md    # Selenium WebDriver 使用指南
-│       ├── chrome_api_guide.md      # Undetected-ChromeDriver 指南
-│       ├── nodriver_api_guide.md    # NoDriver 進階反偵測指南
-│       ├── coding_templates.md      # 程式寫法範本與規範
-│       ├── structure.md             # 平台支援狀態表
-│       ├── setup.md                 # 安裝與環境設定
-│       └── todo.md                  # 待實作功能清單
 ├── 🔧 輔助工具
 │   ├── NonBrowser.py           # 非瀏覽器模式處理
 │   ├── MAXBOT_*.txt           # 執行狀態記錄
 │   └── *.wav                  # 搶票成功音效檔
 └── 📋 專案資訊
     ├── README.md               # 專案說明文件
-    ├── CLAUDE.md               # AI 開發協作指引
     ├── CONTRIBUTING.md         # 貢獻指南
     ├── LEGAL_NOTICE.md         # 法律聲明
     └── LICENSE                 # 授權條款
@@ -212,7 +211,7 @@ tickets_hunter/
 | 檔案 | 功能 | 特色 |
 |------|------|------|
 | `chrome_tixcraft.py` | Selenium 主引擎 | 穩定性高，支援所有平台，**完整參考標準** |
-| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧 |
+| `nodriver_tixcraft.py` | NoDriver 引擎 | 反偵測能力強，適合嚴格檢查的平台 🚧**建構中** |
 | `util.py` | 共用函式庫 | 平台抽象層，OCR、瀏覽器控制、設定處理 |
 | `settings.py` | 現代網頁設定介面 | Tornado 伺服器，響應式設計 |
 | `settings_old.py` | 傳統視窗介面 | Tkinter GUI，偏好桌面介面用戶 |
@@ -222,171 +221,6 @@ tickets_hunter/
 ### 🔌 瀏覽器擴充套件
 - **Maxblockplus** - 廣告阻擋，加速頁面載入
 - **Maxbotplus** - DOM 操作輔助，支援 15+ 平台
-
----
-
-## 🎬 教學資源
-
-### 📺 示範影片
-- [虛擬主機搶票教學](https://max-everyday.com/2023/11/buy-ticket-by-vm/)
-
-### 📖 平台專用教學
-- [拓元/Ticketmaster 教學](https://max-everyday.com/2018/03/tixcraft-bot/)
-- [KKTIX 教學](https://max-everyday.com/2018/12/kktix-bot/)
-- [Cityline 教學](https://max-everyday.com/2019/03/cityline-bot/)
-- [Urbtix 教學](https://max-everyday.com/2019/02/urbtix-bot/)
-- [HKTicketing 教學](https://max-everyday.com/2023/01/hkticketing-bot/)
-
----
-
-## 🔧 技術實作
-
-### 🛠️ WebDriver 策略
-1. **undetected_chromedriver** (主要) - 隱蔽性最佳，支援全平台
-2. **Selenium ChromeDriver** (備用) - 穩定性最高，支援全平台
-3. **NoDriver** (進階) - 反偵測能力最強，**完成率 44.4%** 🚧
-
-#### NoDriver 平台支援狀態
-- ✅ **完整支援** (22.2%): TixCraft, KKTIX
-- ⚠️ **部分實作** (44.4%): TicketMaster, Cityline, iBon, TicketPlus
-- ❌ **開發中** (33.3%): Urbtix, KHAM, HK Ticketing
-
-### 🧠 OCR 驗證碼辨識
-- 使用 [ddddocr](https://github.com/sml2h3/ddddocr) 進行圖像辨識
-- 支援 Canvas 和 Image 兩種驗證碼格式
-- 可調整辨識精度與提交策略
-
-### 🎯 智慧選取邏輯
-- **關鍵字匹配**：支援正則表達式和模糊匹配
-- **排除邏輯**：自動避開輪椅席、視線不良等位置
-- **隨機模式**：模擬真人選擇行為
-
----
-
-## 📖 使用手冊
-
-### 🎯 基本功能設定
-
-本段說明透過設定介面可以看到的主要功能。
-
-**🌐 網頁版設定介面（推薦）**
-```bash
-python settings.py
-# 瀏覽器自動開啟網頁UI：http://127.0.0.1:16888/
-```
-
-**🖥️ 桌面版設定介面**
-```bash
-python settings_old.py
-# 開啟桌面版本UI
-```
-
-**⚡ 直接執行主程式**
-```bash
-# Selenium 版本 (穩定)
-python chrome_tixcraft.py
-
-# NoDriver 版本
-python nodriver_tixcraft.py
-
-# 指定設定檔
-python chrome_tixcraft.py --input settings.json
-```
-
-#### 🗓️ 日期自動選擇
-
-控制搶票時自動選取場次日期的功能。
-
-**基本設定**
-- **啟用功能**：`date_auto_select.enable` = `true`
-- **選擇模式**：`date_auto_select.mode`
-  - `random` - 隨機選取匹配的場次
-  - `from top to bottom` - 由上而下選取第一個匹配項目
-  - `from bottom to top` - 由下而上選取第一個匹配項目
-  - `center` - 選取中間位置的匹配項目
-
-**關鍵字篩選**：`date_auto_select.date_keyword`
-
-✅ **OR 邏輯 (任一匹配)**：
-- 依序嘗試多個日期選項，如 9/11、9/22、3/3
-- 找到第一個匹配就選取，符合優先順序原則
-- 適合有多個備選日期的情況
-
-✅ **AND 邏輯 (全部匹配)**：
-- 同時包含多個關鍵字的場次，如「9/11 週末」或「9/22 平日」
-- 空格分隔的關鍵字需全部匹配
-- 適合精確篩選特定條件的場次
-
-**實用範例**：
-- **多個日期選擇**：可設定聖誕節、跨年等多個熱門日期
-- **時段組合**：可指定特定日期的時段，如週末晚上場次
-- **條件篩選**：可結合關鍵字篩選，如演唱會 VIP 席位
-
-#### 🎪 區域自動選擇
-
-控制搶票時自動選取座位區域的功能。
-
-**基本設定**
-- **啟用功能**：開啟座位區域自動選擇
-- **選擇模式**：支援隨機選擇、順序選擇等多種模式
-
-**關鍵字篩選**
-- **多選一邏輯**：搖滾區、VIP 區或前排座位任一
-- **組合邏輯**：搖滾區的前排座位或 VIP 中央區
-
-#### 🚫 排除關鍵字
-
-自動避開不想要的座位類型。設定排除關鍵字如輪椅席、身障席、視線遮蔽席等特殊座位。
-
-#### 🎫 票券數量
-
-指定要購買的票券張數。通常設定為 1-4 張，根據活動限制而定。
-
-#### 🔍 OCR 驗證碼設定
-
-自動辨識並填入驗證碼。可啟用 OCR 功能提升成功率，並選擇 beta 版本以獲得更高準確度。
-
-#### 🌐 瀏覽器設定
-
-**WebDriver 類型**
-- **Undetected Chrome** - 推薦，隱蔽性最佳
-- **Selenium** - 穩定性最高
-- **NoDriver** - 反偵測能力最強 (實驗性功能)
-
-**語言設定**
-- 支援繁體中文、English、日本語等多國語言
-
-#### ⚡ 進階設定
-
-**重新載入設定**
-- **重新載入間隔**：可設定自動重新載入頁面的間隔時間
-- **過熱保護**：設定連續重新載入次數上限，避免被系統偵測
-- **冷卻時間**：過熱後的暫停冷卻時間
-
-**音效提醒**
-- **搶票成功音效**：成功取得票券時播放提醒音效
-- **訂單完成音效**：完成整個購票流程時播放音效
-- **自訂音效檔案**：可指定自己的音效檔案
-
-**⏰ 時間控制功能**
-
-支援精確的時間控制，可設定特定時間自動暫停/恢復搶票：
-
-**系統時間控制**：
-- 使用完整時間格式 (時:分:秒) 控制暫停/恢復時機
-- 可設定多個時間點，如開搶前後的精確控制
-- 適合秒殺場景的精準時機把握
-
-**秒數控制**：
-- 每分鐘的特定秒數觸發暫停/恢復
-- 適合週期性控制和流量分散
-- 可避免持續高頻請求被偵測
-
-**💡 支援簡化格式輸入：**
-- ✅ 簡化格式：`09:30:00,14:15:30` 或 `00,30,50`
-- ✅ 完整格式：`"09:30:00","14:15:30"` 或 `"00","30","50"`
-- ✅ 單一時間：`14:30:00` 或 `30`
-
 
 ---
 
@@ -462,18 +296,6 @@ git pull
 git clone https://github.com/bouob/tickets_hunter.git
 ```
 
-### 📝 版本更新記錄
-```
-2025.09.24 - TicketPlus NoDriver 重大修正與優化
-  • 修正頁面載入延遲問題，加入 0.8 秒等待時間
-  • 修正 JavaScript 執行結果格式錯誤，加入 parse_nodriver_result 處理
-  • 實作無關鍵字時的自動選擇邏輯（上到下、下到上、隨機）
-  • 改善簡化型頁面(style 3)處理，支援多重選擇器策略
-  • 增強錯誤處理和除錯訊息，提供詳細診斷資訊
-  • 統一版本號更新至 TicketsHunter (2025.09.24)
-
-2025.09.18 - 專案版本統一更新為 TicketsHunter (2025.09.18)
-```
 ---
 
 ## 📄 授權條款

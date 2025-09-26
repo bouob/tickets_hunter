@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.24)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.26)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -1820,7 +1820,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                     is_answer_sent = True
                     fail_list.append(inferred_answer_string)
                     if show_debug_message:
-                        print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+                        print("Sending CAPTCHA answer by bot, attempt #", len(fail_list))
 
                 if is_answer_sent:
                     for i in range(3):
@@ -1862,7 +1862,7 @@ def fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_li
                 fail_list.append(answer_list[0])
                 fail_list.append(answer_list[1])
                 if show_debug_message:
-                    print("sent password by bot:", inferred_answer_string, " at #", len(fail_list))
+                    print("Sending CAPTCHA answer by bot, attempt #", len(fail_list))
         except Exception as exc:
             pass
 
@@ -11603,7 +11603,7 @@ def main(args):
                 print(url)
                 write_last_url_to_file(url)
                 if is_maxbot_paused:
-                    print("MAXBOT Paused.")
+                    print("BOT Paused.")
             last_url = url
 
         if is_maxbot_paused:
