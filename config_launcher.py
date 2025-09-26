@@ -24,7 +24,7 @@ import webbrowser
 
 import util
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.24)"
+CONST_APP_VERSION = "TicketsHunter (2025.09.26)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"

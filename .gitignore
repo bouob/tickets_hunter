@@ -31,6 +31,7 @@ webdriver/msedgedriver*
 *.log
 *.tmp
 .temp/
+.history/
 
 # Claude Code
 .claude/
