@@ -44,7 +44,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.26)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.01)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -833,8 +833,60 @@ def get_driver_by_config(config_dict):
             if 'ibon.com' in homepage:
                 ibonqware = config_dict["advanced"]["ibonqware"]
                 if len(ibonqware) > 1:
-                    driver.delete_cookie("ibonqware")
-                    driver.add_cookie({"name":"ibonqware", "value": ibonqware, "domain" : "ibon.com.tw", "secure":True})
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Setting ibon cookie with length: {len(ibonqware)}")
+                        print(f"Cookie contains mem_id: {'mem_id=' in ibonqware}")
+                        print(f"Cookie contains mem_email: {'mem_email=' in ibonqware}")
+                        print(f"Cookie contains huiwanTK: {'huiwanTK=' in ibonqware}")
+                        print(f"Cookie contains ibonqwareverify: {'ibonqwareverify=' in ibonqware}")
+
+                    try:
+                        # Delete existing cookie
+                        driver.delete_cookie("ibonqware")
+
+                        # Add new cookie with proper domain setting
+                        cookie_dict = {
+                            "name": "ibonqware",
+                            "value": ibonqware,
+                            "domain": ".ibon.com.tw",  # Use .ibon.com.tw for broader domain coverage
+                            "path": "/",
+                            "secure": True,
+                            "httpOnly": False
+                        }
+                        driver.add_cookie(cookie_dict)
+
+                        if config_dict["advanced"]["verbose"]:
+                            print("ibon cookie set successfully")
+                            # Verify cookie was set
+                            cookies = driver.get_cookies()
+                            ibon_cookies = [c for c in cookies if c.get('name') == 'ibonqware']
+                            if ibon_cookies:
+                                print(f"Verified: ibon cookie exists with value length: {len(ibon_cookies[0].get('value', ''))}")
+                                print(f"Cookie domain: {ibon_cookies[0].get('domain', 'N/A')}")
+                                print(f"Cookie path: {ibon_cookies[0].get('path', 'N/A')}")
+                                print(f"Cookie secure: {ibon_cookies[0].get('secure', 'N/A')}")
+                            else:
+                                print("Warning: ibon cookie not found after setting")
+
+                        # Reload page to apply cookie
+                        if config_dict["advanced"]["verbose"]:
+                            print("Reloading page to apply ibon cookie...")
+                        driver.refresh()
+                        time.sleep(3)
+
+                        # Check login status after setting cookie
+                        if config_dict["advanced"]["verbose"]:
+                            login_status = check_ibon_login_status(driver, config_dict)
+                            if login_status:
+                                print("✅ ibon auto-login appears successful")
+                            else:
+                                print("❌ ibon auto-login may have failed - manual login may be required")
+                                print("💡 Try refreshing the page manually or check if cookie has expired")
+                    except Exception as cookie_error:
+                        print(f"Failed to set ibon cookie: {cookie_error}")
+                        if config_dict["advanced"]["verbose"]:
+                            import traceback
+                            traceback.print_exc()
 
         except WebDriverException as exce2:
             print('oh no not again, WebDriverException')
@@ -6835,6 +6887,87 @@ def cityline_main(driver, url, config_dict):
             fail_list = []
             fail_list = cityline_input_code(driver, config_dict, fail_list)
 
+
+def check_ibon_login_status(driver, config_dict):
+    """
+    檢查 ibon 登入狀態
+    Returns:
+        True if logged in successfully
+        False if not logged in or cookie invalid
+    """
+    is_logged_in = False
+
+    try:
+        current_url = driver.current_url
+        if config_dict["advanced"]["verbose"]:
+            print(f"Checking ibon login status at URL: {current_url}")
+
+        # Check if we're redirected to login page
+        if 'huiwan.ibon.com.tw' in current_url and 'Login' in current_url:
+            if config_dict["advanced"]["verbose"]:
+                print("Detected redirect to login page - cookie may be invalid")
+            return False
+
+        # Check for login indicators on ibon pages
+        try:
+            # Method 1: Look for specific ibon login/logout indicators
+            logout_elements = driver.find_elements(By.XPATH, "//a[contains(@href, 'logout') or contains(@href, 'Logout') or contains(text(), '登出') or contains(text(), '會員中心')]")
+            member_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '會員')] | //div[contains(@class, 'member')] | //a[contains(text(), 'Hi,')]")
+
+            if logout_elements or member_elements:
+                if config_dict["advanced"]["verbose"]:
+                    print(f"Found logout/member elements ({len(logout_elements)} logout, {len(member_elements)} member) - user appears to be logged in")
+                is_logged_in = True
+            else:
+                # Method 2: Check for login button/link
+                login_elements = driver.find_elements(By.XPATH, "//a[contains(@href, 'login') or contains(@href, 'Login') or contains(text(), '登入') or contains(text(), '會員登入')]")
+
+                if login_elements:
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Found {len(login_elements)} login elements - user appears to be logged out")
+                    is_logged_in = False
+                else:
+                    # Method 3: Check page content for login indicators
+                    page_source = driver.page_source.lower()
+
+                    # Look for logout related text in page source
+                    logout_indicators = ['logout', '登出', '會員中心', 'member center']
+                    login_indicators = ['會員登入', 'member login', 'sign in', '登入']
+
+                    has_logout = any(indicator in page_source for indicator in logout_indicators)
+                    has_login = any(indicator in page_source for indicator in login_indicators)
+
+                    if has_logout and not has_login:
+                        if config_dict["advanced"]["verbose"]:
+                            print("Found logout indicators in page content - user appears to be logged in")
+                        is_logged_in = True
+                    elif has_login and not has_logout:
+                        if config_dict["advanced"]["verbose"]:
+                            print("Found login indicators in page content - user appears to be logged out")
+                        is_logged_in = False
+                    else:
+                        # Fallback: if we're on ibon domain and not redirected to login, assume logged in
+                        if 'ibon.com' in current_url:
+                            if config_dict["advanced"]["verbose"]:
+                                print("Ambiguous login state, but on ibon domain - assuming logged in")
+                            is_logged_in = True
+
+        except Exception as element_check_error:
+            if config_dict["advanced"]["verbose"]:
+                print(f"Error checking login elements: {element_check_error}")
+            # Fallback: if we're on ibon domain and not redirected to login, assume logged in
+            if 'ibon.com' in current_url and 'huiwan.ibon.com.tw' not in current_url:
+                is_logged_in = True
+
+    except Exception as exc:
+        if config_dict["advanced"]["verbose"]:
+            print(f"Error checking ibon login status: {exc}")
+        is_logged_in = False
+
+    if config_dict["advanced"]["verbose"]:
+        print(f"ibon login status check result: {'Logged in' if is_logged_in else 'Not logged in'}")
+
+    return is_logged_in
 
 def get_ibon_question_text(driver):
     question_div = None
