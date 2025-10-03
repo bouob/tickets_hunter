@@ -2897,20 +2897,20 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         except Exception as exc:
             pass
     else:
-        print("ddddocr 組件無法使用，您可能在 ARM 環境下運行")
+        print("[TIXCRAFT OCR] ddddocr 組件無法使用，您可能在 ARM 環境下運行")
 
     if is_input_box_exist:
         if show_debug_message:
-            print("away_from_keyboard_enable:", away_from_keyboard_enable)
-            print("previous_answer:", previous_answer)
-            print("ocr_captcha_image_source:", ocr_captcha_image_source)
+            print("[TIXCRAFT OCR] away_from_keyboard_enable:", away_from_keyboard_enable)
+            print("[TIXCRAFT OCR] previous_answer:", previous_answer)
+            print("[TIXCRAFT OCR] ocr_captcha_image_source:", ocr_captcha_image_source)
 
         ocr_start_time = time.time()
         ocr_answer = await nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
         if show_debug_message:
-            print("OCR 處理時間:", "{:.3f}".format(ocr_elapsed_time))
+            print("[TIXCRAFT OCR] 處理時間:", "{:.3f}".format(ocr_elapsed_time))
 
         if ocr_answer is None:
             if away_from_keyboard_enable:
@@ -2923,7 +2923,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         else:
             ocr_answer = ocr_answer.strip()
             if show_debug_message:
-                print("OCR 識別結果:", ocr_answer)
+                print("[TIXCRAFT OCR] 識別結果:", ocr_answer)
             if len(ocr_answer) == 4:
                 who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict)
             else:
@@ -2934,7 +2934,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                     if previous_answer != ocr_answer:
                         previous_answer = ocr_answer
                         if show_debug_message:
-                            print("重新點擊驗證碼")
+                            print("[TIXCRAFT OCR] 重新點擊驗證碼")
 
                         # selenium 解決方案
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
@@ -2942,7 +2942,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
                             await asyncio.sleep(0.1)
     else:
-        print("輸入框不存在，退出 OCR...")
+        print("[TIXCRAFT OCR] 輸入框不存在，退出 OCR...")
 
     return is_need_redo_ocr, previous_answer, is_form_submitted
 
@@ -2962,6 +2962,8 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
         # 自動 OCR 模式
         previous_answer = None
         current_url, _ = await nodriver_current_url(tab)
+        fail_count = 0  # Track consecutive failures
+        total_fail_count = 0  # Track total failures
 
         for redo_ocr in range(5):
             is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
@@ -2971,7 +2973,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
 
             if is_form_submitted:
                 if show_debug_message:
-                    print("表單已提交")
+                    print("[TIXCRAFT OCR] 表單已提交")
                 break
 
             if not away_from_keyboard_enable:
@@ -2980,13 +2982,43 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if not is_need_redo_ocr:
                 break
 
+            # Track failures and refresh captcha after 3 consecutive failures
+            if is_need_redo_ocr:
+                fail_count += 1
+                total_fail_count += 1
+                if show_debug_message:
+                    print(f"[TIXCRAFT OCR] Fail count: {fail_count}, Total fails: {total_fail_count}")
+
+                # Check if total failures reached 5, switch to manual input mode
+                if total_fail_count >= 5:
+                    print("[TIXCRAFT OCR] OCR failed 5 times. Please enter captcha manually.")
+                    away_from_keyboard_enable = False
+                    await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
+                    break
+
+                if fail_count >= 3:
+                    if show_debug_message:
+                        print("[TIXCRAFT OCR] 3 consecutive failures reached")
+
+                    # Try to dismiss any existing alert before continuing
+                    try:
+                        await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                        if show_debug_message:
+                            print("[TIXCRAFT OCR] Dismissed existing alert")
+                    except:
+                        pass
+
+                    # Wait for potential auto-refresh
+                    await asyncio.sleep(2.5)
+                    fail_count = 0  # Reset consecutive counter after handling
+
             # 檢查是否還在同一頁面
             new_url, _ = await nodriver_current_url(tab)
             if new_url != current_url:
                 break
 
             if show_debug_message:
-                print(f"OCR 重試 {redo_ocr + 1}/19")
+                print(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
 
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
@@ -5859,7 +5891,7 @@ async def nodriver_ibon_login(tab, config_dict, driver):
         else:
             if show_debug_message:
                 print("[ERROR] ibon auto-login may have failed - manual login may be required")
-                print("💡 Try refreshing the page manually or check if cookie has expired")
+                print("[TIP] Try refreshing the page manually or check if cookie has expired")
             return {'success': False, 'reason': 'login_verification_failed', 'login_status': login_status}
 
     except Exception as cookie_error:
@@ -6347,7 +6379,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
                                 print(f"[SUCCESS] Page navigation confirmed: {current_url} -> {final_url}")
                         else:
                             if show_debug_message:
-                                print(f"⚠️ No page navigation detected after immediate click")
+                                print(f"[WARNING] No page navigation detected after immediate click")
                     except:
                         pass
                 else:
@@ -6377,7 +6409,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
                                     print(f"[SUCCESS] Page navigation confirmed: {current_url} -> {final_url}")
                             else:
                                 if show_debug_message:
-                                    print(f"⚠️ Click succeeded but no navigation detected")
+                                    print(f"[WARNING] Click succeeded but no navigation detected")
                         except:
                             # 假設成功（如果無法檢查 URL）
                             is_date_assigned = True
@@ -7276,7 +7308,7 @@ async def debug_shadow_dom_structure(tab, show_debug_message=True):
 
             except Exception as e:
                 if show_debug_message and level < 3:
-                    print(f"{indent}⚠️ Error processing node at {path}: {e}")
+                    print(f"{indent}[WARNING] Error processing node at {path}: {e}")
 
         # 開始分析
         if show_debug_message:
@@ -7293,8 +7325,8 @@ async def debug_shadow_dom_structure(tab, show_debug_message=True):
             print(f"[INFO] Button nodes found: {stats['button_nodes']}")
             print(f"[INFO] Purchase buttons found: {stats['purchase_buttons']}")
             print(f"[INFO] Shadow roots found: {stats['shadow_roots']}")
-            print(f"🔒 Closed shadow roots: {stats['closed_shadow_roots']}")
-            print(f"🅰️ Angular components: {stats['angular_components']}")
+            print(f"[STATS] Closed shadow roots: {stats['closed_shadow_roots']}")
+            print(f"[STATS] Angular components: {stats['angular_components']}")
             print("="*50)
 
         return stats
@@ -9139,7 +9171,7 @@ async def click_button_via_enhanced_javascript(tab, target_button, show_debug_me
         if show_debug_message:
             if isinstance(click_result, dict):
                 if isinstance(click_result, dict) and click_result.get('success'):
-                    print(f"[JS CLICK] ✅ Enhanced JavaScript click succeeded: {click_result.get('buttonText', '')}")
+                    print(f"[JS CLICK] [SUCCESS] Enhanced JavaScript click succeeded: {click_result.get('buttonText', '')}")
                 else:
                     print(f"[JS CLICK] [ERROR] Enhanced JavaScript click failed: {click_result.get('error', 'Unknown error')}")
             else:
@@ -9493,6 +9525,399 @@ async def nodriver_ibon_allow_not_adjacent_seat(tab, config_dict):
 
     return is_finish_checkbox_click
 
+async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_item=""):
+    """
+    ibon seat area auto-selection for NEW Event page format (NoDriver version)
+
+    Handles seat area selection on /Event/{id}/{id} page (Angular SPA).
+    Uses DOMSnapshot for data extraction and CDP for clicking.
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        area_keyword_item: Area keyword string (space-separated for AND logic)
+
+    Returns:
+        tuple: (is_need_refresh, is_price_assign_by_bot)
+            - is_need_refresh: Whether page refresh is needed
+            - is_price_assign_by_bot: Whether area selection succeeded
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    ticket_number = config_dict["ticket_number"]
+
+    is_price_assign_by_bot = False
+    is_need_refresh = False
+
+    if show_debug_message:
+        print("[ibon] 區域選擇開始")
+        # print(f"關鍵字: {area_keyword_item}")
+        # print(f"模式: {auto_select_mode}")
+        # print(f"票數: {ticket_number}")
+
+    # Wait for Angular app to fully load
+    try:
+        import random
+        wait_time = random.uniform(0.8, 1.2)
+        # if show_debug_message:
+        #     print(f"[ibon] 等待 Angular 載入 {wait_time:.2f}s...")
+        await tab.sleep(wait_time)
+        await tab.sleep(1.5)
+    except:
+        pass
+
+    # Phase 1: Extract all area data using DOMSnapshot (to pierce Shadow DOM if present)
+    try:
+        from nodriver import cdp
+
+        # if show_debug_message:
+        #     # print("[ibon] 擷取頁面結構...")
+
+        # Use DOMSnapshot to get flattened page structure
+        documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
+            computed_styles=[],
+            include_paint_order=True,
+            include_dom_rects=True
+        ))
+
+        areas_data = []
+
+        if documents and len(documents) > 0:
+            document_snapshot = documents[0]
+
+            # Extract node information
+            node_names = []
+            node_values = []
+            parent_indices = []
+            attributes_list = []
+            backend_node_ids = []
+
+            if hasattr(document_snapshot, 'nodes'):
+                nodes = document_snapshot.nodes
+                if hasattr(nodes, 'node_name'):
+                    node_names = [strings[i] if isinstance(i, int) and i < len(strings) else str(i)
+                                 for i in nodes.node_name]
+                if hasattr(nodes, 'node_value'):
+                    node_values = [strings[i] if isinstance(i, int) and i >= 0 and i < len(strings) else ''
+                                  for i in nodes.node_value]
+                if hasattr(nodes, 'parent_index'):
+                    parent_indices = list(nodes.parent_index)
+                if hasattr(nodes, 'attributes'):
+                    attributes_list = nodes.attributes
+                if hasattr(nodes, 'backend_node_id'):
+                    backend_node_ids = list(nodes.backend_node_id)
+
+            # if show_debug_message:
+            #     # print(f"[ibon] 提取 {len(node_names)} 節點")
+
+            # Build children map for traversal
+            children_map = {}
+            for i, parent_idx in enumerate(parent_indices):
+                if parent_idx >= 0:
+                    if parent_idx not in children_map:
+                        children_map[parent_idx] = []
+                    children_map[parent_idx].append(i)
+
+            # Helper function to get attributes as dict
+            def get_attributes_dict(node_index):
+                attrs = {}
+                if node_index < len(attributes_list):
+                    attr_indices = attributes_list[node_index]
+                    for j in range(0, len(attr_indices), 2):
+                        if j + 1 < len(attr_indices):
+                            key_idx = attr_indices[j]
+                            val_idx = attr_indices[j + 1]
+                            key = strings[key_idx] if key_idx < len(strings) else ''
+                            val = strings[val_idx] if val_idx < len(strings) else ''
+                            attrs[key] = val
+                return attrs
+
+            # Helper function to get all text content from node and its children
+            def get_text_content(node_index, depth=0, max_depth=10):
+                if depth > max_depth or node_index >= len(node_names):
+                    return ''
+
+                text_parts = []
+
+                # If this is a text node, get its value
+                if node_names[node_index] == '#text' and node_index < len(node_values):
+                    text_parts.append(node_values[node_index])
+
+                # Recursively get text from children
+                if node_index in children_map:
+                    for child_idx in children_map[node_index]:
+                        child_text = get_text_content(child_idx, depth + 1, max_depth)
+                        if child_text:
+                            text_parts.append(child_text)
+
+                return ' '.join(text_parts).strip()
+
+            # Find all TR elements in the table
+            tr_indices = []
+            for i, node_name in enumerate(node_names):
+                if node_name.upper() == 'TR':
+                    tr_indices.append(i)
+
+            # if show_debug_message:
+            #     # print(f"[ibon] 找到 {len(tr_indices)} TR 元素")
+
+            # Extract data from each TR
+            area_index = 0
+            for tr_idx in tr_indices:
+                # Get TR attributes
+                tr_attrs = get_attributes_dict(tr_idx)
+                tr_class = tr_attrs.get('class', '')
+
+                # Skip header rows (thead)
+                if 'thead' in tr_class.lower() or not tr_class:
+                    continue
+
+                is_disabled = 'disabled' in tr_class.lower()
+
+                # Find TD children
+                td_indices = []
+                if tr_idx in children_map:
+                    for child_idx in children_map[tr_idx]:
+                        if node_names[child_idx].upper() == 'TD':
+                            td_indices.append(child_idx)
+
+                # Extract text from each TD
+                # Expected order: [0]=color, [1]=area_name, [2]=price, [3]=seat_status
+                td_texts = []
+                for td_idx in td_indices:
+                    td_text = get_text_content(td_idx)
+                    td_texts.append(td_text)
+
+                if len(td_texts) >= 4:
+                    area_name = td_texts[1].strip()
+                    price = td_texts[2].strip()
+                    seat_text = td_texts[3].strip()
+
+                    # Get backend_node_id for this TR
+                    tr_backend_node_id = None
+                    if tr_idx < len(backend_node_ids):
+                        tr_backend_node_id = backend_node_ids[tr_idx]
+
+                    # Build area data object
+                    area_data = {
+                        'index': area_index,
+                        'disabled': is_disabled,
+                        'areaName': area_name,
+                        'price': price,
+                        'seatText': seat_text,
+                        'innerHTML': f'<tr class="{tr_class}"><td>{area_name}</td><td>{price}</td><td>{seat_text}</td></tr>',
+                        'tr_node_index': tr_idx,
+                        'backend_node_id': tr_backend_node_id
+                    }
+                    areas_data.append(area_data)
+                    area_index += 1
+
+        # if show_debug_message:
+        #     # print(f"[ibon] 找到 {len(areas_data)} 個區域")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[NEW EVENT ERROR] Failed to extract area data: {exc}")
+            import traceback
+            traceback.print_exc()
+        return True, False
+
+    if not areas_data or len(areas_data) == 0:
+        if show_debug_message:
+            print("[ibon] 頁面無區域")
+        return True, False
+
+    # Phase 2: Filter areas (disabled, sold out, insufficient seats)
+    valid_areas = []
+
+    for area in areas_data:
+        # Skip disabled areas
+        if area['disabled']:
+            if show_debug_message:
+                print(f"[ibon] 跳過: {area['areaName']}")
+            continue
+
+        # 同時檢查區域名稱與內容
+        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+
+        # Skip sold out areas
+        if '已售完' in area['seatText']:
+            if show_debug_message:
+                print(f"[ibon] 已售完: {area['areaName']}")
+            continue
+
+        # Check exclude keywords
+        if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+            if show_debug_message:
+                print(f"[ibon] 排除: {area['areaName']}")
+            continue
+
+        # Check remaining seat count
+        seat_text = area['seatText']
+        if seat_text.isdigit():
+            remaining_seats = int(seat_text)
+            if remaining_seats < ticket_number:
+                if show_debug_message:
+                    print(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
+                continue
+
+        valid_areas.append(area)
+
+    if show_debug_message:
+        print(f"[ibon] 有效區域: {len(valid_areas)}")
+
+    # Phase 3: Keyword matching (AND logic with space separation)
+    matched_areas = []
+
+    if area_keyword_item and len(area_keyword_item) > 0:
+        area_keyword_array = area_keyword_item.split(' ')
+        area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
+
+        if show_debug_message:
+            print(f"[ibon] 關鍵字: {area_keyword_array}")
+
+        for area in valid_areas:
+            # 同時檢查區域名稱與內容
+            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+            row_text = util.format_keyword_string(row_text)
+
+            # Check if all keywords match (AND logic)
+            is_match = all(kw in row_text for kw in area_keyword_array)
+
+            if is_match:
+                matched_areas.append(area)
+                if show_debug_message:
+                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
+
+                # Stop at first match if mode is "from top to bottom"
+                if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
+                    break
+    else:
+        # No keyword specified, accept all valid areas
+        matched_areas = valid_areas
+        # if show_debug_message:
+        #     # print("[ibon] 無關鍵字,所有區域皆可選")
+
+    if show_debug_message:
+        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
+
+    # Check if refresh is needed
+    if len(matched_areas) == 0:
+        is_need_refresh = True
+        if show_debug_message:
+            print("[ibon] 無符合區域")
+        return is_need_refresh, False
+
+    # Phase 4: Select target area based on mode
+    target_area = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
+
+    if not target_area:
+        is_need_refresh = True
+        if show_debug_message:
+            print("[ibon] 選擇失敗")
+        return is_need_refresh, False
+
+    if show_debug_message:
+        print(f"[ibon] 已選: {target_area['areaName']}")
+
+    # Phase 5: Click target area using CDP
+    try:
+        from nodriver import cdp
+
+        if show_debug_message:
+            print(f"[NEW EVENT CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
+
+        backend_node_id = target_area.get('backend_node_id')
+
+        if not backend_node_id:
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] No backend_node_id available for TR")
+            return is_need_refresh, is_price_assign_by_bot
+
+        # Request document first
+        try:
+            document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Requested document with pierce=True")
+        except Exception as doc_exc:
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Document request failed: {doc_exc}")
+            return is_need_refresh, is_price_assign_by_bot
+
+        # Convert backend_node_id to node_id
+        try:
+            result = await tab.send(cdp.dom.push_nodes_by_backend_ids_to_frontend(backend_node_ids=[backend_node_id]))
+            node_ids = result if isinstance(result, list) else (result.node_ids if hasattr(result, 'node_ids') else [])
+
+            if not node_ids or len(node_ids) == 0:
+                if show_debug_message:
+                    print(f"[NEW EVENT CDP CLICK] Failed to convert backend_node_id to node_id")
+                return is_need_refresh, is_price_assign_by_bot
+
+            node_id = node_ids[0]
+
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Node ID: {node_id}")
+
+            # Scroll into view
+            try:
+                await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
+                if show_debug_message:
+                    print(f"[NEW EVENT CDP CLICK] Scrolled element into view")
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[NEW EVENT CDP CLICK] Scroll warning: {e}")
+
+            # Focus element
+            try:
+                await tab.send(cdp.dom.focus(node_id=node_id))
+                if show_debug_message:
+                    print(f"[NEW EVENT CDP CLICK] Focused element")
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[NEW EVENT CDP CLICK] Focus warning: {e}")
+
+            # Get box model
+            box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Got box model")
+
+            # Calculate center point
+            content_quad = box_model.content if hasattr(box_model, 'content') else box_model.model.content
+            x = (content_quad[0] + content_quad[2]) / 2
+            y = (content_quad[1] + content_quad[5]) / 2
+
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
+
+            # Execute mouse click
+            await tab.mouse_click(x, y)
+
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Mouse click executed successfully")
+
+            # Wait for navigation
+            await tab.sleep(1.5)
+
+            is_price_assign_by_bot = True
+
+            if show_debug_message:
+                print(f"[NEW EVENT SUCCESS] Clicked area: {target_area['areaName']}")
+
+        except Exception as resolve_exc:
+            if show_debug_message:
+                print(f"[NEW EVENT CDP CLICK] Resolve/click failed: {resolve_exc}")
+                import traceback
+                traceback.print_exc()
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[NEW EVENT ERROR] Exception during click: {exc}")
+            import traceback
+            traceback.print_exc()
+
+    return is_need_refresh, is_price_assign_by_bot
+
 async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item=""):
     """
     ibon seat area auto-selection (NoDriver version)
@@ -9756,20 +10181,21 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         # Skip disabled areas
         if area['disabled']:
             if show_debug_message:
-                print(f"[FILTER] Skipping disabled area: {area['areaName']}")
+                print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
-        row_text = util.remove_html_tags(area['innerHTML'])
+        # 同時檢查區域名稱與內容
+        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
             if show_debug_message:
-                print(f"[FILTER] Skipping sold out area: {area['areaName']}")
+                print(f"[ibon] 已售完: {area['areaName']}")
             continue
 
         if 'disabled' in area['innerHTML'].lower() or 'sold-out' in area['innerHTML'].lower():
             if show_debug_message:
-                print(f"[FILTER] Skipping disabled/sold-out area: {area['areaName']}")
+                print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
         # Skip description rows (not actual seat areas)
@@ -9779,7 +10205,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         # Check exclude keywords
         if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
             if show_debug_message:
-                print(f"[FILTER] Skipping excluded area: {area['areaName']}")
+                print(f"[ibon] 排除: {area['areaName']}")
             continue
 
         # Check remaining seat count
@@ -9788,13 +10214,13 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             remaining_seats = int(seat_text)
             if remaining_seats < ticket_number:
                 if show_debug_message:
-                    print(f"[FILTER] Skipping area with insufficient seats: {area['areaName']} (has {remaining_seats}, need {ticket_number})")
+                    print(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
                 continue
 
         valid_areas.append(area)
 
     if show_debug_message:
-        print(f"[FILTER] {len(valid_areas)} valid areas after filtering")
+        print(f"[ibon] 有效區域: {len(valid_areas)}")
 
     # Phase 3: Keyword matching (AND logic with space separation)
     matched_areas = []
@@ -9804,10 +10230,11 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
 
         if show_debug_message:
-            print(f"[MATCHING] Keywords (AND logic): {area_keyword_array}")
+            print(f"[ibon] 關鍵字: {area_keyword_array}")
 
         for area in valid_areas:
-            row_text = util.remove_html_tags(area['innerHTML'])
+            # 同時檢查區域名稱與內容
+            row_texttext = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
             row_text = util.format_keyword_string(row_text)
 
             # Check if all keywords match (AND logic)
@@ -9816,7 +10243,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             if is_match:
                 matched_areas.append(area)
                 if show_debug_message:
-                    print(f"[MATCHING] Matched: {area['areaName']} (price: {area['price']})")
+                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
 
                 # Stop at first match if mode is "from top to bottom"
                 if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
@@ -9824,11 +10251,11 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     else:
         # No keyword specified, accept all valid areas
         matched_areas = valid_areas
-        if show_debug_message:
-            print("[MATCHING] No keyword specified, all valid areas are candidates")
+        # if show_debug_message:
+        #     # print("[ibon] 無關鍵字,所有區域皆可選")
 
     if show_debug_message:
-        print(f"[MATCHING] {len(matched_areas)} areas matched after keyword filtering")
+        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
 
     # Check if refresh is needed
     if len(matched_areas) == 0:
@@ -9967,8 +10394,13 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         # Use JavaScript to find first ticket quantity SELECT and set value
         result = await tab.evaluate(f'''
             (function() {{
-                // Find all ticket quantity SELECTs (usually in table.table)
-                const selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                // Try new EventBuy format first: table.rwdtable select.form-control-sm
+                let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+
+                // Fallback to old .aspx format: table.table select[name*="AMOUNT_DDL"]
+                if (selects.length === 0) {{
+                    selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                }}
 
                 if (selects.length === 0) {{
                     return {{success: false, error: "No ticket SELECT found"}};
@@ -10089,10 +10521,35 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                 break
 
         if not img_backend_node_id:
+            # Try finding CANVAS element (new EventBuy format)
+            if show_debug_message:
+                print("[CAPTCHA] IMG not found, searching for CANVAS element...")
+            
+            for doc in documents:
+                node_names = [strings[i] for i in doc.nodes.node_name]
+                
+                for idx, node_name in enumerate(node_names):
+                    if node_name.lower() == 'canvas':
+                        # Found CANVAS element, use it for captcha
+                        if hasattr(doc.nodes, 'backend_node_id') and idx < len(doc.nodes.backend_node_id):
+                            img_backend_node_id = doc.nodes.backend_node_id[idx]
+                            
+                            if show_debug_message:
+                                print(f"[CAPTCHA] Found captcha CANVAS element")
+                                print(f"[CAPTCHA] Backend node ID: {img_backend_node_id}")
+                            break
+                
+                if img_backend_node_id:
+                    break
+        
+        if not img_backend_node_id:
+            if show_debug_message:
+                print("[CAPTCHA] Neither IMG nor CANVAS found")
             return None
 
+
         # Make URL absolute if needed
-        if target_img_url.startswith('/'):
+        if target_img_url and target_img_url.startswith('/'):
             current_url = tab.target.url
             domain = '/'.join(current_url.split('/')[:3])
             target_img_url = domain + target_img_url
@@ -10175,19 +10632,19 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                     print(f"[CAPTCHA] Screenshot: {len(img_base64)} bytes")
 
                                 # Save for debugging (only in verbose mode)
-                                if show_debug_message:
-                                    try:
-                                        import os
-                                        from datetime import datetime
-                                        temp_dir = os.path.join(os.path.dirname(__file__), '.temp')
-                                        os.makedirs(temp_dir, exist_ok=True)
-                                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                        img_path = os.path.join(temp_dir, f'captcha_{timestamp}.png')
-                                        with open(img_path, 'wb') as f:
-                                            f.write(img_base64)
-                                        print(f"[CAPTCHA] Saved: {img_path}")
-                                    except:
-                                        pass
+                                # if show_debug_message:
+                                    # try:
+                                        # import os
+                                        # from datetime import datetime
+                                        # temp_dir = os.path.join(os.path.dirname(__file__), '.temp')
+                                        # os.makedirs(temp_dir, exist_ok=True)
+                                        # timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                        # img_path = os.path.join(temp_dir, f'captcha_{timestamp}.png')
+                                        # with open(img_path, 'wb') as f:
+                                            # f.write(img_base64)
+                                        # print(f"[CAPTCHA] Saved: {img_path}")
+                                    # except:
+                                        # pass
                         else:
                             if show_debug_message:
                                 print("[CAPTCHA] Failed to get box model")
@@ -10235,13 +10692,13 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
         form_verifyCode = None
 
         try:
-            form_verifyCode = await tab.query_selector('input[value="驗證碼"]')
+            form_verifyCode = await tab.query_selector('input[placeholder*="驗證碼"]')
         except:
             pass
 
         if not form_verifyCode:
             try:
-                form_verifyCode = await tab.query_selector('input[placeholder="驗證碼"]')
+                form_verifyCode = await tab.query_selector('input[value="驗證碼"]')
             except:
                 pass
 
@@ -10262,8 +10719,8 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
             is_visible = await tab.evaluate('''
                 (function() {
                     const selectors = [
+                        'input[placeholder*="驗證碼"]',
                         'input[value="驗證碼"]',
-                        'input[placeholder="驗證碼"]',
                         '#ctl00_ContentPlaceHolder1_CHK'
                     ];
                     for (let selector of selectors) {
@@ -10327,7 +10784,12 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                 # Check if ticket number is selected
                 ticket_ok = await tab.evaluate('''
                     (function() {
-                        const selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                        // Try new EventBuy format first: table.rwdtable select.form-control-sm
+                        let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+                        // Fallback to old .aspx format: table.table select[name*="AMOUNT_DDL"]
+                        if (selects.length === 0) {
+                            selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                        }
                         if (selects.length === 0) return false;
                         const select = selects[0];
                         return select.value !== "0" && select.value !== "";
@@ -10476,12 +10938,14 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     # Check if input box exists
     is_input_box_exist = False
     try:
-        input_box = await tab.query_selector('input[value="驗證碼"], input[placeholder="驗證碼"], #ctl00_ContentPlaceHolder1_CHK')
+        input_box = await tab.query_selector('input[placeholder*="驗證碼"], input[value="驗證碼"], #ctl00_ContentPlaceHolder1_CHK')
         is_input_box_exist = input_box is not None
     except:
         pass
 
     if not is_input_box_exist:
+        if show_debug_message:
+            print("[CAPTCHA OCR] Captcha input box not found")
         return is_need_redo_ocr, previous_answer, is_form_submitted
 
     if not ocr:
@@ -10492,7 +10956,12 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     # iBon clears ticket number after captcha error - reselect if needed
     ticket_ok = await tab.evaluate('''
         (function() {
-            const selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+            // Try new EventBuy format first: table.rwdtable select.form-control-sm
+            let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+            // Fallback to old .aspx format: table.table select[name*="AMOUNT_DDL"]
+            if (selects.length === 0) {
+                selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+            }
             if (selects.length === 0) return false;
             const select = selects[0];
             return select.value !== "0" && select.value !== "";
@@ -10700,6 +11169,63 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
 
     return is_captcha_sent
 
+async def nodriver_ibon_purchase_button_press(tab, config_dict):
+    """
+    Click the ibon purchase/next button after captcha is filled
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary for debug settings
+
+    Returns:
+        bool: True if button clicked successfully, False otherwise
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_button_clicked = False
+
+    try:
+        # Primary selector: #ticket-wrap > a.btn
+        # Backup selectors from JavaScript extension analysis
+        selectors = [
+            '#ticket-wrap > a.btn',
+            'div#ticket-wrap > a[onclick]',
+            'div#ticket-wrap a.btn.btn-primary[href]'
+        ]
+
+        for selector in selectors:
+            try:
+                button = await tab.query_selector(selector)
+                if button:
+                    # Check if button is visible and enabled
+                    is_visible = await tab.evaluate(f'''
+                        (function() {{
+                            const btn = document.querySelector('{selector}');
+                            return btn && !btn.disabled && btn.offsetParent !== null;
+                        }})();
+                    ''')
+
+                    if is_visible:
+                        await button.click()
+                        is_button_clicked = True
+                        if show_debug_message:
+                            print(f"[IBON PURCHASE] Successfully clicked button with selector: {selector}")
+                        break
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[IBON PURCHASE] Selector {selector} failed: {exc}")
+                continue
+
+        if not is_button_clicked and show_debug_message:
+            print("[IBON PURCHASE] Purchase button not found or not clickable")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[IBON PURCHASE ERROR] {exc}")
+            import traceback
+            traceback.print_exc()
+
+    return is_button_clicked
+
 async def nodriver_ibon_check_sold_out(tab, config_dict):
     """
     Check if the event/ticket is sold out on ibon
@@ -10814,6 +11340,39 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 pass
             break
 
+    # Auto-redirect if kicked back to homepage (防止被踢回首頁)
+    # Pattern: Homepage → ActivityInfo page redirection
+    # - If homepage config is set to ActivityInfo page, redirect back when kicked to homepage
+    # - If homepage config is homepage itself, skip redirect (normal behavior)
+    is_kicked_to_homepage = False
+    normalized_url = url.lower().rstrip('/')
+    if normalized_url == 'https://ticket.ibon.com.tw' or normalized_url == 'https://ticket.ibon.com.tw/index/entertainment':
+        is_kicked_to_homepage = True
+
+    if is_kicked_to_homepage:
+        config_homepage = config_dict["homepage"]
+        # Only redirect if user wants to be on ActivityInfo page
+        should_redirect = '/activityinfo/' in config_homepage.lower()
+
+        if should_redirect:
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+
+            if show_debug_message:
+                print(f"[IBON] Detected kicked back to homepage: {url}")
+                print(f"[IBON] Redirecting to config homepage: {config_homepage}")
+
+            try:
+                await tab.get(config_homepage)
+                # Wait for page load
+                await asyncio.sleep(2)
+
+                if show_debug_message:
+                    print(f"[IBON] Successfully redirected to: {config_homepage}")
+            except Exception as redirect_exc:
+                if show_debug_message:
+                    print(f"[IBON] Redirect failed: {redirect_exc}")
+
+
     # https://tour.ibon.com.tw/event/e23010000300mxu
     if 'tour' in url.lower() and '/event/' in url.lower():
         is_event_page = False
@@ -10837,6 +11396,25 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if config_dict["date_auto_select"]["enable"]:
                     is_match_target_feature = True
                     is_date_assign_by_bot = await nodriver_ibon_date_auto_select(tab, config_dict)
+
+                    # Auto-reload if no purchase button found (ticket not yet on sale)
+                    if not is_date_assign_by_bot:
+                        show_debug_message = config_dict["advanced"].get("verbose", False)
+                        if show_debug_message:
+                            print("[IBON DETAIL] No purchase button found, page reload required")
+
+                        try:
+                            await tab.reload()
+                            if show_debug_message:
+                                print("[IBON DETAIL] Page reloaded successfully")
+                        except Exception as reload_exc:
+                            if show_debug_message:
+                                print(f"[IBON DETAIL] Page reload failed: {reload_exc}")
+
+                        # Use auto_reload_page_interval setting
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            await asyncio.sleep(auto_reload_interval)
 
     if 'ibon.com.tw/error.html?' in url.lower():
         try:
@@ -10865,6 +11443,119 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
     if not is_enter_verify_mode:
         ibon_dict["fail_list"] = []
+
+    # New ibon Event page format (Angular SPA): https://ticket.ibon.com.tw/Event/{eventId}/{sessionId}
+    if not is_match_target_feature:
+        is_new_event_page = False
+        if 'ticket.ibon.com.tw' in url.lower() and '/event/' in url.lower():
+            url_parts = url.split('/')
+            # URL format: https://ticket.ibon.com.tw/Event/B09QY340/B09VO5KQ
+            # Split result: ['https:', '', 'ticket.ibon.com.tw', 'Event', 'B09QY340', 'B09VO5KQ']
+            if len(url_parts) == 6:
+                is_new_event_page = True
+
+        if is_new_event_page:
+            if config_dict["area_auto_select"]["enable"]:
+                is_price_assign_by_bot = False
+                show_debug_message = config_dict["advanced"].get("verbose", False)
+
+                area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+                is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword)
+
+                if show_debug_message:
+                    print(f"[NEW EVENT] Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
+
+                # Auto-reload if no available ticket areas found
+                if is_need_refresh:
+                    if show_debug_message:
+                        print("[NEW EVENT] No available ticket areas found, page reload required")
+
+                    try:
+                        await tab.reload()
+                        if show_debug_message:
+                            print("[NEW EVENT] Page reloaded successfully")
+                    except Exception as reload_exc:
+                        if show_debug_message:
+                            print(f"[NEW EVENT] Page reload failed: {reload_exc}")
+
+                    # Use auto_reload_page_interval setting
+                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                    if auto_reload_interval > 0:
+                        await asyncio.sleep(auto_reload_interval)
+
+            is_match_target_feature = True
+
+    # New ibon EventBuy page format: https://ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}
+    if not is_match_target_feature:
+        is_new_eventbuy_page = False
+        if 'ticket.ibon.com.tw' in url.lower() and '/eventbuy/' in url.lower():
+            url_parts = url.split('/')
+            # URL format: https://ticket.ibon.com.tw/EventBuy/B09QY340/B09VO5KQ/B09VO6K0
+            # Split result: ['https:', '', 'ticket.ibon.com.tw', 'EventBuy', 'eventId', 'sessionId', 'areaId']
+            if len(url_parts) == 7:
+                is_new_eventbuy_page = True
+
+        if is_new_eventbuy_page:
+            is_match_target_feature = True
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+
+            if show_debug_message:
+                print("[NEW EVENTBUY] Processing EventBuy page")
+
+            # Check disable_adjacent_seat
+            if config_dict["advanced"]["disable_adjacent_seat"]:
+                is_finish_checkbox_click = await nodriver_check_checkbox(tab, '.asp-checkbox > input[type="checkbox"]:not(:checked)')
+
+            # Step 1: Assign ticket number first
+            is_ticket_number_assigned = False
+            is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+            # Step 2: Handle captcha after ticket number is selected
+            is_captcha_sent = False
+            if is_ticket_number_assigned:
+                if show_debug_message:
+                    print("[NEW EVENTBUY] Ticket number assigned, proceeding to captcha")
+
+                # Extract model name from URL for captcha
+                domain_name = url.split('/')[2]
+                # For EventBuy, use sessionId as model name
+                model_name = url.split('/')[5] if len(url.split('/')) > 5 else 'EventBuy'
+                if len(model_name) > 7:
+                    model_name = model_name[:7]
+                captcha_url = '/pic.aspx?TYPE=%s' % (model_name)
+
+                # Set cookies for Captcha_Browser if needed
+                if not Captcha_Browser is None:
+                    Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
+
+                # Call ibon captcha handler (handles both OCR and manual mode)
+                is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
+
+            # Step 3: Click purchase button if everything is ready
+            if is_ticket_number_assigned:
+                if is_captcha_sent:
+                    if show_debug_message:
+                        print("[NEW EVENTBUY] Clicking purchase button")
+
+                    click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
+
+                    # Play sound if button clicked successfully
+                    if click_ret:
+                        play_sound_while_ordering(config_dict)
+                        if show_debug_message:
+                            print("[NEW EVENTBUY] Purchase button clicked successfully")
+            else:
+                # Check if sold out
+                is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
+                if is_sold_out:
+                    if show_debug_message:
+                        print("[NEW EVENTBUY] Sold out detected, going back and refreshing")
+                    try:
+                        await tab.back()
+                        await tab.reload()
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[NEW EVENTBUY] Back/reload failed: {exc}")
 
     if not is_match_target_feature:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
@@ -10908,6 +11599,25 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     if show_debug_message:
                         print(f"Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
+
+                    # Auto-reload if no available ticket areas found
+                    if is_need_refresh:
+                        if show_debug_message:
+                            print("[IBON AREA] No available ticket areas found, page reload required")
+
+                        try:
+                            await tab.reload()
+                            if show_debug_message:
+                                print("[IBON AREA] Page reloaded successfully")
+                        except Exception as reload_exc:
+                            if show_debug_message:
+                                print(f"[IBON AREA] Page reload failed: {reload_exc}")
+
+                        # Use auto_reload_page_interval setting
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            await asyncio.sleep(auto_reload_interval)
+
                     if not is_price_assign_by_bot:
                         # this case show captcha and ticket-number in this page.
                         # TODO:
@@ -10915,6 +11625,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         #    is_do_ibon_performance_with_ticket_number = True
                         pass
 
+                # Old ibon format handling
                 if 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
                     is_do_ibon_performance_with_ticket_number = True
 
@@ -10947,17 +11658,13 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     #print("is_ticket_number_assigned:", is_ticket_number_assigned)
                     if is_ticket_number_assigned:
                         if is_captcha_sent:
-                            click_ret = False
-                            # TODO:
-                            #click_ret = ibon_purchase_button_press(driver)
+                            click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
 
                             # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
                             if click_ret:
                                 play_sound_while_ordering(config_dict)
                     else:
-                        is_sold_out = False
-                        # TODO:
-                        #is_sold_out = ibon_check_sold_out(driver)
+                        is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
                         if is_sold_out:
                             print("is_sold_out, go back , and refresh.")
                             # plan-A
