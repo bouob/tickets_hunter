@@ -10234,7 +10234,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
         for area in valid_areas:
             # 同時檢查區域名稱與內容
-            row_texttext = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
             row_text = util.format_keyword_string(row_text)
 
             # Check if all keywords match (AND logic)
