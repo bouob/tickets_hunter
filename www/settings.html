@@ -365,6 +365,53 @@
         </div>
 
         <div class="row mb-3">
+            <label class="col-sm-2 col-form-label form-check-label" for="email_ticket">有票時寄信</label>
+            <div class="col-sm-10">
+                <input class="form-check-input" type="checkbox" id="email_ticket" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-2 col-form-label form-check-label" for="email_order">訂購時寄信</label>
+            <div class="col-sm-10">
+                <input class="form-check-input" type="checkbox" id="email_order" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="apppassword" class="col-sm-2 col-form-label">您的 Google 應用程式密碼</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="apppassword" value="" />
+                <div class="bd-callout bd-callout-info">
+                    <strong>提示：</strong>
+                    <a href='https://stackoverflow.max-everyday.com/2025/03/google-app-password/' target="_blank">Google 應用程式密碼(App Password)取得教學</a> (另開新視窗)。請務必妥善保管您的應用程式密碼，不要將其洩露給他人。
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="sender_email" class="col-sm-2 col-form-label">您的 Google 電子郵件地址</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="sender_email" value="" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="receiver_email" class="col-sm-2 col-form-label">收件者的電子郵件地址</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="receiver_email" value="" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="email_subject" class="col-sm-2 col-form-label">電子郵件主旨</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="email_subject" value="" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="email_message" class="col-sm-2 col-form-label">電子郵件內容</label>
+            <div class="col-sm-10">
+                <input class="form-control" id="email_message" value="" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
           <div class="col-sm-10">
             <input class="form-control" id="auto_reload_page_interval" value="" />
@@ -389,7 +436,6 @@
             <input class="form-control" id="auto_reload_overheat_cd" value="" />
           </div>
         </div>
-
 
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
@@ -421,6 +467,12 @@
           <div class="col-sm-10">
             <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
           </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-2 col-form-label form-check-label" for="adblock">擋掉 Tracker 連線</label>
+            <div class="col-sm-10">
+                <input class="form-check-input" type="checkbox" id="adblock" />
+            </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="hide_some_image">隱藏部份圖片</label>

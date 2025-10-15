@@ -24,6 +24,14 @@ const play_ticket_sound = document.querySelector('#play_ticket_sound');
 const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
 
+const email_ticket = document.querySelector('#email_ticket');
+const email_order = document.querySelector('#email_order');
+const apppassword = document.querySelector('#apppassword');
+const sender_email = document.querySelector('#sender_email');
+const receiver_email = document.querySelector('#receiver_email');
+const email_subject = document.querySelector('#email_subject');
+const email_message = document.querySelector('#email_message');
+
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
 
@@ -38,6 +46,7 @@ const window_size = document.querySelector('#window_size');
 const chrome_extension = document.querySelector('#chrome_extension');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
 
+const adblock = document.querySelector('#adblock');
 const hide_some_image = document.querySelector('#hide_some_image');
 const block_facebook_network = document.querySelector('#block_facebook_network');
 const headless = document.querySelector('#headless');
@@ -121,6 +130,14 @@ function load_settins_to_form(settings)
         play_order_sound.checked = settings.advanced.play_sound.order;
         play_sound_filename.value = settings.advanced.play_sound.filename;
 
+        email_ticket.checked = settings.advanced.email.ticket;
+        email_order.checked = settings.advanced.email.order;
+        apppassword.value = settings.advanced.email.apppassword;
+        sender_email.value = settings.advanced.email.sender_email;
+        receiver_email.value = settings.advanced.email.receiver_email;
+        email_subject.value = settings.advanced.email.subject;
+        email_message.value = settings.advanced.email.message;
+
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
         max_dwell_time.value = settings.kktix.max_dwell_time;
 
@@ -136,30 +153,35 @@ function load_settins_to_form(settings)
         chrome_extension.checked = settings.advanced.chrome_extension;
         disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
 
+        adblock.checked = settings.advanced.adblock;
         hide_some_image.checked = settings.advanced.hide_some_image;
         block_facebook_network.checked = settings.advanced.block_facebook_network;
         headless.checked = settings.advanced.headless;
         verbose.checked = settings.advanced.verbose;
 
-
         ocr_captcha_enable.checked = settings.ocr_captcha.enable;
-        ocr_captcha_image_source.value  = settings.ocr_captcha.image_source;
+        ocr_captcha_image_source.value = settings.ocr_captcha.image_source;
         ocr_captcha_force_submit.checked = settings.ocr_captcha.force_submit;
 
-        let remote_url_string = "";
-        let remote_url_array = [];
-        if(settings.advanced.remote_url.length > 0) {
-            remote_url_array = JSON.parse('[' +  settings.advanced.remote_url +']');
+        let remoteUrlString = "";
+        const remoteUrlValue = settings.advanced.remote_url;
+        if (remoteUrlValue && remoteUrlValue.length > 0) {
+            try {
+                const parsedUrls = JSON.parse(`[${remoteUrlValue.includes('"') ? remoteUrlValue : `"${remoteUrlValue}"`}]`);
+                if (parsedUrls.length > 0) {
+                    remoteUrlString = parsedUrls[0];
+                }
+            } catch (error) {
+                console.error("Error parsing remote URL:", error);
+                // 如果解析失敗，remoteUrlString 保持為空字串，或者您可以選擇設定為預設值或顯示錯誤訊息
+            }
         }
-        if(remote_url_array.length) {
-            remote_url_string = remote_url_array[0];
-        }
-        remote_url.value = remote_url_string;
+        remote_url.value = remoteUrlString;
 
         // dictionary
         user_guess_string.value = settings.advanced.user_guess_string;
-        if(user_guess_string.value=='""') {
-            user_guess_string.value='';
+        if (user_guess_string.value == '""') {
+            user_guess_string.value = '';
         }
         auto_guess_options.checked = settings.advanced.auto_guess_options;
 
@@ -215,51 +237,54 @@ function load_settins_to_form(settings)
     }
 }
 
-function maxbot_load_api()
-{
-    let api_url = "http://127.0.0.1:16888/load";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        //alert( "second success" );
-        //console.log(data);
-        settings = data;
-        load_settins_to_form(data);
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+function maxbot_load_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/load`;
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            //console.log(data);
+            settings = data;
+            load_settins_to_form(data);
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
-function maxbot_reset_api()
-{
-    let api_url = "http://127.0.0.1:16888/reset";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        //alert( "second success" );
-        //console.log(data);
-        settings = data;
-        load_settins_to_form(data);
-        check_unsaved_fields();
-        run_message("已重設為預設值");
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+function maxbot_reset_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/reset`;
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            //console.log(data);
+            settings = data;
+            load_settins_to_form(data);
+            check_unsaved_fields();
+            run_message("已重設為預設值");
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
-function checkUsePublicServer()
-{
-    if(ocr_captcha_enable.checked) {
+function checkUsePublicServer() {
+    if (ocr_captcha_enable.checked) {
         remote_url.value = PUBLIC_SERVER_URL;
     } else {
 
@@ -268,63 +293,64 @@ function checkUsePublicServer()
 
 let messageClearTimer;
 
-function message(msg)
-{
+function message(msg) {
     $("#message_detail").html("存檔完成");
     $("#message_modal").modal("show");
 }
 
-function message_old(msg)
-{
+function message_old(msg) {
     clearTimeout(messageClearTimer);
     const message = document.querySelector('#message');
     message.innerText = msg;
-    messageClearTimer = setTimeout(function ()
-        {
-            message.innerText = '';
-        }, 3000);
+    messageClearTimer = setTimeout(function() {
+        message.innerText = '';
+    }, 3000);
 }
 
-function maxbot_launch()
-{
+function maxbot_launch() {
     run_message("啟動 MaxBot 主程式中...");
     save_changes_to_dict(true);
     maxbot_save_api(maxbot_run_api());
 }
 
-function maxbot_run_api()
-{
-    let api_url = "http://127.0.0.1:16888/run";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        //alert( "second success" );
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+function maxbot_run_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/run`;
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
-function maxbot_shutdown_api()
-{
-    let api_url = "http://127.0.0.1:16888/shutdown";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        //alert( "second success" );
-        window.close();
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+function maxbot_shutdown_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/shutdown`;
+
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            window.close();
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
 function save_changes_to_dict(silent_flag)
@@ -373,6 +399,14 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.play_sound.order = play_order_sound.checked;
             settings.advanced.play_sound.filename = play_sound_filename.value;
 
+            settings.advanced.email.ticket = email_ticket.checked;
+            settings.advanced.email.order = email_order.checked;
+            settings.advanced.email.apppassword = apppassword.value;
+            settings.advanced.email.sender_email = sender_email.value;
+            settings.advanced.email.receiver_email = receiver_email.value;
+            settings.advanced.email.subject = email_subject.value;
+            settings.advanced.email.message = email_message.value;
+
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
 
@@ -388,6 +422,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.chrome_extension = chrome_extension.checked;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
 
+            settings.advanced.adblock = adblock.checked;
             settings.advanced.hide_some_image = hide_some_image.checked;
             settings.advanced.block_facebook_network = block_facebook_network.checked;
             settings.advanced.headless = headless.checked;
@@ -401,18 +436,18 @@ function save_changes_to_dict(silent_flag)
             let remote_url_array = [];
             remote_url_array.push(remote_url.value);
             let remote_url_string = JSON.stringify(remote_url_array);
-            remote_url_string = remote_url_string.substring(0,remote_url_string.length-1);
+            remote_url_string = remote_url_string.substring(0, remote_url_string.length - 1);
             remote_url_string = remote_url_string.substring(1);
             //console.log("final remote_url_string:"+remote_url_string);
             settings.advanced.remote_url = remote_url_string;
 
             // dictionary
             let user_guess_string_string = user_guess_string.value;
-            if(user_guess_string_string.indexOf('"')==-1) {
+            if (user_guess_string_string.indexOf('"') == -1) {
                 user_guess_string_string = '"' + user_guess_string_string + '"';
             }
-            if(user_guess_string_string=='""') {
-                user_guess_string_string='';
+            if (user_guess_string_string == '""') {
+                user_guess_string_string = '';
             }
             settings.advanced.user_guess_string = user_guess_string_string;
 
@@ -456,80 +491,85 @@ function save_changes_to_dict(silent_flag)
     }
 }
 
-function maxbot_save_api(callback)
-{
-    let api_url = "http://127.0.0.1:16888/save";
-    if(settings) {
-        $.post( api_url, JSON.stringify(settings), function() {
-            //alert( "success" );
-        })
-        .done(function(data) {
-            //alert( "second success" );
-            check_unsaved_fields();
-            if(callback) callback;
-        })
-        .fail(function() {
-            //alert( "error" );
-        })
-        .always(function() {
-            //alert( "finished" );
-        });
+function maxbot_save_api(callback) {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/save`;
+    if (settings) {
+        $.post(api_url, JSON.stringify(settings), function() {
+                //alert( "success" );
+            })
+            .done(function(data) {
+                //alert( "second success" );
+                check_unsaved_fields();
+                if (callback) callback;
+            })
+            .fail(function() {
+                //alert( "error" );
+            })
+            .always(function() {
+                //alert( "finished" );
+            });
     }
 }
 
-function maxbot_pause_api()
-{
-    let api_url = "http://127.0.0.1:16888/pause";
-    if(settings) {
-        $.get( api_url, function() {
-            //alert( "success" );
-        })
-        .done(function(data) {
-            //alert( "second success" );
-        })
-        .fail(function() {
-            //alert( "error" );
-        })
-        .always(function() {
-            //alert( "finished" );
-        });
+function maxbot_pause_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/pause`;
+    if (settings) {
+        $.get(api_url, function() {
+                //alert( "success" );
+            })
+            .done(function(data) {
+                //alert( "second success" );
+            })
+            .fail(function() {
+                //alert( "error" );
+            })
+            .always(function() {
+                //alert( "finished" );
+            });
     }
 }
 
-function maxbot_resume_api()
-{
-    let api_url = "http://127.0.0.1:16888/resume";
-    if(settings) {
-        $.get( api_url, function() {
-            //alert( "success" );
-        })
-        .done(function(data) {
-            //alert( "second success" );
-        })
-        .fail(function() {
-            //alert( "error" );
-        })
-        .always(function() {
-            //alert( "finished" );
-        });
+function maxbot_resume_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/resume`;
+    if (settings) {
+        $.get(api_url, function() {
+                //alert( "success" );
+            })
+            .done(function(data) {
+                //alert( "second success" );
+            })
+            .fail(function() {
+                //alert( "error" );
+            })
+            .always(function() {
+                //alert( "finished" );
+            });
     }
 }
-function maxbot_save()
-{
+
+function maxbot_save() {
     save_changes_to_dict(false);
     maxbot_save_api();
 }
 
-function check_unsaved_fields()
-{
+function check_unsaved_fields() {
     if(settings) {
-        const field_list_basic = ["homepage","ticket_number","refresh_datetime","browser","webdriver_type"];
+        const field_list_basic = ["homepage", "ticket_number", "refresh_datetime", "browser", "webdriver_type"];
         field_list_basic.forEach(f => {
-            const field = document.querySelector('#'+f);
-            if(field.value != settings[f]) {
-                $("#"+f).addClass("is-invalid");
+            const field = document.querySelector('#' + f);
+            if (field.value != settings[f]) {
+                $("#" + f).addClass("is-invalid");
             } else {
-                $("#"+f).removeClass("is-invalid");
+                $("#" + f).removeClass("is-invalid");
             }
         });
         const field_list_advance = [
@@ -568,114 +608,127 @@ function check_unsaved_fields()
             "resume_keyword_second"
         ];
         field_list_advance.forEach(f => {
-            const field = document.querySelector('#'+f);
+            const field = document.querySelector('#' + f);
             let formated_input = field.value;
             let formated_saved_value = settings["advanced"][f];
             //console.log(f);
             //console.log(field.value);
             //console.log(formated_saved_value);
-            if(typeof formated_saved_value == "string") {
-                if(formated_input=='') 
-                    formated_input='""';
-                if(formated_saved_value=='') 
-                    formated_saved_value='""';
-                if(formated_saved_value.indexOf('"') > -1) {
-                    if(formated_input.length) {
-                        if(formated_input != '""') {
+            if (typeof formated_saved_value == "string") {
+                if (formated_input == '')
+                    formated_input = '""';
+                if (formated_saved_value == '')
+                    formated_saved_value = '""';
+                if (formated_saved_value.indexOf('"') > -1) {
+                    if (formated_input.length) {
+                        if (formated_input != '""') {
                             formated_input = '"' + formated_input + '"';
                         }
                     }
                 }
             }
             let is_not_match = (formated_input != formated_saved_value);
-            if(is_not_match) {
+            if (is_not_match) {
                 //console.log(f);
                 //console.log(formated_input);
                 //console.log(formated_saved_value);
-                $("#"+f).addClass("is-invalid");
+                $("#" + f).addClass("is-invalid");
             } else {
-                $("#"+f).removeClass("is-invalid");
+                $("#" + f).removeClass("is-invalid");
             }
         });
 
         // check spcial feature for sites.
-        if(homepage.value.length) {
+        if (homepage.value.length) {
             let special_site = "";
-            const special_site_list = ["kktix", "cityline"];
-            for(let i=0; i<special_site_list.length; i++) {
-                const site=special_site_list[i];
-                const match_url_1 = "." + site + ".com/";
-                const match_url_2 = "/" + site + ".com/";
+            const special_site_list = ["kktix", "cityline", "ibon"];
+            for (let i = 0; i < special_site_list.length; i++) {
+                const site = special_site_list[i];
+                const match_url_1 = "." + site + ".com";
+                const match_url_2 = "/" + site + ".com";
                 //console.log(match_url);
-                if(homepage.value.indexOf(match_url_1) > 0 || homepage.value.indexOf(match_url_2) > 0) {
+                if (homepage.value.indexOf(match_url_1) > 0 || homepage.value.indexOf(match_url_2) > 0) {
                     special_site = site;
                 }
             }
             $('div[data-under]').addClass("disappear");
-            if(special_site.length) {
-                $('div[data-under="'+ special_site +'"]').removeClass("disappear");
+            if (special_site.length) {
+                $('div[data-under="' + special_site + '"]').removeClass("disappear");
+            }
+
+            // for kktix.
+            if (homepage.value.indexOf("kktix.com") > 0 || homepage.value.indexOf("kktix.cc") > 0) {
+                $("#webdriver_type").val("nodriver");
             }
             // for cityline.
-            if(homepage.value.indexOf("cityline.com") > 0) {
+            if (homepage.value.indexOf("cityline.com") > 0) {
+                $("#webdriver_type").val("nodriver");
+            }
+            // for ibon.
+            if (homepage.value.indexOf(".ibon.com.tw") > 0) {
                 $("#webdriver_type").val("nodriver");
             }
         }
     }
 }
 
-function maxbot_status_api()
-{
-    let api_url = "http://127.0.0.1:16888/status";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        //alert( "second success" );
-        let status_text = "已暫停";
-        let status_class = "badge text-bg-danger";
-        if(data.status) {
-            status_text="已啟動";
-            status_class = "badge text-bg-success";
-            $("#pause_btn").removeClass("disappear");
-            $("#resume_btn").addClass("disappear");
-        } else {
-            $("#pause_btn").addClass("disappear");
-            $("#resume_btn").removeClass("disappear");
-        }
-        $("#last_url").html(data.last_url);
-        $("#maxbot_status").html(status_text).prop( "class", status_class);
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+
+function maxbot_status_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/status`;
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            //alert( "second success" );
+            let status_text = "已暫停";
+            let status_class = "badge text-bg-danger";
+            if (data.status) {
+                status_text = "已啟動";
+                status_class = "badge text-bg-success";
+                $("#pause_btn").removeClass("disappear");
+                $("#resume_btn").addClass("disappear");
+            } else {
+                $("#pause_btn").addClass("disappear");
+                $("#resume_btn").removeClass("disappear");
+            }
+            $("#last_url").html(data.last_url);
+            $("#maxbot_status").html(status_text).prop("class", status_class);
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
-function maxbot_version_api()
-{
-    let api_url = "http://127.0.0.1:16888/version";
-    $.get( api_url, function() {
-        //alert( "success" );
-    })
-    .done(function(data) {
-        $("#maxbot_version").html(data.version);
-    })
-    .fail(function() {
-        //alert( "error" );
-    })
-    .always(function() {
-        //alert( "finished" );
-    });
+function maxbot_version_api() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    let api_url = `${protocol}//${hostname}${port ? `:${port}` : ""}/version`;
+    $.get(api_url, function() {
+            //alert( "success" );
+        })
+        .done(function(data) {
+            $("#maxbot_version").html(data.version);
+        })
+        .fail(function() {
+            //alert( "error" );
+        })
+        .always(function() {
+            //alert( "finished" );
+        });
 }
 
-function update_system_time()
-{
-    var currentdate = new Date(); 
-    var datetime = ("0" + currentdate.getHours()).slice(-2) + ":"  
-                + ("0" + currentdate.getMinutes()).slice(-2) + ":" 
-                + ("0" + currentdate.getSeconds()).slice(-2);
+function update_system_time() {
+    var currentdate = new Date();
+    var datetime = ("0" + currentdate.getHours()).slice(-2) + ":" +
+        ("0" + currentdate.getMinutes()).slice(-2) + ":" +
+        ("0" + currentdate.getSeconds()).slice(-2);
     $("#system_time").html(datetime);
 }
 
@@ -704,9 +757,8 @@ onchange_tag_list.forEach((tag) => {
 
 homepage.addEventListener('keyup', check_unsaved_fields);
 
-
-
 let runMessageClearTimer;
+
 function run_message(msg)
 {
     clearTimeout(runMessageClearTimer);
