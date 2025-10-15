@@ -15,6 +15,7 @@
         "type": "module"
     },
     "permissions": [
+        "offscreen",
         "storage",
         "declarativeNetRequest",
         "declarativeNetRequestFeedback"
@@ -26,7 +27,8 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "data/*.json"
+                "data/*.json",
+                "mp3/notification.mp3"
             ],
             "extension_ids": [
                 "*"
@@ -233,62 +235,16 @@
         },
         {
             "matches": [
-                "https://ticket.ibon.com.tw/ActivityInfo/Details/*"
+                "https://orders.ibon.com.tw/application/utk02/UTK0201_001.aspx?*",
+                "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?*",
+                "https://orders.ibon.com.tw/application/utk02/UTK0202_.aspx?*",
+                "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?*"
             ],
             "run_at": "document_start",
-            "js": [
-                "jquery.min.js",
-                "js/ibon_detail.js"
-            ]
-        },
-        {
-            "matches": [
-                "https://orders.ibon.com.tw/application/utk02/UTK0201_000.aspx?*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
-            ],
-            "run_at": "document_end",
-            "js": [
-                "jquery.min.js",
-                "js/ibon_area.js"
-            ]
-        },
-        {
-            "matches": [
-                "https://orders.ibon.com.tw/application/utk02/UTK0201_000.aspx?*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?*"
-            ],
-            "run_at": "document_end",
             "world": "MAIN",
             "js": [
                 "jquery.min.js",
-                "js/ibon_area_front.js"
-            ]
-        },
-        {
-            "matches": [
-                "https://orders.ibon.com.tw/application/utk02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/utk02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
-            ],
-            "run_at": "document_end",
-            "js": [
-                "jquery.min.js",
-                "js/ibon_ticket.js"
-            ]
-        },
-        {
-            "matches": [
-                "https://orders.ibon.com.tw/application/utkK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0201_001.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/utk02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*",
-                "https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=*PERFORMANCE_PRICE_AREA_ID=*"
-            ],
-            "run_at": "document_end",
-            "world": "MAIN",
-            "js": [
-                "jquery.min.js",
-                "js/ibon_ticket_next.js"
+                "js/ibon_area_reload.js"
             ]
         },
         {
@@ -298,6 +254,7 @@
             "run_at": "document_end",
             "js": [
                 "jquery.min.js",
+                "js/common.js",
                 "js/ibon_eventbuy.js"
             ]
         },
@@ -367,17 +324,6 @@
         },
         {
             "matches": [
-                "https://*.cityline.com/utsvInternet/*/eventDetail?event=*",
-                "https://*.cityline.com/utsvlnternet/*/login?lang=TW"
-            ],
-            "run_at": "document_end",
-            "world": "MAIN",
-            "js": [
-                "js/cityline_event_detail.js"
-            ]
-        },
-        {
-            "matches": [
                 "https://shows.cityline.com/tc/*",
                 "https://shows.cityline.com/en/*",
                 "https://priority.cityline.com/tc/*",
@@ -388,10 +334,10 @@
                 "https://cultural.cityline.com/en/*"
             ],
             "run_at": "document_end",
-            "world": "MAIN",
             "js": [
                 "jquery.min.js",
-                "js/cityline_shows_buy_front.js"
+                "js/common.js",
+                "js/cityline_shows_buy.js"
             ]
         },
         {
@@ -467,5 +413,5 @@
         }
 
     ],
-    "version": "1.0.29"
+    "version": "1.0.33"
 }

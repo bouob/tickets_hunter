@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Extension Options</title>
+  <title>MaxBot Extension Options</title>
   <meta charset="UTF-8" />
   <link href="dist/bootstrap/bootstrap.min.css" rel="stylesheet" />
   <script src="dist/bootstrap/bootstrap.min.js"></script>
@@ -13,16 +13,27 @@
   <div class="row g-3">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="readme-tab" data-bs-toggle="tab" data-bs-target="#readme-tab-pane" type="button" role="tab" aria-controls="readme-tab-pane" aria-selected="true">使用需知</button>
+        <button class="nav-link active" id="readme-tab" data-bs-toggle="tab" data-bs-target="#readme-tab-pane" type="button" role="tab" aria-controls="readme-tab-pane" aria-selected="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+</svg> 使用需知</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false">偏好設定</button>
+        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
+  <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
+</svg> 偏好設定</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false">進階設定</button>
+        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-tab-pane" type="button" role="tab" aria-controls="advanced-tab-pane" aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+  <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+  <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+</svg> 進階設定</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false">驗證問題</button>
+        <button class="nav-link" id="verification-tab" data-bs-toggle="tab" data-bs-target="#verification-tab-pane" type="button" role="tab" aria-controls="verification-tab-pane" aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+</svg> 驗證問題</button>
       </li>
     </ul>
     <div class="tab-content" id="myTabContent">
@@ -49,7 +60,7 @@
 
 <p>作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。</p>
 
-<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/Main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/max32002/tixcraft_bot/blob/master/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 MaxBot 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
 </div>
 
       <!-- tab 2 -->
