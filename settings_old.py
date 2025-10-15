@@ -50,9 +50,7 @@ CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
-CONST_SELECT_ORDER_DEFAULT = CONST_RANDOM
 CONST_SELECT_OPTIONS_DEFAULT = (CONST_FROM_TOP_TO_BOTTOM, CONST_FROM_BOTTOM_TO_TOP, CONST_CENTER, CONST_RANDOM)
-CONST_EXCLUDE_DEFAULT = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\",\"燈柱遮蔽\",\"視線不完整\""
 CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 CONST_HOMEPAGE_DEFAULT = "https://tixcraft.com"
 
@@ -340,6 +338,126 @@ def load_translate():
     zh_tw["release"] = '所有可用版本'
     zh_tw["help"] = '使用教學'
 
+    zh_cn={}
+    zh_cn["homepage"] = '售票网站'
+    zh_cn["browser"] = '浏览器'
+    zh_cn["language"] = '语言'
+    zh_cn["ticket_number"] = '门票张数'
+    zh_cn["refresh_datetime"] = '刷新在指定时间'
+
+    zh_cn["enable"] = '启用'
+    zh_cn["recommand_enable"] = "建议启用"
+
+    zh_cn["auto_press_next_step_button"] = 'KKTIX自动点选下一步按钮'
+    zh_cn["auto_fill_ticket_number"] = '自动输入张数'
+    zh_cn["and"] = '而且（同列）'
+
+    zh_cn["local_dictionary"] = '本地字典'
+    zh_cn["remote_url"] = '远端网址'
+    zh_cn["server_url"] = '服务器地址'
+    zh_cn["auto_guess_options"] = '自动猜测验证问题'
+    zh_cn["user_guess_string"] = '验证问题的答案列表'
+    zh_cn["preview"] = '预览'
+    zh_cn["question"] = '验证问题'
+    zh_cn["answer"] = '答案'
+
+    zh_cn["date_auto_select"] = '日期自动点选'
+    zh_cn["date_select_order"] = '日期排序方式'
+    zh_cn["date_keyword"] = '日期关键字'
+    zh_cn["pass_date_is_sold_out"] = '避开“抢购一空”的日期'
+    zh_cn["auto_reload_coming_soon_page"] = '自动刷新倒数中的日期页面'
+    zh_cn["auto_reload_page_interval"] = '重新加载间隔(秒)'
+    zh_cn["cityline_queue_retry"] = 'cityline queue retry'
+    zh_cn["max_dwell_time"] = '购票网页最长停留(秒)'
+    zh_cn["reset_browser_interval"] = '重新启动浏览器间隔(秒)'
+    zh_cn["proxy_server_port"] = 'Proxy IP:PORT'
+    zh_cn["window_size"] = '浏览器窗口大小'
+
+    zh_cn["area_select_order"] = '区域排序方式'
+    zh_cn["area_keyword"] = '区域关键字'
+    zh_cn["area_auto_select"] = '区域自动点选'
+    zh_cn["keyword_exclude"] = '排除关键字'
+    zh_cn["keyword_usage"] = '每组关键字需要双引号, 用逗号分隔, \n在关键字中使用空格作为 AND 逻辑。\n附加 ,\"\" 以匹配所有结果。'
+
+    zh_cn["ocr_captcha"] = '猜测验证码'
+    zh_cn["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
+    zh_cn["ocr_captcha_force_submit"] = '挂机模式'
+    zh_cn["ocr_captcha_image_source"] = 'OCR图像源'
+    zh_cn["webdriver_type"] = 'WebDriver类别'
+    zh_cn["headless"] = '无图形界面模式'
+    zh_cn["verbose"] = '输出详细除错讯息'
+    zh_cn["running_status"] = '执行状态'
+    zh_cn["running_url"] = '执行网址'
+    zh_cn["system_clock"] = '系统时钟'
+    zh_cn["idle_keyword"] = '暂停关键字'
+    zh_cn["resume_keyword"] = '接续关键字'
+    zh_cn["idle_keyword_second"] = '暂停关键字(秒)'
+    zh_cn["resume_keyword_second"] = '接续关键字(秒)'
+    
+    zh_cn["status_idle"] = '闲置中'
+    zh_cn["status_paused"] = '已暂停'
+    zh_cn["status_enabled"] = '已启用'
+    zh_cn["status_running"] = '执行中'
+
+    zh_cn["idle"] = '暂停抢票'
+    zh_cn["resume"] = '接续抢票'
+
+    zh_cn["preference"] = '偏好设定'
+    zh_cn["advanced"] = '进阶设定'
+    zh_cn["verification_word"] = "验证字"
+    zh_cn["maxbot_server"] = '伺服器'
+    zh_cn["autofill"] = '自动填表单'
+    zh_cn["runtime"] = '运行'
+    zh_cn["about"] = '关于'
+    zh_cn["copy"] = '复制'
+
+    zh_cn["run"] = '抢票'
+    zh_cn["save"] = '存档'
+    zh_cn["exit"] = '关闭'
+    zh_cn["copy"] = '复制'
+    zh_cn["restore_defaults"] = '恢复默认值'
+    zh_cn["config_launcher"] = '设定档管理'
+    zh_cn["done"] = '完成'
+
+    zh_cn["tixcraft_sid"] = '拓元家族 cookie SID'
+    zh_cn["ibon_ibonqware"] = 'ibon cookie ibonqware'
+    zh_cn["facebook_account"] = 'Facebook 帐号'
+    zh_cn["kktix_account"] = 'KKTIX 帐号'
+    zh_cn["fami_account"] = 'FamiTicket 帐号'
+    zh_cn["cityline_account"] = 'cityline 帐号'
+    zh_cn["urbtix_account"] = 'URBTIX 帐号'
+    zh_cn["hkticketing_account"] = 'HKTICKETING 帐号'
+    zh_cn["kham_account"] = '宽宏 帐号'
+    zh_cn["ticket_account"] = '年代 帐号'
+    zh_cn["udn_account"] = 'UDN 帐号'
+    zh_cn["ticketplus_account"] = '远大 帐号'
+
+    zh_cn["password"] = '密码'
+    zh_cn["facebook_password"] = 'Facebook 密码'
+    zh_cn["kktix_password"] = 'KKTIX 密码'
+    zh_cn["fami_password"] = 'FamiTicket 密码'
+    zh_cn["cityline_password"] = 'cityline 密码'
+    zh_cn["urbtix_password"] = 'URBTIX 密码'
+    zh_cn["hkticketing_password"] = 'HKTICKETING 密码'
+    zh_cn["kham_password"] = '宽宏 密码'
+    zh_cn["ticket_password"] = '年代 密码'
+    zh_cn["udn_password"] = 'UDN 密码'
+    zh_cn["ticketplus_password"] = '远大 密码'
+    zh_cn["save_password_alert"] = '将密码保存到文件中可能会暴露您的密码。'
+
+    zh_cn["play_ticket_sound"] = '有票时播放音效'
+    zh_cn["play_order_sound"] = '订购时播放音效'
+    zh_cn["play_sound_filename"] = '音效档'
+    
+    zh_cn["chrome_extension"] = "Chrome 浏览器扩展程序"
+    zh_cn["disable_adjacent_seat"] = "允许不连续座位"
+    zh_cn["hide_some_image"] = "隐藏一些图像"
+    zh_cn["block_facebook_network"] = "擋掉 Facebook 連線"
+
+    zh_cn["maxbot_slogan"] = 'MaxBot 是一个免费的开源机器人程序。\n祝您抢票成功。'
+    zh_cn["donate"] = '打赏'
+    zh_cn["help"] = '使用教学'
+    zh_cn["release"] = '所有可用版本'
 
     ja_jp={}
     ja_jp["homepage"] = 'ホームページ'
@@ -467,110 +585,117 @@ def load_translate():
     return translate
 
 def get_default_config():
-    config_dict={}
+    CONST_HOMEPAGE_DEFAULT = "about:blank"
+    CONST_SELECT_ORDER_DEFAULT = CONST_RANDOM
+    CONST_EXCLUDE_DEFAULT = "\"輪椅\",\"身障\",\"身心 障礙\",\"Restricted View\",\"Wheelchair\",\"燈柱遮蔽\",\"視線不完整\""
+    CONST_CAPTCHA_SOUND_FILENAME_DEFAULT = "ding-dong.wav"
 
-    config_dict["homepage"] = CONST_HOMEPAGE_DEFAULT
-    config_dict["browser"] = "chrome"
-    config_dict["language"] = "English"
-    config_dict["ticket_number"] = 2
-    config_dict["refresh_datetime"] = ""
-
-    config_dict["ocr_captcha"] = {}
-    config_dict["ocr_captcha"]["enable"] = True
-    config_dict["ocr_captcha"]["beta"] = True
-    config_dict["ocr_captcha"]["force_submit"] = True
-    config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
-    config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
-
-    config_dict["date_auto_select"] = {}
-    config_dict["date_auto_select"]["enable"] = True
-    config_dict["date_auto_select"]["date_keyword"] = ""
-    config_dict["date_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
-
-    config_dict["area_auto_select"] = {}
-    config_dict["area_auto_select"]["enable"] = True
-    config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
-    config_dict["area_auto_select"]["area_keyword"] = ""
-    config_dict["keyword_exclude"] = CONST_EXCLUDE_DEFAULT
-
-    config_dict['kktix']={}
-    config_dict["kktix"]["auto_press_next_step_button"] = True
-    config_dict["kktix"]["auto_fill_ticket_number"] = True
-    config_dict["kktix"]["max_dwell_time"] = 90
-
-    config_dict['cityline']={}
-    config_dict["cityline"]["cityline_queue_retry"] = True
-
-    config_dict['tixcraft']={}
-    config_dict["tixcraft"]["pass_date_is_sold_out"] = True
-    config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
-
-
-    config_dict['advanced']={}
-
-    config_dict['advanced']['play_sound']={}
-    config_dict["advanced"]["play_sound"]["ticket"] = True
-    config_dict["advanced"]["play_sound"]["order"] = True
-    config_dict["advanced"]["play_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
-
-    config_dict["advanced"]["tixcraft_sid"] = ""
-    config_dict["advanced"]["ibonqware"] = ""
-    config_dict["advanced"]["facebook_account"] = ""
-    config_dict["advanced"]["kktix_account"] = ""
-    config_dict["advanced"]["fami_account"] = ""
-    config_dict["advanced"]["cityline_account"] = ""
-    config_dict["advanced"]["urbtix_account"] = ""
-    config_dict["advanced"]["hkticketing_account"] = ""
-    config_dict["advanced"]["kham_account"] = ""
-    config_dict["advanced"]["ticket_account"] = ""
-    config_dict["advanced"]["udn_account"] = ""
-    config_dict["advanced"]["ticketplus_account"] = ""
-
-    config_dict["advanced"]["facebook_password"] = ""
-    config_dict["advanced"]["kktix_password"] = ""
-    config_dict["advanced"]["fami_password"] = ""
-    config_dict["advanced"]["urbtix_password"] = ""
-    config_dict["advanced"]["cityline_password"] = ""
-    config_dict["advanced"]["hkticketing_password"] = ""
-    config_dict["advanced"]["kham_password"] = ""
-    config_dict["advanced"]["ticket_password"] = ""
-    config_dict["advanced"]["udn_password"] = ""
-    config_dict["advanced"]["ticketplus_password"] = ""
-
-    config_dict["advanced"]["facebook_password_plaintext"] = ""
-    config_dict["advanced"]["kktix_password_plaintext"] = ""
-    config_dict["advanced"]["fami_password_plaintext"] = ""
-    config_dict["advanced"]["urbtix_password_plaintext"] = ""
-    config_dict["advanced"]["cityline_password_plaintext"] = ""
-    config_dict["advanced"]["hkticketing_password_plaintext"] = ""
-    config_dict["advanced"]["kham_password_plaintext"] = ""
-    config_dict["advanced"]["ticket_password_plaintext"] = ""
-    config_dict["advanced"]["udn_password_plaintext"] = ""
-    config_dict["advanced"]["ticketplus_password_plaintext"] = ""
-
-    config_dict["advanced"]["chrome_extension"] = True
-    config_dict["advanced"]["disable_adjacent_seat"] = False
-    config_dict["advanced"]["hide_some_image"] = False
-    config_dict["advanced"]["block_facebook_network"] = False
-
-    config_dict["advanced"]["headless"] = False
-    config_dict["advanced"]["verbose"] = False
-    config_dict["advanced"]["auto_guess_options"] = False
-    config_dict["advanced"]["user_guess_string"] = ""
-    config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
-
-    config_dict["advanced"]["auto_reload_page_interval"] = 0.1
-    config_dict["advanced"]["auto_reload_overheat_count"] = 4
-    config_dict["advanced"]["auto_reload_overheat_cd"] = 1.0
-    config_dict["advanced"]["reset_browser_interval"] = 0
-    config_dict["advanced"]["proxy_server_port"] = ""
-    config_dict["advanced"]["window_size"] = "480,1024"
-
-    config_dict["advanced"]["idle_keyword"] = ""
-    config_dict["advanced"]["resume_keyword"] = ""
-    config_dict["advanced"]["idle_keyword_second"] = ""
-    config_dict["advanced"]["resume_keyword_second"] = ""
-
+    config_dict = {
+        "homepage": CONST_HOMEPAGE_DEFAULT,
+        "browser": "chrome",
+        "language": "English",
+        "ticket_number": 2,
+        "refresh_datetime": "",
+        "port": CONST_SERVER_PORT,
+        "ocr_captcha": {
+            "enable": True,
+            "beta": True,
+            "force_submit": True,
+            "image_source": CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS,
+        },
+        "webdriver_type": CONST_WEBDRIVER_TYPE_UC,
+        "date_auto_select": {
+            "enable": True,
+            "date_keyword": "",
+            "mode": CONST_SELECT_ORDER_DEFAULT,
+        },
+        "area_auto_select": {
+            "enable": True,
+            "mode": CONST_SELECT_ORDER_DEFAULT,
+            "area_keyword": "",
+        },
+        "keyword_exclude": CONST_EXCLUDE_DEFAULT,
+        "kktix": {
+            "auto_press_next_step_button": True,
+            "auto_fill_ticket_number": True,
+            "max_dwell_time": 90,
+        },
+        "cityline": {
+            "cityline_queue_retry": True,
+        },
+        "tixcraft": {
+            "pass_date_is_sold_out": True,
+            "auto_reload_coming_soon_page": True,
+        },
+        "advanced": {
+            "play_sound": {
+                "ticket": True,
+                "order": True,
+                "filename": CONST_CAPTCHA_SOUND_FILENAME_DEFAULT,
+            },
+            "email": {
+                "ticket": True,
+                "order": True,
+                "apppassword": "",
+                "sender_email": "",
+                "receiver_email": "",
+                "subject": "號外",
+                "message": "這是一封寫給自己的信。",
+            },
+            "tixcraft_sid": "",
+            "ibonqware": "",
+            "facebook_account": "",
+            "kktix_account": "",
+            "fami_account": "",
+            "cityline_account": "",
+            "urbtix_account": "",
+            "hkticketing_account": "",
+            "kham_account": "",
+            "ticket_account": "",
+            "udn_account": "",
+            "ticketplus_account": "",
+            "facebook_password": "",
+            "kktix_password": "",
+            "fami_password": "",
+            "urbtix_password": "",
+            "cityline_password": "",
+            "hkticketing_password": "",
+            "kham_password": "",
+            "ticket_password": "",
+            "udn_password": "",
+            "ticketplus_password": "",
+            "facebook_password_plaintext": "",
+            "kktix_password_plaintext": "",
+            "fami_password_plaintext": "",
+            "urbtix_password_plaintext": "",
+            "cityline_password_plaintext": "",
+            "hkticketing_password_plaintext": "",
+            "kham_password_plaintext": "",
+            "ticket_password_plaintext": "",
+            "udn_password_plaintext": "",
+            "ticketplus_password_plaintext": "",
+            "chrome_extension": True,
+            "disable_adjacent_seat": False,
+            "adblock": True,
+            "hide_some_image": False,
+            "block_facebook_network": False,
+            "headless": False,
+            "verbose": False,
+            "auto_guess_options": False,
+            "user_guess_string": "",
+            "remote_url": f"http://127.0.0.1:{CONST_SERVER_PORT}/",
+            "auto_reload_page_interval": 3.0,
+            "auto_reload_overheat_count": 4,
+            "auto_reload_overheat_cd": 1.0,
+            "reset_browser_interval": 0,
+            "proxy_server_port": "",
+            "window_size": "600,1024",
+            "idle_keyword": "",
+            "resume_keyword": "",
+            "idle_keyword_second": "",
+            "resume_keyword_second": "",
+        },
+    }
     return config_dict
 
 def read_last_url_from_file():
@@ -622,7 +747,7 @@ def do_maxbot_idle():
     app_root = util.get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
     try:
-        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
+        with open(idle_filepath, "w") as text_file:
             text_file.write("")
     except Exception as e:
         pass
@@ -642,7 +767,6 @@ def btn_resume_clicked(language_code):
     update_maxbot_runtime_status()
 
 def btn_launcher_clicked():
-    Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
     if save_ret:
         script_name = "config_launcher"
@@ -946,16 +1070,16 @@ def btn_save_act(slience_mode=False):
         config_dict["advanced"]["tixcraft_sid"] = config_dict["advanced"]["tixcraft_sid"]
         config_dict["advanced"]["ibonqware"] = config_dict["advanced"]["ibonqware"]
 
-        config_dict["advanced"]["facebook_password"] = util.encryptMe(config_dict["advanced"]["facebook_password"])
-        config_dict["advanced"]["kktix_password"] = util.encryptMe(config_dict["advanced"]["kktix_password"])
-        config_dict["advanced"]["fami_password"] = util.encryptMe(config_dict["advanced"]["fami_password"])
-        config_dict["advanced"]["cityline_password"] = util.encryptMe(config_dict["advanced"]["cityline_password"])
-        config_dict["advanced"]["urbtix_password"] = util.encryptMe(config_dict["advanced"]["urbtix_password"])
-        config_dict["advanced"]["hkticketing_password"] = util.encryptMe(config_dict["advanced"]["hkticketing_password"])
-        config_dict["advanced"]["kham_password"] = util.encryptMe(config_dict["advanced"]["kham_password"])
-        config_dict["advanced"]["ticket_password"] = util.encryptMe(config_dict["advanced"]["ticket_password"])
-        config_dict["advanced"]["udn_password"] = util.encryptMe(config_dict["advanced"]["udn_password"])
-        config_dict["advanced"]["ticketplus_password"] = util.encryptMe(config_dict["advanced"]["ticketplus_password"])
+        config_dict["advanced"]["facebook_password"] = util.encrypt_me(config_dict["advanced"]["facebook_password"])
+        config_dict["advanced"]["kktix_password"] = util.encrypt_me(config_dict["advanced"]["kktix_password"])
+        config_dict["advanced"]["fami_password"] = util.encrypt_me(config_dict["advanced"]["fami_password"])
+        config_dict["advanced"]["cityline_password"] = util.encrypt_me(config_dict["advanced"]["cityline_password"])
+        config_dict["advanced"]["urbtix_password"] = util.encrypt_me(config_dict["advanced"]["urbtix_password"])
+        config_dict["advanced"]["hkticketing_password"] = util.encrypt_me(config_dict["advanced"]["hkticketing_password"])
+        config_dict["advanced"]["kham_password"] = util.encrypt_me(config_dict["advanced"]["kham_password"])
+        config_dict["advanced"]["ticket_password"] = util.encrypt_me(config_dict["advanced"]["ticket_password"])
+        config_dict["advanced"]["udn_password"] = util.encrypt_me(config_dict["advanced"]["udn_password"])
+        config_dict["advanced"]["ticketplus_password"] = util.encrypt_me(config_dict["advanced"]["ticketplus_password"])
 
         config_dict["advanced"]["chrome_extension"] = bool(chk_state_chrome_extension.get())
         config_dict["advanced"]["disable_adjacent_seat"] = bool(chk_state_adjacent_seat.get())
@@ -968,6 +1092,12 @@ def btn_save_act(slience_mode=False):
         config_dict["ocr_captcha"]["force_submit"] = bool(chk_state_ocr_captcha_force_submit.get())
         config_dict["ocr_captcha"]["image_source"] = combo_ocr_captcha_image_source.get().strip()
 
+
+        if 'cityline.com' in config_dict["homepage"]:
+            combo_webdriver_type.set("nodriver")
+
+        if '.ibon.com.tw' in config_dict["homepage"]:
+            combo_webdriver_type.set("nodriver")
         config_dict["webdriver_type"] = combo_webdriver_type.get().strip()
         config_dict["advanced"]["headless"] = bool(chk_state_headless.get())
         config_dict["advanced"]["verbose"] = bool(chk_state_verbose.get())
@@ -1002,7 +1132,6 @@ def btn_save_act(slience_mode=False):
 
 def btn_run_clicked():
     print('run button pressed.')
-    Root_Dir = ""
     save_ret = btn_save_act(slience_mode=True)
     print("save config result:", save_ret)
     if save_ret:
@@ -1040,10 +1169,12 @@ def launch_maxbot():
     threading.Thread(target=util.launch_maxbot, args=(script_name,"","","","",window_size,)).start()
 
 def show_preview_text():
-    if os.path.exists(CONST_MAXBOT_ANSWER_ONLINE_FILE):
+    app_root = util.get_app_root()
+    answer_filepath = os.path.join(app_root, CONST_MAXBOT_ANSWER_ONLINE_FILE)
+    if os.path.exists(answer_filepath):
         answer_text = ""
         try:
-            with open(CONST_MAXBOT_ANSWER_ONLINE_FILE, "r") as text_file:
+            with open(answer_filepath, "r") as text_file:
                 answer_text = text_file.readline()
         except Exception as e:
             pass
@@ -1859,7 +1990,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly", width=30)
-    combo_language['values']= ("English","繁體中文","日本語")
+    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
     combo_language.set(config_dict['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)
@@ -2326,7 +2457,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_facebook_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_facebook_password
-    txt_facebook_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["facebook_password"].strip()))
+    txt_facebook_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["facebook_password"].strip()))
     txt_facebook_password = Entry(frame_group_header, width=15, textvariable = txt_facebook_password_value, show="*")
     txt_facebook_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2342,7 +2473,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kktix_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_kktix_password
-    txt_kktix_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["kktix_password"].strip()))
+    txt_kktix_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["kktix_password"].strip()))
     txt_kktix_password = Entry(frame_group_header, width=15, textvariable = txt_kktix_password_value, show="*")
     txt_kktix_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2358,7 +2489,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_fami_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_fami_password
-    txt_fami_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["fami_password"].strip()))
+    txt_fami_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["fami_password"].strip()))
     txt_fami_password = Entry(frame_group_header, width=15, textvariable = txt_fami_password_value, show="*")
     txt_fami_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2374,7 +2505,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_cityline_account.grid(column=1, row=group_row_count, sticky = W, columnspan=2)
 
     global txt_cityline_password
-    txt_cityline_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["cityline_password"].strip()))
+    txt_cityline_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["cityline_password"].strip()))
     txt_cityline_password = Entry(frame_group_header, width=15, textvariable = txt_cityline_password_value, show="*")
     #txt_cityline_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2390,7 +2521,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_urbtix_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_urbtix_password
-    txt_urbtix_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["urbtix_password"].strip()))
+    txt_urbtix_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["urbtix_password"].strip()))
     txt_urbtix_password = Entry(frame_group_header, width=15, textvariable = txt_urbtix_password_value, show="*")
     txt_urbtix_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2406,7 +2537,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_hkticketing_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_hkticketing_password
-    txt_hkticketing_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["hkticketing_password"].strip()))
+    txt_hkticketing_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["hkticketing_password"].strip()))
     txt_hkticketing_password = Entry(frame_group_header, width=15, textvariable = txt_hkticketing_password_value, show="*")
     txt_hkticketing_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2422,7 +2553,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_kham_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_kham_password
-    txt_kham_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["kham_password"].strip()))
+    txt_kham_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["kham_password"].strip()))
     txt_kham_password = Entry(frame_group_header, width=15, textvariable = txt_kham_password_value, show="*")
     txt_kham_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2438,7 +2569,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_ticket_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_ticket_password
-    txt_ticket_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["ticket_password"].strip()))
+    txt_ticket_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["ticket_password"].strip()))
     txt_ticket_password = Entry(frame_group_header, width=15, textvariable = txt_ticket_password_value, show="*")
     txt_ticket_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2454,7 +2585,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_udn_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_udn_password
-    txt_udn_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["udn_password"].strip()))
+    txt_udn_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["udn_password"].strip()))
     txt_udn_password = Entry(frame_group_header, width=15, textvariable = txt_udn_password_value, show="*")
     txt_udn_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2470,7 +2601,7 @@ def AutofillTab(root, config_dict, language_code, UI_PADDING_X):
     txt_ticketplus_account.grid(column=1, row=group_row_count, sticky = W)
 
     global txt_ticketplus_password
-    txt_ticketplus_password_value = StringVar(frame_group_header, value=util.decryptMe(config_dict["advanced"]["ticketplus_password"].strip()))
+    txt_ticketplus_password_value = StringVar(frame_group_header, value=util.decrypt_me(config_dict["advanced"]["ticketplus_password"].strip()))
     txt_ticketplus_password = Entry(frame_group_header, width=15, textvariable = txt_ticketplus_password_value, show="*")
     txt_ticketplus_password.grid(column=2, row=group_row_count, sticky = W)
 
@@ -2660,8 +2791,8 @@ def settgins_gui_timer():
             break
 
 def clean_extension_status():
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    app_root = util.get_app_root()
+    webdriver_path = os.path.join(app_root, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
     target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
@@ -2673,8 +2804,8 @@ def clean_extension_status():
             pass
 
 def sync_status_to_extension(status):
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    app_root = util.get_app_root()
+    webdriver_path = os.path.join(app_root, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
     if os.path.exists(target_path):
@@ -2691,7 +2822,10 @@ def sync_status_to_extension(status):
 
 def update_maxbot_runtime_status():
     is_paused = False
-    if os.path.exists(CONST_MAXBOT_INT28_FILE):
+    app_root = util.get_app_root()
+    runtime_status_path = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
+    if os.path.exists(runtime_status_path):
+        is_paused = True
         is_paused = True
 
     sync_status_to_extension(not is_paused)
@@ -3079,8 +3213,8 @@ def clean_tmp_file():
     for filepath in remove_file_list:
          util.force_remove_file(filepath)
 
-    Root_Dir = util.get_app_root()
-    target_folder = os.listdir(Root_Dir)
+    app_root = util.get_app_root()
+    target_folder = os.listdir(app_root)
     for item in target_folder:
         if item.endswith(".tmp"):
             os.remove(os.path.join(Root_Dir, item))
@@ -3132,6 +3266,16 @@ class QuestionHandler(tornado.web.RequestHandler):
 class VersionHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"version":self.application.version})
+
+class StatusHandler(tornado.web.RequestHandler):
+    def get(self):
+        is_paused = False
+        app_root = util.get_app_root()
+        status_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
+        if os.path.exists(status_filepath):
+            is_paused = True
+        url = read_last_url_from_file()
+        self.write({"status": not is_paused, "last_url": url})
 
 class SendkeyHandler(tornado.web.RequestHandler):
     def post(self):
@@ -3211,7 +3355,7 @@ class OcrHandler(tornado.web.RequestHandler):
 
         self.write({"answer": ocr_answer})
 
-async def main_server():
+async def main_server(server_port):
     ocr = None
     try:
         ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
@@ -3224,32 +3368,39 @@ async def main_server():
         ("/version", VersionHandler),
         ("/sendkey", SendkeyHandler),
 
+        ("/status", StatusHandler),
         ("/ocr", OcrHandler),
         ("/query", MainHandler),
         ("/question", QuestionHandler),
     ])
-    app.ocr = ocr;
-    app.version = CONST_APP_VERSION;
+    app.ocr = ocr
+    app.version = CONST_APP_VERSION
 
-    app.listen(CONST_SERVER_PORT)
-    print("server running on port:", CONST_SERVER_PORT)
+    app.listen(server_port)
+    print("server running on port:", server_port)
     await asyncio.Event().wait()
 
 def web_server():
-    is_port_binded = util.is_connectable(CONST_SERVER_PORT)
+    _, config_dict = load_json()
+    server_port = config_dict["port"]
+
+    is_port_binded = util.is_connectable(server_port)
     #print("is_port_binded:", is_port_binded)
     if not is_port_binded:
-        asyncio.run(main_server())
+        asyncio.run(main_server(server_port))
     else:
-        print("port:", CONST_SERVER_PORT, " is in used.")
+        print("port:", server_port, " is in used.")
 
 def preview_question_text_file():
-    if os.path.exists(CONST_MAXBOT_QUESTION_FILE):
+    app_root = util.get_app_root()
+    question_filepath = os.path.join(app_root, CONST_MAXBOT_QUESTION_FILE)
+
+    if os.path.exists(question_filepath):
         infile = None
         if platform.system() == 'Windows':
-            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r', encoding='UTF-8')
+            infile = open(question_filepath, 'r', encoding='UTF-8')
         else:
-            infile = open(CONST_MAXBOT_QUESTION_FILE, 'r')
+            infile = open(question_filepath, 'r')
 
         if not infile is None:
             question_text = infile.readline()

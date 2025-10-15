@@ -5,21 +5,25 @@ import pathlib
 import platform
 import random
 import re
+import shutil
 import socket
 import subprocess
 import sys
 import threading
+import uuid
 from typing import Optional
+import smtplib
+from email.mime.text import MIMEText
+from datetime import datetime
 
 import requests
-import uuid
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
 
 def get_ip_address():
     gethostname = None
@@ -51,75 +55,57 @@ def get_ip_address():
     return ip
 
 def is_connectable(port: int, host: Optional[str] = "localhost") -> bool:
-    """Tries to connect to the server at port to see if it is running.
-
-    :Args:
-     - port - The port to connect.
-    """
-    socket_ = None
-    _is_connectable_exceptions = (socket.error, ConnectionResetError)
+    """Checks if a port is connectable."""
     try:
-        socket_ = socket.create_connection((host, port), 1)
-        result = True
-    except _is_connectable_exceptions:
-        result = False
-    finally:
-        if socket_:
-            socket_.close()
-    return result
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except (socket.error, ConnectionResetError):
+        return False
 
-def remove_html_tags(text):
-    ret = ""
-    if not text is None:
-        clean = re.compile('<.*?>')
-        ret = re.sub(clean, '', text)
-        ret = ret.strip()
-    return ret
+def remove_html_tags(text: Optional[str]) -> str:
+    """Removes HTML tags from a string."""
+    if text is None:
+        return ""
+    clean = re.compile("<.*?>")
+    return re.sub(clean, "", text).strip()
 
-# common functions.
-def find_between( s, first, last ):
-    ret = ""
+def find_between(s: str, first: str, last: str) -> str:
+    """Finds a substring between two delimiters."""
     try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
-        ret = s[start:end]
+        start = s.index(first) + len(first)
+        end = s.index(last, start)
+        return s[start:end]
     except ValueError:
-        pass
-    return ret
+        return ""
 
-def sx(s1):
-    key=18
-    return ''.join(chr(ord(a) ^ key) for a in s1)
+def sx(s1: str) -> str:
+    """XOR encryption/decryption."""
+    key = 18
+    return "".join(chr(ord(a) ^ key) for a in s1)
 
-def decryptMe(b):
-    s=""
-    if(len(b)>0):
-        s=sx(base64.b64decode(b).decode("UTF-8"))
-    return s
+def decrypt_me(b: str) -> str:
+    """Decrypts a base64 encoded string."""
+    if not b:
+        return ""
+    return sx(base64.b64decode(b).decode("UTF-8"))
 
-def encryptMe(s):
-    data=""
-    if(len(s)>0):
-        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
-    return data
+def encrypt_me(s: str) -> str:
+    """Encrypts a string to base64."""
+    if not s:
+        return ""
+    return base64.b64encode(sx(s).encode("UTF-8")).decode("UTF-8")
 
-def is_arm():
-    ret = False
-    if "-arm" in platform.platform():
-        ret = True
-    return ret
+def is_arm() -> bool:
+    """Checks if the platform is ARM."""
+    return "-arm" in platform.platform().lower()
 
-def get_app_root():
-    app_root = ""
-    if hasattr(sys, 'frozen'):
-        basis = sys.executable
-        app_root = os.path.dirname(basis)
-    else:
-        app_root = os.getcwd()
-    return app_root
+def get_app_root() -> str:
+    """Gets the application root directory."""
+    if hasattr(sys, "frozen"):
+        return os.path.dirname(sys.executable)
+    return os.getcwd()
 
-
-def format_config_keyword_for_json(user_input):
+def format_config_keyword_for_json(user_input: str) -> str:
     if len(user_input) > 0:
         # 新增：偵測並轉換簡化格式
         if ',' in user_input and not '"' in user_input:
@@ -127,22 +113,19 @@ def format_config_keyword_for_json(user_input):
             user_input = ','.join([f'"{item.strip()}"' for item in items])
             return user_input  # 已經是正確格式，直接返回
 
-        if not ('\"' in user_input):
-            user_input = '"' + user_input + '"'
+        if '"' not in user_input:
+            user_input = f'"{user_input}"'
 
-        if user_input[:1]=="{" and user_input[-1:]=="}":
-            tmp_json = {}
+        if user_input.startswith("{") and user_input.endswith("}"):
             try:
                 tmp_json = json.loads(user_input)
-                key=list(tmp_json.keys())[0]
-                first_item=tmp_json[key]
-                user_input=json.dumps(first_item)
-            except Exception as exc:
+                key = list(tmp_json.keys())[0]
+                user_input = json.dumps(tmp_json[key])
+            except json.JSONDecodeError:
                 pass
 
-        if user_input[:1]=="[" and user_input[-1:]=="]":
-            user_input=user_input[1:]
-            user_input=user_input[:-1]
+        if user_input.startswith("[") and user_input.endswith("]"):
+            user_input = user_input[1:-1]
     return user_input
 
 def is_text_match_keyword(keyword_string, text):
@@ -155,17 +138,16 @@ def is_text_match_keyword(keyword_string, text):
             items = keyword_string.split(',')
             keyword_string = ','.join([f'"{item.strip()}"' for item in items])
 
-        # directly input text into arrray field.
-        if len(keyword_string) > 0:
-            if not '"' in keyword_string:
-                keyword_string = '"' + keyword_string + '"'
-        
+        if '"' not in keyword_string:
+            keyword_string = f'"{keyword_string}"'
+
         is_match_keyword = False
         keyword_array = []
         try:
-            keyword_array = json.loads("["+ keyword_string +"]")
+            keyword_array = json.loads(f"[{keyword_string}]")
         except Exception as exc:
             keyword_array = []
+        
         for item_list in keyword_array:
             if len(item_list) > 0:
                 if ' ' in item_list:
@@ -2138,3 +2120,82 @@ def parse_nodriver_result(result):
 
 def get_token():
     return str(uuid.uuid4().hex)
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
+def send_email(sender_email, sender_password, receiver_email, subject, message):
+    """
+    透過 Google 帳號寄送電子郵件。
+
+    Args:
+        sender_email (str): 寄件者的 Google 電子郵件地址。
+        sender_password (str): 寄件者的 Google 應用程式密碼。
+        receiver_email (str): 收件者的電子郵件地址。
+        subject (str): 電子郵件主旨。
+        message (str): 電子郵件內容。
+    """
+    try:
+        msg = MIMEText(message, 'plain', 'utf-8')
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+
+        print("電子郵件已成功寄送！")
+
+    except Exception as e:
+        print(f"寄送電子郵件時發生錯誤：{e}")
+
+def optimized_email_sending(config_dict, mode="ticket", last_sent_minute=None, url=None):
+    """
+    如果配置允許，每分鐘發送一封電子郵件。
+
+    Args:
+        config_dict (dict): 配置字典。
+        mode (str): 電子郵件模式，可以是 "ticket" 或其他。
+        last_sent_minute (int): 上次發送電子郵件的分鐘數。
+        url (str): 要添加到電子郵件消息中的 URL。
+
+    Returns:
+        int: 當前分鐘數，如果發送了電子郵件，則更新。
+    """
+    email_config = config_dict.get("advanced", {}).get("email", {})
+    if email_config.get(mode):
+        sender_email = email_config.get("sender_email")
+        app_password = email_config.get("apppassword")
+        receiver_email = email_config.get("receiver_email")
+        subject = email_config.get("subject")
+        message = email_config.get("message", "")
+
+        # 檢查電子郵件配置是否完整
+        if not sender_email or not app_password or not receiver_email:
+            #print("Error: sender_email, apppassword, or receiver_email is missing in config.")
+            return last_sent_minute  # 終止執行
+
+        if mode == "ticket":
+            subject += " - 有票"
+        else:
+            subject += " - 訂購"
+
+        if url:
+            message += f"\n{url}"
+
+        current_minute = datetime.now().minute
+        if current_minute != last_sent_minute:
+            try:
+                send_email(sender_email, app_password, receiver_email, subject, message)
+                last_sent_minute = current_minute
+            except Exception as e:
+                print(f"Error sending email: {e}")
+            return last_sent_minute
+    return last_sent_minute

@@ -77,6 +77,25 @@ def load_translate():
             "release": '所有可用版本',
             "help": '使用教學'
         },
+        'zh_cn': {
+            "language": '语言',
+            "enable": '启用',
+            "config_list": '设定档管理',
+            "advanced": '進階設定',
+            "autofill": '自动填表单',
+            "about": '关于',
+            "run": '抢票',
+            "browse": '开启...',
+            "save": '存档',
+            "exit": '关闭',
+            "copy": '复制',
+            "restore_defaults": '恢复默认值',
+            "done": '完成',
+            "maxbot_slogan": 'MaxRegBot 是一个免费的开源机器人程序。\n祝您挂号成功。',
+            "donate": '打赏',
+            "help": '使用教学',
+            "release": '所有可用版本'
+        },
         'ja_jp': {
             "language": '言語',
             "enable": '有効',
@@ -102,7 +121,10 @@ def load_translate():
 def get_default_config():
     config_dict={}
 
-    config_dict["list"] = [CONST_MAXBOT_CONFIG_FILE]
+    filelist = [CONST_MAXBOT_CONFIG_FILE]
+    for i in range(15-1):
+        filelist.append("")
+    config_dict["list"] = filelist
 
     config_dict["advanced"] = {}
     config_dict["advanced"]["language"] = "English"
@@ -150,8 +172,13 @@ def btn_save_act(slience_mode=True):
     config_dict["advanced"]["language"] = combo_language.get().strip()
     language_code = get_language_code_by_name(config_dict["advanced"]["language"])
 
-    filelist = [txt_file_name[i].get().strip() for i in range(15)]
-    config_dict["list"] = filelist
+    global widgets
+    if "widgets" in globals():
+        filelist = []
+        for i in range(15):
+            filename=widgets['txt_file_name_value'][i].get().strip()
+            filelist.append(filename)
+        config_dict["list"] = filelist
 
     util.save_json(config_dict, config_filepath)
     
@@ -179,6 +206,8 @@ def get_language_code_by_name(new_language):
     language_code = "en_us"
     if '繁體中文' in new_language:
         language_code = 'zh_tw'
+    if '簡体中文' in new_language:
+        language_code = 'zh_cn'
     if '日本語' in new_language:
         language_code = 'ja_jp'
     return language_code
@@ -210,18 +239,21 @@ def applyNewLanguage():
     lbl_donate.config(text=translate[language_code]["donate"])
     lbl_release.config(text=translate[language_code]["release"])
 
-    global btn_browse
-    for i in range(15):
-        btn_browse[i].config(text=translate[language_code]['browse'] + " " + str(i+1))
+    global widgets
+    if "widgets" in globals():
+        for i in range(15):
+            btn_browse = widgets['btn_browse'][i]
+            btn_browse.config(text=translate[language_code]['browse'] + " " + str(i+1))
 
-    global btn_run
-    for i in range(15):
-        btn_run[i].config(text=translate[language_code]['run'] + " " + str(i+1))
+        global btn_run
+        for i in range(15):
+            btn_run = widgets['btn_run'][i]
+            btn_run.config(text=translate[language_code]['run'] + " " + str(i+1))
 
     global btn_save
-    global btn_restore_defaults
-
     btn_save.config(text=translate[language_code]["save"])
+
+    global btn_restore_defaults
     btn_restore_defaults.config(text=translate[language_code]["restore_defaults"])
 
 def btn_items_browse_event(event):
@@ -374,7 +406,7 @@ def AdvancedTab(root, config_dict, language_code, UI_PADDING_X):
 
     global combo_language
     combo_language = ttk.Combobox(frame_group_header, state="readonly")
-    combo_language['values']= ("English","繁體中文","日本語")
+    combo_language['values']= ("English","繁體中文","簡体中文","日本語")
     combo_language.set(config_dict["advanced"]['language'])
     combo_language.bind("<<ComboboxSelected>>", callbackLanguageOnChange)
     combo_language.grid(column=1, row=group_row_count, sticky = W)

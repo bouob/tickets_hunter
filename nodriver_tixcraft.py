@@ -4,19 +4,30 @@ import argparse
 import base64
 import json
 import logging
-import asyncio
 import os
 import pathlib
 import platform
 import random
+import re
+import shutil
 import ssl
 import subprocess
 import sys
 import threading
 import time
+import urllib.parse
 import warnings
 import webbrowser
 from datetime import datetime
+from typing import Optional
+
+import nodriver as uc
+from nodriver import cdp
+from nodriver.core.config import Config
+from urllib3.exceptions import InsecureRequestWarning
+
+import util
+from NonBrowser import NonBrowser
 
 # 強制使用 UTF-8 編碼輸出（解決 Windows CP950 編碼問題）
 # 僅在終端直接輸出時使用，避免與檔案重定向衝突導致死鎖
@@ -25,26 +36,18 @@ if sys.platform == 'win32' and sys.stdout.isatty():
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-import nodriver as uc
-from nodriver import cdp
-from nodriver.core.config import Config
-from urllib3.exceptions import InsecureRequestWarning
-import urllib.parse
-
-import util
-from NonBrowser import NonBrowser
-
 try:
     import ddddocr
 except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.09.29)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.01)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
+CONST_MAXBOT_EXTENSION_STATUS_JSON = "status.json"
 CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
@@ -107,7 +110,6 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 # ===== Cloudflare 繞過模式設定 =====
 # 模式說明：
@@ -146,10 +148,10 @@ def get_config_dict(args):
                 "browser": ["browser"],
                 "tixcraft_sid": ["advanced", "tixcraft_sid"],
                 "ibonqware": ["advanced", "ibonqware"],
+                "kktix_account": ["advanced", "kktix_account"],
+                "kktix_password": ["advanced", "kktix_password_plaintext"],
                 "proxy_server": ["advanced", "proxy_server_port"],
-                "window_size": ["advanced", "window_size"],
-                "date_auto_select_mode": ["date_auto_select", "mode"],
-                "date_keyword": ["date_auto_select", "date_keyword"]
+                "window_size": ["advanced", "window_size"]
             }
 
             # Update the config_dict based on the arguments
@@ -190,12 +192,34 @@ def read_last_url_from_file():
         ret = text_file.readline()
     return ret
 
+def sync_status_to_extension(status):
+    # sync generated ext status.
+    Root_Dir = util.get_app_root()
+    webdriver_folder = os.path.join(Root_Dir, "webdriver")
+    target_folder_list = os.listdir(webdriver_folder)
+    for item in target_folder_list:
+        if item.startswith("tmp_" + CONST_MAXBOT_EXTENSION_NAME):
+            target_path = os.path.join(webdriver_folder, item)
+            target_path = os.path.join(target_path, "data")
+            if os.path.exists(target_path):
+                target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
+                #print("save as to:", target_path)
+                status_json={}
+                status_json["status"]=status
+                #print("dump json to path:", target_path)
+                try:
+                    with open(target_path, 'w') as outfile:
+                        json.dump(status_json, outfile)
+                except Exception as e:
+                    pass
+
 def play_sound_while_ordering(config_dict):
     app_root = util.get_app_root()
     captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
     util.play_mp3_async(captcha_sound_filename)
 
 async def nodriver_press_button(tab, select_query):
+    ret = False
     if tab:
         try:
             element = await tab.query_selector(select_query)
@@ -349,7 +373,7 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
                 await password.send_keys(facebook_password)
                 await tab.send(cdp.input_.dispatch_key_event("keyDown", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
                 await tab.send(cdp.input_.dispatch_key_event("keyUp", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
-                await asyncio.sleep(2)
+                await tab.sleep(2)
             else:
                 print("password not found")
         except Exception as e:
@@ -509,12 +533,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
         print(f"解析 back_to 參數失敗: {exc}")
 
     # for like human.
-    await asyncio.sleep(random.uniform(3, 5))
+    await tab.sleep(random.uniform(3, 5))
 
     kktix_account = config_dict["advanced"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
-        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+        kktix_password = util.decrypt_me(config_dict["advanced"]["kktix_password"])
 
     has_redirected = False
     if len(kktix_account) > 4:
@@ -522,12 +546,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             account = await tab.query_selector("#user_login")
             if account:
                 await account.send_keys(kktix_account)
-                await asyncio.sleep(random.uniform(0.8, 1.5))
+                await tab.sleep(random.uniform(0.8, 1.5))
 
             password = await tab.query_selector("#user_password")
             if password:
                 await password.send_keys(kktix_password)
-                await asyncio.sleep(random.uniform(0.8, 2.0))
+                await tab.sleep(random.uniform(0.8, 2.0))
 
             await tab.evaluate('''
                 const loginBtn = document.querySelector('input[type="submit"][value="登入"]');
@@ -536,14 +560,14 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                 }
             ''')
 
-            await asyncio.sleep(random.uniform(5.0, 10.0))
+            await tab.sleep(random.uniform(5.0, 10.0))
 
             try:
                 current_url = await tab.evaluate('window.location.href')
                 if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
                     if (current_url.endswith('/') or '/users/' in current_url) and target_url != current_url:
                         await tab.get(target_url)
-                        await asyncio.sleep(random.uniform(2.0, 4.0))
+                        await tab.sleep(random.uniform(2.0, 4.0))
                         has_redirected = True
             except Exception as redirect_error:
                 print(f"跳轉失敗: {redirect_error}")
@@ -568,15 +592,16 @@ async def nodriver_kktix_paused_main(tab, url, config_dict):
 
 async def nodriver_goto_homepage(driver, config_dict):
     homepage = config_dict["homepage"]
+    tab = None
+
     if 'kktix.c' in homepage:
         # for like human.
         try:
             tab = await driver.get(homepage)
-            await tab.get_content()
-            await asyncio.sleep(5)
+            await driver
+            await driver.sleep(5)
         except Exception as e:
             pass
-        
 
         if len(config_dict["advanced"]["kktix_account"])>0:
             if not 'https://kktix.com/users/sign_in?' in homepage:
@@ -610,13 +635,16 @@ async def nodriver_goto_homepage(driver, config_dict):
     if 'ticketplus.com.tw' in homepage:
         if len(config_dict["advanced"]["ticketplus_account"]) > 1:
             homepage = "https://ticketplus.com.tw/"
-
+    
     try:
         tab = await driver.get(homepage)
-        await tab.get_content()
-        await asyncio.sleep(3)
+        await driver
+        await driver.sleep(3)
     except Exception as e:
         pass
+
+    domain_name = homepage.split('/')[2]
+    is_cookie_changed = False
 
     tixcraft_family = False
     if 'tixcraft.com' in homepage:
@@ -638,9 +666,11 @@ async def nodriver_goto_homepage(driver, config_dict):
                     cookie.value=tixcraft_sid
                     is_cookie_exist = True
                     break
+
             if not is_cookie_exist:
-                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain="tixcraft.com", path="/", http_only=True, secure=True)
+                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=domain_name, path="/", http_only=True, secure=True)
                 cookies.append(new_cookie)
+                is_cookie_changed = True
             await driver.cookies.set_all(cookies)
 
     # 處理 ibon 登入
@@ -658,6 +688,15 @@ async def nodriver_goto_homepage(driver, config_dict):
 
         # 不管成功與否，都繼續後續處理，讓使用者手動處理登入問題
         # 這樣可以避免完全中斷搶票流程
+
+    if is_cookie_changed:
+        try:
+            for each_tab in driver.tabs:
+                await each_tab.reload()
+        except Exception as exc:
+            print(exc)
+            pass
+
 
     return tab
 
@@ -982,7 +1021,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
             assign_result = util.parse_nodriver_result(assign_result)
 
             if assign_result and assign_result.get('success') and assign_result.get('assigned'):
-                await asyncio.sleep(0.2)
+                await tab.sleep(0.2)
 
             if assign_result and assign_result.get('success'):
                 current_ticket_number = assign_result.get('value', '')
@@ -1016,7 +1055,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
     return is_dom_ready, is_ticket_number_assigned, is_need_refresh
 
 
-async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div):
+async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list):
     """增強版驗證碼處理，包含重試機制和人類化延遲"""
     show_debug_message = True       # debug.
     show_debug_message = False      # online
@@ -1367,7 +1406,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
         try:
             # 如果不是第一次嘗試，等待一下
             if retry_count > 0:
-                await asyncio.sleep(0.5)
+                await tab.sleep(0.5)
                 if show_debug_message:
                     print(f"KKTIX 按鈕點擊重試 {retry_count + 1}/3")
 
@@ -1444,7 +1483,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         print(f"KKTIX processing: [{button_text}]")
 
                     # 等待較長時間給 KKTIX 處理
-                    await asyncio.sleep(1.5)
+                    await tab.sleep(1.5)
 
                     try:
                         # 檢查是否已跳轉到訂單頁面
@@ -1464,7 +1503,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         print(f"KKTIX button click successful: [{button_text}]")
 
                     # 等待頁面處理並檢查是否跳轉
-                    await asyncio.sleep(0.8)  # 給 KKTIX 伺服器時間處理
+                    await tab.sleep(0.8)  # 給 KKTIX 伺服器時間處理
 
                     try:
                         # 檢查是否已跳轉到訂單頁面
@@ -1477,7 +1516,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         pass
 
                     # 如果沒有跳轉，等待原有時間並返回成功
-                    await asyncio.sleep(0.2)
+                    await tab.sleep(0.2)
                     return True
             else:
                 error_msg = result.get('error', 'Unknown error') if result else 'No result'
@@ -1498,7 +1537,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
 
                     # 如果是處理中狀態，等待較長時間再重試
                     if 'processing' in error_msg.lower():
-                        await asyncio.sleep(1.0)
+                        await tab.sleep(1.0)
 
                     # 繼續重試
                     continue
@@ -1513,192 +1552,182 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
     return False
 
 
-async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_ticket):
-    show_debug_message = True       # debug.
+async def nodriver_kktix_reg_new_main(tab, url, config_dict, fail_list, played_sound_ticket, last_sent_minute):
     show_debug_message = False      # online
-
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
-    # part 1: check div.
-    registrationsNewApp_div = None
-    try:
-        registrationsNewApp_div = await tab.query_selector('#registrationsNewApp')
-    except Exception as exc:
-        pass
-        #print("find input fail:", exc)
-
-    # part 2: assign ticket number
     is_ticket_number_assigned = False
-    if not registrationsNewApp_div is None:
-        is_dom_ready = True
-        is_need_refresh = False
+    is_dom_ready = True
+    is_need_refresh = False
 
-        # 檢查頁面狀態，如果偵測到售罄或未開賣，設定重新載入標記
-        try:
-            page_state_raw = await tab.evaluate('''
-                () => {
-                    // 只檢查票券區域內的售罄狀態，避免誤判
-                    const ticketArea = document.querySelector('#registrationsNewApp') || document.body;
-                    const areaHTML = ticketArea.innerHTML;
+    # 檢查頁面狀態，如果偵測到售罄或未開賣，設定重新載入標記
+    try:
+        page_state_raw = await tab.evaluate('''
+            () => {
+                // 只檢查票券區域內的售罄狀態，避免誤判
+                const ticketArea = document.querySelector('#registrationsNewApp') || document.body;
+                const areaHTML = ticketArea.innerHTML;
 
-                    const soldOut = areaHTML.includes('售完') ||
-                                   areaHTML.includes('Sold Out') ||
-                                   areaHTML.includes('已售完') ||
-                                   areaHTML.includes('sold out');
+                const soldOut = areaHTML.includes('售完') ||
+                               areaHTML.includes('Sold Out') ||
+                               areaHTML.includes('已售完') ||
+                               areaHTML.includes('sold out');
 
-                    const notYetOpen = areaHTML.includes('未開賣') ||
-                                      areaHTML.includes('尚未開始') ||
-                                      areaHTML.includes('即將開賣') ||
-                                      areaHTML.includes('coming soon');
+                const notYetOpen = areaHTML.includes('未開賣') ||
+                                  areaHTML.includes('尚未開始') ||
+                                  areaHTML.includes('即將開賣') ||
+                                  areaHTML.includes('coming soon');
 
-                    return { soldOut, notYetOpen };
-                }
-            ''')
+                return { soldOut, notYetOpen };
+            }
+        ''')
 
-            # 使用統一的結果處理函數
-            page_state = util.parse_nodriver_result(page_state_raw)
+        # 使用統一的結果處理函數
+        page_state = util.parse_nodriver_result(page_state_raw)
 
-            if page_state and (page_state.get('soldOut') or page_state.get('notYetOpen')):
-                is_need_refresh = True
-                if show_debug_message:
-                    status = "售罄" if page_state.get('soldOut') else "未開賣"
-                    print(f"KKTIX 偵測到 {status} 狀態，將重新載入頁面")
-        except Exception as exc:
+        if page_state and (page_state.get('soldOut') or page_state.get('notYetOpen')):
+            is_need_refresh = True
             if show_debug_message:
-                print(f"檢查頁面狀態失敗: {exc}")
+                status = "售罄" if page_state.get('soldOut') else "未開賣"
+                print(f"KKTIX 偵測到 {status} 狀態，將重新載入頁面")
+    except Exception as exc:
+        if show_debug_message:
+            print(f"檢查頁面狀態失敗: {exc}")
 
-        if len(area_keyword) > 0:
+    if len(area_keyword) > 0:
+        area_keyword_array = []
+        try:
+            area_keyword_array = json.loads("["+ area_keyword +"]")
+        except Exception as exc:
             area_keyword_array = []
-            try:
-                area_keyword_array = json.loads("["+ area_keyword +"]")
-            except Exception as exc:
-                area_keyword_array = []
 
-            # default refresh
-            is_need_refresh_final = True
+        # default refresh
+        is_need_refresh_final = True
 
-            for area_keyword_item in area_keyword_array:
-                is_need_refresh_tmp = False
-                is_dom_ready, is_ticket_number_assigned, is_need_refresh_tmp = await nodriver_kktix_assign_ticket_number(tab, config_dict, area_keyword_item)
+        for area_keyword_item in area_keyword_array:
+            is_need_refresh_tmp = False
+            is_dom_ready, is_ticket_number_assigned, is_need_refresh_tmp = await nodriver_kktix_assign_ticket_number(tab, config_dict, area_keyword_item)
 
-                if not is_dom_ready:
-                    # page redirecting.
-                    break
+            if not is_dom_ready:
+                # page redirecting.
+                break
 
-                # one of keywords not need to refresh, final is not refresh.
-                if not is_need_refresh_tmp:
-                    is_need_refresh_final = False
+            # one of keywords not need to refresh, final is not refresh.
+            if not is_need_refresh_tmp:
+                is_need_refresh_final = False
 
-                if is_ticket_number_assigned:
-                    break
-                else:
-                    if show_debug_message:
-                        print("is_need_refresh for keyword:", area_keyword_item)
-
-            if not is_ticket_number_assigned:
-                is_need_refresh = is_need_refresh_final
-        else:
-            # empty keyword, match all.
-            is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
-
-        if is_dom_ready:
-            # part 3: captcha
             if is_ticket_number_assigned:
-                if config_dict["advanced"]["play_sound"]["ticket"]:
-                    if not played_sound_ticket:
-                        play_sound_while_ordering(config_dict)
-                    played_sound_ticket = True
-
-                # 收集除錯資訊（僅在 debug 模式下）
-                if show_debug_message:
-                    debug_state = await debug_kktix_page_state(tab, show_debug_message)
-
-                # whole event question.
-                fail_list, is_question_popup, button_clicked_in_captcha = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
-
-                # single option question
-                if not is_question_popup:
-                    # no captcha text popup, goto next page.
-                    control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
-                    if show_debug_message:
-                        print("control_text:", control_text)
-
-                    if len(control_text) > 0:
-                        input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
-                        input_text_element = None
-                        try:
-                            input_text_element = await tab.query_selector(input_text_css)
-                        except Exception as exc:
-                            #print(exc)
-                            pass
-                        if input_text_element is None:
-                            radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
-                            try:
-                                radio_element = await tab.query_selector(radio_css)
-                                if radio_element:
-                                    print("found radio")
-                                    joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
-                                    joined_element = await tab.query_selector(joined_button_css)
-                                    if joined_element:
-                                        control_text = ""
-                                        print("member joined")
-                            except Exception as exc:
-                                print(exc)
-                                pass
-
-                    if len(control_text) == 0:
-                        # 檢查是否在驗證碼處理時已經點擊過按鈕
-                        if button_clicked_in_captcha:
-                            if show_debug_message:
-                                print("Button already clicked during captcha processing, skipping duplicate click")
-                        else:
-                            # 檢查是否已經跳轉到成功頁面，避免重複點擊
-                            try:
-                                current_url = await tab.evaluate('window.location.href')
-                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                                    if show_debug_message:
-                                        print("Already redirected to order page, skipping button click")
-                                else:
-                                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                            except Exception as exc:
-                                # 如果檢查失敗，還是嘗試點擊
-                                click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                    else:
-                        # input by maxbox plus extension.
-                        is_fill_at_webdriver = False
-
-                        if not config_dict["browser"] in CONST_CHROME_FAMILY:
-                            is_fill_at_webdriver = True
-                        else:
-                            if not config_dict["advanced"]["chrome_extension"]:
-                                is_fill_at_webdriver = True
-
-                        # TODO: not implement in extension, so force to fill in webdriver.
-                        is_fill_at_webdriver = True
-                        if is_fill_at_webdriver:
-                            #TODO:
-                            #set_kktix_control_label_text(driver, config_dict)
-                            pass
+                break
             else:
-                if is_need_refresh:
-                    # reset to play sound when ticket avaiable.
-                    played_sound_ticket = False
+                if show_debug_message:
+                    print("is_need_refresh for keyword:", area_keyword_item)
 
+        if not is_ticket_number_assigned:
+            is_need_refresh = is_need_refresh_final
+    else:
+        # empty keyword, match all.
+        is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
+
+    if is_dom_ready:
+        # part 3: captcha
+        if is_ticket_number_assigned:
+            if config_dict["advanced"]["play_sound"]["ticket"]:
+                if not played_sound_ticket:
+                    play_sound_while_ordering(config_dict)
+                played_sound_ticket = True
+
+            last_sent_minute = util.optimized_email_sending(config_dict, "ticket", last_sent_minute, url)
+            
+            # 收集除錯資訊（僅在 debug 模式下）
+            if show_debug_message:
+                debug_state = await debug_kktix_page_state(tab, show_debug_message)
+
+            # whole event question.
+            fail_list, is_question_popup, button_clicked_in_captcha  = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list)
+
+            # single option question
+            if not is_question_popup:
+                # no captcha text popup, goto next page.
+                control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
+                if show_debug_message:
+                    print("control_text:", control_text)
+
+                if len(control_text) > 0:
+                    input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
+                    input_text_element = None
                     try:
-                        print("no match any price, start to refresh page...")
-                        await tab.reload()
+                        input_text_element = await tab.query_selector(input_text_css)
                     except Exception as exc:
-                        #print("refresh fail")
+                        #print(exc)
                         pass
+                    if input_text_element is None:
+                        radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
+                        try:
+                            radio_element = await tab.query_selector(radio_css)
+                            if radio_element:
+                                print("found radio")
+                                joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
+                                joined_element = await tab.query_selector(joined_button_css)
+                                if joined_element:
+                                    control_text = ""
+                                    print("member joined")
+                        except Exception as exc:
+                            print(exc)
+                            pass
 
-                    if config_dict["advanced"]["auto_reload_page_interval"] > 0:
-                        await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+                if len(control_text) == 0:
+                    # 檢查是否在驗證碼處理時已經點擊過按鈕
+                    if button_clicked_in_captcha:
+                        if show_debug_message:
+                            print("Button already clicked during captcha processing, skipping duplicate click")
+                    else:
+                        # 檢查是否已經跳轉到成功頁面，避免重複點擊
+                        try:
+                            current_url = await tab.evaluate('window.location.href')
+                            if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                                if show_debug_message:
+                                    print("Already redirected to order page, skipping button click")
+                            else:
+                                click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
+                        except Exception as exc:
+                            # 如果檢查失敗，還是嘗試點擊
+                            click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
+                else:
+                    # input by maxbox plus extension.
+                    is_fill_at_webdriver = False
 
-    return fail_list, played_sound_ticket
+                    if not config_dict["browser"] in CONST_CHROME_FAMILY:
+                        is_fill_at_webdriver = True
+                    else:
+                        if not config_dict["advanced"]["chrome_extension"]:
+                            is_fill_at_webdriver = True
+
+                    # TODO: not implement in extension, so force to fill in webdriver.
+                    is_fill_at_webdriver = True
+                    if is_fill_at_webdriver:
+                        #TODO:
+                        #set_kktix_control_label_text(driver, config_dict)
+                        pass
+        else:
+            if is_need_refresh:
+                # reset to play sound when ticket avaiable.
+                played_sound_ticket = False
+
+                try:
+                    print("no match any price, start to refresh page...")
+                    await tab.reload()
+                except Exception as exc:
+                    #print("refresh fail")
+                    pass
+
+                if config_dict["advanced"]["auto_reload_page_interval"] > 0:
+                    await tab.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+    return fail_list, played_sound_ticket, last_sent_minute
 
 def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
     """檢查是否已成功取得 KKTIX 票券
@@ -1746,6 +1775,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["played_sound_order"] = False
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
+        kktix_dict["last_sent_minute"] = None
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -1753,11 +1783,11 @@ async def nodriver_kktix_main(tab, url, config_dict):
         is_url_contain_sign_in = True
 
         if redirect_needed:
-            await asyncio.sleep(3)
+            await tab.sleep(3)
             try:
                 url = await tab.evaluate('window.location.href')
                 is_url_contain_sign_in = False
-                await asyncio.sleep(1)
+                await tab.sleep(1)
             except Exception as exc:
                 print(f"取得跳轉後 URL 失敗: {exc}")
 
@@ -1787,7 +1817,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
                 # check is able to buy.
                 if config_dict["kktix"]["auto_fill_ticket_number"]:
-                    kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
+                    kktix_dict["fail_list"], kktix_dict["played_sound_ticket"], kktix_dict["last_sent_minute"] = await nodriver_kktix_reg_new_main(tab, url, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"], kktix_dict["last_sent_minute"])
                     kktix_dict["done_time"] = time.time()
         else:
             is_event_page = False
@@ -1824,6 +1854,8 @@ async def nodriver_kktix_main(tab, url, config_dict):
         # 搶票成功，設定結束標記
         is_quit_bot = True
 
+        util.optimized_email_sending(config_dict, "order", None, url)
+
         # 只在第一次偵測成功時執行動作
         if not kktix_dict["success_actions_done"]:
             if not kktix_dict["start_time"] is None:
@@ -1844,7 +1876,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     kktix_account = config_dict["advanced"]["kktix_account"]
                     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
                     if kktix_password == "":
-                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+                        kktix_password = util.decrypt_me(config_dict["advanced"]["kktix_password"])
 
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
@@ -2094,7 +2126,7 @@ async def nodriver_kktix_reg_auto_reload(tab, config_dict):
             await tab.reload()
 
             # 等待頁面載入完成
-            await asyncio.sleep(2)
+            await tab.sleep(2)
 
             if show_debug_message:
                 print("KKTIX 自動重載: 頁面重新載入完成")
@@ -2173,7 +2205,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = util.guess_tixcraft_question(driver, question_text)
+                answer_list = util.guess_tixcraft_question(tab, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -2190,7 +2222,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         next_step_button_css = ""
         submit_by_enter = True
         check_input_interval = 0.2
-        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+        is_answer_sent, fail_list = await nodriver_fill_common_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
     return fail_list
 
@@ -2427,7 +2459,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
             import time
-            await asyncio.sleep(interval)
+            await tab.sleep(interval)
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -2595,24 +2627,6 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
 
     return is_ticket_number_assigned, select_obj
 
-async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
-    show_debug_message = config_dict["advanced"]["verbose"]
-
-    if show_debug_message:
-        print("開始執行勾選同意條款")
-
-    for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', show_debug_message)
-        if is_finish_checkbox_click:
-            if show_debug_message:
-                print("勾選同意條款成功")
-            break
-        elif show_debug_message:
-            print(f"勾選同意條款失敗，重試 {i+1}/3")
-
-    if not is_finish_checkbox_click and show_debug_message:
-        print("警告：同意條款勾選失敗")
-
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
     global tixcraft_dict
     show_debug_message = True       # debug.
@@ -2626,18 +2640,17 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     ticket_number = str(config_dict["ticket_number"])
     ticket_state_key = f"ticket_assigned_{current_url}_{ticket_number}"
 
+    # 確保勾選同意條款（即使票券已設定）
+    # NoDriver 模式下總是執行勾選同意條款
+    await nodriver_check_checkbox(tab, '#TicketForm_agree:not(:checked)')
+
     if ticket_state_key in tixcraft_dict and tixcraft_dict[ticket_state_key]:
         if show_debug_message:
             print(f"票券數量已設定過 ({ticket_number} 張)，跳過重複設定")
 
-        # 確保勾選同意條款（即使票券已設定）
-        await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
-
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
         return
 
-    # NoDriver 模式下總是執行勾選同意條款
-    await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
     is_ticket_number_assigned = False
 
@@ -2917,7 +2930,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                 # 頁面尚未準備好，重試
                 # PS: 通常發生在非同步腳本取得驗證碼圖片時
                 is_need_redo_ocr = True
-                await asyncio.sleep(0.1)
+                await tab.sleep(0.1)
             else:
                 await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
         else:
@@ -2940,7 +2953,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
 
                         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
-                            await asyncio.sleep(0.1)
+                            await tab.sleep(0.1)
     else:
         print("[TIXCRAFT OCR] 輸入框不存在，退出 OCR...")
 
@@ -3009,7 +3022,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
                         pass
 
                     # Wait for potential auto-refresh
-                    await asyncio.sleep(2.5)
+                    await tab.sleep(2.5)
                     fail_count = 0  # Reset consecutive counter after handling
 
             # 檢查是否還在同一頁面
@@ -3079,7 +3092,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if tixcraft_dict["area_retry_count"] >= (60 * 15):
                     # Cool-down
                     tixcraft_dict["area_retry_count"] = 0
-                    await asyncio.sleep(5)
+                    await tab.sleep(5)
             else:
                 # area auto select is too difficult, skip in this version.
                 # TODO:
@@ -3287,7 +3300,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     ticketplus_account = config_dict["advanced"]["ticketplus_account"]
     ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
     if ticketplus_password == "":
-        ticketplus_password = util.decryptMe(config_dict["advanced"]["ticketplus_password"])
+        ticketplus_password = util.decrypt_me(config_dict["advanced"]["ticketplus_password"])
 
     # manually keyin verify code.
     country_code = ""
@@ -3321,7 +3334,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
                 await el_password.click()
                 await el_password.apply('function (element) {element.value = ""; } ')
                 await el_password.send_keys(ticketplus_password);
-                await asyncio.sleep(random.uniform(0.1, 0.3))
+                await tab.sleep(random.uniform(0.1, 0.3))
                 is_filled_form = True
 
                 if country_code=="+886":
@@ -3329,7 +3342,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
                     print("press enter")
                     await tab.send(cdp.input_.dispatch_key_event("keyDown", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
                     await tab.send(cdp.input_.dispatch_key_event("keyUp", code="Enter", key="Enter", text="\r", windows_virtual_key_code=13))
-                    await asyncio.sleep(random.uniform(0.8, 1.2))
+                    await tab.sleep(random.uniform(0.8, 1.2))
                     # PS: ticketplus country field may not located at your target country.
                     is_submited = True
         except Exception as exc:
@@ -3367,7 +3380,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
         is_user_signin = await nodriver_ticketplus_is_signin(tab)
         #print("is_user_signin:", is_user_signin)
         if not is_user_signin:
-            await asyncio.sleep(0.1)
+            await tab.sleep(0.1)
             if not is_filled_ticketplus_singin_form:
                 is_sign_in_btn_pressed = False
                 try:
@@ -3377,7 +3390,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
                     if sign_in_btn:
                         await sign_in_btn.click()
                         is_sign_in_btn_pressed = True
-                        await asyncio.sleep(0.2)
+                        await tab.sleep(0.2)
                 except Exception as exc:
                     print(exc)
                     pass
@@ -4823,7 +4836,7 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
                         print("Waiting for animation to complete...")
 
                     # 等待展開動畫完成（包含暫停檢查）
-                    if await asyncio_sleep_with_pause_check(0.5, config_dict):
+                    if await tab_sleep_with_pause_check(0.5, config_dict):
                         if show_debug_message:
                             print("Paused while waiting for animation")
                         return False, False
@@ -11959,7 +11972,7 @@ async def nodriver_cityline_close_second_tab(tab, url):
                         break
     return new_tab
 
-async def nodriver_cityline_main(tab, url, config_dict):
+async def nodriver_cityline_main(driver, tab, url, config_dict):
     global cityline_dict
     if not 'cityline_dict' in globals():
         cityline_dict = {}
@@ -12021,7 +12034,7 @@ async def nodriver_facebook_main(tab, config_dict):
     facebook_account = config_dict["advanced"]["facebook_account"].strip()
     facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
     if facebook_password == "":
-        facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+        facebook_password = util.decrypt_me(config_dict["advanced"]["facebook_password"])
     if len(facebook_account) > 4:
         await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
@@ -12171,30 +12184,82 @@ async def nodrver_block_urls(tab, config_dict):
     await tab.send(cdp.network.set_blocked_ur_ls(NETWORK_BLOCKED_URLS))
     return tab
 
-async def nodriver_resize_window(tab, config_dict):
-    if len(config_dict["advanced"]["window_size"]) > 0:
-        if "," in config_dict["advanced"]["window_size"]:
-            size_array = config_dict["advanced"]["window_size"].split(",")
-            position_left = 0
+async def nodriver_resize_window(driver, config_dict):
+    window_size = config_dict["advanced"]["window_size"]
+    #print("window_size", window_size)
+    if len(window_size) > 0:
+        if "," in window_size:
+            print("start to resize window")
+            launch_counter = 1
+            target_left = 0
+            target_top = 30
+            target_width = 600
+            target_height = 1024
+            size_array = window_size.split(",")
+            if len(size_array) >= 2:
+                target_width = int(size_array[0])
+                target_height = int(size_array[1])
             if len(size_array) >= 3:
-                position_left = int(size_array[0]) * int(size_array[2])
+                if len(size_array[2]) > 0:
+                    launch_counter = int(size_array[2])
+                target_left = target_width * launch_counter
+                if target_left >= 1440:
+                    target_left = 0
             #tab = await driver.main_tab()
-            if tab:
-                await tab.set_window_size(left=position_left, top=30, width=int(size_array[0]), height=int(size_array[1]))
+            try:
+                for i, tab in enumerate(driver):
+                    await tab.set_window_size(left=target_left, top=target_top, width=target_width, height=target_height)
+            except Exception as exc:
+                # cannot unpack non-iterable NoneType object
+                print(exc)
+                #print("請關閉所有視窗後，重新操作一次")
+                pass
 
-async def nodriver_current_url(tab):
-    is_quit_bot = False
+async def nodriver_current_url(driver, tab):
     exit_bot_error_strings = [
         "server rejected WebSocket connection: HTTP 500",
         "[Errno 61] Connect call failed ('127.0.0.1',",
         "[WinError 1225] ",
     ]
-
+    # return value
     url = ""
-    if tab:
-        url_dict = {}
+    is_quit_bot = False
+    last_active_tab = None
+
+    driver_info = await driver._get_targets()
+    if not tab.target in driver_info:
+        print("tab may closed by user before, or popup confirm dialog.")
+        tab = None
+        await driver
         try:
-            url_dict = await tab.js_dumps('window.location.href')
+            for i, each_tab in enumerate(driver):
+                target_info = each_tab.target.to_json()
+                target_url = ""
+                if target_info:
+                    if "url" in target_info:
+                        target_url = target_info["url"]
+                if len(target_url) > 4:
+                    if target_url[:4]=="http" or target_url == "about:blank":
+                        print("found tab url:", target_url)
+                        last_active_tab = each_tab
+        except Exception as exc:
+            print(exc)
+            if str(exc) == "list index out of range":
+                print("Browser closed, start to exit bot.")
+                is_quit_bot = True
+                tab = None
+                last_active_tab = None
+
+        if not last_active_tab is None:
+            tab = last_active_tab
+
+    if tab:
+        try:
+            target_info = tab.target.to_json()
+            if target_info:
+                if "url" in target_info:
+                    url = target_info["url"]
+            #url = await tab.evaluate('window.location.href')
         except Exception as exc:
             print(exc)
             str_exc = ""
@@ -12203,19 +12268,14 @@ async def nodriver_current_url(tab):
             except Exception as exc2:
                 pass
             if len(str_exc) > 0:
+                if str_exc == "server rejected WebSocket connection: HTTP 404":
+                    print("目前 nodriver 還沒準備好..., 請等到沒出現這行訊息再開始使用。")
+
                 for each_error_string in exit_bot_error_strings:
                     if each_error_string in str_exc:
                         #print('quit bot by error:', each_error_string, driver)
                         is_quit_bot = True
-
-        url_array = []
-        if url_dict:
-            for k in url_dict:
-                if k.isnumeric():
-                    if "0" in url_dict[k]:
-                        url_array.append(url_dict[k]["0"])
-            url = ''.join(url_array)
-    return url, is_quit_bot
+    return url, is_quit_bot, last_active_tab
 
 def nodriver_overwrite_prefs(conf):
     #print(conf.user_data_dir)
@@ -12223,7 +12283,7 @@ def nodriver_overwrite_prefs(conf):
     if not os.path.exists(prefs_filepath):
         os.mkdir(prefs_filepath)
     prefs_filepath = os.path.join(prefs_filepath,"Preferences")
-    
+
     prefs_dict = {
         "credentials_enable_service": False,
         "ack_existing_ntp_extensions": False,
@@ -12261,57 +12321,184 @@ def nodriver_overwrite_prefs(conf):
 
     state_filepath = os.path.join(conf.user_data_dir,"Local State")
     state_dict = {}
-    state_dict["performance_tuning"]={}
-    state_dict["performance_tuning"]["high_efficiency_mode"]={}
-    state_dict["performance_tuning"]["high_efficiency_mode"]["state"]=1
-    state_dict["browser"]={}
-    state_dict["browser"]["enabled_labs_experiments"]=[
-        "history-journeys@4",
-        "memory-saver-multi-state-mode@1",
-        "modal-memory-saver@1",
-        "read-anything@2"
-    ]
     state_dict["dns_over_https"]={}
     state_dict["dns_over_https"]["mode"]="off"
     json_str = json.dumps(state_dict)
     with open(state_filepath, 'w') as outfile:
         outfile.write(json_str)
 
-async def check_refresh_datetime_occur(tab, target_time):
+async def check_refresh_datetime_occur(driver, target_time):
     is_refresh_datetime_sent = False
-
-    system_clock_data = datetime.now()
-    current_time = system_clock_data.strftime('%H:%M:%S')
-    if target_time == current_time:
-        try:
-            await tab.reload()
-            is_refresh_datetime_sent = True
-            print("send refresh at time:", current_time)
-        except Exception as exc:
-            pass
+    if len(target_time) > 0:
+        system_clock_data = datetime.now()
+        current_time = system_clock_data.strftime('%H:%M:%S')
+        if target_time == current_time:
+            try:
+                for tab in driver.tabs:
+                    await tab.reload()
+                    is_refresh_datetime_sent = True
+                    print("send refresh at time:", current_time)
+            except Exception as exc:
+                print(exc)
+                pass
 
     return is_refresh_datetime_sent
 
+async def sendkey_to_browser(driver, config_dict, url):
+    tmp_filepath = ""
+    if "token" in config_dict:
+        app_root = util.get_app_root()
+        tmp_file = config_dict["token"] + "_sendkey.tmp"
+        tmp_filepath = os.path.join(app_root, tmp_file)
+
+    if os.path.exists(tmp_filepath):
+        sendkey_dict = None
+        try:
+            with open(tmp_filepath) as json_data:
+                sendkey_dict = json.load(json_data)
+                print(sendkey_dict)
+        except Exception as e:
+            print("error on open file")
+            print(e)
+            pass
+
+        if sendkey_dict:
+            #print("nodriver start to sendkey")
+            for each_tab in driver.tabs:
+                all_command_done = await sendkey_to_browser_exist(each_tab, sendkey_dict, url)
+
+                # must all command success to delete tmp file.
+                if all_command_done:
+                    try:
+                        os.unlink(tmp_filepath)
+                        #print("remove file:", tmp_filepath)
+                    except Exception as e:
+                        pass
+
+async def sendkey_to_browser_exist(tab, sendkey_dict, url):
+    all_command_done = True
+    if "command" in sendkey_dict:
+        for cmd_dict in sendkey_dict["command"]:
+            #print("cmd_dict", cmd_dict)
+            matched_location = True
+            if "location" in cmd_dict:
+                if cmd_dict["location"] != url:
+                    matched_location = False
+
+            if matched_location:
+                if cmd_dict["type"] == "sendkey":
+                    print("sendkey")
+                    target_text = cmd_dict["text"]
+                    try:
+                        element = await tab.query_selector(cmd_dict["selector"])
+                        if element:
+                            await element.click()
+                            await element.apply('function (element) {element.value = ""; } ')
+                            await element.send_keys(target_text);
+                        else:
+                            #print("element not found:", select_query)
+                            pass
+                    except Exception as e:
+                        all_command_done = False
+                        #print("click fail for selector:", select_query)
+                        print(e)
+                        pass
+
+                if cmd_dict["type"] == "click":
+                    print("click")
+                    try:
+                        element = await tab.query_selector(cmd_dict["selector"])
+                        if element:
+                            await element.click()
+                        else:
+                            #print("element not found:", select_query)
+                            pass
+                    except Exception as e:
+                        all_command_done = False
+                        #print("click fail for selector:", select_query)
+                        print(e)
+                        pass
+            time.sleep(0.05)
+    return all_command_done
+
+async def eval_to_browser(driver, config_dict, url):
+    tmp_filepath = ""
+    if "token" in config_dict:
+        app_root = util.get_app_root()
+        tmp_file = config_dict["token"] + "_eval.tmp"
+        tmp_filepath = os.path.join(app_root, tmp_file)
+
+    if os.path.exists(tmp_filepath):
+        eval_dict = None
+        try:
+            with open(tmp_filepath) as json_data:
+                eval_dict = json.load(json_data)
+                print(eval_dict)
+        except Exception as e:
+            print("error on open file")
+            print(e)
+            pass
+
+        if eval_dict:
+            #print("nodriver start to eval")
+            for each_tab in driver.tabs:
+                all_command_done = await eval_to_browser_exist(each_tab, eval_dict, url)
+
+                # must all command success to delete tmp file.
+                if all_command_done:
+                    try:
+                        os.unlink(tmp_filepath)
+                        #print("remove file:", tmp_filepath)
+                    except Exception as e:
+                        pass
+
+async def eval_to_browser_exist(tab, eval_dict, url):
+    all_command_done = True
+    if "command" in eval_dict:
+        for cmd_dict in eval_dict["command"]:
+            #print("cmd_dict", cmd_dict)
+            matched_location = True
+            if "location" in cmd_dict:
+                if cmd_dict["location"] != url:
+                    matched_location = False
+
+            if matched_location:
+                if cmd_dict["type"] == "eval":
+                    print("eval")
+                    target_script = cmd_dict["script"]
+                    try:
+                        await tab.evaluate(target_script)
+                    except Exception as e:
+                        all_command_done = False
+                        #print("click fail for selector:", select_query)
+                        print(e)
+                        pass
+
+            time.sleep(0.05)
+    return all_command_done
+
 async def main(args):
     config_dict = get_config_dict(args)
+    config_dict["token"] = util.get_token()
 
     driver = None
     tab = None
     if not config_dict is None:
-        sandbox = False
         conf = get_extension_config(config_dict)
         nodriver_overwrite_prefs(conf)
-        # PS: nodrirver run twice always cause error:
-        # Failed to connect to browser
-        # One of the causes could be when you are running as root.
-        # In that case you need to pass no_sandbox=True
-        #driver = await uc.start(conf, sandbox=sandbox, headless=config_dict["advanced"]["headless"])
+        #driver = await uc.start(conf, headless=config_dict["advanced"]["headless"])
         driver = await uc.start(conf)
         if not driver is None:
+            tab = driver.main_tab
+            await tab.send(cdp.page.add_script_to_evaluate_on_new_document(source="""
+                Element.prototype._as = Element.prototype.attachShadow;
+                Element.prototype.attachShadow = function (params) {
+                    return this._as({mode: "open"})
+                };"""))
             tab = await nodriver_goto_homepage(driver, config_dict)
             tab = await nodrver_block_urls(tab, config_dict)
             if not config_dict["advanced"]["headless"]:
-                await nodriver_resize_window(tab, config_dict)
+                await nodriver_resize_window(driver, config_dict)
         else:
             print("無法使用nodriver，程式無法繼續工作")
             sys.exit()
@@ -12343,21 +12530,24 @@ async def main(args):
         print(exc)
         pass
 
-    maxbot_last_reset_time = time.time()
     is_quit_bot = False
     is_refresh_datetime_sent = False
 
-    while True:
-        await asyncio.sleep(0.05)
+    app_root = util.get_app_root()
+    idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
 
+    while True:
         # pass if driver not loaded.
         if driver is None:
             print("nodriver not accessible!")
             break
+        else:
+            await driver.sleep(0.05)
 
         if not is_quit_bot:
-            url, is_quit_bot = await nodriver_current_url(tab)
-            #print("url:", url)
+            url, is_quit_bot, reset_act_tab = await nodriver_current_url(driver, tab)
+            if not reset_act_tab is None:
+                tab = reset_act_tab
 
         if is_quit_bot:
             try:
@@ -12374,11 +12564,12 @@ async def main(args):
                 continue
 
         if not is_refresh_datetime_sent:
-            is_refresh_datetime_sent = await check_refresh_datetime_occur(tab, config_dict["refresh_datetime"])
+            is_refresh_datetime_sent = await check_refresh_datetime_occur(driver, config_dict["refresh_datetime"])
 
         is_maxbot_paused = False
-        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+        if os.path.exists(idle_filepath):
             is_maxbot_paused = True
+        sync_status_to_extension(not is_maxbot_paused)
 
         if len(url) > 0 :
             if url != last_url:
@@ -12394,6 +12585,9 @@ async def main(args):
             # sleep more when paused.
             await asyncio.sleep(0.1)
             continue
+
+        await sendkey_to_browser(driver, config_dict, url)
+        await eval_to_browser(driver, config_dict, url)
 
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
@@ -12486,7 +12680,7 @@ async def main(args):
             pass
 
         if 'cityline.com' in url:
-            tab = await nodriver_cityline_main(tab, url, config_dict)
+            tab = await nodriver_cityline_main(driver, tab, url, config_dict)
 
         softix_family = False
         if 'hkticketing.com' in url:
