@@ -19,6 +19,7 @@ assignees: 'bouob'
 - 執行方式：[exe執行檔/Python原始碼]
 - Python版本：[如果使用原始碼，請執行 `python --version` 查看]
 - 票務平台：[TixCraft/KKTIX/其他]
+- 目標網址：[https://tixcraft.com/activity/detail/xi198964]
 - WebDriver：[undetected_chromedriver/nodriver/selenium]
 
 ## 📋 錯誤訊息
