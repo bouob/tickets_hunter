@@ -305,7 +305,7 @@ async def nodriver_check_checkbox_enhanced(tab, select_query, show_debug_message
 
     try:
         if show_debug_message:
-            print(f"執行勾選 checkbox: {select_query}")
+            print(f"Checking checkbox: {select_query}")
 
         # 直接使用 JavaScript 查找並勾選
         result = await tab.evaluate(f'''
@@ -328,11 +328,11 @@ async def nodriver_check_checkbox_enhanced(tab, select_query, show_debug_message
         is_checkbox_checked = bool(result)
 
         if show_debug_message:
-            print(f"勾選結果: {is_checkbox_checked}")
+            print(f"Checkbox result: {is_checkbox_checked}")
 
     except Exception as exc:
         if show_debug_message:
-            print(f"勾選異常: {exc}")
+            print(f"Checkbox error: {exc}")
 
     return is_checkbox_checked
 
@@ -398,7 +398,7 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
 
     except Exception as exc:
         if show_debug:
-            print(f"Cloudflare 偵測過程發生錯誤: {exc}")
+            print(f"Cloudflare detection error: {exc}")
         return False
 
 
@@ -426,53 +426,53 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
         show_debug_message = False
 
     if show_debug_message:
-        print("[CLOUDFLARE] 開始處理 Cloudflare 挑戰...")
+        print("[CLOUDFLARE] Starting to handle Cloudflare challenge...")
 
     for retry_count in range(max_retry):
         try:
             if retry_count > 0:
                 if show_debug_message:
-                    print(f"[CLOUDFLARE] 重試第 {retry_count} 次...")
-                # 增加重試間隔
+                    print(f"[CLOUDFLARE] Retry attempt {retry_count}...")
+                # Increase retry interval
                 await tab.sleep(3 + retry_count)
 
-            # 方法一：使用 nodriver 內建的 Cloudflare 繞過功能
+            # Method 1: Use nodriver's built-in Cloudflare bypass
             try:
                 cf_result = await tab.cf_verify()
                 if show_debug_message:
-                    print(f"cf_verify 結果: {cf_result}")
+                    print(f"cf_verify result: {cf_result}")
             except Exception as cf_exc:
                 if show_debug_message:
-                    print(f"cf_verify 不可用: {cf_exc}")
-                # 方法二：嘗試點擊驗證框（如果存在）
+                    print(f"cf_verify unavailable: {cf_exc}")
+                # Method 2: Try clicking verification box (if exists)
                 try:
-                    # 尋找 Cloudflare 驗證框
+                    # Find Cloudflare verification box
                     verify_box = await tab.query_selector('input[type="checkbox"]')
                     if verify_box:
                         await verify_box.click()
                         if show_debug_message:
-                            print("[CLOUDFLARE] 嘗試點擊驗證框")
+                            print("[CLOUDFLARE] Attempting to click verification box")
                 except Exception:
                     pass
 
-            # 等待挑戰完成（動態調整等待時間）
+            # Wait for challenge completion (dynamically adjust wait time)
             wait_time = CLOUDFLARE_WAIT_TIME + (retry_count * 2)
             await tab.sleep(wait_time)
 
-            # 檢查是否成功繞過
+            # Check if successfully bypassed
             if not await detect_cloudflare_challenge(tab, show_debug_message):
                 if show_debug_message:
-                    print("[CLOUDFLARE] Cloudflare 挑戰繞過成功")
+                    print("[CLOUDFLARE] Cloudflare challenge bypassed successfully")
                 return True
             else:
                 if show_debug_message:
-                    print(f"[CLOUDFLARE] 第 {retry_count + 1} 次嘗試未成功")
+                    print(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
 
-                # 最後一次嘗試：刷新頁面
+                # Last attempt: Refresh page
                 if retry_count == max_retry - 1:
                     try:
                         if show_debug_message:
-                            print("[CLOUDFLARE] 最後嘗試：刷新頁面")
+                            print("[CLOUDFLARE] Last attempt: Refreshing page")
                         await tab.reload()
                         await tab.sleep(5)
                         if not await detect_cloudflare_challenge(tab, show_debug_message):
@@ -482,11 +482,11 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
 
         except Exception as exc:
             if show_debug_message:
-                print(f"[CLOUDFLARE] 處理過程發生錯誤: {exc}")
+                print(f"[CLOUDFLARE] Error during processing: {exc}")
 
     if show_debug_message:
-        print("[CLOUDFLARE] Cloudflare 挑戰處理失敗，已達最大重試次數")
-        print("[CLOUDFLARE] 建議：檢查網路連線或稍後再試")
+        print("[CLOUDFLARE] Cloudflare challenge handling failed, max retries reached")
+        print("[CLOUDFLARE] Suggestion: Check network connection or try again later")
     return False
 
 
@@ -2612,7 +2612,7 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
             is_ticket_number_assigned = result.get('success', False)
 
     except Exception as exc:
-        print(f"設定票券數量失敗: {exc}")
+        print(f"Failed to set ticket number: {exc}")
 
     return is_ticket_number_assigned
 
@@ -2634,7 +2634,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         form_select_list = await tab.query_selector_all('.mobile-select')
     except Exception as exc:
         if show_debug_message:
-            print("查找 .mobile-select 失敗")
+            print("Failed to find .mobile-select")
 
     # 如果沒找到 .mobile-select，嘗試其他選擇器
     if len(form_select_list) == 0:
@@ -2642,7 +2642,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             form_select_list = await tab.query_selector_all('select[id*="TicketForm_ticketPrice_"]')
         except Exception as exc:
             if show_debug_message:
-                print("查找票券選擇器失敗")
+                print("Failed to find ticket selector")
 
     form_select_count = len(form_select_list)
     # 移除：內部檢測細節過度詳細
@@ -2665,10 +2665,10 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             if current_value and current_value != "0" and str(current_value).isnumeric():
                 is_ticket_number_assigned = True
                 if show_debug_message:
-                    print(f"票券數量已設定為: {current_value}")
+                    print(f"Ticket number already set to: {current_value}")
         except Exception as exc:
             if show_debug_message:
-                print(f"檢查當前選中值失敗: {exc}")
+                print(f"Failed to check current selected value: {exc}")
 
     # 回傳結果（保持與 Chrome 版本相容）
     select_obj = form_select_list[0] if form_select_count > 0 else None
@@ -2679,19 +2679,19 @@ async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
     show_debug_message = config_dict["advanced"]["verbose"]
 
     if show_debug_message:
-        print("開始執行勾選同意條款")
+        print("Starting to check agreement checkbox")
 
     for i in range(3):
         is_finish_checkbox_click = await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', show_debug_message)
         if is_finish_checkbox_click:
             if show_debug_message:
-                print("勾選同意條款成功")
+                print("Agreement checkbox checked successfully")
             break
         elif show_debug_message:
-            print(f"勾選同意條款失敗，重試 {i+1}/3")
+            print(f"Failed to check agreement, retry {i+1}/3")
 
     if not is_finish_checkbox_click and show_debug_message:
-        print("警告：同意條款勾選失敗")
+        print("Warning: Failed to check agreement checkbox")
 
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
     # 函數開始時檢查暫停
@@ -2712,15 +2712,15 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
 
     if ticket_state_key in tixcraft_dict and tixcraft_dict[ticket_state_key]:
         if show_debug_message:
-            print(f"票券數量已設定過 ({ticket_number} 張)，跳過重複設定")
+            print(f"Ticket number already set ({ticket_number}), skipping")
 
-        # 確保勾選同意條款（即使票券已設定）
+        # Ensure agreement checkbox is checked (even if ticket number already set)
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
         return
 
-    # NoDriver 模式下總是執行勾選同意條款
+    # Always check agreement checkbox in NoDriver mode
     await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
     is_ticket_number_assigned = False
@@ -2730,18 +2730,18 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
 
     if not is_ticket_number_assigned:
         if show_debug_message:
-            print(f"準備設定票券數量: {ticket_number}")
+            print(f"Setting ticket number: {ticket_number}")
         is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number)
 
-    # 設定成功後記錄狀態
+    # Record state after successful setting
     if is_ticket_number_assigned:
         tixcraft_dict[ticket_state_key] = True
         if show_debug_message:
-            print("票券數量設定完成，開始OCR驗證碼處理")
+            print("Ticket number set successfully, starting OCR captcha processing")
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
     else:
         if show_debug_message:
-            print("警告：票券數量設定失敗")
+            print("Warning: Failed to set ticket number")
 
 async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False, config_dict=None):
     """輸入驗證碼到表單"""
@@ -2781,7 +2781,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                     is_text_clicked = True
                     is_verifyCode_editing = True
                 except Exception as exc:
-                    print("點擊驗證碼輸入框失敗，嘗試使用 JavaScript")
+                    print("Failed to click captcha input, trying JavaScript")
                     try:
                         await tab.evaluate('''
                             document.getElementById("TicketForm_verifyCode").focus();
@@ -2791,7 +2791,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         pass
 
             if answer:
-                print("開始填入驗證碼...")
+                print("Starting to fill in captcha...")
                 try:
                     if not is_text_clicked:
                         await form_verifyCode.click()
@@ -2812,8 +2812,8 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         ticket_number_ok = util.parse_nodriver_result(ticket_number_ok)
 
                         if not ticket_number_ok and config_dict:
-                            print("警告：票券數量未設定，重新設定...")
-                            # 重新設定票券數量
+                            print("Warning: Ticket number not set, resetting...")
+                            # Reset ticket number
                             ticket_number = str(config_dict.get("ticket_number", 2))
                             await tab.evaluate(f'''
                                 (function() {{
@@ -2856,7 +2856,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                             is_verifyCode_editing = False
                             is_form_submitted = True
                         else:
-                            print(f"表單未就緒 - 票券:{form_ready.get('ticket')} 驗證碼:{form_ready.get('verify')} 同意:{form_ready.get('agree')}")
+                            print(f"Form not ready - Ticket:{form_ready.get('ticket')} Captcha:{form_ready.get('verify')} Agreement:{form_ready.get('agree')}")
                     else:
                         # 選取輸入框內容並顯示提示
                         await tab.evaluate('''
@@ -2866,7 +2866,7 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         await nodriver_tixcraft_toast(tab, f"※ 按 Enter 如果答案是: {answer}")
 
                 except Exception as exc:
-                    print("輸入驗證碼失敗:", exc)
+                    print("Failed to input captcha:", exc)
 
     return is_verifyCode_editing, is_form_submitted
 
@@ -2898,7 +2898,7 @@ async def nodriver_tixcraft_reload_captcha(tab, domain_name):
             await form_captcha.click()
             ret = True
     except Exception as exc:
-        print(f"重新載入驗證碼失敗: {exc}")
+        print(f"Failed to reload captcha: {exc}")
 
     return ret
 
@@ -2942,12 +2942,12 @@ async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, C
 
                 if img_base64 is None:
                     if not Captcha_Browser is None:
-                        print("canvas 取得圖片失敗，使用方案 B: NonBrowser")
+                        print("Failed to get image from canvas, using fallback: NonBrowser")
                         img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
 
             except Exception as exc:
                 if show_debug_message:
-                    print("canvas 處理異常:", str(exc))
+                    print("Canvas processing error:", str(exc))
 
         # OCR 識別
         if not img_base64 is None:
@@ -2955,7 +2955,7 @@ async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, C
                 ocr_answer = ocr.classification(img_base64)
             except Exception as exc:
                 if show_debug_message:
-                    print("OCR 識別失敗:", exc)
+                    print("OCR recognition failed:", exc)
 
     return ocr_answer
 
@@ -2981,7 +2981,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         except Exception as exc:
             pass
     else:
-        print("[TIXCRAFT OCR] ddddocr 組件無法使用，您可能在 ARM 環境下運行")
+        print("[TIXCRAFT OCR] ddddocr component unavailable, you may be running on ARM")
 
     if is_input_box_exist:
         if show_debug_message:
@@ -2994,7 +2994,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
         if show_debug_message:
-            print("[TIXCRAFT OCR] 處理時間:", "{:.3f}".format(ocr_elapsed_time))
+            print("[TIXCRAFT OCR] Processing time:", "{:.3f}".format(ocr_elapsed_time))
 
         if ocr_answer is None:
             if away_from_keyboard_enable:
@@ -3007,7 +3007,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         else:
             ocr_answer = ocr_answer.strip()
             if show_debug_message:
-                print("[TIXCRAFT OCR] 識別結果:", ocr_answer)
+                print("[TIXCRAFT OCR] Result:", ocr_answer)
             if len(ocr_answer) == 4:
                 who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict)
             else:
@@ -3018,7 +3018,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                     if previous_answer != ocr_answer:
                         previous_answer = ocr_answer
                         if show_debug_message:
-                            print("[TIXCRAFT OCR] 重新點擊驗證碼")
+                            print("[TIXCRAFT OCR] Reloading captcha")
 
                         # selenium 解決方案
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
@@ -3026,7 +3026,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
                             await asyncio.sleep(0.1)
     else:
-        print("[TIXCRAFT OCR] 輸入框不存在，退出 OCR...")
+        print("[TIXCRAFT OCR] Input box not found, exiting OCR...")
 
     return is_need_redo_ocr, previous_answer, is_form_submitted
 
@@ -3061,7 +3061,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
 
             if is_form_submitted:
                 if show_debug_message:
-                    print("[TIXCRAFT OCR] 表單已提交")
+                    print("[TIXCRAFT OCR] Form submitted")
                 break
 
             if not away_from_keyboard_enable:
@@ -3221,14 +3221,18 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print("bot elapsed time:", "{:.3f}".format(bot_elapsed_time))
                 tixcraft_dict["elapsed_time"] = bot_elapsed_time
 
+        # Always set is_quit_bot when checkout page is detected (not just in headless mode)
+        if not tixcraft_dict["is_popup_checkout"]:
+            is_quit_bot = True
+            tixcraft_dict["is_popup_checkout"] = True
+
+        # Headless-specific behavior: open checkout URL in new browser window
         if config_dict["advanced"]["headless"]:
-            if not tixcraft_dict["is_popup_checkout"]:
+            if tixcraft_dict["is_popup_checkout"]:
                 domain_name = url.split('/')[2]
                 checkout_url = "https://%s/ticket/checkout" % (domain_name)
-                print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
+                print("Ticket purchase successful, please check order at: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
-                tixcraft_dict["is_popup_checkout"] = True
-                is_quit_bot = True
 
         if config_dict["advanced"]["play_sound"]["order"]:
             if not tixcraft_dict["played_sound_order"]:
@@ -4736,7 +4740,7 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
 
                 // 如果關鍵字無匹配，才使用自動選擇模式
                 if (!selectedArea) {{
-                    console.log('🤖 關鍵字無匹配，使用自動選擇模式:', "{auto_select_mode}");
+                    console.log('關鍵字無匹配，使用自動選擇模式:', "{auto_select_mode}");
                     if (ticketAreas.length > 0) {{
                         const mode = "{auto_select_mode}";
                         if (mode === "from bottom to top") {{
@@ -4845,25 +4849,25 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
                                 for (let i = 0; i < clicksNeeded; i++) {{
                                     if (!plusButton.disabled) {{
                                         plusButton.click();
-                                        // 移除 await，改為快速點擊
+                                        // Remove await, use quick click instead
                                     }}
                                 }}
-                                console.log('票數設定完成');
+                                console.log('Ticket number set successfully');
                                 return true;
                             }} else {{
-                                console.log('票數已足夠');
+                                console.log('Ticket number already sufficient');
                                 return true;
                             }}
                         }}
                     }}
-                    console.log('警告：未找到有效的票數控制項');
+                    console.log('Warning: No valid ticket number control found');
                     return false;
                 }}
 
-                // 這裡不會執行到，因為上面已經有 return 了
+                // This code should not be reached, as there are returns above
                 return {{
                     success: false,
-                    error: "未預期的執行路徑",
+                    error: "Unexpected execution path",
                     needRefresh: true,
                     panelExpanded: false
                 }};
@@ -4996,18 +5000,18 @@ async def _set_expansion_panel_tickets(tab, ticket_number, show_debug_message):
                                         plusButton.click();
                                     }}
                                 }}
-                                console.log('票數設定完成');
+                                console.log('Ticket number set successfully');
                                 return {{ success: true }};
                             }} else {{
-                                console.log('票數已足夠');
+                                console.log('Ticket number already sufficient');
                                 return {{ success: true }};
                             }}
                         }}
                     }}
-                    return {{ success: false, error: "未找到有效的票數控制項" }};
+                    return {{ success: false, error: "No valid ticket number control found" }};
                 }} catch (error) {{
-                    console.error('票數設定錯誤:', error);
-                    return {{ success: false, error: 'JavaScript 執行錯誤: ' + error.message }};
+                    console.error('Ticket number setting error:', error);
+                    return {{ success: false, error: 'JavaScript execution error: ' + error.message }};
                 }}
             }})();
         ''')
@@ -17009,17 +17013,16 @@ async def main(args):
         if 'kktix.c' in url:
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
-                print("KKTIX 搶票完成，進入暫停模式")
-                # 建立暫停檔案，讓程式進入暫停狀態而不是結束
+                print("KKTIX ticket purchase completed")
+                # Create pause file to pause the program instead of exiting
                 try:
                     with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
                         text_file.write("")
-                    print("已自動暫停，可透過 Web 介面繼續執行")
-                    # 重置 is_quit_bot 避免程式結束
+                    print("Bot Paused. Purchase Completed!")
+                    # Reset is_quit_bot to avoid program exit
                     is_quit_bot = False
                 except Exception as e:
-                    print(f"建立暫停檔案失敗: {e}")
-                # 不執行 break，讓程式繼續執行並進入暫停模式
+                    print(f"Failed to create pause file: {e}")
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -17033,6 +17036,17 @@ async def main(args):
 
         if tixcraft_family:
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
+            if is_quit_bot:
+                print("TixCraft ticket purchase completed")
+                # Create pause file to pause the program instead of exiting
+                try:
+                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
+                        text_file.write("")
+                    print("Bot Paused. Purchase Completed!")
+                    # Reset is_quit_bot to avoid program exit
+                    is_quit_bot = False
+                except Exception as e:
+                    print(f"Failed to create pause file: {e}")
 
         if 'famiticket.com' in url:
             #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
