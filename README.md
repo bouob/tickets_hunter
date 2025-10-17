@@ -19,11 +19,11 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 | **🎨 KKTIX** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
 | **🎵 TicketPlus** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
 | **🎫 iBon** | ❌ 不修復 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
+| **🎭 年代售票** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
+| **🎪 寬宏售票** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
 | **🎪 Cityline** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 |
 | **🎤 TicketMaster** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 |
 | **🏟️ Urbtix** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
-| **🎭 年代售票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
-| **🎪 寬宏售票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 | **🏟️ HKTicketing** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 | **🎪 FamiTicket** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 
@@ -32,12 +32,13 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 - **NoDriver 優先架構** - NoDriver (推薦) + UC (備用) + Selenium (維護模式)
 - **OCR 驗證碼辨識** - 整合 ddddocr 自動處理驗證碼
 - **智慧化選取** - 日期、區域、票數自動選擇
-- **擴充套件輔助** - 廣告阻擋 + DOM 操作加速
 - **多設定檔管理** - 不同活動快速切換設定
 - **網頁設定介面** - 現代化回應式管理介面
 
-> **✅ NoDriver 引擎狀態更新 (2025.10.15)**
-> NoDriver 引擎主流平台（TixCraft、KKTIX、TicketPlus、iBon、KHAM）已實測搶票成功。
+> **📢 策略轉變公告 (2025.10.15)**
+> 本專案自 2025.10.15 起採用「NoDriver First」策略，優先開發與維護 NoDriver 版本。
+> UC 與 Selenium 已進入維護模式，僅修復嚴重錯誤，不再新增功能。
+> NoDriver 引擎主流平台（TixCraft、KKTIX、TicketPlus、iBon、KHAM、Ticket）已實測搶票成功。
 > **建議一般使用者優先使用 NoDriver 驅動**，遇到問題可切換至 UC 或 Selenium。
 > Selenium 與 UC 已進入維護模式，未來將逐步停止更新。
 > 如遇到任何問題請至 [GitHub Issues](https://github.com/bouob/tickets_hunter/issues) 回報。
@@ -123,7 +124,7 @@ TODO - 尚未計畫打包，請從原始碼執行
 **2. 原始碼版本（推薦，跨平台）**
 ```bash
 git clone https://github.com/bouob/tickets_hunter.git
-cd tickets_hunter/src
+cd tickets_hunter
 pip install -r requirement.txt
 ```
 
@@ -211,38 +212,6 @@ tickets_hunter/
 | `config_launcher.py` | 多設定檔管理 | 快速切換不同活動設定 |
 | `NonBrowser.py` | 非瀏覽器模式 | 純 HTTP 請求處理 |
 
-### 🔌 瀏覽器擴充套件
-- **Maxblockplus** - 廣告阻擋，加速頁面載入
-- **Maxbotplus** - DOM 操作輔助，支援 15+ 平台
-
----
-
-## 🔧 技術實作
-
-### 🛠️ WebDriver 策略
-1. **NoDriver** (推薦) - 反偵測能力最強，支援主流平台 ✅
-2. **undetected_chromedriver** (維護模式) - 隱蔽性佳，未來將停止更新
-3. **Selenium ChromeDriver** (維護模式) - 穩定性高，未來將停止更新
-
-> **📢 策略轉變公告 (2025.10.15)**
-> 本專案自 2025.10.15 起採用「NoDriver First」策略，優先開發與維護 NoDriver 版本。
-> UC 與 Selenium 已進入維護模式，僅修復嚴重錯誤，不再新增功能。
-
-#### NoDriver 平台支援狀態
-- ✅ **完整支援且已測試**: TixCraft, KKTIX, TicketPlus, iBon, KHAM
-- ⚠️ **部分支援**: TicketMaster, Cityline
-- ❌ **不支援** (僅提供 Chrome 版本): Urbtix, 年代售票, 寬宏售票, HK Ticketing, FamiTicket
-
-### 🧠 OCR 驗證碼辨識
-- 使用 [ddddocr](https://github.com/sml2h3/ddddocr) 進行圖像辨識
-- 支援 Canvas 和 Image 兩種驗證碼格式
-- 可調整辨識精度與提交策略
-
-### 🎯 智慧選取邏輯
-- **關鍵字匹配**：支援正則表達式和模糊匹配
-- **排除邏輯**：自動避開輪椅席、視線不良等位置
-- **隨機模式**：模擬真人選擇行為
-
 ---
 
 ## 🎬 教學資源
@@ -256,25 +225,6 @@ tickets_hunter/
 - [Cityline 教學](https://max-everyday.com/2019/03/cityline-bot/)
 - [Urbtix 教學](https://max-everyday.com/2019/02/urbtix-bot/)
 - [HKTicketing 教學](https://max-everyday.com/2023/01/hkticketing-bot/)
-
----
-
-## ❓ 常見問題
-
-### 🐛 安裝問題
-**Q: ARM CPU (M1/M2/M3) 安裝 ddddocr 時顯示錯誤？**
-A: 參考 [ddddocr MacOS ARM 安裝指南](FAQ/ddddocr_macos_arm_installation.md) 解決方案
-
-**Q: fatal: destination path already exists？**  
-A: 目錄已存在，直接 `cd tixcraft_bot` 即可
-
-**Q: Out of Memory 錯誤？**  
-A: 增加 Windows 虛擬記憶體或減少瀏覽器數量
-
-### ⚡ 效能最佳化
-- 使用原始碼執行比執行檔效率更高
-- 關閉不必要的瀏覽器擴充套件
-- 調整自動重載間隔避免過度佔用資源
 
 ---
 
