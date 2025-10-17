@@ -695,7 +695,11 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     ticket_price_list = None
     try:
+        # 舊版優先
         ticket_price_list = await tab.query_selector_all('div.display-table-row')
+        # 若舊版找不到，使用新版選擇器
+        if not ticket_price_list or len(ticket_price_list) == 0:
+            ticket_price_list = await tab.query_selector_all('div.ticket-item')
     except Exception as exc:
         ticket_price_list = None
         print("find ticket-price Exception:")
@@ -739,7 +743,12 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                 # 使用 JavaScript 一次取得所有資料，避免使用元素物件方法
                 result = await tab.evaluate(f'''
                     (function() {{
-                        const rows = document.querySelectorAll('div.display-table-row');
+                        // 舊版優先
+                        let rows = document.querySelectorAll('div.display-table-row');
+                        // 若舊版找不到，使用新版選擇器
+                        if (rows.length === 0) {{
+                            rows = document.querySelectorAll('div.ticket-item');
+                        }}
                         if (rows[{i}]) {{
                             const row = rows[{i}];
                             const input = row.querySelector('input');
@@ -962,7 +971,12 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
             # 使用 JavaScript 操作，避免使用元素物件方法
             assign_result = await tab.evaluate(f'''
                 (function() {{
-                    const inputs = document.querySelectorAll('div.display-table-row input');
+                    // 舊版優先
+                    let inputs = document.querySelectorAll('div.display-table-row input');
+                    // 若舊版找不到，使用新版選擇器
+                    if (inputs.length === 0) {{
+                        inputs = document.querySelectorAll('div.ticket-item input.number-step-input-core');
+                    }}
                     const targetInput = inputs[{target_index}];
 
                     if (!targetInput) {{
@@ -970,7 +984,11 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
                     }}
 
                     // 取得對應的票種名稱，清理多餘空白
-                    const parentRow = targetInput.closest('div.display-table-row');
+                    // 舊版優先使用 display-table-row，新版使用 ticket-item
+                    let parentRow = targetInput.closest('div.display-table-row');
+                    if (!parentRow) {{
+                        parentRow = targetInput.closest('div.ticket-item');
+                    }}
                     let ticketName = "未知票種";
                     if (parentRow) {{
                         ticketName = parentRow.textContent
@@ -1792,7 +1810,8 @@ def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
             if len(url.split('/')) >= 7:
                 if len(config_dict["homepage"].split('/')) >= 7:
                     if url.split('/')[4] == config_dict["homepage"].split('/')[4]:
-                        is_kktix_got_ticket = False
+                        # 保留訊息輸出，但不改變返回值
+                        # 重複動作保護已由 success_actions_done 標記處理
                         if show_debug_message:
                             print("重複進入相同活動的訂單頁面，跳過處理")
 
