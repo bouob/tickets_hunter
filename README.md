@@ -35,13 +35,10 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 - **多設定檔管理** - 不同活動快速切換設定
 - **網頁設定介面** - 現代化回應式管理介面
 
-> **📢 策略轉變公告 (2025.10.15)**
-> 本專案自 2025.10.15 起採用「NoDriver First」策略，優先開發與維護 NoDriver 版本。
-> UC 與 Selenium 已進入維護模式，僅修復嚴重錯誤，不再新增功能。
-> NoDriver 引擎主流平台（TixCraft、KKTIX、TicketPlus、iBon、KHAM、Ticket）已實測搶票成功。
-> **建議一般使用者優先使用 NoDriver 驅動**，遇到問題可切換至 UC 或 Selenium。
-> Selenium 與 UC 已進入維護模式，未來將逐步停止更新。
-> 如遇到任何問題請至 [GitHub Issues](https://github.com/bouob/tickets_hunter/issues) 回報。
+> **📢 NoDriver First 策略 (2025.10.15)**
+> NoDriver 引擎已完成主流平台實測（TixCraft、KKTIX、TicketPlus、iBon、KHAM、Ticket），建議一般使用者優先使用。
+> UC 與 Selenium 已進入維護模式，僅修復嚴重錯誤。
+> 如遇問題請至 [GitHub Issues](https://github.com/bouob/tickets_hunter/issues) 回報。
 
 ---
 
@@ -116,18 +113,19 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ### 📦 下載方式
 
-**1. 執行檔版本（僅 Windows）**
-```
-TODO - 尚未計畫打包，請從原始碼執行
-```
-
-**2. 原始碼版本（推薦，跨平台）**
+**原始碼版本（推薦，跨平台）**
 ```bash
 git clone https://github.com/bouob/tickets_hunter.git
 cd tickets_hunter
 pip install -r requirement.txt
 ```
 
+
+### 📂 路徑說明
+
+執行指令前請先確認工作目錄：
+- **根目錄** (`tickets_hunter/`)：執行 pip install、git pull 等全域指令
+- **原始碼目錄** (`tickets_hunter/src/`)：執行 Python 腳本（settings.py、config_launcher.py 等）
 
 ### 🚀 執行方式
 
@@ -155,7 +153,7 @@ git pull
 **或重新下載**
 ```bash
 git clone https://github.com/bouob/tickets_hunter.git
-cd tickets_hunter/src
+cd tickets_hunter
 pip install -r requirement.txt
 ```
 
