@@ -640,6 +640,9 @@ async def nodriver_goto_homepage(driver, config_dict):
     if tixcraft_family:
         tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
+            if config_dict["advanced"]["verbose"]:
+                print(f"Setting tixcraft SID cookie, length: {len(tixcraft_sid)}")
+
             cookies  = await driver.cookies.get_all()
             is_cookie_exist = False
             for cookie in cookies:
@@ -648,9 +651,13 @@ async def nodriver_goto_homepage(driver, config_dict):
                     is_cookie_exist = True
                     break
             if not is_cookie_exist:
-                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain="tixcraft.com", path="/", http_only=True, secure=True)
+                # 修正：使用 .tixcraft.com 包含所有子域名，http_only=False 與 Chrome 一致
+                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=".tixcraft.com", path="/", http_only=False, secure=True)
                 cookies.append(new_cookie)
             await driver.cookies.set_all(cookies)
+
+            if config_dict["advanced"]["verbose"]:
+                print("tixcraft SID cookie set successfully")
 
     # 處理 ibon 登入
     if 'ibon.com' in homepage:
