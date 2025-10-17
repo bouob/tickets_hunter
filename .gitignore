@@ -6,26 +6,25 @@
 # Python cache
 __pycache__/
 *.pyc
+.ptyhon-version
 
 # Sensitive config files
-/settings.json
-/settings.json.bak
-/config_launcher.json
-/MAXBOT_LAST_URL.txt
-/MAXBOT_INT28_IDLE.txt
-webdriver/*/data/settings.json
-webdriver/*/data/settings.json.bak
-webdriver/*/data/status.json
+/src/settings.json
+/src/config_launcher.json
+/src/MAXBOT_LAST_URL.txt
+/src/MAXBOT_INT28_IDLE.txt
+src/webdriver/*/data/settings.json
+src/webdriver/*/data/status.json
 
 # Browser data
 chrome_profile/
 user_data/
 
 # WebDriver executables
-webdriver/*.exe
-webdriver/chromedriver*
-webdriver/geckodriver*
-webdriver/msedgedriver*
+/src/webdriver/*.exe
+/src/webdriver/chromedriver*
+/src/webdriver/geckodriver*
+/src/webdriver/msedgedriver*
 
 # Logs and temp files
 *.log
@@ -37,3 +36,9 @@ webdriver/msedgedriver*
 .claude/
 CLAUDE.md
 /docs/
+.specify/
+specs/
+
+
+#Temp Disable
+/FAQ/
