@@ -4315,16 +4315,16 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
             print(f"Unified selector exception error: {exc}")
         is_selected = False
 
-    # 備用邏輯：如果選擇器失敗，檢查頁面狀態決定是否繼續
+    # Fallback logic: if selector fails, check page status to decide whether to continue
     if not is_selected:
         try:
             if show_debug_message:
                 print("Checking page status to decide whether to continue...")
 
-            # 檢查是否已經有票數被設定且下一步按鈕啟用
+            # Check if ticket count is set and next button is enabled
             page_status = await tab.evaluate('''
                 (function() {
-                    // 檢查是否有票數被設定（展開面板中的數字不是0）
+                    // Check if ticket count is set (number in expanded panel is not 0)
                     const ticketCounts = document.querySelectorAll('.count-button div');
                     let hasTickets = false;
                     for (let count of ticketCounts) {
@@ -4335,7 +4335,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         }
                     }
 
-                    // 檢查下一步按鈕是否啟用
+                    // Check if next button is enabled
                     const nextBtn = document.querySelector('button.nextBtn');
                     const buttonEnabled = nextBtn && !nextBtn.disabled && !nextBtn.classList.contains('v-btn--disabled') && !nextBtn.classList.contains('disabledBtn');
 
@@ -4351,7 +4351,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
             status = util.parse_nodriver_result(page_status)
             if isinstance(status, dict):
                 if show_debug_message:
-                    print(f"[STATUS] 頁面狀態: 有票數={status.get('hasTickets', False)}, 按鈕啟用={status.get('buttonEnabled', False)}")
+                    print(f"[STATUS] Page state: Has tickets={status.get('hasTickets', False)}, Button enabled={status.get('buttonEnabled', False)}")
 
                 if status.get('canContinue', False):
                     if show_debug_message:
@@ -4458,14 +4458,14 @@ async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
             if show_debug_message:
                 if success:
                     button_text = result.get('buttonText', '')
-                    print(f"[SUCCESS] 下一步按鈕點擊成功 - 按鈕文字: {button_text}")
+                    print(f"[SUCCESS] Next button clicked successfully - Button text: {button_text}")
                 else:
-                    print(f"[ERROR] 下一步按鈕點擊失敗: {result.get('message', '未知錯誤')}")
+                    print(f"[ERROR] Next button click failed: {result.get('message', 'Unknown error')}")
             return success
 
     except Exception as exc:
         if show_debug_message:
-            print(f"統一下一步按鈕點擊錯誤: {exc}")
+            print(f"Unified next button click error: {exc}")
 
     return False
 
@@ -5007,27 +5007,27 @@ async def _set_expansion_panel_tickets(tab, ticket_number, show_debug_message):
 
         parsed_result = util.parse_nodriver_result(result)
         if show_debug_message:
-            print(f"票數設定結果: {parsed_result}")
+            print(f"Ticket count assignment result: {parsed_result}")
 
         return isinstance(parsed_result, dict) and parsed_result.get('success', False)
 
     except Exception as exc:
         if show_debug_message:
-            print(f"[ERROR] 票數設定失敗: {exc}")
+            print(f"[ERROR] Ticket count assignment failed: {exc}")
         return False
 
 async def nodriver_ticketplus_assign_ticket_number(tab, target_area, config_dict):
-    """TicketPlus 票券數量設定功能 - 重構版，支援兩種佈局"""
+    """TicketPlus ticket quantity assignment - refactored version supporting two layouts"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
-    # 檢查暫停狀態
+    # Check pause state
     if await check_and_handle_pause(config_dict):
         return False
 
     target_ticket_number = config_dict["ticket_number"]
 
     if show_debug_message:
-        print(f"=== assign_ticket_number START (目標數量: {target_ticket_number}) ===")
+        print(f"=== Ticket assignment START (target count: {target_ticket_number}) ===")
 
     try:
         # 使用純 JavaScript 處理票數選擇，支援兩種佈局
@@ -5167,23 +5167,23 @@ async def nodriver_ticketplus_assign_ticket_number(tab, target_area, config_dict
                     final = result.get('finalCount', 0)
                     clicks = result.get('clickCount', 0)
                     message = result.get('message', '')
-                    print(f"[SUCCESS] 票數設定成功: {current} -> {final} (點擊 {clicks} 次) - {message}")
+                    print(f"[SUCCESS] Ticket count assigned: {current} -> {final} (clicked {clicks} times) - {message}")
                 else:
-                    error = result.get('error', '未知錯誤')
-                    print(f"✗ 票數設定失敗: {error}")
-                    # 顯示除錯資訊
+                    error = result.get('error', 'Unknown error')
+                    print(f"[ERROR] Ticket count assignment failed: {error}")
+                    # Show debug info
                     if 'found_div' in result:
-                        print(f"  找到計數器: {result.get('found_div')}")
+                        print(f"  Counter found: {result.get('found_div')}")
                     if 'found_button' in result:
-                        print(f"  找到按鈕: {result.get('found_button')}")
+                        print(f"  Button found: {result.get('found_button')}")
         else:
             if show_debug_message:
-                print(f"✗ 票數設定失敗: 返回結果格式錯誤 - {result}")
+                print(f"[ERROR] Ticket count assignment failed: Invalid result format - {result}")
 
         if show_debug_message:
-            print(f"=== assign_ticket_number END (結果: {'成功' if success else '失敗'}) ===")
+            print(f"=== Ticket assignment END (result: {'Success' if success else 'Failed'}) ===")
 
-        # 分配後檢查暫停
+        # Check pause after assignment
         if await check_and_handle_pause(config_dict):
             return False
 
@@ -5191,7 +5191,7 @@ async def nodriver_ticketplus_assign_ticket_number(tab, target_area, config_dict
 
     except Exception as exc:
         if show_debug_message:
-            print(f"✗ assign_ticket_number 異常: {exc}")
+            print(f"[ERROR] Ticket assignment exception: {exc}")
         return False
 
 async def nodriver_ticketplus_ticket_agree(tab, config_dict):
@@ -5378,15 +5378,12 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
                     '請勿離開',
                     '請勿關閉網頁',
                     '同時使用多個裝置',
+                    '視窗購票',
                     '正在處理',
                     '處理中'
                 ];
 
                 const bodyText = document.body.textContent || '';
-
-                // 檢查是否有排隊中的標題
-                const queueTitle = document.querySelector('h3[data-v-9c1a94a8].mt-4');
-                const hasQueueTitle = queueTitle && queueTitle.textContent.includes('排隊購票中');
 
                 // 檢查是否包含任何排隊關鍵字
                 const hasQueueKeyword = queueKeywords.some(keyword => bodyText.includes(keyword));
@@ -5406,8 +5403,8 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
                 const foundKeywords = queueKeywords.filter(keyword => bodyText.includes(keyword));
 
                 return {
-                    inQueue: hasQueueTitle || hasQueueKeyword || hasOverlay || hasQueueDialog,
-                    queueTitle: hasQueueTitle ? queueTitle.textContent : '',
+                    inQueue: hasQueueKeyword || hasOverlay || hasQueueDialog,
+                    queueTitle: '',
                     foundKeywords: foundKeywords,
                     hasOverlay: hasOverlay,
                     hasQueueDialog: hasQueueDialog,
@@ -5420,31 +5417,29 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
 
         if isinstance(result, dict):
             is_in_queue = result.get('inQueue', False)
-            # 只在強制顯示或首次偵測時才輸出詳細資訊
+            # Only output detailed info on forced display or first detection
             if show_debug_message and is_in_queue and force_show_debug:
-                print(f"[QUEUE] 偵測到排隊狀態")
-                if result.get('queueTitle'):
-                    print(f"   排隊標題: {result.get('queueTitle')}")
+                print(f"[QUEUE] Queue status detected")
                 if result.get('hasOverlay'):
-                    print("   發現遮罩層 (v-overlay__scrim)")
+                    print("   Overlay scrim found (v-overlay__scrim)")
                 if result.get('hasQueueDialog'):
-                    print(f"   對話框內容: {result.get('dialogText', '')}")
+                    print(f"   Dialog content: {result.get('dialogText', '')}")
                 if result.get('foundKeywords'):
                     keywords = result.get('foundKeywords', [])
-                    # 處理可能的 dict 格式（NoDriver 特殊返回）
+                    # Handle possible dict format (NoDriver special return)
                     if keywords and isinstance(keywords[0], dict):
                         keywords = [str(k.get('value', k)) for k in keywords]
                     elif keywords:
-                        keywords = [str(k) for k in keywords]  # 確保都是字串
+                        keywords = [str(k) for k in keywords]  # Ensure all are strings
                     if keywords:
-                        print(f"   找到關鍵字: {', '.join(keywords)}")
+                        print(f"   Keywords found: {', '.join(keywords)}")
             return is_in_queue
 
         return False
 
     except Exception as exc:
         if show_debug_message:
-            print(f"排隊狀態檢測錯誤: {exc}")
+            print(f"Queue status check error: {exc}")
         return False
 
 async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
@@ -5572,8 +5567,10 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     if show_debug_message:
         print("=== TicketPlus Auto Layout Detection Started ===")
 
-    # 等待頁面載入完成，避免找不到按鈕（包含暫停檢查）
-    if await sleep_with_pause_check(tab, 0.6, config_dict):
+    # Wait for page load to complete, with sufficient delay for Vue.js initialization
+    # Reduced to 0.8-1.5s since initial delay (1.5-2.0s) has already been applied at order page entry
+    # This prevents excessive waiting while maintaining stability
+    if await sleep_with_pause_check(tab, random.uniform(0.8, 1.5), config_dict):
         if show_debug_message:
             print("Paused during page wait")
         return ticketplus_dict
@@ -5614,25 +5611,18 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         print(f"Configured keyword: '{area_keyword}'")
         print(f"Has keyword configured: {has_keyword}")
 
-    # 如果按鈕禁用或有關鍵字設定，才需要選票
-    need_select_ticket = not is_button_enabled or has_keyword
+    # 總是執行票數選擇（TicketPlus 按鈕可以在票數為 0 時啟用）
+    need_select_ticket = True
 
-    if need_select_ticket:
-        if show_debug_message:
-            print(f"Need ticket selection: Button disabled={not is_button_enabled}, Has keyword={has_keyword}")
+    if show_debug_message:
+        print(f"Ticket selection is always required (TicketPlus quirk)")
 
-        # 使用統一選擇器處理所有頁面類型（不依賴 layout_style）
-        if show_debug_message:
-            print(f"Using unified selector - keyword: {area_keyword}")
+    # 使用統一選擇器處理所有頁面類型（不依賴 layout_style）
+    if show_debug_message:
+        print(f"Using unified selector - keyword: {area_keyword}")
 
-        is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, area_keyword)
-        is_need_refresh = not is_price_assign_by_bot  # 如果選擇失敗則需要刷新
-
-    # 如果按鈕已啟用且無需選票，視為可以直接提交
-    elif not need_select_ticket and is_button_enabled:
-        is_price_assign_by_bot = True
-        if show_debug_message:
-            print("Button enabled, no ticket selection needed, proceeding to submission")
+    is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, area_keyword)
+    is_need_refresh = not is_price_assign_by_bot  # 如果選擇失敗則需要刷新
 
     # 如果票種選擇成功，處理後續步驟
     if is_price_assign_by_bot:
@@ -5657,8 +5647,10 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         is_form_submitted = await nodriver_ticketplus_click_next_button_unified(tab, config_dict)
 
         if is_form_submitted:
-            await tab.sleep(5.0)
-            ticketplus_dict["is_ticket_assigned"] = True
+            # 隨機等待 5-10 秒讓排隊狀態初始化（避免固定時間被偵測）
+            await tab.sleep(random.uniform(5.0, 10.0))
+            # 注意：不在此處標記 is_ticket_assigned，避免重載時跳過選票邏輯
+            # 應在進入 /confirm/ 頁面後才標記（見 nodriver_ticketplus_main line ~5882）
 
             # 檢查是否進入排隊狀態
             is_in_queue = await nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False)
@@ -5711,18 +5703,18 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
                                 break
                             else:
                                 if show_debug_message:
-                                    print("[QUEUE END] 排隊結束，繼續處理頁面")
+                                    print("[QUEUE END] Queue ended, continuing page processing")
                                 break
 
-                        # 每次檢查完成後等待5秒再進入下一輪（確保真正的5秒間隔）
-                        await tab.sleep(5.0)
+                        # Random wait 5-10 seconds before next check (prevent fixed frequency detection)
+                        await tab.sleep(random.uniform(5.0, 10.0))
 
                     except Exception as exc:
                         if show_debug_message:
-                            print(f"排隊監控錯誤: {exc}")
+                            print(f"Queue monitoring error: {exc}")
                         break
 
-                # 排隊監控已結束（通過其他條件退出）
+                # Queue monitoring completed (exited via other conditions)
 
         if show_debug_message:
             print(f"Form submission: {'Success' if is_form_submitted else 'Failed'}")
@@ -5848,6 +5840,10 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
         if is_event_page:
             ticketplus_dict["start_time"] = time.time()
 
+            # Initial delay when first entering order page (1.5-2.0s)
+            # This ensures Vue.js has sufficient time to initialize DOM elements
+            await asyncio.sleep(random.uniform(1.5, 2.0))
+
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
 
@@ -5871,8 +5867,8 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 # 頁面已刷新，等待刷新完成後繼續處理
                 if show_debug_message:
                     print("[ORDER PAGE] Page reloaded, waiting for page ready...")
-                # 刷新後可能需要額外時間讓頁面準備好
-                await asyncio.sleep(0.5)
+                # 刷新後可能需要額外時間讓頁面準備好（隨機延遲 0.8-1.2 秒避免偵測）
+                await asyncio.sleep(random.uniform(0.8, 1.2))
 
             # 無論是否刷新，都執行訂單處理（展開票區、選票數）
             ticketplus_dict = await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict)
