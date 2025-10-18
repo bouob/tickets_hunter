@@ -10604,15 +10604,57 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     is_ticket_number_assigned = False
 
     try:
+        # First, wait for SELECT element to be available (DOM stability check)
+        wait_result = await tab.evaluate('''
+            () => {
+                return new Promise((resolve) => {
+                    let attempts = 0;
+                    const maxAttempts = 30; // 30 * 100ms = 3 seconds max wait
+
+                    const checkSelect = setInterval(() => {
+                        attempts++;
+
+                        // Try multiple selectors in priority order
+                        let select = document.querySelector('table.rwdtable select.form-control-sm') ||
+                                    document.querySelector('table.table select[name*="AMOUNT_DDL"]') ||
+                                    document.querySelector('select.form-control-sm');
+
+                        if (select) {
+                            clearInterval(checkSelect);
+                            resolve({ready: true, selector_used: select.className || select.name});
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkSelect);
+                            resolve({ready: false, error: "Timeout waiting for SELECT element"});
+                        }
+                    }, 100);
+                });
+            }
+        ''')
+
+        wait_parsed = util.parse_nodriver_result(wait_result)
+        if show_debug_message and isinstance(wait_parsed, dict):
+            if wait_parsed.get('ready'):
+                print(f"[TICKET DOM] SELECT element ready: {wait_parsed.get('selector_used')}")
+            else:
+                print(f"[TICKET DOM] {wait_parsed.get('error')}")
+
         # Use JavaScript to find first ticket quantity SELECT and set value
         result = await tab.evaluate(f'''
             (function() {{
-                // Try new EventBuy format first: table.rwdtable select.form-control-sm
+                // Try multiple selectors in priority order
                 let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+                let selectorUsed = "table.rwdtable select.form-control-sm";
 
-                // Fallback to old .aspx format: table.table select[name*="AMOUNT_DDL"]
+                // Fallback 1: old .aspx format
                 if (selects.length === 0) {{
                     selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                    selectorUsed = 'table.table select[name*="AMOUNT_DDL"]';
+                }}
+
+                // Fallback 2: generic form-control-sm
+                if (selects.length === 0) {{
+                    selects = document.querySelectorAll('select.form-control-sm');
+                    selectorUsed = "select.form-control-sm";
                 }}
 
                 if (selects.length === 0) {{
@@ -10651,7 +10693,13 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 select.dispatchEvent(new Event('change', {{bubbles: true}}));
                 select.dispatchEvent(new Event('blur', {{bubbles: true}}));
 
-                return {{success: true, set_value: "{ticket_number}"}};
+                // Verify the value was actually set
+                const finalValue = select.value;
+                if (finalValue !== "{ticket_number}") {{
+                    return {{success: false, error: "Value verification failed", expected: "{ticket_number}", actual: finalValue, selector: selectorUsed}};
+                }}
+
+                return {{success: true, set_value: "{ticket_number}", verified: true, selector: selectorUsed}};
             }})();
         ''')
 
@@ -10673,9 +10721,17 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 else:
                     if show_debug_message:
                         print(f"[TICKET] Set to: {result_parsed.get('set_value')}")
+                        if result_parsed.get('verified'):
+                            print(f"[TICKET] Verified: true")
+                        if result_parsed.get('selector'):
+                            print(f"[TICKET] Selector used: {result_parsed.get('selector')}")
             else:
                 if show_debug_message:
-                    print(f"[TICKET] Failed: {result_parsed.get('error')}")
+                    error_msg = result_parsed.get('error')
+                    if error_msg == "Value verification failed":
+                        print(f"[TICKET] Verification failed: expected {result_parsed.get('expected')}, actual {result_parsed.get('actual')}")
+                    else:
+                        print(f"[TICKET] Failed: {error_msg}")
 
     except Exception as exc:
         if show_debug_message:
@@ -11186,9 +11242,29 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     ''')
 
     if not ticket_ok:
-        await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
-        # Wait for iBon to process ticket number change
-        await asyncio.sleep(random.uniform(0.15, 0.25))
+        # Retry with exponential backoff: 0.5s → 1.0s → 2.0s
+        max_retries = 3
+        is_ticket_number_assigned = False
+        show_debug_message = config_dict["advanced"].get("verbose", False)
+
+        for attempt in range(1, max_retries + 1):
+            is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+            if is_ticket_number_assigned:
+                if show_debug_message and attempt > 1:
+                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                break
+
+            if attempt < max_retries:
+                # Exponential backoff: delay = 0.5 * (2 ^ (attempt - 1))
+                delay = 0.5 * (2 ** (attempt - 1))
+                if show_debug_message:
+                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                await asyncio_sleep_with_pause_check(delay, config_dict)
+
+        if is_ticket_number_assigned:
+            # Wait for iBon to process ticket number change
+            await asyncio.sleep(random.uniform(0.15, 0.25))
 
     # Get captcha image and do OCR
     ocr_start_time = time.time()
@@ -11687,7 +11763,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         is_event_page = True
 
         if is_event_page:
-            if config_dict["area_auto_select"]["enable"]:
+            # Check if area is already selected (avoid duplicate selection causing double tickets)
+            is_area_already_selected = 'PERFORMANCE_PRICE_AREA_ID=' in url.upper()
+
+            if config_dict["area_auto_select"]["enable"] and not is_area_already_selected:
                 is_match_target_feature = True
                 area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
@@ -11769,15 +11848,30 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             if show_debug_message:
                                 print(f"[IBON] Captcha error: {exc}")
 
-                    # Step 3: Assign ticket number
+                    # Step 3: Assign ticket number with retry (exponential backoff)
                     is_ticket_number_assigned = False
+                    max_retries = 3
+                    show_debug_message = config_dict["advanced"].get("verbose", False)
+
                     try:
-                        is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+                        for attempt in range(1, max_retries + 1):
+                            is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+                            if is_ticket_number_assigned:
+                                if show_debug_message and attempt > 1:
+                                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                                break
+
+                            if attempt < max_retries:
+                                delay = 0.5 * (2 ** (attempt - 1))
+                                if show_debug_message:
+                                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                                await asyncio_sleep_with_pause_check(delay, config_dict)
+
                         if is_ticket_number_assigned:
                             # Wait for iBon to process ticket number change
                             await asyncio.sleep(random.uniform(0.15, 0.25))
                     except Exception as exc:
-                        show_debug_message = config_dict["advanced"].get("verbose", False)
                         if show_debug_message:
                             print(f"[IBON] Ticket number error: {exc}")
 
@@ -11854,9 +11948,25 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             if config_dict["advanced"]["disable_adjacent_seat"]:
                 is_finish_checkbox_click = await nodriver_check_checkbox(tab, '.asp-checkbox > input[type="checkbox"]:not(:checked)')
 
-            # Step 1: Assign ticket number first
+            # Step 1: Assign ticket number first with retry (exponential backoff)
             is_ticket_number_assigned = False
-            is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+            max_retries = 3
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+
+            for attempt in range(1, max_retries + 1):
+                is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+                if is_ticket_number_assigned:
+                    if show_debug_message and attempt > 1:
+                        print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                    break
+
+                if attempt < max_retries:
+                    delay = 0.5 * (2 ** (attempt - 1))
+                    if show_debug_message:
+                        print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                    await asyncio_sleep_with_pause_check(delay, config_dict)
+
             if is_ticket_number_assigned:
                 # Wait for iBon to process ticket number change
                 await asyncio.sleep(random.uniform(0.15, 0.25))
@@ -11938,7 +12048,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                 is_do_ibon_performance_with_ticket_number = False
 
-                if 'PRODUCT_ID=' in url.upper():
+                # Check if area is already selected (avoid duplicate selection causing double tickets)
+                is_area_already_selected = 'PERFORMANCE_PRICE_AREA_ID=' in url.upper()
+
+                if 'PRODUCT_ID=' in url.upper() and not is_area_already_selected:
                     # step 1: select area.
                     is_price_assign_by_bot = False
                     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -11985,10 +12098,26 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         # TODO:
                         is_finish_checkbox_click = await nodriver_check_checkbox(tab, '.asp-checkbox > input[type="checkbox"]:not(:checked)')
 
-                    # Step 1: Assign ticket number first
+                    # Step 1: Assign ticket number first with retry (exponential backoff)
                     is_match_target_feature = True
                     is_ticket_number_assigned = False
-                    is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+                    max_retries = 3
+                    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+                    for attempt in range(1, max_retries + 1):
+                        is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+                        if is_ticket_number_assigned:
+                            if show_debug_message and attempt > 1:
+                                print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                            break
+
+                        if attempt < max_retries:
+                            delay = 0.5 * (2 ** (attempt - 1))
+                            if show_debug_message:
+                                print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                            await asyncio_sleep_with_pause_check(delay, config_dict)
+
                     if is_ticket_number_assigned:
                         # Wait for iBon to process ticket number change
                         await asyncio.sleep(random.uniform(0.15, 0.25))
