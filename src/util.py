@@ -499,15 +499,17 @@ def dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG
             pass
 
     local_remote_url_array = []
-    local_remote_url = config_dict["advanced"]["remote_url"]
-    if len(local_remote_url) > 0:
-        try:
-            temp_remote_url_array = json.loads("["+ local_remote_url +"]")
-            for remote_url in temp_remote_url_array:
-                remote_url_final = remote_url + "*"
-                local_remote_url_array.append(remote_url_final)
-        except Exception as exc:
-            pass
+
+    if not manifest_dict is None:
+        local_remote_url = config_dict["advanced"]["remote_url"]
+        if len(local_remote_url) > 0:
+            try:
+                temp_remote_url_array = json.loads("["+ local_remote_url +"]")
+                for remote_url in temp_remote_url_array:
+                    remote_url_final = remote_url + "*"
+                    local_remote_url_array.append(remote_url_final)
+            except Exception as exc:
+                pass
 
     if len(local_remote_url_array) > 0:
         is_manifest_changed = False
@@ -2034,7 +2036,10 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
             print("execute linux binary")
         if platform.system() == 'Windows':
             print("execute .exe binary.")
-            cmd = script_name + '.exe ' + ' '.join(cmd_argument)
+            # for OLD version pyinstaller, ex: 5.x+
+            #cmd = script_name + '.exe ' + ' '.join(cmd_argument)
+            # for NEW version pyinstaller, 6.x+
+            cmd = '..\\' + script_name + '.exe ' + ' '.join(cmd_argument)
         subprocess.Popen(cmd, shell=True, cwd=working_dir)
     else:
         interpreter_binary = 'python'

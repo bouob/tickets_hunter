@@ -2725,7 +2725,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         show_debug_message = True
 
     # 檢查是否已經設定過票券數量（方案 B：狀態標記）
-    current_url, _ = await nodriver_current_url(tab)
+    current_url, _, tab = await nodriver_current_url(tab)
     ticket_number = str(config_dict["ticket_number"])
     ticket_state_key = f"ticket_assigned_{current_url}_{ticket_number}"
 
@@ -3068,7 +3068,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
     else:
         # 自動 OCR 模式
         previous_answer = None
-        current_url, _ = await nodriver_current_url(tab)
+        current_url, _, tab = await nodriver_current_url(tab)
         fail_count = 0  # Track consecutive failures
         total_fail_count = 0  # Track total failures
 
@@ -3120,7 +3120,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
                     fail_count = 0  # Reset consecutive counter after handling
 
             # 檢查是否還在同一頁面
-            new_url, _ = await nodriver_current_url(tab)
+            new_url, _, tab = await nodriver_current_url(tab)
             if new_url != current_url:
                 break
 
@@ -6537,142 +6537,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
     return is_date_assigned
 
-async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item):
-    """
-    NoDriver ibon 區域自動選擇實作 - orders 頁面
-    搜尋區域列表並選擇對應的區域
-    參考：Chrome 版本的 ibon_area_auto_select
-    """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-    auto_select_mode = config_dict["area_auto_select"]["mode"]
-
-    is_price_assign_by_bot = False
-    is_need_refresh = False
-
-    if show_debug_message:
-        print("[IBON ORDERS] Starting area selection")
-        print("area_keyword:", area_keyword_item)
-        print("auto_select_mode:", auto_select_mode)
-
-    # Search for area rows
-    area_list = None
-    try:
-        area_list = await tab.query_selector_all('div.col-md-5 > table > tbody > tr:not(.disabled)')
-    except Exception as exc:
-        if show_debug_message:
-            print("[IBON ORDERS] Failed to find area rows")
-            print(exc)
-
-    formated_area_list = None
-    if area_list:
-        area_list_count = len(area_list)
-        if show_debug_message:
-            print(f"[IBON ORDERS] Found {area_list_count} area rows")
-
-        if area_list_count > 0:
-            formated_area_list = []
-
-            # Filter list
-            for row in area_list:
-                row_text = ""
-                row_html = ""
-                try:
-                    row_html = await row.get_html()
-                    row_text = util.remove_html_tags(row_html)
-                except Exception as exc:
-                    if show_debug_message:
-                        print(f"[IBON ORDERS] Error getting row HTML: {exc}")
-                    break
-
-                if len(row_text) > 0:
-                    # Check sold out
-                    if '已售完' in row_text:
-                        row_text = ""
-
-                    if 'disabled' in row_html:
-                        row_text = ""
-
-                    if 'sold-out' in row_html:
-                        row_text = ""
-
-                # Clean description rows
-                if len(row_text) > 0:
-                    if row_text == "座位已被選擇":
-                        row_text = ""
-                    if row_text == "座位已售出":
-                        row_text = ""
-                    if row_text == "舞台區域":
-                        row_text = ""
-
-                # Check keyword exclude
-                if len(row_text) > 0:
-                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                        row_text = ""
-
-                # Check ticket number
-                if len(row_text) > 0:
-                    try:
-                        area_seat_el = await row.query_selector('td.action')
-                        if area_seat_el:
-                            seat_text = await area_seat_el.apply('function() { return this.textContent; }')
-                            if seat_text and seat_text.isdigit():
-                                seat_int = int(seat_text)
-                                if seat_int < config_dict["ticket_number"]:
-                                    if show_debug_message:
-                                        print(f"[IBON ORDERS] Skip insufficient tickets: {row_text}")
-                                    row_text = ""
-                    except Exception as exc:
-                        if show_debug_message:
-                            print(f"[IBON ORDERS] Error checking seat count: {exc}")
-
-                if len(row_text) > 0:
-                    formated_area_list.append(row)
-
-    # Keyword matching
-    matched_blocks = None
-    if formated_area_list:
-        if show_debug_message:
-            print(f"[IBON ORDERS] Found {len(formated_area_list)} available areas")
-
-        if len(formated_area_list) > 0:
-            if len(area_keyword_item) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # Match keyword
-                if show_debug_message:
-                    print(f"[IBON ORDERS] Matching keyword: {area_keyword_item}")
-                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, area_keyword_item, formated_area_list)
-
-                if show_debug_message and matched_blocks:
-                    print(f"[IBON ORDERS] Found {len(matched_blocks)} rows matching keyword")
-        else:
-            if show_debug_message:
-                print("[IBON ORDERS] No available areas found")
-            is_need_refresh = True
-    else:
-        if show_debug_message:
-            print("[IBON ORDERS] No area list found")
-        is_need_refresh = True
-
-    # Select target area
-    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-
-    if target_area:
-        try:
-            # Click target area
-            await target_area.click()
-            is_price_assign_by_bot = True
-            if show_debug_message:
-                print("[IBON ORDERS] Area clicked successfully")
-        except Exception as exc:
-            if show_debug_message:
-                print(f"[IBON ORDERS] Click failed: {exc}")
-    else:
-        if show_debug_message:
-            print("[IBON ORDERS] No target area found")
-        is_need_refresh = True
-
-    return is_need_refresh, is_price_assign_by_bot
 
 async def search_purchase_buttons_with_cdp(tab, show_debug_message):
     """
@@ -11313,7 +11177,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
 
         if len(ocr_answer) == 4:
             # Valid 4-digit answer
-            current_url_before_submit, _ = await nodriver_current_url(tab)
+            current_url_before_submit, _, tab = await nodriver_current_url(tab)
             who_care_var, is_form_submitted = await nodriver_ibon_keyin_captcha_code(
                 tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict
             )
@@ -11326,7 +11190,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
                     print(f"[CAPTCHA OCR] Checking URL for verification...")
 
                 try:
-                    current_url_after_submit, _ = await nodriver_current_url(tab)
+                    current_url_after_submit, _, tab = await nodriver_current_url(tab)
                 except Exception as url_exc:
                     if show_debug_message:
                         print(f"[CAPTCHA OCR] Failed to get URL: {url_exc}")
@@ -11398,7 +11262,7 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
     else:
         # Auto OCR mode
         previous_answer = None
-        current_url, _ = await nodriver_current_url(tab)
+        current_url, _, tab = await nodriver_current_url(tab)
         fail_count = 0  # Track consecutive failures
         total_fail_count = 0  # Track total failures
 
@@ -11456,7 +11320,7 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
                     fail_count = 0  # Reset consecutive counter after refresh
 
             # Check if URL changed
-            new_url, _ = await nodriver_current_url(tab)
+            new_url, _, tab = await nodriver_current_url(tab)
             if new_url != current_url:
                 if show_debug_message:
                     print("[IBON CAPTCHA] URL changed, exit OCR loop")
@@ -12435,23 +12299,28 @@ async def nodriver_cityline_purchase_button_press(tab, config_dict):
 
     return is_button_clicked
 
-async def nodriver_cityline_close_second_tab(tab, url):
-    new_tab = tab
-    #print("tab count:", len(tab.browser.tabs))
-    if len(tab.browser.tabs) > 1:
+async def nodriver_cityline_close_tab(tabs):
+    if len(tabs) > 1:
+        tmp_tab = tabs[0]
+        try:
+            html = await tmp_tab.get_content()
+            #print("get_content:", html)
+            if len(html) > 0:
+                await tmp_tab.activate()
+                await tmp_tab.close()
+        except Exception as exc:
+            pass
+
+async def nodriver_cityline_close_second_tab(driver, current_tab, url):
+    tabs = await nodriver_get_http_tab(driver)
+    tab_count = len(tabs)
+    #print("close_second_tab tab count:", tab_count)
+    if tab_count > 1:
         # wait page ready.
-        await asyncio.sleep(0.3)
-        for tmp_tab in tab.browser.tabs:
-            if tmp_tab != tab:
-                tmp_url, is_quit_bot = await nodriver_current_url(tmp_tab)
-                if len(tmp_url) > 0:
-                    if tmp_url[:5] == "https":
-                        await new_tab.activate()
-                        await tab.close()
-                        await asyncio.sleep(0.3)
-                        new_tab = tmp_tab
-                        break
-    return new_tab
+        time.sleep(0.3)
+        await nodriver_cityline_close_tab(tabs)
+        time.sleep(0.3)
+    return current_tab
 
 async def nodriver_cityline_main(tab, url, config_dict):
     global cityline_dict
@@ -16866,10 +16735,12 @@ def get_extension_config(config_dict):
     browser_args = get_nodriver_browser_args()
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
+    browser_args.append("--disable-features=DisableLoadExtensionCommandLineSwitch")
     conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
         ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
         if len(ext) > 0:
+            # chrome 137+
             conf.add_extension(ext)
             util.dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE)
         ext = get_maxbot_extension_path(CONST_MAXBLOCK_EXTENSION_NAME)
@@ -16946,19 +16817,52 @@ async def nodriver_resize_window(tab, config_dict):
             if tab:
                 await tab.set_window_size(left=position_left, top=30, width=int(size_array[0]), height=int(size_array[1]))
 
-async def nodriver_current_url(tab):
-    is_quit_bot = False
+# we only handle last tab.
+async def nodriver_current_url(driver, tab):
     exit_bot_error_strings = [
         "server rejected WebSocket connection: HTTP 500",
         "[Errno 61] Connect call failed ('127.0.0.1',",
         "[WinError 1225] ",
     ]
-
+    # return value
     url = ""
-    if tab:
-        url_dict = {}
+    is_quit_bot = False
+    last_active_tab = None
+
+    driver_info = await driver._get_targets()
+    if not tab.target in driver_info:
+        print("tab may closed by user before, or popup confirm dialog.")
+        tab = None
+        await driver
         try:
-            url_dict = await tab.js_dumps('window.location.href')
+            for i, each_tab in enumerate(driver):
+                target_info = each_tab.target.to_json()
+                target_url = ""
+                if target_info:
+                    if "url" in target_info:
+                        target_url = target_info["url"]
+                if len(target_url) > 4:
+                    if target_url[:4]=="http" or target_url == "about:blank":
+                        print("found tab url:", target_url)
+                        last_active_tab = each_tab
+        except Exception as exc:
+            print(exc)
+            if str(exc) == "list index out of range":
+                print("Browser closed, start to exit bot.")
+                is_quit_bot = True
+                tab = None
+                last_active_tab = None
+
+        if not last_active_tab is None:
+            tab = last_active_tab
+
+    if tab:
+        try:
+            target_info = tab.target.to_json()
+            if target_info:
+                if "url" in target_info:
+                    url = target_info["url"]
+            #url = await tab.evaluate('window.location.href')
         except Exception as exc:
             print(exc)
             str_exc = ""
@@ -16967,19 +16871,14 @@ async def nodriver_current_url(tab):
             except Exception as exc2:
                 pass
             if len(str_exc) > 0:
+                if str_exc == "server rejected WebSocket connection: HTTP 404":
+                    print("目前 nodriver 還沒準備好..., 請等到沒出現這行訊息再開始使用。")
+
                 for each_error_string in exit_bot_error_strings:
                     if each_error_string in str_exc:
                         #print('quit bot by error:', each_error_string, driver)
                         is_quit_bot = True
-
-        url_array = []
-        if url_dict:
-            for k in url_dict:
-                if k.isnumeric():
-                    if "0" in url_dict[k]:
-                        url_array.append(url_dict[k]["0"])
-            url = ''.join(url_array)
-    return url, is_quit_bot
+    return url, is_quit_bot, last_active_tab
 
 def nodriver_overwrite_prefs(conf):
     #print(conf.user_data_dir)
@@ -17120,8 +17019,10 @@ async def main(args):
             break
 
         if not is_quit_bot:
-            url, is_quit_bot = await nodriver_current_url(tab)
-            #print("url:", url)
+            url, is_quit_bot, reset_act_tab = await nodriver_current_url(driver, tab)
+            if not reset_act_tab is None:
+                tab = reset_act_tab
+            #print("act_tab url:", url)
 
         if is_quit_bot:
             try:

@@ -352,8 +352,8 @@ def change_maxbot_status_by_keyword():
             maxbot_resume()
 
 def clean_extension_status():
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    app_root = util.get_app_root()
+    webdriver_path = os.path.join(app_root, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
     target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
@@ -365,8 +365,8 @@ def clean_extension_status():
             pass
 
 def sync_status_to_extension(status):
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
+    app_root = util.get_app_root()
+    webdriver_path = os.path.join(app_root, "webdriver")
     target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
     target_path = os.path.join(target_path, "data")
     if os.path.exists(target_path):
@@ -392,16 +392,23 @@ def clean_tmp_file():
          filepath = os.path.join(app_root, filename)
          util.force_remove_file(filepath)
 
-    Root_Dir = util.get_app_root()
-    target_folder = os.listdir(Root_Dir)
+    target_folder = os.listdir(app_root)
     for item in target_folder:
         if item.endswith(".tmp"):
-            os.remove(os.path.join(Root_Dir, item))
+            os.remove(os.path.join(app_root, item))
 
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
         global txt_question
         txt_question.insert("1.0", "")
+
+class HomepageHandler(tornado.web.RequestHandler):
+    def get(self):
+        app_root = util.get_app_root()
+        web_folder = os.path.join(app_root, "www")
+        html_path = os.path.join(web_folder, "settings.html")
+        if os.path.exists(html_path):
+            self.render(html_path)
 
 class VersionHandler(tornado.web.RequestHandler):
     def get(self):
@@ -610,6 +617,7 @@ async def main_server():
         pass
 
     app = Application([
+        ("/", HomepageHandler),
         ("/version", VersionHandler),
         ("/shutdown", ShutdownHandler),
         ("/sendkey", SendkeyHandler),
@@ -628,15 +636,16 @@ async def main_server():
         ("/ocr", OcrHandler),
         ("/query", QueryHandler),
         ("/question", QuestionHandler),
-        ('/(.*)', StaticFileHandler, {"path": os.path.join(SCRIPT_DIR, 'www')}),
+        ('/(.*)', StaticFileHandler, {"path": os.path.join(".", 'www/')}),
     ])
-    app.ocr = ocr;
-    app.version = CONST_APP_VERSION;
+    app.ocr = ocr
+    app.version = CONST_APP_VERSION
 
-    app.listen(CONST_SERVER_PORT)
-    print("server running on port:", CONST_SERVER_PORT)
+    server_port = CONST_SERVER_PORT
+    app.listen(server_port)
+    print("server running on port:", server_port)
 
-    url="http://127.0.0.1:" + str(CONST_SERVER_PORT) + "/settings.html"
+    url=f"http://127.0.0.1:{server_port}/"
     print("goto url:", url)
     webbrowser.open_new(url)
     await asyncio.Event().wait()
