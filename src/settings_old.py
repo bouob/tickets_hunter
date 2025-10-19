@@ -103,9 +103,12 @@ GLOBAL_SERVER_SHUTDOWN = False
 
 def get_resource_path(relative_path):
     """Convert relative path to absolute path based on script directory."""
-    if os.path.isabs(relative_path):
-        return relative_path
-    return os.path.join(SCRIPT_DIR, relative_path)
+    app_root = util.get_app_root()
+    platform = sys.platform
+    if platform.endswith("win32"):
+        relative_path = relative_path.replace("/","\\")
+    resource_path = os.path.join(app_root, relative_path)
+    return resource_path
 
 def load_translate():
     translate = {}

@@ -26,10 +26,10 @@ mkdir dist\chrome_tixcraft\assets
 mkdir dist\chrome_tixcraft\assets\icons
 mkdir dist\chrome_tixcraft\assets\sounds
 
-copy /Y assets\icons\*.gif dist\chrome_tixcraft\icons
-copy /Y assets\icons\*.ppm dist\chrome_tixcraft\icons
-copy /Y assets\sounds\*.wav dist\chrome_tixcraft\sounds
-copy /Y assets\sounds\*.mp3 dist\chrome_tixcraft\sounds
+copy /Y assets\icons\*.gif dist\chrome_tixcraft\assets\icons
+copy /Y assets\icons\*.ppm dist\chrome_tixcraft\assets\icons
+copy /Y assets\sounds\*.wav dist\chrome_tixcraft\assets\sounds
+copy /Y assets\sounds\*.mp3 dist\chrome_tixcraft\assets\sounds
 
 mkdir dist\chrome_tixcraft\webdriver
 copy /Y webdriver\*.crx dist\chrome_tixcraft\webdriver
