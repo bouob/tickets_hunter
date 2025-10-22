@@ -1,7 +1,7 @@
 ---
 name: 🚀 Feature Request
 about: Suggest a new feature or enhancement
-title: '[FEATURE] '
+title: '[FEATURE] <請描述功能需求>'
 labels: 'enhancement'
 assignees: 'bouob'
 ---

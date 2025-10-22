@@ -1,9 +1,5 @@
 <!--
 此 PR Template 基於 Tickets Hunter 專案規範設計
-請參考以下文件：
-- /docs/development_guide.md - 開發規範
-- /docs/ticket_automation_standard.md - 標準功能架構
-- /docs/changelog_guide.md - CHANGELOG 撰寫指南
 -->
 
 ## 🎯 變更摘要
@@ -50,7 +46,7 @@
 - `檔案名稱` - 簡述修改內容
 
 ### 功能分類（12 階段標準架構）
-<!-- 勾選此 PR 涉及的功能階段（參考 /docs/ticket_automation_standard.md） -->
+<!-- 勾選此 PR 涉及的功能階段 -->
 - [ ] 階段 1：環境初始化
 - [ ] 階段 2：身份認證（登入）
 - [ ] 階段 3：頁面監控與重載
@@ -78,8 +74,7 @@
 
 ## ✅ 開發規範檢查
 
-### 必要檢查（參考 /docs/development_guide.md）
-- [ ] **使用 `show_debug_message` 控制除錯輸出**
+### 必要檢查
 - [ ] **實作錯誤處理和重試機制**（關鍵操作）
 
 ### util.py 共用函式庫檢查（如有修改）
@@ -123,7 +118,6 @@
 ## 📝 CHANGELOG 撰寫提醒
 
 <!--
-根據 /docs/changelog_guide.md 的指引：
 - ✅ 應該寫：使用者可以做什麼、改善了什麼體驗
 - ❌ 不該寫：函數名稱、技術細節、編碼問題、測試結果
 -->

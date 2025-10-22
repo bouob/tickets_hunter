@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -576,14 +576,15 @@ class OcrHandler(tornado.web.RequestHandler):
 class QueryHandler(tornado.web.RequestHandler):
     def format_config_keyword_for_json(self, user_input):
         if len(user_input) > 0:
-            # 新增：偵測並轉換簡化格式
-            if ',' in user_input and not '"' in user_input:
-                items = user_input.split(',')
-                user_input = ','.join([f'"{item.strip()}"' for item in items])
-                return user_input  # 已經是正確格式，直接返回
+            # Remove any existing quotes first
+            user_input = user_input.replace('"', '').replace("'", '')
 
-            if not ('\"' in user_input):
-                user_input = '"' + user_input + '"'
+            # Add quotes to each keyword
+            if ',' in user_input:
+                items = user_input.split(',')
+                user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
+            else:
+                user_input = f'"{user_input.strip()}"'
         return user_input
 
     def compose_as_json(self, user_input):
