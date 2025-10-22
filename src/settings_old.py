@@ -37,7 +37,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -566,7 +566,7 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
-    config_dict["advanced"]["remote_url"] = "http://127.0.0.1:%d/" % (CONST_SERVER_PORT)
+    config_dict["advanced"]["remote_url"] = "\"http://127.0.0.1:%d/\"" % (CONST_SERVER_PORT)
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
     config_dict["advanced"]["auto_reload_overheat_count"] = 4
@@ -913,10 +913,10 @@ def btn_save_act(slience_mode=False):
             txt_idle_keyword_second.delete(1.0, "end")
             txt_resume_keyword_second.delete(1.0, "end")
 
-            txt_idle_keyword.insert("1.0", config_dict["advanced"]["idle_keyword"].strip())
-            txt_resume_keyword.insert("1.0", config_dict["advanced"]["resume_keyword"].strip())
-            txt_idle_keyword_second.insert("1.0", config_dict["advanced"]["idle_keyword_second"].strip())
-            txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
+            txt_idle_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword"].strip()))
+            txt_resume_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword"].strip()))
+            txt_idle_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword_second"].strip()))
+            txt_resume_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword_second"].strip()))
 
     if is_all_data_correct:
         config_dict["refresh_datetime"] = txt_refresh_datetime.get().strip()
@@ -1719,7 +1719,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_date_keyword
     txt_date_keyword = Text(frame_group_tixcraft, width=30, height=4)
     txt_date_keyword.grid(column=1, row=group_row_count, sticky = W)
-    txt_date_keyword.insert("1.0", config_dict["date_auto_select"]["date_keyword"].strip())
+    txt_date_keyword.insert("1.0", util.format_keyword_for_display(config_dict["date_auto_select"]["date_keyword"].strip()))
 
     group_row_count+=1
 
@@ -1800,7 +1800,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_area_keyword
     txt_area_keyword = Text(frame_group_area, width=30, height=4)
     txt_area_keyword.grid(column=1, row=group_row_count, sticky = W)
-    txt_area_keyword.insert("1.0", config_dict["area_auto_select"]["area_keyword"].strip())
+    txt_area_keyword.insert("1.0", util.format_keyword_for_display(config_dict["area_auto_select"]["area_keyword"].strip()))
 
     group_row_count+=1
 
@@ -1811,7 +1811,7 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_keyword_exclude
     txt_keyword_exclude = Text(frame_group_area, width=30, height=4)
     txt_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
-    txt_keyword_exclude.insert("1.0", config_dict["keyword_exclude"].strip())
+    txt_keyword_exclude.insert("1.0", util.format_keyword_for_display(config_dict["keyword_exclude"].strip()))
 
     group_row_count+=1
 
@@ -2190,7 +2190,7 @@ def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_remote_url
     txt_remote_url = Text(frame_group_header, width=30, height=4)
     txt_remote_url.grid(column=1, row=group_row_count, sticky = W)
-    txt_remote_url.insert("1.0", config_dict['advanced']["remote_url"].strip())
+    txt_remote_url.insert("1.0", util.format_keyword_for_display(config_dict['advanced']["remote_url"].strip()))
 
     icon_preview_text_filename = "assets/icons/icon_chrome_4.gif"
     icon_preview_text_img = PhotoImage(file=get_resource_path(icon_preview_text_filename))
@@ -2814,7 +2814,7 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_idle_keyword
     txt_idle_keyword = Text(frame_group_header, width=30, height=4)
     txt_idle_keyword.grid(column=1, row=group_row_count, sticky = W)
-    txt_idle_keyword.insert("1.0", config_dict["advanced"]["idle_keyword"].strip())
+    txt_idle_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword"].strip()))
 
     group_row_count +=1
 
@@ -2825,7 +2825,7 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_resume_keyword
     txt_resume_keyword = Text(frame_group_header, width=30, height=4)
     txt_resume_keyword.grid(column=1, row=group_row_count, sticky = W)
-    txt_resume_keyword.insert("1.0", config_dict["advanced"]["resume_keyword"].strip())
+    txt_resume_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword"].strip()))
 
     group_row_count +=1
 
@@ -2841,7 +2841,7 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_idle_keyword_second
     txt_idle_keyword_second = Text(frame_group_header, width=30, height=4)
     txt_idle_keyword_second.grid(column=1, row=group_row_count, sticky = W)
-    txt_idle_keyword_second.insert("1.0", config_dict["advanced"]["idle_keyword_second"].strip())
+    txt_idle_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword_second"].strip()))
 
     group_row_count +=1
 
@@ -2852,7 +2852,7 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
     global txt_resume_keyword_second
     txt_resume_keyword_second = Text(frame_group_header, width=30, height=4)
     txt_resume_keyword_second.grid(column=1, row=group_row_count, sticky = W)
-    txt_resume_keyword_second.insert("1.0", config_dict["advanced"]["resume_keyword_second"].strip())
+    txt_resume_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword_second"].strip()))
 
     group_row_count +=1
 
@@ -3118,8 +3118,15 @@ def btn_query_question_clicked():
 class MainHandler(tornado.web.RequestHandler):
     def format_config_keyword_for_json(self, user_input):
         if len(user_input) > 0:
-            if not ('\"' in user_input):
-                user_input = '"' + user_input + '"'
+            # Remove any existing quotes first
+            user_input = user_input.replace('"', '').replace("'", '')
+
+            # Add quotes to each keyword
+            if ',' in user_input:
+                items = user_input.split(',')
+                user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
+            else:
+                user_input = f'"{user_input.strip()}"'
         return user_input
 
     def compose_as_json(self, user_input):

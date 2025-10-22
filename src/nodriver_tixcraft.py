@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.23)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -145,12 +145,12 @@ def get_config_dict(args):
                 "homepage": ["homepage"],
                 "ticket_number": ["ticket_number"],
                 "browser": ["browser"],
-                "tixcraft_sid": ["advanced", "tixcraft_sid"],
-                "ibonqware": ["advanced", "ibonqware"],
                 "proxy_server": ["advanced", "proxy_server_port"],
                 "window_size": ["advanced", "window_size"],
                 "date_auto_select_mode": ["date_auto_select", "mode"],
-                "date_keyword": ["date_auto_select", "date_keyword"]
+                "date_keyword": ["date_auto_select", "date_keyword"],
+                "area_auto_select_mode": ["area_auto_select", "mode"],
+                "area_keyword": ["area_auto_select", "area_keyword"]
             }
 
             # Update the config_dict based on the arguments
@@ -718,21 +718,16 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     if price_list_count > 0:
         areas = []
-        input_index = 0  # 追蹤有效 input 的索引
+        input_index = 0  # Track valid input index
 
-        kktix_area_keyword_array = kktix_area_keyword.split(' ')
-        kktix_area_keyword_1 = kktix_area_keyword_array[0]
-        kktix_area_keyword_1_and = ""
-        if len(kktix_area_keyword_array) > 1:
-            kktix_area_keyword_1_and = kktix_area_keyword_array[1]
-
-        # clean stop word.
-        kktix_area_keyword_1 = util.format_keyword_string(kktix_area_keyword_1)
-        kktix_area_keyword_1_and = util.format_keyword_string(kktix_area_keyword_1_and)
+        # Parse area keywords (space-separated = AND logic)
+        # Support N keywords (previously limited to 2)
+        kktix_area_keyword_array = [kw.strip() for kw in kktix_area_keyword.split(' ') if kw.strip()]
+        # Clean stop words for all keywords
+        kktix_area_keyword_array = [util.format_keyword_string(kw) for kw in kktix_area_keyword_array]
 
         if show_debug_message:
-            print('kktix_area_keyword_1:', kktix_area_keyword_1)
-            print('kktix_area_keyword_1_and:', kktix_area_keyword_1_and)
+            print(f'[KKTIX AREA] Keywords (AND logic): {kktix_area_keyword_array}')
 
         for i, row in enumerate(ticket_price_list):
             row_text = ""
@@ -847,81 +842,83 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                             print("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
                         row_text = ""
 
-            # 處理有 input 的票種
+            # Process ticket types with input field
             if row_input is not None:
                 if show_debug_message:
                     original_text = util.remove_html_tags(result.get('html', '')) if result else ""
-                    print(f"票種索引 {i} (input索引 {input_index}): {original_text[:50]}")
+                    original_text = ' '.join(original_text.split())  # Remove extra whitespace and newlines
+                    print(f"[KKTIX] Ticket index {i} (input index {input_index}): {original_text[:50]}")
 
-                # 檢查票種是否被排除關鍵字過濾掉
+                # Check if ticket type is filtered out by exclude keywords
                 if len(row_text) == 0:
                     if show_debug_message:
-                        print(f"  -> 被排除關鍵字過濾，跳過")
-                    input_index += 1  # 仍需遞增 input_index
+                        print(f"  -> Filtered by exclude keyword, skipped")
+                    input_index += 1  # Still need to increment input_index
                     continue
 
-                # 只有當票種文字未被排除關鍵字過濾時才處理
+                # Only process if ticket text is not filtered out by exclude keywords
                 is_match_area = False
 
-                # check ticket input textbox.
+                # Check ticket input textbox
                 if len(current_ticket_number) > 0:
                     if current_ticket_number != "0":
                         is_ticket_number_assigned = True
 
                 if is_ticket_number_assigned:
-                    # no need to travel
+                    # No need to continue searching
                     break
 
-                if len(kktix_area_keyword_1) == 0:
-                    # keyword #1, empty, direct add to list.
+                # Keyword matching with AND logic (all keywords must match)
+                if len(kktix_area_keyword_array) == 0:
+                    # No keyword specified, match all
                     is_match_area = True
-                    match_area_code = 1
                 else:
-                    # MUST match keyword #1.
-                    if kktix_area_keyword_1 in row_text:
-                        #print('match keyword#1')
-
-                        # because of logic between keywords is AND!
-                        if len(kktix_area_keyword_1_and) == 0:
-                            #print('keyword#2 is empty, directly match.')
-                            # keyword #2 is empty, direct append.
-                            is_match_area = True
-                            match_area_code = 2
-                        else:
-                            if kktix_area_keyword_1_and in row_text:
-                                #print('match keyword#2')
-                                is_match_area = True
-                                match_area_code = 3
-                            else:
-                                #print('not match keyword#2')
-                                pass
-                    else:
-                        #print('not match keyword#1')
-                        pass
+                    # Check if all keywords match (AND logic)
+                    is_match_area = all(kw in row_text for kw in kktix_area_keyword_array)
 
                 if show_debug_message:
-                    print(f"  -> 是否符合條件: {is_match_area}, 配對代碼: {match_area_code if is_match_area else 'N/A'}")
+                    print(f"  -> Match result: {is_match_area}")
 
                 if is_match_area:
-                    areas.append(row_input)  # 現在儲存的是有效 input 索引
+                    areas.append(row_input)  # Store valid input index
                     if show_debug_message:
-                        print(f"  -> 加入選擇清單，input索引: {row_input}")
+                        print(f"  -> Added to selection list, input index: {row_input}")
 
-                    # from top to bottom, match first to break.
+                    # From top to bottom mode: match first then break
                     if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        if show_debug_message:
+                            print(f"[KKTIX AREA] Mode is '{kktix_area_auto_select_mode}', stopping at first match")
                         break
 
-                input_index += 1  # 遞增有效 input 的索引
+                input_index += 1  # Increment valid input index
 
             if not is_dom_ready:
-                # not sure to break or continue..., maybe break better.
+                # DOM not ready, break the loop
                 break
     else:
         if show_debug_message:
-            print("no any price list found.")
+            print("[KKTIX] No price list found")
         pass
 
-    # 遍歷完成後檢查暫停
+    # Match result summary
+    if show_debug_message:
+        total_checked = len(ticket_price_list) if ticket_price_list else 0
+        total_matched = len(areas) if areas else 0
+
+        print(f"[KKTIX AREA] ========================================")
+        print(f"[KKTIX AREA] Match Summary:")
+        print(f"[KKTIX AREA]   Total ticket types checked: {total_checked}")
+        print(f"[KKTIX AREA]   Total ticket types matched: {total_matched}")
+
+        if total_checked > 0 and total_matched > 0:
+            match_rate = total_matched / total_checked * 100
+            print(f"[KKTIX AREA]   Match rate: {match_rate:.1f}%")
+        elif total_matched == 0:
+            print(f"[KKTIX AREA]   No ticket types matched")
+
+        print(f"[KKTIX AREA] ========================================")
+
+    # Check pause after traversal
     if await check_and_handle_pause(config_dict):
         return True, False, None
 
@@ -960,6 +957,14 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
                     print("matched_blocks is empty, is_need_refresh")
 
     if not target_area is None:
+        # 顯示選中目標訊息
+        if show_debug_message:
+            try:
+                print(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
+                print(f"[KKTIX AREA] Selected target: #{target_area + 1}/{len(matched_blocks)}")
+            except:
+                print(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
+
         current_ticket_number = ""
         if show_debug_message:
             print("try to set input box value.")
@@ -1631,6 +1636,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     # part 1: check div.
     registrationsNewApp_div = None
@@ -1677,7 +1683,15 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                         print("is_need_refresh for keyword:", area_keyword_item)
 
             if not is_ticket_number_assigned:
-                is_need_refresh = is_need_refresh_final
+                # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                if is_need_refresh_final:
+                    if show_debug_message:
+                        print(f"[KKTIX AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
+                    is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
+
+                # If fallback still failed, then refresh
+                if not is_ticket_number_assigned:
+                    is_need_refresh = is_need_refresh_final
         else:
             # empty keyword, match all.
             is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
@@ -1803,7 +1817,7 @@ def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
             if not 'https://kktix.com/users/sign_in?' in url:
                 is_kktix_got_ticket = True
                 if show_debug_message:
-                    print(f"偵測到搶票成功頁面: {url}")
+                    print(f"[KKTIX] Success page detected: {url}")
 
     if is_kktix_got_ticket:
         if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
@@ -1917,7 +1931,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 if not kktix_dict["done_time"] is None:
                     bot_elapsed_time = kktix_dict["done_time"] - kktix_dict["start_time"]
                     if kktix_dict["elapsed_time"] != bot_elapsed_time:
-                        print("搶票完成，耗時: {:.3f} 秒".format(bot_elapsed_time))
+                        print("[KKTIX] Ticket purchase completed, elapsed time: {:.3f} seconds".format(bot_elapsed_time))
                     kktix_dict["elapsed_time"] = bot_elapsed_time
 
             if config_dict["advanced"]["play_sound"]["order"]:
@@ -2060,141 +2074,6 @@ async def nodriver_kktix_double_check_all_text_value(tab, config_dict, ticket_nu
 
     return is_do_press_next_button
 
-# DISABLED: API check causes access log and may be detected as bot behavior
-# This function is kept for reference but not used
-# async def nodriver_kktix_check_register_status(tab, config_dict):
-#     """
-#     KKTIX 註冊狀態檢查功能
-#     對應 Chrome 版本的 kktix_check_register_status()
-#     使用 JavaScript 呼叫 KKTIX API 檢查票券狀態
-#     """
-#     show_debug_message = config_dict["advanced"]["verbose"]
-#     is_need_refresh = False
-#
-#     try:
-#         # 取得當前 URL 來構建 API 請求
-#         current_url = await tab.evaluate('() => window.location.href')
-#
-#         # 使用 JavaScript 呼叫 KKTIX API 檢查狀態
-#         status_result = await tab.evaluate('''
-#             async () => {
-#                 try {
-#                     const currentUrl = window.location.href;
-#                     const urlParts = currentUrl.split('/');
-#
-#                     // 從 URL 提取 event_id
-#                     let eventId = '';
-#                     const eventsIndex = urlParts.findIndex(part => part === 'events');
-#                     if (eventsIndex !== -1 && eventsIndex + 1 < urlParts.length) {
-#                         eventId = urlParts[eventsIndex + 1];
-#                     }
-#
-#                     if (!eventId) {
-#                         return { success: false, error: 'Cannot extract event ID from URL' };
-#                     }
-#
-#                     // 構建 API URL
-#                     const apiUrl = `https://kktix.com/events/${eventId}.json`;
-#
-#                     // 發送 API 請求
-#                     const response = await fetch(apiUrl, {
-#                         method: 'GET',
-#                         headers: {
-#                             'Accept': 'application/json',
-#                             'X-Requested-With': 'XMLHttpRequest'
-#                         }
-#                     });
-#
-#                     if (!response.ok) {
-#                         return { success: false, error: `API request failed: ${response.status}` };
-#                     }
-#
-#                     const data = await response.json();
-#
-#                     // 檢查票券狀態
-#                     const tickets = data.event?.tickets || [];
-#                     const statusList = [];
-#
-#                     tickets.forEach(ticket => {
-#                         if (ticket.inventory_id) {
-#                             statusList.push({
-#                                 name: ticket.name,
-#                                 inventory_id: ticket.inventory_id,
-#                                 status: ticket.status
-#                             });
-#                         }
-#                     });
-#
-#                     return { success: true, tickets: statusList };
-#
-#                 } catch (error) {
-#                     return { success: false, error: error.message };
-#                 }
-#             }
-#         ''')
-#
-#         if status_result and status_result.get('success'):
-#             tickets = status_result.get('tickets', [])
-#             if tickets:
-#                 # 檢查是否有售罄或即將開賣的票券
-#                 for ticket in tickets:
-#                     status = ticket.get('status', '')
-#                     ticket_name = ticket.get('name', '')
-#
-#                     if status in ['OUT_OF_STOCK', 'COMING_SOON', 'SOLD_OUT']:
-#                         if show_debug_message:
-#                             print(f"KKTIX 狀態檢查: {ticket_name} - {status}")
-#                         is_need_refresh = True
-#                         break
-#
-#                 if show_debug_message and not is_need_refresh:
-#                     print("KKTIX 狀態檢查: 票券狀態正常，無需重新載入")
-#             elif show_debug_message:
-#                 print("KKTIX 狀態檢查: 未找到票券資訊")
-#         else:
-#             error_msg = status_result.get('error', '未知錯誤') if status_result else '無回應'
-#             if show_debug_message:
-#                 print(f"KKTIX 狀態檢查失敗: {error_msg}")
-#
-#     except Exception as exc:
-#         if show_debug_message:
-#             print(f"KKTIX 狀態檢查例外: {exc}")
-#
-#     return is_need_refresh
-
-# DISABLED: API check causes access log and may be detected as bot behavior
-# This function is kept for reference but not used
-# async def nodriver_kktix_reg_auto_reload(tab, config_dict):
-#     """
-#     KKTIX 自動重載功能
-#     對應 Chrome 版本的 kktix_reg_auto_reload()
-#     當票券售罄時自動重新載入頁面
-#     """
-#     show_debug_message = config_dict["advanced"]["verbose"]
-#     is_need_reload = False
-#
-#     try:
-#         # 使用註冊狀態檢查來決定是否需要重新載入
-#         is_need_reload = await nodriver_kktix_check_register_status(tab, config_dict)
-#
-#         if is_need_reload:
-#             if show_debug_message:
-#                 print("KKTIX 自動重載: 偵測到票券售罄，準備重新載入頁面")
-#
-#             # 重新載入頁面
-#             await tab.reload()
-#
-#             # 等待頁面載入完成
-#             await asyncio.sleep(2)
-#
-#             if show_debug_message:
-#                 print("KKTIX 自動重載: 頁面重新載入完成")
-#
-#     except Exception as exc:
-#         if show_debug_message:
-#             print(f"KKTIX 自動重載失敗: {exc}")
-#
-#     return is_need_reload
 
 async def nodriver_tixcraft_home_close_window(tab):
     accept_all_cookies_btn = None
@@ -2307,6 +2186,9 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     area_list = None
     if check_game_detail:
+        # Add random delay (0.8-1 sec) to prevent bot detection
+        await asyncio.sleep(random.uniform(0.8, 1.0))
+
         try:
             area_list = await tab.query_selector_all('#gameList > table > tbody > tr')
         except:
@@ -2369,6 +2251,8 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
         if not date_keyword:
             matched_blocks = formated_area_list
+            if show_debug_message:
+                print(f"[DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
         else:
             # Keyword matching
             matched_blocks = []
@@ -2377,12 +2261,19 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 import re
                 keyword_array = json.loads("[" + date_keyword + "]")
                 if show_debug_message:
-                    print(f"date_keyword array: {keyword_array}")
+                    print(f"[DATE KEYWORD] Raw input: '{date_keyword}'")
+                    print(f"[DATE KEYWORD] Parsed array: {keyword_array}")
+                    print(f"[DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+                    print(f"[DATE KEYWORD] Checking {len(formated_area_list_text)} available dates...")
 
                 for i, row_text in enumerate(formated_area_list_text):
                     # Normalize spaces for better matching
                     normalized_row_text = re.sub(r'\s+', ' ', row_text)
 
+                    if show_debug_message:
+                        print(f"[DATE KEYWORD] [{i+1}/{len(formated_area_list_text)}] Checking: {row_text[:80]}...")
+
+                    row_matched = False
                     for keyword_item_set in keyword_array:
                         is_match = False
                         if isinstance(keyword_item_set, str):
@@ -2391,80 +2282,167 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                             is_match = normalized_keyword in normalized_row_text
                             if show_debug_message:
                                 if is_match:
-                                    print(f"matched keyword '{keyword_item_set}' in row: {row_text[:60]}...")
-                                elif normalized_keyword != keyword_item_set:
-                                    # Check original too for debugging
-                                    if keyword_item_set in row_text:
-                                        print(f"keyword would match without normalization")
+                                    print(f"[DATE KEYWORD]   Matched keyword: '{keyword_item_set}'")
+                                else:
+                                    print(f"[DATE KEYWORD]   No match for: '{keyword_item_set}'")
                         elif isinstance(keyword_item_set, list):
                             # Normalize all keywords in list
                             normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                            is_match = all(kw in normalized_row_text for kw in normalized_keywords)
-                            if show_debug_message and is_match:
-                                print(f"matched all keywords {keyword_item_set} in row: {row_text[:60]}...")
+
+                            if show_debug_message:
+                                print(f"[DATE KEYWORD]   Checking AND logic: {keyword_item_set}")
+
+                            # Check each keyword individually for detailed feedback
+                            match_results = []
+                            for kw in normalized_keywords:
+                                kw_match = kw in normalized_row_text
+                                match_results.append(kw_match)
+                                if show_debug_message:
+                                    status = "PASS" if kw_match else "FAIL"
+                                    print(f"[DATE KEYWORD]     {status} '{kw}': {kw_match}")
+
+                            is_match = all(match_results)
+
+                            if show_debug_message:
+                                if is_match:
+                                    print(f"[DATE KEYWORD]   All AND keywords matched")
+                                else:
+                                    print(f"[DATE KEYWORD]   AND logic failed (not all matched)")
 
                         if is_match:
                             matched_blocks.append(formated_area_list[i])
+                            row_matched = True
+                            if show_debug_message:
+                                print(f"[DATE KEYWORD]   → Date added to matched list (total: {len(matched_blocks)})")
                             break
+
+                    if show_debug_message and not row_matched:
+                        print(f"[DATE KEYWORD]   → No keywords matched this row, skipping")
             except Exception as e:
                 if show_debug_message:
-                    print(f"keyword parsing error: {e}")
+                    print(f"[DATE KEYWORD] Parsing error: {e}")
+                    print(f"[DATE KEYWORD] Fallback: using all {len(formated_area_list)} dates")
                 matched_blocks = formated_area_list
 
+    # Match result summary
+    if show_debug_message:
+        print(f"[DATE KEYWORD] ========================================")
+        print(f"[DATE KEYWORD] Match Summary:")
+        print(f"[DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
+        print(f"[DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
+        if matched_blocks and len(matched_blocks) > 0 and formated_area_list and len(formated_area_list) > 0:
+            print(f"[DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_area_list)*100:.1f}%")
+            print(f"[DATE KEYWORD] ========================================")
+        elif not matched_blocks or len(matched_blocks) == 0:
+            print(f"[DATE KEYWORD]   No dates matched any keywords")
+            print(f"[DATE KEYWORD] ========================================")
+
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+
+    if show_debug_message:
+        if target_area and matched_blocks:
+            # Find which index was selected
+            try:
+                target_index = matched_blocks.index(target_area) if target_area in matched_blocks else -1
+                print(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
+                print(f"[DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
+            except:
+                print(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
+                print(f"[DATE SELECT] Target selected from {len(matched_blocks)} matched dates")
+        elif not matched_blocks or len(matched_blocks) == 0:
+            print(f"[DATE SELECT] No target selected (matched_blocks is empty)")
+
     is_date_clicked = False
 
     # 移除：內部選擇細節過度詳細
 
     if target_area:
-        # Priority: button with data-href (tixcraft) > regular link > regular button
+        # Priority: button with data-href (tixcraft/indievox) > regular link > regular button
+        # IMPORTANT: Search within target_area, not the whole page
+        click_method_used = None
         try:
-            # For tixcraft - use JavaScript to find button and get data-href
-            data_href = await tab.evaluate('''
-                (function() {
-                    const buttons = document.querySelectorAll('button[data-href]');
-                    for (let button of buttons) {
-                        if (button.getAttribute('data-href')) {
-                            return button.getAttribute('data-href');
-                        }
-                    }
-                    return null;
-                })();
-            ''')
+            if show_debug_message:
+                print("[DATE SELECT] Trying button[data-href] method within target_area...")
 
-            # 解析結果
-            data_href = util.util.parse_nodriver_result(data_href)
+            # Method 1: button[data-href] within target_area (tixcraft/indievox specific)
+            # 使用 NoDriver Element API 取得 data-href
+            button_with_href = await target_area.query_selector('button[data-href]')
+            data_href = None
+            if button_with_href:
+                # 更新元素以確保屬性載入
+                await button_with_href.update()
+                button_attrs = button_with_href.attrs or {}
+                data_href = button_attrs.get('data-href')
 
-            if data_href:
-                # 保留關鍵導航訊息，但簡化
                 if show_debug_message:
-                    print("clicking button")
-                await tab.get(data_href)
-                is_date_clicked = True
+                    if data_href:
+                        print(f"[DATE SELECT] button[data-href] found in target_area: {data_href}")
+                    else:
+                        print("[DATE SELECT] button[data-href] found but no href value")
+
+                if data_href:
+                    if show_debug_message:
+                        print("[DATE SELECT] Navigating via button[data-href]...")
+                    await tab.get(data_href)
+                    is_date_clicked = True
+                    click_method_used = "button[data-href]"
+                    if show_debug_message:
+                        print("[DATE SELECT] Successfully navigated via button[data-href]")
+            else:
+                if show_debug_message:
+                    print("[DATE SELECT] No button[data-href] in target_area, will try fallback methods")
         except Exception as e:
             if show_debug_message:
-                print(f"button data-href error: {e}")
+                print(f"[DATE SELECT] button[data-href] method failed: {e}")
 
-        # For other platforms - regular link or button click
+        # Method 2: regular link or button click
         if not is_date_clicked:
             try:
+                if show_debug_message:
+                    print("[DATE SELECT] Trying link <a[href]> method within target_area...")
+
                 # Try link first (ticketmaster, etc)
                 link = await target_area.query_selector('a[href]')
                 if link:
                     if show_debug_message:
-                        print("clicking link")
+                        print("[DATE SELECT] Link found in target_area, clicking...")
                     await link.click()
                     is_date_clicked = True
+                    click_method_used = "link <a[href]>"
+                    if show_debug_message:
+                        print("[DATE SELECT] Successfully clicked via link")
                 else:
+                    if show_debug_message:
+                        print("[DATE SELECT] No link found, trying regular button within target_area...")
+
                     # Try regular button
                     button = await target_area.query_selector('button')
                     if button:
-                        # 移除重複的 clicking button 訊息
+                        if show_debug_message:
+                            print("[DATE SELECT] Regular button found in target_area, clicking...")
                         await button.click()
                         is_date_clicked = True
+                        click_method_used = "regular button"
+                        if show_debug_message:
+                            print("[DATE SELECT] Successfully clicked via regular button")
+                    else:
+                        if show_debug_message:
+                            print("[DATE SELECT] No clickable element found in target_area")
             except Exception as e:
                 if show_debug_message:
-                    print(f"click error: {e}")
+                    print(f"[DATE SELECT] Click error: {e}")
+
+        # Final summary
+        if show_debug_message:
+            if is_date_clicked and click_method_used:
+                print(f"[DATE SELECT] ========================================")
+                print(f"[DATE SELECT] Date selection completed successfully")
+                print(f"[DATE SELECT] Method used: {click_method_used}")
+                print(f"[DATE SELECT] ========================================")
+            elif not is_date_clicked:
+                print(f"[DATE SELECT] ========================================")
+                print("[DATE SELECT] All click methods failed")
+                print(f"[DATE SELECT] ========================================")
 
     return is_date_clicked
 
@@ -2499,6 +2477,13 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
             if not is_need_refresh:
                 break
+
+        # Fallback: If all keyword groups failed to match, use auto_select_mode without keyword
+        if is_need_refresh and matched_blocks is None:
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+            if show_debug_message:
+                print(f"[AREA KEYWORD] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
+            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
     else:
         is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
 
@@ -2526,41 +2511,98 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
+    show_debug_message = config_dict["advanced"].get("verbose", False)
     is_need_refresh = False
     matched_blocks = None
 
+    # Display keyword information
+    if show_debug_message:
+        print(f"[AREA KEYWORD] ========================================")
+        if area_keyword_item:
+            keyword_parts = area_keyword_item.split(' ')
+            print(f"[AREA KEYWORD] Raw input: '{area_keyword_item}'")
+            print(f"[AREA KEYWORD] Parsed (AND logic): {keyword_parts}")
+            print(f"[AREA KEYWORD] Total sub-keywords: {len(keyword_parts)}")
+            print(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
+        else:
+            print(f"[AREA KEYWORD] No keyword specified, matching all areas")
+            print(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
+
     if not el:
+        if show_debug_message:
+            print(f"[AREA KEYWORD] Element is None, cannot select area")
         return True, None
 
     try:
         area_list = await el.query_selector_all('a')
     except:
+        if show_debug_message:
+            print(f"[AREA KEYWORD] Failed to query area list")
         return True, None
 
     if not area_list or len(area_list) == 0:
+        if show_debug_message:
+            print(f"[AREA KEYWORD] No areas found")
         return True, None
 
+    if show_debug_message:
+        print(f"[AREA KEYWORD] Found {len(area_list)} area(s) to check")
+        print(f"[AREA KEYWORD] ========================================")
+
     matched_blocks = []
+    area_index = 0
     for row in area_list:
+        area_index += 1
+
         try:
             row_html = await row.get_html()
             row_text = util.remove_html_tags(row_html)
         except:
+            if show_debug_message:
+                print(f"[AREA KEYWORD] [{area_index}] Failed to get row content")
             break
 
         if not row_text or util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+            if show_debug_message:
+                print(f"[AREA KEYWORD] [{area_index}] Excluded by keyword_exclude")
             continue
+
+        if show_debug_message:
+            print(f"[AREA KEYWORD] [{area_index}/{len(area_list)}] Checking: {row_text[:80]}...")
 
         row_text = util.format_keyword_string(row_text)
 
         # Check keyword match
         if area_keyword_item:
-            is_match = all(
-                util.format_keyword_string(kw) in row_text
-                for kw in area_keyword_item.split(' ')
-            )
+            keyword_parts = area_keyword_item.split(' ')
+
+            if show_debug_message:
+                print(f"[AREA KEYWORD]   Matching AND keywords: {keyword_parts}")
+
+            # Check each keyword individually for detailed feedback
+            match_results = {}
+            for kw in keyword_parts:
+                formatted_kw = util.format_keyword_string(kw)
+                kw_match = formatted_kw in row_text
+                match_results[kw] = kw_match
+
+                if show_debug_message:
+                    status = "PASS" if kw_match else "FAIL"
+                    print(f"[AREA KEYWORD]     {status} '{kw}': {kw_match}")
+
+            is_match = all(match_results.values())
+
+            if show_debug_message:
+                if is_match:
+                    print(f"[AREA KEYWORD]   All AND keywords matched")
+                else:
+                    print(f"[AREA KEYWORD]   AND logic failed")
+
             if not is_match:
                 continue
+        else:
+            if show_debug_message:
+                print(f"[AREA KEYWORD]   No keyword filter, accepting this area")
 
         # Check seat availability for multiple tickets
         if config_dict["ticket_number"] > 1:
@@ -2570,17 +2612,57 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
                     font_text = await font_el.evaluate('el => el.textContent')
                     if font_text:
                         font_text = "@%s@" % font_text
+
+                        if show_debug_message:
+                            print(f"[AREA KEYWORD]   Checking seats: {font_text.strip('@')}")
+
                         # Skip if only 1-9 seats remaining
                         SEATS_1_9 = ["@%d@" % i for i in range(1, 10)]
                         if any(seat in font_text for seat in SEATS_1_9):
+                            if show_debug_message:
+                                print(f"[AREA KEYWORD]   Insufficient seats (need {config_dict['ticket_number']}, only {font_text.strip('@')} available)")
                             continue
+                        else:
+                            if show_debug_message:
+                                print(f"[AREA KEYWORD]   Sufficient seats available")
             except:
                 pass
 
         matched_blocks.append(row)
 
+        if show_debug_message:
+            print(f"[AREA KEYWORD]   → Area added to matched list (total: {len(matched_blocks)})")
+
         if area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
+            if show_debug_message:
+                print(f"[AREA KEYWORD]   Mode is '{area_auto_select_mode}', stopping at first match")
             break
+
+    # Match result summary
+    if show_debug_message:
+        print(f"[AREA KEYWORD] ========================================")
+        print(f"[AREA KEYWORD] Match Summary:")
+        print(f"[AREA KEYWORD]   Total areas checked: {len(area_list)}")
+        print(f"[AREA KEYWORD]   Total areas matched: {len(matched_blocks)}")
+        if len(matched_blocks) > 0:
+            print(f"[AREA KEYWORD]   Match rate: {len(matched_blocks)/len(area_list)*100:.1f}%")
+
+            # Display selected target index
+            target_index = 0
+            if area_auto_select_mode == "random":
+                target_index = "random"
+            elif area_auto_select_mode == "from bottom to top":
+                target_index = len(matched_blocks) - 1
+            elif area_auto_select_mode == "center":
+                target_index = len(matched_blocks) // 2
+            elif area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
+                target_index = 0
+
+            print(f"[AREA KEYWORD]   Selected target index: {target_index}")
+            print(f"[AREA KEYWORD] ========================================")
+        else:
+            print(f"[AREA KEYWORD]   No areas matched")
+            print(f"[AREA KEYWORD] ========================================")
 
     if not matched_blocks:
         is_need_refresh = True
@@ -2589,22 +2671,30 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     return is_need_refresh, matched_blocks
 
 async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
-    """簡化版本：參考 Chrome 邏輯設定票券數量"""
+    """簡化版本：參考 Chrome 邏輯設定票券數量，並檢查 option 是否可用"""
     is_ticket_number_assigned = False
 
     if select_obj is None:
         return is_ticket_number_assigned
 
     try:
-        # 嘗試透過 JavaScript 設定選擇器的值
+        # 嘗試透過 JavaScript 設定選擇器的值，並檢查 option 是否 disabled
         result = await tab.evaluate(f'''
             (function() {{
                 const select = document.querySelector('.mobile-select') ||
                                document.querySelector('select[id*="TicketForm_ticketPrice_"]');
                 if (!select) return {{success: false, error: "Select not found"}};
 
-                // 先嘗試設定目標數量
-                const targetOption = Array.from(select.options).find(opt => opt.value === "{ticket_number}");
+                // 售完關鍵字列表
+                const soldOutKeywords = ["選購一空", "已售完", "Sold out", "No tickets available", "空席なし", "完売した"];
+
+                // 先嘗試設定目標數量（檢查是否 disabled 或售完）
+                const targetOption = Array.from(select.options).find(opt =>
+                    opt.value === "{ticket_number}" &&
+                    !opt.disabled &&
+                    !soldOutKeywords.includes(opt.value)
+                );
+
                 if (targetOption) {{
                     select.value = "{ticket_number}";
                     select.selectedIndex = targetOption.index;
@@ -2612,8 +2702,13 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
                     return {{success: true, selected: "{ticket_number}"}};
                 }}
 
-                // 備用方案：設定為 "1"
-                const fallbackOption = Array.from(select.options).find(opt => opt.value === "1");
+                // 備用方案：設定為 "1"（同樣檢查是否可用）
+                const fallbackOption = Array.from(select.options).find(opt =>
+                    opt.value === "1" &&
+                    !opt.disabled &&
+                    !soldOutKeywords.includes(opt.value)
+                );
+
                 if (fallbackOption) {{
                     select.value = "1";
                     select.selectedIndex = fallbackOption.index;
@@ -2621,7 +2716,7 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
                     return {{success: true, selected: "1"}};
                 }}
 
-                return {{success: false, error: "No valid options"}};
+                return {{success: false, error: "No valid options (all disabled or sold out)"}};
             }})();
         ''')
 
@@ -2636,7 +2731,7 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
     return is_ticket_number_assigned
 
 async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
-    """簡化版本：參考 Chrome 邏輯檢查票券選擇器"""
+    """簡化版本：參考 Chrome 邏輯檢查票券選擇器，並過濾 disabled/售完的選項"""
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
@@ -2664,7 +2759,83 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                 print("Failed to find ticket selector")
 
     form_select_count = len(form_select_list)
-    # 移除：內部檢測細節過度詳細
+
+    if show_debug_message and form_select_count > 0:
+        print(f"[TICKET SELECT] Found {form_select_count} select element(s)")
+
+    # 過濾掉 disabled 或只有售完選項的 select（使用 NoDriver Element API）
+    valid_selects = []
+    sold_out_keywords = ["選購一空", "已售完", "Sold out", "No tickets available", "空席なし", "完売した"]
+
+    # 使用 NoDriver Element API 檢查每個 select 元素
+    for idx, select_element in enumerate(form_select_list):
+        try:
+            # 更新元素以確保屬性載入
+            await select_element.update()
+
+            # 檢查 select 是否 disabled
+            select_attrs = select_element.attrs or {}
+            select_id = select_attrs.get('id', f'select_{idx}')
+            is_select_disabled = 'disabled' in select_attrs
+
+            if is_select_disabled:
+                if show_debug_message:
+                    print(f"[TICKET SELECT] Skipping disabled select: {select_id}")
+                continue
+
+            # 檢查 option 元素
+            option_elements = await select_element.query_selector_all('option')
+            has_valid_option = False
+            option_values = []
+
+            for option_element in option_elements:
+                try:
+                    await option_element.update()
+                    option_attrs = option_element.attrs or {}
+                    option_value = option_attrs.get('value', '')
+                    option_text = option_element.text or ''  # .text 是屬性，不需要 await
+                    option_disabled = 'disabled' in option_attrs
+
+                    option_values.append(option_value)
+
+                    # 檢查是否為有效選項
+                    if (option_value != "0" and
+                        not option_disabled and
+                        option_value not in sold_out_keywords and
+                        option_text not in sold_out_keywords):
+                        has_valid_option = True
+
+                except Exception as opt_exc:
+                    if show_debug_message:
+                        print(f"[TICKET SELECT] Error checking option: {opt_exc}")
+                    continue
+
+            if has_valid_option:
+                valid_selects.append(select_element)
+                if show_debug_message:
+                    print(f"[TICKET SELECT] Valid select found: {select_id}")
+            else:
+                if show_debug_message:
+                    print(f"[TICKET SELECT] Skipping select (all options sold out or disabled): {select_id}")
+                    print(f"[TICKET SELECT]   Option values: {option_values}")
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Error checking select element: {exc}")
+            # 發生錯誤時，將此 select 加入作為備用
+            valid_selects.append(select_element)
+
+    if show_debug_message:
+        print(f"[TICKET SELECT] Valid (available) selects: {len(valid_selects)}/{form_select_count}")
+
+    if len(valid_selects) == 0:
+        if show_debug_message:
+            print("[TICKET SELECT] Warning: All ticket types are sold out or disabled")
+        return False, None
+
+    # 使用第一個可用的 select
+    select_obj = valid_selects[0]
+    form_select_count = len(valid_selects)
 
     # 檢查是否已經選擇了票券數量（非 "0"）
     if form_select_count > 0:
@@ -3604,109 +3775,61 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
         if show_debug_message:
             print("formated_area_list count:", len(formated_area_list))
 
-        # 關鍵字匹配 - 使用 JavaScript 避免 NoDriver 元素物件問題
+        # Keyword matching - Unified JSON array parsing with AND/OR logic
+        # Format: "AA BB","CC","DD" -> (AA AND BB) OR (CC) OR (DD)
         if len(date_keyword) == 0:
             matched_blocks = formated_area_list
         else:
-            date_keyword = util.format_keyword_string(date_keyword)
-            if show_debug_message:
-                print("start to match formated keyword:", date_keyword)
-
-            # 使用 JavaScript 進行關鍵字匹配，避免 util.py 的 NoDriver 不相容問題
+            matched_blocks = []
             try:
-                # 在 JavaScript 中處理關鍵字分割，避免 format_keyword_string 破壞逗號分隔
+                # Parse as JSON array (auto-removes quotes)
+                import json
                 original_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-                js_result = await tab.evaluate(f'''
-                    (function() {{
-                        const originalKeyword = '{original_keyword}';
-                        const matchedElements = [];
+                keyword_array = json.loads("[" + original_keyword + "]")
 
-                        // 解析關鍵字 - 處理引號包圍和逗號分隔
-                        let keywords = [];
-                        if (originalKeyword.includes(',')) {{
-                            // 分割逗號分隔的關鍵字
-                            const parts = originalKeyword.split(',');
-                            keywords = parts.map(part => {{
-                                // 移除引號和空格
-                                return part.trim().replace(/^["']|["']$/g, '');
-                            }}).filter(k => k.length > 0);
-                        }} else {{
-                            // 單個關鍵字
-                            keywords = [originalKeyword.replace(/^["']|["']$/g, '').trim()];
-                        }}
+                if show_debug_message:
+                    print(f"[TicketPlus DATE] Applying keyword filter: {keyword_array}")
 
-                        console.log('解析出的關鍵字:', keywords);
+                # Match keyword groups (OR logic between groups)
+                for i, row in enumerate(formated_area_list):
+                    # Get row text
+                    row_text = ""
+                    try:
+                        row_html = await row.get_html()
+                        row_text = util.remove_html_tags(row_html).lower()
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[TicketPlus DATE] Failed to get row text: {exc}")
+                        continue
 
-                        // 查找所有可能的日期元素
-                        const selectors = [
-                            'div#buyTicket > div.sesstion-item > div.row',
-                            'tr', 'div[class*="date"]', 'div[class*="session"]',
-                            '.sesstion-item', '[data-href]'
-                        ];
+                    # Check if any keyword group matches (OR logic between groups)
+                    for keyword_item in keyword_array:
+                        # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
+                        sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
 
-                        let allElements = [];
-                        selectors.forEach(selector => {{
-                            const elements = Array.from(document.querySelectorAll(selector));
-                            allElements = allElements.concat(elements);
-                        }});
+                        # Check if all sub-keywords match (AND logic within group)
+                        is_match = all(sub_kw.lower() in row_text for sub_kw in sub_keywords)
 
-                        // 去重
-                        allElements = [...new Set(allElements)];
+                        if is_match:
+                            matched_blocks.append(row)
+                            if show_debug_message:
+                                print(f"[TicketPlus DATE] Keyword '{keyword_item}' matched row {i}")
+                            break  # Stop checking other keyword groups for this row
 
-                        console.log('找到', allElements.length, '個候選元素');
-
-                        // 匹配任一關鍵字
-                        for (let element of allElements) {{
-                            const text = element.textContent || element.innerText || '';
-                            const normalizedText = text.replace(/[\\s\\u3000]/g, '').toLowerCase();
-
-                            for (let keyword of keywords) {{
-                                // 正規化關鍵字 - 移除空格、全形空格，轉小寫
-                                const normalizedKeyword = keyword.replace(/[\\s\\u3000]/g, '').toLowerCase();
-
-                                if (normalizedText.includes(normalizedKeyword)) {{
-                                    console.log('匹配到日期:', '"' + keyword + '" -> ' + text.substring(0, 100));
-                                    matchedElements.push(element);
-                                    break; // 匹配到一個關鍵字就足夠
-                                }}
-                            }}
-                        }}
-
-                        return {{
-                            success: true,
-                            matchedCount: matchedElements.length,
-                            keywords: keywords,
-                            matchedElements: matchedElements.map((el, idx) => ({{
-                                index: idx,
-                                text: (el.textContent || '').substring(0, 200),
-                                tagName: el.tagName
-                            }}))
-                        }};
-                    }})();
-                ''')
-
-                # 使用 NoDriver 結果解析器
-                parsed_js_result = util.parse_nodriver_result(js_result)
-
-                if isinstance(parsed_js_result, dict) and parsed_js_result.get('success'):
-                    matched_count = parsed_js_result.get('matchedCount', 0)
-                    if show_debug_message:
-                        keywords = parsed_js_result.get('keywords', [])
-                        print(f"Parsed keywords: {keywords}")
-                        print(f"after JavaScript match keyword, found count: {matched_count}")
-                        for match_info in parsed_js_result.get('matchedElements', []):
-                            if isinstance(match_info, dict):
-                                print(f"  Match {match_info.get('index', '?')}: {match_info.get('text', '')}")
-
-                    # 如果有匹配結果，取第一個作為 matched_blocks
-                    matched_blocks = formated_area_list[:matched_count] if matched_count > 0 else []
-                else:
-                    matched_blocks = []
-
+            except json.JSONDecodeError as exc:
+                if show_debug_message:
+                    print(f"[TicketPlus DATE] Keyword parse error: {exc}, using all available dates")
+                matched_blocks = formated_area_list
             except Exception as exc:
                 if show_debug_message:
-                    print(f"JavaScript keyword matching failed: {exc}")
+                    print(f"[TicketPlus DATE] Keyword matching failed: {exc}")
                 matched_blocks = []
+
+        # Fallback: if no matches found, use all available dates
+        if len(matched_blocks) == 0 and formated_area_list and len(formated_area_list) > 0:
+            if show_debug_message:
+                print(f"[TicketPlus DATE] No keyword matches, falling back to mode '{auto_select_mode}'")
+            matched_blocks = formated_area_list
     else:
         if show_debug_message:
             print("date date-time-position is None or empty")
@@ -5972,32 +6095,18 @@ async def nodriver_ibon_login(tab, config_dict, driver):
     try:
         from nodriver import cdp
 
-        # 設定 ibon cookie
-        cookies = await driver.cookies.get_all()
-        is_cookie_exist = False
-        for cookie in cookies:
-            if cookie.name == 'ibonqware':
-                cookie.value = ibonqware
-                is_cookie_exist = True
-                if show_debug_message:
-                    print("Updated existing ibon cookie")
-                break
-
-        if not is_cookie_exist:
-            new_cookie = cdp.network.CookieParam(
-                "ibonqware", ibonqware,
-                domain=".ibon.com.tw",
-                path="/",
-                http_only=True,
-                secure=True
-            )
-            cookies.append(new_cookie)
-            if show_debug_message:
-                print("Added new ibon cookie")
-
-        await driver.cookies.set_all(cookies)
+        # Set ibon cookie using CDP
+        cookie_result = await tab.send(cdp.network.set_cookie(
+            name="ibonqware",
+            value=ibonqware,
+            domain=".ibon.com.tw",
+            path="/",
+            secure=True,
+            http_only=True
+        ))
 
         if show_debug_message:
+            print(f"CDP setCookie result: {cookie_result}")
             print("ibon cookie set successfully (NoDriver)")
 
         # 驗證 cookie 是否設定成功
@@ -6012,30 +6121,23 @@ async def nodriver_ibon_login(tab, config_dict, driver):
             print(f"Verified: ibon cookie exists with value length: {len(ibon_cookies[0].value)}")
             print(f"Cookie domain: {ibon_cookies[0].domain}")
 
-        # 重新載入頁面以應用 cookie（關鍵步驟！）
+        # Reload page to apply ibon cookie (required for Angular SPA)
+        # Use full navigation instead of reload for better Angular app initialization
+        current_url = await tab.evaluate('window.location.href')
         if show_debug_message:
-            print("Reloading page to apply ibon cookie...")
-        await tab.reload()
-        await tab.sleep(3.0)  # 等待頁面完全載入
-
-        if show_debug_message:
-            print("Page reloaded, ibon cookie should now be active")
-
-        # 檢查登入狀態
-        login_status = await check_ibon_login_status(tab, config_dict)
+            print(f"Reloading page to apply ibon cookie: {current_url}")
+        await tab.get(current_url)
+        await tab
+        await tab.sleep(2.0)  # Wait for Angular initialization
 
         if show_debug_message:
-            print(f"Post-reload login status: {login_status.get('isLoggedIn', False)}")
+            print("[SUCCESS] ibon cookie set and page reloaded")
+            print("[INFO] Login status will be verified during ticket purchase flow")
 
-        if login_status.get('isLoggedIn', False):
-            if show_debug_message:
-                print("[SUCCESS] ibon auto-login successful")
-            return {'success': True, 'login_status': login_status}
-        else:
-            if show_debug_message:
-                print("[ERROR] ibon auto-login may have failed - manual login may be required")
-                print("[TIP] Try refreshing the page manually or check if cookie has expired")
-            return {'success': False, 'reason': 'login_verification_failed', 'login_status': login_status}
+        # Return success - don't check login status immediately after reload
+        # Reason: Angular SPA may require multiple page loads to fully initialize in automation
+        # The cookie is set correctly and will be used in subsequent operations
+        return {'success': True, 'reason': 'cookie_set_and_reloaded'}
 
     except Exception as cookie_error:
         print(f"Failed to set ibon cookie (NoDriver): {cookie_error}")
@@ -6061,7 +6163,6 @@ async def nodriver_ibon_date_selection(tab, config_dict):
     is_date_selected = False
 
     try:
-        # 等待頁面載入
         await tab.sleep(1.0)
 
         # 使用多重策略搜尋日期選項
@@ -6076,7 +6177,6 @@ async def nodriver_ibon_date_selection(tab, config_dict):
         available_options = []
         for option in date_options:
             if isinstance(option, dict):
-                # 檢查是否有 disabled 屬性
                 element_html = option.get('element', '')
                 if 'disabled' not in element_html.lower():
                     available_options.append(option)
@@ -6094,7 +6194,6 @@ async def nodriver_ibon_date_selection(tab, config_dict):
                 date_context = option.get('date_context', '').lower()
                 search_text = f"{option_text} {date_context}"
 
-                # 簡單關鍵字匹配
                 if date_keyword.lower() in search_text:
                     matched_options.append(option)
                     if show_debug_message:
@@ -6126,7 +6225,6 @@ async def nodriver_ibon_date_selection(tab, config_dict):
                 is_date_selected = True
                 if show_debug_message:
                     print("Date selection successful")
-                # 等待頁面更新
                 await tab.sleep(1.5)
             else:
                 if show_debug_message:
@@ -6315,7 +6413,6 @@ async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_m
             print("[MODE SELECT] No enabled buttons available")
         return None
 
-    # 根據模式選擇按鈕
     target_button = None
     if auto_select_mode == "random":
         import random
@@ -6371,7 +6468,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
     except:
         pass
 
-    # Step 1: Capture DOM snapshot to penetrate closed Shadow DOM
+    # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
     if show_debug_message:
         print("[IBON DATE] Capturing DOM snapshot with CDP...")
 
@@ -6385,7 +6482,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
             print(f"[IBON DATE] Error capturing snapshot: {e}")
         return False
 
-    # Step 2: Search for purchase buttons in flattened DOM
     purchase_buttons = []
 
     if documents and len(documents) > 0:
@@ -6395,7 +6491,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
         document_snapshot = documents[0]
         nodes = document_snapshot.nodes
 
-        # Extract node information
         node_names = [strings[i] for i in nodes.node_name]
         node_values = [strings[i] if i >= 0 else '' for i in nodes.node_value]
         attributes_list = nodes.attributes
@@ -6404,10 +6499,12 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
         if show_debug_message:
             print(f"[IBON DATE] Total nodes in snapshot: {len(node_names)}")
 
-        # Step 3: Search for purchase buttons
+        # Step 1: Extract parent_index for tracking node relationships
+        parent_indices = list(nodes.parent_index) if hasattr(nodes, 'parent_index') else []
+
+        # Step 2: Search for purchase buttons and extract date context
         for i, node_name in enumerate(node_names):
             if node_name.upper() == 'BUTTON':
-                # Parse attributes
                 attrs = {}
                 if i < len(attributes_list):
                     attr_indices = attributes_list[i]
@@ -6417,7 +6514,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
                             val = strings[attr_indices[j + 1]]
                             attrs[key] = val
 
-                # Check if this is a purchase button
                 button_class = attrs.get('class', '')
                 button_disabled = 'disabled' in attrs
 
@@ -6428,16 +6524,72 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
                     if i + 1 < len(node_names) and node_names[i + 1] == '#text':
                         button_text = node_values[i + 1].strip()
 
+                    # Step 3: Extract date context by finding parent .tr container
+                    date_context = ''
+                    if parent_indices:
+                        # Traverse up to find .tr container
+                        current_idx = i
+                        tr_container_idx = -1
+                        for _ in range(10):  # Max 10 levels up
+                            if current_idx < len(parent_indices):
+                                parent_idx = parent_indices[current_idx]
+                                if parent_idx >= 0 and parent_idx < len(attributes_list):
+                                    # Check if this parent has class='tr' or class contains 'tr'
+                                    parent_attrs = {}
+                                    parent_attr_indices = attributes_list[parent_idx]
+                                    for j in range(0, len(parent_attr_indices), 2):
+                                        if j + 1 < len(parent_attr_indices):
+                                            key = strings[parent_attr_indices[j]]
+                                            val = strings[parent_attr_indices[j + 1]]
+                                            parent_attrs[key] = val
+
+                                    parent_class = parent_attrs.get('class', '')
+                                    if ' tr ' in f' {parent_class} ' or parent_class.endswith(' tr') or parent_class.startswith('tr '):
+                                        tr_container_idx = parent_idx
+                                        break
+
+                                current_idx = parent_idx
+                            else:
+                                break
+
+                        # Step 4: Find .date element within .tr container
+                        if tr_container_idx >= 0:
+                            # Search siblings and children of .tr container for .date element
+                            for j in range(len(node_names)):
+                                if parent_indices[j] == tr_container_idx or parent_indices[j] == i:
+                                    # Check if this node has class='date' or class contains 'date'
+                                    if j < len(attributes_list):
+                                        node_attrs = {}
+                                        node_attr_indices = attributes_list[j]
+                                        for k in range(0, len(node_attr_indices), 2):
+                                            if k + 1 < len(node_attr_indices):
+                                                key = strings[node_attr_indices[k]]
+                                                val = strings[node_attr_indices[k + 1]]
+                                                node_attrs[key] = val
+
+                                        node_class = node_attrs.get('class', '')
+                                        if 'date' in node_class:
+                                            # Extract text content from this node's children
+                                            for text_idx in range(j + 1, min(j + 10, len(node_names))):
+                                                if node_names[text_idx] == '#text':
+                                                    date_text = node_values[text_idx].strip()
+                                                    if date_text:
+                                                        date_context = date_text
+                                                        break
+                                            if date_context:
+                                                break
+
                     purchase_buttons.append({
                         'backend_node_id': backend_node_ids[i],
                         'class': button_class,
                         'disabled': button_disabled,
                         'text': button_text,
-                        'index': i
+                        'index': i,
+                        'date_context': date_context
                     })
 
                     if show_debug_message:
-                        print(f"[IBON DATE] Found button: class='{button_class[:50]}...', disabled={button_disabled}, text='{button_text}'")
+                        print(f"[IBON DATE] Found button: class='{button_class[:50]}...', disabled={button_disabled}, text='{button_text}', date_context='{date_context}'")
 
     if show_debug_message:
         print(f"[IBON DATE] Found {len(purchase_buttons)} purchase button(s)")
@@ -6447,7 +6599,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
             print("[IBON DATE] No purchase buttons found in Shadow DOM")
         return False
 
-    # Step 4: Filter disabled buttons
+    # Step 5: Filter disabled buttons
     enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
 
     if show_debug_message:
@@ -6458,22 +6610,66 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
             print("[IBON DATE] All buttons are disabled")
         return False
 
-    # Step 5: Select target button based on mode
+    # Step 6: Apply keyword matching (FR-017)
+    # Unified keyword processing: JSON array parsing with AND/OR logic
+    # Format: "AA BB","CC","DD" -> (AA AND BB) OR (CC) OR (DD)
+    matched_buttons = []
+    if len(date_keyword) > 0 and enabled_buttons:
+        try:
+            # Parse as JSON array (auto-removes quotes)
+            import json
+            keyword_array = json.loads("[" + date_keyword + "]")
+            if show_debug_message:
+                print(f"[IBON DATE] Applying keyword filter: {keyword_array}")
+
+            for button in enabled_buttons:
+                button_text = button.get('text', '').lower()
+                date_context = button.get('date_context', '').lower()
+                search_text = f"{button_text} {date_context}"
+
+                # Check if any keyword group matches (OR logic between groups)
+                for keyword_item in keyword_array:
+                    # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+
+                    # Check if all sub-keywords match (AND logic within group)
+                    is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
+
+                    if is_match:
+                        matched_buttons.append(button)
+                        if show_debug_message:
+                            print(f"[IBON DATE] Keyword '{keyword_item}' matched button with date_context: '{date_context}'")
+                        break  # Stop checking other keyword groups for this button
+        except json.JSONDecodeError as e:
+            if show_debug_message:
+                print(f"[IBON DATE] Keyword parse error: {e}, using all enabled buttons")
+            matched_buttons = enabled_buttons
+    else:
+        matched_buttons = enabled_buttons
+
+    # Step 7: Fallback strategy (FR-018)
+    if len(matched_buttons) == 0:
+        if show_debug_message:
+            print(f"[IBON DATE] No keyword matches, falling back to mode '{auto_select_mode}'")
+        matched_buttons = enabled_buttons
+
+    # Step 8: Select target button based on mode
     if auto_select_mode == "random":
-        target_button = random.choice(enabled_buttons)
+        target_button = random.choice(matched_buttons)
     elif auto_select_mode == "from bottom to top":
-        target_button = enabled_buttons[-1]
+        target_button = matched_buttons[-1]
     elif auto_select_mode == "center":
-        target_button = enabled_buttons[len(enabled_buttons) // 2]
+        target_button = matched_buttons[len(matched_buttons) // 2]
     else:  # from top to bottom (default)
-        target_button = enabled_buttons[0]
+        target_button = matched_buttons[0]
+
+    # Determine selection method
+    selection_method = "keyword match" if (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons)) else f"mode '{auto_select_mode}'"
 
     if show_debug_message:
-        print(f"[IBON DATE] Selected target button: {target_button['text']}")
+        print(f"[IBON DATE] Selected target button ({selection_method}): date_context='{target_button.get('date_context', 'N/A')}'")
 
-    # Step 6: Click button using CDP
     try:
-        # Initialize DOM
         await tab.send(cdp.dom.get_document())
 
         # Convert backend_node_id to node_id
@@ -6510,7 +6706,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
         if show_debug_message:
             print(f"[IBON DATE] Resolved button object_id: {remote_object_id}")
 
-        # Call click() on the remote object
         result = await tab.send(runtime.call_function_on(
             function_declaration='function() { this.click(); return true; }',
             object_id=remote_object_id,
@@ -6524,7 +6719,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
             if show_debug_message:
                 print("[IBON DATE] Purchase button clicked successfully")
             is_date_assigned = True
-            # Wait for navigation
             await tab.sleep(0.5)
         else:
             if show_debug_message:
@@ -6537,142 +6731,6 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
     return is_date_assigned
 
-async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item):
-    """
-    NoDriver ibon 區域自動選擇實作 - orders 頁面
-    搜尋區域列表並選擇對應的區域
-    參考：Chrome 版本的 ibon_area_auto_select
-    """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-    auto_select_mode = config_dict["area_auto_select"]["mode"]
-
-    is_price_assign_by_bot = False
-    is_need_refresh = False
-
-    if show_debug_message:
-        print("[IBON ORDERS] Starting area selection")
-        print("area_keyword:", area_keyword_item)
-        print("auto_select_mode:", auto_select_mode)
-
-    # Search for area rows
-    area_list = None
-    try:
-        area_list = await tab.query_selector_all('div.col-md-5 > table > tbody > tr:not(.disabled)')
-    except Exception as exc:
-        if show_debug_message:
-            print("[IBON ORDERS] Failed to find area rows")
-            print(exc)
-
-    formated_area_list = None
-    if area_list:
-        area_list_count = len(area_list)
-        if show_debug_message:
-            print(f"[IBON ORDERS] Found {area_list_count} area rows")
-
-        if area_list_count > 0:
-            formated_area_list = []
-
-            # Filter list
-            for row in area_list:
-                row_text = ""
-                row_html = ""
-                try:
-                    row_html = await row.get_html()
-                    row_text = util.remove_html_tags(row_html)
-                except Exception as exc:
-                    if show_debug_message:
-                        print(f"[IBON ORDERS] Error getting row HTML: {exc}")
-                    break
-
-                if len(row_text) > 0:
-                    # Check sold out
-                    if '已售完' in row_text:
-                        row_text = ""
-
-                    if 'disabled' in row_html:
-                        row_text = ""
-
-                    if 'sold-out' in row_html:
-                        row_text = ""
-
-                # Clean description rows
-                if len(row_text) > 0:
-                    if row_text == "座位已被選擇":
-                        row_text = ""
-                    if row_text == "座位已售出":
-                        row_text = ""
-                    if row_text == "舞台區域":
-                        row_text = ""
-
-                # Check keyword exclude
-                if len(row_text) > 0:
-                    if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-                        row_text = ""
-
-                # Check ticket number
-                if len(row_text) > 0:
-                    try:
-                        area_seat_el = await row.query_selector('td.action')
-                        if area_seat_el:
-                            seat_text = await area_seat_el.apply('function() { return this.textContent; }')
-                            if seat_text and seat_text.isdigit():
-                                seat_int = int(seat_text)
-                                if seat_int < config_dict["ticket_number"]:
-                                    if show_debug_message:
-                                        print(f"[IBON ORDERS] Skip insufficient tickets: {row_text}")
-                                    row_text = ""
-                    except Exception as exc:
-                        if show_debug_message:
-                            print(f"[IBON ORDERS] Error checking seat count: {exc}")
-
-                if len(row_text) > 0:
-                    formated_area_list.append(row)
-
-    # Keyword matching
-    matched_blocks = None
-    if formated_area_list:
-        if show_debug_message:
-            print(f"[IBON ORDERS] Found {len(formated_area_list)} available areas")
-
-        if len(formated_area_list) > 0:
-            if len(area_keyword_item) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # Match keyword
-                if show_debug_message:
-                    print(f"[IBON ORDERS] Matching keyword: {area_keyword_item}")
-                matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, area_keyword_item, formated_area_list)
-
-                if show_debug_message and matched_blocks:
-                    print(f"[IBON ORDERS] Found {len(matched_blocks)} rows matching keyword")
-        else:
-            if show_debug_message:
-                print("[IBON ORDERS] No available areas found")
-            is_need_refresh = True
-    else:
-        if show_debug_message:
-            print("[IBON ORDERS] No area list found")
-        is_need_refresh = True
-
-    # Select target area
-    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-
-    if target_area:
-        try:
-            # Click target area
-            await target_area.click()
-            is_price_assign_by_bot = True
-            if show_debug_message:
-                print("[IBON ORDERS] Area clicked successfully")
-        except Exception as exc:
-            if show_debug_message:
-                print(f"[IBON ORDERS] Click failed: {exc}")
-    else:
-        if show_debug_message:
-            print("[IBON ORDERS] No target area found")
-        is_need_refresh = True
-
-    return is_need_refresh, is_price_assign_by_bot
 
 async def search_purchase_buttons_with_cdp(tab, show_debug_message):
     """
@@ -11097,31 +11155,59 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                             print(f"[CAPTCHA INPUT] Failed to register alert handler: {handler_exc}")
 
                     # Find and click submit button
-                    # Button ID from HTML: ctl00_ContentPlaceHolder1_A2
+                    # Multiple button patterns for different ibon page types:
+                    # - UTK0201 (EventBuy): #ctl00_ContentPlaceHolder1_A2
+                    # - UTK0202 (ticket selection): a[id*="AddShopingCart"] or a.btn.btn-primary.btn-block
                     # CRITICAL: iBon requires calling ImageCode_Verify2() before submit
                     submit_clicked = await tab.evaluate('''
                         (function() {
-                            const submitBtn = document.querySelector('#ctl00_ContentPlaceHolder1_A2');
+                            // Try multiple selectors in priority order
+                            let submitBtn = document.querySelector('#ctl00_ContentPlaceHolder1_A2');
+
+                            if (!submitBtn) {
+                                // UTK0202 page: try AddShopingCart button
+                                submitBtn = document.querySelector('a[id*="AddShopingCart"]');
+                            }
+
+                            if (!submitBtn) {
+                                // Generic fallback: any visible "下一步" button
+                                const buttons = document.querySelectorAll('a.btn.btn-primary.btn-block');
+                                for (let btn of buttons) {
+                                    if (btn.textContent.includes('下一步') &&
+                                        btn.offsetParent !== null &&  // is visible
+                                        btn.style.display !== 'none') {
+                                        submitBtn = btn;
+                                        break;
+                                    }
+                                }
+                            }
+
                             if (!submitBtn || submitBtn.disabled) {
+                                console.log('[CAPTCHA] Submit button not found or disabled');
                                 return false;
                             }
+
+                            console.log('[CAPTCHA] Found submit button:', submitBtn.id || submitBtn.className);
 
                             // Call iBon's frontend verification function if it exists
                             if (typeof ImageCode_Verify2 === 'function') {
                                 try {
                                     ImageCode_Verify2();
+                                    console.log('[CAPTCHA] Called ImageCode_Verify2()');
                                 } catch (e) {
                                     console.log('[CAPTCHA] ImageCode_Verify2 failed:', e);
                                 }
                             } else if (typeof ImageCode_Verify === 'function') {
                                 try {
                                     ImageCode_Verify();
+                                    console.log('[CAPTCHA] Called ImageCode_Verify()');
                                 } catch (e) {
                                     console.log('[CAPTCHA] ImageCode_Verify failed:', e);
                                 }
                             }
 
                             submitBtn.click();
+                            console.log('[CAPTCHA] Submit button clicked');
                             return true;
                         })();
                     ''')
@@ -11633,6 +11719,67 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         ibon_dict["triggered_idle"] = False
         ibon_dict["shown_checkout_message"] = False
 
+    # Check if kicked to login page (Cookie/Session expired)
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_login_page = False
+    target_url = None
+
+    # Detect login page patterns
+    if 'huiwan.ibon.com.tw/huiwan/loginhuiwan' in url.lower():
+        is_login_page = True
+        # Extract target URL from query parameter
+        if 'targeturl=' in url.lower():
+            try:
+                import urllib.parse
+                parsed = urllib.parse.urlparse(url)
+                params = urllib.parse.parse_qs(parsed.query)
+                if 'targeturl' in params:
+                    target_url = params['targeturl'][0]
+            except:
+                pass
+        if show_debug_message:
+            print(f"[IBON LOGIN] Detected login page redirect")
+            if target_url:
+                print(f"[IBON LOGIN] Target URL: {target_url}")
+
+    # If kicked to login page, re-login and redirect back
+    if is_login_page:
+        if show_debug_message:
+            print("[IBON LOGIN] Re-authenticating with cookie...")
+
+        # Re-execute login process
+        login_result = await nodriver_ibon_login(tab, config_dict, None)
+
+        if show_debug_message:
+            if login_result['success']:
+                print("[IBON LOGIN] Re-authentication successful")
+            else:
+                print(f"[IBON LOGIN] Re-authentication failed: {login_result.get('error', 'Unknown error')}")
+
+        # Redirect back to target URL or homepage
+        if target_url and target_url.startswith('http'):
+            if show_debug_message:
+                print(f"[IBON LOGIN] Redirecting to target: {target_url}")
+            try:
+                await tab.get(target_url)
+                await asyncio.sleep(2)
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[IBON LOGIN] Redirect failed: {e}")
+        else:
+            # No target URL, go to homepage
+            config_homepage = config_dict["homepage"]
+            if show_debug_message:
+                print(f"[IBON LOGIN] No target URL, redirecting to homepage: {config_homepage}")
+            try:
+                await tab.get(config_homepage)
+                await asyncio.sleep(2)
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[IBON LOGIN] Homepage redirect failed: {e}")
+
+        return False  # Don't quit bot, continue monitoring
+
     home_url_list = ['https://ticket.ibon.com.tw/'
     ,'https://ticket.ibon.com.tw/index/entertainment'
     ]
@@ -11785,6 +11932,15 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item)
                         if not is_need_refresh:
                             break
+
+                    # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                    if not is_price_assign_by_bot:
+                        if is_need_refresh:
+                            show_debug_message = config_dict["advanced"].get("verbose", False)
+                            auto_select_mode = config_dict["area_auto_select"]["mode"]
+                            if show_debug_message:
+                                print(f"[IBON AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
+                            is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, "")
                 else:
                     # empty keyword, match all.
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, area_keyword)
@@ -11880,30 +12036,62 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         try:
                             click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
                             if click_ret:
-                                play_sound_while_ordering(config_dict)
+                                # Play "ticket" sound when attempting to enter checkout (found ticket)
+                                if config_dict["advanced"]["play_sound"]["ticket"]:
+                                    if not ibon_dict.get("played_sound_ticket", False):
+                                        play_sound_while_ordering(config_dict)
+                                        ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             show_debug_message = config_dict["advanced"].get("verbose", False)
                             if show_debug_message:
                                 print(f"[IBON] Submit button error: {exc}")
 
-    # New ibon Event page format (Angular SPA): https://ticket.ibon.com.tw/Event/{eventId}/{sessionId}
+    # New ibon Event page format (Angular SPA): https://ticket.ibon.com.tw/Event/{eventId}/{sessionId}[/{activityId}]
     if not is_match_target_feature:
         is_new_event_page = False
         if 'ticket.ibon.com.tw' in url.lower() and '/event/' in url.lower():
             url_parts = url.split('/')
             # URL format: https://ticket.ibon.com.tw/Event/B09QY340/B09VO5KQ
             # Split result: ['https:', '', 'ticket.ibon.com.tw', 'Event', 'B09QY340', 'B09VO5KQ']
-            if len(url_parts) == 6:
+            # URL format (with activity ID): https://ticket.ibon.com.tw/Event/B09QY340/B09VO5KQ/39142
+            # Split result: ['https:', '', 'ticket.ibon.com.tw', 'Event', 'B09QY340', 'B09VO5KQ', '39142']
+            if len(url_parts) >= 6:
                 is_new_event_page = True
 
         if is_new_event_page:
             if config_dict["area_auto_select"]["enable"]:
-                is_price_assign_by_bot = False
-                show_debug_message = config_dict["advanced"].get("verbose", False)
-
+                is_match_target_feature = True
                 area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-                is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword)
 
+                is_need_refresh = False
+                is_price_assign_by_bot = False
+
+                if len(area_keyword) > 0:
+                    area_keyword_array = []
+                    try:
+                        import json
+                        area_keyword_array = json.loads("["+ area_keyword +"]")
+                    except Exception as exc:
+                        area_keyword_array = []
+
+                    for area_keyword_item in area_keyword_array:
+                        is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_item)
+                        if not is_need_refresh:
+                            break
+
+                    # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                    if not is_price_assign_by_bot:
+                        if is_need_refresh:
+                            show_debug_message = config_dict["advanced"].get("verbose", False)
+                            auto_select_mode = config_dict["area_auto_select"]["mode"]
+                            if show_debug_message:
+                                print(f"[IBON EVENT] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
+                            is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, "")
+                else:
+                    # empty keyword, match all.
+                    is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword)
+
+                show_debug_message = config_dict["advanced"].get("verbose", False)
                 if show_debug_message:
                     print(f"[NEW EVENT] Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
 
@@ -11927,14 +12115,16 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
             is_match_target_feature = True
 
-    # New ibon EventBuy page format: https://ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}
+    # New ibon EventBuy page format: https://ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}[/{activityId}]
     if not is_match_target_feature:
         is_new_eventbuy_page = False
         if 'ticket.ibon.com.tw' in url.lower() and '/eventbuy/' in url.lower():
             url_parts = url.split('/')
             # URL format: https://ticket.ibon.com.tw/EventBuy/B09QY340/B09VO5KQ/B09VO6K0
             # Split result: ['https:', '', 'ticket.ibon.com.tw', 'EventBuy', 'eventId', 'sessionId', 'areaId']
-            if len(url_parts) == 7:
+            # URL format (with activity ID): https://ticket.ibon.com.tw/EventBuy/B09QY340/B09VO5KQ/B09VSQGL/39142
+            # Split result: ['https:', '', 'ticket.ibon.com.tw', 'EventBuy', 'B09QY340', 'B09VO5KQ', 'B09VSQGL', '39142']
+            if len(url_parts) >= 7:
                 is_new_eventbuy_page = True
 
         if is_new_eventbuy_page:
@@ -12002,7 +12192,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     # Play sound if button clicked successfully
                     if click_ret:
-                        play_sound_while_ordering(config_dict)
+                        # Play "ticket" sound when attempting to enter checkout (found ticket)
+                        if config_dict["advanced"]["play_sound"]["ticket"]:
+                            if not ibon_dict.get("played_sound_ticket", False):
+                                play_sound_while_ordering(config_dict)
+                                ibon_dict["played_sound_ticket"] = True
                         if show_debug_message:
                             print("[NEW EVENTBUY] Purchase button clicked successfully")
             else:
@@ -12145,7 +12339,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                             # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
                             if click_ret:
-                                play_sound_while_ordering(config_dict)
+                                # Play "ticket" sound when attempting to enter checkout (found ticket)
+                                if config_dict["advanced"]["play_sound"]["ticket"]:
+                                    if not ibon_dict.get("played_sound_ticket", False):
+                                        play_sound_while_ordering(config_dict)
+                                        ibon_dict["played_sound_ticket"] = True
                     else:
                         is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
                         if is_sold_out:
@@ -13961,6 +14159,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             if not el_btn:
                                 # Fallback to <a> tag (for other possible layouts)
                                 el_btn = await tab.query_selector('a[onclick="return chkCart();"]')
+                        elif "orders.ibon.com.tw" in url:
+                            # ibon uses <a> tag with id containing AddShopingCart
+                            if show_debug_message:
+                                print("[SUBMIT] Searching for ibon submit button...")
+                            el_btn = await tab.query_selector('a[id*="AddShopingCart"]')
+                            if not el_btn:
+                                # Fallback to generic button
+                                el_btn = await tab.query_selector('a.btn.btn-primary.btn-block')
                         else:
                             # Kham
                             if show_debug_message:
@@ -14139,6 +14345,36 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 except Exception as exc:
                     if show_debug_message:
                         print(f"Set ticket number error: {exc}")
+            elif "orders.ibon.com.tw" in url:
+                # ibon - uses SELECT dropdown for ticket number
+                select_query = 'select[id*="AMOUNT_DDL"]'
+                try:
+                    await tab.evaluate(f'''
+                        (function() {{
+                            const select = document.querySelector('{select_query}');
+                            if (select) {{
+                                const targetValue = '{config_dict["ticket_number"]}';
+                                // Check if option exists
+                                const option = Array.from(select.options).find(opt => opt.value === targetValue);
+                                if (option) {{
+                                    select.value = targetValue;
+                                    select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    console.log('[IBON TICKET] Set to: ' + targetValue);
+                                    return true;
+                                }} else {{
+                                    console.log('[IBON TICKET] Target value not available: ' + targetValue);
+                                    return false;
+                                }}
+                            }}
+                            console.log('[IBON TICKET] SELECT not found');
+                            return false;
+                        }})();
+                    ''')
+                    if show_debug_message:
+                        print(f"[IBON TICKET] Ticket number set to: {config_dict['ticket_number']}")
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[IBON TICKET] Set ticket number error: {exc}")
             else:
                 # Kham - find the correct ticket type input using pure JavaScript
                 try:
@@ -14281,6 +14517,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             if not el_btn:
                                 # Fallback to <a> tag
                                 el_btn = await tab.query_selector('a[onclick="return chkCart();"]')
+                        elif "orders.ibon.com.tw" in url:
+                            # ibon uses <a> tag with id containing AddShopingCart
+                            if show_debug_message:
+                                print("[SUBMIT] Searching for ibon submit button...")
+                            el_btn = await tab.query_selector('a[id*="AddShopingCart"]')
+                            if not el_btn:
+                                # Fallback to generic button
+                                el_btn = await tab.query_selector('a.btn.btn-primary.btn-block')
                         else:
                             # Kham
                             if show_debug_message:
@@ -17291,22 +17535,6 @@ def cli():
         help="overwrite ticket_number setting",
         type=int)
 
-    parser.add_argument("--tixcraft_sid",
-        help="overwrite tixcraft sid field",
-        type=str)
-
-    parser.add_argument("--kktix_account",
-        help="overwrite kktix_account field",
-        type=str)
-
-    parser.add_argument("--kktix_password",
-        help="overwrite kktix_password field",
-        type=str)
-
-    parser.add_argument("--ibonqware",
-        help="overwrite ibonqware field",
-        type=str)
-
     #default="False",
     parser.add_argument("--headless",
         help="headless mode",
@@ -17333,6 +17561,15 @@ def cli():
 
     parser.add_argument("--date_keyword",
         help="overwrite date_auto_select date_keyword",
+        type=str)
+
+    parser.add_argument("--area_auto_select_mode",
+        help="overwrite area_auto_select mode",
+        choices=['random', 'center', 'from top to bottom', 'from bottom to top'],
+        type=str)
+
+    parser.add_argument("--area_keyword",
+        help="overwrite area_auto_select area_keyword",
         type=str)
 
     args = parser.parse_args()

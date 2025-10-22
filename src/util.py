@@ -122,30 +122,57 @@ def get_app_root():
     return app_root
 
 
+def format_keyword_for_display(keyword_string):
+    """
+    Format JSON keyword string for GUI display.
+
+    JSON Input:  "AA BB","CC","DD"
+    GUI Output:  AA BB,CC,DD
+
+    This function removes quotes for user-friendly display.
+    """
+    if len(keyword_string) > 0:
+        # Remove all quotes for display
+        keyword_string = keyword_string.replace('"', '').replace("'", '')
+    return keyword_string
+
 def format_config_keyword_for_json(user_input):
+    """
+    Format user input keywords for JSON storage.
+
+    User Input:  AA BB,CC,DD
+    JSON Output: "AA BB","CC","DD"
+
+    This function adds quotes to protect keywords with spaces.
+    """
     if len(user_input) > 0:
-        # 新增：偵測並轉換簡化格式
-        if ',' in user_input and not '"' in user_input:
-            items = user_input.split(',')
-            user_input = ','.join([f'"{item.strip()}"' for item in items])
-            return user_input  # 已經是正確格式，直接返回
+        # Remove any existing quotes first (for idempotency)
+        user_input = user_input.replace('"', '').replace("'", '')
 
-        if not ('\"' in user_input):
-            user_input = '"' + user_input + '"'
-
+        # Handle JSON object format
         if user_input[:1]=="{" and user_input[-1:]=="}":
             tmp_json = {}
             try:
                 tmp_json = json.loads(user_input)
                 key=list(tmp_json.keys())[0]
                 first_item=tmp_json[key]
-                user_input=json.dumps(first_item)
+                user_input = str(first_item)
             except Exception as exc:
                 pass
 
+        # Handle array format
         if user_input[:1]=="[" and user_input[-1:]=="]":
             user_input=user_input[1:]
             user_input=user_input[:-1]
+            user_input = user_input.replace('"', '').replace("'", '')
+
+        # Add quotes to each keyword
+        if ',' in user_input:
+            items = user_input.split(',')
+            user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
+        else:
+            user_input = f'"{user_input.strip()}"'
+
     return user_input
 
 def is_text_match_keyword(keyword_string, text):

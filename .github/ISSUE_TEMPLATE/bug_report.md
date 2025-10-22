@@ -1,7 +1,7 @@
 ---
 name: 🐛 Bug Report
 about: Report a bug to help us improve
-title: '[BUG] '
+title: '[BUG] <請描述問題>'
 labels: 'bug'
 assignees: 'bouob'
 ---
