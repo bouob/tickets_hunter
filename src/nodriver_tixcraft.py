@@ -2337,6 +2337,12 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
             print(f"[DATE KEYWORD]   No dates matched any keywords")
             print(f"[DATE KEYWORD] ========================================")
 
+    # Fallback: if keyword provided but no matches found, use all available dates (FR-017-2)
+    if len(matched_blocks) == 0 and date_keyword and formated_area_list and len(formated_area_list) > 0:
+        if show_debug_message:
+            print(f"[DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
+        matched_blocks = formated_area_list
+
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     if show_debug_message:
@@ -3847,205 +3853,133 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                     const originalKeyword = '{original_keyword}';
                     const autoSelectMode = '{auto_select_mode}';
 
-                    console.log('Starting date selection and click - keyword:', originalKeyword, 'mode:', autoSelectMode);
+                    console.log('[TicketPlus] Starting date selection - keyword:', originalKeyword, 'mode:', autoSelectMode);
 
-                    // 查找匹配的日期元素，優先找「立即購買」按鈕
-                    const selectors = [
-                        'button.nextBtn',           // TicketPlus 的「立即購買」按鈕
-                        '.sesstion-item',           // 場次項目
-                        'button',                   // 任何按鈕
-                        'tr',
-                        'div[class*="date"]',
-                        'div[class*="session"]',
-                        '[data-href]'
-                    ];
+                    // 優先選擇場次容器（包含完整日期資訊）
+                    let sessionContainers = Array.from(document.querySelectorAll('.sesstion-item'));
 
-                    let matchedElements = [];
-                    let allElements = [];
+                    // 如果沒有 .sesstion-item，fallback 到 row 元素
+                    if (sessionContainers.length === 0) {{
+                        sessionContainers = Array.from(document.querySelectorAll('div#buyTicket > div.row.pa-4'));
+                    }}
 
-                    selectors.forEach(selector => {{
-                        const elements = Array.from(document.querySelectorAll(selector));
-                        allElements = allElements.concat(elements);
-                    }});
+                    console.log('[TicketPlus] Found session containers:', sessionContainers.length);
 
-                    // 去重
-                    allElements = [...new Set(allElements)];
+                    let matchedContainers = [];
 
-                    // 關鍵字匹配（如果有關鍵字的話）- 使用與匹配邏輯一致的方式
+                    // 關鍵字匹配
                     if (originalKeyword && originalKeyword.trim() !== '') {{
-                        // 解析關鍵字 - 處理引號包圍和逗號分隔，與匹配邏輯保持一致
+                        // 解析關鍵字 - 處理引號包圍和逗號分隔
                         let keywords = [];
                         if (originalKeyword.includes(',')) {{
-                            // 分割逗號分隔的關鍵字
-                            const parts = originalKeyword.split(',');
-                            keywords = parts.map(part => {{
-                                // 移除引號和空格
-                                return part.trim().replace(/^["']|["']$/g, '');
-                            }}).filter(k => k.length > 0);
+                            keywords = originalKeyword.split(',')
+                                .map(k => k.trim().replace(/^["']|["']$/g, ''))
+                                .filter(k => k.length > 0);
                         }} else {{
-                            // 單個關鍵字
                             keywords = [originalKeyword.replace(/^["']|["']$/g, '').trim()];
                         }}
 
-                        console.log('點擊邏輯解析出的關鍵字:', keywords);
+                        console.log('[TicketPlus] Parsed keywords:', keywords);
 
-                        for (let element of allElements) {{
-                            const text = element.textContent || element.innerText || '';
+                        // 匹配容器文字
+                        for (let i = 0; i < sessionContainers.length; i++) {{
+                            const container = sessionContainers[i];
+                            const text = container.textContent || '';
                             const normalizedText = text.replace(/[\\s\\u3000]/g, '').toLowerCase();
 
-                            // 檢查是否包含任一關鍵字
-                            let matched = false;
+                            // 檢查是否匹配任一關鍵字
                             for (let keyword of keywords) {{
-                                // 正規化關鍵字 - 移除空格、全形空格，轉小寫
                                 const normalizedKeyword = keyword.replace(/[\\s\\u3000]/g, '').toLowerCase();
-
                                 if (normalizedText.includes(normalizedKeyword)) {{
-                                    console.log('點擊邏輯匹配到日期元素:', '"' + keyword + '" -> ' + text.substring(0, 100));
-                                    matched = true;
-                                    break;
+                                    matchedContainers.push(container);
+                                    console.log('[TicketPlus] Keyword "' + keyword + '" matched container ' + i);
+                                    console.log('  -> Text preview:', text.substring(0, 100).replace(/\\n/g, ' '));
+                                    break;  // 已匹配，檢查下一個容器
                                 }}
-                            }}
-
-                            if (matched) {{
-                                matchedElements.push(element);
                             }}
                         }}
                     }} else {{
-                        // 沒有關鍵字，優先篩選最相關的購買按鈕
-                        console.log('No keyword specified, filtering relevant buy buttons');
-
-                        // 優先選擇 nextBtn 立即購買按鈕
-                        let buyButtons = allElements.filter(el => {{
-                            return el.matches('button.nextBtn') &&
-                                   el.textContent &&
-                                   el.textContent.includes('立即購買');
-                        }});
-
-                        // 如果沒找到 nextBtn，嘗試其他購買相關元素
-                        if (buyButtons.length === 0) {{
-                            buyButtons = allElements.filter(el => {{
-                                const text = el.textContent || el.innerText || '';
-                                return (el.matches('button') || el.matches('.sesstion-item')) &&
-                                       text.includes('購買');
-                            }});
-                        }}
-
-                        // 如果還是沒找到，使用所有 nextBtn 按鈕
-                        if (buyButtons.length === 0) {{
-                            buyButtons = allElements.filter(el => el.matches('button.nextBtn'));
-                        }}
-
-                        // 最後選擇：使用所有可點擊元素
-                        if (buyButtons.length === 0) {{
-                            buyButtons = allElements.filter(el => {{
-                                return el.matches('button') || el.matches('[onclick]') || el.matches('a[href]');
-                            }});
-                        }}
-
-                        matchedElements = buyButtons;
-                        console.log('No keyword - filtered to', matchedElements.length, 'relevant buy buttons');
-
-                        // 詳細 log 每個候選元素
-                        matchedElements.forEach((el, index) => {{
-                            const text = (el.textContent || '').substring(0, 50);
-                            const tagName = el.tagName.toLowerCase();
-                            const className = el.className || '';
-                            console.log('  Candidate ' + index + ': <' + tagName + ' class="' + className + '">' + text + '...');
-                        }});
+                        // 無關鍵字，使用所有容器
+                        matchedContainers = sessionContainers;
+                        console.log('[TicketPlus] No keyword specified, using all', sessionContainers.length, 'containers');
                     }}
 
-                    if (matchedElements.length === 0) {{
-                        console.log('[ERROR] No valid elements found for clicking');
-                        console.log('Total allElements found:', allElements.length);
-                        console.log('Search mode: keyword=' + originalKeyword + ', mode=' + autoSelectMode);
+                    // 回退機制：如果關鍵字匹配失敗，使用所有容器
+                    if (matchedContainers.length === 0 && sessionContainers.length > 0) {{
+                        console.log('[TicketPlus FALLBACK] No keyword matches, using all', sessionContainers.length, 'containers');
+                        matchedContainers = sessionContainers;
+                    }}
+
+                    if (matchedContainers.length === 0) {{
+                        console.log('[TicketPlus ERROR] No session containers found');
                         return {{
                             success: false,
-                            error: 'No matched date elements found',
+                            error: 'No session containers found',
                             debug: {{
-                                totalElements: allElements.length,
                                 keyword: originalKeyword,
-                                mode: autoSelectMode
+                                mode: autoSelectMode,
+                                totalContainers: sessionContainers.length
                             }}
                         }};
                     }}
 
-                    // 根據模式選擇目標元素
-                    console.log('[SUCCESS] Found ' + matchedElements.length + ' candidate elements, selecting by mode: ' + autoSelectMode);
-
-                    let targetIndex = 0; // 預設第一個
+                    // 根據模式選擇目標容器
+                    let targetIndex = 0;
                     if (autoSelectMode === 'from bottom to top') {{
-                        targetIndex = matchedElements.length - 1;
+                        targetIndex = matchedContainers.length - 1;
                     }} else if (autoSelectMode === 'center') {{
-                        targetIndex = Math.floor(matchedElements.length / 2);
+                        targetIndex = Math.floor(matchedContainers.length / 2);
                     }} else if (autoSelectMode === 'random') {{
-                        targetIndex = Math.floor(Math.random() * matchedElements.length);
+                        targetIndex = Math.floor(Math.random() * matchedContainers.length);
                     }}
 
-                    let targetElement = matchedElements[targetIndex];
-                    const targetText = (targetElement.textContent || '').substring(0, 100);
-                    const targetTag = targetElement.tagName.toLowerCase();
-                    const targetClass = targetElement.className || '';
+                    let targetContainer = matchedContainers[targetIndex];
+                    const containerText = (targetContainer.textContent || '').substring(0, 150).replace(/\\n/g, ' ');
+                    console.log('[TicketPlus TARGET] Selected container [' + targetIndex + '/' + matchedContainers.length + ']');
+                    console.log('  -> Preview:', containerText);
 
-                    console.log('[TARGET] Selected element [' + targetIndex + ']: <' + targetTag + ' class="' + targetClass + '">' + targetText + '...');
-
-                    // 嘗試點擊
-                    let clickSuccess = false;
-                    let clickAction = '';
-
-                    // 方法1: 找內部的按鈕
-                    const button = targetElement.querySelector('button');
-                    if (button && !clickSuccess) {{
-                        try {{
-                            const event = new MouseEvent('click', {{
-                                bubbles: true,
-                                cancelable: true,
-                                view: window
-                            }});
-                            button.dispatchEvent(event);
-                            clickSuccess = true;
-                            clickAction = 'internal_button_clicked';
-                            console.log('Internal button click successful');
-                        }} catch (e) {{
-                            console.log('Internal button click failed:', e.message);
-                        }}
+                    // 在容器內查找購買按鈕
+                    let buyButton = targetContainer.querySelector('button.nextBtn');
+                    if (!buyButton) {{
+                        buyButton = targetContainer.querySelector('button');
                     }}
 
-                    // 方法2: 點擊整個元素
-                    if (!clickSuccess) {{
-                        try {{
-                            const event = new MouseEvent('click', {{
-                                bubbles: true,
-                                cancelable: true,
-                                view: window
-                            }});
-                            targetElement.dispatchEvent(event);
-                            clickSuccess = true;
-                            clickAction = 'element_clicked';
-                            console.log('Element click successful');
-                        }} catch (e) {{
-                            console.log('Element click failed:', e.message);
-                        }}
+                    if (!buyButton) {{
+                        console.log('[TicketPlus ERROR] No buy button found in container');
+                        return {{
+                            success: false,
+                            error: 'No buy button found in container',
+                            targetText: containerText
+                        }};
                     }}
 
-                    // 方法3: 如果有 data-href，直接導航
-                    if (!clickSuccess && targetElement.getAttribute('data-href')) {{
-                        try {{
-                            const href = targetElement.getAttribute('data-href');
-                            window.location.href = href;
-                            clickSuccess = true;
-                            clickAction = 'navigation_by_href';
-                            console.log('Navigation via data-href successful');
-                        }} catch (e) {{
-                            console.log('data-href navigation failed:', e.message);
-                        }}
-                    }}
+                    const buttonText = buyButton.textContent || '';
+                    console.log('[TicketPlus BUTTON] Found button:', buttonText);
 
-                    return {{
-                        success: clickSuccess,
-                        action: clickAction,
-                        matchedCount: matchedElements.length,
-                        targetText: (targetElement.textContent || '').substring(0, 200)
-                    }};
+                    // 點擊按鈕
+                    try {{
+                        const event = new MouseEvent('click', {{
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        }});
+                        buyButton.dispatchEvent(event);
+                        console.log('[TicketPlus SUCCESS] Button clicked successfully');
+                        return {{
+                            success: true,
+                            action: 'button_clicked',
+                            matchedCount: matchedContainers.length,
+                            targetText: containerText,
+                            buttonText: buttonText
+                        }};
+                    }} catch (e) {{
+                        console.log('[TicketPlus ERROR] Click failed:', e.message);
+                        return {{
+                            success: false,
+                            error: 'Click failed: ' + e.message,
+                            targetText: containerText
+                        }};
+                    }}
                 }})();
             ''')
 
@@ -6146,242 +6080,6 @@ async def nodriver_ibon_login(tab, config_dict, driver):
             traceback.print_exc()
         return {'success': False, 'reason': 'exception', 'error': str(cookie_error)}
 
-async def nodriver_ibon_date_selection(tab, config_dict):
-    """
-    NoDriver ibon 日期選擇實作
-    基於 Chrome ibon 的日期選擇邏輯，使用 Shadow DOM 穿透技術
-    """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-    auto_select_mode = config_dict["date_auto_select"]["mode"]
-    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-
-    if show_debug_message:
-        print("NoDriver ibon date selection started")
-        print("date_keyword:", date_keyword)
-        print("auto_select_mode:", auto_select_mode)
-
-    is_date_selected = False
-
-    try:
-        await tab.sleep(1.0)
-
-        # 使用多重策略搜尋日期選項
-        date_options = await search_ibon_date_options_with_cdp(tab, show_debug_message)
-
-        if show_debug_message:
-            print(f"Found {len(date_options)} date options")
-            for i, option in enumerate(date_options):
-                print(f"  Option {i}: {option}")
-
-        # 過濾可用的日期選項（排除 disabled 的按鈕）
-        available_options = []
-        for option in date_options:
-            if isinstance(option, dict):
-                element_html = option.get('element', '')
-                if 'disabled' not in element_html.lower():
-                    available_options.append(option)
-                elif show_debug_message:
-                    print(f"  Skipping disabled option: {option.get('text', 'unknown')}")
-
-        if show_debug_message:
-            print(f"Available (enabled) options: {len(available_options)}")
-
-        # 應用關鍵字過濾
-        matched_options = []
-        if len(date_keyword) > 0 and available_options:
-            for option in available_options:
-                option_text = option.get('text', '').lower()
-                date_context = option.get('date_context', '').lower()
-                search_text = f"{option_text} {date_context}"
-
-                if date_keyword.lower() in search_text:
-                    matched_options.append(option)
-                    if show_debug_message:
-                        print(f"  Keyword match: '{option.get('text', 'unknown')}'")
-        else:
-            matched_options = available_options
-
-        # 選擇目標日期選項
-        target_option = None
-        if matched_options:
-            if auto_select_mode == "random":
-                import random
-                target_option = random.choice(matched_options)
-            elif auto_select_mode == "from bottom to top":
-                target_option = matched_options[-1]
-            elif auto_select_mode == "center":
-                target_option = matched_options[len(matched_options) // 2]
-            else:  # from top to bottom (default)
-                target_option = matched_options[0]
-
-            if show_debug_message:
-                option_text = target_option.get('text', 'unknown') if isinstance(target_option, dict) else 'non-dict'
-                print(f"Selected date option: '{option_text}'")
-
-        # 點擊選中的日期選項
-        if target_option and isinstance(target_option, dict):
-            click_result = await click_ibon_date_option(tab, target_option, show_debug_message)
-            if click_result and click_result.get('success'):
-                is_date_selected = True
-                if show_debug_message:
-                    print("Date selection successful")
-                await tab.sleep(1.5)
-            else:
-                if show_debug_message:
-                    print(f"Date selection failed: {click_result}")
-        else:
-            if show_debug_message:
-                print("No suitable date option found")
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"Date selection error: {e}")
-            import traceback
-            traceback.print_exc()
-
-    if show_debug_message:
-        print(f"Date selection result: {is_date_selected}")
-
-    return is_date_selected
-
-async def search_ibon_date_options_with_cdp(tab, show_debug_message):
-    """
-    使用 CDP 搜尋 ibon 日期選項
-    參考 Chrome ibon 的選擇器: div.single-content > div > div.row > div > div.tr
-    """
-    date_options = []
-
-    try:
-        from nodriver import cdp
-
-        if show_debug_message:
-            print("Searching for ibon date options...")
-
-        # 使用 DOMSnapshot 獲取平坦化的頁面結構
-        documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
-            computed_styles=[],
-            include_paint_order=True,
-            include_dom_rects=True,
-            include_blended_background_colors=True
-        ))
-
-        if documents and len(documents) > 0:
-            document = documents[0]
-            node_names = document.layout.node_names if hasattr(document.layout, 'node_names') else []
-            node_values = document.layout.node_values if hasattr(document.layout, 'node_values') else []
-
-            # 搜尋相關的日期選項容器
-            target_selectors = [
-                'div.tr',  # 主要的日期行選擇器
-                'div.single-content',
-                'button.btn',
-                'button.btn-pink',
-                'button.btn-buy'
-            ]
-
-            found_nodes = []
-            for i, name_idx in enumerate(node_names):
-                if name_idx < len(strings):
-                    node_name = strings[name_idx].lower()
-
-                    # 檢查是否為目標節點
-                    for selector in target_selectors:
-                        if selector.replace('.', ' ').replace('div', '').replace('button', '').strip() in node_name:
-                            found_nodes.append((i, node_name))
-                            break
-
-            if show_debug_message:
-                print(f"Found {len(found_nodes)} potential date nodes")
-
-            # 提取文字內容和屬性
-            for node_idx, node_name in found_nodes:
-                try:
-                    # 嘗試獲取節點內容
-                    if hasattr(document.layout, 'text_values') and node_idx < len(document.layout.text_values):
-                        text_idx = document.layout.text_values[node_idx]
-                        if text_idx >= 0 and text_idx < len(strings):
-                            text_content = strings[text_idx]
-
-                            # 檢查是否包含日期相關信息
-                            if any(keyword in text_content.lower() for keyword in
-                                  ['立即購', '線上購票', '購票', '票券', '日期', '時間', '場次']):
-
-                                date_option = {
-                                    'text': text_content,
-                                    'node_name': node_name,
-                                    'node_index': node_idx,
-                                    'method': 'cdp_dom_snapshot',
-                                    'date_context': '',
-                                    'element': f'<{node_name}>{text_content}</{node_name}>'
-                                }
-
-                                date_options.append(date_option)
-
-                                if show_debug_message:
-                                    print(f"  Found date option: {text_content[:50]}")
-
-                except Exception as node_error:
-                    if show_debug_message:
-                        print(f"Error processing node {node_idx}: {node_error}")
-                    continue
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"CDP date search error: {e}")
-
-    return date_options
-
-async def click_ibon_date_option(tab, date_option, show_debug_message):
-    """
-    點擊 ibon 日期選項
-    """
-    try:
-        if show_debug_message:
-            print(f"Attempting to click date option: {date_option.get('text', 'unknown')}")
-
-        # 根據不同方法點擊
-        method = date_option.get('method', 'unknown')
-
-        if method == 'cdp_dom_snapshot':
-            # 嘗試使用 JavaScript 點擊
-            text_content = date_option.get('text', '')
-
-            # 使用多重策略嘗試點擊
-            click_scripts = [
-                f"document.evaluate(\"//button[contains(text(), '{text_content}')]\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue?.click()",
-                f"document.evaluate(\"//div[contains(@class, 'tr')]//button[contains(text(), '{text_content}')]\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue?.click()",
-                f"[...document.querySelectorAll('button')].find(btn => btn.textContent.includes('{text_content}'))?.click()",
-                f"[...document.querySelectorAll('div.tr button')].find(btn => btn.textContent.includes('{text_content}'))?.click()"
-            ]
-
-            for script in click_scripts:
-                try:
-                    result = await tab.evaluate(script, return_by_value=True)
-                    if show_debug_message:
-                        print(f"JavaScript click result: {result}")
-
-                    # 等待一下看是否有反應
-                    await tab.sleep(0.5)
-
-                    # 檢查頁面是否有變化（簡單檢查）
-                    current_url = await tab.evaluate('window.location.href', return_by_value=True)
-                    if show_debug_message:
-                        print(f"Current URL after click attempt: {current_url}")
-
-                    return {'success': True, 'method': 'javascript', 'script': script}
-
-                except Exception as script_error:
-                    if show_debug_message:
-                        print(f"JavaScript click failed: {script_error}")
-                    continue
-
-        return {'success': False, 'error': 'No suitable click method found'}
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"Click date option error: {e}")
-        return {'success': False, 'error': str(e)}
-
 async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_message=False):
     """
     NoDriver ibon 日期模式自動選擇
@@ -6431,9 +6129,367 @@ async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_m
 
     return target_button
 
+async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
+    """
+    NoDriver ibon 日期自動選擇實作 - 使用 CDP pierce=True 參數
+    直接穿透 Shadow DOM，比 DOMSnapshot 更簡潔高效
+
+    使用 CDP DOM.query_selector_all(pierce=True) 直接查詢 Shadow DOM 中的按鈕
+    參考：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
+    """
+    from nodriver import cdp
+    from nodriver.cdp import runtime
+    import random
+    import json
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+
+    if show_debug_message:
+        print("[IBON DATE PIERCE] Starting date selection with pierce=True")
+        print("date_keyword:", date_keyword)
+        print("auto_select_mode:", auto_select_mode)
+
+    # Step 1: Initial wait and scroll to trigger Angular rendering
+    if show_debug_message:
+        print("[IBON DATE PIERCE] Waiting for Angular to initialize...")
+
+    await tab  # Sync state
+    initial_wait = random.uniform(1.2, 1.8)
+    await tab.sleep(initial_wait)
+
+    # Step 2: Scroll to trigger lazy loading
+    try:
+        await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
+        await tab  # Sync state
+        if show_debug_message:
+            print("[IBON DATE PIERCE] Scrolled to bottom")
+    except:
+        pass
+
+    # Step 3: Intelligent waiting - poll for button presence using CDP search
+    # Must use CDP perform_search to penetrate Shadow DOM (regular JS querySelectorAll won't work)
+    max_wait = 5  # Max 5 seconds additional wait
+    check_interval = 0.3
+    max_attempts = int(max_wait / check_interval)
+    button_found = False
+
+    for attempt in range(max_attempts):
+        try:
+            # Use CDP search to check button presence (penetrates Shadow DOM)
+            search_id, result_count = await tab.send(cdp.dom.perform_search(
+                query='button.btn-buy',
+                include_user_agent_shadow_dom=True
+            ))
+
+            # Clean up search
+            try:
+                await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+            except:
+                pass
+
+            if result_count > 0:
+                button_found = True
+                if show_debug_message:
+                    print(f"[IBON DATE PIERCE] Found {result_count} button(s) after {initial_wait + attempt * check_interval:.1f}s")
+                break
+        except:
+            pass
+
+        await tab.sleep(check_interval)
+
+    if not button_found and show_debug_message:
+        print(f"[IBON DATE PIERCE] No buttons found after {initial_wait + max_wait:.1f}s, proceeding with search anyway...")
+
+    # Step 4: Get document with pierce=True to enable Shadow DOM traversal
+    # Use shallow depth to avoid CBOR stack overflow on complex pages
+    try:
+        doc_result = await tab.send(cdp.dom.get_document(depth=0, pierce=False))
+        root_node_id = doc_result.node_id
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] Got document root: {root_node_id}")
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] Failed to get document: {e}")
+        return False
+
+    # Step 5: Use perform_search with pierce capability
+    # Note: query_selector_all doesn't support pierce in current NoDriver version
+    # Use perform_search which can traverse Shadow DOM
+    try:
+        # Perform search to find buttons (automatically pierces Shadow DOM)
+        search_id, result_count = await tab.send(cdp.dom.perform_search(
+            query='button.btn-buy',
+            include_user_agent_shadow_dom=True
+        ))
+
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] Found {result_count} button(s) via search")
+
+        if result_count == 0:
+            if show_debug_message:
+                print("[IBON DATE PIERCE] No purchase buttons found")
+            # Cleanup search
+            try:
+                await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+            except:
+                pass
+            return False
+
+        # Get search results (node IDs)
+        button_node_ids = await tab.send(cdp.dom.get_search_results(
+            search_id=search_id,
+            from_index=0,
+            to_index=result_count
+        ))
+
+        # Cleanup search
+        try:
+            await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+        except:
+            pass
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] perform_search failed: {e}")
+        return False
+
+    # Step 5: Extract button data and date context
+    purchase_buttons = []
+
+    for node_id in button_node_ids:
+        try:
+            # Describe button node to get attributes
+            node_desc = await tab.send(cdp.dom.describe_node(node_id=node_id))
+            # node_desc directly contains the node info, not wrapped in .node
+            node = node_desc if hasattr(node_desc, 'attributes') else node_desc.node
+
+            # Parse attributes
+            attrs = {}
+            if hasattr(node, 'attributes') and node.attributes:
+                for i in range(0, len(node.attributes), 2):
+                    if i + 1 < len(node.attributes):
+                        attrs[node.attributes[i]] = node.attributes[i + 1]
+
+            button_class = attrs.get('class', '')
+            button_disabled = 'disabled' in attrs
+
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Button class: {button_class}")
+
+            # Extract date context by traversing up to find .tr container
+            date_context = ''
+
+            # Start from button's parent (not the button itself)
+            try:
+                button_desc = await tab.send(cdp.dom.describe_node(node_id=node_id))
+                button_node = button_desc if hasattr(button_desc, 'attributes') else button_desc.node
+
+                # Get parent_id to start traversal
+                if not hasattr(button_node, 'parent_id') or not button_node.parent_id:
+                    if show_debug_message:
+                        print(f"[IBON DATE PIERCE DEBUG] Button has no parent_id")
+                    current_node_id = None
+                else:
+                    current_node_id = button_node.parent_id  # Start from parent, not button itself
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[IBON DATE PIERCE DEBUG] Failed to get button parent: {e}")
+                current_node_id = None
+
+            if current_node_id:
+                for level in range(10):  # Max 10 levels up (now starting from parent = level 1)
+                    try:
+                        parent_desc = await tab.send(cdp.dom.describe_node(node_id=current_node_id))
+                        # Same fix: node_desc might be the node itself
+                        parent_node = parent_desc if hasattr(parent_desc, 'attributes') else parent_desc.node
+
+                        # Parse parent attributes
+                        parent_attrs = {}
+                        if hasattr(parent_node, 'attributes') and parent_node.attributes:
+                            for i in range(0, len(parent_node.attributes), 2):
+                                if i + 1 < len(parent_node.attributes):
+                                    parent_attrs[parent_node.attributes[i]] = parent_node.attributes[i + 1]
+
+                        parent_class = parent_attrs.get('class', '')
+
+                        if show_debug_message and level < 3:
+                            print(f"[IBON DATE PIERCE DEBUG] Level {level + 1}, parent class: {parent_class[:50] if parent_class else 'none'}")
+
+                        # Check if this is .tr container (flexible matching)
+                        is_tr_container = (
+                            ' tr ' in f' {parent_class} ' or
+                            parent_class.endswith(' tr') or
+                            parent_class.startswith('tr ') or
+                            'd-flex' in parent_class  # ibon uses d-flex for containers
+                        )
+
+                        if is_tr_container:
+                            # Found potential container, extract outer HTML for date context
+                            # Use HTML text directly for keyword matching (don't force specific date format)
+                            try:
+                                outer_html = await tab.send(cdp.dom.get_outer_html(node_id=current_node_id))
+                                # Use HTML text directly as date_context for flexible keyword matching
+                                # This allows matching any format: "11/30", "2025.11.30", "2025-11-30", etc.
+                                date_context = outer_html[:200]  # Use first 200 chars
+                                if show_debug_message:
+                                    print(f"[IBON DATE PIERCE DEBUG] Found container HTML: {date_context[:80]}...")
+                                break
+                            except Exception as html_err:
+                                if show_debug_message:
+                                    print(f"[IBON DATE PIERCE DEBUG] get_outer_html failed: {html_err}")
+
+                        # Move up to parent
+                        if hasattr(parent_node, 'parent_id') and parent_node.parent_id:
+                            current_node_id = parent_node.parent_id
+                        else:
+                            break
+
+                    except Exception as e:
+                        if show_debug_message:
+                            print(f"[IBON DATE PIERCE DEBUG] Traversal error at level {level + 1}: {e}")
+                        break
+
+            purchase_buttons.append({
+                'node_id': node_id,
+                'class': button_class,
+                'disabled': button_disabled,
+                'date_context': date_context
+            })
+
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Button: disabled={button_disabled}, date='{date_context}'")
+
+        except Exception as e:
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Failed to process button: {e}")
+            continue
+
+    if len(purchase_buttons) == 0:
+        if show_debug_message:
+            print("[IBON DATE PIERCE] No valid buttons extracted")
+        return False
+
+    # Step 6: Filter disabled buttons
+    enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
+
+    if show_debug_message:
+        print(f"[IBON DATE PIERCE] {len(enabled_buttons)} enabled button(s)")
+
+    if len(enabled_buttons) == 0:
+        if show_debug_message:
+            print("[IBON DATE PIERCE] All buttons disabled")
+        return False
+
+    # Step 7: Apply keyword matching (same logic as original)
+    matched_buttons = []
+    if len(date_keyword) > 0 and enabled_buttons:
+        try:
+            keyword_array = json.loads("[" + date_keyword + "]")
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Keyword filter: {keyword_array}")
+
+            for button in enabled_buttons:
+                date_context = button.get('date_context', '').lower()
+
+                for keyword_item in keyword_array:
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                    is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
+
+                    if is_match:
+                        matched_buttons.append(button)
+                        if show_debug_message:
+                            print(f"[IBON DATE PIERCE] Matched '{keyword_item}' in '{date_context}'")
+                        break
+        except json.JSONDecodeError as e:
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Keyword parse error: {e}")
+            matched_buttons = enabled_buttons
+    else:
+        matched_buttons = enabled_buttons
+
+    # Step 8: Fallback if no matches
+    if len(matched_buttons) == 0:
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] No matches, fallback to mode '{auto_select_mode}'")
+        matched_buttons = enabled_buttons
+
+    # Step 9: Select target based on mode
+    if auto_select_mode == "random":
+        target_button = random.choice(matched_buttons)
+    elif auto_select_mode == "from bottom to top":
+        target_button = matched_buttons[-1]
+    elif auto_select_mode == "center":
+        target_button = matched_buttons[len(matched_buttons) // 2]
+    else:  # from top to bottom
+        target_button = matched_buttons[0]
+
+    if show_debug_message:
+        print(f"[IBON DATE PIERCE] Selected: date='{target_button.get('date_context', 'N/A')}'")
+
+    # Step 10: Click button using CDP
+    try:
+        # Scroll into view
+        await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=target_button['node_id']))
+        await tab.sleep(0.2)
+
+        # Resolve node to RemoteObject
+        resolved = await tab.send(cdp.dom.resolve_node(node_id=target_button['node_id']))
+
+        if hasattr(resolved, 'object'):
+            remote_object_id = resolved.object.object_id
+        elif hasattr(resolved, 'object_id'):
+            remote_object_id = resolved.object_id
+        else:
+            raise Exception("Could not get object_id")
+
+        # Click using JavaScript
+        result = await tab.send(runtime.call_function_on(
+            function_declaration='function() { this.click(); return true; }',
+            object_id=remote_object_id,
+            return_by_value=True
+        ))
+
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] Click result: {result}")
+            print("[IBON DATE PIERCE] Button clicked successfully")
+
+        await tab.sleep(0.5)
+        return True
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE] Click failed: {e}")
+        return False
+
 async def nodriver_ibon_date_auto_select(tab, config_dict):
     """
-    NoDriver ibon 日期自動選擇實作 - ActivityInfo/Details 頁面
+    NoDriver ibon 日期自動選擇實作 - 主入口（包含 fallback）
+
+    優先使用 pierce=True 方法（更快、更簡潔）
+    失敗時回退到 DOMSnapshot 方法（更穩定但較慢）
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Try pierce method first (faster)
+    try:
+        result = await nodriver_ibon_date_auto_select_pierce(tab, config_dict)
+        if result:
+            return True
+        else:
+            if show_debug_message:
+                print("[IBON DATE] pierce method failed, trying DOMSnapshot fallback...")
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON DATE] pierce method error: {e}, trying DOMSnapshot fallback...")
+
+    # Fallback to original DOMSnapshot method
+    return await nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict)
+
+async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
+    """
+    NoDriver ibon 日期自動選擇實作 - DOMSnapshot 回退版本
     使用 CDP DOMSnapshot 穿透 closed Shadow DOM 搜尋購票按鈕
     參考：NoDriver API Guide 範例 1
     """
@@ -6453,8 +6509,8 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
     is_date_assigned = False
 
-    # Wait for page to load (Angular SPA needs more time)
-    wait_time = random.uniform(1.5, 2.0)
+    # Balanced wait for page to load (1.2-1.8s: stable for slower Angular pages, ~20% faster than original 1.5-2.0s)
+    wait_time = random.uniform(1.2, 1.8)
     if show_debug_message:
         print(f"[IBON DATE] Waiting {wait_time:.2f} seconds for Angular to load...")
     await tab.sleep(wait_time)
@@ -6462,11 +6518,40 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
     # Scroll down to trigger lazy loading
     try:
         await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-        await tab.sleep(0.5)
+        # Reduced wait after scroll (0.5s -> 0.2s) as scroll is immediate
+        await tab.sleep(0.2)
         if show_debug_message:
             print("[IBON DATE] Scrolled to bottom to trigger content loading")
     except:
         pass
+
+    # Wait for Angular content to render (check for .tr containers which hold date info)
+    content_appeared = False
+    max_wait_attempts = 20  # 20 * 0.5s = 10 seconds
+    if show_debug_message:
+        print("[IBON DATE] Waiting for date content to render...")
+
+    for attempt in range(max_wait_attempts):
+        try:
+            # Check for .tr containers (which contain date info and buttons)
+            content_check = await tab.evaluate('''
+                () => {
+                    // ibon uses .tr or .d-flex containers for date rows
+                    const containers = document.querySelectorAll('.tr, .d-flex[class*="tr"]');
+                    return containers.length;
+                }
+            ''')
+            if content_check > 0:
+                content_appeared = True
+                if show_debug_message:
+                    print(f"[IBON DATE] Found {content_check} date container(s) after {attempt * 0.5:.1f}s")
+                break
+        except:
+            pass
+        await tab.sleep(0.5)
+
+    if not content_appeared and show_debug_message:
+        print(f"[IBON DATE] No content found after {max_wait_attempts * 0.5}s, proceeding with snapshot anyway...")
 
     # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
     if show_debug_message:
@@ -6502,6 +6587,11 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
         # Step 1: Extract parent_index for tracking node relationships
         parent_indices = list(nodes.parent_index) if hasattr(nodes, 'parent_index') else []
 
+        # Debug: Count all buttons found
+        button_count = sum(1 for name in node_names if name.upper() == 'BUTTON')
+        if show_debug_message:
+            print(f"[IBON DATE] Total BUTTON nodes found: {button_count}")
+
         # Step 2: Search for purchase buttons and extract date context
         for i, node_name in enumerate(node_names):
             if node_name.upper() == 'BUTTON':
@@ -6516,6 +6606,10 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 
                 button_class = attrs.get('class', '')
                 button_disabled = 'disabled' in attrs
+
+                # Debug: Log all button classes found
+                if show_debug_message and button_class:
+                    print(f"[IBON DATE DEBUG] Button class: {button_class}")
 
                 # ibon purchase buttons have 'btn-buy' or 'ng-tns-c57' in class
                 if 'btn-buy' in button_class or ('ng-tns-c57' in button_class and 'btn' in button_class):
@@ -9815,27 +9909,20 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
     if show_debug_message:
         print("[ibon] 區域選擇開始")
-        # print(f"關鍵字: {area_keyword_item}")
-        # print(f"模式: {auto_select_mode}")
-        # print(f"票數: {ticket_number}")
 
-    # Wait for Angular app to fully load
+    # Optimized wait for Angular app to fully load (reduced from 2.3-2.7s to 1.0-1.4s)
     try:
         import random
-        wait_time = random.uniform(0.8, 1.2)
-        # if show_debug_message:
-        #     print(f"[ibon] 等待 Angular 載入 {wait_time:.2f}s...")
+        wait_time = random.uniform(0.6, 0.8)
         await tab.sleep(wait_time)
-        await tab.sleep(1.5)
+        # Reduced second wait (1.5s -> 0.6s) - total now 1.2-1.4s instead of 2.3-2.7s
+        await tab.sleep(0.6)
     except:
         pass
 
     # Phase 1: Extract all area data using DOMSnapshot (to pierce Shadow DOM if present)
     try:
         from nodriver import cdp
-
-        # if show_debug_message:
-        #     # print("[ibon] 擷取頁面結構...")
 
         # Use DOMSnapshot to get flattened page structure
         documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
@@ -9870,9 +9957,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                     attributes_list = nodes.attributes
                 if hasattr(nodes, 'backend_node_id'):
                     backend_node_ids = list(nodes.backend_node_id)
-
-            # if show_debug_message:
-            #     # print(f"[ibon] 提取 {len(node_names)} 節點")
 
             # Build children map for traversal
             children_map = {}
@@ -9921,9 +10005,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
             for i, node_name in enumerate(node_names):
                 if node_name.upper() == 'TR':
                     tr_indices.append(i)
-
-            # if show_debug_message:
-            #     # print(f"[ibon] 找到 {len(tr_indices)} TR 元素")
 
             # Extract data from each TR
             area_index = 0
@@ -9975,9 +10056,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                     }
                     areas_data.append(area_data)
                     area_index += 1
-
-        # if show_debug_message:
-        #     # print(f"[ibon] 找到 {len(areas_data)} 個區域")
 
     except Exception as exc:
         if show_debug_message:
@@ -10059,8 +10137,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     else:
         # No keyword specified, accept all valid areas
         matched_areas = valid_areas
-        # if show_debug_message:
-        #     # print("[ibon] 無關鍵字,所有區域皆可選")
 
     if show_debug_message:
         print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
@@ -10216,19 +10292,57 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         print(f"auto_select_mode: {auto_select_mode}")
         print(f"ticket_number: {ticket_number}")
 
-    # Wait for Shadow DOM to fully load
+    # Wait for Shadow DOM to fully load (ibon orders page needs more time for TR elements to render)
+    # Use intelligent waiting: check for page elements rather than blind sleep
     try:
-        import random
-        wait_time = random.uniform(0.3, 0.6)
+        # cdp and random already imported at file start (Line 11, 29)
+
+        # First, ensure page state is synced
+        await tab  # Sync state
+
+        # Wait for initial page load with basic delay
+        initial_wait = random.uniform(1.5, 2.0)
         if show_debug_message:
-            print(f"Waiting {wait_time:.2f} seconds for page to fully load...")
-        await tab.sleep(wait_time)
-    except:
+            print(f"Waiting {initial_wait:.2f} seconds for initial page load...")
+        await tab.sleep(initial_wait)
+
+        # Then wait for TR elements to appear (intelligent waiting)
+        # Use CDP perform_search to penetrate Shadow DOM (consistent with date select)
+        max_wait = 5  # Max 5 seconds additional wait
+        check_interval = 0.3
+        max_attempts = int(max_wait / check_interval)
+
+        for attempt in range(max_attempts):
+            try:
+                # Use CDP search to check TR presence (penetrates Shadow DOM)
+                search_id, tr_count = await tab.send(cdp.dom.perform_search(
+                    query='tbody tr',
+                    include_user_agent_shadow_dom=True
+                ))
+
+                # Clean up search
+                try:
+                    await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+                except:
+                    pass
+
+                if tr_count > 0:
+                    if show_debug_message:
+                        print(f"[IBON AREA WAIT] Found {tr_count} TR elements after {initial_wait + attempt * check_interval:.1f}s")
+                    break
+            except:
+                pass
+
+            await tab.sleep(check_interval)
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON AREA WAIT] Error during wait: {e}")
         pass
 
     # Phase 1: Extract all area data using DOMSnapshot (to pierce closed Shadow DOM)
     try:
-        from nodriver import cdp
+        # cdp already imported at function start (Line 10535)
 
         if show_debug_message:
             print("[DOMSNAPSHOT] Capturing page structure for area extraction...")
@@ -10518,8 +10632,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     else:
         # No keyword specified, accept all valid areas
         matched_areas = valid_areas
-        # if show_debug_message:
-        #     # print("[ibon] 無關鍵字,所有區域皆可選")
 
     if show_debug_message:
         print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
@@ -10545,7 +10657,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     # Phase 5: Click target area using CDP real-time coordinates
     try:
-        from nodriver import cdp
+        # cdp already imported at file start (Line 29)
 
         if show_debug_message:
             print(f"[CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
@@ -10662,12 +10774,12 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     is_ticket_number_assigned = False
 
     try:
-        # First, wait for SELECT element to be available (DOM stability check)
+        # Optimized: wait for SELECT element (reduced from 30 to 15 attempts = 1.5s max)
         wait_result = await tab.evaluate('''
             () => {
                 return new Promise((resolve) => {
                     let attempts = 0;
-                    const maxAttempts = 30; // 30 * 100ms = 3 seconds max wait
+                    const maxAttempts = 15; // 15 * 100ms = 1.5 seconds max wait (reduced from 30)
 
                     const checkSelect = setInterval(() => {
                         attempts++;
@@ -11648,6 +11760,118 @@ async def nodriver_ibon_check_sold_out(tab, config_dict):
 
     return is_sold_out
 
+async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
+    """
+    Check if tickets are sold out on ibon ticket selection page
+    Applicable to UTK0201_001.aspx and similar ticket quantity selection pages
+
+    Detection methods:
+    1. Check if ticket quantity dropdowns only have "0" option
+    2. Check if page contains sold out messages
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary for debug settings
+
+    Returns:
+        bool: True if sold out (needs page reload), False otherwise
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_sold_out = False
+
+    try:
+        result = await tab.evaluate('''
+            (function() {
+                // Sold out keywords (multi-language support)
+                const soldOutKeywords = ['選購一空', '已售完', 'No tickets available', 'Sold out', 'Sold Out', '空席なし', '完売した', '完売', '尚無票'];
+
+                // Method 1: Check AMOUNT_STR spans (purchase quantity field)
+                const amountSpans = document.querySelectorAll('span[id*="AMOUNT_STR"]');
+                let hasAmountSoldOut = false;
+                let amountSoldOutCount = 0;
+
+                for (let span of amountSpans) {
+                    const text = span.textContent.trim();
+                    // Check if text matches any sold out keyword
+                    if (soldOutKeywords.some(keyword => text === keyword)) {
+                        hasAmountSoldOut = true;
+                        amountSoldOutCount++;
+                    }
+                }
+
+                // Method 2: Check PRICE_STR spans (ticket area label)
+                const priceSpans = document.querySelectorAll('span[id*="PRICE_STR"]');
+                let hasPriceSoldOut = false;
+
+                for (let span of priceSpans) {
+                    const text = span.textContent;
+                    // Check if text contains any sold out keyword in parentheses
+                    if (soldOutKeywords.some(keyword => text.includes('(' + keyword + ')'))) {
+                        hasPriceSoldOut = true;
+                        break;
+                    }
+                }
+
+                // Method 3: Check if ticket quantity selectors only have "0" option
+                let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+                if (selects.length === 0) {
+                    selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                }
+                if (selects.length === 0) {
+                    selects = document.querySelectorAll('select.form-control-sm');
+                }
+
+                let hasValidOptions = false;
+                let selectCount = selects.length;
+
+                for (let select of selects) {
+                    for (let option of select.options) {
+                        // Valid option: value not "0" or empty, and not disabled
+                        if (option.value !== "0" && option.value !== "" && !option.disabled) {
+                            hasValidOptions = true;
+                            break;
+                        }
+                    }
+                    if (hasValidOptions) break;
+                }
+
+                // Method 4: Check if page contains sold out messages in body text
+                const pageText = document.body.innerText || document.body.textContent;
+                let hasSoldOutMessage = soldOutKeywords.some(keyword => pageText.includes(keyword));
+
+                // Final determination: sold out if any method detects it
+                const isSoldOut = hasAmountSoldOut || hasPriceSoldOut || !hasValidOptions || hasSoldOutMessage;
+
+                return {
+                    hasAmountSoldOut: hasAmountSoldOut,
+                    amountSoldOutCount: amountSoldOutCount,
+                    hasPriceSoldOut: hasPriceSoldOut,
+                    selectCount: selectCount,
+                    hasValidOptions: hasValidOptions,
+                    hasSoldOutMessage: hasSoldOutMessage,
+                    isSoldOut: isSoldOut
+                };
+            })()
+        ''')
+
+        result = util.parse_nodriver_result(result)
+        if isinstance(result, dict):
+            is_sold_out = result.get('isSoldOut', False)
+            if show_debug_message:
+                print(f"[IBON SOLD OUT CHECK] AMOUNT_STR sold out: {result.get('hasAmountSoldOut', False)} (count: {result.get('amountSoldOutCount', 0)})")
+                print(f"[IBON SOLD OUT CHECK] PRICE_STR sold out: {result.get('hasPriceSoldOut', False)}")
+                print(f"[IBON SOLD OUT CHECK] Select elements found: {result.get('selectCount', 0)}")
+                print(f"[IBON SOLD OUT CHECK] Has valid options: {result.get('hasValidOptions', False)}")
+                print(f"[IBON SOLD OUT CHECK] Body text has sold out message: {result.get('hasSoldOutMessage', False)}")
+                if is_sold_out:
+                    print("[IBON SOLD OUT CHECK] All tickets are sold out, page reload required")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON SOLD OUT CHECK] Error: {e}")
+
+    return is_sold_out
+
 async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     """
     Handle verification question on ibon (simplified version)
@@ -11980,16 +12204,38 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             pass
 
                 if is_do_ibon_performance_with_ticket_number:
+                    # Step 0: Check if tickets are sold out FIRST (before OCR)
+                    show_debug_message = config_dict["advanced"].get("verbose", False)
+                    is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
+
+                    if is_sold_out_detected:
+                        if show_debug_message:
+                            print("[IBON] All tickets sold out, reloading page (skip OCR)...")
+
+                        try:
+                            await tab.reload()
+                        except Exception as reload_exc:
+                            if show_debug_message:
+                                print(f"[IBON] Reload error: {reload_exc}")
+
+                        # Wait before next check (FR-061: auto_reload_page_interval)
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            if show_debug_message:
+                                print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                            await asyncio.sleep(auto_reload_interval)
+
+                        return False  # Return to main loop to continue monitoring
+
                     # Step 1: Handle non-adjacent seat checkbox
                     if config_dict["advanced"]["disable_adjacent_seat"]:
                         try:
                             await nodriver_ibon_allow_not_adjacent_seat(tab, config_dict)
                         except Exception as exc:
-                            show_debug_message = config_dict["advanced"].get("verbose", False)
                             if show_debug_message:
                                 print(f"[IBON] Checkbox error: {exc}")
 
-                    # Step 2: Handle captcha
+                    # Step 2: Handle captcha (only executed when tickets are available)
                     is_captcha_sent = False
                     if config_dict["ocr_captcha"]["enable"]:
                         try:
@@ -12000,14 +12246,12 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                             is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
                         except Exception as exc:
-                            show_debug_message = config_dict["advanced"].get("verbose", False)
                             if show_debug_message:
                                 print(f"[IBON] Captcha error: {exc}")
 
                     # Step 3: Assign ticket number with retry (exponential backoff)
                     is_ticket_number_assigned = False
                     max_retries = 3
-                    show_debug_message = config_dict["advanced"].get("verbose", False)
 
                     try:
                         for attempt in range(1, max_retries + 1):
@@ -12031,6 +12275,29 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         if show_debug_message:
                             print(f"[IBON] Ticket number error: {exc}")
 
+                    # Step 3.5: Final check if tickets are sold out (backup check)
+                    if not is_ticket_number_assigned:
+                        is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
+
+                        if is_sold_out_detected:
+                            if show_debug_message:
+                                print("[IBON] All tickets sold out, reloading page...")
+
+                            try:
+                                await tab.reload()
+                            except Exception as reload_exc:
+                                if show_debug_message:
+                                    print(f"[IBON] Reload error: {reload_exc}")
+
+                            # Wait before next check (FR-061: auto_reload_page_interval)
+                            auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                            if auto_reload_interval > 0:
+                                if show_debug_message:
+                                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                                await asyncio.sleep(auto_reload_interval)
+
+                            return False  # Return to main loop to continue monitoring
+
                     # Step 4: Submit purchase
                     if is_ticket_number_assigned and is_captcha_sent:
                         try:
@@ -12043,6 +12310,129 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                         ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             show_debug_message = config_dict["advanced"].get("verbose", False)
+                            if show_debug_message:
+                                print(f"[IBON] Submit button error: {exc}")
+
+            # Handle case when area is already selected (direct access to UTK0201_001 page)
+            elif is_area_already_selected:
+                is_match_target_feature = True
+                show_debug_message = config_dict["advanced"].get("verbose", False)
+
+                if show_debug_message:
+                    print("[IBON] Area already selected, checking ticket availability...")
+
+                # Check if we need to handle ticket number and captcha (UTK0201_001 page)
+                is_do_ibon_performance_with_ticket_number = False
+
+                # UTK0201_001 page: has PERFORMANCE_PRICE_AREA_ID parameter
+                if 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
+                    is_do_ibon_performance_with_ticket_number = True
+
+                if is_do_ibon_performance_with_ticket_number:
+                    # Step 0: Check if tickets are sold out FIRST (before OCR)
+                    is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
+
+                    if is_sold_out_detected:
+                        if show_debug_message:
+                            print("[IBON] All tickets sold out, reloading page (skip OCR)...")
+
+                        try:
+                            await tab.reload()
+                        except Exception as reload_exc:
+                            if show_debug_message:
+                                print(f"[IBON] Reload error: {reload_exc}")
+
+                        # Wait before next check (FR-061: auto_reload_page_interval)
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            if show_debug_message:
+                                print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                            await asyncio.sleep(auto_reload_interval)
+
+                        return False  # Return to main loop to continue monitoring
+
+                    # Step 1: Handle non-adjacent seat checkbox
+                    if config_dict["advanced"]["disable_adjacent_seat"]:
+                        try:
+                            await nodriver_ibon_allow_not_adjacent_seat(tab, config_dict)
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[IBON] Checkbox error: {exc}")
+
+                    # Step 2: Handle captcha (only executed when tickets are available)
+                    is_captcha_sent = False
+                    if config_dict["ocr_captcha"]["enable"]:
+                        try:
+                            # Initialize OCR instance
+                            import ddddocr
+                            ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
+                            ocr.set_ranges(0)  # Restrict to digits only for ibon
+
+                            is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[IBON] Captcha error: {exc}")
+
+                    # Step 3: Assign ticket number with retry
+                    is_ticket_number_assigned = False
+                    max_retries = 3
+
+                    try:
+                        for attempt in range(1, max_retries + 1):
+                            is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
+
+                            if is_ticket_number_assigned:
+                                if show_debug_message and attempt > 1:
+                                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                                break
+
+                            if attempt < max_retries:
+                                delay = 0.5 * (2 ** (attempt - 1))
+                                if show_debug_message:
+                                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s")
+                                await asyncio_sleep_with_pause_check(delay, config_dict)
+
+                        if is_ticket_number_assigned:
+                            # Wait for iBon to process ticket number change
+                            await asyncio.sleep(random.uniform(0.15, 0.25))
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[IBON] Ticket number error: {exc}")
+
+                    # Step 3.5: Final check if tickets are sold out (backup check)
+                    if not is_ticket_number_assigned:
+                        is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
+
+                        if is_sold_out_detected:
+                            if show_debug_message:
+                                print("[IBON] All tickets sold out, reloading page...")
+
+                            try:
+                                await tab.reload()
+                            except Exception as reload_exc:
+                                if show_debug_message:
+                                    print(f"[IBON] Reload error: {reload_exc}")
+
+                            # Wait before next check (FR-061: auto_reload_page_interval)
+                            auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                            if auto_reload_interval > 0:
+                                if show_debug_message:
+                                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                                await asyncio.sleep(auto_reload_interval)
+
+                            return False  # Return to main loop to continue monitoring
+
+                    # Step 4: Submit purchase
+                    if is_ticket_number_assigned and is_captcha_sent:
+                        try:
+                            click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
+                            if click_ret:
+                                # Play "ticket" sound when attempting to enter checkout (found ticket)
+                                if config_dict["advanced"]["play_sound"]["ticket"]:
+                                    if not ibon_dict.get("played_sound_ticket", False):
+                                        play_sound_while_ordering(config_dict)
+                                        ibon_dict["played_sound_ticket"] = True
+                        except Exception as exc:
                             if show_debug_message:
                                 print(f"[IBON] Submit button error: {exc}")
 
@@ -17328,6 +17718,7 @@ async def main(args):
 
     url = ""
     last_url = ""
+    last_paused_state = False  # Track pause state changes
 
     fami_dict = {}
     fami_dict["fail_list"] = []
@@ -17386,12 +17777,15 @@ async def main(args):
 
         is_maxbot_paused = await check_and_handle_pause(config_dict)
 
+        # Detect pause state change and show message immediately
+        if is_maxbot_paused and not last_paused_state:
+            print("BOT Paused.")
+        last_paused_state = is_maxbot_paused
+
         if len(url) > 0 :
             if url != last_url:
                 print(url)
                 write_last_url_to_file(url)
-                if is_maxbot_paused:
-                    print("BOT Paused.")
             last_url = url
 
         if is_maxbot_paused:
