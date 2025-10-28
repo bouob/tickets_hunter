@@ -19,6 +19,10 @@ CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
 
+# Keyword delimiter constants (Issue #23)
+CONST_KEYWORD_DELIMITER = ';'  # New delimiter (semicolon)
+CONST_KEYWORD_DELIMITER_OLD = ','  # Old delimiter (comma) for backward compatibility detection
+
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 def get_ip_address():
@@ -127,11 +131,17 @@ def format_keyword_for_display(keyword_string):
     Format JSON keyword string for GUI display.
 
     JSON Input:  "AA BB","CC","DD"
-    GUI Output:  AA BB,CC,DD
+    GUI Output:  AA BB;CC;DD
 
-    This function removes quotes for user-friendly display.
+    This function removes quotes and converts comma delimiters to semicolons
+    for user-friendly display (Issue #23).
     """
     if len(keyword_string) > 0:
+        # Convert keyword delimiter from "," to ";" BEFORE removing quotes
+        # This preserves commas within keywords (e.g., "3,280","2,680" → "3,280";"2,680")
+        keyword_string = keyword_string.replace('","', '"' + CONST_KEYWORD_DELIMITER + '"')
+        keyword_string = keyword_string.replace("','", "'" + CONST_KEYWORD_DELIMITER + "'")
+
         # Remove all quotes for display
         keyword_string = keyword_string.replace('"', '').replace("'", '')
     return keyword_string
@@ -140,10 +150,12 @@ def format_config_keyword_for_json(user_input):
     """
     Format user input keywords for JSON storage.
 
-    User Input:  AA BB,CC,DD
+    User Input:  AA BB;CC;DD
     JSON Output: "AA BB","CC","DD"
 
     This function adds quotes to protect keywords with spaces.
+    Use semicolon (;) as the only delimiter (Issue #23).
+    Commas within keywords (e.g., "3,280") are preserved.
     """
     if len(user_input) > 0:
         # Remove any existing quotes first (for idempotency)
@@ -167,29 +179,47 @@ def format_config_keyword_for_json(user_input):
             user_input = user_input.replace('"', '').replace("'", '')
 
         # Add quotes to each keyword
-        if ',' in user_input:
-            items = user_input.split(',')
+        # Use semicolon as the ONLY delimiter (Issue #23)
+        if CONST_KEYWORD_DELIMITER in user_input:
+            items = user_input.split(CONST_KEYWORD_DELIMITER)
             user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
         else:
             user_input = f'"{user_input.strip()}"'
 
     return user_input
 
-def is_text_match_keyword(keyword_string, text):
+def is_text_match_keyword(keyword_string, text, config_dict=None):
+    """
+    Check if text matches any keyword in keyword_string.
+
+    Args:
+        keyword_string: Keyword string or array
+            - String: Use semicolon (;) as delimiter
+            - Array: Use directly
+        text: Text to match
+        config_dict: Optional config dictionary (reserved for future use)
+
+    Returns:
+        bool: True if text matches any keyword
+
+    Delimiter: Only semicolon (;) is supported (Issue #23).
+    Commas within keywords (e.g., "3,280") are preserved.
+    Space-separated keywords use AND logic (e.g., "1280 一般" matches text containing both).
+    """
     is_match_keyword = True
     if len(keyword_string) > 0 and len(text) > 0:
 
-        # 新增：處理簡化的逗號分隔格式
-        if ',' in keyword_string and not '"' in keyword_string:
-            # 將 "00,30,50" 轉換為 "00","30","50"
-            items = keyword_string.split(',')
-            keyword_string = ','.join([f'"{item.strip()}"' for item in items])
+        # Handle semicolon-separated format (Issue #23)
+        if CONST_KEYWORD_DELIMITER in keyword_string and not '"' in keyword_string:
+            # Convert "3,280;2,680" to "3,280","2,680"
+            items = keyword_string.split(CONST_KEYWORD_DELIMITER)
+            keyword_string = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
 
         # directly input text into arrray field.
         if len(keyword_string) > 0:
             if not '"' in keyword_string:
                 keyword_string = '"' + keyword_string + '"'
-        
+
         is_match_keyword = False
         keyword_array = []
         try:
@@ -337,14 +367,14 @@ def t_or_f(arg):
     return ret
 
 def format_keyword_string(keyword):
+    """
+    Minimal keyword formatting - no normalization.
+    Input text is matched exactly as provided (Issue #23).
+    Only removes full-width spaces that are clearly erroneous.
+    """
     if not keyword is None:
         if len(keyword) > 0:
-            keyword = keyword.replace('／','/')
-            keyword = keyword.replace('　','')
-            keyword = keyword.replace(',','')
-            keyword = keyword.replace('，','')
-            keyword = keyword.replace('$','')
-            keyword = keyword.replace(' ','').lower()
+            keyword = keyword.replace('　','')  # Remove full-width space only
     return keyword
 
 def format_quota_string(formated_html_text):

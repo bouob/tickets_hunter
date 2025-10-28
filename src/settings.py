@@ -580,8 +580,9 @@ class QueryHandler(tornado.web.RequestHandler):
             user_input = user_input.replace('"', '').replace("'", '')
 
             # Add quotes to each keyword
-            if ',' in user_input:
-                items = user_input.split(',')
+            # Use semicolon as the ONLY delimiter (Issue #23)
+            if util.CONST_KEYWORD_DELIMITER in user_input:
+                items = user_input.split(util.CONST_KEYWORD_DELIMITER)
                 user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
             else:
                 user_input = f'"{user_input.strip()}"'
