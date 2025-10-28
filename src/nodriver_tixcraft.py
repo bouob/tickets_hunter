@@ -4031,10 +4031,16 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
         exclude_keywords = []
         if keyword_exclude:
             try:
-                # 移除雙引號並用逗號分隔
-                exclude_keywords = [kw.strip('"') for kw in keyword_exclude.split(',') if kw.strip()]
+                # Try JSON format first (standard storage format)
+                # Example: "\"輪椅\",\"身障\"" → ["輪椅", "身障"]
+                exclude_keywords = json.loads("[" + keyword_exclude + "]")
             except:
-                pass
+                # Fallback: semicolon-separated format (Issue #23)
+                if util.CONST_KEYWORD_DELIMITER in keyword_exclude:
+                    exclude_keywords = [kw.strip() for kw in keyword_exclude.split(util.CONST_KEYWORD_DELIMITER) if kw.strip()]
+                else:
+                    # Single keyword
+                    exclude_keywords = [keyword_exclude.strip()] if keyword_exclude.strip() else []
 
         # 統一的結構化判斷與選擇邏輯
         js_result = await tab.evaluate(f'''
@@ -13884,8 +13890,18 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     # Build exclude keywords list for JavaScript
                     exclude_keywords = []
                     if "keyword_exclude" in config_dict:
-                        exclude_keywords = config_dict["keyword_exclude"].strip().split(",")
-                        exclude_keywords = [k.strip() for k in exclude_keywords if k.strip()]
+                        keyword_exclude_str = config_dict["keyword_exclude"].strip()
+                        try:
+                            # Try JSON format first (standard storage format)
+                            # Example: "\"輪椅\",\"身障\"" → ["輪椅", "身障"]
+                            exclude_keywords = json.loads("[" + keyword_exclude_str + "]")
+                        except:
+                            # Fallback: semicolon-separated format (Issue #23)
+                            if util.CONST_KEYWORD_DELIMITER in keyword_exclude_str:
+                                exclude_keywords = [k.strip() for k in keyword_exclude_str.split(util.CONST_KEYWORD_DELIMITER) if k.strip()]
+                            else:
+                                # Single keyword
+                                exclude_keywords = [keyword_exclude_str] if keyword_exclude_str else []
 
                     exclude_keywords_json = json.dumps(exclude_keywords)
 
