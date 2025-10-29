@@ -90,6 +90,46 @@ var settings = null;
 
 maxbot_load_api();
 
+// Keyword conversion functions (aligned with util.py logic)
+function format_keyword_for_display(keyword_string) {
+    // Convert JSON format to user display format
+    // Input:  "AA BB","CC","DD"
+    // Output: AA BB;CC;DD
+    if (!keyword_string || keyword_string.length === 0) {
+        return '';
+    }
+
+    // Replace "," or ',' with ";" or ';' (convert delimiter)
+    keyword_string = keyword_string.replace(/","/g, '";').replace(/','/, "';");
+
+    // Remove all quotes for display
+    keyword_string = keyword_string.replace(/["']/g, '');
+
+    return keyword_string;
+}
+
+function format_config_keyword_for_json(user_input) {
+    // Convert user input to JSON format
+    // Input:  AA BB;CC;DD
+    // Output: "AA BB","CC","DD"
+    if (!user_input || user_input.length === 0) {
+        return '';
+    }
+
+    // Remove any existing quotes first
+    user_input = user_input.replace(/["']/g, '');
+
+    // Use semicolon as the ONLY delimiter (Issue #23)
+    if (user_input.includes(';')) {
+        const items = user_input.split(';')
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+        return items.map(item => `"${item}"`).join(',');
+    } else {
+        return `"${user_input.trim()}"`;
+    }
+}
+
 function load_settins_to_form(settings)
 {
     if (settings)
@@ -100,18 +140,12 @@ function load_settins_to_form(settings)
         ticket_number.value = settings.ticket_number;
         refresh_datetime.value = settings.refresh_datetime;
         date_select_mode.value = settings.date_auto_select.mode;
-        date_keyword.value = settings.date_auto_select.date_keyword;
-        if(date_keyword.value=='""') {
-            date_keyword.value='';
-        }
+        date_keyword.value = format_keyword_for_display(settings.date_auto_select.date_keyword);
 
         area_select_mode.value = settings.area_auto_select.mode;
-        area_keyword.value = settings.area_auto_select.area_keyword;
-        if(area_keyword.value=='""') {
-            area_keyword.value='';
-        }
+        area_keyword.value = format_keyword_for_display(settings.area_auto_select.area_keyword);
 
-        keyword_exclude.value = settings.keyword_exclude;
+        keyword_exclude.value = format_keyword_for_display(settings.keyword_exclude);
         
         // advanced
         browser.value = settings.browser;
@@ -342,28 +376,12 @@ function save_changes_to_dict(silent_flag)
             settings.ticket_number = ticket_number_value;
             settings.refresh_datetime = refresh_datetime.value;
             settings.date_auto_select.mode = date_select_mode.value;
-
-            let date_keyword_string = date_keyword.value;
-            if(date_keyword_string.indexOf('"')==-1) {
-                date_keyword_string = '"' + date_keyword_string + '"';
-            }
-            if(date_keyword_string=='""') {
-                date_keyword_string='';
-            }
-            settings.date_auto_select.date_keyword = date_keyword_string;
+            settings.date_auto_select.date_keyword = format_config_keyword_for_json(date_keyword.value);
 
             settings.area_auto_select.mode = area_select_mode.value;
+            settings.area_auto_select.area_keyword = format_config_keyword_for_json(area_keyword.value);
 
-            let area_keyword_string = area_keyword.value;
-            if(area_keyword_string.indexOf('"')==-1) {
-                area_keyword_string = '"' + area_keyword_string + '"';
-            }
-            if(area_keyword_string=='""') {
-                area_keyword_string='';
-            }
-            settings.area_auto_select.area_keyword = area_keyword_string;
-
-            settings.keyword_exclude = keyword_exclude.value;
+            settings.keyword_exclude = format_config_keyword_for_json(keyword_exclude.value);
 
             // advanced
             settings.browser = browser.value;

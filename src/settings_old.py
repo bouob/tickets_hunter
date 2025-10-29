@@ -148,7 +148,7 @@ def load_translate():
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
     en_us["keyword_exclude"] = 'Keyword Exclude'
-    en_us["keyword_usage"] = 'Keywords separated by comma (e.g: wheelchair,restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nQuotes supported but not required'
+    en_us["keyword_usage"] = 'Keywords separated by semicolon (e.g: wheelchair;restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nComma is just part of text (e.g: 3,280)'
 
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -268,7 +268,7 @@ def load_translate():
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
     zh_tw["keyword_exclude"] = '排除關鍵字'
-    zh_tw["keyword_usage"] = '關鍵字用逗號分隔 (如: 輪椅,不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n支援引號格式，但非必需'
+    zh_tw["keyword_usage"] = '關鍵字用分號分隔 (如: 輪椅;不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n逗號只是文字的一部分 (如: 3,280)'
 
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -389,7 +389,7 @@ def load_translate():
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
     ja_jp["keyword_exclude"] = '除外キーワード'
-    ja_jp["keyword_usage"] = 'キーワードはカンマで区切る (例: 車椅子,制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nクォートは対応していますが必須ではありません'
+    ja_jp["keyword_usage"] = 'キーワードはセミコロンで区切る (例: 車椅子;制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nカンマはテキストの一部です (例: 3,280)'
 
     ja_jp["ocr_captcha"] = 'OCR認証'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'

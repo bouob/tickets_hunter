@@ -255,14 +255,14 @@
                 </h2>
                 <div id="collapseDateLogic" class="accordion-collapse collapse">
                   <div class="accordion-body">
-                    <p><strong>OR 邏輯 (任一匹配)</strong>：<code>"9/11","9/22","3/3"</code><br>
-                    依序嘗試，找到第一個匹配就選取</p>
+                    <p><strong>OR 邏輯 (任一匹配)</strong>：<code>9/11;9/22;3/3</code><br>
+                    依序嘗試，找到第一個匹配就選取（分號分隔）</p>
 
-                    <p><strong>AND 邏輯 (全部匹配)</strong>：<code>"9/11 週末","9/22 平日"</code><br>
+                    <p><strong>AND 邏輯 (全部匹配)</strong>：<code>9/11 週末;9/22 平日</code><br>
                     空格分隔的關鍵字需全部匹配</p>
 
                     <p><strong>實用範例</strong>：<br>
-                    <code>"2024/12/25 晚上","2024/12/26 下午","週末場次"</code></p>
+                    <code>2024/12/25 晚上;2024/12/26 下午;週末場次</code></p>
                   </div>
                 </div>
               </div>
@@ -294,8 +294,8 @@
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>🎪 區域邏輯說明：</strong><br>
-              <strong>OR 邏輯</strong>：<code>"搖滾區","VIP","前排"</code> - 任一區域匹配<br>
-              <strong>AND 邏輯</strong>：<code>"搖滾區 前排","VIP 中央"</code> - 區域 + 位置組合
+              <strong>OR 邏輯</strong>：<code>搖滾區;VIP;前排</code> - 任一區域匹配（分號分隔）<br>
+              <strong>AND 邏輯</strong>：<code>搖滾區 前排;VIP 中央</code> - 區域 + 位置組合（空格表示 AND）
             </div>
           </div>
         </div>
@@ -305,7 +305,7 @@
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>提示：</strong>
-                每組關鍵字需要用「<code>雙引號</code>」包起來, 用「<code>逗號</code>」分隔, 在關鍵字中使用「<code>空格</code>」為 AND 邏輯。完全不輸入或是加入 「<code>,""</code>」 代表符合所有關鍵字。
+                多組關鍵字使用「<code>分號</code>」分隔（OR 邏輯），關鍵字內部使用「<code>空格</code>」為 AND 邏輯。例如：<code>輪椅;身障</code> 或 <code>搖滾A 前排;VIP</code>。留空代表不排除任何關鍵字。
             </div>
           </div>
         </div>
@@ -672,28 +672,28 @@
         <div class="row mb-3">
           <label for="idle_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-danger">暫停</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword" rows="3" placeholder="例如：09:30:00,14:15:30 或 &quot;09:30:00&quot;,&quot;14:15:30&quot;"></textarea>
+            <textarea class="form-control" id="idle_keyword" rows="3" placeholder="例如：09:30:00;14:15:30 或 &quot;09:30:00&quot;;&quot;14:15:30&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-success">接繼</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword" rows="3" placeholder="例如：09:35:00,14:20:30 或 &quot;09:35:00&quot;,&quot;14:20:30&quot;"></textarea>
+            <textarea class="form-control" id="resume_keyword" rows="3" placeholder="例如：09:35:00;14:20:30 或 &quot;09:35:00&quot;;&quot;14:20:30&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-danger">暫停</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword_second" rows="3" placeholder="例如：00,30,50 或 &quot;00&quot;,&quot;30&quot;,&quot;50&quot;"></textarea>
+            <textarea class="form-control" id="idle_keyword_second" rows="3" placeholder="例如：00;30;50 或 &quot;00&quot;;&quot;30&quot;;&quot;50&quot;"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-success">接繼</span>關鍵字</label>
           <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword_second" rows="3" placeholder="例如：05,35,55 或 &quot;05&quot;,&quot;35&quot;,&quot;55&quot;"></textarea>
+            <textarea class="form-control" id="resume_keyword_second" rows="3" placeholder="例如：05;35;55 或 &quot;05&quot;;&quot;35&quot;;&quot;55&quot;"></textarea>
           </div>
         </div>
 
@@ -713,16 +713,16 @@
                   <div class="col-md-6">
                     <strong>系統時間：</strong>
                     <ul class="mb-1">
-                      <li><code>09:30:00,15:55:00</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"09:30:00","15:55:00"</code> <span class="badge bg-secondary">完整格式</span></li>
+                      <li><code>09:30:00;15:55:00</code> <span class="badge bg-primary">簡化格式</span></li>
+                      <li><code>"09:30:00";"15:55:00"</code> <span class="badge bg-secondary">完整格式</span></li>
                       <li><code>14:30:00</code> <span class="badge bg-info">單一時間</span></li>
                     </ul>
                   </div>
                   <div class="col-md-6">
                     <strong>秒數：</strong>
                     <ul class="mb-1">
-                      <li><code>00,30,50</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"00","30","50"</code> <span class="badge bg-secondary">完整格式</span></li>
+                      <li><code>00;30;50</code> <span class="badge bg-primary">簡化格式</span></li>
+                      <li><code>"00";"30";"50"</code> <span class="badge bg-secondary">完整格式</span></li>
                       <li><code>30</code> <span class="badge bg-info">單一秒數</span></li>
                     </ul>
                   </div>
@@ -772,6 +772,6 @@
   </div>
 </div>
 
-  <script src="settings.js"></script>
+  <script src="settings.js?v=20251029-2"></script>
 </body>
 </html>
