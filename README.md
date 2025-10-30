@@ -2,14 +2,15 @@
 
 **📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
 **🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援  
-**⚡ 版本**：Tickets Hunter (2025.10.27)  
+**⚡ 版本**：Tickets Hunter (2025.10.30)  
 **🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！  
 **🚨 嚴正警告**：使用本程式當黃牛或有任何加價轉售牟利行為，本人代表各粉絲祝福您，**早生貴子胎胎都三胞胎**！本程式僅供個人合法使用，嚴禁商業牟利。
 
 > **💬 需要協助或回報問題？**
 > - 🐛 [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md) - 遇到問題請點這裡
 > - 🚀 [提出新功能建議](https://github.com/bouob/tickets_hunter/issues/new?template=feature_request.md) - 想要新功能請點這裡
-> - 💬 [查看已知問題](https://github.com/bouob/tickets_hunter/issues) - 搜尋是否有人遇到相同問題
+> - 💬 [查看已知問題](https://github.com/bouob/tickets_hunter/issues?q=is%3Aissue) - 搜尋是否有人遇到相同問題
+> - 📝 [更新紀錄](https://github.com/bouob/tickets_hunter/blob/main/CHANGELOG.md) - 查看版本更新歷史
 
 ---
 
@@ -19,16 +20,12 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ### 🎪 平台支援狀態
 
+✅ **主流平台 NoDriver 完全支援**：TixCraft、Teamear、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票
+
+**NoDriver 特殊狀態平台**：
+
 | 平台 | Chrome/Selenium | NoDriver | 實測狀況 | 備註 |
 |------|:---------------:|:--------:|:--------:|------|
-| **🎭 TixCraft 拓元** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
-| **🎵 Teamear 添翼** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** (Tixcraft Family) |
-| **🎸 Indievox 獨立音樂** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** (Tixcraft Family) |
-| **🎨 KKTIX** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
-| **🎵 TicketPlus 遠大** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
-| **🎫 iBon** | ❌ 不修復 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
-| **🎭 年代售票** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
-| **🎪 寬宏售票 KHAM** | ✅ 完全支援 | ✅ 完全支援 | 🟢 已測試 | **建議使用 NoDriver** |
 | **🎪 Cityline 買飛** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 |
 | **🎤 TicketMaster** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 (Tixcraft Family) |
 | **🏟️ Urbtix 城市** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
@@ -36,15 +33,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 | **🎪 FamiTicket 全網** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 
 
-### 🚀 核心特色
-- **NoDriver 優先架構** - NoDriver (推薦) + UC (備用) + Selenium (維護模式)
-- **OCR 驗證碼辨識** - 整合 ddddocr 自動處理驗證碼
-- **智慧化選取** - 日期、區域、票數自動選擇
-- **多設定檔管理** - 不同活動快速切換設定
-- **網頁設定介面** - 現代化回應式管理介面
-
-> **📢 NoDriver First 策略 (2025.10.15)**
-> NoDriver 引擎已完成主流平台實測，建議一般使用者優先使用。UC 與 Selenium 已進入維護模式，僅修復嚴重錯誤。
+> **📢 策略**：建議使用 NoDriver，UC/Selenium 已進入維護模式（僅修復嚴重錯誤）
 
 ---
 
@@ -97,7 +86,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 - ✈️ **旅遊服務**：機票、飯店、遊樂園等旅遊票券
 - 🏢 **商業活動**：商展、會議、講座等非文創商業活動
 - 🌍 **海外活動**：非台灣地區舉辦之各類活動票券
-- 📚 **教育研究**：學術研究、技術測試等合法用途
+
 
 **使用原則**：
 - 勿以身試法，了解當地法規
@@ -273,6 +262,18 @@ tickets_hunter/
 
 ---
 
+## ⭐ Star History
+
+<a href="https://www.star-history.com/#bouob/tickets_hunter&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&legend=top-left" />
+ </picture>
+</a>
+
+---
+
 ## 📄 授權條款
 
 本專案採用 GNU GPL 授權，遵循開源精神。使用時請遵守：
@@ -284,4 +285,4 @@ tickets_hunter/
 
 ---
 
-*最後更新：2025.10.27 | 由 Claude Code AI 輔助維護*
+*最後更新：2025.10.30 | 由 Claude Code AI 輔助維護*

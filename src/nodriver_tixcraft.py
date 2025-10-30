@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.27)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -541,19 +541,50 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                 }
             ''')
 
-            await asyncio.sleep(random.uniform(5.0, 10.0))
+            # Smart polling: wait for login completion (URL change from sign_in page)
+            max_wait = 10
+            check_interval = 0.3
+            max_attempts = int(max_wait / check_interval)
+            login_completed = False
 
-            # 登入後檢查暫停
-            if await check_and_handle_pause(config_dict):
-                return False
+            for attempt in range(max_attempts):
+                # 登入後檢查暫停
+                if await check_and_handle_pause(config_dict):
+                    return False
 
+                try:
+                    current_url = await tab.evaluate('window.location.href')
+
+                    # Detect if left sign_in page (login completed)
+                    if '/users/sign_in' not in current_url:
+                        login_completed = True
+                        if show_debug_message:
+                            print(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
+                        break
+                except Exception as exc:
+                    if show_debug_message and attempt == max_attempts - 1:
+                        print(f"[KKTIX SIGNIN] Error checking URL: {exc}")
+
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(check_interval)
+
+            if not login_completed:
+                if show_debug_message:
+                    print(f"[KKTIX SIGNIN] Login timeout after {max_wait}s")
+
+            # Check if need to manually redirect to back_to URL
             try:
                 current_url = await tab.evaluate('window.location.href')
                 if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
+                    # If on homepage or user page, manually redirect to back_to URL
                     if (current_url.endswith('/') or '/users/' in current_url) and target_url != current_url:
+                        if show_debug_message:
+                            print(f"[KKTIX SIGNIN] Currently on homepage/user page, redirecting to: {target_url}")
                         await tab.get(target_url)
                         await asyncio.sleep(random.uniform(1.5, 3.0))
                         has_redirected = True
+                    elif show_debug_message:
+                        print(f"[KKTIX SIGNIN] Already on target page: {current_url}")
             except Exception as redirect_error:
                 print(f"跳轉失敗: {redirect_error}")
 
@@ -718,6 +749,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     if price_list_count > 0:
         areas = []
+        pending_tickets = []  # Track matched tickets waiting for "not yet open" to open
         input_index = 0  # Track valid input index
 
         # Parse area keywords (space-separated = AND logic)
@@ -774,23 +806,38 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                 break
 
             if len(row_text) > 0:
-                if '未開賣' in row_text:
-                    row_text = ""
+                # Preserve "not yet open" tickets for keyword matching
+                # Only filter permanently unavailable tickets (sold out)
 
-                if '暫無票' in row_text:
-                    row_text = ""
+                # Multi-language "sold out" keyword filtering
+                sold_out_keywords = ['暫無票', '已售完', 'Sold Out', 'sold out', '完売']
+                is_sold_out = any(kw in row_text for kw in sold_out_keywords)
 
-                if '已售完' in row_text:
+                if is_sold_out:
                     row_text = ""
+                    if show_debug_message:
+                        print(f"  -> Filtered: sold out")
 
-                if 'Sold Out' in row_text:
-                    row_text = ""
+                # Multi-language "not yet open" check (preserve these tickets for keyword matching)
+                not_yet_open_keywords = [
+                    '未開賣', '尚未開賣', '尚未開始', '即將開賣',
+                    'Not Started', 'not started',
+                    'まだ発売'
+                ]
+                has_not_yet_open_status = any(kw in row_text for kw in not_yet_open_keywords)
 
-                if '完売' in row_text:
-                    row_text = ""
+                if has_not_yet_open_status and show_debug_message:
+                    print(f"  -> Preserved ticket with 'not yet open' status for keyword matching")
 
-                if not('<input type=' in row_html):
-                    row_text = ""
+                # Filter tickets without input field, EXCEPT "not yet open" tickets
+                if len(row_text) > 0 and not('<input type=' in row_html):
+                    if not has_not_yet_open_status:
+                        row_text = ""
+                        if show_debug_message:
+                            print(f"  -> Filtered: no input field and not 'not yet open'")
+                    else:
+                        if show_debug_message:
+                            print(f"  -> Kept 'not yet open' ticket for keyword matching (no input yet)")
 
             if len(row_text) > 0:
                 if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -842,33 +889,16 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                             print("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
                         row_text = ""
 
-            # Process ticket types with input field
-            if row_input is not None:
-                if show_debug_message:
-                    original_text = util.remove_html_tags(result.get('html', '')) if result else ""
-                    original_text = ' '.join(original_text.split())  # Remove extra whitespace and newlines
-                    print(f"[KKTIX] Ticket index {i} (input index {input_index}): {original_text[:50]}")
-
-                # Check if ticket type is filtered out by exclude keywords
-                if len(row_text) == 0:
-                    if show_debug_message:
-                        print(f"  -> Filtered by exclude keyword, skipped")
-                    input_index += 1  # Still need to increment input_index
-                    continue
-
-                # Only process if ticket text is not filtered out by exclude keywords
-                is_match_area = False
-
-                # Check ticket input textbox
-                if len(current_ticket_number) > 0:
-                    if current_ticket_number != "0":
-                        is_ticket_number_assigned = True
-
-                if is_ticket_number_assigned:
-                    # No need to continue searching
+            # Keyword matching for ALL preserved tickets (including "not yet open")
+            # This is the key improvement: match keywords regardless of input field status
+            if len(row_text) > 0:
+                # Check if already assigned
+                if len(current_ticket_number) > 0 and current_ticket_number != "0":
+                    is_ticket_number_assigned = True
                     break
 
-                # Keyword matching with AND logic (all keywords must match)
+                # Perform keyword matching
+                is_match_area = False
                 if len(kktix_area_keyword_array) == 0:
                     # No keyword specified, match all
                     is_match_area = True
@@ -877,20 +907,37 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                     is_match_area = all(kw in row_text for kw in kktix_area_keyword_array)
 
                 if show_debug_message:
-                    print(f"  -> Match result: {is_match_area}")
+                    original_text = util.remove_html_tags(result.get('html', '')) if result else ""
+                    original_text = ' '.join(original_text.split())  # Remove extra whitespace and newlines
+                    print(f"[KKTIX] Ticket index {i}: {original_text[:60]}")
+                    print(f"  -> Keyword match: {is_match_area}")
 
+                # Handle matched tickets based on input field availability
                 if is_match_area:
-                    areas.append(row_input)  # Store valid input index
-                    if show_debug_message:
-                        print(f"  -> Added to selection list, input index: {row_input}")
-
-                    # From top to bottom mode: match first then break
-                    if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                    if row_input is not None:
+                        # Has input field (purchasable) - add to selection list
+                        areas.append(row_input)
                         if show_debug_message:
-                            print(f"[KKTIX AREA] Mode is '{kktix_area_auto_select_mode}', stopping at first match")
-                        break
+                            print(f"  -> Matched and added to selection list (input index: {row_input})")
 
-                input_index += 1  # Increment valid input index
+                        # From top to bottom mode: match first then break
+                        if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                            if show_debug_message:
+                                print(f"[KKTIX AREA] Mode is '{kktix_area_auto_select_mode}', stopping at first match")
+                            break
+                    else:
+                        # No input field (not yet open) - track as pending
+                        pending_tickets.append({
+                            'index': i,
+                            'text': original_text[:60] if show_debug_message else row_text[:60],
+                            'keywords': kktix_area_keyword_array
+                        })
+                        if show_debug_message:
+                            print(f"  -> Matched but waiting for ticket to open (keywords: {', '.join(kktix_area_keyword_array)})")
+
+            # Increment input index if this row has an input field
+            if row_input is not None:
+                input_index += 1
 
             if not is_dom_ready:
                 # DOM not ready, break the loop
@@ -903,17 +950,29 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     # Match result summary
     if show_debug_message:
         total_checked = len(ticket_price_list) if ticket_price_list else 0
-        total_matched = len(areas) if areas else 0
+        total_matched_with_input = len(areas) if areas else 0
+        total_matched_pending = len(pending_tickets) if pending_tickets else 0
+        total_matched_all = total_matched_with_input + total_matched_pending
 
         print(f"[KKTIX AREA] ========================================")
         print(f"[KKTIX AREA] Match Summary:")
         print(f"[KKTIX AREA]   Total ticket types checked: {total_checked}")
-        print(f"[KKTIX AREA]   Total ticket types matched: {total_matched}")
+        print(f"[KKTIX AREA]   Tickets matched (with input): {total_matched_with_input}")
+        print(f"[KKTIX AREA]   Tickets matched (waiting for open): {total_matched_pending}")
 
-        if total_checked > 0 and total_matched > 0:
-            match_rate = total_matched / total_checked * 100
-            print(f"[KKTIX AREA]   Match rate: {match_rate:.1f}%")
-        elif total_matched == 0:
+        if total_matched_pending > 0:
+            print(f"[KKTIX AREA]")
+            print(f"[KKTIX AREA]   Waiting for these tickets to open:")
+            for pending in pending_tickets[:5]:  # Show max 5 pending tickets
+                keywords_str = ', '.join(pending['keywords'])
+                print(f"[KKTIX AREA]     - {pending['text']} (keywords: {keywords_str})")
+            if total_matched_pending > 5:
+                print(f"[KKTIX AREA]     ... and {total_matched_pending - 5} more")
+
+        if total_checked > 0 and total_matched_all > 0:
+            match_rate = total_matched_all / total_checked * 100
+            print(f"[KKTIX AREA]   Overall match rate: {match_rate:.1f}%")
+        elif total_matched_all == 0:
             print(f"[KKTIX AREA]   No ticket types matched")
 
         print(f"[KKTIX AREA] ========================================")
@@ -1325,10 +1384,14 @@ async def debug_kktix_page_state(tab, show_debug=True):
                     errorText: document.querySelector('.alert-danger, .error, .warning')?.innerText || '',
                     soldOut: !!document.querySelector('.alert-danger, .error')?.innerText?.includes('售完') ||
                             !!document.querySelector('.alert-danger, .error')?.innerText?.includes('已售完') ||
+                            !!document.querySelector('.alert-danger, .error')?.innerText?.includes('Sold Out') ||
                             !!document.querySelector('.sold-out, .unavailable'),
                     notYetOpen: !!document.querySelector('.alert-danger, .error')?.innerText?.includes('未開賣') ||
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('尚未開賣') ||
                                !!document.querySelector('.alert-danger, .error')?.innerText?.includes('尚未開始') ||
-                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('即將開賣')
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('即將開賣') ||
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('Not Started') ||
+                               !!document.querySelector('.alert-danger, .error')?.innerText?.includes('まだ発売')
                 };
 
                 // 頁面載入狀態
@@ -1383,6 +1446,223 @@ async def debug_kktix_page_state(tab, show_debug=True):
         if show_debug:
             print(f"Debug failed: {exc}")
         return error_state
+
+async def nodriver_kktix_date_auto_select(tab, config_dict):
+    """KKTIX multi-session date selection with keyword matching"""
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Read config
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+
+    # Check if multi-session page exists with smart polling
+    session_list = None
+    max_wait = 5
+    check_interval = 0.3
+    max_attempts = int(max_wait / check_interval)
+
+    for attempt in range(max_attempts):
+        try:
+            session_list = await tab.query_selector_all('div.event-list ul.clearfix > li')
+            if session_list and len(session_list) > 0:
+                if show_debug_message:
+                    print(f"[KKTIX DATE] Found {len(session_list)} sessions after {attempt * check_interval:.1f}s")
+                break
+        except Exception as exc:
+            if show_debug_message and attempt == max_attempts - 1:
+                print(f"[KKTIX DATE] Error querying session list: {exc}")
+
+        if attempt < max_attempts - 1:
+            await tab.sleep(check_interval)
+
+    if not session_list or len(session_list) == 0:
+        if show_debug_message:
+            print(f"[KKTIX DATE] Timeout after {max_wait}s waiting for session list")
+        return False
+
+    if show_debug_message:
+        print(f"[KKTIX DATE] Found {len(session_list)} sessions on page")
+
+    # Extract session info (text + button element)
+    formated_session_list = []
+    formated_session_list_text = []
+
+    for session_item in session_list:
+        try:
+            # Get session date text
+            date_text = None
+            try:
+                # Priority 1: span.timezoneSuffix
+                date_elem = await session_item.query_selector('span.timezoneSuffix')
+                if date_elem:
+                    date_text = await date_elem.get_html()
+                    date_text = util.remove_html_tags(date_text).strip()
+            except:
+                pass
+
+            if not date_text:
+                try:
+                    # Fallback: .event-info > a > p
+                    date_elem = await session_item.query_selector('.event-info > a > p')
+                    if date_elem:
+                        date_text = await date_elem.get_html()
+                        date_text = util.remove_html_tags(date_text).strip()
+                except:
+                    pass
+
+            # Check if button exists
+            button_elem = await session_item.query_selector('div.content > a.btn-point')
+
+            if date_text and button_elem:
+                # Check exclude keywords
+                if not util.reset_row_text_if_match_keyword_exclude(config_dict, date_text):
+                    formated_session_list.append(button_elem)
+                    formated_session_list_text.append(date_text)
+                    if show_debug_message:
+                        print(f"[KKTIX DATE] Available session: {date_text}")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[KKTIX DATE] Error processing session: {exc}")
+            continue
+
+    if len(formated_session_list) == 0:
+        if show_debug_message:
+            print("[KKTIX DATE] No available sessions found after filtering")
+        return False
+
+    # Keyword matching
+    matched_blocks = None
+
+    if not date_keyword:
+        matched_blocks = formated_session_list
+        if show_debug_message:
+            print(f"[KKTIX DATE KEYWORD] No keyword specified, using all {len(formated_session_list)} sessions")
+    else:
+        # Keyword matching logic
+        matched_blocks = []
+        try:
+            import json
+            import re
+            keyword_array = json.loads("[" + date_keyword + "]")
+            if show_debug_message:
+                print(f"[KKTIX DATE KEYWORD] Raw input: '{date_keyword}'")
+                print(f"[KKTIX DATE KEYWORD] Parsed array: {keyword_array}")
+                print(f"[KKTIX DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+                print(f"[KKTIX DATE KEYWORD] Checking {len(formated_session_list_text)} available sessions...")
+
+            for i, session_text in enumerate(formated_session_list_text):
+                # Normalize spaces for better matching
+                normalized_session_text = re.sub(r'\s+', ' ', session_text)
+
+                if show_debug_message:
+                    print(f"[KKTIX DATE KEYWORD] [{i+1}/{len(formated_session_list_text)}] Checking: {session_text[:80]}...")
+
+                session_matched = False
+                for keyword_item_set in keyword_array:
+                    is_match = False
+                    if isinstance(keyword_item_set, str):
+                        # OR logic: single keyword
+                        normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
+                        is_match = normalized_keyword in normalized_session_text
+                        if show_debug_message:
+                            if is_match:
+                                print(f"[KKTIX DATE KEYWORD]   Matched keyword: '{keyword_item_set}'")
+                            else:
+                                print(f"[KKTIX DATE KEYWORD]   No match for: '{keyword_item_set}'")
+                    elif isinstance(keyword_item_set, list):
+                        # AND logic: all keywords must match
+                        normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
+
+                        if show_debug_message:
+                            print(f"[KKTIX DATE KEYWORD]   Checking AND logic: {keyword_item_set}")
+
+                        match_results = []
+                        for kw in normalized_keywords:
+                            kw_match = kw in normalized_session_text
+                            match_results.append(kw_match)
+                            if show_debug_message:
+                                status = "PASS" if kw_match else "FAIL"
+                                print(f"[KKTIX DATE KEYWORD]     {status} '{kw}': {kw_match}")
+
+                        is_match = all(match_results)
+
+                        if show_debug_message:
+                            if is_match:
+                                print(f"[KKTIX DATE KEYWORD]   All AND keywords matched")
+                            else:
+                                print(f"[KKTIX DATE KEYWORD]   AND logic failed (not all matched)")
+
+                    if is_match:
+                        matched_blocks.append(formated_session_list[i])
+                        session_matched = True
+                        if show_debug_message:
+                            print(f"[KKTIX DATE KEYWORD]   → Session added to matched list (total: {len(matched_blocks)})")
+                        break
+
+                if show_debug_message and not session_matched:
+                    print(f"[KKTIX DATE KEYWORD]   → No keywords matched this session, skipping")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[KKTIX DATE KEYWORD] Parsing error: {e}")
+                print(f"[KKTIX DATE KEYWORD] Fallback: using all {len(formated_session_list)} sessions")
+            matched_blocks = formated_session_list
+
+    # Match result summary
+    if show_debug_message:
+        print(f"[KKTIX DATE KEYWORD] ========================================")
+        print(f"[KKTIX DATE KEYWORD] Match Summary:")
+        print(f"[KKTIX DATE KEYWORD]   Total sessions available: {len(formated_session_list)}")
+        print(f"[KKTIX DATE KEYWORD]   Total sessions matched: {len(matched_blocks)}")
+        if matched_blocks and len(matched_blocks) > 0:
+            print(f"[KKTIX DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_session_list)*100:.1f}%")
+            print(f"[KKTIX DATE KEYWORD] ========================================")
+        elif not matched_blocks or len(matched_blocks) == 0:
+            print(f"[KKTIX DATE KEYWORD]   No sessions matched any keywords")
+            print(f"[KKTIX DATE KEYWORD] ========================================")
+
+    # Fallback: if keyword provided but no matches found, use all available sessions
+    if len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
+        if show_debug_message:
+            print(f"[KKTIX DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
+        matched_blocks = formated_session_list
+
+    # Select target using auto_select_mode
+    target_button = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+
+    if show_debug_message:
+        if target_button and matched_blocks:
+            try:
+                target_index = matched_blocks.index(target_button) if target_button in matched_blocks else -1
+                print(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
+                print(f"[KKTIX DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
+            except:
+                print(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
+                print(f"[KKTIX DATE SELECT] Target selected from {len(matched_blocks)} matched sessions")
+        elif not matched_blocks or len(matched_blocks) == 0:
+            print(f"[KKTIX DATE SELECT] No target selected (matched_blocks is empty)")
+
+    # Click selected button
+    is_date_clicked = False
+    if target_button:
+        try:
+            if show_debug_message:
+                print("[KKTIX DATE SELECT] Clicking selected session button...")
+            await target_button.click()
+            is_date_clicked = True
+            if show_debug_message:
+                print(f"[KKTIX DATE SELECT] ========================================")
+                print(f"[KKTIX DATE SELECT] Session selection completed successfully")
+                print(f"[KKTIX DATE SELECT] ========================================")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[KKTIX DATE SELECT] Click error: {exc}")
+                print(f"[KKTIX DATE SELECT] ========================================")
+
+    return is_date_clicked
 
 #   : This is for case-2 next button.
 async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
@@ -1578,48 +1858,118 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
 
 async def nodriver_kktix_check_ticket_page_status(tab, show_debug_message=False):
     """
-    檢查 KKTIX 購票頁面的票券狀態
-    取代舊的 nodriver_kktix_check_register_status (API 檢查)
-    改用 HTML 內容檢查，更直接且不增加 API 存取記錄
+    Check KKTIX ticket page status
+    Improved: Distinguish "all not yet open" vs "partially not yet open", with multi-language support
+
+    Improvements:
+    - Check each ticket unit status instead of entire page HTML
+    - Only reload if "all tickets sold out" or "all tickets not yet open"
+    - Multi-language support: Traditional Chinese, English, Japanese
 
     Returns:
-        bool: True 表示需要重新載入頁面（票券售完或未開賣）
+        bool: True means need to reload page (all tickets sold out or not yet open)
     """
     is_need_refresh = False
 
     try:
         page_state_raw = await tab.evaluate('''
             () => {
-                // 只檢查票券區域內的售罄狀態，避免誤判
                 const ticketArea = document.querySelector('#registrationsNewApp') || document.body;
-                const areaHTML = ticketArea.innerHTML;
 
-                const soldOut = areaHTML.includes('售完') ||
-                               areaHTML.includes('Sold Out') ||
-                               areaHTML.includes('已售完') ||
-                               areaHTML.includes('sold out');
+                // Get all ticket units
+                const ticketUnits = Array.from(ticketArea.querySelectorAll('.ticket-unit'));
 
-                const notYetOpen = areaHTML.includes('尚未開賣') ||
-                                  areaHTML.includes('未開賣') ||
-                                  areaHTML.includes('尚未開始') ||
-                                  areaHTML.includes('即將開賣') ||
-                                  areaHTML.includes('coming soon');
+                if (ticketUnits.length === 0) {
+                    return { soldOut: false, notYetOpen: false, allNotYetOpen: false, allSoldOut: false };
+                }
 
-                return { soldOut, notYetOpen };
+                // Multi-language "not yet open" keywords
+                const notYetOpenKeywords = [
+                    '尚未開賣', '未開賣', '尚未開始', '即將開賣',
+                    'Not Started', 'not started', 'coming soon', 'Coming Soon',
+                    'まだ発売'
+                ];
+
+                // Multi-language "sold out" keywords
+                const soldOutKeywords = [
+                    '售完', '已售完', 'Sold Out', 'sold out', '完売',
+                    '暫無票'
+                ];
+
+                // Check each ticket status
+                let notYetOpenCount = 0;
+                let soldOutCount = 0;
+                let availableCount = 0;
+
+                ticketUnits.forEach(unit => {
+                    const quantitySpan = unit.querySelector('.ticket-quantity');
+                    if (quantitySpan) {
+                        const text = quantitySpan.textContent.trim();
+
+                        // Check if "not yet open"
+                        if (notYetOpenKeywords.some(kw => text.includes(kw))) {
+                            notYetOpenCount++;
+                        }
+                        // Check if "sold out"
+                        else if (soldOutKeywords.some(kw => text.includes(kw))) {
+                            soldOutCount++;
+                        }
+                        // Other status treated as available
+                        else {
+                            availableCount++;
+                        }
+                    } else {
+                        // No quantity span, check if has input (might be purchasable ticket)
+                        const hasInput = unit.querySelector('input[type="text"], input[type="number"]');
+                        if (hasInput) {
+                            availableCount++;
+                        }
+                    }
+                });
+
+                // Determine if need to reload
+                const totalTickets = ticketUnits.length;
+                const allNotYetOpen = notYetOpenCount === totalTickets && totalTickets > 0;
+                const allSoldOut = soldOutCount === totalTickets && totalTickets > 0;
+                const hasNotYetOpen = notYetOpenCount > 0;
+                const hasSoldOut = soldOutCount > 0;
+
+                return {
+                    soldOut: hasSoldOut,
+                    allSoldOut: allSoldOut,
+                    notYetOpen: hasNotYetOpen,
+                    allNotYetOpen: allNotYetOpen,
+                    availableCount: availableCount,
+                    stats: {
+                        total: totalTickets,
+                        notYetOpen: notYetOpenCount,
+                        soldOut: soldOutCount,
+                        available: availableCount
+                    }
+                };
             }
         ''')
 
-        # 使用統一的結果處理函數
+        # Use unified result parsing function
         page_state = util.parse_nodriver_result(page_state_raw)
 
-        if page_state and (page_state.get('soldOut') or page_state.get('notYetOpen')):
-            is_need_refresh = True
-            if show_debug_message:
-                status = "售罄" if page_state.get('soldOut') else "未開賣"
-                print(f"KKTIX 偵測到 {status} 狀態，將重新載入頁面")
+        # Only reload if "all tickets not yet open" or "all tickets sold out"
+        if page_state:
+            if page_state.get('allNotYetOpen') or page_state.get('allSoldOut'):
+                is_need_refresh = True
+                if show_debug_message:
+                    status = "All Sold Out" if page_state.get('allSoldOut') else "All Not Yet Open"
+                    stats = page_state.get('stats', {})
+                    print(f"[KKTIX STATUS] {status}, will reload page")
+                    print(f"  Ticket stats: total={stats.get('total')}, notYetOpen={stats.get('notYetOpen')}, soldOut={stats.get('soldOut')}, available={stats.get('available')}")
+            elif show_debug_message and (page_state.get('notYetOpen') or page_state.get('soldOut')):
+                stats = page_state.get('stats', {})
+                print(f"[KKTIX STATUS] Partial tickets not yet open/sold out, continue matching")
+                print(f"  Ticket stats: total={stats.get('total')}, notYetOpen={stats.get('notYetOpen')}, soldOut={stats.get('soldOut')}, available={stats.get('available')}")
+
     except Exception as exc:
         if show_debug_message:
-            print(f"檢查頁面狀態失敗: {exc}")
+            print(f"Check page status failed: {exc}")
 
     return is_need_refresh
 
@@ -1849,16 +2199,15 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
-        redirect_needed = await nodriver_kktix_signin(tab, url, config_dict)
-        is_url_contain_sign_in = True
+        # nodriver_kktix_signin already handles smart polling and redirect
+        await nodriver_kktix_signin(tab, url, config_dict)
 
-        if redirect_needed:
-            await asyncio.sleep(3)
-            try:
-                url = await tab.evaluate('window.location.href')
-                is_url_contain_sign_in = False
-                await asyncio.sleep(1)
-            except Exception as exc:
+        # Update URL after signin completes
+        try:
+            url = await tab.evaluate('window.location.href')
+            is_url_contain_sign_in = False
+        except Exception as exc:
+            if show_debug_message:
                 print(f"取得跳轉後 URL 失敗: {exc}")
 
     if not is_url_contain_sign_in:
@@ -1885,8 +2234,23 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # 勾選同意條款 - 使用精確的 ID 選擇器
                 is_finish_checkbox_click = await nodriver_check_checkbox(tab, '#person_agree_terms:not(:checked)')
 
-                # check is able to buy.
-                if config_dict["kktix"]["auto_fill_ticket_number"]:
+                # Check if tickets are already selected (prevent repeated execution)
+                is_ticket_already_selected = False
+                try:
+                    is_ticket_already_selected = await tab.evaluate('''
+                        () => {
+                            const inputs = document.querySelectorAll('input[type="text"][inputmode="numeric"]');
+                            for (let input of inputs) {
+                                if (parseInt(input.value) > 0) return true;
+                            }
+                            return false;
+                        }
+                    ''')
+                except:
+                    pass
+
+                # check is able to buy (only if tickets not already selected)
+                if config_dict["kktix"]["auto_fill_ticket_number"] and not is_ticket_already_selected:
                     kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
                     kktix_dict["done_time"] = time.time()
         else:
@@ -1902,9 +2266,16 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # if not config_dict["advanced"]["chrome_extension"]:
                 #     await nodriver_kktix_reg_auto_reload(tab, config_dict)
 
-                if config_dict["kktix"]["auto_press_next_step_button"]:
-                    # 自動點擊「立即購票」按鈕
-                    await nodriver_kktix_events_press_next_button(tab, config_dict)
+                # Try date selection first (multi-session pages)
+                is_date_selected = False
+                if config_dict["date_auto_select"]["enable"]:
+                    is_date_selected = await nodriver_kktix_date_auto_select(tab, config_dict)
+
+                # If date selection didn't happen (single session or failed), use next button
+                if not is_date_selected:
+                    if config_dict["kktix"]["auto_press_next_step_button"]:
+                        # 自動點擊「立即購票」按鈕
+                        await nodriver_kktix_events_press_next_button(tab, config_dict)
 
             # reset answer fail list.
             kktix_dict["fail_list"] = []
@@ -6831,1501 +7202,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
     return is_date_assigned
 
-
-async def search_closed_shadow_dom_buttons(tab, show_debug_message):
-    """
-    使用 NoDriver CDP DOM pierce=True 穿透 closed Shadow DOM 搜尋購票按鈕
-    基於 NoDriver API 指南的混合策略方法
-    """
-    try:
-        from nodriver import cdp
-        import re
-
-        if show_debug_message:
-            print("[SHADOW DOM] Starting enhanced closed Shadow DOM search...")
-
-        # 步驟 1: 使用 DOMSnapshot 提取完整頁面結構和日期信息
-        date_map_by_order = []  # 按鈕順序到日期的映射
-
-        try:
-            if show_debug_message:
-                print("[DOMSNAPSHOT] Capturing page structure for date extraction...")
-
-            # 使用 DOMSnapshot 獲取平坦化的頁面結構
-            documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
-                computed_styles=[],
-                include_paint_order=True,
-                include_dom_rects=True
-            ))
-
-            if documents and len(documents) > 0:
-                document_snapshot = documents[0]
-
-                # 提取節點信息
-                node_names = []
-                node_values = []
-                parent_indices = []
-                attributes_list = []
-
-                if hasattr(document_snapshot, 'layout'):
-                    if hasattr(document_snapshot.layout, 'node_index'):
-                        node_indices = document_snapshot.layout.node_index
-
-                        # 從 document_snapshot.nodes 獲取節點信息
-                        if hasattr(document_snapshot, 'nodes'):
-                            nodes = document_snapshot.nodes
-                            if hasattr(nodes, 'node_name'):
-                                node_names = [strings[i] if isinstance(i, int) and i < len(strings) else str(i)
-                                             for i in nodes.node_name]
-                            if hasattr(nodes, 'node_value'):
-                                node_values = [strings[i] if isinstance(i, int) and i >= 0 and i < len(strings) else ''
-                                              for i in nodes.node_value]
-                            if hasattr(nodes, 'parent_index'):
-                                parent_indices = list(nodes.parent_index)
-                            if hasattr(nodes, 'attributes'):
-                                attributes_list = nodes.attributes
-
-                if show_debug_message:
-                    print(f"[DOMSNAPSHOT] Extracted {len(node_names)} nodes, {len(strings)} strings")
-
-                # 建立節點到日期的映射
-                # 策略：找出所有包含日期格式的 #text 節點，記錄其祖先鏈中的日期
-                node_has_date = {}  # node_index -> (date_string, tag_name)
-
-                # 第一步：找出所有包含日期的文本節點
-                for i, node_name in enumerate(node_names):
-                    if node_name == '#text' and i < len(node_values) and node_values[i]:
-                        text_content = node_values[i]
-                        # 更寬鬆的日期匹配：可能包含完整年份 2025/10/02 或簡化的 10/02
-                        date_match = re.search(r'(\d{4}/)?(\d{1,2}/\d{1,2})', text_content)
-                        if date_match:
-                            # 只取月/日部分
-                            date_str = date_match.group(2)
-                            # 標記這個文本節點的父節點有日期
-                            if i < len(parent_indices):
-                                parent_idx = parent_indices[i]
-                                if parent_idx >= 0:
-                                    parent_tag = node_names[parent_idx] if parent_idx < len(node_names) else 'unknown'
-                                    node_has_date[parent_idx] = (date_str, parent_tag)
-                                    if show_debug_message:
-                                        # 顯示完整文本內容以便除錯（避免編碼錯誤中斷流程）
-                                        try:
-                                            print(f"[DOMSNAPSHOT] Found date '{date_str}' in #text node {i}, parent: {parent_tag} (index {parent_idx}), full text: '{text_content[:50]}'")
-                                        except UnicodeEncodeError:
-                                            print(f"[DOMSNAPSHOT] Found date '{date_str}' in #text node {i}, parent: {parent_tag} (index {parent_idx}), full text: <encoding error>")
-
-                if show_debug_message:
-                    print(f"[DOMSNAPSHOT] Found {len(node_has_date)} nodes with dates")
-
-                # 第二步：建立子節點到父節點的映射（用於向下搜尋）
-                children_map = {}  # parent_index -> [child_indices]
-                for i, parent_idx in enumerate(parent_indices):
-                    if parent_idx >= 0:
-                        if parent_idx not in children_map:
-                            children_map[parent_idx] = []
-                        children_map[parent_idx].append(i)
-
-                if show_debug_message:
-                    print(f"[DOMSNAPSHOT] Built children map with {len(children_map)} parents")
-
-                # 第三步：定義在按鈕的兄弟/子節點中查找日期的函數
-                def find_date_near_button(button_idx):
-                    """
-                    在按鈕附近查找日期：
-                    1. 向上找到按鈕的場次容器（向上 3-4 層）
-                    2. 在該容器的所有子孫節點中搜尋包含日期的文本節點
-                    3. 返回找到的第一個日期
-                    """
-                    # 步驟 1：向上找到場次容器（div.game-item 或類似）
-                    # 減少層數避免找到包含所有場次的大容器
-                    container_idx = button_idx
-                    for _ in range(2):  # 向上 2 層找到場次容器（避免找到太大的容器）
-                        if container_idx < len(parent_indices):
-                            container_idx = parent_indices[container_idx]
-                        else:
-                            break
-
-                    if container_idx < 0:
-                        return None
-
-                    # 步驟 2：在容器的所有子孫中搜尋日期（廣度優先搜尋）
-                    queue = [container_idx]
-                    visited = set()
-                    dates_found = []
-
-                    while queue and len(visited) < 200:  # 限制搜尋範圍避免過度搜尋
-                        current = queue.pop(0)
-                        if current in visited or current < 0:
-                            continue
-                        visited.add(current)
-
-                        # 檢查當前節點是否有日期
-                        if current in node_has_date:
-                            dates_found.append((current, node_has_date[current]))
-
-                        # 加入子節點到隊列
-                        if current in children_map:
-                            queue.extend(children_map[current])
-
-                    # 返回找到的第一個日期（最接近的）
-                    if dates_found:
-                        if show_debug_message:
-                            # dates_found 現在是 [(node_idx, (date_str, tag_name)), ...]
-                            date_info = [(d[1][0], d[1][1]) for d in dates_found]  # [(date, tag), ...]
-                            print(f"[DOMSNAPSHOT] Button {button_idx} in container {container_idx}: found {len(dates_found)} dates: {date_info}")
-
-                        # 優先級策略：P 標籤 > 其他標籤，排除 SMALL 標籤（截止時間）
-                        # dates_found 格式: [(node_idx, (date_str, tag_name)), ...]
-
-                        # 第一優先：尋找 P 標籤的日期（活動時間）
-                        for node_idx, (date_str, tag_name) in dates_found:
-                            if tag_name.upper() == 'P':
-                                if show_debug_message:
-                                    print(f"[DOMSNAPSHOT] Button {button_idx}: selected date '{date_str}' from P tag (event time)")
-                                return date_str
-
-                        # 第二優先：尋找非 SMALL 標籤的日期
-                        for node_idx, (date_str, tag_name) in dates_found:
-                            if tag_name.upper() != 'SMALL':
-                                if show_debug_message:
-                                    print(f"[DOMSNAPSHOT] Button {button_idx}: selected date '{date_str}' from {tag_name} tag")
-                                return date_str
-
-                        # 最後：如果只有 SMALL 標籤，返回第一個
-                        if show_debug_message:
-                            print(f"[DOMSNAPSHOT] Button {button_idx}: only SMALL tags found, using first: '{dates_found[0][1][0]}'")
-                        return dates_found[0][1][0]
-
-                    if show_debug_message:
-                        print(f"[DOMSNAPSHOT] Button {button_idx} in container {container_idx}: NO dates found")
-                    return None
-
-                # 找到所有購票按鈕並建立順序映射
-                for i, node_name in enumerate(node_names):
-                    if node_name.lower() == 'button':
-                        # 檢查按鈕的 class 屬性
-                        is_purchase_button = False
-
-                        if i < len(attributes_list) and attributes_list[i]:
-                            attrs = attributes_list[i]
-                            # attributes 是一個索引列表，格式為 [name_idx, value_idx, name_idx, value_idx, ...]
-                            for j in range(0, len(attrs), 2):
-                                if j + 1 < len(attrs):
-                                    attr_name_idx = attrs[j]
-                                    attr_value_idx = attrs[j + 1]
-
-                                    if (attr_name_idx >= 0 and attr_name_idx < len(strings) and
-                                        attr_value_idx >= 0 and attr_value_idx < len(strings)):
-                                        attr_name = strings[attr_name_idx]
-                                        attr_value = strings[attr_value_idx]
-
-                                        if attr_name == 'class':
-                                            # 檢查是否為購票按鈕
-                                            if ('btn-buy' in attr_value or
-                                                'btn-pink' in attr_value or
-                                                'ng-tns-c57' in attr_value):
-                                                is_purchase_button = True
-                                                break
-
-                        if is_purchase_button:
-                            # 在按鈕附近查找日期
-                            date = find_date_near_button(i)
-                            date_map_by_order.append(date)
-
-                            if show_debug_message:
-                                print(f"[DOMSNAPSHOT] Button #{len(date_map_by_order)}: date = '{date}'")
-
-                if show_debug_message:
-                    print(f"[DOMSNAPSHOT] Built date mapping for {len(date_map_by_order)} buttons")
-
-        except Exception as e:
-            if show_debug_message:
-                print(f"[DOMSNAPSHOT] Failed to extract dates via DOMSnapshot: {e}")
-                print(f"[DOMSNAPSHOT] Will proceed without date mapping")
-
-        # 步驟 2: 使用 pierce=True 獲取包含 closed Shadow DOM 的完整文檔樹
-        document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-
-        if show_debug_message:
-            print(f"[SHADOW DOM] Document retrieved with pierce=True")
-
-        # 步驟 3: 遞歸搜尋所有節點（包括 closed Shadow DOM）
-        # 使用計數器來追蹤找到的按鈕順序，並從 date_map_by_order 獲取對應日期
-        button_counter = [0]  # 使用列表來在閉包中共享計數器
-
-        async def find_buttons_in_node(node, path="", level=0):
-            buttons = []
-            indent = "  " * level
-
-            try:
-                node_name = getattr(node, 'node_name', '').lower()
-
-                # 檢查當前節點是否為按鈕
-                if node_name == 'button':
-                    try:
-                        # 獲取節點詳細資訊
-                        node_desc = await tab.send(cdp.dom.describe_node(node_id=node.node_id, depth=1))
-
-                        # 解析節點屬性
-                        attributes = getattr(node_desc, 'attributes', [])
-                        attr_dict = {}
-                        for i in range(0, len(attributes), 2):
-                            if i + 1 < len(attributes):
-                                attr_dict[attributes[i]] = attributes[i + 1]
-
-                        # 獲取元素的 HTML 內容
-                        outer_html_result = await tab.send(cdp.dom.get_outer_html(node_id=node.node_id))
-                        outer_html = getattr(outer_html_result, 'outer_html', outer_html_result)
-
-                        classes = attr_dict.get('class', '')
-                        button_text = ""
-
-                        # 嘗試從 HTML 中提取按鈕文字
-                        import re
-                        text_match = re.search(r'>([^<]*)</button>', outer_html)
-                        if text_match:
-                            button_text = text_match.group(1).strip()
-
-                        # 檢查是否為 ibon 購票按鈕
-                        is_ibon_purchase_button = (
-                            'btn-buy' in classes or
-                            'btn-pink' in classes or
-                            'ng-tns-c57' in classes or  # 特別針對 ibon 的 Angular 類別
-                            '線上購票' in button_text or
-                            '購票' in button_text
-                        )
-
-                        if is_ibon_purchase_button:
-                            # 從 date_map_by_order 獲取當前按鈕的日期
-                            current_button_index = button_counter[0]
-                            button_date = None
-                            if current_button_index < len(date_map_by_order):
-                                button_date = date_map_by_order[current_button_index]
-
-                            button_counter[0] += 1  # 增加計數器
-
-                            if show_debug_message:
-                                print(f"{indent}[SHADOW DOM] [SUCCESS] Found ibon purchase button at {path}")
-                                print(f"{indent}    Classes: {classes}")
-                                print(f"{indent}    Text: '{button_text}'")
-                                if button_date:
-                                    print(f"{indent}    Date: '{button_date}' (from DOMSnapshot)")
-                                print(f"{indent}    HTML: {outer_html[:100]}...")
-
-                            button_data = {
-                                'node_id': node.node_id,
-                                'path': path,
-                                'attributes': attr_dict,
-                                'html': outer_html,
-                                'classes': classes,
-                                'text': button_text,
-                                'method': 'cdp_dom_pierce',
-                                'disabled': 'disabled' in attr_dict
-                            }
-
-                            # 添加日期（從 DOMSnapshot 映射表獲取）
-                            if button_date:
-                                button_data['date_context'] = button_date
-
-                            buttons.append(button_data)
-
-                    except Exception as e:
-                        if show_debug_message:
-                            print(f"{indent}[SHADOW DOM] Error processing button node: {e}")
-
-                # 遞歸檢查子節點
-                if hasattr(node, 'children') and node.children:
-                    for i, child in enumerate(node.children):
-                        child_buttons = await find_buttons_in_node(
-                            child, f"{path}/{node_name}[{i}]", level + 1
-                        )
-                        buttons.extend(child_buttons)
-
-                # 檢查 Shadow roots（關鍵：可存取 closed Shadow DOM）
-                if hasattr(node, 'shadow_roots') and node.shadow_roots:
-                    # 只在找到 closed shadow DOM 時顯示訊息
-                    for i, shadow_root in enumerate(node.shadow_roots):
-                        shadow_type = getattr(shadow_root, 'shadow_root_type', 'UNKNOWN')
-                        if show_debug_message and shadow_type == 'ShadowRootType.CLOSED':
-                            print(f"{indent}[SHADOW DOM] Found {len(node.shadow_roots)} shadow root(s) in {node_name}")
-                            print(f"{indent}[SHADOW DOM] Processing {shadow_type} shadow root {i}")
-
-                        shadow_buttons = await find_buttons_in_node(
-                            shadow_root, f"{path}/{node_name}[shadow_{shadow_type}_{i}]", level + 1
-                        )
-                        buttons.extend(shadow_buttons)
-
-            except Exception as e:
-                if show_debug_message:
-                    print(f"{indent}[SHADOW DOM] Error processing node at {path}: {e}")
-
-            return buttons
-
-        # 開始搜尋 - 修正 API 使用方式
-        if show_debug_message:
-            print("[SHADOW DOM] Starting recursive search from document...")
-            print(f"[SHADOW DOM] Document type: {type(document)}")
-            print(f"[SHADOW DOM] Document attributes: {dir(document)}")
-
-        # 直接使用 document 作為根節點，而不是 document.root
-        found_buttons = await find_buttons_in_node(document, "root", level=0)
-
-        # 過濾掉 disabled 按鈕，優先返回可用按鈕
-        enabled_buttons = [btn for btn in found_buttons if not btn.get('disabled', False)]
-        disabled_buttons = [btn for btn in found_buttons if btn.get('disabled', False)]
-
-        if show_debug_message:
-            print(f"[SHADOW DOM] Search completed. Found {len(found_buttons)} total buttons")
-            print(f"[SHADOW DOM] Enabled buttons: {len(enabled_buttons)}, Disabled buttons: {len(disabled_buttons)}")
-
-            for i, btn in enumerate(enabled_buttons):
-                print(f"[SHADOW DOM] Enabled Button {i+1}: '{btn['text']}' at {btn['path']}")
-
-            for i, btn in enumerate(disabled_buttons):
-                print(f"[SHADOW DOM] Disabled Button {i+1}: '{btn['text']}' at {btn['path']}")
-
-        # 優先返回可用按鈕，如果沒有可用按鈕才返回所有按鈕
-        if enabled_buttons:
-            if show_debug_message:
-                print(f"[SHADOW DOM] Returning {len(enabled_buttons)} enabled buttons")
-            return enabled_buttons
-        else:
-            if show_debug_message:
-                print(f"[SHADOW DOM] No enabled buttons found, returning all {len(found_buttons)} buttons")
-            return found_buttons
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[SHADOW DOM] Closed Shadow DOM search failed: {e}")
-        return []
-
-async def debug_shadow_dom_structure(tab, show_debug_message=True):
-    """
-    完整探索和輸出 Shadow DOM 結構的除錯工具
-    使用 CDP DOM pierce=True 深度分析所有節點，包括 closed Shadow DOM
-    """
-    try:
-        from nodriver import cdp
-
-        if show_debug_message:
-            print("\n" + "="*80)
-            print("SHADOW DOM STRUCTURE DEBUGGER")
-            print("="*80)
-
-        # 使用 pierce=True 獲取包含所有 Shadow DOM 的完整文檔樹
-        document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-
-        if show_debug_message:
-            print(f"Document retrieved with pierce=True")
-            print(f"Document type: {type(document)}")
-
-        # 統計資料
-        stats = {
-            'total_nodes': 0,
-            'button_nodes': 0,
-            'shadow_roots': 0,
-            'closed_shadow_roots': 0,
-            'purchase_buttons': 0,
-            'angular_components': 0
-        }
-
-        # 遞歸分析所有節點
-        async def analyze_node_recursive(node, path="", level=0, parent_info=""):
-            """遞歸分析節點並輸出結構"""
-            indent = "  " * level
-            stats['total_nodes'] += 1
-
-            try:
-                node_name = getattr(node, 'node_name', '').lower()
-                node_type = getattr(node, 'node_type', 0)
-
-                # 獲取節點詳細資訊
-                if node_type == 1:  # Element node
-                    try:
-                        node_desc = await tab.send(cdp.dom.describe_node(node_id=node.node_id, depth=1))
-                        attributes = getattr(node_desc, 'attributes', [])
-
-                        # 解析屬性
-                        attr_dict = {}
-                        for i in range(0, len(attributes), 2):
-                            if i + 1 < len(attributes):
-                                attr_dict[attributes[i]] = attributes[i + 1]
-
-                        # 檢查是否為按鈕相關元素
-                        is_button = node_name == 'button'
-                        is_purchase_related = False
-
-                        # 獲取元素內容
-                        element_html = ""
-                        element_text = ""
-                        try:
-                            outer_html_result = await tab.send(cdp.dom.get_outer_html(node_id=node.node_id))
-                            element_html = getattr(outer_html_result, 'outer_html', str(outer_html_result))
-
-                            # 提取文字內容
-                            import re
-                            text_match = re.search(r'>([^<]*)</.*?>', element_html)
-                            if text_match:
-                                element_text = text_match.group(1).strip()
-                        except:
-                            pass
-
-                        # 檢查是否為購票相關元素
-                        if (is_button and ('線上購票' in element_text or '購票' in element_text)) or \
-                           ('btn-buy' in attr_dict.get('class', '') or 'btn-pink' in attr_dict.get('class', '')):
-                            is_purchase_related = True
-                            stats['purchase_buttons'] += 1
-
-                        # 檢查是否為 Angular 組件
-                        is_angular = any(attr.startswith('_ngcontent') or attr.startswith('ng-')
-                                       for attr in attr_dict.keys())
-                        if is_angular:
-                            stats['angular_components'] += 1
-
-                        # 輸出節點資訊
-                        if show_debug_message and (is_button or is_purchase_related or is_angular or level < 5):
-                            node_info = f"{indent}NODE {node_name.upper()}"
-
-                            if is_purchase_related:
-                                node_info += " [PURCHASE BUTTON]"
-                            elif is_button:
-                                node_info += " [BUTTON]"
-
-                            if is_angular:
-                                node_info += " [ANGULAR]"
-
-                            print(f"{node_info} @ {path}")
-
-                            # 顯示重要屬性
-                            important_attrs = ['class', 'id', 'disabled', 'type']
-                            for attr in important_attrs:
-                                if attr in attr_dict:
-                                    print(f"{indent}    {attr}: {attr_dict[attr]}")
-
-                            # 顯示文字內容
-                            if element_text:
-                                print(f"{indent}    Text: '{element_text}'")
-
-                            # 顯示 HTML (截取前100字符)
-                            if element_html and (is_purchase_related or is_button):
-                                html_preview = element_html[:150] + "..." if len(element_html) > 150 else element_html
-                                print(f"{indent}    HTML: {html_preview}")
-
-                        if is_button:
-                            stats['button_nodes'] += 1
-
-                    except Exception as e:
-                        if show_debug_message and level < 3:
-                            print(f"{indent}[ERROR] Error analyzing element {node_name}: {e}")
-
-                # 檢查子節點
-                if hasattr(node, 'children') and node.children:
-                    for i, child in enumerate(node.children):
-                        child_path = f"{path}/{node_name}[{i}]"
-                        await analyze_node_recursive(child, child_path, level + 1, node_name)
-
-                # 檢查 Shadow roots (關鍵功能)
-                if hasattr(node, 'shadow_roots') and node.shadow_roots:
-                    stats['shadow_roots'] += len(node.shadow_roots)
-
-                    for i, shadow_root in enumerate(node.shadow_roots):
-                        shadow_type = getattr(shadow_root, 'shadow_root_type', 'UNKNOWN')
-
-                        if shadow_type == 'ShadowRootType.CLOSED':
-                            stats['closed_shadow_roots'] += 1
-
-                        if show_debug_message:
-                            print(f"{indent}[SHADOW] SHADOW ROOT [{shadow_type}] in {node_name.upper()}")
-
-                        shadow_path = f"{path}/{node_name}[shadow_{shadow_type}_{i}]"
-                        await analyze_node_recursive(shadow_root, shadow_path, level + 1, f"shadow_of_{node_name}")
-
-            except Exception as e:
-                if show_debug_message and level < 3:
-                    print(f"{indent}[WARNING] Error processing node at {path}: {e}")
-
-        # 開始分析
-        if show_debug_message:
-            print("[DEBUG] Starting recursive DOM analysis...")
-
-        await analyze_node_recursive(document, "root")
-
-        # 輸出統計資料
-        if show_debug_message:
-            print("\n" + "="*50)
-            print("[SUMMARY] ANALYSIS SUMMARY")
-            print("="*50)
-            print(f"[INFO] Total nodes analyzed: {stats['total_nodes']}")
-            print(f"[INFO] Button nodes found: {stats['button_nodes']}")
-            print(f"[INFO] Purchase buttons found: {stats['purchase_buttons']}")
-            print(f"[INFO] Shadow roots found: {stats['shadow_roots']}")
-            print(f"[STATS] Closed shadow roots: {stats['closed_shadow_roots']}")
-            print(f"[STATS] Angular components: {stats['angular_components']}")
-            print("="*50)
-
-        return stats
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[ERROR] Shadow DOM structure debug failed: {e}")
-        return None
-
-async def compare_search_methods(tab, target_text="線上購票", show_debug_message=True):
-    """
-    比較不同搜尋方法的結果，專門針對多按鈕情況進行分析
-    """
-    try:
-        from nodriver import cdp
-        import re
-
-        if show_debug_message:
-            print("\n" + "="*80)
-            print("[DEBUG] SEARCH METHODS COMPARISON")
-            print("="*80)
-
-        results = {
-            'tab_find': [],
-            'cdp_dom': [],
-            'javascript': [],
-            'summary': {}
-        }
-
-        # 方法 1: tab.find() 搜尋
-        if show_debug_message:
-            print("\n[METHOD 1] NoDriver tab.find()")
-            print("-" * 40)
-
-        try:
-            # 嘗試多次 find 以找到所有按鈕
-            found_elements = []
-            for attempt in range(10):  # 最多嘗試10次
-                element = await tab.find(target_text, best_match=True)
-                if element:
-                    element_str = str(element)
-                    # 避免重複
-                    if element_str not in found_elements:
-                        found_elements.append(element_str)
-
-                        # 分析這個元素
-                        is_disabled = 'disabled=' in element_str or 'disabled"' in element_str
-
-                        # 提取日期和場地資訊
-                        date_match = re.search(r'(\d{4}/\d{2}/\d{2})', element_str)
-                        venue_match = re.search(r'>(.*?)<.*?>(.*?)<.*?>線上購票', element_str)
-
-                        element_info = {
-                            'html': element_str,
-                            'disabled': is_disabled,
-                            'date': date_match.group(1) if date_match else 'Unknown',
-                            'attempt': attempt + 1
-                        }
-
-                        results['tab_find'].append(element_info)
-
-                        if show_debug_message:
-                            status = "🔴 DISABLED" if is_disabled else "🟢 ENABLED"
-                            print(f"  Attempt {attempt + 1}: {status}")
-                            print(f"    Date: {element_info['date']}")
-                            print(f"    HTML: {element_str[:100]}...")
-
-                        # 嘗試隱藏這個元素以找到下一個
-                        try:
-                            await tab.evaluate('''
-                                (function() {
-                                    const buttons = document.querySelectorAll('button');
-                                    buttons.forEach(btn => {
-                                        if (btn.textContent.includes('線上購票')) {
-                                            btn.style.visibility = 'hidden';
-                                        }
-                                    });
-                                })();
-                            ''')
-                            await tab.sleep(0.1)
-                        except:
-                            pass
-                else:
-                    break
-
-            # 恢復所有隱藏的元素
-            try:
-                await tab.evaluate('''
-                    (function() {
-                        const buttons = document.querySelectorAll('button');
-                        buttons.forEach(btn => {
-                            btn.style.visibility = '';
-                        });
-                    })();
-                ''')
-            except:
-                pass
-
-        except Exception as e:
-            if show_debug_message:
-                print(f"  [ERROR] tab.find() failed: {e}")
-
-        # 方法 2: CDP DOM 搜尋
-        if show_debug_message:
-            print("\n[METHOD 2] CDP DOM Search")
-            print("-" * 40)
-
-        try:
-            document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-
-            async def find_purchase_buttons(node, path=""):
-                buttons = []
-                try:
-                    node_name = getattr(node, 'node_name', '').lower()
-
-                    if node_name == 'button':
-                        # 獲取按鈕詳細資訊
-                        try:
-                            outer_html_result = await tab.send(cdp.dom.get_outer_html(node_id=node.node_id))
-                            element_html = getattr(outer_html_result, 'outer_html', str(outer_html_result))
-
-                            if '線上購票' in element_html:
-                                # 分析按鈕周圍的結構以提取日期和場地
-                                parent_html = ""
-                                try:
-                                    # 嘗試獲取父元素的 HTML
-                                    parent_node = getattr(node, 'parent_id', None)
-                                    if parent_node:
-                                        parent_result = await tab.send(cdp.dom.get_outer_html(node_id=parent_node))
-                                        parent_html = getattr(parent_result, 'outer_html', "")
-                                except:
-                                    pass
-
-                                is_disabled = 'disabled=' in element_html
-
-                                # 提取日期
-                                date_match = re.search(r'(\d{4}/\d{2}/\d{2})', parent_html or element_html)
-
-                                # 提取場地
-                                venue_match = re.search(r'(LIVE WAREHOUSE|Legacy Taichung)', parent_html or element_html)
-
-                                button_info = {
-                                    'html': element_html,
-                                    'parent_html': parent_html[:200] + "..." if len(parent_html) > 200 else parent_html,
-                                    'disabled': is_disabled,
-                                    'date': date_match.group(1) if date_match else 'Unknown',
-                                    'venue': venue_match.group(1) if venue_match else 'Unknown',
-                                    'path': path
-                                }
-
-                                buttons.append(button_info)
-
-                                if show_debug_message:
-                                    status = "[DISABLED]" if is_disabled else "[ENABLED]"
-                                    print(f"  Found: {status}")
-                                    print(f"    Date: {button_info['date']}")
-                                    print(f"    Venue: {button_info['venue']}")
-                                    print(f"    Path: {path}")
-
-                        except Exception as e:
-                            if show_debug_message:
-                                print(f"  [ERROR] Error analyzing button: {e}")
-
-                    # 遞歸檢查子節點
-                    if hasattr(node, 'children') and node.children:
-                        for i, child in enumerate(node.children):
-                            child_buttons = await find_purchase_buttons(child, f"{path}/{node_name}[{i}]")
-                            buttons.extend(child_buttons)
-
-                    # 檢查 Shadow roots
-                    if hasattr(node, 'shadow_roots') and node.shadow_roots:
-                        for i, shadow_root in enumerate(node.shadow_roots):
-                            shadow_buttons = await find_purchase_buttons(shadow_root, f"{path}/{node_name}[shadow_{i}]")
-                            buttons.extend(shadow_buttons)
-
-                except Exception as e:
-                    pass
-
-                return buttons
-
-            cdp_buttons = await find_purchase_buttons(document, "root")
-            results['cdp_dom'] = cdp_buttons
-
-        except Exception as e:
-            if show_debug_message:
-                print(f"  [ERROR] CDP DOM search failed: {e}")
-
-        # 方法 3: JavaScript 搜尋
-        if show_debug_message:
-            print("\n[METHOD 3] JavaScript Search")
-            print("-" * 40)
-
-        try:
-            js_result = await tab.evaluate('''
-                (function() {
-                    const results = [];
-
-                    // 搜尋所有購票按鈕
-                    const buttons = document.querySelectorAll('button');
-
-                    buttons.forEach((btn, index) => {
-                        if (btn.textContent.includes('線上購票')) {
-                            // 找到父容器以獲取日期和場地資訊
-                            let parentContainer = btn.closest('.col-12.grid');
-                            let parentHTML = parentContainer ? parentContainer.outerHTML : btn.outerHTML;
-
-                            // 提取日期
-                            const dateMatch = parentHTML.match(/(\\d{4}\\/\\d{2}\\/\\d{2})/);
-
-                            // 提取場地
-                            const venueMatch = parentHTML.match(/(LIVE WAREHOUSE|Legacy Taichung)/);
-
-                            results.push({
-                                index: index,
-                                text: btn.textContent.trim(),
-                                disabled: btn.disabled || btn.hasAttribute('disabled'),
-                                className: btn.className,
-                                date: dateMatch ? dateMatch[1] : 'Unknown',
-                                venue: venueMatch ? venueMatch[1] : 'Unknown',
-                                html: btn.outerHTML,
-                                parentHTML: parentHTML.substring(0, 300)
-                            });
-                        }
-                    });
-
-                    return results;
-                })();
-            ''', return_by_value=True)
-
-            results['javascript'] = js_result
-
-            if show_debug_message:
-                for i, btn in enumerate(js_result):
-                    status = "🔴 DISABLED" if btn['disabled'] else "🟢 ENABLED"
-                    print(f"  Button {i+1}: {status}")
-                    print(f"    Date: {btn['date']}")
-                    print(f"    Venue: {btn['venue']}")
-                    print(f"    Class: {btn['className']}")
-
-        except Exception as e:
-            if show_debug_message:
-                print(f"  [ERROR] JavaScript search failed: {e}")
-
-        # 總結比較
-        if show_debug_message:
-            print("\n[SUMMARY] COMPARISON SUMMARY")
-            print("=" * 50)
-            print(f"tab.find() found: {len(results['tab_find'])} elements")
-            print(f"CDP DOM found: {len(results['cdp_dom'])} buttons")
-            print(f"JavaScript found: {len(results['javascript'])} buttons")
-
-            enabled_counts = {
-                'tab_find': sum(1 for x in results['tab_find'] if not x['disabled']),
-                'cdp_dom': sum(1 for x in results['cdp_dom'] if not x['disabled']),
-                'javascript': sum(1 for x in results['javascript'] if not x['disabled'])
-            }
-
-            print(f"\nEnabled buttons:")
-            for method, count in enabled_counts.items():
-                print(f"  {method}: {count}")
-
-        results['summary'] = {
-            'total_found': {
-                'tab_find': len(results['tab_find']),
-                'cdp_dom': len(results['cdp_dom']),
-                'javascript': len(results['javascript'])
-            },
-            'enabled_found': enabled_counts
-        }
-
-        return results
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[ERROR] Search methods comparison failed: {e}")
-        return None
-
-async def search_and_click_with_nodriver_native(tab, show_debug_message, target_text="線上購票"):
-    """
-    使用 NoDriver 原生方法搜尋並點擊按鈕
-    這是最可靠的方法，因為 NoDriver 有內建的 Shadow DOM 支援
-    """
-    try:
-        if show_debug_message:
-            print(f"[NATIVE] Starting NoDriver native search for: {target_text}")
-
-        # 方法 1: 使用 JavaScript 搜尋所有購票按鈕並選擇可用的
-        try:
-            if show_debug_message:
-                print(f"[NATIVE] Searching for all purchase buttons via JavaScript")
-
-            # 使用 JavaScript 搜尋所有購票按鈕，包括 Shadow DOM
-            buttons_info = await tab.evaluate('''
-                (function() {
-                    const buttons = [];
-
-                    // 遞迴搜尋 Shadow DOM
-                    function searchShadowDOM(root, path = '') {
-                        const elements = root.querySelectorAll('*');
-                        elements.forEach((el, idx) => {
-                            if (el.shadowRoot) {
-                                searchShadowDOM(el.shadowRoot, path + `shadow_${idx}_`);
-                            }
-                        });
-
-                        // 搜尋購票按鈕
-                        const purchaseButtons = root.querySelectorAll('button.btn-buy, button:contains("線上購票"), button[class*="btn-buy"], button[class*="btn-pink"]');
-                        purchaseButtons.forEach((btn, btnIdx) => {
-                            const isDisabled = btn.hasAttribute('disabled') || btn.disabled;
-                            const btnText = btn.textContent.trim();
-                            const btnClass = btn.className;
-
-                            if (btnText.includes('線上購票') || btnText.includes('購票') || btnClass.includes('btn-buy')) {
-                                buttons.push({
-                                    text: btnText,
-                                    disabled: isDisabled,
-                                    className: btnClass,
-                                    path: path + `btn_${btnIdx}`,
-                                    element: btn.outerHTML
-                                });
-
-                                // 儲存元素的引用以便點擊
-                                btn.setAttribute('data-maxbot-index', buttons.length - 1);
-                            }
-                        });
-                    }
-
-                    // 開始搜尋
-                    searchShadowDOM(document);
-
-                    return buttons;
-                })();
-            ''', return_by_value=True)
-
-            if show_debug_message:
-                print(f"[NATIVE] Found {len(buttons_info)} purchase buttons total")
-                for i, btn_info in enumerate(buttons_info):
-                    status = "DISABLED" if btn_info['disabled'] else "ENABLED"
-                    print(f"[NATIVE]   Button {i}: {btn_info['text']} - {status}")
-
-            # 找到第一個可用的按鈕
-            enabled_buttons = [btn for btn in buttons_info if not btn['disabled']]
-
-            if enabled_buttons:
-                target_button = enabled_buttons[0]
-                if show_debug_message:
-                    print(f"[NATIVE] Selecting first enabled button: {target_button['text']}")
-
-                # 點擊第一個可用的按鈕
-                click_result = await tab.evaluate('''
-                    (function() {
-                        const buttons = document.querySelectorAll('button[data-maxbot-index]');
-                        let targetButton = null;
-
-                        buttons.forEach(btn => {
-                            if (!btn.disabled && !btn.hasAttribute('disabled')) {
-                                if (!targetButton) {
-                                    targetButton = btn;
-                                }
-                            }
-                        });
-
-                        if (targetButton) {
-                            targetButton.click();
-                            return {
-                                success: true,
-                                text: targetButton.textContent.trim(),
-                                className: targetButton.className
-                            };
-                        }
-                        return {success: false, error: 'No enabled button found'};
-                    })();
-                ''', return_by_value=True)
-
-                if isinstance(click_result, dict) and click_result.get('success'):
-                    if show_debug_message:
-                        print(f"[NATIVE] Successfully clicked enabled button: {click_result.get('text') if isinstance(click_result, dict) else 'unknown'}")
-
-                    # 檢查頁面導航
-                    await tab.sleep(1.0)
-                    try:
-                        current_url = await tab.evaluate('window.location.href', return_by_value=True)
-                        if show_debug_message:
-                            print(f"[NATIVE] Current URL after click: {current_url}")
-                    except:
-                        pass
-
-                    return {
-                        "success": True,
-                        "method": "nodriver_native_javascript",
-                        "element": target_button['element'],
-                        "buttonText": target_button['text']
-                    }
-                else:
-                    if show_debug_message:
-                        print(f"[NATIVE] JavaScript click failed: {click_result.get('error') if isinstance(click_result, dict) else str(click_result)}")
-
-            else:
-                if show_debug_message:
-                    print(f"[NATIVE] No enabled buttons found among {len(buttons_info)} total buttons")
-
-        except Exception as js_error:
-            if show_debug_message:
-                print(f"[NATIVE] JavaScript search failed: {js_error}")
-
-        # 方法 2: 改進的 tab.find() 方法 - 實作智能 disabled 按鈕跳過
-        try:
-            if show_debug_message:
-                print(f"[NATIVE] Enhanced tab.find() with intelligent disabled filtering for text: '{target_text}'")
-
-            # 先用 JavaScript 尋找所有匹配的購票按鈕並分析其狀態
-            element_analysis = await tab.evaluate('''
-                (function() {
-                    const results = [];
-                    const searchText = '線上購票';
-
-                    // 搜尋所有可能的購票按鈕
-                    const allButtons = document.querySelectorAll('button');
-
-                    allButtons.forEach((btn, index) => {
-                        const text = btn.textContent.trim();
-                        const classes = btn.className || '';
-                        const isDisabled = btn.disabled || btn.hasAttribute('disabled');
-                        const isVisible = btn.offsetParent !== null;
-                        const isPurchaseButton = text.includes(searchText) || text.includes('購票') ||
-                                               classes.includes('btn-buy') || classes.includes('btn-pink');
-
-                        if (isPurchaseButton) {
-                            results.push({
-                                index: index,
-                                text: text,
-                                classes: classes,
-                                disabled: isDisabled,
-                                visible: isVisible,
-                                outerHTML: btn.outerHTML.substring(0, 150) + '...'
-                            });
-                        }
-                    });
-
-                    return {
-                        totalButtons: allButtons.length,
-                        purchaseButtons: results,
-                        enabledCount: results.filter(b => !b.disabled && b.visible).length,
-                        disabledCount: results.filter(b => b.disabled).length
-                    };
-                })();
-            ''', return_by_value=True)
-
-            # 安全處理 RemoteObject
-            try:
-                if isinstance(element_analysis, dict):
-                    if show_debug_message:
-                        print(f"[NATIVE] Button analysis: {element_analysis.get('enabledCount', 0)} enabled, {element_analysis.get('disabledCount', 0)} disabled")
-
-                        purchase_buttons = element_analysis.get('purchaseButtons', [])
-                        if purchase_buttons:
-                            for i, btn in enumerate(purchase_buttons):
-                                status = "[ENABLED]" if not btn.get('disabled', True) and btn.get('visible', False) else "[DISABLED]" if btn.get('disabled', True) else "[HIDDEN]"
-                                print(f"[NATIVE]   Button {i+1}: {status} '{btn.get('text', '')}' classes='{btn.get('classes', '')}'")
-
-                    # 如果有可用按鈕，優先使用第一個可用的
-                    enabled_buttons = [btn for btn in element_analysis.get('purchaseButtons', [])
-                                     if not btn.get('disabled', True) and btn.get('visible', False)]
-                else:
-                    if show_debug_message:
-                        print(f"[NATIVE] JavaScript analysis returned non-dict type: {type(element_analysis)}")
-                    enabled_buttons = []
-            except Exception as analysis_error:
-                if show_debug_message:
-                    print(f"[NATIVE] Error processing analysis results: {analysis_error}")
-                enabled_buttons = []
-
-            if enabled_buttons:
-                if show_debug_message:
-                    print(f"[NATIVE] Found {len(enabled_buttons)} enabled buttons, using the first one")
-
-                # 使用 JavaScript 直接點擊第一個可用按鈕
-                click_result = await tab.evaluate(f'''
-                    (function() {{
-                        const searchText = '線上購票';
-                        const allButtons = document.querySelectorAll('button');
-
-                        for (let btn of allButtons) {{
-                            const text = btn.textContent.trim();
-                            const classes = btn.className || '';
-                            const isDisabled = btn.disabled || btn.hasAttribute('disabled');
-                            const isVisible = btn.offsetParent !== null;
-                            const isPurchaseButton = text.includes(searchText) || text.includes('購票') ||
-                                                   classes.includes('btn-buy') || classes.includes('btn-pink');
-
-                            if (isPurchaseButton && !isDisabled && isVisible) {{
-                                console.log('[NATIVE] Clicking enabled button:', btn.outerHTML.substring(0,100));
-                                btn.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-                                btn.click();
-                                return {{
-                                    success: true,
-                                    buttonText: text,
-                                    classes: classes
-                                }};
-                            }}
-                        }}
-
-                        return {{ success: false, reason: 'No enabled button found' }};
-                    }})();
-                ''', return_by_value=True)
-
-                if click_result.get('success'):
-                    if show_debug_message:
-                        print(f"[NATIVE] Successfully clicked enabled button: '{click_result.get('buttonText', '')}'")
-
-                    # 等待頁面響應
-                    await tab.sleep(1.0)
-                    try:
-                        current_url = await tab.evaluate('window.location.href', return_by_value=True)
-                        if show_debug_message:
-                            print(f"[NATIVE] Current URL after click: {current_url}")
-                    except:
-                        pass
-
-                    return {
-                        "success": True,
-                        "method": "nodriver_native_js_enabled_click",
-                        "buttonText": click_result.get('buttonText', ''),
-                        "classes": click_result.get('classes', '')
-                    }
-
-            # 如果沒有可用按鈕，嘗試傳統的 tab.find() 方法
-            max_attempts = 3  # 減少嘗試次數避免無限循環
-            for attempt in range(max_attempts):
-                try:
-                    element = await tab.find(target_text, best_match=True)
-
-                    if not element:
-                        if show_debug_message:
-                            print(f"[NATIVE] No element found on attempt {attempt + 1}")
-                        break
-
-                    if show_debug_message:
-                        print(f"[NATIVE] Found element on attempt {attempt + 1}: {element}")
-
-                    # 檢查是否 disabled
-                    element_str = str(element)
-                    is_disabled = 'disabled=' in element_str or 'disabled"' in element_str
-
-                    if show_debug_message:
-                        print(f"[NATIVE] Element string: {element_str[:150]}...")
-                        print(f"[NATIVE] Is disabled: {is_disabled}")
-
-                    if is_disabled:
-                        if show_debug_message:
-                            print(f"[NATIVE] Element on attempt {attempt + 1} is disabled, will skip")
-                        continue
-                    else:
-                        if show_debug_message:
-                            print(f"[NATIVE] Found enabled element on attempt {attempt + 1}")
-                        break
-
-                except Exception as find_error:
-                    if show_debug_message:
-                        print(f"[NATIVE] Find error on attempt {attempt + 1}: {find_error}")
-                    break
-
-            if element:
-
-                # 檢查元素是否可點擊
-                try:
-                    # 滾動到元素位置
-                    await element.scroll_into_view()
-                    await tab.sleep(0.3)
-
-                    # 使用 NoDriver 原生點擊
-                    await element.click()
-
-                    if show_debug_message:
-                        print(f"[NATIVE] Successfully clicked element via native method")
-
-                    # 檢查頁面是否導航
-                    await tab.sleep(1.0)
-                    try:
-                        current_url = await tab.evaluate('window.location.href', return_by_value=True)
-                        if show_debug_message:
-                            print(f"[NATIVE] Current URL after click: {current_url}")
-                    except:
-                        pass
-
-                    return {
-                        "success": True,
-                        "method": "nodriver_native_find",
-                        "element": str(element),
-                        "buttonText": target_text
-                    }
-
-                except Exception as click_error:
-                    if show_debug_message:
-                        print(f"[NATIVE] Click failed on found element: {click_error}")
-
-        except Exception as find_error:
-            if show_debug_message:
-                print(f"[NATIVE] tab.find() failed: {find_error}")
-
-        # 方法 2: 使用 tab.select() 搜尋 CSS 選擇器
-        try:
-            if show_debug_message:
-                print(f"[NATIVE] Trying tab.select() with purchase button selectors")
-
-            # 嘗試多個可能的選擇器 - 增強 ibon 特定選擇器
-            selectors = [
-                'button:contains("線上購票")',
-                'button.btn-buy:not([disabled])',  # 只選擇非 disabled 的按鈕
-                'button.btn-pink:not([disabled])',
-                'button[class*="btn-buy"]:not([disabled])',
-                'button[class*="btn-pink"]:not([disabled])',
-                'button[class*="ng-tns-c57"]:not([disabled])',  # ibon Angular 特定類別
-                'button.ng-star-inserted:not([disabled])',
-                'button[class*="btn"][class*="pink"]:not([disabled])',
-                '.btn.btn-pink.btn-buy:not([disabled])',
-                '[role="button"][class*="btn-buy"]:not([disabled])'
-            ]
-
-            for selector in selectors:
-                try:
-                    element = await tab.select(selector)
-                    if element:
-                        if show_debug_message:
-                            print(f"[NATIVE] Found element via selector '{selector}': {element}")
-
-                        # 檢查文字是否匹配
-                        try:
-                            element_text = await element.get_text()
-                            if target_text in element_text or 'btn-buy' in (element.attrs.get('class', '')):
-                                # 點擊元素
-                                await element.scroll_into_view()
-                                await tab.sleep(0.3)
-                                await element.click()
-
-                                if show_debug_message:
-                                    print(f"[NATIVE] [SUCCESS] Successfully clicked via selector: {selector}")
-
-                                await tab.sleep(1.0)
-                                return {
-                                    "success": True,
-                                    "method": f"nodriver_native_select_{selector}",
-                                    "element": str(element),
-                                    "buttonText": element_text
-                                }
-                        except Exception as text_error:
-                            if show_debug_message:
-                                print(f"[NATIVE] Text check failed for {selector}: {text_error}")
-                            continue
-
-                except Exception as selector_error:
-                    if show_debug_message:
-                        print(f"[NATIVE] Selector '{selector}' failed: {selector_error}")
-                    continue
-
-        except Exception as select_error:
-            if show_debug_message:
-                print(f"[NATIVE] tab.select() method failed: {select_error}")
-
-        # 方法 3: 使用 tab.query_selector_all() 然後篩選
-        try:
-            if show_debug_message:
-                print(f"[NATIVE] Trying query_selector_all for buttons")
-
-            # 獲取所有按鈕
-            buttons = await tab.query_selector_all('button')
-            if show_debug_message:
-                print(f"[NATIVE] Found {len(buttons)} total buttons")
-
-            for i, button in enumerate(buttons):
-                try:
-                    # 檢查按鈕文字和類別
-                    button_text = await button.get_text()
-                    button_classes = button.attrs.get('class', '')
-
-                    if show_debug_message and i < 5:  # 只顯示前5個按鈕的詳細資訊
-                        print(f"[NATIVE] Button {i}: '{button_text}' classes: '{button_classes}'")
-
-                    # 檢查是否為 disabled 按鈕
-                    is_disabled = button.attrs.get('disabled') is not None
-
-                    if (target_text in button_text or
-                        'btn-buy' in button_classes or
-                        'btn-pink' in button_classes or
-                        'ng-tns-c57' in button_classes):
-
-                        if show_debug_message:
-                            status = "[DISABLED]" if is_disabled else "[ENABLED]"
-                            print(f"[NATIVE] Found matching button {status}: '{button_text}' with classes: '{button_classes}'")
-
-                        # 跳過 disabled 按鈕
-                        if is_disabled:
-                            if show_debug_message:
-                                print(f"[NATIVE] Skipping disabled button: '{button_text}'")
-                            continue
-
-                        await button.scroll_into_view()
-                        await tab.sleep(0.3)
-                        await button.click()
-
-                        if show_debug_message:
-                            print(f"[NATIVE] [SUCCESS] Successfully clicked enabled button via query_selector_all")
-
-                        await tab.sleep(1.0)
-                        return {
-                            "success": True,
-                            "method": "nodriver_native_query_all_enabled",
-                            "element": str(button),
-                            "buttonText": button_text
-                        }
-
-                except Exception as button_error:
-                    if show_debug_message:
-                        print(f"[NATIVE] Button {i} processing failed: {button_error}")
-                    continue
-
-        except Exception as query_error:
-            if show_debug_message:
-                print(f"[NATIVE] query_selector_all failed: {query_error}")
-
-        if show_debug_message:
-            print(f"[NATIVE] [ERROR] All native methods failed")
-
-        return {"success": False, "error": "All NoDriver native methods failed"}
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[NATIVE] Exception: {e}")
-        return {"success": False, "error": str(e)}
-
-async def search_and_click_immediately(tab, show_debug_message, target_text="線上購票"):
-    """
-    搜尋並立即點擊按鈕，避免 NodeId 失效問題
-    """
-    try:
-        if show_debug_message:
-            print(f"[IMMEDIATE] Starting immediate search and click for: {target_text}")
-
-        # 使用純 JavaScript 搜尋並立即點擊
-        immediate_click_js = f'''
-        (function() {{
-            const targetText = "{target_text}";
-            let foundAndClicked = false;
-            const searchResults = [];
-
-            console.log(`[IMMEDIATE] Starting search for: "${{targetText}}"`);
-
-            function immediateButtonClick(button, source) {{
-                try {{
-                    if (button.disabled) {{
-                        console.log(`[IMMEDIATE] Button disabled in ${{source}}`);
-                        return false;
-                    }}
-
-                    if (button.offsetParent === null) {{
-                        console.log(`[IMMEDIATE] Button not visible in ${{source}}`);
-                        return false;
-                    }}
-
-                    const beforeUrl = window.location.href;
-                    console.log(`[IMMEDIATE] Clicking button from ${{source}}, URL before: ${{beforeUrl}}`);
-
-                    // 立即執行多種點擊方法
-                    button.scrollIntoView({{ behavior: 'instant', block: 'center' }});
-                    button.focus();
-
-                    // 模擬完整的點擊序列
-                    const events = [
-                        new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}),
-                        new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}),
-                        new MouseEvent('click', {{ bubbles: true, cancelable: true, view: window }})
-                    ];
-
-                    events.forEach(event => button.dispatchEvent(event));
-                    button.click();
-
-                    // Form 提交（如果適用）
-                    const form = button.closest('form');
-                    if (form) {{
-                        console.log(`[IMMEDIATE] Submitting parent form`);
-                        form.submit();
-                    }}
-
-                    // 鍵盤事件
-                    button.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', keyCode: 13, bubbles: true }}));
-                    button.dispatchEvent(new KeyboardEvent('keyup', {{ key: 'Enter', keyCode: 13, bubbles: true }}));
-
-                    console.log(`[IMMEDIATE] Button clicked from ${{source}}`);
-
-                    // 檢查導航
-                    setTimeout(() => {{
-                        const afterUrl = window.location.href;
-                        if (beforeUrl !== afterUrl) {{
-                            console.log(`[IMMEDIATE] Page navigation detected: ${{afterUrl}}`);
-                        }} else {{
-                            console.log(`[IMMEDIATE] No navigation detected`);
-                        }}
-                    }}, 100);
-
-                    return true;
-                }} catch (e) {{
-                    console.log(`[IMMEDIATE] Click failed from ${{source}}: ${{e.message}}`);
-                    return false;
-                }}
-            }}
-
-            // 方法 1: 全域按鈕搜尋
-            try {{
-                const allButtons = document.querySelectorAll('button');
-                console.log(`[IMMEDIATE] Found ${{allButtons.length}} buttons globally`);
-                searchResults.push(`found_${{allButtons.length}}_global_buttons`);
-
-                for (let btn of allButtons) {{
-                    const text = btn.textContent.trim();
-                    const classes = btn.className || '';
-
-                    if (text === targetText && classes.includes('btn-buy')) {{
-                        console.log(`[IMMEDIATE] Found target via global search`);
-                        searchResults.push('target_found_globally');
-
-                        if (immediateButtonClick(btn, 'global_search')) {{
-                            foundAndClicked = true;
-                            searchResults.push('clicked_from_global_search');
-                            return {{ success: true, method: 'global_search', attempts: searchResults }};
-                        }}
-                    }}
-                }}
-            }} catch (e) {{
-                console.log(`[IMMEDIATE] Global search failed: ${{e.message}}`);
-                searchResults.push(`global_search_error: ${{e.message}}`);
-            }}
-
-            // 方法 2: TreeWalker 深度搜尋（如果全域搜尋失敗）
-            if (!foundAndClicked) {{
-                try {{
-                    console.log(`[IMMEDIATE] Starting TreeWalker search`);
-                    const walker = document.createTreeWalker(
-                        document.body || document.documentElement,
-                        NodeFilter.SHOW_ELEMENT,
-                        null,
-                        false
-                    );
-
-                    let node;
-                    while (node = walker.nextNode()) {{
-                        // 檢查按鈕
-                        if (node.tagName && node.tagName.toLowerCase() === 'button') {{
-                            const text = node.textContent.trim();
-                            const classes = node.className || '';
-
-                            if (text === targetText && classes.includes('btn-buy')) {{
-                                console.log(`[IMMEDIATE] Found target via TreeWalker`);
-                                searchResults.push('target_found_via_treewalker');
-
-                                if (immediateButtonClick(node, 'treewalker')) {{
-                                    foundAndClicked = true;
-                                    searchResults.push('clicked_from_treewalker');
-                                    return {{ success: true, method: 'treewalker', attempts: searchResults }};
-                                }}
-                            }}
-                        }}
-
-                        // 檢查 Shadow DOM
-                        if (node.shadowRoot) {{
-                            try {{
-                                const shadowButtons = node.shadowRoot.querySelectorAll('button');
-                                console.log(`[IMMEDIATE] Found ${{shadowButtons.length}} buttons in shadow DOM of ${{node.tagName}}`);
-
-                                for (let shadowBtn of shadowButtons) {{
-                                    const text = shadowBtn.textContent.trim();
-                                    const classes = shadowBtn.className || '';
-
-                                    if (text === targetText && classes.includes('btn-buy')) {{
-                                        console.log(`[IMMEDIATE] Found target in shadow DOM`);
-                                        searchResults.push(`target_found_in_shadow_${{node.tagName}}`);
-
-                                        if (immediateButtonClick(shadowBtn, `shadow_${{node.tagName}}`)) {{
-                                            foundAndClicked = true;
-                                            searchResults.push(`clicked_from_shadow_${{node.tagName}}`);
-                                            return {{ success: true, method: `shadow_${{node.tagName}}`, attempts: searchResults }};
-                                        }}
-                                    }}
-                                }}
-                            }} catch (e) {{
-                                console.log(`[IMMEDIATE] Shadow DOM access failed for ${{node.tagName}}: ${{e.message}}`);
-                                searchResults.push(`shadow_error_${{node.tagName}}: ${{e.message}}`);
-                            }}
-                        }}
-
-                        // 特殊處理 app-game
-                        if (node.tagName && node.tagName.toLowerCase() === 'app-game') {{
-                            try {{
-                                const gameButtons = node.querySelectorAll('button');
-                                console.log(`[IMMEDIATE] Found ${{gameButtons.length}} buttons in app-game`);
-                                searchResults.push(`found_${{gameButtons.length}}_buttons_in_app_game`);
-
-                                for (let gameBtn of gameButtons) {{
-                                    const text = gameBtn.textContent.trim();
-                                    const classes = gameBtn.className || '';
-
-                                    if (text === targetText && classes.includes('btn-buy')) {{
-                                        console.log(`[IMMEDIATE] Found target in app-game`);
-                                        searchResults.push('target_found_in_app_game');
-
-                                        if (immediateButtonClick(gameBtn, 'app_game')) {{
-                                            foundAndClicked = true;
-                                            searchResults.push('clicked_from_app_game');
-                                            return {{ success: true, method: 'app_game', attempts: searchResults }};
-                                        }}
-                                    }}
-                                }}
-                            }} catch (e) {{
-                                console.log(`[IMMEDIATE] app-game access failed: ${{e.message}}`);
-                                searchResults.push(`app_game_error: ${{e.message}}`);
-                            }}
-                        }}
-                    }}
-                }} catch (e) {{
-                    console.log(`[IMMEDIATE] TreeWalker search failed: ${{e.message}}`);
-                    searchResults.push(`treewalker_error: ${{e.message}}`);
-                }}
-            }}
-
-            console.log(`[IMMEDIATE] Search completed. Found and clicked: ${{foundAndClicked}}`);
-            return {{ success: foundAndClicked, method: foundAndClicked ? 'found' : 'not_found', attempts: searchResults }};
-        }})();
-        '''
-
-        # 執行立即搜尋和點擊
-        result_raw = await tab.evaluate(immediate_click_js, return_by_value=True)
-
-        # 解析 NoDriver 格式
-        if not isinstance(result_raw, dict):
-            from . import util
-            result = util.parse_nodriver_result(result_raw) if result_raw else {}
-        else:
-            result = result_raw
-
-        if show_debug_message:
-            if isinstance(result, dict):
-                success = result.get('success', False)
-                method = result.get('method', 'unknown')
-                attempts = result.get('attempts', [])
-                print(f"[IMMEDIATE] {'[SUCCESS]' if success else '[FAILED]'} via {method}")
-                print(f"[IMMEDIATE] Search attempts: {', '.join(attempts)}")
-            else:
-                print(f"[IMMEDIATE] Unexpected result after parsing: {result}")
-
-        # 短暫等待頁面導航
-        await tab.sleep(0.5)
-
-        # 檢查 URL 變化
-        try:
-            final_url = await tab.evaluate('window.location.href')
-            if show_debug_message:
-                print(f"[IMMEDIATE] Final URL: {final_url}")
-        except:
-            pass
-
-        return result
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[IMMEDIATE] Exception: {e}")
-        return {"success": False, "error": str(e), "attempts": []}
 
 async def extract_date_context_from_path(tab, button_node, path):
     """從按鈕節點的父層結構中提取日期資訊"""
