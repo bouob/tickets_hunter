@@ -280,50 +280,6 @@ python nodriver_tixcraft.py --input settings.json
 
 ---
 
-## 🔍 監控搶票過程
-
-### 查看程式輸出
-如果在「進階設定」中啟用「輸出詳細除錯訊息」，會看到詳細的執行過程：
-
-**警告**：輸出大量日誌可能影響效能，除非需要除錯，否則建議保持關閉。
-
-**範例 1：成功匹配關鍵字**
-```
-[DATE KEYWORD] Keywords (AND logic): ['11/16', '19:30']
-[DATE KEYWORD] Match found! Total dates matched: 1
-[DATE SELECT] Selected: 2024/11/16 (六) 19:30
-
-[AREA KEYWORD] Keywords (AND logic): ['搖滾A', '前排']
-[AREA KEYWORD] Match Summary:
-  Total areas checked: 5
-  Areas matched: 1
-  Match rate: 20.0%
-[AREA SELECT] Selected: 搖滾A區 前排 TWD$2,280
-```
-
-**範例 2：關鍵字失敗，回退到自動選擇**
-```
-[DATE KEYWORD] Keywords (AND logic): ['11/99']
-[DATE KEYWORD] No matches found
-[DATE SELECT] Fallback to mode: from top to bottom
-[DATE SELECT] Auto-selected: 2024/11/16 (六) 19:30
-```
-
-**範例 3：KKTIX 等待票券開賣**
-```
-[KKTIX AREA] Match Summary:
-  Tickets matched (with input): 0
-  Tickets matched (waiting for open): 1
-
-  Waiting for these tickets to open:
-    - 全票(2F) TWD$3,800 (keywords: 2F, 3,800)
-```
-
-### 瀏覽器視窗
-程式會自動開啟 Chrome 瀏覽器，您可以直接看到操作過程。
-
----
-
 ## ❓ 常見問題排除
 
 ### Q1: 程式啟動後瀏覽器沒有開啟
@@ -349,21 +305,21 @@ python --version
 - 活動尚未開賣
 
 **解決方法**：
-1. 檢查 `date_keyword` 是否正確
+1. 檢查圖形介面中「日期關鍵字」欄位是否正確
 2. 手動打開活動頁面，複製日期文字
-3. 或設定 `"date_keyword": ""` 使用 mode 自動選
+3. 或將「日期關鍵字」欄位留空，使用「日期排序方式」自動選擇
 
 ---
 
 ### Q3: 程式選錯區域
 **可能原因**：
-- `area_keyword` 設定不夠精確
-- 沒有設定 `keyword_exclude`
+- 「區域關鍵字」設定不夠精確
+- 沒有設定「排除關鍵字」
 
 **解決方法**：
-1. 使用更精確的關鍵字，例如 `"搖滾A區"` 而不是 `"搖滾"`
-2. 設定 `keyword_exclude` 排除不要的區域
-3. 調整 `mode` 設定
+1. 使用更精確的關鍵字，例如在「區域關鍵字」欄位填寫「搖滾A區」而不是「搖滾」
+2. 在「排除關鍵字」欄位設定要排除的區域
+3. 調整「區域排序方式」設定
 
 ---
 
@@ -373,8 +329,8 @@ python --version
 - 辨識失敗很正常
 
 **解決方法**：
-1. 設定 `"force_submit": false`，辨識後等待手動確認
-2. 或設定 `"ocr_captcha.enable": false`，完全手動輸入
+1. 在圖形介面中取消勾選「掛機模式」，辨識後等待手動確認
+2. 或取消勾選「OCR」，完全手動輸入
 
 ---
 
