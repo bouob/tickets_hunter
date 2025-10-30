@@ -17,14 +17,38 @@
 ## 📋 前置準備
 
 ### 1. 確認已安裝
-- Python 3.9 或以上版本
+- Python 3.9-3.11（建議使用 3.10）
 - Chrome 瀏覽器
 - Tickets Hunter 程式 (已下載或 git clone)
 
-### 2. 安裝相依套件
+### 2. 下載程式
+
+**原始碼版本（推薦，跨平台）**
 ```bash
+git clone https://github.com/bouob/tickets_hunter.git
+cd tickets_hunter
+```
+
+### 3. 安裝相依套件
+```bash
+pip install -r requirement.txt
+```
+
+### 4. 路徑說明（重要！）
+
+執行指令前請先確認工作目錄：
+- **根目錄** (`tickets_hunter/`)：執行 pip install、git pull 等全域指令
+- **原始碼目錄** (`tickets_hunter/src/`)：執行 Python 腳本（settings.py、config_launcher.py 等）
+
+**範例**：
+```bash
+# 在根目錄執行（安裝相依套件、更新程式）
 cd tickets_hunter
 pip install -r requirement.txt
+
+# 切換到原始碼目錄執行（啟動程式）
+cd tickets_hunter/src
+python settings.py
 ```
 
 ---
@@ -46,6 +70,13 @@ cd tickets_hunter/src
 python settings_old.py
 ```
 會開啟傳統的視窗介面。
+
+**方法三：多設定檔管理（進階）**
+```bash
+cd tickets_hunter/src
+python config_launcher.py
+```
+適合需要管理多個活動設定檔的使用者。
 
 ---
 
@@ -298,7 +329,7 @@ python nodriver_tixcraft.py --input settings.json
 ### Q1: 程式啟動後瀏覽器沒有開啟
 **可能原因**：
 - Chrome 瀏覽器未安裝
-- Python 版本過舊 (需 3.9+)
+- Python 版本不相容（需 3.9-3.11，建議 3.10）
 - 相依套件未安裝
 
 **解決方法**：
@@ -360,6 +391,25 @@ python --version
    cd tickets_hunter
    rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
    ```
+
+---
+
+## 🔄 程式更新
+
+### 取得最新版本
+```bash
+cd tickets_hunter
+git pull
+```
+
+### 或重新下載
+```bash
+git clone https://github.com/bouob/tickets_hunter.git
+cd tickets_hunter
+pip install -r requirement.txt
+```
+
+**建議**：定期更新以獲得最新功能和錯誤修復。
 
 ---
 

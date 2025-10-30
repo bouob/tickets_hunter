@@ -97,67 +97,32 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ---
 
-## 💻 安裝與執行
+## 🚀 快速開始
 
-### 🔧 環境設定
-
-**系統需求**
-- Python 3.9-3.11 (建議 3.10)
+### 系統需求
+- Python 3.9-3.11（建議 3.10）
 - Chrome 瀏覽器
-- 4GB+ RAM (多開瀏覽器需更多)
+- 4GB+ RAM
 
-### 📦 下載方式
+### 三步驟開始搶票
 
-**原始碼版本（推薦，跨平台）**
+**1. 下載並安裝**
 ```bash
 git clone https://github.com/bouob/tickets_hunter.git
 cd tickets_hunter
 pip install -r requirement.txt
 ```
 
-
-### 📂 路徑說明
-
-執行指令前請先確認工作目錄：
-- **根目錄** (`tickets_hunter/`)：執行 pip install、git pull 等全域指令
-- **原始碼目錄** (`tickets_hunter/src/`)：執行 Python 腳本（settings.py、config_launcher.py 等）
-
-### 🚀 執行方式
-
-**1. 網頁設定介面（推薦）**
+**2. 開啟設定介面**
 ```bash
-cd tickets_hunter/src
+cd src
 python settings.py
-# 瀏覽器自動開啟網頁UI：http://127.0.0.1:16888/
+# 瀏覽器會自動開啟 http://127.0.0.1:16888/
 ```
 
-**2. 桌面設定介面（傳統視窗）**
-```bash
-cd tickets_hunter/src
-python settings_old.py
-# 啟動 Tkinter GUI 桌面視窗
-```
+**3. 完成設定並開始搶票**
 
-**3. 多設定檔管理**
-```bash
-cd tickets_hunter/src
-python config_launcher.py
-```
-
-### 🔄 更新方式
-
-**取得最新版本**
-```bash
-cd tickets_hunter
-git pull
-```
-
-**或重新下載**
-```bash
-git clone https://github.com/bouob/tickets_hunter.git
-cd tickets_hunter
-pip install -r requirement.txt
-```
+> 📖 **完整教學請參閱** → [快速入門指南](guide/quick-start.md)（5分鐘完整設定流程）
 
 ---
 
@@ -216,6 +181,12 @@ tickets_hunter/
 
 ## 🎬 教學資源
 
+### 📖 使用者手冊（推薦新手閱讀）
+- [完整使用者手冊](guide/README.md) - 專為第一次使用者設計
+- [快速入門指南](guide/quick-start.md) - 5分鐘快速開始搶票
+- [關鍵字與回退機制](guide/keyword-mechanism.md) - 理解搶票邏輯
+- [詳細設定說明](guide/settings-guide.md) - settings.json 完整欄位說明
+
 ### 📺 示範影片
 - [虛擬主機搶票教學](https://max-everyday.com/2023/11/buy-ticket-by-vm/)
 
@@ -263,14 +234,7 @@ tickets_hunter/
 ---
 
 ## ⭐ Star History
-
-<a href="https://www.star-history.com/#bouob/tickets_hunter&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&legend=top-left" />
- </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/svg?repos=bouob/tickets_hunter&type=date&legend=top-left)](https://www.star-history.com/#bouob/tickets_hunter&type=date&legend=top-left)
 
 ---
 
