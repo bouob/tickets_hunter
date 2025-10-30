@@ -44,54 +44,56 @@
       <!-- tab 1 -->
       <div class="tab-pane fade show active" id="readme-tab-pane" role="tabpanel" aria-labelledby="readme-tab" tabindex="0">
 
-<p><strong>Tickets Hunter </strong> 是一個開放原始碼的多平台搶票自動化系統，後續延伸自原 MaxBot 專案。</p>
-
-<h4>🎯 核心特色</h4>
-<ul>
-  <li><strong>雙引擎架構</strong>：Selenium (穩定) + NoDriver (反偵測)</li>
-  <li><strong>多平台支援</strong>：拓元 TixCraft、KKTIX、Cityline、iBon、TicketPlus 等 15+ 平台</li>
-  <li><strong>智慧化選取</strong>：日期、區域、票數自動選擇，支援 OR/AND 邏輯</li>
-  <li><strong>OCR 驗證碼辨識</strong>：整合 ddddocr 自動處理驗證碼</li>
-  <li><strong>現代化介面</strong>：網頁設定介面，響應式設計</li>
-</ul>
-
-<h4>🎪 支援平台</h4>
-<ul>
-  <li><strong>Tixcraft 拓元售票</strong></li>
-  <li><strong>添翼 Teamear</strong></li>
-  <li><strong>Indievox 獨立音樂</strong></li>
-  <li><strong>KKTIX</strong></li>
-  <li><strong>iBon</strong></li>
-  <li><strong>FamiTicket 全網</strong></li>
-  <li><strong>Kham 寬宏售票</strong></li>
-  <li><strong>Ticket.com.tw 年代</strong></li>
-  <li><strong>UDN售票網</strong></li>
-  <li><strong>TicketPlus 遠大</strong></li>
-  <li><strong>Urbtix 城市</strong></li>
-  <li><strong>Cityline 買飛</strong></li>
-  <li><strong>HKTicketing 快達票</strong></li>
-  <li><strong>澳門銀河</strong></li>
-  <li><strong>TicketMaster Singapore</strong></li>
-  <li><strong>Ticketek Australia</strong></li>
-</ul>
-
-<h4>⚡ 版本資訊</h4>
-<p><strong>版本</strong>：Tickets Hunter (2025.10.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
-
-<p></p>
-
-<div class="bd-callout bd-callout-info">
-  台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+<!-- 版本資訊 -->
+<div class="alert alert-info" role="alert">
+  <h5 class="alert-heading">版本資訊</h5>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.10.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <hr/>
 
-<h3>法律聲明</h3>
+<!-- 法律資訊 -->
+<h3>法律資訊</h3>
 
-<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/Main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+<div class="bd-callout bd-callout-warning">
+  <strong>台灣地區重要提醒</strong><br/>
+  台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+</div>
+
+<h4>法律聲明</h4>
+
+<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
 
 <div class="bd-callout bd-callout-info">
   作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
+</div>
+
+<hr/>
+
+<!-- 使用者快速手冊 -->
+<h3>使用者快速手冊</h3>
+
+<p>本手冊專為<strong>第一次使用搶票機器人的一般使用者</strong>設計，不需要程式背景即可輕鬆上手。</p>
+
+<h4>推薦閱讀順序</h4>
+
+<ol class="mb-3">
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/quick-start.md" target="_blank">快速入門指南</a> - 5分鐘快速開始搶票（第一次使用必讀）</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/keyword-mechanism.md" target="_blank">關鍵字與回退機制</a> - 理解日期關鍵字、區域關鍵字如何運作</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md" target="_blank">詳細設定說明</a> - settings.json 完整欄位說明與進階功能</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/README.md" target="_blank">完整使用者手冊</a> - 手冊總覽與導航</li>
+</ol>
+
+<p><strong>重要更新 (2025.10.29)</strong>：關鍵字分隔符號已變更：逗號 (<code>,</code>) → 分號 (<code>;</code>)。範例：<code>11/16;11/17;11/18</code>（詳見「關鍵字與回退機制」）</p>
+
+<hr/>
+
+<!-- 支持專案 -->
+<h4>支持專案</h4>
+<p>如果這個專案對您有幫助，歡迎請開發者喝杯茶，支持我們持續改進與維護。</p>
+
+<div class="mt-3 mb-3">
+  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🍵"  data-font="Poppins" data-text="Buy me a tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
 </div>
 
 </div>
@@ -107,38 +109,44 @@
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSites" aria-expanded="true" aria-controls="collapseSites">
-                    部份支援的網站清單
+                    支援的售票平台（點擊快速填入）
                   </button>
                 </h2>
                 <div id="collapseSites" class="accordion-collapse collapse">
                   <div class="accordion-body">
                     <h6><strong>台灣地區</strong></h6>
-                    <ul class="mb-3">
-                      <li><strong>Tixcraft 拓元售票</strong> - tixcraft.com</li>
-                      <li><strong>添翼 Teamear</strong> - www.teamear.com</li>
-                      <li><strong>Indievox 獨立音樂</strong> - www.indievox.com</li>
-                      <li><strong>KKTIX</strong> - kktix.com</li>
-                      <li><strong>iBon</strong> - ticket.ibon.com.tw</li>
-                      <li><strong>FamiTicket 全網</strong> - www.famiticket.com.tw</li>
-                      <li><strong>Kham 寬宏售票</strong> - kham.com.tw</li>
-                      <li><strong>Ticket.com.tw 年代</strong> - ticket.com.tw</li>
-                      <li><strong>UDN售票網</strong> - tickets.udn.com</li>
-                      <li><strong>TicketPlus 遠大</strong> - ticketplus.com.tw</li>
-                    </ul>
+                    <div class="mb-3">
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tixcraft.com')">Tixcraft 拓元售票</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.teamear.com')">添翼 Teamear</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.indievox.com')">Indievox 獨立音樂</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kktix.com')">KKTIX</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.ibon.com.tw')">iBon</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.famiticket.com.tw')">FamiTicket 全網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kham.com.tw')">Kham 寬宏售票</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.com.tw')">Ticket.com.tw 年代</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udn.com')">UDN售票網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticketplus.com.tw')">TicketPlus 遠大</button>
+                    </div>
 
                     <h6><strong>海外地區</strong></h6>
-                    <ul class="mb-0">
-                      <li><strong>Urbtix 城市</strong> - ticket.urbtix.hk</li>
-                      <li><strong>Cityline 買飛</strong> - www.cityline.com</li>
-                      <li><strong>HKTicketing 快達票</strong> - hkticketing.com</li>
-                      <li><strong>澳門銀河</strong> - www.galaxymacau.com</li>
-                      <li><strong>TicketMaster Singapore</strong> - www.ticketmaster.sg</li>
-                      <li><strong>Ticketek Australia</strong> - www.ticketek.com.au</li>
-                    </ul>
+                    <div class="mb-0">
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.urbtix.hk')">Urbtix 城市</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.cityline.com')">Cityline 買飛</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://hkticketing.com')">HKTicketing 快達票</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.galaxymacau.com')">澳門銀河</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.sg')">TicketMaster Singapore</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketek.com.au')">Ticketek Australia</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <script>
+            function fillHomepage(url) {
+              document.getElementById('homepage').value = url;
+            }
+            </script>
 
           </div>
         </div>
@@ -323,7 +331,7 @@
           <label for="browser" class="col-sm-2 col-form-label">瀏覽器</label>
           <div class="col-sm-10">
             <select id="browser" class="form-select" aria-label="Default select">
-              <option value="chrome">Google Chrome</option>
+              <option value="chrome">Google Chrome ★</option>
               <option value="edge">Microsoft Edge</option>
               <option value="brave">Brave</option>
               <option value="firefox">Firefox</option>
@@ -338,7 +346,7 @@
             <select id="webdriver_type" class="form-select" aria-label="Default select">
               <option value="selenium">Selenium</option>
               <option value="undetected_chromedriver">Undetected Chromedriver</option>
-              <option value="nodriver">NODRIVER</option>
+              <option value="nodriver">NODRIVER ★</option>
               <!-- option value="DrissionPage">DrissionPage</option -->
             </select>
           </div>
