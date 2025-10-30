@@ -12,6 +12,7 @@
   <link rel="icon" href="/favicon.ico">
 </head>
 <body>
+  <div class="container py-4">
   <div id="message"></div>
   <h2>Tickets Hunter 🎫 - 多平台搶票自動化系統</h2>
   <div class="row g-3">
@@ -64,10 +65,6 @@
 
 <p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
 
-<div class="bd-callout bd-callout-info">
-  作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
-</div>
-
 <hr/>
 
 <!-- 使用者快速手冊 -->
@@ -90,10 +87,10 @@
 
 <!-- 支持專案 -->
 <h4>支持專案</h4>
-<p>如果這個專案對您有幫助，歡迎請開發者喝杯茶，支持我們持續改進與維護。</p>
+<p>如果這個專案對您有幫助，歡迎請開發者喝杯珍珠奶茶，支持我們持續改進與維護。</p>
 
 <div class="mt-3 mb-3">
-  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🍵"  data-font="Poppins" data-text="Buy me a tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🧋"  data-font="Poppins" data-text="Buy me a Bubble Tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
 </div>
 
 </div>
@@ -102,7 +99,7 @@
       <div class="tab-pane fade" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
         <div class="row mb-3">
           <label for="homepage" class="col-sm-2 col-form-label">網址</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="homepage" value="" />
 
             <div class="accordion mt-1" id="accordionExample">
@@ -153,20 +150,20 @@
 
         <div class="row mb-3 disappear" data-under="kktix">
           <label class="col-sm-2 col-form-label form-check-label" for="auto_press_next_step_button">KKTIX點選下一步按鈕</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="auto_press_next_step_button" />
           </div>
         </div>
         <div class="row mb-3 disappear" data-under="kktix">
           <label for="max_dwell_time" class="col-sm-2 col-form-label">KKTIX購票最長停留(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="max_dwell_time" value="" />
           </div>
         </div>
 
         <div class="row mb-3 disappear" data-under="cityline">
           <label class="col-sm-2 col-form-label form-check-label" for="cityline_queue_retry">Cityline 排隊撞牆</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="cityline_queue_retry" />
           </div>
         </div>
@@ -179,7 +176,7 @@
 
         <div class="row mb-3">
           <label for="ticket_number" class="col-sm-2 col-form-label">張數</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ticket_number" class="form-select" aria-label="Default select">
               <option selected="selected">
                 張數
@@ -220,7 +217,7 @@
 
         <div class="row mb-3">
           <label for="refresh_datetime" class="col-sm-2 col-form-label">刷新在指定時間</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="refresh_datetime" value="" />
 
             <div class="bd-callout bd-callout-info">
@@ -232,7 +229,7 @@
 
         <div class="row mb-3">
           <label for="date_select_mode" class="col-sm-2 col-form-label">日期排序方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="date_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
                 from top to bottom
@@ -251,7 +248,7 @@
         </div>
         <div class="row mb-3">
           <label for="date_keyword" class="col-sm-2 col-form-label">日期關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="date_keyword" rows="3"></textarea>
 
             <div class="accordion mt-1" id="accordionDateLogic">
@@ -279,7 +276,7 @@
         </div>
         <div class="row mb-3">
           <label for="area_select_mode" class="col-sm-2 col-form-label">區域排序方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="area_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
                 from top to bottom
@@ -298,7 +295,7 @@
         </div>
         <div class="row mb-3">
           <label for="area_keyword" class="col-sm-2 col-form-label">區域關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>🎪 區域邏輯說明：</strong><br>
@@ -309,7 +306,7 @@
         </div>
         <div class="row">
           <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>提示：</strong>
@@ -319,7 +316,7 @@
         </div>
         <div class="row">
           <label for="homepage" class="col-sm-2 col-form-label">版本</label>
-          <div class="col-sm-10"><p id="maxbot_version" class="text-secondary mt-2"></p>
+          <div class="col-sm-10 col-lg-8 col-xl-6"><p id="maxbot_version" class="text-secondary mt-2"></p>
           </div>
         </div>
       </div>
@@ -329,7 +326,7 @@
 
         <div class="row mb-3">
           <label for="browser" class="col-sm-2 col-form-label">瀏覽器</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="browser" class="form-select" aria-label="Default select">
               <option value="chrome">Google Chrome ★</option>
               <option value="edge">Microsoft Edge</option>
@@ -342,11 +339,11 @@
 
         <div class="row mb-3">
           <label for="webdriver_type" class="col-sm-2 col-form-label">WebDriver類別</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="webdriver_type" class="form-select" aria-label="Default select">
               <option value="selenium">Selenium</option>
               <option value="undetected_chromedriver">Undetected Chromedriver</option>
-              <option value="nodriver">NODRIVER ★</option>
+              <option value="nodriver">Nodriver ★</option>
               <!-- option value="DrissionPage">DrissionPage</option -->
             </select>
           </div>
@@ -354,34 +351,34 @@
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="play_ticket_sound">有票時播放音效</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="play_ticket_sound" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="play_order_sound">訂購時播放音效</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="play_order_sound" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="play_sound_filename" class="col-sm-2 col-form-label">音效檔</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="play_sound_filename" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_page_interval" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_overheat_count" value="" />
 
             <div class="bd-callout bd-callout-info">
@@ -393,7 +390,7 @@
 
         <div class="row mb-3">
           <label for="auto_reload_overheat_cd" class="col-sm-2 col-form-label">達成最多刷新次數的冷確時間(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_overheat_cd" value="" />
           </div>
         </div>
@@ -401,94 +398,85 @@
 
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="reset_browser_interval" value="" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="proxy_server_port" class="col-sm-2 col-form-label">Proxy IP:PORT</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="proxy_server_port" value="" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="window_size" class="col-sm-2 col-form-label">瀏覽器視窗大小</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="window_size" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="chrome_extension">Chrome 瀏覽器擴充功能</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="chrome_extension" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">允許不連續座位</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="hide_some_image">隱藏部份圖片</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="hide_some_image" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="block_facebook_network">擋掉 Facebook 連線</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="block_facebook_network" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="headless">無圖形界面模式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="headless" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="verbose">輸出除錯訊息</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="verbose" />
           </div>
         </div>
-
-
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">OCR</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="ocr_captcha_enable" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="ocr_captcha_image_source" class="col-sm-2 col-form-label">OCR圖片取得方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ocr_captcha_image_source" class="form-select" aria-label="Default select">
               <option value="canvas">canvas</option>
               <option value="NonBrowser">NonBrowser</option>
             </select>
           </div>
         </div>
-
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_force_submit">掛機模式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="ocr_captcha_force_submit" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="remote_url" value="" />
-          </div>
-        </div>
-        <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">Tickets Hunter Public OCR Server</label>
-          <div class="col-sm-10">
-            <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server" />
           </div>
         </div>
       </div>
@@ -497,14 +485,14 @@
       <div class="tab-pane fade" id="verification-tab-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="2">
         <div class="row mb-3">
           <label for="user_guess_string" class="col-sm-2 col-form-label">使用者自定字典</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="user_guess_string" rows="3"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="auto_guess_options">自動猜測驗證問題</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="auto_guess_options" />
           </div>
         </div>
@@ -515,21 +503,21 @@
       <div class="tab-pane fade" id="autofill-tab-pane" role="tabpanel" aria-labelledby="autofill-tab" tabindex="2">
         <div class="row mb-3">
           <label for="tixcraft_sid" class="col-sm-2 col-form-label">拓元家族 cookie SID</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="tixcraft_sid" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="ibonqware" class="col-sm-2 col-form-label">ibon cookie ibonqware</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="ibonqware" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="facebook_account" class="col-sm-2 col-form-label">Facebook</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="facebook_account" value="" class="form-control">
@@ -541,7 +529,7 @@
 
         <div class="row mb-3">
           <label for="kktix_account" class="col-sm-2 col-form-label">KKTIX</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kktix_account" value="" class="form-control">
@@ -553,7 +541,7 @@
 
         <div class="row mb-3">
           <label for="fami_account" class="col-sm-2 col-form-label">FamiTicket</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="fami_account" value="" class="form-control">
@@ -565,7 +553,7 @@
 
         <div class="row mb-3">
           <label for="kham_account" class="col-sm-2 col-form-label">寬宏</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kham_account" value="" class="form-control">
@@ -577,7 +565,7 @@
 
         <div class="row mb-3">
           <label for="ticket_account" class="col-sm-2 col-form-label">年代</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticket_account" value="" class="form-control">
@@ -589,7 +577,7 @@
 
         <div class="row mb-3">
           <label for="udn_account" class="col-sm-2 col-form-label">UDN</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="udn_account" value="" class="form-control">
@@ -601,7 +589,7 @@
 
         <div class="row mb-3">
           <label for="ticketplus_account" class="col-sm-2 col-form-label">遠大</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticketplus_account" value="" class="form-control">
@@ -613,7 +601,7 @@
 
         <div class="row mb-3">
           <label for="cityline_account" class="col-sm-2 col-form-label">cityline</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="cityline_account" value="" class="form-control">
@@ -623,7 +611,7 @@
 
         <div class="row mb-3">
           <label for="urbtix_account" class="col-sm-2 col-form-label">URBTIX</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="urbtix_account" value="" class="form-control">
@@ -635,7 +623,7 @@
 
         <div class="row mb-3">
           <label for="hkticketing_account" class="col-sm-2 col-form-label">HKTICKETING</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="hkticketing_account" value="" class="form-control">
@@ -656,7 +644,7 @@
       <div class="tab-pane fade" id="runtime-tab-pane" role="tabpanel" aria-labelledby="runtime-tab" tabindex="2">
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label">執行狀態</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <span id="maxbot_status"></span>
             <button class="btn btn-primary" id="pause_btn">暫停搶票</button>
             <button class="btn btn-primary" id="resume_btn">接繼搶票</button>
@@ -665,43 +653,43 @@
 
         <div class="row mb-3">
           <label for="last_url" class="col-sm-2 col-form-label">執行網址</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="last_url" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label">系統時間</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <span id="system_time"></span>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-danger">暫停</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword" rows="3" placeholder="例如：09:30:00;14:15:30 或 &quot;09:30:00&quot;;&quot;14:15:30&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="idle_keyword" placeholder="例如：09:30:00;14:15:30">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-success">接繼</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword" rows="3" placeholder="例如：09:35:00;14:20:30 或 &quot;09:35:00&quot;;&quot;14:20:30&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="resume_keyword" placeholder="例如：09:35:00;14:20:30">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-danger">暫停</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword_second" rows="3" placeholder="例如：00;30;50 或 &quot;00&quot;;&quot;30&quot;;&quot;50&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="idle_keyword_second" placeholder="例如：00;30;50">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-success">接繼</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword_second" rows="3" placeholder="例如：05;35;55 或 &quot;05&quot;;&quot;35&quot;;&quot;55&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="resume_keyword_second" placeholder="例如：05;35;55">
           </div>
         </div>
 
@@ -721,17 +709,17 @@
                   <div class="col-md-6">
                     <strong>系統時間：</strong>
                     <ul class="mb-1">
-                      <li><code>09:30:00;15:55:00</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"09:30:00";"15:55:00"</code> <span class="badge bg-secondary">完整格式</span></li>
-                      <li><code>14:30:00</code> <span class="badge bg-info">單一時間</span></li>
+                      <li><code>09:30:00;15:55:00</code></li>
+                      <li><code>"09:30:00";"15:55:00"</code></li>
+                      <li><code>14:30:00</code> (單一時間)</li>
                     </ul>
                   </div>
                   <div class="col-md-6">
                     <strong>秒數：</strong>
                     <ul class="mb-1">
-                      <li><code>00;30;50</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"00";"30";"50"</code> <span class="badge bg-secondary">完整格式</span></li>
-                      <li><code>30</code> <span class="badge bg-info">單一秒數</span></li>
+                      <li><code>00;30;50</code></li>
+                      <li><code>"00";"30";"50"</code></li>
+                      <li><code>30</code> (單一秒數)</li>
                     </ul>
                   </div>
                 </div>
@@ -761,6 +749,7 @@
     <div class="col-12">
       <span class="text-danger" id="run_btn_pressed_message"></span>
     </div>
+  </div>
   </div>
 
 <div class="modal" id="message_modal" tabindex="-1" role="dialog">
