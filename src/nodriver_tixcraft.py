@@ -19,8 +19,8 @@ import webbrowser
 from datetime import datetime
 
 # 強制使用 UTF-8 編碼輸出（解決 Windows CP950 編碼問題）
-# 僅在終端直接輸出時使用，避免與檔案重定向衝突導致死鎖
-if sys.platform == 'win32' and sys.stdout.isatty():
+# 適用於所有輸出環境（終端、IDE、重定向、管道）
+if sys.platform == 'win32':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
