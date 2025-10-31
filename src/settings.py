@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.27)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -580,8 +580,9 @@ class QueryHandler(tornado.web.RequestHandler):
             user_input = user_input.replace('"', '').replace("'", '')
 
             # Add quotes to each keyword
-            if ',' in user_input:
-                items = user_input.split(',')
+            # Use semicolon as the ONLY delimiter (Issue #23)
+            if util.CONST_KEYWORD_DELIMITER in user_input:
+                items = user_input.split(util.CONST_KEYWORD_DELIMITER)
                 user_input = ','.join([f'"{item.strip()}"' for item in items if item.strip()])
             else:
                 user_input = f'"{user_input.strip()}"'
