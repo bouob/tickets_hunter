@@ -13,6 +13,7 @@ __pycache__/
 /src/config_launcher.json
 /src/MAXBOT_LAST_URL.txt
 /src/MAXBOT_INT28_IDLE.txt
+/src/MAXBOT_QUESTION.txt
 src/webdriver/*/data/settings.json
 src/webdriver/*/data/status.json
 
