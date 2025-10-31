@@ -45,7 +45,6 @@ const verbose = document.querySelector('#verbose');
 
 
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
-const ocr_captcha_use_public_server = document.querySelector('#ocr_captcha_use_public_server');
 const ocr_captcha_image_source = document.querySelector('#ocr_captcha_image_source');
 const ocr_captcha_force_submit = document.querySelector('#ocr_captcha_force_submit');
 const remote_url = document.querySelector('#remote_url');
@@ -323,7 +322,7 @@ function maxbot_launch()
 {
     run_message("啟動 MaxBot 主程式中...");
     save_changes_to_dict(true);
-    maxbot_save_api(maxbot_run_api());
+    maxbot_save_api(maxbot_run_api);
 }
 
 function maxbot_run_api()
@@ -333,10 +332,13 @@ function maxbot_run_api()
         //alert( "success" );
     })
     .done(function(data) {
-        //alert( "second success" );
+        run_message("啟動指令已發送，請稍候瀏覽器視窗開啟...");
+        console.log("[MaxBot] Launch API response:", data);
     })
-    .fail(function() {
-        //alert( "error" );
+    .fail(function(xhr, status, error) {
+        run_message("啟動失敗：無法連線到後端服務 (" + status + ")");
+        console.error("[MaxBot] Launch API error:", status, error);
+        console.error("[MaxBot] Response content:", xhr.responseText);
     })
     .always(function() {
         //alert( "finished" );
@@ -482,12 +484,14 @@ function maxbot_save_api(callback)
             //alert( "success" );
         })
         .done(function(data) {
-            //alert( "second success" );
+            console.log("[MaxBot] 設定儲存成功");
             check_unsaved_fields();
-            if(callback) callback;
+            if(callback) callback();
         })
-        .fail(function() {
-            //alert( "error" );
+        .fail(function(xhr, status, error) {
+            console.error("[MaxBot] Save API error:", status, error);
+            console.error("[MaxBot] Response content:", xhr.responseText);
+            alert("儲存設定失敗：" + status);
         })
         .always(function() {
             //alert( "finished" );
@@ -710,7 +714,6 @@ reset_button.addEventListener('click', maxbot_reset_api);
 exit_button.addEventListener('click', maxbot_shutdown_api);
 pause_button.addEventListener('click', maxbot_pause_api);
 resume_button.addEventListener('click', maxbot_resume_api);
-ocr_captcha_use_public_server.addEventListener('change', checkUsePublicServer);
 
 const onchange_tag_list = ["input","select","textarea"];
 onchange_tag_list.forEach((tag) => {
@@ -722,21 +725,19 @@ onchange_tag_list.forEach((tag) => {
 
 homepage.addEventListener('keyup', check_unsaved_fields);
 
-
-
 let runMessageClearTimer;
+
 function run_message(msg)
 {
     clearTimeout(runMessageClearTimer);
     const message = document.querySelector('#run_btn_pressed_message');
     message.innerText = msg;
-    messageClearTimer = setTimeout(function ()
+    runMessageClearTimer = setTimeout(function ()
         {
             message.innerText = '';
         }, 3000);
 }
 
 function home_tab_clicked() {
-    console.log("clicked");
     document.getElementById("homepage").focus();
 }
