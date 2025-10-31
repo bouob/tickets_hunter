@@ -37,7 +37,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.27)"
+CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -148,7 +148,7 @@ def load_translate():
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
     en_us["keyword_exclude"] = 'Keyword Exclude'
-    en_us["keyword_usage"] = 'Keywords separated by comma (e.g: wheelchair,restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nQuotes supported but not required'
+    en_us["keyword_usage"] = 'Keywords separated by semicolon (e.g: wheelchair;restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nComma is just part of text (e.g: 3,280)'
 
     en_us["ocr_captcha"] = 'OCR captcha'
     en_us["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -268,7 +268,7 @@ def load_translate():
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
     zh_tw["keyword_exclude"] = '排除關鍵字'
-    zh_tw["keyword_usage"] = '關鍵字用逗號分隔 (如: 輪椅,不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n支援引號格式，但非必需'
+    zh_tw["keyword_usage"] = '關鍵字用分號分隔 (如: 輪椅;不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n逗號只是文字的一部分 (如: 3,280)'
 
     zh_tw["ocr_captcha"] = '猜測驗證碼'
     zh_tw["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -389,7 +389,7 @@ def load_translate():
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
     ja_jp["keyword_exclude"] = '除外キーワード'
-    ja_jp["keyword_usage"] = 'キーワードはカンマで区切る (例: 車椅子,制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nクォートは対応していますが必須ではありません'
+    ja_jp["keyword_usage"] = 'キーワードはセミコロンで区切る (例: 車椅子;制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nカンマはテキストの一部です (例: 3,280)'
 
     ja_jp["ocr_captcha"] = 'OCR認証'
     ja_jp["ocr_captcha_ddddocr_beta"] = 'ddddocr beta'
@@ -1425,41 +1425,23 @@ def callbackAreaAutoOnChange():
 
 def showHideBlocks():
     global UI_PADDING_X
-
-    global frame_group_kktix
-    global frame_group_kktix_index
     global frame_group_tixcraft
     global frame_group_tixcraft_index
-
     global combo_homepage
+    global combo_webdriver_type
 
     new_homepage = ""
     if 'combo_homepage' in globals():
         new_homepage = combo_homepage.get().strip()
-        #print("new homepage value:", new_homepage)
 
-    BLOCK_STYLE_TIXCRAFT = 0
-    BLOCK_STYLE_KKTIX = 1
-    STYLE_KKTIX_DOMAIN_LIST = ['kktix']
-
-    global combo_webdriver_type
+    # Set nodriver for Cityline
     if 'combo_webdriver_type' in globals():
         if 'cityline.com' in new_homepage:
             combo_webdriver_type.set("nodriver")
 
-    show_block_index = BLOCK_STYLE_TIXCRAFT
-    for domain_name in STYLE_KKTIX_DOMAIN_LIST:
-        if domain_name in new_homepage:
-            show_block_index = BLOCK_STYLE_KKTIX
-
-    if 'frame_group_kktix' in globals():
-        if show_block_index == BLOCK_STYLE_KKTIX:
-            frame_group_kktix.grid(column=0, row=frame_group_kktix_index, padx=UI_PADDING_X)
-            frame_group_tixcraft.grid_forget()
-        else:
-            frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
-            frame_group_kktix.grid_forget()
-
+    # Always show date/session selection block (universal for all platforms)
+    if 'frame_group_tixcraft' in globals():
+        frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
         showHideTixcraftBlocks()
 
 def showHideOcrCaptchaWithSubmit():
@@ -1629,18 +1611,10 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     txt_refresh_datetime = Entry(frame_group_header, width=30, textvariable = txt_refresh_datetime_value)
     txt_refresh_datetime.grid(column=1, row=group_row_count, sticky = W)
 
-    row_count+=1
-
-    # for sub group KKTix.
-    global frame_group_kktix
-    frame_group_kktix = Frame(root)
-    group_row_count = 0
-
-    # start sub group...
     group_row_count+=1
 
     global lbl_auto_press_next_step_button
-    lbl_auto_press_next_step_button = Label(frame_group_kktix, text=translate[language_code]['auto_press_next_step_button'])
+    lbl_auto_press_next_step_button = Label(frame_group_header, text=translate[language_code]['auto_press_next_step_button'])
     lbl_auto_press_next_step_button.grid(column=0, row=group_row_count, sticky = E)
 
     global chk_state_auto_press_next_step_button
@@ -1648,13 +1622,13 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     chk_state_auto_press_next_step_button.set(config_dict["kktix"]["auto_press_next_step_button"])
 
     global chk_auto_press_next_step_button
-    chk_auto_press_next_step_button = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_press_next_step_button)
+    chk_auto_press_next_step_button = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_press_next_step_button)
     chk_auto_press_next_step_button.grid(column=1, row=group_row_count, sticky = W)
 
     group_row_count+=1
 
     global lbl_auto_fill_ticket_number
-    lbl_auto_fill_ticket_number = Label(frame_group_kktix, text=translate[language_code]['auto_fill_ticket_number'])
+    lbl_auto_fill_ticket_number = Label(frame_group_header, text=translate[language_code]['auto_fill_ticket_number'])
     lbl_auto_fill_ticket_number.grid(column=0, row=group_row_count, sticky = E)
 
     global chk_state_auto_fill_ticket_number
@@ -1662,17 +1636,12 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     chk_state_auto_fill_ticket_number.set(config_dict["kktix"]["auto_fill_ticket_number"])
 
     global chk_auto_fill_ticket_number
-    chk_auto_fill_ticket_number = Checkbutton(frame_group_kktix, text=translate[language_code]['enable'], variable=chk_state_auto_fill_ticket_number)
+    chk_auto_fill_ticket_number = Checkbutton(frame_group_header, text=translate[language_code]['enable'], variable=chk_state_auto_fill_ticket_number)
     chk_auto_fill_ticket_number.grid(column=1, row=group_row_count, sticky = W)
-
-    global frame_group_kktix_index
-    frame_group_kktix_index = row_count
-    #PS: don't need show when onload(), because show/hide block will load again.
-    #frame_group_kktix.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
 
     row_count+=1
 
-    # for sub group tixcraft.
+    # for date/session selection (universal for all platforms).
     global frame_group_tixcraft
     frame_group_tixcraft = Frame(root)
     group_row_count = 0

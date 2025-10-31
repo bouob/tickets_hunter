@@ -12,6 +12,7 @@
   <link rel="icon" href="/favicon.ico">
 </head>
 <body>
+  <div class="container py-4">
   <div id="message"></div>
   <h2>Tickets Hunter 🎫 - 多平台搶票自動化系統</h2>
   <div class="row g-3">
@@ -44,54 +45,52 @@
       <!-- tab 1 -->
       <div class="tab-pane fade show active" id="readme-tab-pane" role="tabpanel" aria-labelledby="readme-tab" tabindex="0">
 
-<p><strong>Tickets Hunter </strong> 是一個開放原始碼的多平台搶票自動化系統，後續延伸自原 MaxBot 專案。</p>
-
-<h4>🎯 核心特色</h4>
-<ul>
-  <li><strong>雙引擎架構</strong>：Selenium (穩定) + NoDriver (反偵測)</li>
-  <li><strong>多平台支援</strong>：拓元 TixCraft、KKTIX、Cityline、iBon、TicketPlus 等 15+ 平台</li>
-  <li><strong>智慧化選取</strong>：日期、區域、票數自動選擇，支援 OR/AND 邏輯</li>
-  <li><strong>OCR 驗證碼辨識</strong>：整合 ddddocr 自動處理驗證碼</li>
-  <li><strong>現代化介面</strong>：網頁設定介面，響應式設計</li>
-</ul>
-
-<h4>🎪 支援平台</h4>
-<ul>
-  <li><strong>Tixcraft 拓元售票</strong></li>
-  <li><strong>添翼 Teamear</strong></li>
-  <li><strong>Indievox 獨立音樂</strong></li>
-  <li><strong>KKTIX</strong></li>
-  <li><strong>iBon</strong></li>
-  <li><strong>FamiTicket 全網</strong></li>
-  <li><strong>Kham 寬宏售票</strong></li>
-  <li><strong>Ticket.com.tw 年代</strong></li>
-  <li><strong>UDN售票網</strong></li>
-  <li><strong>TicketPlus 遠大</strong></li>
-  <li><strong>Urbtix 城市</strong></li>
-  <li><strong>Cityline 買飛</strong></li>
-  <li><strong>HKTicketing 快達票</strong></li>
-  <li><strong>澳門銀河</strong></li>
-  <li><strong>TicketMaster Singapore</strong></li>
-  <li><strong>Ticketek Australia</strong></li>
-</ul>
-
-<h4>⚡ 版本資訊</h4>
-<p><strong>版本</strong>：Tickets Hunter (2025.10.27) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
-
-<p></p>
-
-<div class="bd-callout bd-callout-info">
-  台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+<!-- 版本資訊 -->
+<div class="alert alert-info" role="alert">
+  <h5 class="alert-heading">版本資訊</h5>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.10.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <hr/>
 
-<h3>法律聲明</h3>
+<!-- 法律資訊 -->
+<h3>法律資訊</h3>
 
-<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/Main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+<div class="bd-callout bd-callout-warning">
+  <strong>台灣地區重要提醒</strong><br/>
+  台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
+</div>
 
-<div class="bd-callout bd-callout-info">
-  作者沒有意圖要他人購得的票券進行加價轉售或是使用在違法的事情上，他人的行為並不在作者的意識支配範圍之內，作者不對他人的非法行為負責。
+<h4>法律聲明</h4>
+
+<p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
+
+<hr/>
+
+<!-- 使用者快速手冊 -->
+<h3>使用者快速手冊</h3>
+
+<p>本手冊專為<strong>第一次使用搶票機器人的一般使用者</strong>設計，不需要程式背景即可輕鬆上手。</p>
+
+<h4>推薦閱讀順序</h4>
+
+<ol class="mb-3">
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/quick-start.md" target="_blank">快速入門指南</a> - 5分鐘快速開始搶票（第一次使用必讀）</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/keyword-mechanism.md" target="_blank">關鍵字與回退機制</a> - 理解日期關鍵字、區域關鍵字如何運作</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md" target="_blank">詳細設定說明</a> - settings.json 完整欄位說明與進階功能</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/README.md" target="_blank">完整使用者手冊</a> - 手冊總覽與導航</li>
+</ol>
+
+<p><strong>重要更新 (2025.10.29)</strong>：關鍵字分隔符號已變更：逗號 (<code>,</code>) → 分號 (<code>;</code>)。範例：<code>11/16;11/17;11/18</code>（詳見「關鍵字與回退機制」）</p>
+
+<hr/>
+
+<!-- 支持專案 -->
+<h4>支持專案</h4>
+<p>如果這個專案對您有幫助，歡迎請開發者喝杯珍珠奶茶，支持我們持續改進與維護。</p>
+
+<div class="mt-3 mb-3">
+  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🧋"  data-font="Poppins" data-text="Buy me a Bubble Tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
 </div>
 
 </div>
@@ -100,65 +99,71 @@
       <div class="tab-pane fade" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
         <div class="row mb-3">
           <label for="homepage" class="col-sm-2 col-form-label">網址</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="homepage" value="" />
 
             <div class="accordion mt-1" id="accordionExample">
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSites" aria-expanded="true" aria-controls="collapseSites">
-                    部份支援的網站清單
+                    支援的售票平台（點擊快速填入）
                   </button>
                 </h2>
                 <div id="collapseSites" class="accordion-collapse collapse">
                   <div class="accordion-body">
                     <h6><strong>台灣地區</strong></h6>
-                    <ul class="mb-3">
-                      <li><strong>Tixcraft 拓元售票</strong> - tixcraft.com</li>
-                      <li><strong>添翼 Teamear</strong> - www.teamear.com</li>
-                      <li><strong>Indievox 獨立音樂</strong> - www.indievox.com</li>
-                      <li><strong>KKTIX</strong> - kktix.com</li>
-                      <li><strong>iBon</strong> - ticket.ibon.com.tw</li>
-                      <li><strong>FamiTicket 全網</strong> - www.famiticket.com.tw</li>
-                      <li><strong>Kham 寬宏售票</strong> - kham.com.tw</li>
-                      <li><strong>Ticket.com.tw 年代</strong> - ticket.com.tw</li>
-                      <li><strong>UDN售票網</strong> - tickets.udn.com</li>
-                      <li><strong>TicketPlus 遠大</strong> - ticketplus.com.tw</li>
-                    </ul>
+                    <div class="mb-3">
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tixcraft.com')">Tixcraft 拓元售票</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.teamear.com')">添翼 Teamear</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.indievox.com')">Indievox 獨立音樂</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kktix.com')">KKTIX</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.ibon.com.tw')">iBon</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.famiticket.com.tw')">FamiTicket 全網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kham.com.tw')">Kham 寬宏售票</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.com.tw')">Ticket.com.tw 年代</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udn.com')">UDN售票網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticketplus.com.tw')">TicketPlus 遠大</button>
+                    </div>
 
                     <h6><strong>海外地區</strong></h6>
-                    <ul class="mb-0">
-                      <li><strong>Urbtix 城市</strong> - ticket.urbtix.hk</li>
-                      <li><strong>Cityline 買飛</strong> - www.cityline.com</li>
-                      <li><strong>HKTicketing 快達票</strong> - hkticketing.com</li>
-                      <li><strong>澳門銀河</strong> - www.galaxymacau.com</li>
-                      <li><strong>TicketMaster Singapore</strong> - www.ticketmaster.sg</li>
-                      <li><strong>Ticketek Australia</strong> - www.ticketek.com.au</li>
-                    </ul>
+                    <div class="mb-0">
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.urbtix.hk')">Urbtix 城市</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.cityline.com')">Cityline 買飛</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://hkticketing.com')">HKTicketing 快達票</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.galaxymacau.com')">澳門銀河</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketmaster.sg')">TicketMaster Singapore</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.ticketek.com.au')">Ticketek Australia</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <script>
+            function fillHomepage(url) {
+              document.getElementById('homepage').value = url;
+            }
+            </script>
 
           </div>
         </div>
 
         <div class="row mb-3 disappear" data-under="kktix">
           <label class="col-sm-2 col-form-label form-check-label" for="auto_press_next_step_button">KKTIX點選下一步按鈕</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="auto_press_next_step_button" />
           </div>
         </div>
         <div class="row mb-3 disappear" data-under="kktix">
           <label for="max_dwell_time" class="col-sm-2 col-form-label">KKTIX購票最長停留(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="max_dwell_time" value="" />
           </div>
         </div>
 
         <div class="row mb-3 disappear" data-under="cityline">
           <label class="col-sm-2 col-form-label form-check-label" for="cityline_queue_retry">Cityline 排隊撞牆</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="cityline_queue_retry" />
           </div>
         </div>
@@ -171,7 +176,7 @@
 
         <div class="row mb-3">
           <label for="ticket_number" class="col-sm-2 col-form-label">張數</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ticket_number" class="form-select" aria-label="Default select">
               <option selected="selected">
                 張數
@@ -212,7 +217,7 @@
 
         <div class="row mb-3">
           <label for="refresh_datetime" class="col-sm-2 col-form-label">刷新在指定時間</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="refresh_datetime" value="" />
 
             <div class="bd-callout bd-callout-info">
@@ -224,7 +229,7 @@
 
         <div class="row mb-3">
           <label for="date_select_mode" class="col-sm-2 col-form-label">日期排序方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="date_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
                 from top to bottom
@@ -243,7 +248,7 @@
         </div>
         <div class="row mb-3">
           <label for="date_keyword" class="col-sm-2 col-form-label">日期關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="date_keyword" rows="3"></textarea>
 
             <div class="accordion mt-1" id="accordionDateLogic">
@@ -255,14 +260,14 @@
                 </h2>
                 <div id="collapseDateLogic" class="accordion-collapse collapse">
                   <div class="accordion-body">
-                    <p><strong>OR 邏輯 (任一匹配)</strong>：<code>"9/11","9/22","3/3"</code><br>
-                    依序嘗試，找到第一個匹配就選取</p>
+                    <p><strong>OR 邏輯 (任一匹配)</strong>：<code>9/11;9/22;3/3</code><br>
+                    依序嘗試，找到第一個匹配就選取（分號分隔）</p>
 
-                    <p><strong>AND 邏輯 (全部匹配)</strong>：<code>"9/11 週末","9/22 平日"</code><br>
+                    <p><strong>AND 邏輯 (全部匹配)</strong>：<code>9/11 週末;9/22 平日</code><br>
                     空格分隔的關鍵字需全部匹配</p>
 
                     <p><strong>實用範例</strong>：<br>
-                    <code>"2024/12/25 晚上","2024/12/26 下午","週末場次"</code></p>
+                    <code>2024/12/25 晚上;2024/12/26 下午;週末場次</code></p>
                   </div>
                 </div>
               </div>
@@ -271,7 +276,7 @@
         </div>
         <div class="row mb-3">
           <label for="area_select_mode" class="col-sm-2 col-form-label">區域排序方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="area_select_mode" class="form-select" aria-label="Default select">
               <option value="from top to bottom">
                 from top to bottom
@@ -290,28 +295,28 @@
         </div>
         <div class="row mb-3">
           <label for="area_keyword" class="col-sm-2 col-form-label">區域關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>🎪 區域邏輯說明：</strong><br>
-              <strong>OR 邏輯</strong>：<code>"搖滾區","VIP","前排"</code> - 任一區域匹配<br>
-              <strong>AND 邏輯</strong>：<code>"搖滾區 前排","VIP 中央"</code> - 區域 + 位置組合
+              <strong>OR 邏輯</strong>：<code>搖滾區;VIP;前排</code> - 任一區域匹配（分號分隔）<br>
+              <strong>AND 邏輯</strong>：<code>搖滾區 前排;VIP 中央</code> - 區域 + 位置組合（空格表示 AND）
             </div>
           </div>
         </div>
         <div class="row">
           <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
             <div class="bd-callout bd-callout-info">
               <strong>提示：</strong>
-                每組關鍵字需要用「<code>雙引號</code>」包起來, 用「<code>逗號</code>」分隔, 在關鍵字中使用「<code>空格</code>」為 AND 邏輯。完全不輸入或是加入 「<code>,""</code>」 代表符合所有關鍵字。
+                多組關鍵字使用「<code>分號</code>」分隔（OR 邏輯），關鍵字內部使用「<code>空格</code>」為 AND 邏輯。例如：<code>輪椅;身障</code> 或 <code>搖滾A 前排;VIP</code>。留空代表不排除任何關鍵字。
             </div>
           </div>
         </div>
         <div class="row">
           <label for="homepage" class="col-sm-2 col-form-label">版本</label>
-          <div class="col-sm-10"><p id="maxbot_version" class="text-secondary mt-2"></p>
+          <div class="col-sm-10 col-lg-8 col-xl-6"><p id="maxbot_version" class="text-secondary mt-2"></p>
           </div>
         </div>
       </div>
@@ -321,9 +326,9 @@
 
         <div class="row mb-3">
           <label for="browser" class="col-sm-2 col-form-label">瀏覽器</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="browser" class="form-select" aria-label="Default select">
-              <option value="chrome">Google Chrome</option>
+              <option value="chrome">Google Chrome ★</option>
               <option value="edge">Microsoft Edge</option>
               <option value="brave">Brave</option>
               <option value="firefox">Firefox</option>
@@ -334,11 +339,11 @@
 
         <div class="row mb-3">
           <label for="webdriver_type" class="col-sm-2 col-form-label">WebDriver類別</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="webdriver_type" class="form-select" aria-label="Default select">
               <option value="selenium">Selenium</option>
               <option value="undetected_chromedriver">Undetected Chromedriver</option>
-              <option value="nodriver">NODRIVER</option>
+              <option value="nodriver">Nodriver ★</option>
               <!-- option value="DrissionPage">DrissionPage</option -->
             </select>
           </div>
@@ -346,34 +351,34 @@
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="play_ticket_sound">有票時播放音效</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="play_ticket_sound" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="play_order_sound">訂購時播放音效</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="play_order_sound" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="play_sound_filename" class="col-sm-2 col-form-label">音效檔</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="play_sound_filename" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_page_interval" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_overheat_count" value="" />
 
             <div class="bd-callout bd-callout-info">
@@ -385,7 +390,7 @@
 
         <div class="row mb-3">
           <label for="auto_reload_overheat_cd" class="col-sm-2 col-form-label">達成最多刷新次數的冷確時間(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_overheat_cd" value="" />
           </div>
         </div>
@@ -393,94 +398,85 @@
 
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="reset_browser_interval" value="" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="proxy_server_port" class="col-sm-2 col-form-label">Proxy IP:PORT</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="proxy_server_port" value="" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="window_size" class="col-sm-2 col-form-label">瀏覽器視窗大小</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="window_size" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="chrome_extension">Chrome 瀏覽器擴充功能</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="chrome_extension" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">允許不連續座位</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="hide_some_image">隱藏部份圖片</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="hide_some_image" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="block_facebook_network">擋掉 Facebook 連線</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="block_facebook_network" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="headless">無圖形界面模式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="headless" />
           </div>
         </div>
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="verbose">輸出除錯訊息</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="verbose" />
           </div>
         </div>
-
-
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">OCR</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="ocr_captcha_enable" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="ocr_captcha_image_source" class="col-sm-2 col-form-label">OCR圖片取得方式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ocr_captcha_image_source" class="form-select" aria-label="Default select">
               <option value="canvas">canvas</option>
               <option value="NonBrowser">NonBrowser</option>
             </select>
           </div>
         </div>
-
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_force_submit">掛機模式</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="ocr_captcha_force_submit" />
           </div>
         </div>
         <div class="row mb-3">
           <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="remote_url" value="" />
-          </div>
-        </div>
-        <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_use_public_server">Tickets Hunter Public OCR Server</label>
-          <div class="col-sm-10">
-            <input class="form-check-input" type="checkbox" id="ocr_captcha_use_public_server" />
           </div>
         </div>
       </div>
@@ -489,14 +485,14 @@
       <div class="tab-pane fade" id="verification-tab-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="2">
         <div class="row mb-3">
           <label for="user_guess_string" class="col-sm-2 col-form-label">使用者自定字典</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="user_guess_string" rows="3"></textarea>
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label form-check-label" for="auto_guess_options">自動猜測驗證問題</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-check-input" type="checkbox" id="auto_guess_options" />
           </div>
         </div>
@@ -507,21 +503,21 @@
       <div class="tab-pane fade" id="autofill-tab-pane" role="tabpanel" aria-labelledby="autofill-tab" tabindex="2">
         <div class="row mb-3">
           <label for="tixcraft_sid" class="col-sm-2 col-form-label">拓元家族 cookie SID</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="tixcraft_sid" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="ibonqware" class="col-sm-2 col-form-label">ibon cookie ibonqware</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="ibonqware" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="facebook_account" class="col-sm-2 col-form-label">Facebook</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="facebook_account" value="" class="form-control">
@@ -533,7 +529,7 @@
 
         <div class="row mb-3">
           <label for="kktix_account" class="col-sm-2 col-form-label">KKTIX</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kktix_account" value="" class="form-control">
@@ -545,7 +541,7 @@
 
         <div class="row mb-3">
           <label for="fami_account" class="col-sm-2 col-form-label">FamiTicket</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="fami_account" value="" class="form-control">
@@ -557,7 +553,7 @@
 
         <div class="row mb-3">
           <label for="kham_account" class="col-sm-2 col-form-label">寬宏</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="kham_account" value="" class="form-control">
@@ -569,7 +565,7 @@
 
         <div class="row mb-3">
           <label for="ticket_account" class="col-sm-2 col-form-label">年代</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticket_account" value="" class="form-control">
@@ -581,7 +577,7 @@
 
         <div class="row mb-3">
           <label for="udn_account" class="col-sm-2 col-form-label">UDN</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="udn_account" value="" class="form-control">
@@ -593,7 +589,7 @@
 
         <div class="row mb-3">
           <label for="ticketplus_account" class="col-sm-2 col-form-label">遠大</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="ticketplus_account" value="" class="form-control">
@@ -605,7 +601,7 @@
 
         <div class="row mb-3">
           <label for="cityline_account" class="col-sm-2 col-form-label">cityline</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="cityline_account" value="" class="form-control">
@@ -615,7 +611,7 @@
 
         <div class="row mb-3">
           <label for="urbtix_account" class="col-sm-2 col-form-label">URBTIX</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="urbtix_account" value="" class="form-control">
@@ -627,7 +623,7 @@
 
         <div class="row mb-3">
           <label for="hkticketing_account" class="col-sm-2 col-form-label">HKTICKETING</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
               <input type="text" id="hkticketing_account" value="" class="form-control">
@@ -648,7 +644,7 @@
       <div class="tab-pane fade" id="runtime-tab-pane" role="tabpanel" aria-labelledby="runtime-tab" tabindex="2">
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label">執行狀態</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <span id="maxbot_status"></span>
             <button class="btn btn-primary" id="pause_btn">暫停搶票</button>
             <button class="btn btn-primary" id="resume_btn">接繼搶票</button>
@@ -657,43 +653,43 @@
 
         <div class="row mb-3">
           <label for="last_url" class="col-sm-2 col-form-label">執行網址</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="last_url" value="" />
           </div>
         </div>
 
         <div class="row mb-3">
           <label class="col-sm-2 col-form-label">系統時間</label>
-          <div class="col-sm-10">
+          <div class="col-sm-10 col-lg-8 col-xl-6">
             <span id="system_time"></span>
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-danger">暫停</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword" rows="3" placeholder="例如：09:30:00,14:15:30 或 &quot;09:30:00&quot;,&quot;14:15:30&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="idle_keyword" placeholder="例如：09:30:00;14:15:30">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword" class="col-sm-2 col-form-label">系統時間 - <span class="text-success">接繼</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword" rows="3" placeholder="例如：09:35:00,14:20:30 或 &quot;09:35:00&quot;,&quot;14:20:30&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="resume_keyword" placeholder="例如：09:35:00;14:20:30">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="idle_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-danger">暫停</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="idle_keyword_second" rows="3" placeholder="例如：00,30,50 或 &quot;00&quot;,&quot;30&quot;,&quot;50&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="idle_keyword_second" placeholder="例如：00;30;50">
           </div>
         </div>
 
         <div class="row mb-3">
           <label for="resume_keyword_second" class="col-sm-2 col-form-label">秒數 - <span class="text-success">接繼</span>關鍵字</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" id="resume_keyword_second" rows="3" placeholder="例如：05,35,55 或 &quot;05&quot;,&quot;35&quot;,&quot;55&quot;"></textarea>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" class="form-control" id="resume_keyword_second" placeholder="例如：05;35;55">
           </div>
         </div>
 
@@ -713,17 +709,17 @@
                   <div class="col-md-6">
                     <strong>系統時間：</strong>
                     <ul class="mb-1">
-                      <li><code>09:30:00,15:55:00</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"09:30:00","15:55:00"</code> <span class="badge bg-secondary">完整格式</span></li>
-                      <li><code>14:30:00</code> <span class="badge bg-info">單一時間</span></li>
+                      <li><code>09:30:00;15:55:00</code></li>
+                      <li><code>"09:30:00";"15:55:00"</code></li>
+                      <li><code>14:30:00</code> (單一時間)</li>
                     </ul>
                   </div>
                   <div class="col-md-6">
                     <strong>秒數：</strong>
                     <ul class="mb-1">
-                      <li><code>00,30,50</code> <span class="badge bg-primary">簡化格式</span></li>
-                      <li><code>"00","30","50"</code> <span class="badge bg-secondary">完整格式</span></li>
-                      <li><code>30</code> <span class="badge bg-info">單一秒數</span></li>
+                      <li><code>00;30;50</code></li>
+                      <li><code>"00";"30";"50"</code></li>
+                      <li><code>30</code> (單一秒數)</li>
                     </ul>
                   </div>
                 </div>
@@ -754,6 +750,7 @@
       <span class="text-danger" id="run_btn_pressed_message"></span>
     </div>
   </div>
+  </div>
 
 <div class="modal" id="message_modal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
@@ -772,6 +769,6 @@
   </div>
 </div>
 
-  <script src="settings.js"></script>
+  <script src="settings.js?v=20251029-2"></script>
 </body>
 </html>
