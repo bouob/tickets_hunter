@@ -15572,7 +15572,7 @@ async def nodrver_block_urls(tab, config_dict):
     try:
         await tab.send(cdp.network.enable())
         # Block unnecessary network requests for performance optimization
-        await tab.send(cdp.network.set_blocked_ur_ls(NETWORK_BLOCKED_URLS))
+        await tab.send(cdp.network.set_blocked_ur_ls(urls=NETWORK_BLOCKED_URLS))
     except Exception as exc:
         print(f"Warning: Failed to enable network blocking: {exc}")
         # Continue without network blocking if it fails
