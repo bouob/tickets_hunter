@@ -15569,9 +15569,13 @@ async def nodrver_block_urls(tab, config_dict):
         NETWORK_BLOCKED_URLS.append('*facebook.com/*')
         NETWORK_BLOCKED_URLS.append('*.fbcdn.net/*')
 
-    await tab.send(cdp.network.enable())
-    # set_blocked_ur_ls is author's typo..., waiting author to chagne.
-    await tab.send(cdp.network.set_blocked_ur_ls(NETWORK_BLOCKED_URLS))
+    try:
+        await tab.send(cdp.network.enable())
+        # Block unnecessary network requests for performance optimization
+        await tab.send(cdp.network.set_blocked_ur_ls(NETWORK_BLOCKED_URLS))
+    except Exception as exc:
+        print(f"Warning: Failed to enable network blocking: {exc}")
+        # Continue without network blocking if it fails
     return tab
 
 async def nodriver_resize_window(tab, config_dict):
