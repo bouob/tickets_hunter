@@ -114,12 +114,6 @@
 
 ## 📂 相關資源
 
-### 開發者文件
-如果您想深入了解技術細節或參與開發，請參考：
-- [專案架構概覽](../docs/01-getting-started/project_overview.md)
-- [安裝與環境設定](../docs/01-getting-started/setup.md)
-- [開發規範指南](../docs/02-development/development_guide.md)
-
 ### 問題回報
 - [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md)
 - [提出新功能建議](https://github.com/bouob/tickets_hunter/issues/new?template=feature_request.md)
