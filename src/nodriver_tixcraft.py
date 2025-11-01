@@ -1486,9 +1486,16 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # T003: Check main switch (defensive programming)
+    if not config_dict["date_auto_select"]["enable"]:
+        if show_debug_message:
+            print("[KKTIX DATE SELECT] Main switch is disabled, skipping date selection")
+        return False
+
     # Read config
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field (default: strict mode)
 
     # Check if multi-session page exists with smart polling
     session_list = None
@@ -1565,7 +1572,8 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             print("[KKTIX DATE] No available sessions found after filtering")
         return False
 
-    # Keyword matching
+    # T004-T008: NEW LOGIC - Early return pattern (Feature 003)
+    # Keyword priority matching: first match wins and stops immediately
     matched_blocks = None
 
     if not date_keyword:
@@ -1573,74 +1581,98 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
         if show_debug_message:
             print(f"[KKTIX DATE KEYWORD] No keyword specified, using all {len(formated_session_list)} sessions")
     else:
-        # Keyword matching logic
+        # NEW: Early return pattern - iterate keywords in order
         matched_blocks = []
+        target_row_found = False
+        keyword_matched_index = -1
+
         try:
             import json
             import re
             keyword_array = json.loads("[" + date_keyword + "]")
+
+            # T005: Start checking keywords log
             if show_debug_message:
-                print(f"[KKTIX DATE KEYWORD] Raw input: '{date_keyword}'")
-                print(f"[KKTIX DATE KEYWORD] Parsed array: {keyword_array}")
+                print(f"[KKTIX DATE KEYWORD] Start checking keywords in order: {keyword_array}")
                 print(f"[KKTIX DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
-                print(f"[KKTIX DATE KEYWORD] Checking {len(formated_session_list_text)} available sessions...")
+                print(f"[KKTIX DATE KEYWORD] Checking against {len(formated_session_list_text)} available sessions...")
 
-            for i, session_text in enumerate(formated_session_list_text):
-                # Normalize spaces for better matching
-                normalized_session_text = re.sub(r'\s+', ' ', session_text)
-
+            # NEW: Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item_set in enumerate(keyword_array):
                 if show_debug_message:
-                    print(f"[KKTIX DATE KEYWORD] [{i+1}/{len(formated_session_list_text)}] Checking: {session_text[:80]}...")
+                    print(f"[KKTIX DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
-                session_matched = False
-                for keyword_item_set in keyword_array:
+                # Check all rows for this keyword
+                for i, session_text in enumerate(formated_session_list_text):
+                    normalized_session_text = re.sub(r'\s+', ' ', session_text)
                     is_match = False
+
                     if isinstance(keyword_item_set, str):
                         # OR logic: single keyword
                         normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
                         is_match = normalized_keyword in normalized_session_text
-                        if show_debug_message:
-                            if is_match:
-                                print(f"[KKTIX DATE KEYWORD]   Matched keyword: '{keyword_item_set}'")
-                            else:
-                                print(f"[KKTIX DATE KEYWORD]   No match for: '{keyword_item_set}'")
                     elif isinstance(keyword_item_set, list):
                         # AND logic: all keywords must match
                         normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-
-                        if show_debug_message:
-                            print(f"[KKTIX DATE KEYWORD]   Checking AND logic: {keyword_item_set}")
-
-                        match_results = []
-                        for kw in normalized_keywords:
-                            kw_match = kw in normalized_session_text
-                            match_results.append(kw_match)
-                            if show_debug_message:
-                                status = "PASS" if kw_match else "FAIL"
-                                print(f"[KKTIX DATE KEYWORD]     {status} '{kw}': {kw_match}")
-
+                        match_results = [kw in normalized_session_text for kw in normalized_keywords]
                         is_match = all(match_results)
 
-                        if show_debug_message:
-                            if is_match:
-                                print(f"[KKTIX DATE KEYWORD]   All AND keywords matched")
-                            else:
-                                print(f"[KKTIX DATE KEYWORD]   AND logic failed (not all matched)")
-
                     if is_match:
-                        matched_blocks.append(formated_session_list[i])
-                        session_matched = True
+                        # T006: Keyword matched log - IMMEDIATELY select and stop
+                        matched_blocks = [formated_session_list[i]]
+                        target_row_found = True
+                        keyword_matched_index = keyword_index
                         if show_debug_message:
-                            print(f"[KKTIX DATE KEYWORD]   → Session added to matched list (total: {len(matched_blocks)})")
+                            print(f"[KKTIX DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                            print(f"[KKTIX DATE SELECT] Selected session: {session_text[:80]} (keyword match)")
                         break
 
-                if show_debug_message and not session_matched:
-                    print(f"[KKTIX DATE KEYWORD]   → No keywords matched this session, skipping")
+                if target_row_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T007: All keywords failed log
+            if not target_row_found:
+                if show_debug_message:
+                    print(f"[KKTIX DATE KEYWORD] All keywords failed to match")
+
         except Exception as e:
             if show_debug_message:
                 print(f"[KKTIX DATE KEYWORD] Parsing error: {e}")
-                print(f"[KKTIX DATE KEYWORD] Fallback: using all {len(formated_session_list)} sessions")
+            # On error, use mode selection
+            matched_blocks = []
+
+    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
+    # Will be removed after 2 weeks (2025-11-14)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # This logic scanned ALL keywords and collected all matches, then selected one
+    # NEW logic (above) uses early return: first match wins immediately
+    if not date_keyword:
+        matched_blocks = formated_session_list
+    else:
+        matched_blocks = []
+        try:
+            keyword_array = json.loads("[" + date_keyword + "]")
+            for i, session_text in enumerate(formated_session_list_text):
+                normalized_session_text = re.sub(r'\s+', ' ', session_text)
+                session_matched = False
+                for keyword_item_set in keyword_array:
+                    is_match = False
+                    if isinstance(keyword_item_set, str):
+                        normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
+                        is_match = normalized_keyword in normalized_session_text
+                    elif isinstance(keyword_item_set, list):
+                        normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
+                        match_results = [kw in normalized_session_text for kw in normalized_keywords]
+                        is_match = all(match_results)
+                    if is_match:
+                        matched_blocks.append(formated_session_list[i])
+                        session_matched = True
+                        break
+        except Exception as e:
             matched_blocks = formated_session_list
+    """
 
     # Match result summary
     if show_debug_message:
@@ -1655,11 +1687,31 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             print(f"[KKTIX DATE KEYWORD]   No sessions matched any keywords")
             print(f"[KKTIX DATE KEYWORD] ========================================")
 
-    # Fallback: if keyword provided but no matches found, use all available sessions
+    # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
+    if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
+        if date_auto_fallback:
+            # T018: Fallback enabled - use auto_select_mode
+            if show_debug_message:
+                print(f"[KKTIX DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                print(f"[KKTIX DATE FALLBACK] Selecting available session based on date_select_order='{auto_select_mode}'")
+            matched_blocks = formated_session_list
+        else:
+            # T019: Fallback disabled - strict mode (do not select anything)
+            if show_debug_message:
+                print(f"[KKTIX DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                print(f"[KKTIX DATE SELECT] Waiting for manual intervention")
+            return False  # Return immediately without selection
+
+    # DEPRECATED: Old unconditional fallback logic
+    # Will be removed after 2 weeks (2025-11-14)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # Unconditional auto-fallback when keywords fail
     if len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
         if show_debug_message:
             print(f"[KKTIX DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
         matched_blocks = formated_session_list
+    """
 
     # Select target using auto_select_mode
     target_button = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
@@ -2015,9 +2067,16 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # T010: Check main switch (defensive programming)
+    if not config_dict["area_auto_select"]["enable"]:
+        if show_debug_message:
+            print("[KKTIX AREA SELECT] Main switch is disabled, skipping area selection")
+        return fail_list, played_sound_ticket
+
     # read config.
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field (default: strict mode)
 
     # part 1: check div.
     registrationsNewApp_div = None
@@ -2063,16 +2122,41 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     if show_debug_message:
                         print("is_need_refresh for keyword:", area_keyword_item)
 
+            # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
             if not is_ticket_number_assigned:
-                # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                # All keyword groups failed
+                if is_need_refresh_final:
+                    if area_auto_fallback:
+                        # T022: Fallback enabled - use auto_select_mode without keyword
+                        if show_debug_message:
+                            print(f"[KKTIX AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                            print(f"[KKTIX AREA FALLBACK] Selecting available ticket based on area_select_order='{auto_select_mode}'")
+                        is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
+                    else:
+                        # T023: Fallback disabled - strict mode (do not select anything)
+                        if show_debug_message:
+                            print(f"[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                            print(f"[KKTIX AREA SELECT] Waiting for manual intervention")
+                        # Return without modifying is_need_refresh
+                        return fail_list, played_sound_ticket
+
+                # If fallback still failed (or was attempted), then refresh
+                if not is_ticket_number_assigned:
+                    is_need_refresh = is_need_refresh_final
+
+            # DEPRECATED: Old unconditional fallback logic
+            # Will be removed after 2 weeks (2025-11-14)
+            """
+            # OLD LOGIC - DEPRECATED - DO NOT USE
+            # Unconditional auto-fallback when all keywords fail
+            if not is_ticket_number_assigned:
                 if is_need_refresh_final:
                     if show_debug_message:
                         print(f"[KKTIX AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
                     is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
-
-                # If fallback still failed, then refresh
                 if not is_ticket_number_assigned:
                     is_need_refresh = is_need_refresh_final
+            """
         else:
             # empty keyword, match all.
             is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
