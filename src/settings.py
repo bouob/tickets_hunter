@@ -207,6 +207,10 @@ def get_default_config():
     config_dict["advanced"]["idle_keyword_second"] = ""
     config_dict["advanced"]["resume_keyword_second"] = ""
 
+    # Keyword priority fallback (Feature 003)
+    config_dict["date_auto_fallback"] = False  # default: strict mode (avoid unwanted purchases)
+    config_dict["area_auto_fallback"] = False  # default: strict mode (avoid unwanted purchases)
+
     return config_dict
 
 def read_last_url_from_file():
