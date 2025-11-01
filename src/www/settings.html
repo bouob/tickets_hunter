@@ -40,6 +40,15 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="runtime-tab" data-bs-toggle="tab" data-bs-target="#runtime-tab-pane" type="button" role="tab" aria-controls="runtime-tab-pane" aria-selected="false">執行階段</button>
       </li>
+
+      <li class="nav-item ms-auto d-flex align-items-center" role="presentation">
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" id="dark_mode_toggle">
+          <label class="form-check-label" for="dark_mode_toggle">
+            Dark Mode
+          </label>
+        </div>
+      </li>
     </ul>
     <div class="tab-content" id="myTabContent">
       <!-- tab 1 -->
@@ -59,8 +68,6 @@
   <strong>台灣地區重要提醒</strong><br/>
   台灣藝文活動的<strong>文創法第十條</strong>中的「<code>不正方式</code>」由於沒有明確定義，代表的是所有軟體都涉嫌違反。故在此呼籲大家，勿以身試法。
 </div>
-
-<h4>法律聲明</h4>
 
 <p>使用此儲存庫或與之相關的任何程式碼，即表示您同意<a href="https://github.com/bouob/tickets_hunter/blob/main/LEGAL_NOTICE.md" target="_blank">法律聲明</a>。作者不對該儲存庫的使用負責與背書，也不對其他使用者所做的任何副本、分叉、重新上傳或與 Tickets Hunter 相關的任何其他內容負責。 這是作者唯一的帳戶和儲存庫。 為了防止假冒或不負責任的行為，請遵守此儲存庫使用的 GNU GPL 授權。</p>
 
@@ -88,7 +95,7 @@
 <h4>支持專案</h4>
 <p>如果這個專案對您有幫助，歡迎請開發者喝杯珍珠奶茶，支持我們持續改進與維護。</p>
 
-<div class="mt-3 mb-3">
+<div class="mt-3 mb-3 bmc-container">
   <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🧋"  data-font="Poppins" data-text="Buy me a Bubble Tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
 </div>
 
@@ -771,43 +778,56 @@
 
         <div class="row mb-3">
           <div class="col-sm-12">
-            <div class="bd-callout bd-callout-info">
-              <strong>時間控制功能說明：</strong>
-              <ul class="mb-2">
-                <li><strong>系統時間關鍵字：</strong>使用 <code>HH:MM:SS</code> 格式（時:分:秒）</li>
-                <li><strong>秒數關鍵字：</strong>只使用秒數 <code>SS</code> 格式（每分鐘的指定秒數觸發）</li>
-                <li><strong>暫停功能：</strong>當系統時間符合暫停關鍵字時，自動暫停搶票動作</li>
-                <li><strong>繼續功能：</strong>當系統時間符合繼續關鍵字時，自動恢復搶票動作</li>
-              </ul>
-              <div class="alert alert-success mb-2">
-                <strong>📝 輸入格式範例：</strong>
-                <div class="row">
-                  <div class="col-md-6">
-                    <strong>系統時間：</strong>
-                    <ul class="mb-1">
-                      <li><code>09:30:00;15:55:00</code></li>
-                      <li><code>"09:30:00";"15:55:00"</code></li>
-                      <li><code>14:30:00</code> (單一時間)</li>
+            <div class="accordion" id="accordionRuntimeHelp">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRuntimeHelp" aria-expanded="false" aria-controls="collapseRuntimeHelp">
+                    ⏰ 時間控制功能說明
+                  </button>
+                </h2>
+                <div id="collapseRuntimeHelp" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <strong>功能說明：</strong>
+                    <ul class="mb-3">
+                      <li><strong>系統時間關鍵字：</strong>使用 <code>HH:MM:SS</code> 格式（時:分:秒）</li>
+                      <li><strong>秒數關鍵字：</strong>只使用秒數 <code>SS</code> 格式（每分鐘的指定秒數觸發）</li>
+                      <li><strong>暫停功能：</strong>當系統時間符合暫停關鍵字時，自動暫停搶票動作</li>
+                      <li><strong>繼續功能：</strong>當系統時間符合繼續關鍵字時，自動恢復搶票動作</li>
                     </ul>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>秒數：</strong>
-                    <ul class="mb-1">
-                      <li><code>00;30;50</code></li>
-                      <li><code>"00";"30";"50"</code></li>
-                      <li><code>30</code> (單一秒數)</li>
-                    </ul>
+
+                    <div class="alert alert-success mb-3">
+                      <strong>📝 輸入格式範例：</strong>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <strong>系統時間：</strong>
+                          <ul class="mb-1">
+                            <li><code>09:30:00;15:55:00</code></li>
+                            <li><code>"09:30:00";"15:55:00"</code></li>
+                            <li><code>14:30:00</code> (單一時間)</li>
+                          </ul>
+                        </div>
+                        <div class="col-md-6">
+                          <strong>秒數：</strong>
+                          <ul class="mb-1">
+                            <li><code>00;30;50</code></li>
+                            <li><code>"00";"30";"50"</code></li>
+                            <li><code>30</code> (單一秒數)</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="alert alert-warning mb-0">
+                      <strong>注意事項：</strong>
+                      <ul class="mb-0">
+                        <li>時間格式必須精確，格式錯誤會導致功能失效</li>
+                        <li>程式會持續檢查系統時間，匹配到設定時間會立即執行對應動作</li>
+                        <li>建議搭配暫停與繼續關鍵字使用，避免程式一直處於暫停狀態</li>
+                        <li>秒數關鍵字會在每分鐘的指定秒數觸發，適合做週期性控制</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="alert alert-warning mb-0">
-                <strong>注意事項：</strong>
-                <ul class="mb-0">
-                  <li>時間格式必須精確，格式錯誤會導致功能失效</li>
-                  <li>程式會持續檢查系統時間，匹配到設定時間會立即執行對應動作</li>
-                  <li>建議搭配暫停與繼續關鍵字使用，避免程式一直處於暫停狀態</li>
-                  <li>秒數關鍵字會在每分鐘的指定秒數觸發，適合做週期性控制</li>
-                </ul>
               </div>
             </div>
           </div>
@@ -816,6 +836,7 @@
       </div>
 
     </div>
+    <hr/>
     <div class="col-12">
       <button class="btn btn-primary" id="run_btn">搶票</button>
       <button class="btn btn-primary" id="save_btn">存檔</button>

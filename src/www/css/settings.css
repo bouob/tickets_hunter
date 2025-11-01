@@ -1,5 +1,15 @@
+/* jf-openhuninn Font */
+@font-face {
+	font-family: 'jf-openhuninn';
+	src: url('jf-openhuninn-2.1.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
 body {
 	margin: 36px;
+	font-family: 'jf-openhuninn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 textarea {
@@ -81,4 +91,98 @@ textarea {
 :-ms-input-placeholder {
     color: #999;
     opacity: 1;
+}
+
+/* Dark Mode Toggle in Nav Tabs */
+.nav-tabs .nav-item .form-check-label {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    padding-left: 0.5rem;
+    cursor: pointer;
+}
+
+.nav-tabs .nav-item .form-check {
+    padding-left: 2.5em;
+}
+
+/* Dark Mode Styles */
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] body {
+    background-color: #212529;
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .bd-callout {
+    background-color: var(--bs-secondary-bg);
+    border-left-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .bd-callout-info {
+    --bd-callout-bg: #1a3a4a;
+    --bd-callout-border: #0dcaf0;
+}
+
+[data-bs-theme="dark"] .bd-callout-warning {
+    --bd-callout-bg: #3d3420;
+    --bd-callout-border: #ffc107;
+}
+
+[data-bs-theme="dark"] .bd-callout-danger {
+    --bd-callout-bg: #3d1f1f;
+    --bd-callout-border: #dc3545;
+}
+
+[data-bs-theme="dark"] ::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] ::-webkit-input-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] ::-moz-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] :-ms-input-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+/* Buy Me a Coffee Button Styles */
+/* Scale down button size */
+.bmc-container {
+    transform: scale(0.85);
+    transform-origin: left center;
+    display: inline-block;
+}
+
+/* Dark mode: white text */
+[data-bs-theme="dark"] .bmc-container,
+[data-bs-theme="dark"] .bmc-container *,
+[data-bs-theme="dark"] div[class*="bmc"],
+[data-bs-theme="dark"] a[class*="bmc"],
+[data-bs-theme="dark"] button[class*="bmc"],
+[data-bs-theme="dark"] .bmc-container span,
+[data-bs-theme="dark"] .bmc-container a,
+[data-bs-theme="dark"] .bmc-container button {
+    color: #ffffff !important;
+}
+
+/* Light mode: black text (default, explicit for clarity) */
+[data-bs-theme="light"] .bmc-container,
+[data-bs-theme="light"] .bmc-container *,
+[data-bs-theme="light"] div[class*="bmc"],
+[data-bs-theme="light"] a[class*="bmc"],
+[data-bs-theme="light"] button[class*="bmc"],
+[data-bs-theme="light"] .bmc-container span,
+[data-bs-theme="light"] .bmc-container a,
+[data-bs-theme="light"] .bmc-container button {
+    color: #000000 !important;
 }

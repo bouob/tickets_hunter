@@ -86,6 +86,8 @@ const idle_keyword = document.querySelector('#idle_keyword');
 const resume_keyword = document.querySelector('#resume_keyword');
 const idle_keyword_second = document.querySelector('#idle_keyword_second');
 const resume_keyword_second = document.querySelector('#resume_keyword_second');
+const dark_mode_toggle = document.querySelector('#dark_mode_toggle');
+const theme_status = document.querySelector('#theme_status');
 
 var settings = null;
 
@@ -747,3 +749,52 @@ function run_message(msg)
 function home_tab_clicked() {
     document.getElementById("homepage").focus();
 }
+
+// Dark Mode Functions
+function initTheme() {
+    // Check if user has a saved preference
+    const savedTheme = localStorage.getItem('theme');
+
+    // If no saved preference, check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+    // Apply theme
+    applyTheme(theme);
+
+    // Update toggle state
+    dark_mode_toggle.checked = (theme === 'dark');
+    updateThemeStatus(theme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    localStorage.setItem('theme', theme);
+}
+
+function updateThemeStatus(theme) {
+    // Update status badge if it exists (optional display element)
+    if (theme_status) {
+        if (theme === 'dark') {
+            theme_status.textContent = '已啟用';
+            theme_status.className = 'badge bg-success ms-2';
+        } else {
+            theme_status.textContent = '已關閉';
+            theme_status.className = 'badge bg-secondary ms-2';
+        }
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    applyTheme(newTheme);
+    updateThemeStatus(newTheme);
+}
+
+// Initialize theme on page load
+initTheme();
+
+// Add event listener for theme toggle
+dark_mode_toggle.addEventListener('change', toggleTheme);
