@@ -674,21 +674,52 @@ async def nodriver_goto_homepage(driver, config_dict):
             if config_dict["advanced"]["verbose"]:
                 print(f"Setting tixcraft SID cookie, length: {len(tixcraft_sid)}")
 
-            cookies  = await driver.cookies.get_all()
-            is_cookie_exist = False
-            for cookie in cookies:
-                if cookie.name=='SID':
-                    cookie.value=tixcraft_sid
-                    is_cookie_exist = True
-                    break
-            if not is_cookie_exist:
-                # 修正：使用 .tixcraft.com 包含所有子域名，http_only=False 與 Chrome 一致
-                new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=".tixcraft.com", path="/", http_only=False, secure=True)
-                cookies.append(new_cookie)
-            await driver.cookies.set_all(cookies)
+            try:
+                from nodriver import cdp
 
-            if config_dict["advanced"]["verbose"]:
-                print("tixcraft SID cookie set successfully")
+                # Set tixcraft SID cookie using CDP (same as ibon implementation)
+                cookie_result = await tab.send(cdp.network.set_cookie(
+                    name="SID",
+                    value=tixcraft_sid,
+                    domain=".tixcraft.com",
+                    path="/",
+                    secure=True,
+                    http_only=False  # TixCraft SID cookie is not httpOnly
+                ))
+
+                if config_dict["advanced"]["verbose"]:
+                    print(f"CDP setCookie result: {cookie_result}")
+                    print("tixcraft SID cookie set successfully")
+
+                # Verify cookie was set
+                updated_cookies = await driver.cookies.get_all()
+                sid_cookies = [c for c in updated_cookies if c.name == 'SID']
+                if not sid_cookies:
+                    if config_dict["advanced"]["verbose"]:
+                        print("Warning: TixCraft SID cookie not found after setting")
+                elif config_dict["advanced"]["verbose"]:
+                    print(f"Verified SID cookie: domain={sid_cookies[0].domain}, value length={len(sid_cookies[0].value)}")
+
+            except Exception as e:
+                if config_dict["advanced"]["verbose"]:
+                    print(f"Error setting TixCraft SID cookie: {str(e)}")
+                    print("Falling back to old method...")
+
+                # Fallback to old method if CDP fails
+                cookies  = await driver.cookies.get_all()
+                is_cookie_exist = False
+                for cookie in cookies:
+                    if cookie.name=='SID':
+                        cookie.value=tixcraft_sid
+                        is_cookie_exist = True
+                        break
+                if not is_cookie_exist:
+                    new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=".tixcraft.com", path="/", http_only=False, secure=True)
+                    cookies.append(new_cookie)
+                await driver.cookies.set_all(cookies)
+
+                if config_dict["advanced"]["verbose"]:
+                    print("tixcraft SID cookie set successfully (fallback method)")
 
     # 處理 ibon 登入
     if 'ibon.com' in homepage:
@@ -2538,9 +2569,16 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # T003: Check main switch (defensive programming)
+    if not config_dict["date_auto_select"]["enable"]:
+        if show_debug_message:
+            print("[DATE SELECT] Main switch is disabled, skipping date selection")
+        return False
+
     # read config
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field (default: strict mode)
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -2620,80 +2658,103 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                     formated_area_list_text.append(row_text)
                     # 移除：可用場次訊息過度詳細
 
+        # T004-T008: NEW LOGIC - Early return pattern (Feature 003)
+        # Keyword priority matching: first match wins and stops immediately
         if not date_keyword:
             matched_blocks = formated_area_list
             if show_debug_message:
                 print(f"[DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
         else:
-            # Keyword matching
+            # NEW: Early return pattern - iterate keywords in order
             matched_blocks = []
+            target_row_found = False
+            keyword_matched_index = -1
+
             try:
                 import json
                 import re
                 keyword_array = json.loads("[" + date_keyword + "]")
+
+                # T005: Start checking keywords log
                 if show_debug_message:
-                    print(f"[DATE KEYWORD] Raw input: '{date_keyword}'")
-                    print(f"[DATE KEYWORD] Parsed array: {keyword_array}")
+                    print(f"[DATE KEYWORD] Start checking keywords in order: {keyword_array}")
                     print(f"[DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
-                    print(f"[DATE KEYWORD] Checking {len(formated_area_list_text)} available dates...")
+                    print(f"[DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
 
-                for i, row_text in enumerate(formated_area_list_text):
-                    # Normalize spaces for better matching
-                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
-
+                # NEW: Iterate keywords in priority order (early return)
+                for keyword_index, keyword_item_set in enumerate(keyword_array):
                     if show_debug_message:
-                        print(f"[DATE KEYWORD] [{i+1}/{len(formated_area_list_text)}] Checking: {row_text[:80]}...")
+                        print(f"[DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
-                    row_matched = False
-                    for keyword_item_set in keyword_array:
+                    # Check all rows for this keyword
+                    for i, row_text in enumerate(formated_area_list_text):
+                        normalized_row_text = re.sub(r'\s+', ' ', row_text)
                         is_match = False
+
                         if isinstance(keyword_item_set, str):
-                            # Normalize keyword spaces too
+                            # OR logic: single keyword
                             normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
                             is_match = normalized_keyword in normalized_row_text
-                            if show_debug_message:
-                                if is_match:
-                                    print(f"[DATE KEYWORD]   Matched keyword: '{keyword_item_set}'")
-                                else:
-                                    print(f"[DATE KEYWORD]   No match for: '{keyword_item_set}'")
                         elif isinstance(keyword_item_set, list):
-                            # Normalize all keywords in list
+                            # AND logic: all keywords must match
                             normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-
-                            if show_debug_message:
-                                print(f"[DATE KEYWORD]   Checking AND logic: {keyword_item_set}")
-
-                            # Check each keyword individually for detailed feedback
-                            match_results = []
-                            for kw in normalized_keywords:
-                                kw_match = kw in normalized_row_text
-                                match_results.append(kw_match)
-                                if show_debug_message:
-                                    status = "PASS" if kw_match else "FAIL"
-                                    print(f"[DATE KEYWORD]     {status} '{kw}': {kw_match}")
-
+                            match_results = [kw in normalized_row_text for kw in normalized_keywords]
                             is_match = all(match_results)
 
-                            if show_debug_message:
-                                if is_match:
-                                    print(f"[DATE KEYWORD]   All AND keywords matched")
-                                else:
-                                    print(f"[DATE KEYWORD]   AND logic failed (not all matched)")
-
                         if is_match:
-                            matched_blocks.append(formated_area_list[i])
-                            row_matched = True
+                            # T006: Keyword matched log - IMMEDIATELY select and stop
+                            matched_blocks = [formated_area_list[i]]
+                            target_row_found = True
+                            keyword_matched_index = keyword_index
                             if show_debug_message:
-                                print(f"[DATE KEYWORD]   → Date added to matched list (total: {len(matched_blocks)})")
+                                print(f"[DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                                print(f"[DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
                             break
 
-                    if show_debug_message and not row_matched:
-                        print(f"[DATE KEYWORD]   → No keywords matched this row, skipping")
+                    if target_row_found:
+                        # EARLY RETURN: Stop checking further keywords
+                        break
+
+                # T007: All keywords failed log
+                if not target_row_found:
+                    if show_debug_message:
+                        print(f"[DATE KEYWORD] All keywords failed to match")
+
             except Exception as e:
                 if show_debug_message:
                     print(f"[DATE KEYWORD] Parsing error: {e}")
-                    print(f"[DATE KEYWORD] Fallback: using all {len(formated_area_list)} dates")
+                # On error, use mode selection
+                matched_blocks = []
+
+        # DEPRECATED (T008): Old logic - scan all keywords and collect matches
+        # Will be removed after 2 weeks (2025-11-14)
+        """
+        # OLD LOGIC - DEPRECATED - DO NOT USE
+        # This logic scanned ALL keywords and collected all matches, then selected one
+        # NEW logic (above) uses early return: first match wins immediately
+        if not date_keyword:
+            matched_blocks = formated_area_list
+        else:
+            matched_blocks = []
+            try:
+                keyword_array = json.loads("[" + date_keyword + "]")
+                for i, row_text in enumerate(formated_area_list_text):
+                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
+                    for keyword_item_set in keyword_array:
+                        is_match = False
+                        if isinstance(keyword_item_set, str):
+                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
+                            is_match = normalized_keyword in normalized_row_text
+                        elif isinstance(keyword_item_set, list):
+                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
+                            match_results = [kw in normalized_row_text for kw in normalized_keywords]
+                            is_match = all(match_results)
+                        if is_match:
+                            matched_blocks.append(formated_area_list[i])
+                            break
+            except Exception as e:
                 matched_blocks = formated_area_list
+        """
 
     # Match result summary
     if show_debug_message:
@@ -2708,11 +2769,26 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
             print(f"[DATE KEYWORD]   No dates matched any keywords")
             print(f"[DATE KEYWORD] ========================================")
 
-    # Fallback: if keyword provided but no matches found, use all available dates (FR-017-2)
-    if len(matched_blocks) == 0 and date_keyword and formated_area_list and len(formated_area_list) > 0:
+    # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
+    if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
+        if date_auto_fallback:
+            # T018: Fallback enabled - use auto_select_mode
+            if show_debug_message:
+                print(f"[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                print(f"[DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            matched_blocks = formated_area_list
+        else:
+            # T019: Fallback disabled - strict mode (do not select anything)
+            if show_debug_message:
+                print(f"[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                print(f"[DATE SELECT] Waiting for manual intervention")
+            return False  # Return immediately without selection
+
+    # T020: Handle case when formated_area_list is empty or None (all options excluded)
+    if formated_area_list is None or len(formated_area_list) == 0:
         if show_debug_message:
-            print(f"[DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
-        matched_blocks = formated_area_list
+            print(f"[DATE FALLBACK] No available options after exclusion")
+        return False
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
@@ -2828,10 +2904,19 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # T010: Check main switch (defensive programming)
+    if not config_dict["area_auto_select"]["enable"]:
+        if show_debug_message:
+            print("[AREA SELECT] Main switch is disabled, skipping area selection")
+        return False
+
     import json
 
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
 
     try:
         el = await tab.query_selector('.zone')
@@ -2850,19 +2935,64 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         except:
             area_keyword_array = []
 
+        # T012: Start checking keywords log
+        if show_debug_message:
+            print(f"[AREA KEYWORD] Start checking keywords in order: {area_keyword_array}")
+            print(f"[AREA KEYWORD] Total keyword groups: {len(area_keyword_array)}")
+
+        # T011: Early return pattern - iterate keywords in priority order
+        keyword_matched = False
+        for keyword_index, area_keyword_item in enumerate(area_keyword_array):
+            if show_debug_message:
+                print(f"[AREA KEYWORD] Checking keyword #{keyword_index + 1}: {area_keyword_item}")
+
+            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
+
+            if not is_need_refresh:
+                # T013: Keyword matched log
+                keyword_matched = True
+                if show_debug_message:
+                    print(f"[AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
+                break
+
+        # T014: All keywords failed log
+        if not keyword_matched and show_debug_message:
+            print(f"[AREA KEYWORD] All keywords failed to match")
+
+        # DEPRECATED (T015): Old logic - scan all keywords and collect matches
+        # Will be removed after 2 weeks (2025-11-15)
+        """
+        # OLD LOGIC - DEPRECATED - DO NOT USE
+        # This logic scanned ALL keywords and collected all matches, then selected one
+        # NEW logic (above) uses early return: first match wins immediately
         for area_keyword_item in area_keyword_array:
             is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
             if not is_need_refresh:
                 break
+        """
 
-        # Fallback: If all keyword groups failed to match, use auto_select_mode without keyword
+        # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
         if is_need_refresh and matched_blocks is None:
-            show_debug_message = config_dict["advanced"].get("verbose", False)
-            if show_debug_message:
-                print(f"[AREA KEYWORD] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+            if area_auto_fallback:
+                # T022: Fallback enabled - use auto_select_mode without keyword
+                if show_debug_message:
+                    print(f"[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                    print(f"[AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+                is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+            else:
+                # T023: Fallback disabled - strict mode (do not select anything)
+                if show_debug_message:
+                    print(f"[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                    print(f"[AREA SELECT] Waiting for manual intervention")
+                return False  # Return immediately without selection
     else:
         is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+
+    # T024: Handle case when matched_blocks is empty or None (all options excluded)
+    if matched_blocks is None or len(matched_blocks) == 0:
+        if show_debug_message:
+            print(f"[AREA FALLBACK] No available options after exclusion")
+        return False
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if target_area:
@@ -6431,24 +6561,12 @@ async def nodriver_ibon_login(tab, config_dict, driver):
         if show_debug_message:
             print(f"Verified: ibon cookie exists with value length: {len(ibon_cookies[0].value)}")
             print(f"Cookie domain: {ibon_cookies[0].domain}")
+            print("[SUCCESS] ibon cookie set successfully")
+            print("[INFO] Cookie will be applied when navigating to event page")
 
-        # Reload page to apply ibon cookie (required for Angular SPA)
-        # Use full navigation instead of reload for better Angular app initialization
-        current_url = await tab.evaluate('window.location.href')
-        if show_debug_message:
-            print(f"Reloading page to apply ibon cookie: {current_url}")
-        await tab.get(current_url)
-        await tab
-        await tab.sleep(2.0)  # Wait for Angular initialization
-
-        if show_debug_message:
-            print("[SUCCESS] ibon cookie set and page reloaded")
-            print("[INFO] Login status will be verified during ticket purchase flow")
-
-        # Return success - don't check login status immediately after reload
-        # Reason: Angular SPA may require multiple page loads to fully initialize in automation
-        # The cookie is set correctly and will be used in subsequent operations
-        return {'success': True, 'reason': 'cookie_set_and_reloaded'}
+        # No page reload needed - cookie is set on homepage,
+        # and navigation to event page will automatically apply the cookie
+        return {'success': True, 'reason': 'cookie_set'}
 
     except Exception as cookie_error:
         print(f"Failed to set ibon cookie (NoDriver): {cookie_error}")
