@@ -13,8 +13,10 @@ const ticket_number = document.querySelector('#ticket_number');
 const refresh_datetime = document.querySelector('#refresh_datetime');
 const date_select_mode = document.querySelector('#date_select_mode');
 const date_keyword = document.querySelector('#date_keyword');
+const date_auto_fallback = document.querySelector('#date_auto_fallback');
 const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
+const area_auto_fallback = document.querySelector('#area_auto_fallback');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 
 // advance
@@ -140,9 +142,11 @@ function load_settins_to_form(settings)
         refresh_datetime.value = settings.refresh_datetime;
         date_select_mode.value = settings.date_auto_select.mode;
         date_keyword.value = format_keyword_for_display(settings.date_auto_select.date_keyword);
+        date_auto_fallback.checked = settings.date_auto_fallback || false;
 
         area_select_mode.value = settings.area_auto_select.mode;
         area_keyword.value = format_keyword_for_display(settings.area_auto_select.area_keyword);
+        area_auto_fallback.checked = settings.area_auto_fallback || false;
 
         keyword_exclude.value = format_keyword_for_display(settings.keyword_exclude);
         
@@ -379,9 +383,11 @@ function save_changes_to_dict(silent_flag)
             settings.refresh_datetime = refresh_datetime.value;
             settings.date_auto_select.mode = date_select_mode.value;
             settings.date_auto_select.date_keyword = format_config_keyword_for_json(date_keyword.value);
+            settings.date_auto_fallback = date_auto_fallback.checked;
 
             settings.area_auto_select.mode = area_select_mode.value;
             settings.area_auto_select.area_keyword = format_config_keyword_for_json(area_keyword.value);
+            settings.area_auto_fallback = area_auto_fallback.checked;
 
             settings.keyword_exclude = format_config_keyword_for_json(keyword_exclude.value);
 

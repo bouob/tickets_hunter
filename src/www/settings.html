@@ -47,7 +47,6 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <h5 class="alert-heading">版本資訊</h5>
   <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.10.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
@@ -275,6 +274,19 @@
           </div>
         </div>
         <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">日期自動遞補</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="date_auto_fallback">
+              <label class="form-check-label" for="date_auto_fallback">
+                當所有日期關鍵字都未匹配時，自動選擇可用日期
+                <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="啟用後，若所有日期關鍵字都未匹配，系統會根據「日期排序方式」自動選擇可用日期。預設為關閉（嚴格模式），避免誤購不想要的票券。">?</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
           <label for="area_select_mode" class="col-sm-2 col-form-label">區域排序方式</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="area_select_mode" class="form-select" aria-label="Default select">
@@ -301,6 +313,19 @@
               <strong>🎪 區域邏輯說明：</strong><br>
               <strong>OR 邏輯</strong>：<code>搖滾區;VIP;前排</code> - 任一區域匹配（分號分隔）<br>
               <strong>AND 邏輯</strong>：<code>搖滾區 前排;VIP 中央</code> - 區域 + 位置組合（空格表示 AND）
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">區域自動遞補</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="area_auto_fallback">
+              <label class="form-check-label" for="area_auto_fallback">
+                當所有區域關鍵字都未匹配時，自動選擇可用區域
+                <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="啟用後，若所有區域關鍵字都未匹配，系統會根據「區域排序方式」自動選擇可用區域。預設為關閉（嚴格模式），避免誤購不想要的票券。">?</span>
+              </label>
             </div>
           </div>
         </div>
@@ -350,15 +375,21 @@
         </div>
 
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="play_ticket_sound">有票時播放音效</label>
+          <label class="col-sm-2 col-form-label">有票時播放音效</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="play_ticket_sound" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="play_ticket_sound">
+              <label class="form-check-label" for="play_ticket_sound">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="play_order_sound">訂購時播放音效</label>
+          <label class="col-sm-2 col-form-label">訂購時播放音效</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="play_order_sound" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="play_order_sound">
+              <label class="form-check-label" for="play_order_sound">啟用</label>
+            </div>
           </div>
         </div>
 
@@ -416,45 +447,66 @@
         </div>
 
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="chrome_extension">Chrome 瀏覽器擴充功能</label>
+          <label class="col-sm-2 col-form-label">Chrome 瀏覽器擴充功能</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="chrome_extension" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="chrome_extension">
+              <label class="form-check-label" for="chrome_extension">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="disable_adjacent_seat">允許不連續座位</label>
+          <label class="col-sm-2 col-form-label">允許不連續座位</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="disable_adjacent_seat" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="disable_adjacent_seat">
+              <label class="form-check-label" for="disable_adjacent_seat">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="hide_some_image">隱藏部份圖片</label>
+          <label class="col-sm-2 col-form-label">隱藏部份圖片</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="hide_some_image" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="hide_some_image">
+              <label class="form-check-label" for="hide_some_image">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="block_facebook_network">擋掉 Facebook 連線</label>
+          <label class="col-sm-2 col-form-label">擋掉 Facebook 連線</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="block_facebook_network" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="block_facebook_network">
+              <label class="form-check-label" for="block_facebook_network">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="headless">無圖形界面模式</label>
+          <label class="col-sm-2 col-form-label">無圖形界面模式</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="headless" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="headless">
+              <label class="form-check-label" for="headless">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="verbose">輸出除錯訊息</label>
+          <label class="col-sm-2 col-form-label">輸出除錯訊息</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="verbose" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="verbose">
+              <label class="form-check-label" for="verbose">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_enable">OCR</label>
+          <label class="col-sm-2 col-form-label">OCR</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="ocr_captcha_enable" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="ocr_captcha_enable">
+              <label class="form-check-label" for="ocr_captcha_enable">啟用</label>
+            </div>
           </div>
         </div>
 
@@ -468,9 +520,12 @@
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="ocr_captcha_force_submit">掛機模式</label>
+          <label class="col-sm-2 col-form-label">掛機模式</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="ocr_captcha_force_submit" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="ocr_captcha_force_submit">
+              <label class="form-check-label" for="ocr_captcha_force_submit">啟用</label>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
@@ -491,9 +546,12 @@
         </div>
 
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label form-check-label" for="auto_guess_options">自動猜測驗證問題</label>
+          <label class="col-sm-2 col-form-label">自動猜測驗證問題</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-check-input" type="checkbox" id="auto_guess_options" />
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="auto_guess_options">
+              <label class="form-check-label" for="auto_guess_options">啟用</label>
+            </div>
           </div>
         </div>
 
@@ -787,6 +845,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=20251031-1"></script>
+  <script src="settings.js?v=20251031-4"></script>
 </body>
 </html>
