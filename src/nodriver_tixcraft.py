@@ -1029,6 +1029,9 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
+    # Track selection type: empty keyword means fallback selection
+    is_fallback_selection = (kktix_area_keyword == "")
+
     is_ticket_number_assigned = False
     matched_blocks = None
     is_dom_ready = True
@@ -1132,6 +1135,10 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
                 if assign_result.get('assigned'):
                     # 清理票種名稱中的換行符號和多餘空白
                     clean_ticket_name = ' '.join(ticket_name.split())
+
+                    # T013 equivalent: Log selected area with selection type
+                    selection_type = "fallback" if is_fallback_selection else "keyword match"
+                    print(f"[KKTIX AREA SELECT] Selected ticket: {clean_ticket_name} ({selection_type})")
                     print("assign ticket number:%s to [%s]" % (ticket_number_str, clean_ticket_name))
                     is_ticket_number_assigned = True
                 elif assign_result.get('alreadySet'):
@@ -3056,6 +3063,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         """
 
         # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
+        is_fallback_selection = False  # Track selection type for logging
         if is_need_refresh and matched_blocks is None:
             if area_auto_fallback:
                 # T022: Fallback enabled - use auto_select_mode without keyword
@@ -3063,6 +3071,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
                     print(f"[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
                     print(f"[AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
                 is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+                is_fallback_selection = True  # Mark as fallback selection
             else:
                 # T023: Fallback disabled - strict mode (do not select anything)
                 if show_debug_message:
@@ -3071,6 +3080,9 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
                 return False  # Return immediately without selection
     else:
         is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+        # No keyword specified, treat as mode-based selection (similar to fallback)
+        if not area_keyword:
+            is_fallback_selection = True
 
     # T024: Handle case when matched_blocks is empty or None (all options excluded)
     if matched_blocks is None or len(matched_blocks) == 0:
@@ -3080,6 +3092,18 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
 
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if target_area:
+        # T013: Log selected area with selection type
+        if show_debug_message:
+            try:
+                area_text = await target_area.text
+                if not area_text:
+                    area_text = await target_area.inner_text
+                area_text = area_text.strip()[:80] if area_text else "Unknown"
+                selection_type = "fallback" if is_fallback_selection else "keyword match"
+                print(f"[AREA SELECT] Selected area: {area_text} ({selection_type})")
+            except:
+                pass  # If text extraction fails, skip logging
+
         try:
             await target_area.click()
         except:
@@ -4291,6 +4315,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
     # 讀取設定
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
@@ -4409,18 +4434,27 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
 
             except json.JSONDecodeError as exc:
                 if show_debug_message:
-                    print(f"[TicketPlus DATE] Keyword parse error: {exc}, using all available dates")
-                matched_blocks = formated_area_list
+                    print(f"[TicketPlus DATE] Keyword parse error: {exc}")
+                    print(f"[TicketPlus DATE] Treating as 'all keywords failed'")
+                matched_blocks = []  # Let Feature 003 fallback logic handle this
             except Exception as exc:
                 if show_debug_message:
                     print(f"[TicketPlus DATE] Keyword matching failed: {exc}")
                 matched_blocks = []
 
-        # Fallback: if no matches found, use all available dates
-        if len(matched_blocks) == 0 and formated_area_list and len(formated_area_list) > 0:
-            if show_debug_message:
-                print(f"[TicketPlus DATE] No keyword matches, falling back to mode '{auto_select_mode}'")
-            matched_blocks = formated_area_list
+        # T018-T020: Conditional fallback based on date_auto_fallback switch
+        if len(matched_blocks) == 0 and date_keyword and len(date_keyword) > 0:
+            if date_auto_fallback:
+                # T018: Fallback enabled
+                if show_debug_message:
+                    print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                matched_blocks = formated_area_list
+            else:
+                # T019: Fallback disabled - strict mode
+                if show_debug_message:
+                    print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                    print(f"[TicketPlus DATE SELECT] Waiting for manual intervention")
+                return False
     else:
         if show_debug_message:
             print("date date-time-position is None or empty")
@@ -4437,8 +4471,9 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                 (function() {{
                     const originalKeyword = '{original_keyword}';
                     const autoSelectMode = '{auto_select_mode}';
+                    const dateAutoFallback = {'true' if date_auto_fallback else 'false'};
 
-                    console.log('[TicketPlus] Starting date selection - keyword:', originalKeyword, 'mode:', autoSelectMode);
+                    console.log('[TicketPlus] Starting date selection - keyword:', originalKeyword, 'mode:', autoSelectMode, 'fallback:', dateAutoFallback);
 
                     // 優先選擇場次容器（包含完整日期資訊）
                     let sessionContainers = Array.from(document.querySelectorAll('.sesstion-item'));
@@ -4489,10 +4524,22 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                         console.log('[TicketPlus] No keyword specified, using all', sessionContainers.length, 'containers');
                     }}
 
-                    // 回退機制：如果關鍵字匹配失敗，使用所有容器
-                    if (matchedContainers.length === 0 && sessionContainers.length > 0) {{
-                        console.log('[TicketPlus FALLBACK] No keyword matches, using all', sessionContainers.length, 'containers');
-                        matchedContainers = sessionContainers;
+                    // T018-T020: Conditional fallback based on date_auto_fallback switch
+                    if (matchedContainers.length === 0 && originalKeyword && originalKeyword.trim() !== '') {{
+                        if (dateAutoFallback) {{
+                            // T018: Fallback enabled
+                            console.log('[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback');
+                            matchedContainers = sessionContainers;
+                        }} else {{
+                            // T019: Fallback disabled - strict mode
+                            console.log('[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled');
+                            console.log('[TicketPlus DATE SELECT] Waiting for manual intervention');
+                            return {{
+                                success: false,
+                                error: 'No keyword matches and fallback is disabled',
+                                strict_mode: true
+                            }};
+                        }}
                     }}
 
                     if (matchedContainers.length === 0) {{
@@ -4593,6 +4640,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
     """TicketPlus 統一選擇器 - 語言無關的票種/票區選擇"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
     keyword_exclude = config_dict.get("keyword_exclude", "")
 
@@ -4633,12 +4681,13 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 const keyword = '{area_keyword}';
                 const ticketNumber = {ticket_number};
                 const autoSelectMode = '{auto_select_mode}';
+                const areaAutoFallback = {'true' if area_auto_fallback else 'false'};
                 const keywordArray = keyword.split(' ');
                 const keyword1 = keywordArray[0] || '';
                 const keyword2 = keywordArray[1] || '';
                 const excludeKeywords = {exclude_keywords};
 
-                console.log('Unified selector execution - keyword:', keyword, 'tickets:', ticketNumber, 'mode:', autoSelectMode);
+                console.log('Unified selector execution - keyword:', keyword, 'tickets:', ticketNumber, 'mode:', autoSelectMode, 'fallback:', areaAutoFallback);
                 console.log('排除關鍵字:', excludeKeywords);
 
                 // 檢查是否售罄
@@ -4775,9 +4824,31 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         }}
                     }}
 
-                    // 如果沒有關鍵字或找不到符合的，使用 mode 選擇
-                    if (!targetRow && validRows.length > 0) {{
-                        console.log('📍 無關鍵字或找不到符合項目，使用自動選擇模式:', autoSelectMode);
+                    // T022-T024: Conditional fallback based on area_auto_fallback switch
+                    if (!targetRow && keyword1 && keyword1.trim() !== '') {{
+                        if (areaAutoFallback) {{
+                            // T022: Fallback enabled
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
+                            const targetIndex = getTargetIndex(validRows, autoSelectMode);
+                            if (targetIndex >= 0 && targetIndex < validRows.length) {{
+                                const targetItem = validRows[targetIndex];
+                                targetRow = targetItem.row;
+                                targetTicketName = targetItem.name;
+                                console.log('自動選擇票種:', targetTicketName);
+                            }}
+                        }} else {{
+                            // T023: Fallback disabled - strict mode
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
+                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
+                            return {{
+                                success: false,
+                                error: 'No keyword matches and fallback is disabled',
+                                strict_mode: true
+                            }};
+                        }}
+                    }} else if (!targetRow && validRows.length > 0) {{
+                        // No keyword specified, select based on mode
+                        console.log('📍 無關鍵字，使用自動選擇模式:', autoSelectMode);
                         const targetIndex = getTargetIndex(validRows, autoSelectMode);
                         if (targetIndex >= 0 && targetIndex < validRows.length) {{
                             const targetItem = validRows[targetIndex];
@@ -4864,9 +4935,31 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         }}
                     }}
 
-                    // 如果沒有關鍵字或找不到符合的，使用 mode 選擇
-                    if (!targetPanel && validPanels.length > 0) {{
-                        console.log('📍 無關鍵字或找不到符合項目，使用自動選擇模式:', autoSelectMode);
+                    // T022-T024: Conditional fallback based on area_auto_fallback switch
+                    if (!targetPanel && keyword1 && keyword1.trim() !== '') {{
+                        if (areaAutoFallback) {{
+                            // T022: Fallback enabled
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
+                            const targetIndex = getTargetIndex(validPanels, autoSelectMode);
+                            if (targetIndex >= 0 && targetIndex < validPanels.length) {{
+                                const targetItem = validPanels[targetIndex];
+                                targetPanel = targetItem.panel;
+                                targetAreaName = targetItem.name;
+                                console.log('自動選擇票區:', targetAreaName);
+                            }}
+                        }} else {{
+                            // T023: Fallback disabled - strict mode
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
+                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
+                            return {{
+                                success: false,
+                                error: 'No keyword matches and fallback is disabled',
+                                strict_mode: true
+                            }};
+                        }}
+                    }} else if (!targetPanel && validPanels.length > 0) {{
+                        // No keyword specified, select based on mode
+                        console.log('📍 無關鍵字，使用自動選擇模式:', autoSelectMode);
                         const targetIndex = getTargetIndex(validPanels, autoSelectMode);
                         if (targetIndex >= 0 && targetIndex < validPanels.length) {{
                             const targetItem = validPanels[targetIndex];
@@ -5151,6 +5244,7 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
     """TicketPlus 座位區域自動選擇功能 - 重構版使用純 JavaScript"""
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
 
     if show_debug_message:
@@ -5183,8 +5277,9 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
             (function() {{
                 try {{
                 const ticketAreas = [];
+                const areaAutoFallback = {'true' if area_auto_fallback else 'false'};
                 console.log('=== TicketPlus 票種區域檢測開始 ===');
-                console.log('版面樣式: {current_layout_style}');
+                console.log('版面樣式: {current_layout_style}, fallback:', areaAutoFallback);
 
                 let elements = [];
                 let isExpansionPanel = false;
@@ -5405,22 +5500,49 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
                     }}
                 }}
 
-                // 如果關鍵字無匹配，才使用自動選擇模式
-                if (!selectedArea) {{
-                    console.log('關鍵字無匹配，使用自動選擇模式:', "{auto_select_mode}");
-                    if (ticketAreas.length > 0) {{
-                        const mode = "{auto_select_mode}";
-                        if (mode === "from bottom to top") {{
-                            selectedArea = ticketAreas[ticketAreas.length - 1];
-                            console.log('選擇最後一個:', selectedArea.areaName);
-                        }} else if (mode === "random") {{
-                            const randomIndex = Math.floor(Math.random() * ticketAreas.length);
-                            selectedArea = ticketAreas[randomIndex];
-                            console.log('隨機選擇:', selectedArea.areaName);
-                        }} else {{
-                            selectedArea = ticketAreas[0];
-                            console.log('選擇第一個:', selectedArea.areaName);
+                // T022-T024: Conditional fallback based on area_auto_fallback switch
+                if (!selectedArea && areaKeyword && areaKeyword.length > 0) {{
+                    if (areaAutoFallback) {{
+                        // T022: Fallback enabled
+                        console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
+                        if (ticketAreas.length > 0) {{
+                            const mode = "{auto_select_mode}";
+                            if (mode === "from bottom to top") {{
+                                selectedArea = ticketAreas[ticketAreas.length - 1];
+                                console.log('選擇最後一個:', selectedArea.areaName);
+                            }} else if (mode === "random") {{
+                                const randomIndex = Math.floor(Math.random() * ticketAreas.length);
+                                selectedArea = ticketAreas[randomIndex];
+                                console.log('隨機選擇:', selectedArea.areaName);
+                            }} else {{
+                                selectedArea = ticketAreas[0];
+                                console.log('選擇第一個:', selectedArea.areaName);
+                            }}
                         }}
+                    }} else {{
+                        // T023: Fallback disabled - strict mode
+                        console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
+                        console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
+                        return {{
+                            success: false,
+                            error: 'No keyword matches and fallback is disabled',
+                            strict_mode: true
+                        }};
+                    }}
+                }} else if (!selectedArea && ticketAreas.length > 0) {{
+                    // No keyword specified, select based on mode
+                    console.log('無關鍵字，使用自動選擇模式:', "{auto_select_mode}");
+                    const mode = "{auto_select_mode}";
+                    if (mode === "from bottom to top") {{
+                        selectedArea = ticketAreas[ticketAreas.length - 1];
+                        console.log('選擇最後一個:', selectedArea.areaName);
+                    }} else if (mode === "random") {{
+                        const randomIndex = Math.floor(Math.random() * ticketAreas.length);
+                        selectedArea = ticketAreas[randomIndex];
+                        console.log('隨機選擇:', selectedArea.areaName);
+                    }} else {{
+                        selectedArea = ticketAreas[0];
+                        console.log('選擇第一個:', selectedArea.areaName);
                     }}
                 }}
 
@@ -6724,6 +6846,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field
 
     if show_debug_message:
         print("[IBON DATE PIERCE] Starting date selection with pierce=True")
@@ -6961,7 +7084,60 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             print("[IBON DATE PIERCE] All buttons disabled")
         return False
 
-    # Step 7: Apply keyword matching (same logic as original)
+    # Step 7: Apply keyword matching with early return pattern (T004-T007)
+    matched_buttons = []
+    target_found = False
+
+    if len(date_keyword) > 0 and enabled_buttons:
+        try:
+            keyword_array = json.loads("[" + date_keyword + "]")
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE KEYWORD] Start checking keywords in order: {keyword_array}")
+
+            # NEW: Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item in enumerate(keyword_array):
+                if show_debug_message:
+                    print(f"[IBON DATE PIERCE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+
+                # Check all buttons for this keyword
+                for button in enabled_buttons:
+                    date_context = button.get('date_context', '').lower()
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                    is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
+
+                    if is_match:
+                        # T006: Keyword matched log - IMMEDIATELY select and stop
+                        matched_buttons = [button]
+                        target_found = True
+                        if show_debug_message:
+                            print(f"[IBON DATE PIERCE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                            print(f"[IBON DATE PIERCE SELECT] Selected date: {date_context[:50]} (keyword match)")
+                        break
+
+                if target_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T007: All keywords failed log
+            if not target_found:
+                if show_debug_message:
+                    print(f"[IBON DATE PIERCE KEYWORD] All keywords failed to match")
+
+        except json.JSONDecodeError as e:
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE] Keyword parse error: {e}")
+                print(f"[IBON DATE PIERCE] Treating as 'all keywords failed'")
+            matched_buttons = []  # Let Feature 003 fallback logic handle this
+    else:
+        matched_buttons = enabled_buttons
+
+    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
+    # Will be removed after 2 weeks (2025-11-15)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # This logic scanned ALL keywords and collected all matches, then selected one
+    # NEW logic (above) uses early return: first match wins immediately
+
     matched_buttons = []
     if len(date_keyword) > 0 and enabled_buttons:
         try:
@@ -6987,12 +7163,21 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             matched_buttons = enabled_buttons
     else:
         matched_buttons = enabled_buttons
+    """
 
-    # Step 8: Fallback if no matches
-    if len(matched_buttons) == 0:
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] No matches, fallback to mode '{auto_select_mode}'")
-        matched_buttons = enabled_buttons
+    # Step 8: Conditional fallback based on date_auto_fallback switch (T018-T020)
+    if len(matched_buttons) == 0 and len(date_keyword) > 0:
+        if date_auto_fallback:
+            # T018: Fallback enabled
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            matched_buttons = enabled_buttons
+        else:
+            # T019: Fallback disabled - strict mode
+            if show_debug_message:
+                print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                print(f"[IBON DATE PIERCE SELECT] Waiting for manual intervention")
+            return False
 
     # Step 9: Select target based on mode
     if auto_select_mode == "random":
@@ -7004,8 +7189,11 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     else:  # from top to bottom
         target_button = matched_buttons[0]
 
+    # T013: Log selected date with selection type
     if show_debug_message:
-        print(f"[IBON DATE PIERCE] Selected: date='{target_button.get('date_context', 'N/A')}'")
+        is_keyword_match = (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons))
+        selection_type = "keyword match" if is_keyword_match else "fallback"
+        print(f"[IBON DATE PIERCE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
 
     # Step 10: Click button using CDP
     try:
@@ -7079,6 +7267,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
     if show_debug_message:
@@ -7283,13 +7472,72 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             print("[IBON DATE] All buttons are disabled")
         return False
 
-    # Step 6: Apply keyword matching (FR-017)
+    # Step 6: Apply keyword matching with early return pattern (T004-T007)
     # Unified keyword processing: JSON array parsing with AND/OR logic
     # Format: "AA BB","CC","DD" -> (AA AND BB) OR (CC) OR (DD)
     matched_buttons = []
+    target_found = False
+
     if len(date_keyword) > 0 and enabled_buttons:
         try:
             # Parse as JSON array (auto-removes quotes)
+            import json
+            keyword_array = json.loads("[" + date_keyword + "]")
+            if show_debug_message:
+                print(f"[IBON DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+
+            # NEW: Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item in enumerate(keyword_array):
+                if show_debug_message:
+                    print(f"[IBON DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+
+                # Check all buttons for this keyword
+                for button in enabled_buttons:
+                    button_text = button.get('text', '').lower()
+                    date_context = button.get('date_context', '').lower()
+                    search_text = f"{button_text} {date_context}"
+
+                    # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                    # Check if all sub-keywords match (AND logic within group)
+                    is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
+
+                    if is_match:
+                        # T006: Keyword matched log - IMMEDIATELY select and stop
+                        matched_buttons = [button]
+                        target_found = True
+                        if show_debug_message:
+                            print(f"[IBON DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                            print(f"[IBON DATE SELECT] Selected date: {date_context[:50]} (keyword match)")
+                        break
+
+                if target_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T007: All keywords failed log
+            if not target_found:
+                if show_debug_message:
+                    print(f"[IBON DATE KEYWORD] All keywords failed to match")
+
+        except json.JSONDecodeError as e:
+            if show_debug_message:
+                print(f"[IBON DATE] Keyword parse error: {e}")
+                print(f"[IBON DATE] Treating as 'all keywords failed'")
+            matched_buttons = []  # Let Feature 003 fallback logic handle this
+    else:
+        matched_buttons = enabled_buttons
+
+    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
+    # Will be removed after 2 weeks (2025-11-15)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # This logic scanned ALL keywords and collected all matches, then selected one
+    # NEW logic (above) uses early return: first match wins immediately
+
+    matched_buttons = []
+    if len(date_keyword) > 0 and enabled_buttons:
+        try:
             import json
             keyword_array = json.loads("[" + date_keyword + "]")
             if show_debug_message:
@@ -7300,31 +7548,40 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                 date_context = button.get('date_context', '').lower()
                 search_text = f"{button_text} {date_context}"
 
-                # Check if any keyword group matches (OR logic between groups)
                 for keyword_item in keyword_array:
-                    # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
                     sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-
-                    # Check if all sub-keywords match (AND logic within group)
                     is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
 
                     if is_match:
                         matched_buttons.append(button)
                         if show_debug_message:
                             print(f"[IBON DATE] Keyword '{keyword_item}' matched button with date_context: '{date_context}'")
-                        break  # Stop checking other keyword groups for this button
+                        break
         except json.JSONDecodeError as e:
             if show_debug_message:
                 print(f"[IBON DATE] Keyword parse error: {e}, using all enabled buttons")
             matched_buttons = enabled_buttons
     else:
         matched_buttons = enabled_buttons
+    """
 
-    # Step 7: Fallback strategy (FR-018)
-    if len(matched_buttons) == 0:
-        if show_debug_message:
-            print(f"[IBON DATE] No keyword matches, falling back to mode '{auto_select_mode}'")
-        matched_buttons = enabled_buttons
+    # Step 7: Conditional fallback based on date_auto_fallback switch (T018-T020)
+    if len(matched_buttons) == 0 and len(date_keyword) > 0:
+        if date_auto_fallback:
+            # T018: Fallback enabled - use auto_select_mode
+            if show_debug_message:
+                print(f"[IBON DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                print(f"[IBON DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            matched_buttons = enabled_buttons
+        else:
+            # T019: Fallback disabled - strict mode (do not select anything)
+            if show_debug_message:
+                print(f"[IBON DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                print(f"[IBON DATE SELECT] Waiting for manual intervention")
+            # T020: No available options after keyword matching failed
+            if show_debug_message:
+                print(f"[IBON DATE FALLBACK] No available options after keyword matching")
+            return False
 
     # Step 8: Select target button based on mode
     if auto_select_mode == "random":
@@ -7336,10 +7593,13 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     else:  # from top to bottom (default)
         target_button = matched_buttons[0]
 
-    # Determine selection method
-    selection_method = "keyword match" if (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons)) else f"mode '{auto_select_mode}'"
+    # Determine selection method (T013 equivalent)
+    is_keyword_match = (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons))
+    selection_type = "keyword match" if is_keyword_match else "fallback"
+    selection_method = selection_type if is_keyword_match else f"mode '{auto_select_mode}'"
 
     if show_debug_message:
+        print(f"[IBON DATE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
         print(f"[IBON DATE] Selected target button ({selection_method}): date_context='{target_button.get('date_context', 'N/A')}'")
 
     try:
@@ -8099,6 +8359,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
 
     is_price_assign_by_bot = False
@@ -8205,13 +8466,21 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
             # Extract data from each TR
             area_index = 0
+            tr_count = 0
             for tr_idx in tr_indices:
                 # Get TR attributes
                 tr_attrs = get_attributes_dict(tr_idx)
                 tr_class = tr_attrs.get('class', '')
 
-                # Skip header rows (thead)
-                if 'thead' in tr_class.lower() or not tr_class:
+                # Skip header rows (check if parent is THEAD)
+                parent_idx = parent_indices[tr_idx] if tr_idx < len(parent_indices) else -1
+                is_header = False
+                if parent_idx >= 0 and parent_idx < len(node_names):
+                    parent_name = node_names[parent_idx].upper()
+                    if parent_name == 'THEAD':
+                        is_header = True
+
+                if is_header:
                     continue
 
                 is_disabled = 'disabled' in tr_class.lower()
@@ -8223,36 +8492,78 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                         if node_names[child_idx].upper() == 'TD':
                             td_indices.append(child_idx)
 
-                # Extract text from each TD
-                # Expected order: [0]=color, [1]=area_name, [2]=price, [3]=seat_status
-                td_texts = []
-                for td_idx in td_indices:
-                    td_text = get_text_content(td_idx)
-                    td_texts.append(td_text)
+                # Get backend_node_id for this TR
+                tr_backend_node_id = None
+                if tr_idx < len(backend_node_ids):
+                    tr_backend_node_id = backend_node_ids[tr_idx]
 
-                if len(td_texts) >= 4:
-                    area_name = td_texts[1].strip()
-                    price = td_texts[2].strip()
-                    seat_text = td_texts[3].strip()
+                tr_count += 1
 
-                    # Get backend_node_id for this TR
-                    tr_backend_node_id = None
-                    if tr_idx < len(backend_node_ids):
-                        tr_backend_node_id = backend_node_ids[tr_idx]
+                # Detect "giant TR" pattern (ibon Event page uses 1 TR with all areas)
+                # Pattern: [color, area_name, price, seat_status] x N areas
+                if len(td_indices) > 10:
+                    # Giant TR: loop through TDs in groups of 4
+                    for i in range(0, len(td_indices), 4):
+                        if i + 3 < len(td_indices):
+                            # Extract this group of 4 TDs
+                            td_texts = [
+                                get_text_content(td_indices[i]),     # color
+                                get_text_content(td_indices[i+1]),   # area_name
+                                get_text_content(td_indices[i+2]),   # price
+                                get_text_content(td_indices[i+3])    # seat_status
+                            ]
 
-                    # Build area data object
-                    area_data = {
-                        'index': area_index,
-                        'disabled': is_disabled,
-                        'areaName': area_name,
-                        'price': price,
-                        'seatText': seat_text,
-                        'innerHTML': f'<tr class="{tr_class}"><td>{area_name}</td><td>{price}</td><td>{seat_text}</td></tr>',
-                        'tr_node_index': tr_idx,
-                        'backend_node_id': tr_backend_node_id
-                    }
-                    areas_data.append(area_data)
-                    area_index += 1
+                            # Skip empty TDs (color-tag TDs may be empty)
+                            area_name = td_texts[1].strip()
+                            if len(area_name) == 0:
+                                continue
+
+                            price = td_texts[2].strip()
+                            seat_text = td_texts[3].strip()
+
+                            # For giant TR, determine disabled from seat_text
+                            # (cannot use TR class since all areas share the same TR)
+                            is_area_disabled = ('已售完' in seat_text)
+
+                            # Build area data object
+                            area_data = {
+                                'index': area_index,
+                                'disabled': is_area_disabled,
+                                'areaName': area_name,
+                                'price': price,
+                                'seatText': seat_text,
+                                'innerHTML': f'<tr><td>{area_name}</td><td>{price}</td><td>{seat_text}</td></tr>',
+                                'tr_node_index': tr_idx,
+                                'backend_node_id': tr_backend_node_id
+                            }
+                            areas_data.append(area_data)
+                            area_index += 1
+                else:
+                    # Standard TR structure: each TR = 1 area
+                    # Expected order: [0]=color, [1]=area_name, [2]=price, [3]=seat_status
+                    td_texts = []
+                    for td_idx in td_indices:
+                        td_text = get_text_content(td_idx)
+                        td_texts.append(td_text)
+
+                    if len(td_texts) >= 4:
+                        area_name = td_texts[1].strip()
+                        price = td_texts[2].strip()
+                        seat_text = td_texts[3].strip()
+
+                        # Build area data object
+                        area_data = {
+                            'index': area_index,
+                            'disabled': is_disabled,
+                            'areaName': area_name,
+                            'price': price,
+                            'seatText': seat_text,
+                            'innerHTML': f'<tr class="{tr_class}"><td>{area_name}</td><td>{price}</td><td>{seat_text}</td></tr>',
+                            'tr_node_index': tr_idx,
+                            'backend_node_id': tr_backend_node_id
+                        }
+                        areas_data.append(area_data)
+                        area_index += 1
 
     except Exception as exc:
         if show_debug_message:
@@ -8265,6 +8576,10 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
         if show_debug_message:
             print("[ibon] 頁面無區域")
         return True, False
+
+    # Debug extraction (disabled by default)
+    # if show_debug_message:
+    #     print(f"[IBON EXTRACT DEBUG] Total extracted areas: {len(areas_data)}")
 
     # Phase 2: Filter areas (disabled, sold out, insufficient seats)
     valid_areas = []
@@ -8305,8 +8620,81 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     if show_debug_message:
         print(f"[ibon] 有效區域: {len(valid_areas)}")
 
-    # Phase 3: Keyword matching (AND logic with space separation)
+    # Phase 3: Keyword matching with early return pattern (T010-T016)
     matched_areas = []
+    target_found = False
+
+    if area_keyword_item and len(area_keyword_item) > 0:
+        try:
+            import json
+            # Parse keywords - support multiple formats:
+            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
+            # 2. keyword1,keyword2,keyword3 (without quotes)
+            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            area_keyword_clean = area_keyword_item.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            if show_debug_message:
+                print(f"[IBON EVENT AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON EVENT AREA KEYWORD] Total valid areas: {len(valid_areas)}")
+                if len(valid_areas) > 0:
+                    print(f"[IBON EVENT AREA KEYWORD] First 5 areas: {[a['areaName'] for a in valid_areas[:5]]}")
+
+            # NEW: Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item in enumerate(keyword_array):
+                if show_debug_message:
+                    print(f"[IBON EVENT AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+
+                # Check all areas for this keyword
+                for area in valid_areas:
+                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                    row_text = util.format_keyword_string(row_text)
+
+                    # Support both AND (space) and OR (semicolon) logic
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
+
+                    if is_match:
+                        # T013: Keyword matched log - IMMEDIATELY select and stop
+                        matched_areas = [area]
+                        target_found = True
+                        if show_debug_message:
+                            print(f"[IBON EVENT AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                            print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
+                        break
+
+                if target_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T014: All keywords failed log
+            if not target_found:
+                if show_debug_message:
+                    print(f"[IBON EVENT AREA KEYWORD] All keywords failed to match")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[IBON EVENT AREA] Keyword parse error: {e}")
+                print(f"[IBON EVENT AREA] Treating as 'all keywords failed'")
+            matched_areas = []  # Let Feature 003 fallback logic handle this
+    else:
+        matched_areas = valid_areas
+
+    if show_debug_message and not target_found:
+        print(f"[IBON EVENT AREA] Total matched areas: {len(matched_areas)}")
+
+    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
+    # Will be removed after 2 weeks (2025-11-15)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # This logic scanned ALL keywords and collected all matches, then selected one
+    # NEW logic (above) uses early return: first match wins immediately
 
     if area_keyword_item and len(area_keyword_item) > 0:
         area_keyword_array = area_keyword_item.split(' ')
@@ -8316,11 +8704,8 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
             print(f"[ibon] 關鍵字: {area_keyword_array}")
 
         for area in valid_areas:
-            # 同時檢查區域名稱與內容
             row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
             row_text = util.format_keyword_string(row_text)
-
-            # Check if all keywords match (AND logic)
             is_match = all(kw in row_text for kw in area_keyword_array)
 
             if is_match:
@@ -8328,22 +8713,34 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 if show_debug_message:
                     print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
 
-                # Stop at first match if mode is "from top to bottom"
                 if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
                     break
     else:
-        # No keyword specified, accept all valid areas
         matched_areas = valid_areas
 
     if show_debug_message:
         print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
+    """
 
-    # Check if refresh is needed
-    if len(matched_areas) == 0:
-        is_need_refresh = True
-        if show_debug_message:
-            print("[ibon] 無符合區域")
-        return is_need_refresh, False
+    # T022-T024: Conditional fallback based on area_auto_fallback switch
+    if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
+        if area_auto_fallback:
+            # T022: Fallback enabled - use all valid areas
+            if show_debug_message:
+                print(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                print(f"[IBON EVENT AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+            matched_areas = valid_areas
+        else:
+            # T023: Fallback disabled - strict mode (do not select anything)
+            if show_debug_message:
+                print(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                print(f"[IBON EVENT AREA SELECT] Waiting for manual intervention")
+            # T024: No available options after keyword matching failed
+            if len(valid_areas) == 0:
+                if show_debug_message:
+                    print(f"[IBON EVENT AREA FALLBACK] No available options after exclusion")
+            is_need_refresh = True
+            return is_need_refresh, False
 
     # Phase 4: Select target area based on mode
     target_area = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
@@ -8478,6 +8875,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
 
     is_price_assign_by_bot = False
@@ -8658,8 +9056,15 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 tr_id = tr_attrs.get('id', '')
                 tr_class = tr_attrs.get('class', '')
 
-                # Skip header rows (thead)
-                if not tr_id:
+                # Skip header rows (check if parent is THEAD)
+                parent_idx = parent_indices[tr_idx] if tr_idx < len(parent_indices) else -1
+                is_header = False
+                if parent_idx >= 0 and parent_idx < len(node_names):
+                    parent_name = node_names[parent_idx].upper()
+                    if parent_name == 'THEAD':
+                        is_header = True
+
+                if is_header:
                     continue
 
                 is_disabled = 'disabled' in tr_class.lower()
@@ -8800,8 +9205,78 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     if show_debug_message:
         print(f"[ibon] 有效區域: {len(valid_areas)}")
 
-    # Phase 3: Keyword matching (AND logic with space separation)
+    # Phase 3: Keyword matching with early return pattern (T010-T016)
     matched_areas = []
+    target_found = False
+
+    if area_keyword_item and len(area_keyword_item) > 0:
+        try:
+            import json
+            # Parse keywords - support multiple formats:
+            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
+            # 2. keyword1,keyword2,keyword3 (without quotes)
+            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            area_keyword_clean = area_keyword_item.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            if show_debug_message:
+                print(f"[IBON AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+
+            # NEW: Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item in enumerate(keyword_array):
+                if show_debug_message:
+                    print(f"[IBON AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+
+                # Check all areas for this keyword
+                for area in valid_areas:
+                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                    row_text = util.format_keyword_string(row_text)
+
+                    # Support both AND (space) and OR (semicolon) logic
+                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
+
+                    if is_match:
+                        # T013: Keyword matched log - IMMEDIATELY select and stop
+                        matched_areas = [area]
+                        target_found = True
+                        if show_debug_message:
+                            print(f"[IBON AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                            print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
+                        break
+
+                if target_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T014: All keywords failed log
+            if not target_found:
+                if show_debug_message:
+                    print(f"[IBON AREA KEYWORD] All keywords failed to match")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[IBON AREA] Keyword parse error: {e}")
+                print(f"[IBON AREA] Treating as 'all keywords failed'")
+            matched_areas = []  # Let Feature 003 fallback logic handle this
+    else:
+        matched_areas = valid_areas
+
+    if show_debug_message and not target_found:
+        print(f"[IBON AREA] Total matched areas: {len(matched_areas)}")
+
+    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
+    # Will be removed after 2 weeks (2025-11-15)
+    """
+    # OLD LOGIC - DEPRECATED - DO NOT USE
+    # This logic scanned ALL keywords and collected all matches, then selected one
+    # NEW logic (above) uses early return: first match wins immediately
 
     if area_keyword_item and len(area_keyword_item) > 0:
         area_keyword_array = area_keyword_item.split(' ')
@@ -8811,11 +9286,8 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             print(f"[ibon] 關鍵字: {area_keyword_array}")
 
         for area in valid_areas:
-            # 同時檢查區域名稱與內容
             row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
             row_text = util.format_keyword_string(row_text)
-
-            # Check if all keywords match (AND logic)
             is_match = all(kw in row_text for kw in area_keyword_array)
 
             if is_match:
@@ -8823,22 +9295,34 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 if show_debug_message:
                     print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
 
-                # Stop at first match if mode is "from top to bottom"
                 if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
                     break
     else:
-        # No keyword specified, accept all valid areas
         matched_areas = valid_areas
 
     if show_debug_message:
         print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
+    """
 
-    # Check if refresh is needed
-    if len(matched_areas) == 0:
-        is_need_refresh = True
-        if show_debug_message:
-            print("[RESULT] No matched areas found, refresh needed")
-        return is_need_refresh, False
+    # T022-T024: Conditional fallback based on area_auto_fallback switch
+    if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
+        if area_auto_fallback:
+            # T022: Fallback enabled - use all valid areas
+            if show_debug_message:
+                print(f"[IBON AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                print(f"[IBON AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+            matched_areas = valid_areas
+        else:
+            # T023: Fallback disabled - strict mode (do not select anything)
+            if show_debug_message:
+                print(f"[IBON AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                print(f"[IBON AREA SELECT] Waiting for manual intervention")
+            # T024: No available options after keyword matching failed
+            if len(valid_areas) == 0:
+                if show_debug_message:
+                    print(f"[IBON AREA FALLBACK] No available options after exclusion")
+            is_need_refresh = True
+            return is_need_refresh, False
 
     # Phase 4: Select target area based on mode
     target_area = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
@@ -8849,7 +9333,11 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             print("[RESULT] Failed to select target area, refresh needed")
         return is_need_refresh, False
 
+    # T013 equivalent: Log selected area with selection type
     if show_debug_message:
+        is_keyword_match = (area_keyword_item and len(area_keyword_item) > 0 and len(matched_areas) < len(valid_areas))
+        selection_type = "keyword match" if is_keyword_match else "fallback"
+        print(f"[IBON AREA SELECT] Selected area: {target_area['areaName']} ({selection_type})")
         print(f"[TARGET] Selected area: {target_area['areaName']} (index: {target_area['index']}, id: {target_area['id']})")
 
     # Phase 5: Click target area using CDP real-time coordinates
@@ -10354,14 +10842,26 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         if not is_need_refresh:
                             break
 
-                    # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                    # Fallback: If all keyword groups failed, check area_auto_fallback setting
                     if not is_price_assign_by_bot:
                         if is_need_refresh:
-                            show_debug_message = config_dict["advanced"].get("verbose", False)
-                            auto_select_mode = config_dict["area_auto_select"]["mode"]
-                            if show_debug_message:
-                                print(f"[IBON AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
-                            is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, "")
+                            area_auto_fallback = config_dict.get("area_auto_fallback", False)
+                            if area_auto_fallback:
+                                # Feature 003: Fallback enabled - use auto_select_mode without keyword
+                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                auto_select_mode = config_dict["area_auto_select"]["mode"]
+                                if show_debug_message:
+                                    print(f"[IBON AREA] All keyword groups failed, area_auto_fallback=true")
+                                    print(f"[IBON AREA] Falling back to auto_select_mode: {auto_select_mode}")
+                                is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, "")
+                            else:
+                                # Feature 003: Fallback disabled - do not select anything
+                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                if show_debug_message:
+                                    print(f"[IBON AREA] All keyword groups failed, area_auto_fallback=false")
+                                    print(f"[IBON AREA] Waiting for manual intervention (strict mode)")
+                                # Keep is_price_assign_by_bot=False and is_need_refresh=True
+                                # This will trigger page reload in the outer loop
                 else:
                     # empty keyword, match all.
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, area_keyword)
@@ -10666,14 +11166,26 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         if not is_need_refresh:
                             break
 
-                    # Fallback: If all keyword groups failed, use auto_select_mode without keyword
+                    # Fallback: If all keyword groups failed, check area_auto_fallback setting
                     if not is_price_assign_by_bot:
                         if is_need_refresh:
-                            show_debug_message = config_dict["advanced"].get("verbose", False)
-                            auto_select_mode = config_dict["area_auto_select"]["mode"]
-                            if show_debug_message:
-                                print(f"[IBON EVENT] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
-                            is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, "")
+                            area_auto_fallback = config_dict.get("area_auto_fallback", False)
+                            if area_auto_fallback:
+                                # Feature 003: Fallback enabled - use auto_select_mode without keyword
+                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                auto_select_mode = config_dict["area_auto_select"]["mode"]
+                                if show_debug_message:
+                                    print(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=true")
+                                    print(f"[IBON EVENT] Falling back to auto_select_mode: {auto_select_mode}")
+                                is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, "")
+                            else:
+                                # Feature 003: Fallback disabled - do not select anything
+                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                if show_debug_message:
+                                    print(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=false")
+                                    print(f"[IBON EVENT] Waiting for manual intervention (strict mode)")
+                                # Keep is_price_assign_by_bot=False and is_need_refresh=True
+                                # This will trigger page reload in the outer loop
                 else:
                     # empty keyword, match all.
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword)
