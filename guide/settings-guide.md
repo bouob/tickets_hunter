@@ -140,6 +140,10 @@ python settings_old.py
 
 ### 日期自動點選（date_auto_select）
 
+**⭐ v1.2 新增功能**：條件式遞補控制（[date_auto_fallback](#日期自動遞補date_auto_fallback-新功能)），可選擇當關鍵字失敗時是停止執行或自動遞補。
+
+---
+
 #### 啟用（enable）
 類型：布林值 | 預設：啟用
 
@@ -182,8 +186,13 @@ python settings_old.py
 #### 日期排序方式（mode）
 類型：字串 | 預設：random
 
-當關鍵字找不到時的自動選擇策略。
+自動選擇日期的策略。
 
+
+**使用時機**（v1.2 更新）：
+1. **關鍵字未設定時**：直接使用此策略選擇
+2. **關鍵字全失敗 + date_auto_fallback=true 時**：使用此策略自動遞補
+3. **關鍵字全失敗 + date_auto_fallback=false 時**：停止執行（不使用此策略）
 
 **可選值**：
 
@@ -193,6 +202,8 @@ python settings_old.py
 | from bottom to top | 從下到上 | 選最晚場次 |
 | center | 中間 | 平衡策略 |
 | random | 隨機 | 增加變化性（預設） |
+
+**詳細說明**：參考 [自動回退策略](keyword-mechanism.md#自動回退策略)
 
 ---
 
@@ -242,6 +253,10 @@ python settings_old.py
 
 ### 區域自動點選（area_auto_select）
 
+**⭐ v1.2 新增功能**：條件式遞補控制（[area_auto_fallback](#區域自動遞補area_auto_fallback-新功能)），可選擇當關鍵字失敗時是停止執行或自動遞補。
+
+---
+
 #### 啟用（enable）
 類型：布林值 | 預設：啟用
 
@@ -280,8 +295,13 @@ python settings_old.py
 #### 區域排序方式（mode）
 類型：字串 | 預設：random
 
-當關鍵字找不到時的自動選擇策略。
+自動選擇區域的策略。
 
+
+**使用時機**（v1.2 更新）：
+1. **關鍵字未設定時**：直接使用此策略選擇
+2. **關鍵字全失敗 + area_auto_fallback=true 時**：使用此策略自動遞補
+3. **關鍵字全失敗 + area_auto_fallback=false 時**：停止執行（不使用此策略）
 
 **可選值**：
 
@@ -291,6 +311,8 @@ python settings_old.py
 | from bottom to top | 從下到上 | 選最便宜位置 |
 | center | 中間 | 中等價位 |
 | random | 隨機 | 分散風險（預設） |
+
+**詳細說明**：參考 [自動回退策略](keyword-mechanism.md#自動回退策略)
 
 ---
 

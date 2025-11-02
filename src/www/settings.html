@@ -22,7 +22,7 @@
       </li>
 
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false" onclick="home_tab_clicked();">偏好設定</button>
+        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="false" onclick="home_tab_clicked();">基本設定</button>
       </li>
 
       <li class="nav-item" role="presentation">
@@ -222,14 +222,12 @@
         </div>
 
         <div class="row mb-3">
-          <label for="refresh_datetime" class="col-sm-2 col-form-label">刷新在指定時間</label>
+          <label for="refresh_datetime" class="col-sm-2 col-form-label">刷新在指定時間
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="時間格式 HH:MM:SS (小時:分鐘:秒數)。在設定介面修改並存檔，並不會套用在「已經」開出的瀏覽器，只會套用在存檔之後按「搶票」所開出的瀏覽器。">?</span>
+          </label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="refresh_datetime" value="" />
-
-            <div class="bd-callout bd-callout-info">
-              <strong>提示：</strong>
-                時間格式 <code>HH:MM:SS</code> (小時:分鐘:秒數)。在設定介面修改並存檔，並不會套用在「已經」開出的瀏覽器，只會套用在存檔之後按「搶票」所開出的瀏覽器。
-            </div>
           </div>
         </div>
 
@@ -316,10 +314,24 @@
           <label for="area_keyword" class="col-sm-2 col-form-label">區域關鍵字</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="area_keyword" rows="3"></textarea>
-            <div class="bd-callout bd-callout-info">
-              <strong>🎪 區域邏輯說明：</strong><br>
-              <strong>OR 邏輯</strong>：<code>搖滾區;VIP;前排</code> - 任一區域匹配（分號分隔）<br>
-              <strong>AND 邏輯</strong>：<code>搖滾區 前排;VIP 中央</code> - 區域 + 位置組合（空格表示 AND）
+            <div class="accordion mt-1" id="accordionAreaLogic">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAreaLogic" aria-expanded="false" aria-controls="collapseAreaLogic">
+                    🎪 區域邏輯說明
+                  </button>
+                </h2>
+                <div id="collapseAreaLogic" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <p><strong>OR 邏輯 (任一匹配)</strong>：<code>搖滾區;VIP;前排</code><br>
+                    任一區域匹配即選取（分號分隔）</p>
+
+                    <p><strong>AND 邏輯 (組合條件)</strong>：<code>搖滾區 前排;VIP 中央</code><br>
+                    區域 + 位置組合（空格表示 AND）<br>
+                    例如「<code>搖滾區 前排</code>」表示必須同時包含「搖滾區」且「前排」才匹配</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -337,13 +349,12 @@
           </div>
         </div>
         <div class="row">
-          <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字</label>
+          <label for="keyword_exclude" class="col-sm-2 col-form-label">排除關鍵字
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="多組關鍵字使用「分號」分隔（OR 邏輯），關鍵字內部使用「空格」為 AND 邏輯。例如：輪椅;身障 或 搖滾A 前排;VIP。留空代表不排除任何關鍵字。">?</span>
+          </label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <textarea class="form-control" id="keyword_exclude" rows="3"></textarea>
-            <div class="bd-callout bd-callout-info">
-              <strong>提示：</strong>
-                多組關鍵字使用「<code>分號</code>」分隔（OR 邏輯），關鍵字內部使用「<code>空格</code>」為 AND 邏輯。例如：<code>輪椅;身障</code> 或 <code>搖滾A 前排;VIP</code>。留空代表不排除任何關鍵字。
-            </div>
           </div>
         </div>
         <div class="row">
@@ -415,14 +426,12 @@
         </div>
 
         <div class="row mb-3">
-          <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數</label>
+          <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="目前只有拓元的「日期頁面」與「票價頁面」有支援這個功能。">?</span>
+          </label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_overheat_count" value="" />
-
-            <div class="bd-callout bd-callout-info">
-              <strong>提示：</strong>
-                目前只有拓元的「日期頁面」與「票價頁面」有支援這個功能。
-            </div>
           </div>
         </div>
 
