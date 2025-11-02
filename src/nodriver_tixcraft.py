@@ -3021,9 +3021,23 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     matched_blocks = None
 
     if area_keyword:
+        # Parse keywords - support multiple formats:
+        # 1. "keyword1,keyword2,keyword3" (with outer quotes)
+        # 2. keyword1,keyword2,keyword3 (without quotes)
+        # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
         try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-        except:
+            area_keyword_clean = area_keyword.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            area_keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+        except Exception as e:
+            if show_debug_message:
+                print(f"[AREA KEYWORD] Parse error: {e}")
             area_keyword_array = []
 
         # T012: Start checking keywords log
@@ -6404,7 +6418,37 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     is_price_assign_by_bot = False
 
     # 獲取關鍵字設定（修正讀取路徑）
-    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
+    area_keyword_raw = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
+
+    # Parse keywords - support multiple formats (same as ibon):
+    # 1. "keyword1,keyword2,keyword3" (with outer quotes)
+    # 2. keyword1,keyword2,keyword3 (without quotes)
+    # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+    if area_keyword_raw:
+        try:
+            area_keyword_clean = area_keyword_raw.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            # Join with space for JavaScript parsing (JS splits by space)
+            area_keyword = ' '.join(keyword_array) if len(keyword_array) > 0 else ''
+
+            if show_debug_message:
+                print(f"[TicketPlus] Parsed keywords: {keyword_array}")
+                print(f"[TicketPlus] Keyword string for JS: '{area_keyword}'")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TicketPlus] Keyword parse error: {e}")
+            area_keyword = area_keyword_raw
+    else:
+        area_keyword = ''
+
     has_keyword = len(area_keyword) > 0
 
     if show_debug_message:
@@ -12486,6 +12530,25 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
+    # Parse keywords - support multiple formats (same as ibon)
+    if area_keyword_item and len(area_keyword_item) > 0:
+        try:
+            area_keyword_clean = area_keyword_item.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            # Join with space to maintain existing logic
+            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+        except Exception as e:
+            if show_debug_message:
+                print(f"[KHAM AREA] Keyword parse error: {e}")
+
     is_price_assign_by_bot = False
     is_need_refresh = False
 
@@ -13885,6 +13948,25 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
 
+    # Parse keywords - support multiple formats (same as ibon)
+    if area_keyword_item and len(area_keyword_item) > 0:
+        try:
+            area_keyword_clean = area_keyword_item.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            # Join with space to maintain existing logic
+            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+        except Exception as e:
+            if show_debug_message:
+                print(f"[KHAM SEAT TYPE] Keyword parse error: {e}")
+
     try:
         from nodriver import cdp
 
@@ -14807,6 +14889,25 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
+
+    # Parse keywords - support multiple formats (same as ibon)
+    if area_keyword_item and len(area_keyword_item) > 0:
+        try:
+            area_keyword_clean = area_keyword_item.strip()
+            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
+                area_keyword_clean = area_keyword_clean[1:-1]
+
+            keyword_array = [
+                kw.strip().strip('"').strip("'")
+                for kw in area_keyword_clean.split(',')
+                if kw.strip()
+            ]
+
+            # Join with space to maintain existing logic
+            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TICKET SEAT TYPE] Keyword parse error: {e}")
 
     try:
         from nodriver import cdp
