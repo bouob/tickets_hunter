@@ -155,34 +155,50 @@ textarea {
     opacity: 1;
 }
 
-/* Buy Me a Coffee Button Styles */
-/* Scale down button size */
-.bmc-container {
-    transform: scale(0.85);
-    transform-origin: left center;
-    display: inline-block;
+/* Buy Me a Coffee Button Styles - Bootstrap Style */
+.bmc-button {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #20c997;
+    --bs-btn-border-color: #20c997;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #1aa179;
+    --bs-btn-hover-border-color: #199473;
+    --bs-btn-focus-shadow-rgb: 32, 201, 151;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #199473;
+    --bs-btn-active-border-color: #18886c;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #20c997;
+    --bs-btn-disabled-border-color: #20c997;
 }
 
-/* Dark mode: white text */
-[data-bs-theme="dark"] .bmc-container,
-[data-bs-theme="dark"] .bmc-container *,
-[data-bs-theme="dark"] div[class*="bmc"],
-[data-bs-theme="dark"] a[class*="bmc"],
-[data-bs-theme="dark"] button[class*="bmc"],
-[data-bs-theme="dark"] .bmc-container span,
-[data-bs-theme="dark"] .bmc-container a,
-[data-bs-theme="dark"] .bmc-container button {
-    color: #ffffff !important;
+.bmc-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
 }
 
-/* Light mode: black text (default, explicit for clarity) */
-[data-bs-theme="light"] .bmc-container,
-[data-bs-theme="light"] .bmc-container *,
-[data-bs-theme="light"] div[class*="bmc"],
-[data-bs-theme="light"] a[class*="bmc"],
-[data-bs-theme="light"] button[class*="bmc"],
-[data-bs-theme="light"] .bmc-container span,
-[data-bs-theme="light"] .bmc-container a,
-[data-bs-theme="light"] .bmc-container button {
-    color: #000000 !important;
+.bmc-button:hover {
+    color: var(--bs-btn-hover-color);
+    text-decoration: none;
+}
+
+.bmc-button:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), 0.5);
+}
+
+.bmc-emoji {
+    font-size: 1.25rem;
+}
+
+/* Dark Mode: Use Bootstrap's teal color with adjusted shades */
+[data-bs-theme="dark"] .bmc-button {
+    --bs-btn-bg: #0dcaf0;
+    --bs-btn-border-color: #0dcaf0;
+    --bs-btn-hover-bg: #31d2f2;
+    --bs-btn-hover-border-color: #25cff2;
+    --bs-btn-focus-shadow-rgb: 13, 202, 240;
+    --bs-btn-active-bg: #25cff2;
+    --bs-btn-active-border-color: #3dd5f3;
 }
