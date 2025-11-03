@@ -13,8 +13,10 @@ const ticket_number = document.querySelector('#ticket_number');
 const refresh_datetime = document.querySelector('#refresh_datetime');
 const date_select_mode = document.querySelector('#date_select_mode');
 const date_keyword = document.querySelector('#date_keyword');
+const date_auto_fallback = document.querySelector('#date_auto_fallback');
 const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
+const area_auto_fallback = document.querySelector('#area_auto_fallback');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 
 // advance
@@ -84,6 +86,8 @@ const idle_keyword = document.querySelector('#idle_keyword');
 const resume_keyword = document.querySelector('#resume_keyword');
 const idle_keyword_second = document.querySelector('#idle_keyword_second');
 const resume_keyword_second = document.querySelector('#resume_keyword_second');
+const dark_mode_toggle = document.querySelector('#dark_mode_toggle');
+const theme_status = document.querySelector('#theme_status');
 
 var settings = null;
 
@@ -140,9 +144,11 @@ function load_settins_to_form(settings)
         refresh_datetime.value = settings.refresh_datetime;
         date_select_mode.value = settings.date_auto_select.mode;
         date_keyword.value = format_keyword_for_display(settings.date_auto_select.date_keyword);
+        date_auto_fallback.checked = settings.date_auto_fallback || false;
 
         area_select_mode.value = settings.area_auto_select.mode;
         area_keyword.value = format_keyword_for_display(settings.area_auto_select.area_keyword);
+        area_auto_fallback.checked = settings.area_auto_fallback || false;
 
         keyword_exclude.value = format_keyword_for_display(settings.keyword_exclude);
         
@@ -379,9 +385,11 @@ function save_changes_to_dict(silent_flag)
             settings.refresh_datetime = refresh_datetime.value;
             settings.date_auto_select.mode = date_select_mode.value;
             settings.date_auto_select.date_keyword = format_config_keyword_for_json(date_keyword.value);
+            settings.date_auto_fallback = date_auto_fallback.checked;
 
             settings.area_auto_select.mode = area_select_mode.value;
             settings.area_auto_select.area_keyword = format_config_keyword_for_json(area_keyword.value);
+            settings.area_auto_fallback = area_auto_fallback.checked;
 
             settings.keyword_exclude = format_config_keyword_for_json(keyword_exclude.value);
 
@@ -741,3 +749,52 @@ function run_message(msg)
 function home_tab_clicked() {
     document.getElementById("homepage").focus();
 }
+
+// Dark Mode Functions
+function initTheme() {
+    // Check if user has a saved preference
+    const savedTheme = localStorage.getItem('theme');
+
+    // If no saved preference, check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+    // Apply theme
+    applyTheme(theme);
+
+    // Update toggle state
+    dark_mode_toggle.checked = (theme === 'dark');
+    updateThemeStatus(theme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    localStorage.setItem('theme', theme);
+}
+
+function updateThemeStatus(theme) {
+    // Update status badge if it exists (optional display element)
+    if (theme_status) {
+        if (theme === 'dark') {
+            theme_status.textContent = '已啟用';
+            theme_status.className = 'badge bg-success ms-2';
+        } else {
+            theme_status.textContent = '已關閉';
+            theme_status.className = 'badge bg-secondary ms-2';
+        }
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    applyTheme(newTheme);
+    updateThemeStatus(newTheme);
+}
+
+// Initialize theme on page load
+initTheme();
+
+// Add event listener for theme toggle
+dark_mode_toggle.addEventListener('change', toggleTheme);
