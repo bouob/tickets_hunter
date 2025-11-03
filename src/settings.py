@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -234,7 +234,7 @@ def load_json():
     config_dict = None
     if os.path.isfile(config_filepath):
         try:
-            with open(config_filepath) as json_data:
+            with open(config_filepath, encoding='utf-8') as json_data:
                 config_dict = json.load(json_data)
         except Exception as e:
             pass
@@ -380,7 +380,7 @@ def sync_status_to_extension(status):
         status_json["status"]=status
         #print("dump json to path:", target_path)
         try:
-            with open(target_path, 'w') as outfile:
+            with open(target_path, 'w', encoding='utf-8') as outfile:
                 json.dump(status_json, outfile)
         except Exception as e:
             pass

@@ -42,6 +42,12 @@
       </li>
 
       <li class="nav-item ms-auto d-flex align-items-center" role="presentation">
+        <a href="https://github.com/bouob/tickets_hunter/issues" target="_blank" class="btn btn-sm btn-outline-primary">
+          回報問題
+        </a>
+      </li>
+
+      <li class="nav-item ms-3 d-flex align-items-center" role="presentation">
         <div class="form-check form-switch mb-0">
           <input class="form-check-input" type="checkbox" id="dark_mode_toggle">
           <label class="form-check-label" for="dark_mode_toggle">
@@ -56,7 +62,38 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.10.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.03) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+</div>
+
+<!-- 開發狀態提示（可展開） -->
+<div class="accordion mb-3" id="devStatusAccordion">
+  <div class="accordion-item border-warning">
+    <h2 class="accordion-header" id="devStatusHeading">
+      <button class="accordion-button collapsed bg-warning bg-opacity-10" type="button" data-bs-toggle="collapse" data-bs-target="#devStatusCollapse" aria-expanded="false" aria-controls="devStatusCollapse">
+        <span class="badge bg-warning text-dark me-2">開發中</span>
+        <strong>快速開發階段提醒</strong>
+      </button>
+    </h2>
+    <div id="devStatusCollapse" class="accordion-collapse collapse" aria-labelledby="devStatusHeading" data-bs-parent="#devStatusAccordion">
+      <div class="accordion-body bg-warning bg-opacity-10">
+        <p>
+          <strong>目前專案正處於快速開發階段</strong>，新功能持續加入，可能會遇到一些 Bug 或不穩定的情況。
+        </p>
+        <hr>
+        <p class="mb-0">
+          如果您在使用過程中遇到任何問題，請協助我們：
+        </p>
+        <ul class="mb-2">
+          <li>記錄下發生問題的具體步驟（例如：選擇哪個平台、設定了哪些關鍵字）</li>
+          <li>截圖或複製錯誤訊息</li>
+          <li>前往 <a href="https://github.com/bouob/tickets_hunter/issues" target="_blank">GitHub Issues</a> 回報問題</li>
+        </ul>
+        <p class="mb-0">
+          <small>感謝您的耐心與協助，讓 Tickets Hunter 變得更好！</small>
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <hr/>
@@ -95,8 +132,11 @@
 <h4>支持專案</h4>
 <p>如果這個專案對您有幫助，歡迎請開發者喝杯珍珠奶茶，支持我們持續改進與維護。</p>
 
-<div class="mt-3 mb-3 bmc-container">
-  <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="victor0x1" data-color="#6eb89f" data-emoji="🧋"  data-font="Poppins" data-text="Buy me a Bubble Tea" data-outline-color="#5a9d88" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+<div class="mt-3 mb-3">
+  <a href="https://buymeacoffee.com/victor0x1" target="_blank" class="btn btn-lg bmc-button">
+    <span class="bmc-emoji">🧋</span>
+    <span>自由樂捐珍奶</span>
+  </a>
 </div>
 
 </div>
