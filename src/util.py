@@ -1468,7 +1468,9 @@ def get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLI
 
     user_guess_string = config_dict["advanced"]["user_guess_string"]
     if len(user_guess_string) > 0:
-        user_guess_string = format_config_keyword_for_json(user_guess_string)
+        # Direct JSON parsing (same logic as date_keyword in KKTIX date selection)
+        # No need to call format_config_keyword_for_json() when reading from JSON
+        # The value is already in JSON format: "測試","測試2"
         try:
             local_array = json.loads("["+ user_guess_string +"]")
         except Exception as exc:
@@ -1484,7 +1486,7 @@ def get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLI
             pass
 
     if len(user_guess_string) > 0:
-        user_guess_string = format_config_keyword_for_json(user_guess_string)
+        # Direct JSON parsing (same logic as date_keyword in KKTIX date selection)
         try:
             online_array = json.loads("["+ user_guess_string +"]")
         except Exception as exc:

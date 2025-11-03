@@ -33,6 +33,10 @@ user_data/
 .temp/
 .history/
 
+# Environment files
+.env
+.env.*
+
 # Claude Code
 .claude/
 CLAUDE.md

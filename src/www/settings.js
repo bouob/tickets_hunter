@@ -196,10 +196,7 @@ function load_settins_to_form(settings)
         remote_url.value = remote_url_string;
 
         // dictionary
-        user_guess_string.value = settings.advanced.user_guess_string;
-        if(user_guess_string.value=='""') {
-            user_guess_string.value='';
-        }
+        user_guess_string.value = format_keyword_for_display(settings.advanced.user_guess_string);
         auto_guess_options.checked = settings.advanced.auto_guess_options;
 
         // auto fill
@@ -435,14 +432,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.remote_url = remote_url_string;
 
             // dictionary
-            let user_guess_string_string = user_guess_string.value;
-            if(user_guess_string_string.indexOf('"')==-1) {
-                user_guess_string_string = '"' + user_guess_string_string + '"';
-            }
-            if(user_guess_string_string=='""') {
-                user_guess_string_string='';
-            }
-            settings.advanced.user_guess_string = user_guess_string_string;
+            settings.advanced.user_guess_string = format_config_keyword_for_json(user_guess_string.value);
 
             settings.advanced.auto_guess_options = auto_guess_options.checked;
 
@@ -672,7 +662,7 @@ function maxbot_status_api()
             $("#pause_btn").addClass("disappear");
             $("#resume_btn").removeClass("disappear");
         }
-        $("#last_url").html(data.last_url);
+        $("#last_url").text(data.last_url);
         $("#maxbot_status").html(status_text).prop( "class", status_class);
     })
     .fail(function() {
@@ -798,3 +788,204 @@ initTheme();
 
 // Add event listener for theme toggle
 dark_mode_toggle.addEventListener('change', toggleTheme);
+
+// ========================================
+// Question Detection Feature
+// ========================================
+
+let questionCheckInterval = null;
+let lastDetectedQuestion = '';
+
+/**
+ * Check if MAXBOT_QUESTION.txt exists and display the question
+ */
+async function checkDetectedQuestion() {
+    try {
+        const response = await fetch('/question');
+        const data = await response.json();
+
+        const alertElement = document.getElementById('detected-question-alert');
+        const questionTextElement = document.getElementById('detected-question-text');
+
+        if (data.exists && data.question) {
+            // Only update if question content changed
+            if (data.question !== lastDetectedQuestion) {
+                lastDetectedQuestion = data.question;
+
+                // Update question text
+                questionTextElement.textContent = data.question;
+
+                // Show alert with fade-in effect
+                alertElement.style.display = 'block';
+                setTimeout(() => {
+                    alertElement.classList.add('show');
+                }, 10);
+
+                // Auto-scroll to the alert if verification tab is active
+                const verificationTab = document.getElementById('verification-tab');
+                if (verificationTab.classList.contains('active')) {
+                    alertElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                console.log('[QUESTION DETECTED]', data.question);
+            }
+        } else {
+            // Hide alert if no question or file doesn't exist
+            if (alertElement.classList.contains('show')) {
+                alertElement.classList.remove('show');
+                setTimeout(() => {
+                    alertElement.style.display = 'none';
+                }, 150);
+                lastDetectedQuestion = '';
+            }
+        }
+    } catch (error) {
+        console.error('[QUESTION CHECK] Error:', error);
+    }
+}
+
+/**
+ * Start polling for question detection
+ */
+function startQuestionPolling() {
+    // Check immediately
+    checkDetectedQuestion();
+
+    // Then check every 0.5 seconds
+    if (!questionCheckInterval) {
+        questionCheckInterval = setInterval(checkDetectedQuestion, 500);
+        console.log('[QUESTION POLLING] Started (every 0.5 seconds)');
+    }
+}
+
+/**
+ * Stop polling
+ */
+function stopQuestionPolling() {
+    if (questionCheckInterval) {
+        clearInterval(questionCheckInterval);
+        questionCheckInterval = null;
+        console.log('[QUESTION POLLING] Stopped');
+    }
+}
+
+// Start polling when page loads
+startQuestionPolling();
+
+// Also check when verification tab is clicked
+const verificationTab = document.getElementById('verification-tab');
+if (verificationTab) {
+    verificationTab.addEventListener('click', () => {
+        // Force check immediately when tab is clicked
+        checkDetectedQuestion();
+    });
+}
+
+// Search button handlers
+async function searchQuestion(engine, event) {
+    const questionText = document.getElementById('detected-question-text').textContent.trim();
+    if (!questionText) {
+        console.warn('[SEARCH] No question text available');
+        return;
+    }
+
+    // AI prompt for direct answers
+    const aiPrompt = "Answer this question directly in the same language as the question, provide only the answer without explanation:\n\n";
+
+    // Determine if this is an AI service (needs prompt) or search engine (no prompt)
+    const isAI = ['perplexity', 'chatgpt', 'grok', 'claude'].includes(engine);
+    const fullQuestion = isAI ? aiPrompt + questionText : questionText;
+    const encodedQuestion = encodeURIComponent(fullQuestion);
+
+    let searchUrl = '';
+    let needsCopy = false;
+
+    switch (engine) {
+        case 'google':
+            searchUrl = `https://www.google.com/search?q=${encodeURIComponent(questionText)}`;
+            break;
+        case 'bing':
+            searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(questionText)}`;
+            break;
+        case 'perplexity':
+            searchUrl = `https://www.perplexity.ai/?q=${encodedQuestion}`;
+            break;
+        case 'chatgpt':
+            searchUrl = `https://chatgpt.com?q=${encodedQuestion}`;
+            break;
+        case 'claude':
+            searchUrl = 'https://claude.ai/new';
+            needsCopy = true;
+            break;
+        case 'grok':
+            searchUrl = `https://grok.com?q=${encodedQuestion}`;
+            break;
+        default:
+            console.error('[SEARCH] Unknown search engine:', engine);
+            return;
+    }
+
+    // Check if Ctrl/Cmd/Middle-click (should open in background)
+    const openInBackground = event && (event.ctrlKey || event.metaKey || event.button === 1);
+
+    // For AI services, copy question to clipboard
+    if (needsCopy) {
+        try {
+            await navigator.clipboard.writeText(fullQuestion);
+            console.log(`[SEARCH] Question copied to clipboard for ${engine}`);
+
+            // Only show notification if not opening in background
+            if (!openInBackground) {
+                const alertElement = document.getElementById('detected-question-alert');
+                const originalText = alertElement.querySelector('h5').innerHTML;
+                alertElement.querySelector('h5').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>問題已複製！請貼上到 ${engine.toUpperCase()}`;
+
+                // Restore original text after 2 seconds
+                setTimeout(() => {
+                    alertElement.querySelector('h5').innerHTML = originalText;
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('[SEARCH] Failed to copy to clipboard:', err);
+            if (!openInBackground) {
+                alert(`無法自動複製問題。請手動複製：\n\n${fullQuestion}`);
+            }
+        }
+    }
+
+    console.log(`[SEARCH] Opening ${engine}:`, searchUrl, openInBackground ? '(background)' : '(foreground)');
+
+    // Open the URL
+    // Note: window.open() behavior with Ctrl/Cmd is browser-dependent
+    // Most modern browsers will open in background automatically when Ctrl/Cmd is pressed
+    window.open(searchUrl, '_blank', 'noopener,noreferrer');
+}
+
+// Attach search button event listeners (pass event object)
+document.getElementById('search-google-btn')?.addEventListener('click', (e) => searchQuestion('google', e));
+document.getElementById('search-bing-btn')?.addEventListener('click', (e) => searchQuestion('bing', e));
+document.getElementById('search-perplexity-btn')?.addEventListener('click', (e) => searchQuestion('perplexity', e));
+document.getElementById('search-chatgpt-btn')?.addEventListener('click', (e) => searchQuestion('chatgpt', e));
+document.getElementById('search-claude-btn')?.addEventListener('click', (e) => searchQuestion('claude', e));
+document.getElementById('search-grok-btn')?.addEventListener('click', (e) => searchQuestion('grok', e));
+
+// Also handle middle-click (button 1) for all search buttons
+const searchButtons = [
+    'search-google-btn', 'search-bing-btn', 'search-perplexity-btn',
+    'search-chatgpt-btn', 'search-claude-btn', 'search-grok-btn'
+];
+searchButtons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    const engine = btnId.replace('search-', '').replace('-btn', '');
+    btn?.addEventListener('mousedown', (e) => {
+        if (e.button === 1) { // Middle mouse button
+            e.preventDefault();
+            searchQuestion(engine, e);
+        }
+    });
+});
+
+// Clean up when page unloads
+window.addEventListener('beforeunload', () => {
+    stopQuestionPolling();
+});
