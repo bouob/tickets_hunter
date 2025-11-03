@@ -39,6 +39,17 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
 
+# Deprecation warning
+print("\n" + "="*60)
+print("[DEPRECATION WARNING]")
+print("[棄用警告]")
+print("="*60)
+print("settings_old.py is no longer maintained.")
+print("Please use settings.py instead.")
+print("-" * 60)
+print("settings_old 已經停止更新，請改用 settings.py")
+print("="*60 + "\n")
+
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
