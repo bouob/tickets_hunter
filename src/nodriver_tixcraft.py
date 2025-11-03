@@ -753,6 +753,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     ticket_number = config_dict["ticket_number"]
 
     areas = None
+    pending_tickets = None
     is_ticket_number_assigned = False
 
     ticket_price_list = None
