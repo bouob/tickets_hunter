@@ -10,6 +10,82 @@
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png">
   <link rel="icon" href="/favicon.ico">
+  <style>
+    /* Search button unified styling */
+    .search-engine-btn {
+      border-color: #000 !important;
+      color: #000 !important;
+    }
+
+    .search-engine-btn:hover {
+      background-color: #000 !important;
+      border-color: #000 !important;
+      color: #fff !important;
+    }
+
+    /* Dark mode support */
+    [data-bs-theme="dark"] .search-engine-btn {
+      border-color: #fff !important;
+      color: #fff !important;
+    }
+
+    [data-bs-theme="dark"] .search-engine-btn:hover {
+      background-color: #fff !important;
+      border-color: #fff !important;
+      color: #000 !important;
+    }
+
+    /* Form input focus style - Blue instead of red */
+    .form-control:focus,
+    .form-select:focus {
+      border-color: #0d6efd !important;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    /* Dark mode form input focus */
+    [data-bs-theme="dark"] .form-control:focus,
+    [data-bs-theme="dark"] .form-select:focus {
+      border-color: #6ea8fe !important;
+      box-shadow: 0 0 0 0.25rem rgba(110, 168, 254, 0.25) !important;
+    }
+
+    /* Remove invalid validation styling (red border and exclamation icon) */
+    .form-control.is-invalid,
+    .was-validated .form-control:invalid,
+    .form-select.is-invalid,
+    .was-validated .form-select:invalid {
+      border-color: #dee2e6 !important;
+      background-image: none !important;
+      padding-right: 0.75rem !important;
+    }
+
+    /* Remove invalid focus styling */
+    .form-control.is-invalid:focus,
+    .was-validated .form-control:invalid:focus,
+    .form-select.is-invalid:focus,
+    .was-validated .form-select:invalid:focus {
+      border-color: #0d6efd !important;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    /* Dark mode - Remove invalid validation styling */
+    [data-bs-theme="dark"] .form-control.is-invalid,
+    [data-bs-theme="dark"] .was-validated .form-control:invalid,
+    [data-bs-theme="dark"] .form-select.is-invalid,
+    [data-bs-theme="dark"] .was-validated .form-select:invalid {
+      border-color: var(--bs-border-color) !important;
+      background-image: none !important;
+    }
+
+    /* Dark mode - Remove invalid focus styling */
+    [data-bs-theme="dark"] .form-control.is-invalid:focus,
+    [data-bs-theme="dark"] .was-validated .form-control:invalid:focus,
+    [data-bs-theme="dark"] .form-select.is-invalid:focus,
+    [data-bs-theme="dark"] .was-validated .form-select:invalid:focus {
+      border-color: #6ea8fe !important;
+      box-shadow: 0 0 0 0.25rem rgba(110, 168, 254, 0.25) !important;
+    }
+  </style>
 </head>
 <body>
   <div class="container py-4">
@@ -594,10 +670,14 @@
 
       <!-- tab 4 -->
       <div class="tab-pane fade" id="verification-tab-pane" role="tabpanel" aria-labelledby="verification-tab" tabindex="2">
+
         <div class="row mb-3">
           <label for="user_guess_string" class="col-sm-2 col-form-label">使用者自定字典</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <textarea class="form-control" id="user_guess_string" rows="3"></textarea>
+            <textarea class="form-control" id="user_guess_string" rows="3" placeholder="多個答案請用逗號分隔，例如：答案A,答案B,答案C"></textarea>
+            <div class="form-text">
+              系統偵測到驗證問題時會優先使用此處的答案。若未填寫且啟用「自動猜測驗證問題」，系統將嘗試自動推測答案。
+            </div>
           </div>
         </div>
 
@@ -608,6 +688,76 @@
               <input class="form-check-input" type="checkbox" id="auto_guess_options">
               <label class="form-check-label" for="auto_guess_options">啟用</label>
             </div>
+            <div class="form-text">
+              當未填寫「使用者自定字典」時，系統將嘗試從問題內容自動推測答案（如日期、時間等）。
+            </div>
+          </div>
+        </div>
+
+        <!-- 偵測到的驗證問題 (隱藏，檔案存在時才顯示) -->
+        <div class="alert alert-warning alert-dismissible fade" id="detected-question-alert" role="alert" style="display: none;">
+          <h5 class="alert-heading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            偵測到驗證問題！
+          </h5>
+          <hr>
+          <p class="mb-2"><strong>問題內容：</strong></p>
+          <div class="card bg-body-secondary">
+            <div class="card-body">
+              <pre id="detected-question-text" class="mb-0 text-body" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+            </div>
+          </div>
+          <hr>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-google-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-google me-1" viewBox="0 0 16 16">
+                <path d="M15.545 6.558a9.4 9.4 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.7 7.7 0 0 1 5.352 2.082l-2.284 2.284A4.35 4.35 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.8 4.8 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.7 3.7 0 0 0 1.599-2.431H8v-3.08z"/>
+              </svg>
+              Google
+            </button>
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-bing-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-bing me-1" viewBox="0 0 16 16">
+                <path d="M5 1v12.5L11 16l.5-1.5-2-1V2.5z"/>
+              </svg>
+              Bing
+            </button>
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-perplexity-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+              </svg>
+              Perplexity
+            </button>
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-grok-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-lightning-charge me-1" viewBox="0 0 16 16">
+                <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
+              </svg>
+              Grok
+            </button>
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-chatgpt-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-chat-dots me-1" viewBox="0 0 16 16">
+                <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/>
+              </svg>
+              ChatGPT
+            </button>
+            <button type="button" class="btn btn-sm search-engine-btn" id="search-claude-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-robot me-1" viewBox="0 0 16 16">
+                <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a25 25 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25 25 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135"/>
+                <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2zM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5"/>
+              </svg>
+              Claude
+            </button>
+          </div>
+          <div class="mt-2">
+            <small class="text-muted">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+              </svg>
+              提示：若自動答題失敗，可點擊上方按鈕搜尋答案，然後手動填入到「使用者自定字典」欄位中。
+            </small>
           </div>
         </div>
 
