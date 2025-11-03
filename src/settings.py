@@ -404,8 +404,23 @@ def clean_tmp_file():
 
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
-        global txt_question
-        txt_question.insert("1.0", "")
+        """Read MAXBOT_QUESTION.txt and return its content"""
+        question_text = ""
+        question_file = os.path.join(SCRIPT_DIR, CONST_MAXBOT_QUESTION_FILE)
+
+        # Check if file exists
+        if os.path.exists(question_file):
+            try:
+                with open(question_file, "r", encoding="utf-8") as f:
+                    question_text = f.read().strip()
+            except Exception as e:
+                print(f"Error reading question file: {e}")
+
+        # Return JSON response
+        self.write({
+            "exists": os.path.exists(question_file),
+            "question": question_text
+        })
 
 class VersionHandler(tornado.web.RequestHandler):
     def get(self):
