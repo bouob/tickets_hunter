@@ -39,6 +39,17 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CONST_APP_VERSION = "TicketsHunter (2025.10.30)"
 
+# Deprecation warning
+print("\n" + "="*60)
+print("[DEPRECATION WARNING]")
+print("[棄用警告]")
+print("="*60)
+print("settings_old.py is no longer maintained.")
+print("Please use settings.py instead.")
+print("-" * 60)
+print("settings_old 已經停止更新，請改用 settings.py")
+print("="*60 + "\n")
+
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
 CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
@@ -135,6 +146,8 @@ def load_translate():
     en_us["date_auto_select"] = 'Date Auto Select'
     en_us["date_select_order"] = 'Date select order'
     en_us["date_keyword"] = 'Date Keyword'
+    en_us["date_auto_fallback"] = 'Date Auto Fallback'
+    en_us["date_auto_fallback_tooltip"] = 'When all date keywords fail to match, should the system automatically select an available date based on "Date Select Order"?\nDefault: No (strict mode) to avoid purchasing unwanted tickets.'
     en_us["pass_date_is_sold_out"] = 'Pass date is sold out'
     en_us["auto_reload_coming_soon_page"] = 'Reload coming soon page'
     en_us["auto_reload_page_interval"] = 'Reload page interval(sec.)'
@@ -147,6 +160,8 @@ def load_translate():
     en_us["area_select_order"] = 'Area select order'
     en_us["area_keyword"] = 'Area Keyword'
     en_us["area_auto_select"] = 'Area Auto Select'
+    en_us["area_auto_fallback"] = 'Area Auto Fallback'
+    en_us["area_auto_fallback_tooltip"] = 'When all area keywords fail to match, should the system automatically select an available area based on "Area Select Order"?\nDefault: No (strict mode) to avoid purchasing unwanted tickets.'
     en_us["keyword_exclude"] = 'Keyword Exclude'
     en_us["keyword_usage"] = 'Keywords separated by semicolon (e.g: wheelchair;restricted)\nSpace in keyword means AND logic (e.g: VIP box)\nComma is just part of text (e.g: 3,280)'
 
@@ -255,6 +270,8 @@ def load_translate():
     zh_tw["date_auto_select"] = '日期自動點選'
     zh_tw["date_select_order"] = '日期排序方式'
     zh_tw["date_keyword"] = '日期關鍵字'
+    zh_tw["date_auto_fallback"] = '日期自動遞補'
+    zh_tw["date_auto_fallback_tooltip"] = '當所有日期關鍵字都未匹配時，是否根據「日期排序方式」自動選擇可用日期。\n預設為「否」（嚴格模式），避免誤購不想要的票券。'
     zh_tw["pass_date_is_sold_out"] = '避開「搶購一空」的日期'
     zh_tw["auto_reload_coming_soon_page"] = '自動刷新倒數中的日期頁面'
     zh_tw["auto_reload_page_interval"] = '自動刷新頁面間隔(秒)'
@@ -267,6 +284,8 @@ def load_translate():
     zh_tw["area_select_order"] = '區域排序方式'
     zh_tw["area_keyword"] = '區域關鍵字'
     zh_tw["area_auto_select"] = '區域自動點選'
+    zh_tw["area_auto_fallback"] = '區域自動遞補'
+    zh_tw["area_auto_fallback_tooltip"] = '當所有區域關鍵字都未匹配時，是否根據「區域排序方式」自動選擇可用區域。\n預設為「否」（嚴格模式），避免誤購不想要的票券。'
     zh_tw["keyword_exclude"] = '排除關鍵字'
     zh_tw["keyword_usage"] = '關鍵字用分號分隔 (如: 輪椅;不良)\n關鍵字內有空格表示 AND 邏輯 (如: VIP 包廂)\n逗號只是文字的一部分 (如: 3,280)'
 
@@ -376,6 +395,8 @@ def load_translate():
     ja_jp["date_auto_select"] = '日付自動選択'
     ja_jp["date_select_order"] = '日付のソート方法'
     ja_jp["date_keyword"] = '日付キーワード'
+    ja_jp["date_auto_fallback"] = '日付自動フォールバック'
+    ja_jp["date_auto_fallback_tooltip"] = 'すべての日付キーワードが一致しない場合、「日付のソート方法」に基づいて利用可能な日付を自動的に選択しますか？\nデフォルト：いいえ（厳格モード）、望まないチケットの購入を避けるため。'
     ja_jp["pass_date_is_sold_out"] = '売り切れ日付をスキップ'
     ja_jp["auto_reload_coming_soon_page"] = '準備中ページをリロード'
     ja_jp["auto_reload_page_interval"] = 'ページリロード間隔(秒)'
@@ -388,6 +409,8 @@ def load_translate():
     ja_jp["area_select_order"] = 'エリアソート方法'
     ja_jp["area_keyword"] = 'エリアキーワード'
     ja_jp["area_auto_select"] = 'エリア自動選択'
+    ja_jp["area_auto_fallback"] = 'エリア自動フォールバック'
+    ja_jp["area_auto_fallback_tooltip"] = 'すべてのエリアキーワードが一致しない場合、「エリアソート方法」に基づいて利用可能なエリアを自動的に選択しますか？\nデフォルト：いいえ（厳格モード）、望まないチケットの購入を避けるため。'
     ja_jp["keyword_exclude"] = '除外キーワード'
     ja_jp["keyword_usage"] = 'キーワードはセミコロンで区切る (例: 車椅子;制限)\nキーワード内のスペースはANDロジック (例: VIP ボックス)\nカンマはテキストの一部です (例: 3,280)'
 
@@ -580,6 +603,10 @@ def get_default_config():
     config_dict["advanced"]["idle_keyword_second"] = ""
     config_dict["advanced"]["resume_keyword_second"] = ""
 
+    # Keyword priority fallback (Feature 003)
+    config_dict["date_auto_fallback"] = False
+    config_dict["area_auto_fallback"] = False
+
     return config_dict
 
 def read_last_url_from_file():
@@ -678,8 +705,10 @@ def btn_save_act(slience_mode=False):
     global txt_user_guess_string
 
     global chk_state_date_auto_select
+    global chk_state_date_auto_fallback
     global txt_date_keyword
     global chk_state_area_auto_select
+    global chk_state_area_auto_fallback
     global txt_area_keyword
     global txt_keyword_exclude
     global txt_remote_url
@@ -795,6 +824,8 @@ def btn_save_act(slience_mode=False):
         date_keyword = txt_date_keyword.get("1.0",END).strip()
         date_keyword = util.format_config_keyword_for_json(date_keyword)
         config_dict["date_auto_select"]["date_keyword"] = date_keyword
+
+        config_dict["date_auto_fallback"] = bool(chk_state_date_auto_fallback.get())
 
         config_dict["tixcraft"]["pass_date_is_sold_out"] = bool(chk_state_pass_date_is_sold_out.get())
         config_dict["tixcraft"]["auto_reload_coming_soon_page"] = bool(chk_state_auto_reload_coming_soon_page.get())
@@ -922,6 +953,8 @@ def btn_save_act(slience_mode=False):
         config_dict["refresh_datetime"] = txt_refresh_datetime.get().strip()
         config_dict["area_auto_select"]["enable"] = bool(chk_state_area_auto_select.get())
         config_dict["area_auto_select"]["mode"] = combo_area_auto_select_mode.get().strip()
+
+        config_dict["area_auto_fallback"] = bool(chk_state_area_auto_fallback.get())
 
         config_dict["advanced"]["play_sound"]["ticket"] = bool(chk_state_play_ticket_sound.get())
         config_dict["advanced"]["play_sound"]["order"] = bool(chk_state_play_order_sound.get())
@@ -1171,7 +1204,6 @@ def applyNewLanguage():
     global lbl_area_auto_select_mode
     global lbl_area_keyword
     global lbl_keyword_exclude
-    global lbl_keyword_usage
 
     global lbl_pass_date_is_sold_out
     global lbl_auto_reload_coming_soon_page
@@ -1259,7 +1291,6 @@ def applyNewLanguage():
     lbl_area_auto_select_mode.config(text=translate[language_code]["area_select_order"])
     lbl_area_keyword.config(text=translate[language_code]["area_keyword"])
     lbl_keyword_exclude.config(text=translate[language_code]["keyword_exclude"])
-    lbl_keyword_usage.config(text=translate[language_code]["keyword_usage"])
     lbl_pass_date_is_sold_out.config(text=translate[language_code]["pass_date_is_sold_out"])
     lbl_auto_reload_coming_soon_page.config(text=translate[language_code]["auto_reload_coming_soon_page"])
     lbl_ocr_captcha.config(text=translate[language_code]["ocr_captcha"])
@@ -1441,7 +1472,7 @@ def showHideBlocks():
 
     # Always show date/session selection block (universal for all platforms)
     if 'frame_group_tixcraft' in globals():
-        frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, padx=UI_PADDING_X)
+        frame_group_tixcraft.grid(column=0, row=frame_group_tixcraft_index, sticky = W, padx=UI_PADDING_X)
         showHideTixcraftBlocks()
 
 def showHideOcrCaptchaWithSubmit():
@@ -1686,9 +1717,26 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_date_keyword.grid(column=0, row=date_keyword_index, sticky = E+N)
 
     global txt_date_keyword
-    txt_date_keyword = Text(frame_group_tixcraft, width=30, height=4)
-    txt_date_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_date_keyword = Text(frame_group_tixcraft, width=30, height=2)
+    txt_date_keyword.grid(column=1, row=group_row_count, rowspan=2, sticky = W, pady=4)
     txt_date_keyword.insert("1.0", util.format_keyword_for_display(config_dict["date_auto_select"]["date_keyword"].strip()))
+
+    group_row_count+=2
+
+    # Add spacing before date_auto_fallback
+    group_row_count+=1
+
+    global lbl_date_auto_fallback
+    lbl_date_auto_fallback = Label(frame_group_tixcraft, text=translate[language_code]['date_auto_fallback'])
+    lbl_date_auto_fallback.grid(column=0, row=group_row_count, sticky = E, pady=4)
+
+    global chk_state_date_auto_fallback
+    chk_state_date_auto_fallback = BooleanVar()
+    chk_state_date_auto_fallback.set(config_dict.get("date_auto_fallback", False))
+
+    global chk_date_auto_fallback
+    chk_date_auto_fallback = Checkbutton(frame_group_tixcraft, text=translate[language_code]['enable'], variable=chk_state_date_auto_fallback)
+    chk_date_auto_fallback.grid(column=1, row=group_row_count, sticky = W, pady=4)
 
     group_row_count+=1
 
@@ -1767,9 +1815,26 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_area_keyword.grid(column=0, row=group_row_count, sticky = E+N)
 
     global txt_area_keyword
-    txt_area_keyword = Text(frame_group_area, width=30, height=4)
-    txt_area_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_area_keyword = Text(frame_group_area, width=30, height=2)
+    txt_area_keyword.grid(column=1, row=group_row_count, rowspan=2, sticky = W, pady=4)
     txt_area_keyword.insert("1.0", util.format_keyword_for_display(config_dict["area_auto_select"]["area_keyword"].strip()))
+
+    group_row_count+=2
+
+    # Add spacing before area_auto_fallback
+    group_row_count+=2
+
+    global lbl_area_auto_fallback
+    lbl_area_auto_fallback = Label(frame_group_area, text=translate[language_code]['area_auto_fallback'])
+    lbl_area_auto_fallback.grid(column=0, row=group_row_count, sticky = E, pady=4)
+
+    global chk_state_area_auto_fallback
+    chk_state_area_auto_fallback = BooleanVar()
+    chk_state_area_auto_fallback.set(config_dict.get("area_auto_fallback", False))
+
+    global chk_area_auto_fallback
+    chk_area_auto_fallback = Checkbutton(frame_group_area, text=translate[language_code]['enable'], variable=chk_state_area_auto_fallback)
+    chk_area_auto_fallback.grid(column=1, row=group_row_count, sticky = W, pady=4)
 
     group_row_count+=1
 
@@ -1778,15 +1843,11 @@ def PreferenctTab(root, config_dict, language_code, UI_PADDING_X):
     lbl_keyword_exclude.grid(column=0, row=group_row_count, sticky = E+N)
 
     global txt_keyword_exclude
-    txt_keyword_exclude = Text(frame_group_area, width=30, height=4)
-    txt_keyword_exclude.grid(column=1, row=group_row_count, sticky = W)
+    txt_keyword_exclude = Text(frame_group_area, width=30, height=2)
+    txt_keyword_exclude.grid(column=1, row=group_row_count, rowspan=2, sticky = W, pady=4)
     txt_keyword_exclude.insert("1.0", util.format_keyword_for_display(config_dict["keyword_exclude"].strip()))
 
-    group_row_count+=1
-
-    global lbl_keyword_usage
-    lbl_keyword_usage = Label(frame_group_area, text=translate[language_code]['keyword_usage'])
-    lbl_keyword_usage.grid(column=1, row=group_row_count, sticky = W)
+    group_row_count+=2
 
     # flush
     frame_group_area.grid(column=0, row=row_count, sticky = W, padx=UI_PADDING_X)
@@ -2147,10 +2208,10 @@ def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_user_guess_string
     txt_user_guess_string = Text(frame_group_header, width=30, height=4)
-    txt_user_guess_string.grid(column=1, row=group_row_count, sticky = W)
+    txt_user_guess_string.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_user_guess_string.insert("1.0", config_dict["advanced"]["user_guess_string"].strip())
 
-    group_row_count+=1
+    group_row_count+=4
 
     global lbl_remote_url
     lbl_remote_url = Label(frame_group_header, text=translate[language_code]['remote_url'])
@@ -2158,7 +2219,7 @@ def VerificationTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_remote_url
     txt_remote_url = Text(frame_group_header, width=30, height=4)
-    txt_remote_url.grid(column=1, row=group_row_count, sticky = W)
+    txt_remote_url.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_remote_url.insert("1.0", util.format_keyword_for_display(config_dict['advanced']["remote_url"].strip()))
 
     icon_preview_text_filename = "assets/icons/icon_chrome_4.gif"
@@ -2782,10 +2843,10 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_idle_keyword
     txt_idle_keyword = Text(frame_group_header, width=30, height=4)
-    txt_idle_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_idle_keyword.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_idle_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword"].strip()))
 
-    group_row_count +=1
+    group_row_count +=4
 
     global lbl_resume_keyword
     lbl_resume_keyword = Label(frame_group_header, text=translate[language_code]['resume_keyword'])
@@ -2793,10 +2854,10 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_resume_keyword
     txt_resume_keyword = Text(frame_group_header, width=30, height=4)
-    txt_resume_keyword.grid(column=1, row=group_row_count, sticky = W)
+    txt_resume_keyword.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_resume_keyword.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword"].strip()))
 
-    group_row_count +=1
+    group_row_count +=4
 
     lbl_time_example = Label(frame_group_header, text="例: 11:55:00,15:00:00", font=('Arial', 8), fg='#666666')
     lbl_time_example.grid(column=1, row=group_row_count, sticky = W)
@@ -2809,10 +2870,10 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_idle_keyword_second
     txt_idle_keyword_second = Text(frame_group_header, width=30, height=4)
-    txt_idle_keyword_second.grid(column=1, row=group_row_count, sticky = W)
+    txt_idle_keyword_second.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_idle_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["idle_keyword_second"].strip()))
 
-    group_row_count +=1
+    group_row_count +=4
 
     global lbl_resume_keyword_second
     lbl_resume_keyword_second = Label(frame_group_header, text=translate[language_code]['resume_keyword_second'])
@@ -2820,10 +2881,10 @@ def RuntimeTab(root, config_dict, language_code, UI_PADDING_X):
 
     global txt_resume_keyword_second
     txt_resume_keyword_second = Text(frame_group_header, width=30, height=4)
-    txt_resume_keyword_second.grid(column=1, row=group_row_count, sticky = W)
+    txt_resume_keyword_second.grid(column=1, row=group_row_count, rowspan=4, sticky = W, pady=4)
     txt_resume_keyword_second.insert("1.0", util.format_keyword_for_display(config_dict["advanced"]["resume_keyword_second"].strip()))
 
-    group_row_count +=1
+    group_row_count +=4
 
     lbl_second_example = Label(frame_group_header, text="例: 50,00", font=('Arial', 8), fg='#666666')
     lbl_second_example.grid(column=1, row=group_row_count, sticky = W)
@@ -3013,7 +3074,7 @@ def main_gui():
     load_GUI(root, config_dict)
 
     GUI_SIZE_WIDTH = 610
-    GUI_SIZE_HEIGHT = 660
+    GUI_SIZE_HEIGHT = 650
 
     GUI_SIZE_MACOS = str(GUI_SIZE_WIDTH) + 'x' + str(GUI_SIZE_HEIGHT)
     GUI_SIZE_WINDOWS=str(GUI_SIZE_WIDTH-70) + 'x' + str(GUI_SIZE_HEIGHT-80)

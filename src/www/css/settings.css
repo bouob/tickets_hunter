@@ -1,5 +1,15 @@
+/* jf-openhuninn Font */
+@font-face {
+	font-family: 'jf-openhuninn';
+	src: url('jf-openhuninn-2.1.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
 body {
 	margin: 36px;
+	font-family: 'jf-openhuninn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 textarea {
@@ -60,4 +70,135 @@ textarea {
     --bd-callout-color: var(--bs-danger-text-emphasis);
     --bd-callout-bg: var(--bs-danger-bg-subtle);
     --bd-callout-border: var(--bs-danger-border-subtle)
+}
+
+/* Placeholder 文字樣式 - 淺灰色 */
+::placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+::-webkit-input-placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+::-moz-placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+/* Dark Mode Toggle in Nav Tabs */
+.nav-tabs .nav-item .form-check-label {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    padding-left: 0.5rem;
+    cursor: pointer;
+}
+
+.nav-tabs .nav-item .form-check {
+    padding-left: 2.5em;
+}
+
+/* Dark Mode Styles */
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] body {
+    background-color: #212529;
+    color: #dee2e6;
+}
+
+[data-bs-theme="dark"] .bd-callout {
+    background-color: var(--bs-secondary-bg);
+    border-left-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .bd-callout-info {
+    --bd-callout-bg: #1a3a4a;
+    --bd-callout-border: #0dcaf0;
+}
+
+[data-bs-theme="dark"] .bd-callout-warning {
+    --bd-callout-bg: #3d3420;
+    --bd-callout-border: #ffc107;
+}
+
+[data-bs-theme="dark"] .bd-callout-danger {
+    --bd-callout-bg: #3d1f1f;
+    --bd-callout-border: #dc3545;
+}
+
+[data-bs-theme="dark"] ::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] ::-webkit-input-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] ::-moz-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+[data-bs-theme="dark"] :-ms-input-placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+/* Buy Me a Coffee Button Styles - Bootstrap Style */
+.bmc-button {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #20c997;
+    --bs-btn-border-color: #20c997;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #1aa179;
+    --bs-btn-hover-border-color: #199473;
+    --bs-btn-focus-shadow-rgb: 32, 201, 151;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #199473;
+    --bs-btn-active-border-color: #18886c;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #20c997;
+    --bs-btn-disabled-border-color: #20c997;
+}
+
+.bmc-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.bmc-button:hover {
+    color: var(--bs-btn-hover-color);
+    text-decoration: none;
+}
+
+.bmc-button:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), 0.5);
+}
+
+.bmc-emoji {
+    font-size: 1.25rem;
+}
+
+/* Dark Mode: Use Bootstrap's teal color with adjusted shades */
+[data-bs-theme="dark"] .bmc-button {
+    --bs-btn-bg: #0dcaf0;
+    --bs-btn-border-color: #0dcaf0;
+    --bs-btn-hover-bg: #31d2f2;
+    --bs-btn-hover-border-color: #25cff2;
+    --bs-btn-focus-shadow-rgb: 13, 202, 240;
+    --bs-btn-active-bg: #25cff2;
+    --bs-btn-active-border-color: #3dd5f3;
 }
