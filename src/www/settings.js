@@ -662,7 +662,7 @@ function maxbot_status_api()
             $("#pause_btn").addClass("disappear");
             $("#resume_btn").removeClass("disappear");
         }
-        $("#last_url").html(data.last_url);
+        $("#last_url").text(data.last_url);
         $("#maxbot_status").html(status_text).prop( "class", status_class);
     })
     .fail(function() {

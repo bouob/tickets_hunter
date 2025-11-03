@@ -219,10 +219,10 @@ def read_last_url_from_file():
     text = ""
     if os.path.exists(last_url_filepath):
         try:
-            with open(last_url_filepath, "r") as text_file:
-                text = text_file.readline()
+            with open(last_url_filepath, "r", encoding="utf-8") as text_file:
+                text = text_file.readline().strip()
         except Exception as e:
-            pass
+            print(f"[ERROR] Failed to read last_url from {last_url_filepath}: {e}")
     return text
 
 def load_json():
