@@ -204,10 +204,10 @@ python settings.py
 
 | 值 | 中文說明 | 適用情境 |
 |---|---------|---------|
-| from top to bottom | 從上到下 | 選最早場次 |
-| from bottom to top | 從下到上 | 選最晚場次 |
-| center | 中間 | 平衡策略 |
-| random | 隨機 | 增加變化性（預設） |
+| from top to bottom | 正序 | 選最早場次 |
+| from bottom to top | 倒序 | 選最晚場次 |
+| center | 取中間 | 平衡策略 |
+| random | 隨機變化 | 增加變化性（預設） |
 
 **詳細說明**：參考 [自動回退策略](keyword-mechanism.md#自動回退策略)
 
@@ -321,10 +321,10 @@ python settings.py
 
 | 值 | 中文說明 | 適用情境 |
 |---|---------|---------|
-| from top to bottom | 從上到下 | 選最貴/最好位置（通常） |
-| from bottom to top | 從下到上 | 選最便宜位置 |
-| center | 中間 | 中等價位 |
-| random | 隨機 | 分散風險（預設） |
+| from top to bottom | 正序 | 選最貴/最好位置（通常） |
+| from bottom to top | 倒序 | 選最便宜位置 |
+| center | 取中間 | 中等價位 |
+| random | 隨機變化 | 分散風險（預設） |
 
 **詳細說明**：參考 [自動回退策略](keyword-mechanism.md#自動回退策略)
 
@@ -679,8 +679,8 @@ iBon 的 Cookie qware，用於快速登入。
 
 ### 建議 1：新手推薦設定
 - **WebDriver類別**：nodriver
-- **日期排序方式**：from top to bottom（選最早場次）
-- **區域排序方式**：from top to bottom（選最好位置）
+- **日期排序方式**：正序（選最早場次）
+- **區域排序方式**：正序（選最好位置）
 - **排除關鍵字**：務必設定（避免誤選輪椅席）
 - **輸出詳細除錯訊息**：關閉（避免影響效能，除非需要除錯）
 

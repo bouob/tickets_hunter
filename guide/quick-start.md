@@ -169,14 +169,14 @@ https://kktix.com/events/example-event
 - 區域：**區域排序方式**（下拉選單）
 
 **可選值**：
-- from top to bottom - 選**第一個**可用選項（通常是最早日期或最貴區域）
-- from bottom to top - 選**最後一個**可用選項
-- center - 選**中間**的選項
-- random - **隨機**選擇
+- 正序 - 選**第一個**可用選項（通常是最早日期或最貴區域）
+- 倒序 - 選**最後一個**可用選項
+- 取中間 - 選**中間**的選項
+- 隨機變化 - **隨機**選擇
 
 **推薦設定**：
-- 日期：from top to bottom (選最早場次)
-- 區域：from top to bottom (選最貴區域，通常位置最好)
+- 日期：正序 (選最早場次)
+- 區域：正序 (選最貴區域，通常位置最好)
 
 ---
 
@@ -381,7 +381,6 @@ pip install -r requirement.txt
 
 1. **深入了解關鍵字機制** - [關鍵字與回退機制](keyword-mechanism.md)
 2. **探索進階設定** - [詳細設定說明](settings-guide.md)
-3. **回到總覽** - [使用者手冊首頁](README.md)
 
 ---
 

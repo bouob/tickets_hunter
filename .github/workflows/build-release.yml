@@ -1,0 +1,196 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on tags like v2025.11.03
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Get version from tag
+        id: get_version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirement.txt
+          pip install pyinstaller
+
+      - name: Verify dependencies
+        run: |
+          python -c "import ddddocr; import nodriver; import selenium; import tornado; print('All core packages installed!')"
+          python -m PyInstaller --version
+
+      - name: Build executables with PyInstaller
+        run: |
+          echo "Building nodriver_tixcraft.exe..."
+          python -m PyInstaller build_scripts/nodriver_tixcraft.spec --clean --noconfirm
+
+          echo "Building chrome_tixcraft.exe..."
+          python -m PyInstaller build_scripts/chrome_tixcraft.spec --clean --noconfirm
+
+          echo "Building settings.exe..."
+          python -m PyInstaller build_scripts/settings.spec --clean --noconfirm
+
+          echo "Building config_launcher.exe..."
+          python -m PyInstaller build_scripts/config_launcher.spec --clean --noconfirm
+
+          echo "All executables built successfully!"
+
+      - name: Create unified directory structure
+        shell: cmd
+        run: |
+          echo Creating unified directory...
+          mkdir dist\tickets_hunter
+
+          echo Copying executables...
+          xcopy /Y dist\nodriver_tixcraft\nodriver_tixcraft.exe dist\tickets_hunter\
+          xcopy /Y dist\chrome_tixcraft\chrome_tixcraft.exe dist\tickets_hunter\
+          xcopy /Y dist\settings\settings.exe dist\tickets_hunter\
+          xcopy /Y dist\config_launcher\config_launcher.exe dist\tickets_hunter\
+
+          echo Merging _internal directories...
+          xcopy /E /I /Y dist\nodriver_tixcraft\_internal dist\tickets_hunter\_internal
+          xcopy /E /I /Y dist\chrome_tixcraft\_internal\* dist\tickets_hunter\_internal
+          xcopy /E /I /Y dist\settings\_internal\* dist\tickets_hunter\_internal
+          xcopy /E /I /Y dist\config_launcher\_internal\* dist\tickets_hunter\_internal
+
+          echo Copying shared resources from src/...
+          REM Only copy browser extension directories (chromedriver.exe excluded - settings.exe auto-downloads it)
+          xcopy /E /I /Y src\webdriver\Maxbotplus_1.0.0 dist\tickets_hunter\webdriver\Maxbotplus_1.0.0
+          xcopy /E /I /Y src\webdriver\Maxblockplus_1.0.0 dist\tickets_hunter\webdriver\Maxblockplus_1.0.0
+          xcopy /E /I /Y src\assets dist\tickets_hunter\assets
+          xcopy /E /I /Y src\www dist\tickets_hunter\www
+          REM settings.json excluded - program generates it automatically
+          REM ddddocr data files are automatically collected by PyInstaller via collect_data_files()
+
+          echo Copying documentation...
+          copy build_scripts\README_Release.txt dist\tickets_hunter\
+          if exist CHANGELOG.md copy CHANGELOG.md dist\tickets_hunter\
+
+          echo Unified directory created successfully!
+
+      - name: Create ZIP archive
+        shell: pwsh
+        run: |
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+          $zipName = "tickets_hunter_v$version.zip"
+          Write-Host "Creating $zipName..."
+          Compress-Archive -Path "dist\tickets_hunter\*" -DestinationPath $zipName -Force
+          Write-Host "ZIP archive created successfully!"
+
+          # Display file info
+          Get-ChildItem $zipName | Format-List Name, Length
+
+      - name: Extract CHANGELOG for release notes
+        id: changelog
+        shell: pwsh
+        run: |
+          $version = "${{ steps.get_version.outputs.VERSION }}"
+
+          if (Test-Path "CHANGELOG.md") {
+            $content = Get-Content "CHANGELOG.md" -Raw
+
+            # Try to extract current version's changes
+            $pattern = "## \[$version\].*?(?=## \[|\z)"
+            if ($content -match $pattern) {
+              $notes = $Matches[0]
+            } else {
+              # Fallback: extract from v prefix
+              $pattern = "## \[v?$version\].*?(?=## \[|\z)"
+              if ($content -match $pattern) {
+                $notes = $Matches[0]
+              } else {
+                # Fallback: use latest entry
+                $pattern = "## \[.*?\].*?(?=## \[|\z)"
+                if ($content -match $pattern) {
+                  $notes = $Matches[0]
+                } else {
+                  $notes = "Version $version release"
+                }
+              }
+            }
+
+            # Clean up and format
+            $notes = $notes -replace '## \[.*?\]', ''
+            $notes = $notes.Trim()
+
+            # Write to output (escape multiline)
+            $notes = $notes -replace "`r`n", "%0A"
+            echo "NOTES=$notes" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "NOTES=Version $version release" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Tickets Hunter v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            # Tickets Hunter v${{ steps.get_version.outputs.VERSION }}
+
+            多平台搶票自動化系統
+
+            ## 下載說明
+
+            下載 `tickets_hunter_v${{ steps.get_version.outputs.VERSION }}.zip` 並解壓縮。
+
+            執行檔說明：
+            - `nodriver_tixcraft.exe` - NoDriver 版本（推薦，反偵測最佳）
+            - `chrome_tixcraft.exe` - Chrome 版本（維護模式）
+            - `settings.exe` - 網頁版設定編輯器
+            - `config_launcher.exe` - GUI 多開管理器
+
+            詳細使用說明請參閱壓縮檔內的 `README_Release.txt`。
+
+            ## 更新內容
+
+            ${{ steps.changelog.outputs.NOTES }}
+
+            ## 系統需求
+
+            - Windows 10/11
+            - 無需安裝 Python（已包含所有依賴）
+
+            ## 支援平台
+
+            - TixCraft 拓元
+            - KKTIX
+            - ibon 售票
+            - TicketPlus 遠大
+            - KHAM 寬宏
+            - 年代售票
+            - Teamear 添翼
+            - Indievox
+          files: |
+            tickets_hunter_v${{ steps.get_version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts (for debugging)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/
+            dist/*/warn-*.txt
+          retention-days: 7
