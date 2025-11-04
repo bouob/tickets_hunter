@@ -735,7 +735,6 @@ last_updated: "2025-11-01"
 
 - [快速入門指南](quick-start.md) - 第一次使用設定
 - [詳細設定說明](settings-guide.md) - 完整設定參考
-- [使用者手冊首頁](README.md) - 回到總覽
 
 ---
 

@@ -381,7 +381,6 @@ pip install -r requirement.txt
 
 1. **深入了解關鍵字機制** - [關鍵字與回退機制](keyword-mechanism.md)
 2. **探索進階設定** - [詳細設定說明](settings-guide.md)
-3. **回到總覽** - [使用者手冊首頁](README.md)
 
 ---
 
