@@ -180,7 +180,7 @@ jobs:
             - Indievox
           files: |
             tickets_hunter_v${{ steps.get_version.outputs.VERSION }}.zip
-          draft: false
+          draft: true
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
