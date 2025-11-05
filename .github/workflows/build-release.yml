@@ -143,41 +143,9 @@ jobs:
         with:
           name: Tickets Hunter v${{ steps.get_version.outputs.VERSION }}
           body: |
-            # Tickets Hunter v${{ steps.get_version.outputs.VERSION }}
-
-            多平台搶票自動化系統
-
-            ## 下載說明
-
-            下載 `tickets_hunter_v${{ steps.get_version.outputs.VERSION }}.zip` 並解壓縮。
-
-            執行檔說明：
-            - `nodriver_tixcraft.exe` - NoDriver 版本（推薦，反偵測最佳）
-            - `chrome_tixcraft.exe` - Chrome 版本（維護模式）
-            - `settings.exe` - 網頁版設定編輯器
-            - `config_launcher.exe` - GUI 多開管理器
-
-            詳細使用說明請參閱壓縮檔內的 `README_Release.txt`。
-
             ## 更新內容
 
             ${{ steps.changelog.outputs.NOTES }}
-
-            ## 系統需求
-
-            - Windows 10/11
-            - 無需安裝 Python（已包含所有依賴）
-
-            ## 支援平台
-
-            - TixCraft 拓元
-            - KKTIX
-            - ibon 售票
-            - TicketPlus 遠大
-            - KHAM 寬宏
-            - 年代售票
-            - Teamear 添翼
-            - Indievox
           files: |
             tickets_hunter_v${{ steps.get_version.outputs.VERSION }}.zip
           draft: true
