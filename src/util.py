@@ -2082,7 +2082,7 @@ def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix
     if len(headless) > 0:
         cmd_argument.append('--headless=' + headless)
 
-    working_dir = os.path.dirname(os.path.realpath(__file__))
+    working_dir = get_app_root()
     if hasattr(sys, 'frozen'):
         print("execute in frozen mode")
         # check platform here.
