@@ -1,0 +1,10 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(cd :*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

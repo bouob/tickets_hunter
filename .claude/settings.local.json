@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Bash(timeout:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(python -c \"print(''File check OK'')\")",
+      "Bash(lsof:*)",
+      "Bash(python -c \"import time; time.sleep(2); print(''Wait complete'')\")",
+      "Bash(tasklist)",
+      "Bash(findstr:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:ultrafunkamsterdam.github.io)",
+      "WebFetch(domain:www.selenium.dev)",
+      "WebFetch(domain:chromereleases.googleblog.com)",
+      "WebFetch(domain:chromedriver.chromium.org)",
+      "WebFetch(domain:pyinstaller.org)",
+      "WebFetch(domain:developer.chrome.com)",
+      "WebFetch(domain:stackoverflow.max-everyday.com)",
+      "WebFetch(domain:jrsoftware.org)",
+      "WebFetch(domain:nuitka.net)",
+      "WebFetch(domain:www.whatismybrowser.com)",
+      "WebFetch(domain:tixcraft.com)",
+      "WebFetch(domain:kktix.com)",
+      "WebFetch(domain:ticket.ibon.com.tw)",
+      "WebFetch(domain:aka.ms)",
+      "WebFetch(domain:onnxruntime.ai)",
+      "WebFetch(domain:upx.github.io)",
+      "WebFetch(domain:max-everyday.com)",
+      "WebFetch(domain:law.moj.gov.tw)",
+      "WebFetch(domain:chromedevtools.github.io)",
+      "SlashCommand(/speckit.analyze)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:pypi.org)",
+      "SlashCommand(/speckit.specify 將 FamiTicket (全家網) 從 Chrome 遷移到 NoDriver，實作完整票務自動化流程（帳號密碼登入、日期/區域選擇、驗證問題、自動補票），參考 Chrome 實作邏輯與 NoDriver TixCraft/KKTIX 模式)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "outputStyle": "default"
+}
