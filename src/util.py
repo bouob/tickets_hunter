@@ -287,7 +287,7 @@ def save_url_to_file(remote_url, CONST_MAXBOT_ANSWER_ONLINE_FILE, force_write = 
 
     if is_write_to_file:
         html_text = format_config_keyword_for_json(html_text)
-        working_dir = os.path.dirname(os.path.realpath(__file__))
+        working_dir = get_app_root()
         target_path = os.path.join(working_dir, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         write_string_to_file(target_path, html_text)
     return is_write_to_file
