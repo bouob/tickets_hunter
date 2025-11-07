@@ -1,0 +1,120 @@
+name: Lock Closed Issues
+
+# 定時每天日本時間早上 4 點執行（UTC 19:00，因為日本是 UTC+9）
+# 也支援手動觸發
+on:
+  schedule:
+    - cron: "0 19 * * *"  # 每天 UTC 19:00（日本時間 04:00）
+  workflow_dispatch:  # 允許手動觸發
+
+permissions:
+  issues: write  # 需要寫入權限以鎖定 issue
+
+jobs:
+  lock-stale-issues:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Set 3-day threshold
+        id: set-threshold
+        run: |
+          # 計算 3 天前的時間戳
+          THRESHOLD_DATE=$(date -u -d '3 days ago' '+%Y-%m-%dT%H:%M:%SZ')
+          echo "THRESHOLD_DATE=$THRESHOLD_DATE" >> $GITHUB_ENV
+          echo "設定時間閾值: $THRESHOLD_DATE"
+
+      - name: Lock closed issues inactive for 3 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "開始檢查已關閉的 issues..."
+          echo "倉庫: $REPO"
+          echo "時間閾值: $THRESHOLD_DATE"
+          echo ""
+
+          # 計數器
+          LOCKED_COUNT=0
+          SKIPPED_COUNT=0
+
+          # 批次查詢已關閉的 issues（每頁 100 筆，按更新時間升序）
+          PAGE=1
+          while true; do
+            echo "正在處理第 $PAGE 頁..."
+
+            # 查詢已關閉的 issues
+            ISSUES=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/repos/$REPO/issues?state=closed&per_page=100&page=$PAGE&sort=updated&direction=asc" \
+              --jq '.[] | select(.pull_request == null) | {number: .number, updated_at: .updated_at, locked: .locked}')
+
+            # 如果沒有更多 issues，跳出循環
+            if [ -z "$ISSUES" ]; then
+              echo "沒有更多 issues 需要處理"
+              break
+            fi
+
+            # 處理每個 issue
+            echo "$ISSUES" | jq -c '.' | while read -r issue; do
+              ISSUE_NUMBER=$(echo "$issue" | jq -r '.number')
+              UPDATED_AT=$(echo "$issue" | jq -r '.updated_at')
+              IS_LOCKED=$(echo "$issue" | jq -r '.locked')
+
+              # 跳過已鎖定的 issues
+              if [ "$IS_LOCKED" = "true" ]; then
+                echo "  已經鎖定，跳過: #$ISSUE_NUMBER"
+                SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+                continue
+              fi
+
+              # 檢查更新時間是否早於閾值
+              if [[ "$UPDATED_AT" < "$THRESHOLD_DATE" ]]; then
+                echo "  準備鎖定: #$ISSUE_NUMBER (最後更新: $UPDATED_AT)"
+
+                # 定義評論內容
+                COMMENT_BODY="此 Issue 已關閉超過 3 天且無新活動，現已自動鎖定。
+
+                若有新問題或相關疑問，請開啟新的 Issue 並提供：
+                - 清楚的問題描述
+                - 重現步驟
+                - 完整錯誤訊息
+                - 基本資訊（OS、版本號、平台等）
+
+                感謝您的理解與配合！
+
+                ---
+                *自動化系統 - Lock Closed Issues*"
+
+                # 新增評論
+                if gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$COMMENT_BODY"; then
+                  echo "    評論已新增: #$ISSUE_NUMBER"
+                else
+                  echo "    新增評論失敗: #$ISSUE_NUMBER"
+                  continue
+                fi
+
+                # 鎖定 issue（原因：resolved）
+                if gh issue lock "$ISSUE_NUMBER" --repo "$REPO" --reason "resolved"; then
+                  echo "    成功鎖定: #$ISSUE_NUMBER"
+                  LOCKED_COUNT=$((LOCKED_COUNT + 1))
+                else
+                  echo "    鎖定失敗: #$ISSUE_NUMBER"
+                fi
+              else
+                # 因為是按更新時間升序排列，如果遇到較新的 issue 就可以停止
+                echo "  尚未超過 3 天，停止檢查: #$ISSUE_NUMBER (最後更新: $UPDATED_AT)"
+                break 2  # 跳出兩層循環
+              fi
+            done
+
+            PAGE=$((PAGE + 1))
+          done
+
+          echo ""
+          echo "======================================"
+          echo "執行完成！"
+          echo "已鎖定: $LOCKED_COUNT 個 issues"
+          echo "跳過: $SKIPPED_COUNT 個 issues（已鎖定）"
+          echo "======================================"
