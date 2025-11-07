@@ -1,0 +1,1190 @@
+https://www.famiticket.com.tw/Home/User/SignIn
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Password filled and form submitted
+[LOGIN] Login completed, redirected to: https://www.famiticket.com.tw/Home/
+[LOGIN] On home page, redirecting to target: https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/34e5705e-2822-410b-8fbc-8cf64db63167
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/877b2a15-4641-4d53-b3c6-33cc960b4022
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] Failed to click 'button.btn-buy': Node with given id does not belong to the document [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/8fc5d926-2748-4a7b-95fd-70ca6efeb9ff
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 7.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/8fc5d926-2748-4a7b-95fd-70ca6efeb9ff
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 0): VIP區2400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: VIP區2400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/d26abc0f-3fb7-4653-817c-2dac2ac08e13
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/2e8da52f-ee0f-4e1a-872a-0e8ca3d36eb9
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] Failed to click 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/863ab02a-13c0-4e9a-b384-8b27e4b5264a
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 6.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/863ab02a-13c0-4e9a-b384-8b27e4b5264a
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/1e567f60-e9e8-4a40-9e97-afab6fb05bef
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/1e567f60-e9e8-4a40-9e97-afab6fb05bef
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/a22078e2-c8f2-4fe4-9379-b31fdb544c4d
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/1665b868-8b7c-4339-a399-961b4aa6613c
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/353a8011-5bc7-4bfa-8da5-a4918c8bbf2e
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/e7676673-5a46-41b6-bd9e-c9327afb63cb
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/6313ca15-619f-487d-a168-3e72d81de3f0
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/4970a3b5-c3c7-414e-a134-7c5f0d083a66
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/9d4028d4-d1a8-4ceb-bd72-25ac52d4168a
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/9d4028d4-d1a8-4ceb-bd72-25ac52d4168a
+[AREA SELECT] No area links found
+[AREA SELECT] Trying alternative selector 'a.area': 0 found
+[AREA SELECT] Elements with 'area' in class: 10
+[AREA SELECT] Total divs on page: 99
+[AREA SELECT] JavaScript query result: None
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/80600f9f-1e31-442e-9806-6b361d6d4042
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/80600f9f-1e31-442e-9806-6b361d6d4042
+[AREA SELECT] No area links found
+[AREA SELECT] Trying alternative selector 'a.area': 0 found
+[AREA SELECT] Elements with 'area' in class: 20
+[AREA SELECT] Total divs on page: 108
+[AREA SELECT] JavaScript query result: None
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/a51cd3b1-0695-48ed-9d1e-afbbb93ead3f
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/deb6f3af-0eb7-4d05-a291-bad8f5a51fb2
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Date selection failed: Could not find node with given id [code: -32000]
+[COORDINATOR] Date selection failed, stopping flow
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 9.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/deb6f3af-0eb7-4d05-a291-bad8f5a51fb2
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/ce84f9f5-d479-4c33-8cb4-763e90750d0c
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/25a86444-3bb8-41f0-b47d-a00367f1d0cc
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Date selection failed: Could not find node with given id [code: -32000]
+[COORDINATOR] Date selection failed, stopping flow
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 7.5s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/25a86444-3bb8-41f0-b47d-a00367f1d0cc
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/a310bf05-7467-4a9e-9c8e-6d8951a63373
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 9.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/a310bf05-7467-4a9e-9c8e-6d8951a63373
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/a0f95c16-e186-4bdd-8033-a39b97fd2069
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 9.5s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/a0f95c16-e186-4bdd-8033-a39b97fd2069
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 1): 一般區1400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: 一般區1400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/00ba575f-7837-41fd-9ede-ab5a7549d922
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/00ba575f-7837-41fd-9ede-ab5a7549d922
+[AREA SELECT] No area links found
+[AREA SELECT] Trying alternative selector 'a.area': 0 found
+[AREA SELECT] Elements with 'area' in class: 0
+[AREA SELECT] Total divs on page: 85
+[AREA SELECT] JavaScript query result: None
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/986e05fc-e7fc-44fb-8085-22b065411bf0
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/986e05fc-e7fc-44fb-8085-22b065411bf0
+[AREA SELECT] No area links found
+[AREA SELECT] Trying alternative selector 'a.area': 0 found
+[AREA SELECT] Elements with 'area' in class: 10
+[AREA SELECT] Total divs on page: 99
+[AREA SELECT] JavaScript query result: None
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/4a5e0a79-39d3-4032-8aa4-479c93ede430
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Not on activity page, skipping
+https://www.famiticket.com.tw/Sales/Home/Index/4365847d-c3e3-4d3d-af0f-d2d4d8efbdd1
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 9.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/4365847d-c3e3-4d3d-af0f-d2d4d8efbdd1
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 0): VIP區2400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: VIP區2400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/87bd5a0f-c97c-4d19-b090-8f965076cfaf
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+https://www.famiticket.com.tw/Sales/Home/Index/a2fdd57b-0fed-44bb-b719-bfa8b5d99ebd
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] Failed to click 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/1eb2b3d2-160f-4629-9511-cf5492d21fb8
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Warning: Area elements not found after 15s total wait
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/1eb2b3d2-160f-4629-9511-cf5492d21fb8
+[AREA SELECT] No area links found
+[AREA SELECT] Trying alternative selector 'a.area': 0 found
+[AREA SELECT] Elements with 'area' in class: 0
+[AREA SELECT] Total divs on page: 85
+[AREA SELECT] JavaScript query result: None
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/2db5e840-0a6b-458e-8ab7-688ea522ec4b
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 9.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/2db5e840-0a6b-458e-8ab7-688ea522ec4b
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 0): VIP區2400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: VIP區2400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': Could not find node with given id [code: -32000]
+https://www.famiticket.com.tw/Sales/Home/Index/212f3ea0-c8ed-494b-824b-b9977429cb96
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] Found 1 date rows
+[DATE SELECT] Formatted 1 date rows
+[DATE SELECT] After keyword match: 1 rows
+[DATE SELECT] Clicking date (index 0): 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[DATE SELECT] Direct click failed, trying CDP click
+[CLICK] CDP click failed for '.session__list > tbody > tr:nth-child(1) button': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for '.session__list > tbody > tr:nth-child(1) button'
+[DATE SELECT] CDP click succeeded for date: 2025.12.13 (六) 19:00動畫演唱會駁二藝術特區B10倉庫立即購買
+[COORDINATOR] Date selection succeeded, waiting for page transition
+[COORDINATOR] Area elements found after initial 5s + 7.0s
+[COORDINATOR] Area keyword array: []
+[COORDINATOR] No area keywords, trying all areas
+[AREA SELECT] area_keyword_item: 
+[AREA SELECT] auto_select_mode: random
+[AREA SELECT] Current URL: https://www.famiticket.com.tw/Sales/Home/Index/212f3ea0-c8ed-494b-824b-b9977429cb96
+[AREA SELECT] Found 2 area links
+[AREA SELECT] Formatted 2 area links
+[AREA SELECT] After keyword match: 2 areas
+[AREA SELECT] Clicking area (index 0): VIP區2400熱賣中
+[AREA SELECT] Direct click failed, trying JavaScript
+[AREA SELECT] JavaScript click also failed for area: VIP區2400熱賣中
+[COORDINATOR] Date -> Area flow failed
+[FAMITICKET] Routing to date -> area coordinator (Sales page)
+[COORDINATOR] Starting date -> area flow
+[COORDINATOR] Step 1: Executing date selection
+[DATE SELECT] date_keyword: 
+[DATE SELECT] auto_select_mode: random
+[DATE SELECT] No date rows found
+[DATE SELECT] Auto-reload enabled, waiting 5 seconds
+[COORDINATOR] Date selection failed, stopping flow
+https://www.famiticket.com.tw/Home/Activity/Info/MwBoAFYAaABvADgAZABIADMAaQBBAC8AUwBuADcAMQBVAEwAcgBlAGIATgBpAGgAUgB5ADIAUwBCAGkAbgB5AFAAOQArAFEAWAB0AHgAeQBwAFkAdwA9AA2
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page
+[CLICK] CDP click failed for 'button.btn-buy': 'list' object has no attribute 'get'
+[CLICK] JavaScript click succeeded for 'button.btn-buy'
+[ACTIVITY] Button clicked successfully, waiting 3 seconds for page transition
+[FAMITICKET] Routing to activity handler
+[ACTIVITY] Detected FamiTicket activity page

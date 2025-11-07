@@ -1,0 +1,1100 @@
+登入完成後 應該會有這個元素跑出來: <div class="user-serve">
+                            <div class="user-serve__inner">
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/User/Orders">
+                                    <i class="fa-userss"></i>
+                                    <span class="user-serve__name" id="membername">XXX</span>
+                                </a>
+                                        <a id="cart_icon" class="user-serve__item user-serve__item--cart" onclick="CartWaiting()">
+                                            <i class="fa-basket"></i>
+                                            <span id="cartOrderNum">1</span>
+                                        </a>
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/user/signout">
+                                    <i class="fa-logout"></i>
+                                </a>
+                            </div>
+                        </div>
+
+
+下面是 登入頁面的body
+<body>
+    <header class="header container no-print">
+        <div class="row">
+            <div class="header__col col-lg-12">
+                <div class="famitkt-logo">
+                    <a class="famitkt-logo__link" href="https://www.famiticket.com.tw/Home">
+                        <img class="famitkt-logo__img" src="/Home/Images/logo.png">
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center ml-auto">
+                    <div class="header__search d-none d-lg-block">
+                        <button class="btn header__search-btn" type="button" data-target="#searchModal" data-toggle="modal">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                        <div class="user-serve">
+                            <div class="user-serve__inner">
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/User/SignIn">
+                                    <i class="fa-userss"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <div class="d-lg-none">
+                        <button class="navbar-toggler" aria-expanded="false" aria-controls="navbarNav" aria-label="Toggle navigation" type="button" data-target="#navbarNav" data-toggle="collapse">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+    <nav class="header__navbar navbar navbar-expand-lg no-print">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="" data-toggle="dropdown"><span>活動分類</span></a> 
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                                                                        <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242">
+                                                    戶外觀光
+                                                    <span class="dropdown-menu__link-eng">Tourist</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/562">
+                                                    休閒農場
+                                                    <span class="dropdown-menu__link-eng">Farm</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/701">
+                                                    住宿
+                                                    <span class="dropdown-menu__link-eng">HOTEL</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/582">
+                                                    ESIM
+                                                    <span class="dropdown-menu__link-eng">ESIM</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/2">
+                                                    農遊超市
+                                                    <span class="dropdown-menu__link-eng">Farmtour Market</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241">
+                                                    餐飲
+                                                    <span class="dropdown-menu__link-eng">Restaurant</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/561">
+                                                    餐券
+                                                    <span class="dropdown-menu__link-eng">voucher</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/82">
+                                                    其他
+                                                    <span class="dropdown-menu__link-eng">other</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164">
+                                                    主題樂園
+                                                    <span class="dropdown-menu__link-eng">ThemePark</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/461">
+                                                    樂園
+                                                    <span class="dropdown-menu__link-eng">ThemePark</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/741">
+                                                    日本樂園
+                                                    <span class="dropdown-menu__link-eng">Japan ThemePark</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221">
+                                                    紓壓放鬆
+                                                    <span class="dropdown-menu__link-eng">Relax</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221/523">
+                                                    美容SPA
+                                                    <span class="dropdown-menu__link-eng">spa</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01">
+                                                    展演票券
+                                                    <span class="dropdown-menu__link-eng">Exhibition</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/424">
+                                                    展覽
+                                                    <span class="dropdown-menu__link-eng">exhibition</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/C11">
+                                                    演唱會
+                                                    <span class="dropdown-menu__link-eng">concert</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/321">
+                                                    表演&amp;劇場
+                                                    <span class="dropdown-menu__link-eng">Theater</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/581">
+                                                    文化幣(限線上)
+                                                    <span class="dropdown-menu__link-eng">Culture Points</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/42">
+                                                    體驗
+                                                    <span class="dropdown-menu__link-eng">Experience</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01">
+                                                    運動賽事
+                                                    <span class="dropdown-menu__link-eng">SPORTS</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/001">
+                                                    中華職棒
+                                                    <span class="dropdown-menu__link-eng">CPBL</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/002">
+                                                    TPBL
+                                                    <span class="dropdown-menu__link-eng">TPBL</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/161">
+                                                    其他
+                                                    <span class="dropdown-menu__link-eng">others</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/721">
+                                                    PLG
+                                                    <span class="dropdown-menu__link-eng">PLG</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/62">
+                                                    TPVL
+                                                    <span class="dropdown-menu__link-eng">TPVL</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61">
+                                                    交通
+                                                    <span class="dropdown-menu__link-eng">Transportation</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/261">
+                                                    阿里山線
+                                                    <span class="dropdown-menu__link-eng">Alishan Route</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/342">
+                                                    台灣好行
+                                                    <span class="dropdown-menu__link-eng">Taiwan Tourist Shuttle</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01">
+                                                    電影
+                                                    <span class="dropdown-menu__link-eng">MOVIE</span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/481">
+                                                    特價電影票
+                                                    <span class="dropdown-menu__link-eng">Sales</span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/301">
+                                                    交換票
+                                                    <span class="dropdown-menu__link-eng">Ticket</span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+
+
+                        </ul>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" data-toggle="modal" data-target="#searchModal" href="#searchModal">活動探索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/Faq">常見問題</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/User/Orders">會員專區</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/TicketInstruction">購票須知</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Modal -->
+    <div class="modal fade search-modal" id="searchModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        活動探索
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body search-modal__body">
+                    <div class="search-modal__inner">
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchName">活動名稱：</label>
+                            <input id="searchName" type="text" class="search-modal__input" maxlength="10">
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchCatg">活動分類：</label>
+                            <select id="searchCatg" class="search-modal__select">
+                                                                    <option value="">全部</option>
+                                                <option value="242">
+                                                    戶外觀光
+                                                </option>
+                                                <option value="241">
+                                                    餐飲
+                                                </option>
+                                                <option value="164">
+                                                    主題樂園
+                                                </option>
+                                                <option value="221">
+                                                    紓壓放鬆
+                                                </option>
+                                                <option value="C01">
+                                                    展演票券
+                                                </option>
+                                                <option value="S01">
+                                                    運動賽事
+                                                </option>
+                                                <option value="61">
+                                                    交通
+                                                </option>
+                                                <option value="M01">
+                                                    電影
+                                                </option>
+
+                            </select>
+                        </div>
+                        
+                        <div class="search-modal__input-wrapper">
+                            <button type="button" class="btn search-modal__submit" onclick="btnSearchHeaderClick();">
+                                <i class="fas fa-search"></i><span class="search-modal__submit-text">搜尋</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="queueModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        貼心提醒
+                    </div>
+                    
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-1">
+                        <label id="queueText"></label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal" data-dismiss="modal">
+                            <span>取消</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="alertModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        貼心提醒
+                    </div>
+                    
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-1">
+                        <label id="alertText"></label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal" data-dismiss="modal">
+                            <span>確定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+
+        var Waiit = true;
+
+        function CartWaiting() {
+            if (Waiit) {
+                Waiit = false;
+                  $.ajax({
+            type: "Post",
+            url: '/Home/Activity/ToWaiting?t=P',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                if (data.STATUS == "0") {
+                    var Waiit = true;
+                    $("#alertText").html("請先登入會員");
+                    $("#alertModal").modal('show');
+                    $("#alertModal").on('hide.bs.modal', function (e) {
+                        location.href = '/Home/User/SignIn';
+                    });
+                } else if (data.STATUS == "1") {
+                    var Waiit = true;
+                    showQueue();
+
+                    return;
+                } else if (data.STATUS == "2") {
+
+                    var herfLocation = '/Home/User/ToBuyCart';
+
+                    //無須排隊，執行原本流程
+                    location.href = herfLocation;
+
+                }
+
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                //debugger;
+                showQueue();
+
+            }
+        });
+            }
+
+    }
+</script>
+    <script>
+
+        function showQueue() {
+
+        countdownnumber = 0;
+
+        if (countdownnumber > 0) {
+            $("#queueText").html("<table align='center'><tr><td>系統忙碌中， </td><td id='countdown'></td><td> 秒鐘後，自動嘗試進入場次頁。</td></tr></table>");
+        }
+        else
+        {
+            $("#queueText").html("<table align='center'><tr><td>系統忙碌中， 請稍後進入場次頁。</td></tr></table>");
+        }
+
+        $("#queueModal").modal('show');
+
+        //重新進入倒數
+        countdownfunc();
+
+        //關閉訊息，結束倒數
+        $("#queueModal").on('hide.bs.modal', function (e) {
+        clearTimeout(countdownid);
+        });
+    }
+
+    function countdownfunc() {
+        var x = document.getElementById("countdown");
+        x.innerHTML = countdownnumber;
+        if (countdownnumber == 0) {
+            CartWaiting();
+        } else {
+            countdownnumber--;
+            if (countdownid) {
+                clearTimeout(countdownid);
+            }
+            countdownid = setTimeout(countdownfunc, 1000);
+        }
+    }
+
+    </script>
+    <script>
+        function calendar(t, e, n) { var i = this, o = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); return this.opened = !0, this.t = t, this.y = e, this.m = n, this.d = null, /Edge/i.test(navigator.userAgent) && t.setAttribute("type", "text"), this.render = function (t, e) { var n = Date, o = !isNaN(e), s = new n(t, e - 1, 1), r = s.getDay(), a = new n(t, e, 0).getDate(), h = Array.apply(0, Array(o ? 42 : 12)); o && h.unshift("日", "一", "二", "三", "四", "五", "六"), t = o ? s.getFullYear() : t, e = s.getMonth() + 1, this.$w || (this.$w = $('<div class="famiCal-wrapper"></div>').appendTo("body")), this.opened && (this.$w.html('<div class="famiCal' + (o ? "" : " famiCal--month") + '"><table border=1><tr><td>《</td><td colspan=' + (o ? 5 : 2) + ">" + t + "年" + (o ? e + "月" : "") + "</td><td>》</td></tr>" + h.map(function (i, s) { var a = new n(t, e - 1, s - r - 6), h = a.getMonth() + 1 == e; return (s % (o ? 7 : 4) ? "" : (s ? "</tr>" : "") + "<tr>") + "<td" + (o && s > 6 && !h ? ' class="not-current">' : ">") + (o ? s < 7 ? i : a.getDate() : s + 1 + "月") + "</td>" }).join("") + "</tr></table></div>"), this.reposition(), this.$w.find("td").map(function (t, e) { return e.num = t, e }).on("mousedown", function (n) { var s = n.target.num, h = n.target.innerText; s < 3 ? i.render(t + (o ? 0 : s - 1), o && s - 1 ? e + s - 1 : NaN) : (s > 9 || !o) && (o && s > r + 9 && s <= r + a + 9 ? (i.d = parseInt(h), i.t.value = t + "-" + (e < 10 ? "0" : "") + e + "-" + (h < 10 ? "0" : "") + h, i.onChange && "function" == typeof i.onChange && i.onChange(t, e, h), i.t.blur()) : i.render(t, o ? e + (s < r + 10 ? -1 : 1) : s - 2)) })), this.$w.on("mousedown", function (t) { t.preventDefault() }) }, this.open = function () { this.opened = !0, this.render(this.y, this.m) }, this.close = function () { this.opened = !1, this.$w.html("") }, this.reposition = function () { var t = this.$w, e = this.t; this.opened && (t.css("top", $(e).offset().top + e.clientHeight), t.css("left", $(e).offset().left)) }, this.onChange = null, o || ($(t).on("focus", function (t) { t.preventDefault(), i.open(), i.render(i.y, i.m) }), $(t).on("blur", function () { i.close() })), this }
+    </script>
+    <script>
+        var d = new Date();
+        //new calendar(searchDateS, d.getFullYear(), d.getMonth() + 1);
+        //new calendar(searchDateE, d.getFullYear(), d.getMonth() + 1);
+    </script>
+
+    <div>
+        
+
+
+
+
+<div class="member container min-hight-container" style="min-height: 1076.05px;">
+    <ul class="member__tab nav nav-pills mb-3 row" id="pills-tab" role="tablist">
+        <li class="nav-item col-6 text-center">
+            <a class="nav-link active" id="user-login-tab" href="#">登入</a>
+        </li>
+        <li class="nav-item col-6 text-center">
+            <a class="nav-link" id="user-regist-tab" href="/Home/User/Reg">註冊</a>
+        </li>
+    </ul>
+    <div class="tab-content row justify-content-center" id="pills-tabContent">
+        <div class="tab-pane col fade show active" id="user-login">
+
+            <form id="frmSignIn" name="frmSignIn" method="post" action="https://www.famiticket.com.tw/Home/User/SignInCheck" onsubmit="return validateSubmit();">
+                <div class="member__acc-login">
+                    <div class="acc-login">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-userss"></i></span>
+                            </div>
+                            <input type="text" class="form-control" placeholder="請填寫註冊之e-mail" name="usr_act" id="usr_act" maxlength="50">
+                            <div class="invalid-feedback">帳號尚未輸入</div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-unlock-alt"></i></span>
+                            </div>
+                            <input type="password" class="form-control" placeholder="密碼" id="usr_pwd" name="usr_pwd" maxlength="16">
+                            <input type="text" class="form-control" placeholder="密碼" id="usr_pwd_show" name="usr_pwd" maxlength="16" style="display:none">
+                            <div class="input-group-prepend" id="showArea">
+                                <span class="input-group-text" id="basic-addon1" style="border-top-left-radius: 0;border-bottom-left-radius: 0;border-top-right-radius: .25rem;border-bottom-right-radius: .25rem;"><i class="fas fa-eye"></i></span>
+                            </div>
+                            <div class="invalid-feedback">密碼尚未輸入</div>
+                        </div>
+                        
+                        <div class="sns-login__title" style="color:red;text-align:left;">
+                            FamiTicket購票網改版上線，會員資料不與原購票網共用。初次購票前請先註冊加入會員，謝謝您的支持與配合。
+                        </div>
+                        
+                        
+                        <button class="btn acc-login__submit" id="btnLogin" onclick="getToken()">登入</button>
+                        <a class="acc-login__forget" href="/Home/User/ForgotPwd">忘記密碼</a>
+                        <a class="acc-login__forget" href="/Home/User/ReReg">重寄驗證信</a>
+                        <input type="hidden" id="state" name="state" value="dgB2AGgAVgBmAEcAQQBBADYAMABSAGUAZwBqAHAAUwBaAEcANwA3AFEAeAAwAEwAOAB2AEQAZABjAFAASgBBAG8ALwBuAHYAYwBBAHYAZgArADMAYwBKAFYAWABvAGwAQgBkAGkAagBvAHEAagBFAG0AYgBGAFgAZQBwADYAWABjAEMAWgBHAHYAZABiADAASAB0AEsAdgA5AEQAWAAwAHYAbQAzAHYANgBnAD0APQA1">
+                        <input type="hidden" id="token" name="token" value="0cAFcWeA6JEXQ3hMyEOXg4AQNhYtRRpYNdUH84ugTCJGDUdyP2RXqOCKfMz05qUN73-e8yI51xSjKXYeSBnsjvkaYFpz4c25VpU-z9_2K02Yqc3iHWl5OUSUTt5nDyVaLO_-zybyOpl3rJEp59JoIaPAQ11FhjjUJeolpsnYudPkd0xOJBjEaSTLDSaXjGb6LA2gOyTmHNlemm5Mdp6b_nvSY-OTIsgz8OUJdi7ycHIku7xl34eYMWc35TN1X11uu-wtQCdJ05VqE9K1cjkND01GrtNA9IRA3QTi2NfOtIj-djz3q_ynOhTdBdb1CmjBlkM-D75VCXK-tJKRffon_xOWJWayhjbtLDnVNLcLmXJBtfCNrLkw12V0QRW6XQuoljg2vRefJi4GgfgdQYfPsAVrciPbbnXnNtYgm7-3txMiX4dlvCHtp-1eY6a8aPPvnnKe-y6PHOfX328XAd8oipuVflMxBBj4eNtTXj3ePMFj0apWbwx3d4PX5LTwfda12X2uvtp3NKQoED1JNI6C2gsps78nDUEGT4Y4zJH7jOWQ2u3WJ3_TquPKZ-nMNdB2Fb24ADWutBzzj0ZHMwMXWORFMZZGPfkK1pyrRRqnJ1Ea1f5dpxmzb5-gWek18c8St7E-MTat1gqpPHJWtgBH03WqhQUGqROzQc2ancChhPhZ3dVDWry3Xo5Pes-GQKWodx6UnoJ0K7_fNzRQFoS5huDQFjFrAVTvxt_crDMJjUDwfaoH9AzrR1CTiWtjC77scR7qppUkmN_35qdW_0sKdjG9B19siRRL4qKwXVNzMaKPLHinSO_r4cpHYe3Vp0Hf6UgK_1frUW6JPN7hR-qiRNDkM_O1a3PV7tKeJMnqTIG5XIySqm9rpOxvLkb4MGJuykGFWXYn9HyJ7eFQGpWs-_1YWLR2rNJjprgScj56oqkChfdIPUGgT1esm6Mb8bmBfPolEZr0V4FdGYzJOK2ZV4cJS9c-ioUp2AcCjbmdQwJc7pfWXfIIyiWxgZyTD2ja0vMZoaJQ5c-MPAre7h6MPxnpTMKyPJYWxwWTFzc41_86-neInbvBM0Mo2ZPIsIBO6-D1lXHJpUGoZsE8PPay9l4Q-09Jk3EM-_r9JQuobVDnV7WYWTGmAk4WoH86n7j9HEkMZdMepKn-bprKk9if4J3gxPZZ5WPy9PP9rQr7MzT1gd9xnbTpCAgzrbYV-NvlNpvrVXyuNaEB4dzpwnl3WKWnjcib1F5cOMX0aiNMF5ARBSk8RlXQGkZ7mj8Kbpt5E-__tuOg2EnL_RodIX7mGMiPoX3sDUjQFGXCn9lh32LLn6k8MLsY-cgo9M6BI_KKZmfJ6rJ_XXRT4av0qZrRxXvlY_fs19lohLSZ2Rztkwp-5323HihiVWuqOvACB0yFiPvVFRcyaxJqP0JqOqmPQbyPkfM94KnpM4nthoflUQ-jtpZEz-EYWgQw4WueAslugT_XBMCSEjhr_atEnkYTkW5fx7XQSa-4r5w6DdxtkI2DIxp0DHnUB6Wue0M5KexQrc_oym9dKQ8IyYtiONN_2doM_R0GsCc2SmZlFteGRAANFHjwCQnBV7yMb-ovN1yDRD749NWtymTva4SUBd9WkxdObNyD3ivt92OcsZXPM-ow-Yfp_BVI9N9YY">
+                    </div>
+                </div>
+            </form>
+            <div class="member__sns-login">
+                <div class="sns-login">
+                    <div class="sns-login__title">
+                        社群帳號快速登入
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-lg-6">
+                            <button class="btn sns-login__btn sns-login__btn--google" onclick="GoogleLogin();">
+                                <i class="fab fa-google"></i>
+                                <span>Google</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<link rel="stylesheet" href="/Home/Styles/lib/swiper.min.css">
+<div class="d-flex justify-content-center goTop__wrap no-print">
+    <a class="goTop" href="#">
+        <span class="goTop__text">TOP</span>
+    </a>
+</div>
+<footer class="footer-outer no-print">
+    <div class="container ">
+        <div class="row footer">
+            <div class="col-lg-4 col-sm-10 footer__desc">
+                <img class="footer__desc-img" src="/Home/images/logofooter.png">
+                <ul>
+                    <li>
+                        <i class="fas fa-clock"></i>服務時間：
+                        <br>星期一～星期五 09:00~17:00
+                        <br>國定假日公休
+                    </li>
+                    
+                    <li class="line-cs"><span>LINE線上客服</span><a href="https://lin.ee/q5kJ632"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="36" border="0"></a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__service">
+                <ul>
+                    <li><a href="http://www.familynet.com.tw" target="_blank">關於全網</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Home/Cooperation">廠商合作</a></li>
+                    
+                    <li><a href="#" data-target="#ServiceTermModal" data-toggle="modal">會員服務條款</a></li>
+                    <li><a href="#" data-target="#SecurityStatementModal" data-toggle="modal">資安聲明</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__account">
+                <ul>
+                    <li><a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx" target="_blank">發票查詢</a></li>
+                    <li><a href="#" data-target="#InvoiceNoticeModal" data-toggle="modal">發票開立須知</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/GetPage" target="_blank">申請退票</a></li>
+                    <li><a href="/Home/Template/%e9%80%80%e7%a5%a8%e7%94%b3%e8%ab%8b%e6%9b%b8.xlsx" download="">退票申請書下載</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/RefundProcess" target="_blank">退票進度查詢</a></li>
+                    <li><a href="https://www.family.com.tw/marketing/inquiry.aspx" target="_blank">取票店鋪查詢</a></li>
+                </ul>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        <div class="container">
+            <div class="copyright__inner row">
+                <div class="col-sm-12 color-w">
+                    Copyright © FamilyNet Co., Ltd. 全網行銷股份有限公司  統一編號：27560883
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="ServiceTermModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        會員服務條款
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">FamiTicket <span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網會員服務條款</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">親愛的朋友您好：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">歡迎您成為</span>FamiTicket<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網會員，為保障您的權益，在註冊成為</span>FamiTicket<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網會員之前，請詳細閱讀本服務條款內容。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一、服務簡介</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷股份有限公司</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">以下簡稱「全網行銷」</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">係依據本服務條款提供</span>FamiTicket<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網</span>(https://www.famiticket.com.tw)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">服務，</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">以下簡稱「本服務」</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">。當您開始使用本服務時，即表示已閱讀、瞭解並同意接受本服務條款之所有內容，並完全接受本服務現有與未來衍生的服務項目及內容。全網行銷有權於任何時間修改或變更本服務條款之內容，修改後的服務條款內容將公佈網站上，全網行銷將不會個別通知會員，建議會員隨時注意該等修改或變更。會員若於任何修改或變更後繼續使用本服務者，視為會員已閱讀、瞭解並同意接受該等修改或變更。若會員不同意服務條款之修改或變更，或不接受本服務條款的其他任一約定，會員應立即停止使用本服務。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">若會員為未滿二十歲之未成年人，應於會員的法定代理人（或監護人）閱讀、瞭解並同意本服務條款之所有內容及其後修改變更後，方得註冊為會員、使用或繼續使用本服務。當會員使用或繼續使用全網行銷時，即視為會員的法定代理人（或監護人）已閱讀、瞭解並同意接受本服務條款之所有內容及其後修改變更。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">為了確保會員之個人資料、隱私及消費者權益之保護，於交易過程中將蒐集、處理及利用會員本人或其法定代理人、委託代理人之個人資料，謹依個人資料保護法第</span>8<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">條規定告知以下事項：</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">1.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">蒐集之目的：全網行銷基於</span>040/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">行銷、</span>052/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">法人對會員名冊之內部管理、</span>063/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">非公務機關依法定義務所進行個人資料之蒐集處理及利用、</span>067/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">信用卡、現金卡、轉帳卡或電子票證業務、</span>069/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">契約、類似契約或其他法律關係事務、</span>077/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">訂位、住宿登記與購票業務、</span>081/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">個人資料之合法交易業務、</span>090/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">消費者、客戶管理與服務、</span>098/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">商業與技術資訊、</span>107/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">採購與供應管理、</span>129/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會計與相關服務、</span>135/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">資</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">通</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">訊服務、</span>136/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">資</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">通</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">訊與資料庫管理、</span>137/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">資通安全與管理、</span>148/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">網路購物及其他電子商務服務、</span>152/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">廣告或商業行為管理、</span>157/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">調查、統計與研究分析、</span>181/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">其他經營合於營業登記項目或組織章程所定之業務、</span>182/<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">其他諮詢與顧問服務之特定目的，於您加入會員或進行交易的過程蒐集您的個人資料並且在前揭目的範圍內以合於法令規定的方式處理、利用您的個人資料。例示如下：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(1)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">以會員身份使用全網行銷提供之各項服務時，於頁面中自動顯示會員資訊。</span> (2)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">為遂行交易行為：會員對商品或勞務為預約、下標、購買、參與贈獎等之活動或從事其他交易時，關於商品配送、勞務提供、價金給付、回覆客戶之詢問、全網行銷對會員之詢問、相關售後服務及其他遂行交易所必要之業務。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(3)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">宣傳廣告或行銷等：提供會員各種電子雜誌等資訊、透過電子郵件、郵件、電話等提供與服務有關之資訊。將會員所瀏覽之內容或廣告，依客戶之個人屬性或購買紀錄、全網行銷網站之瀏覽紀錄等項目，進行個人化作業、會員使用服務之分析、新服務之開發或既有服務之改善等。針對民調、活動、留言版等之意見，或其他服務關連事項，與會員進行聯繫。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(4)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">回覆客戶之詢問：針對會員透過電子郵件、傳真、電話或其他任何直接間接連絡方式向全網行銷所提出之詢問進行回覆。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(5)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">其他業務附隨之事項：附隨於上述</span>(1)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">至</span>(4)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">之利用目的而為全網行銷提供服務所必要之使用。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(6)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">對於各別服務提供者之資訊提供：會員對服務提供者之商品或勞務為預約、下標、購買、參加贈獎活動或申請其他交易時，全網行銷於該交易所必要之範圍內，得將會員之個人資料檔案提供予服務提供者，並由服務提供者負責管理該個人資料檔案。全網行銷將以規約課予服務提供者依保障會員隱私權之原則處理個人資料之義務，但無法保證服務提供者會必然遵守。詳細內容，請向各別服務提供者洽詢。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">2.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">蒐集之個人資料類別：全網行銷於網站內蒐集的個人資料包括，</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(1)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">辨識個人者：例如會員之姓名、通訊地址、住家電話號碼、行動電話、電子郵遞地址等。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(2)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">辨識財務者：例如信用卡或金融機構帳戶等。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(3)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">個人描述：例如性別、出生年月日等。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(4)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">政府資料中之辨識者：例如身分證統一編號。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">3.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">利用期間、地區、對象及方式：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(1)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">期間：全網行銷會員當事人要求停止利用或全網行銷停止提供服務之日為止；依相關法令規定或因執行業務所必須保存期間或依個別契約約定之保存年限。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(2)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">利用對象及方式：會員之個人資料僅供全網行銷及集團總公司</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全家便利商店股份有限公司</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">、受全網行銷委託處理事務之委外機構</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">包括但不限於商品配送商</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">、對全網行銷有管轄權、調查權之主管機關、司法機關或其他政府機構、其他與全網行銷之交易相對人</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">包含但不限於合作廠商、活動主辦單位</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">或業務相關機構而有蒐集、處理、利用個人資料必要者。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(3)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">地區：前揭利用對象之國內及國外所在地。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">4.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員就個人資料之權利：會員就全網行銷所蒐集、處理、利用的個人資料，得以來電</span>(0800-071-999)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">或來訊</span>(</span></span><span style="font-size:12pt"><font face="新細明體, serif">LINE客服帳號</font><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">：</span></span></span>@famiticket&nbsp;<span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">的方式向全網行銷行使以下權利：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(1)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">查詢或請求閱覽。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(2)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">請求製給複製本。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(3)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">請求補充或更正。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(4)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">請求停止蒐集、處理或利用。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(5)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">請求刪除。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">5.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">請注意！您可自由選擇所提供個人資料的詳細程度，但如您拒絕提供加入會員所需必要之資料，將可能導致無法享受完整服務或完全無法使用該項服務；如您提供不實的資料，全網行銷有權暫停或終止您的帳號，並拒絕您使用全網行銷的服務。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二、會員的註冊義務</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">您承諾絕不為任何非法目的或以任何非法方式使用本服務，並承諾遵守中華民國相關法規及一切使用網際網路之國際慣例。您若係中華民國以外之使用者，並同意遵守所屬國家或地域之法令。您同意並保證不得利用本服務從事侵害他人權益或違法之下列行為：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">上載、張貼、公布或傳送任何誹謗、侮辱、具威脅性、攻擊性、不雅、猥褻、不實、違反公共秩序或善良風俗或其他不法之文字、圖片或任何形式的檔案於全網行銷網站。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得侵害他人名譽、隱私權、營業秘密、商標權、著作權、專利權、其他智慧財產權及其他權利。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得冒用他人名義使用全網行銷之服務。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">四</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得上載、張貼、傳輸或散佈任何含有電腦病毒或任何對電腦軟、硬體產生中斷、破壞或限制功能之程式碼之資料。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">五</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得從事不法交易行為或張貼虛假不實、引人犯罪之訊息。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">六</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得販賣槍枝、毒品、禁藥、盜版軟體或其他違禁物。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">七</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得提供賭博資訊或以任何方式引誘他人參與賭博。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">八</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得濫發廣告郵件、垃圾郵件、連鎖信、違法之多層次傳銷訊息等。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">九</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得偽造訊息來源或以任何方式干擾傳輸來源之認定。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得干擾或中斷全網行銷服務或伺服器或連結本服務之網路，或不遵守連結至本服務之相關需求、程序、政策或規則等。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得對於恐怖行動提供任何實質支持或資源。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">不得追蹤他人或其他干擾他人或為前述目前蒐集或儲存他人之個人資訊。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">其他全網行銷有正當理由認為不適當之行為。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三、會員帳號、密碼及安全</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員完成本服務的登記程序之後，會員將取得一個特定之密碼及會員帳號。盡善良管理人義務維持密碼及帳號之機密安全，是會員的責任。任何依照規定方法輸入會員帳號及密碼與登入資料一致時，無論是否由本人親自輸入，均將推定為會員本人所使用，利用該密碼及帳號所進行的一切行動，會員本人應負完全責任。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員同意以下事項：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">1.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">如會員的密碼或帳號遭到盜用、非授權使用或有其他任何安全問題發生時，會員應立即通知全網行銷</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">2.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">每次連線完畢，均結束會員的帳號使用。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">3.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員的帳號、密碼及會員權益均僅供會員個人使用及享有，不得轉借、轉讓他人或與他人合用。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">4.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">帳號及密碼遭盜用、不當使用或其他全網行銷無法辯識是否為本人親自使用之情況時，對此所致之損害，除證明係因可歸責於全網行銷之事由所致，全網行銷將不負任何責任。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">5.<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷若知悉會員之帳號密碼確係遭他人冒用時，將立即暫停該帳號之使用</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">含該帳號所生交易之處理</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">四、服務內容變更與電子報發送</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員同意全網行銷所提供本服務之範圍，全網行銷均得視業務需要及實際情形，增減、變更或終止相關服務的項目或內容，全網將公佈網站上且無需個別通知會員。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員同意全網行銷得依實際執行情形，增加、修改或終止相關活動，並選擇最適方式告知會員。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員同意全網行銷得不定期發送電子報至會員所登錄的電子信箱帳號。當會員收到訊息後表示拒絕接受行銷時，全網行銷將停止繼續發送行銷訊息。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">五、服務之停止、中斷</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷將依一般合理之技術及方式，維持系統及服務之正常運作。但於以下各項情況時，全網行銷有權可以停止、中斷提供本服務：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網站電子通信設備進行必要之保養及施工時</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">發生突發性之電子通信設備故障時</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網站申請之電子通信服務被停止，無法提供服務時</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">四</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">由於天災等不可抗力之因素或其他不可歸責於全網行銷致使全網購票網站無法提供服務時。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">六、兒童及青少年之保護</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">兒童及青少年上網已經成為無可避免之趨勢，使用網際網路獲取知識更可以培養子女的成熟度與競爭能力。然而網路上的確存有不適宜兒童及青少年接受的訊息，例如色情與暴力的訊息，兒童及青少年有可能因此受到心靈與肉體上的傷害。因此，為確保兒童及青少年使用網路的安全，並避免隱私權受到侵犯，家長（或監護人）應盡到下列義務：</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">檢閱各該網站是否有保護個人資料的隱私權政策，再決定是否同意提出相關的個人資料；並應持續叮嚀兒童及青少年不可洩漏自己或家人的任何資料（包括姓名、地址、電話、電子郵件信箱、照片、信用卡號等）給任何人。也不可以單獨接受網友的邀請或贈送禮物而與之見面。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">謹慎選擇合適網站供兒童及青少年瀏覽。未滿十二歲之兒童上網時，應全程在旁陪伴，十二歲以上未滿十八歲之青少年上網前亦應斟酌是否給予同意。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">七、交易行為</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員使用本服務進行交易時，應依據全網購票網所提供之確認商品數量及價格機制進行。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員使用本服務進行交易時，應依照消費者保護法、藝文展覽票券定型化契約應記載及不得記載事項、或藝文表演票券定型化契約應記載及不得記載事項之規定行使權利。</span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">三</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網購票網提供票券退、換票機制並公告說明。但非供自用，購買票券而轉售圖利者，全網購票網得不予退、換票。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">八、智慧財產權的保護</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷所使用之軟體或程式、網站上所有內容，包括但不限於著作、圖片、檔案、資訊、資料、網站架構、網站畫面的安排、網頁設計，均由全網行銷或其他權利人依法擁有之智慧財產權，包括但不限於商標權、專利權、著作權、營業秘密與專有技術等。非經全網行銷或權利人事前書面同意，任何人不得逕自使用、修改、重製、公開播送、改作、散布、發行、公開發表、進行還原工程、解編或反向組譯。若欲引用或轉載前述軟體、程式或網站內容，必須依法取得全網行銷或其他權利人的事前書面同意。如有違反，則應對全網行銷或其他權利人負損害賠償責任。</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷所製作之圖樣（以下稱「全網行銷商標」），依其註冊或使用之狀態，受商標法及公平交易法等之保護，未經全網行銷事前書面同意，不可以任何方式使用全網行銷商標。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">九、責任之限制與排除</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">一</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">本服務所提供之各項功能，均依該功能當時之現況提供使用，全網行銷對於其效能、速度、完整性、可靠性、安全性、正確性等，皆不負擔任何明示或默示之擔保責任。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;">(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">二</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">全網行銷並不保證本服務之網頁、伺服器、網域等所傳送的電子郵件或其內容不會含有電腦病毒等有害物；亦不保證郵件、檔案或資料之傳輸儲存均正確無誤不會斷線和出錯等，因各該郵件、檔案或資料傳送或儲存失敗、遺失或錯誤等所致之損害，全網行銷不負賠償責任。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十、會員對全網行銷之授權</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">對於會員上載、傳送、輸入或提供之資料，會員同意全網購票網站得於合理之範圍內蒐集、處理、保存、傳遞及使用該等資料，以提供使用者其他資訊或服務、或作成會員統計資料、或進行關於網路行為之調查或研究，或為任何之合法使用。若會員無合法權利得授權他人使用、修改、重製、公開播送、改作、散布、發行、公開發表某資料，並將前述權利轉授權第三人者，請勿擅自將該資料上載、傳送、輸入或提供至全網購票網。任何資料一經會員上載、傳送、輸入或提供至全網購票網時，視為會員已允許全網購票網來無條件使用、修改、重製、公開播送、改作、散布、發行、公開發表該等資料，並得將前述權利轉授權他人，會員對此絕無異議。會員並應保證全網行銷使用、修改、重製、公開播送、改作、散布、發行、公開發表、轉授權該等資料，不致侵害任何第三人之智慧財產權，否則應對全網購票網負損害賠償責任（包括但不限於訴訟費用及律師費用等）。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十一、特別授權事項</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">因使用本服務所提供之網路交易或活動，可能須透過宅配或貨運業者始能完成貨品</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">或贈品等</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">之配送或取回，因此，會員同意並授權全網行銷得視該次網路交易或活動之需求及目的，將由會員所提供且為配送所必要之個人資料</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">如收件人姓名、配送地址、連絡電話等</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">，提供予宅配或貨運業者及相關配合之廠商，以利完成該次貨品</span>(<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">或贈品等</span>)<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">之配送、取回。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十二、拒絕或終止會員的使用</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">會員同意全網行銷得基於維護交易安全之考量，因任何理由，包含但不限於缺乏使用，或違反本服務條款的明文規定及精神，終止會員的密碼、帳號（或其任何部分）或本服務（或其任何部分）之使用，或將本服務內任何「會員內容」加以移除並刪除。此外，會員同意若本服務（或其任何部分）之使用被終止，全網購票網對會員或任何第三人均不承擔責任。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十三、準據法與管轄法院</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">本服務條款之解釋與適用，以及與本服務條款有關或會員與全網行銷間因交易行為而產生之爭議或糾紛，應依照中華民國法律予以處理，並以台灣台北地方法院為第一審管轄法院，但若法律對於管轄法院另有強制規定者，仍應依其規定。</span> </span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十四、消費爭議處理</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">您若不滿意本系統提供之服務，可撥叫客服專線、或以電子郵件或書面辦理申訴。</span> |<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">服務專線電話：</span>0800-071-999 |</span><font face="新細明體, serif">LINE客服帳號</font><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">：</span></span></span>@famiticket&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,&quot;sans-serif&quot;"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">十五、企業經營者資訊</span> |FamiTicket<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">系統網路服務：由全網行銷股份有限公司所經營。</span>|<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">公司負責人：簡維國。</span>|<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">營業所在地：104台北市中山區中山北路二段44號8樓A室</span> |LINE<span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;">客服：</span>@famiticket&nbsp;|</span></span></p>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="SecurityStatementModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        資安聲明
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<p align="center" style="margin-top:7.5pt; text-align:center; margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="font-family:Calibri,sans-serif"><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">【資</span></span></span></b><b> </b><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">訊</span></span></span></b><b> </b><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">安</span></span></span></b><b> </b><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">全</span></span></span></b><b> </b><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">聲</span></span></span></b><b> </b><b><span style="font-size:18.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">明】</span></span></span></b></span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="font-family:Calibri,sans-serif"><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">各位親愛的朋友，感謝您蒞臨「</span></span></span><span lang="EN-US" style="font-size:9.0pt"><span style="font-family:&quot;Arial&quot;,&quot;sans-serif&quot;"><span style="color:#333333">FamiTicket</span></span></span><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">全網購票網」</span></span></span><span lang="EN-US" style="font-size:9.0pt"><span style="font-family:&quot;Arial&quot;,&quot;sans-serif&quot;"><span style="color:#333333">(</span></span></span><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">以下簡稱本網站</span></span></span><span lang="EN-US" style="font-size:9.0pt"><span style="font-family:&quot;Arial&quot;,&quot;sans-serif&quot;"><span style="color:#333333">)</span></span></span><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">，我們非常重視您在使用網際網路時的安全以及隱私保護權利，為此本公司已依據個人資料保護法等法規，訂定資訊安全管理政策，並落實推動資訊安全管理作業，針對資訊安全及個人資料保護等重要項目，進行電子商務資訊安全強化。</span></span></span></span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="font-family:Calibri,sans-serif"><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">為確保網際網路使用者在瀏覽本網站之資訊安全，暨協助您了解本公司如何保護您在使用本網站各項服務的安全及如何蒐集、運用及保護您所提供的各項資訊，本網站相關對外服務之主機皆已定期實施弱點掃描與系統漏洞修補作業，並針對重要資訊系統建立備援機制，以期提供您一個可靠的交易環境。另本網站已建置防火牆等安全防護設備，將對企圖入侵與破壞本網站之行為加以記錄、呈報及攔阻，並將詳實通報警政相關單位。</span></span></span></span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="font-family:Calibri,sans-serif"><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">除了持續強化本網站之安全性外，對於您的個人及交易資料，我們承諾將僅只於業務內使用，在業務所必需之情況，以最小化原則及安全之傳輸方式提供受委託廠商有限之資料，該資料及受委託廠商亦在本網站資訊安全管理政策保障及規範之內。</span></span></span></span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="font-family:Calibri,sans-serif"><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">若您對於本網站的隱私及安全政策仍有任何疑問，歡迎您隨時與我們聯絡。</span></span></span></span></span></span></p>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+
+<table align="right" class="Table" style="background:white; border:undefined">
+	<tbody>
+		<tr>
+			<td style="background:white; padding:.75pt .75pt .75pt .75pt">&nbsp;</td>
+			<td style="background:white; padding:.75pt .75pt .75pt .75pt">
+			<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+			</td>
+		</tr>
+		<tr>
+			<td style="background:white; padding:.75pt .75pt .75pt .75pt" valign="bottom">
+			<p align="right" style="text-align:right; margin:0cm 0cm 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><span style="font-size:9.0pt"><span style="font-family:&quot;新細明體&quot;,&quot;serif&quot;"><span style="color:#333333">資訊安全負責人：</span></span></span><br>
+			&nbsp;</span></span></p>
+			</td>
+			<td style="background:white; padding:.75pt .75pt .75pt .75pt">
+			<p style="margin:0cm 0cm 0.0001pt"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/7047" style="width: 193px; height: 110px;"></p>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+<p style="margin:0cm 0cm 0.0001pt">&nbsp;</p>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="InvoiceNoticeModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        發票開立須知
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <p>網站發票開立須知</p>
+
+<p>一、由全網行銷股份有限公司發行之票券，會於您訂單成立後2-3日開立電子發票，以簡訊發送通知至您會員電話。</p>
+
+<p>　您可於結帳頁面選擇發票處理方式，目前提供以下方式：</p>
+
+<p>　(1)全網會員載具：依會員資料連絡電話為載具，開立發票後以簡訊方式發送通知。</p>
+
+<p>　(2)公司戶電子發票：將依照您輸入的統一編號，開立三聯電子發票。&nbsp;</p>
+
+<p>　(3)捐贈：依照您輸入的愛心碼，將發票捐至相關機構。</p>
+
+<p>二、請務必小心核對發票資訊，因配合國稅局勸止二聯換開三聯之政策，本公司有權利拒絕換開發票三聯式發票。</p>
+
+<p>三、 為響應環保本平台不提供紙本發票，若要查詢發票開立狀態，請至以下平台查詢：</p>
+
+<p>　(1)全網電子發票系統：<a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx">https://eiv.familynet.com.tw/Page/EIV_Q.aspx</a></p>
+
+<p>　(2)若您開立的是三聯電子發票，需要發票明細進行報帳，請至「財政部電子發票平台」列印明細：<a href="https://www.einvoice.nat.gov.tw/APCONSUMER/BTC601W/">https://www.einvoice.nat.gov.tw/APCONSUMER/BTC601W/</a></p>
+
+<p>四、 若您發票資料設定為「全網會員載具」，FamiTicket將會根據國稅局公佈之統一發票中獎號碼進行電腦對獎（不包含：已捐贈、已索取、已寄出與已作廢發票）。 若您的發票中獎，我們將會發送簡訊通知，請您前往全家使用FamiPort機台，點選「列印查詢」→「電子發票」→「全網行銷載具」→「輸入手機號碼/驗證碼」→「列印」</p>
+
+<p>五、依據統一發票使用辦法第4條第27款規定，娛樂業之門票收入得免用或免開統一發票。</p>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script>
+    $('a.goTop').on('click', function (e) {
+        e.preventDefault();
+        $('html, body').stop().animate({ scrollTop: 0 }, 300);
+    });
+</script>
+<script>
+    var $catgBar = $('.catg-bar');
+    $catgBar.each(function (index, element) {
+        var $this = $(this),
+            $catgDropDown = $this.find('.catg-bar__dropdown'),
+            $catgBarCategory = $this.find('.catg-bar__category');
+        $catgBarCategory.on('mouseenter', function (e) {
+            var $this = $(this),
+                index = $(this).index();
+            $catgBarCategory.removeClass('catg-bar__category--active');
+            $this.addClass('catg-bar__category--active');
+            if ($catgDropDown.find('.category__list').eq(index).length) {
+                $this.addClass('catg-bar__category--haschild');
+            }
+            $catgDropDown.css('top', $this.position().top + $this.innerHeight());
+            $catgDropDown.addClass('catg-bar__dropdown--active');
+            $catgDropDown.find('.category__list').removeClass('category__list--active');
+            $catgDropDown.find('.category__list').eq(index).addClass('category__list--active');
+        });
+        $this.on('mouseleave', function () {
+            $catgDropDown.removeClass('catg-bar__dropdown--active');
+            $catgBarCategory.removeClass('catg-bar__category--active');
+        });
+    });
+    setContainerMinHht('.min-hight-container');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('.header').outerHeight(),
+            navHht = $('.header__navbar').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight(),
+            goTopHht = $('.goTop__wrap').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - navHht - footerHht - goTopHht);
+        }
+    }
+</script>
+
+
+
+<script src="https://www.google.com/recaptcha/enterprise.js?render=6LcEBponAAAAAH90J6VjlSJepju7MzE8LtkbBYp-"></script>
+<script>
+    $(document).ready(function () {
+        getToken()
+    });
+
+    var intervalId = setInterval(function () { getToken() }, 60000);
+</script>
+
+<script>
+
+    function getToken()
+    {
+        grecaptcha.enterprise.ready(async () => {
+            const token = await grecaptcha.enterprise.execute('6LcEBponAAAAAH90J6VjlSJepju7MzE8LtkbBYp-', { action: 'LOGIN' });
+            $("#token").val(token);
+            // IMPORTANT: The 'token' that results from execute is an encrypted response sent by
+            // reCAPTCHA Enterprise to the end user's browser.
+            // This token must be validated by creating an assessment.
+            // See https://cloud.google.com/recaptcha-enterprise/docs/create-assessment
+        });
+    }
+
+    $("#showArea").on("touchend", function () {
+        $("#usr_pwd").show();
+        $("#usr_pwd_show").hide();
+    });
+    $("#showArea").on("touchstart", function () {
+        $("#usr_pwd").hide();
+        $("#usr_pwd_show").val($("#usr_pwd").val());
+        $("#usr_pwd_show").show();
+    });
+
+    $("#showArea").mouseup(function () {
+        $("#usr_pwd").show();
+        $("#usr_pwd_show").hide();
+    }).mousedown(function () {
+        $("#usr_pwd").hide();
+        $("#usr_pwd_show").val($("#usr_pwd").val());
+        $("#usr_pwd_show").show();
+    });
+
+    function FbLogin() {
+        if ("N" != "Y")
+        {
+            $('#alertModal').modal('show');
+            $('#alertText').html("FB登入功能維修中，將於9/25起停用此功能。請使用會員Email信箱登入，可使用「忘記密碼」功能取得新密碼。");
+        } else {
+            location.href ="/Home/OAuth/FbLoginJump?t=dgB2AGgAVgBmAEcAQQBBADYAMABSAGUAZwBqAHAAUwBaAEcANwA3AFEAeAAwAEwAOAB2AEQAZABjAFAASgBBAG8ALwBuAHYAYwBBAHYAZgArADMAYwBKAFYAWABvAGwAQgBkAGkAagBvAHEAagBFAG0AYgBGAFgAZQBwADYAWABjAEMAWgBHAHYAZABiADAASAB0AEsAdgA5AEQAWAAwAHYAbQAzAHYANgBnAD0APQA1";
+        }
+
+     }
+        function GoogleLogin() {
+            location.href = "/Home/OAuth/GoogleLoginJump?t=dgB2AGgAVgBmAEcAQQBBADYAMABSAGUAZwBqAHAAUwBaAEcANwA3AFEAeAAwAEwAOAB2AEQAZABjAFAASgBBAG8ALwBuAHYAYwBBAHYAZgArADMAYwBKAFYAWABvAGwAQgBkAGkAagBvAHEAagBFAG0AYgBGAFgAZQBwADYAWABjAEMAWgBHAHYAZABiADAASAB0AEsAdgA5AEQAWAAwAHYAbQAzAHYANgBnAD0APQA1";
+            }
+
+
+        function validateSubmit() {
+            
+            var checkOK = '1';
+            var usrAct = document.getElementById('usr_act').value;
+            var usrPwd = document.getElementById('usr_pwd').value;
+            if (usrAct === '') {
+            $("#usr_act").addClass("is-invalid");
+                checkOK = '0';
+            } else {
+            $("#usr_act").removeClass("is-invalid");
+            }
+
+            if (usrPwd === '') {
+            $("#usr_pwd").addClass("is-invalid");
+                checkOK = '0';
+            } else {
+            $("#usr_pwd").removeClass("is-invalid");
+            }
+
+            if (checkOK == '0') {
+                return false;
+            } else {
+
+                //var puzzle_data = $('#puzzle_data').val();
+                //document.getElementById("data").value = puzzle_data;
+
+                //var challenge_key = $('#challenge_key').val();
+                //document.getElementById("key").value = challenge_key;
+
+                return true;
+            }
+        }
+</script>
+<script>
+    $(function () {
+
+        });
+</script>
+<script src=""></script>
+    </div>
+
+    <form id="frmSearchHeader" name="frmSearchHeader" method="post" action="https://www.famiticket.com.tw/Home/Activity/Search">
+        <input type="hidden" id="hdnSearchHeaderCatg" name="searchCatgB">
+        <input type="hidden" id="hdnSearchHeaderName" name="searchName">
+        
+    </form>
+    <script>
+        function btnSearchHeaderClick() {
+            document.getElementById("hdnSearchHeaderCatg").value = document.getElementById("searchCatg").value;
+            document.getElementById("hdnSearchHeaderName").value = document.getElementById("searchName").value;
+            //document.getElementById("hdnSearchHeaderDateS").value = document.getElementById("searchDateS").value;
+            //document.getElementById("hdnSearchHeaderDateE").value = document.getElementById("searchDateE").value;
+            document.getElementById("frmSearchHeader").submit();
+        }
+    </script>
+    
+
+
+<div><div class="grecaptcha-badge" data-style="bottomright" style="width: 256px; height: 60px; display: block; transition: right 0.3s; position: fixed; bottom: 14px; right: -186px; box-shadow: gray 0px 0px 5px; border-radius: 2px; overflow: hidden;"><div class="grecaptcha-logo"><iframe title="reCAPTCHA" width="256" height="60" role="presentation" name="a-k3i9ifwfjmal" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="https://www.google.com/recaptcha/enterprise/anchor?ar=1&amp;k=6LcEBponAAAAAH90J6VjlSJepju7MzE8LtkbBYp-&amp;co=aHR0cHM6Ly93d3cuZmFtaXRpY2tldC5jb20udHc6NDQz&amp;hl=zh-TW&amp;v=cLm1zuaUXPLFw7nzKiQTH1dX&amp;size=invisible&amp;anchor-ms=20000&amp;execute-ms=15000&amp;cb=dyg33si28lxo"></iframe></div><div class="grecaptcha-error"></div><textarea id="g-recaptcha-response-100000" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;"></iframe></div></body>

@@ -1,0 +1,1639 @@
+<body class="modal-open" style="overflow: hidden; padding-right: 0px;">
+<script src="/assets/b7dd4dcc/jquery.min.js"></script>
+<script src="/assets/fcaa3c37/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/ads.js?v=20241127200620"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" integrity="sha512-uURl+ZXMBrF4AwGaWmEetzrd+J5/8NRkWAvJx5sbPSSuOb0bZLqf+tOzniObO00BjHa/dD7gub9oCGMLPQHtQA=="></script>
+<script src="/assets/bba9a1aa/yii.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery.selectbox/1.2.0/jquery.selectBox.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" integrity="sha512-uUIH4PUKGPl+eVMr1yfs0oRNeEpeEXg+Mn9K90vcNHmIzxfigb4B8TI2nGzxe/CuOiqGnpTFpNO7uBAPrr+DDA=="></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.14.0/jquery-ui.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" integrity="sha512-MlEyuwT6VkRXExjj8CdBKNgd+e2H+aYZOCUaCrt9KRk6MlZDOs91V1yK22rwm8aCIsb5Ec1euL8f0g58RKT/Pg=="></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ=="></script>
+<script src="/js/common.js?v=1" crossorigin="anonymous" referrerpolicy="no-referrer"></script><noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KHQ8BC9" height="0"
+            width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KHQ8BC9');    </script>
+<div class="main-wrapper">
+    <!-- HEADER -->
+        <header id="header" class="header clearfix">
+                          
+        <noscript class="alert-warning">
+            JavaScript is deactivated on your browser, please re-activate it.        </noscript>
+        <!-- NAVBAR -->
+        <div class="darkBg">
+		   <div class="container-lg">
+				<div class="row justify-content-start navbar-location">
+					 <div class="col d-flex">
+					    						<button type="button" class="location-toggle collapsed" onclick="toggle_menu(&quot;country&quot;);"><img class="countrySVG" src="/images/flags/sg.svg" alt="" viewbox="0 0 12 12" focusable="false" aria-hidden="true">
+<span>SG</span></button>						<button type="button" class="location-toggle" onclick="toggle_menu(&quot;lang&quot;)"><svg class="BaseSvg-sc-9y47q5-0 CompassArrowIcon___StyledBaseSvg-gu8gxz-0 sfxrJ" width="1.5em" height="1.5em" title="Region:" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+<path d="M9.93 16.41c.23-.35.75-1.26.74-1.24.31-.48.85-.7 1.35-.7h6c.3 0 .48-.18.48-.48V7.01c0-.31-.19-.51-.49-.51H6c-.3 0-.49.2-.49.5v7c0 .3.18.47.49.47h1.78c.87 0 1.04.51 1.1 1.8l.02.4v.05c0 .4.01.59.04.73a3 3 0 001-1.04zm-3.94-.94c-.86 0-1.49-.62-1.49-1.48V7.01c0-.86.63-1.51 1.49-1.51H18c.86 0 1.49.65 1.49 1.5v7c0 .85-.63 1.47-1.48 1.47h-6c-.19 0-.41.09-.51.24.03-.05-.5.87-.75 1.26-.65.96-1.28 1.53-2.02 1.53-.46 0-.7-.33-.78-.8a5.38 5.38 0 01-.07-.96v-.05l-.02-.37c-.03-.7-.08-.85-.1-.85H6z"></path></svg>
+<span>EN</span></button>					</div>
+					<div id="topbar-nav" class="col justify-content-end align-items-center"><a href="https://help.ticketmaster.sg/">Help</a></div>				</div>
+					<div id="overlayLocation" onclick="closeNav2()"></div>					<div id="myLoc" class="sidenav">
+						<div class="myLocContainer">
+							<div class="sidenavcontent">
+								<h2 class="locHeader">
+									 <button type="button" class="locCloseBtn" data-testid="panelBack" aria-label="Back" onclick="toggle_menu()"><svg class="arrowClose" width="1.5em" height="1.5em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg></button>									Location								</h2>
+								<div class="mainLocPanel">
+									<div class="locPanel">
+										<div class="countryList">
+											<button aria-expanded="false" class="yxcv5q-1">
+												<div class="yxcv5q-2 currentFlag">
+													<img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/sg.svg" alt="">												</div>
+												<span class="currentCountry">Singapore</span>											</button>
+											<div class="overseasList" id="overseasList">
+												<div class="locList">
+													<a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.com.au" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/au.svg" alt="" loading="lazy">Australia</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.be" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/be.svg" alt="" loading="lazy">Belgium</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.com.br" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/br.svg" alt="" loading="lazy">Brasil</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.ca" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/ca.svg" alt="" loading="lazy">Canada</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.cz" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="cs"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/cz.svg" alt="" loading="lazy">Česká republika</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.cl" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/cl.svg" alt="" loading="lazy">Chile</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.dk" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="da"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/dk.svg" alt="" loading="lazy">Danmark</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.de" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="de"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/de.svg" alt="" loading="lazy">Deutschland</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.es" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="es"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/es.svg" alt="" loading="lazy">España</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.fr" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/fr.svg" alt="" loading="lazy">France</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.ie" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="it"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/ie.svg" alt="" loading="lazy">Ireland</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.it" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="it"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/it.svg" alt="" loading="lazy">Italia</div></a><a class="yxcv5q-10-a ixkCki" href="https://shop.tickethour.com" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="el"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/cy.svg" alt="" loading="lazy">Kýpros</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.com.mx" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="es"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/mx.svg" alt="" loading="lazy">México</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.nl" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="nl"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/nl.svg" alt="" loading="lazy">Nederland</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.co.nz" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/nz.svg" alt="" loading="lazy">New Zealand</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.no" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="no"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/no.svg" alt="" loading="lazy">Norge</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.at" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="de"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/at.svg" alt="" loading="lazy">Österreich</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.pl" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="pl"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/pl.svg" alt="" loading="lazy">Polska</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.co.za" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/za.svg" alt="" loading="lazy">South Africa</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.fi" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="fi"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/fi.svg" alt="" loading="lazy">Suomi</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.se" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="sv"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/se.svg" alt="" loading="lazy">Sverige</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.ch" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/ch.svg" alt="" loading="lazy">Switzerland</div></a><a class="yxcv5q-10-a ixkCki" href="https://tixcraft.com" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/tw.svg" alt="" loading="lazy">Taiwan</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.biletix.com" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="tr"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/tr.svg" alt="" loading="lazy">Türkiye</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.ae" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/ae.svg" alt="" loading="lazy">United Arab Emirates</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.co.uk" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/uk.svg" alt="" loading="lazy">United Kingdom </div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.com" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="en"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/us.svg" alt="" loading="lazy">United States</div></a><a class="yxcv5q-10-a ixkCki" href="https://www.ticketmaster.gr" aria-current="false"><div class="yxcv5q-11 ieQaMD" lang="el"><img class="sc-1mf0slz-0 jnlEsB sc-1qfebe8-1 cbZHih" src="/images/flags/gr.svg" alt="" loading="lazy">Ελλάδα</div></a>												</div>
+											</div>
+										</div>
+									</div>
+									<div class="locPanel">
+										<div class="countryList">
+											<button class="yxcv5q-1">
+												<div class="yxcv5q-2 currentFlag">
+													<svg viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true" focusable="false" class="BaseSvg-sc-9y47q5-0 SpeechBubbleIcon___StyledBaseSvg-sc-1s5o0cx-0 jPYCbF"><path d="M9.93 16.41c.23-.35.75-1.26.74-1.24.31-.48.85-.7 1.35-.7h6c.3 0 .48-.18.48-.48V7.01c0-.31-.19-.51-.49-.51H6c-.3 0-.49.2-.49.5v7c0 .3.18.47.49.47h1.78c.87 0 1.04.51 1.1 1.8l.02.4v.05c0 .4.01.59.04.73a3 3 0 001-1.04zm-3.94-.94c-.86 0-1.49-.62-1.49-1.48V7.01c0-.86.63-1.51 1.49-1.51H18c.86 0 1.49.65 1.49 1.5v7c0 .85-.63 1.47-1.48 1.47h-6c-.19 0-.41.09-.51.24.03-.05-.5.87-.75 1.26-.65.96-1.28 1.53-2.02 1.53-.46 0-.7-.33-.78-.8a5.38 5.38 0 01-.07-.96v-.05l-.02-.37c-.03-.7-.08-.85-.1-.85H6z"></path></svg>
+												</div><span class="yxcv5q-3 currentLabel">Language</span><span class="currentCountry">English</span>
+												<svg class="BaseSvg-sc-9y47q5-0 ChevronIcon___StyledBaseSvg-sc-18akie4-0 eQMPXe yxcv5q-6 chZcwd" viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg>
+											</button>
+											<div class="overseasList" id="languageList">
+												<div class="locList">
+													<a class="yxcv5q-10-a ixkCki" href="/user/changelanguage/lang/en-SG" aria-current=""><div class="yxcv5q-11 ieQaMD" lang="en-SG">English</div><svg class="BaseSvg-sc-9y47q5-0 CheckmarkIcon___StyledBaseSvg-sc-1oi9407-0 jMrIus yxcv5q-7 gwhZoc" viewBox="0 0 24 24" width="1.25em" height="1.25em" aria-hidden="true" focusable="false"><path d="M22.72 4.7l-.4-.42a.93.93 0 00-1.34 0L8.5 17.03l-5.38-5.7a.93.93 0 00-1.36 0l-.49.5a1 1 0 000 1.35l6 6.3a1.7 1.7 0 002.45 0l13-13.41c.37-.38.37-1 0-1.37"></path></svg></a>												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+		   </div>
+		<nav id="bs-navbar" class="navbar navbar-expand navbar-default nav-line">
+		   <div class="container-lg flex-row flex-wrap">
+			  <div class="d-flex logoContainer">
+				 <button type="button" class="navbar-toggler" onclick="toggle_NavMenu()"><svg width="1.5em" height="1.5em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="#ffffff" d="M3 4.5h18v3H3v-3zm0 6h18v3H3v-3zm0 6h18v3H3v-3z"></path></svg></button>				 <a id="logoLink" href="/"><img class="navbar-brand " src="https://static.ticketmaster.sg/images/logo/internet.svg" alt="Logo"><span class="alttext">Home page</span></a>			  </div>
+			  <div class="collapse navbar-collapse justify-content-end">
+				 <ul class="navbar-nav me-auto">
+					<li>
+						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-navbar" aria-controls="bs-navbar" aria-expanded="true"><svg width="1.5em" height="1.5em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg></button>						Menu					</li>
+					<li id="activity" class="nav-item accessible-megamenu-top-nav-item">
+						<a class="en " href="/activity">Events</a>					</li>
+					<li id="Categories" class="nav-item accessible-megamenu-top-nav-item">
+						<button class="moreBtn">Categories</button>
+<div class="catList">
+<ul role="listbox" class="whiteBox">
+<li id="3" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/categories/concerts">Concerts</a></li><li id="4" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/categories/sports">Sports</a></li><li id="38" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/categories/arts-theatre-comedy">Arts, Theatre &amp; Comedy</a></li><li id="39" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/categories/family-entertainment">Family Entertainment</a></li></ul>
+</div>					</li>
+					<li id="Venues" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/venues">Venues</a></li><li id="Help" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="https://help.ticketmaster.sg/">Help</a></li>					<li id="moreMenu" class="nav-item accessible-megamenu-top-nav-item">
+						<button class="moreBtn">More</button>
+						<div id="megaMenuContainer">
+							<div id="megaMenu" class="megaList">
+								<ul role="listbox" class="whiteBox">
+								<li id="megaCategories" class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/categories"><strong>Categories</strong><svg class="eQMPXe lh3nx1-6 elqISe" viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg></a></li><li id="megaVenues" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/venues">Venues</a></li><li id="megaHelp" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="https://help.ticketmaster.sg/">Help</a></li>								</ul>
+							</div>
+							<div class="megaList">
+								<ul role="listbox" class="whiteBox">
+								<li id="3" class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/categories/concerts">Concerts</a></li><li id="4" class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/categories/sports">Sports</a></li><li id="38" class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/categories/arts-theatre-comedy">Arts, Theatre &amp; Comedy</a></li><li id="39" class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/categories/family-entertainment">Family Entertainment</a></li>								</ul>
+							</div>
+						</div>
+					</li>
+				 </ul>
+				 <ul class="nav-info searchContainer ">
+					<li class="searchBox">
+					   <div class="input-group">
+						  <input type="text" id="txt_search" class="search-input" placeholder="Search by Event" aria-describedby="basic-addon2">
+						  <div class="input-group-append">
+							 <button type="reset" class="clearSearch"><svg class="staticMode" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1C5.95 1 1 5.95 1 12s4.95 11 11 11 11-4.95 11-11S18.05 1 12 1zm4.8 13.9l-1.9 1.9-2.9-2.88-2.9 2.89-1.9-1.92L10.07 12 7.2 9.1l1.92-1.9L12 10.07l2.9-2.89 1.9 1.92-2.87 2.9 2.89 2.9z"></path></svg><span class="sc-1b3hien-4 eJlxQm">Clear</span></button>
+							<button type="button" class="search-btn" data-href="/activity"><svg width="1.5em" height="1.5em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.56 14.35l5.19 5.19a.86.86 0 01-1.21 1.2l-5.2-5.18a7.02 7.02 0 111.22-1.21zm-.23-4.33a5.31 5.31 0 10-10.62 0 5.31 5.31 0 0010.62 0z"></path></svg></button>						  </div>
+						   <div class="searchResultBox"><h4 class="searchTitle">Search suggestions</h4><ul id="searchResult" class="whiteBox" role="listbox"></ul></div>					   </div>
+					</li>
+				 </ul>
+				 <ul class="nav-info">
+					<li class="account-login text-center dropdown">
+					   							<a href="/login"><svg viewBox="0 0 24 24" width="24px" height="24px" aria-hidden="true" focusable="false"><path fill="#FFFFFF" d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18.7a8.7 8.7 0 01-5.62-2.06l.07-.09c1.19-1.48 2.9-2.12 5.55-2.12s4.38.63 5.58 2.09l.07.09A8.66 8.66 0 0112 20.7zm6.51-2.95l-.05-.06C17 16 14.87 15.16 12 15.16S7 16 5.53 17.69v.06a8.71 8.71 0 1113 0z M12 6a4 4 0 104 4 4 4 0 00-4-4zm0 6.7a2.7 2.7 0 112.7-2.7 2.7 2.7 0 01-2.7 2.7z"></path></svg><span>Sign In/Register</span></a>											</li>
+				 </ul>
+			  </div>
+		   </div>
+		</nav>
+		<nav id="bs-navbar2" class="sidenav">
+		   <ul class="nav navbar-nav">
+			  <li>
+				<button type="button" class="navbar-toggle" onclick="toggle_NavMenu()"><svg width="1.5em" height="1.5em" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg></button>				Menu			  </li>
+			  <li id="slideActivity" class="nav-item accessible-megamenu-top-nav-item">
+				 <a class="en" href="/activity">Events</a>			  </li>
+			  <li id="Categories" class="nav-item accessible-megamenu-top-nav-item has-submenu"><div>Categories</div>
+<svg class="arrowDown" viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"><path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path></svg>
+<ul class="submenu submenu-genre d-none"><li id="3" class="en"><a class="en " href="/categories/concerts">Concerts</a></li><li id="4" class="en"><a class="en " href="/categories/sports">Sports</a></li><li id="38" class="en"><a class="en " href="/categories/arts-theatre-comedy">Arts, Theatre &amp; Comedy</a></li><li id="39" class="en"><a class="en " href="/categories/family-entertainment">Family Entertainment</a></li></ul>
+</li><li id="Venues" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="/venues">Venues</a></li><li id="Help" class="nav-item accessible-megamenu-top-nav-item"><a class="en " href="https://help.ticketmaster.sg/">Help</a></li>		   </ul>
+		   			<ui class="nav navbar-nav bottom-nav"><li class="nav-item accessible-megamenu-top-nav-item"><a class="en" href="/login">Sign In/Register</a></li>
+</ui>					</nav>
+		<!-- start: Breadcrumb -->
+		<div id="breadcrumbs-widget" class="container">
+			 <ol class="breadcrumb"><li><a href="/">Home</a></li>
+<li><a href="/activity">Events</a></li>
+<li><a href="/activity/detail/26sg_riize">2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE</a></li>
+<li class="active">Seat Selection</li>
+</ol>		</div>
+		<!-- end: Breadcrumb -->
+    </header>
+
+    <div id="main-container">
+        
+<!-- start: Container -->
+<div class="container">
+    <!-- start: Flow short ver -->
+<div class="row" id="mobileWizard">
+ <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 col-12">
+    <div class="purchaseProgress">
+       <div class="progress-track"></div>
+                        <div class="progress-step active">Seat Selection</div>
+                        <div class="progress-step disabled">Confirmation</div>
+                        <div class="progress-step disabled">Payment</div>
+                        <div class="progress-step disabled">Finish</div>
+                </div>
+ </div>
+</div>
+    <!-- start: Flow-Content -->
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 col-12">
+            <!-- start: Page-Info -->
+            <div id="pageinfo" class="row py-3">
+        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3 col-3 title-img visible-desktop d-none d-sm-block">
+        <img class="img-fluid" src="https://static.ticketmaster.sg/images/activity/26sg_riize_7f4e3e32ea9c1bb9e7af55f43f3dfbdf.jpg" alt="">    </div>
+         <div class="col-lg-9 col-md-9 col-sm-12 col-xs-12 col-12">
+        <div class="page-header"><h3 id="seatmapEventName">2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE</h3></div>
+        <div class="">
+            <select id="gameId" class="form-select" name="gameId">
+<option value="2923" selected="">24 Jan 2026 (Sat.) 07:00 pm  &lt;Singapore Indoor Stadium&gt; 2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE</option>
+</select>        </div>
+    </div>
+</div>
+            <!-- end: Page-Info -->
+            <!-- Site Map Details -->
+            <div id="sectionInfo" class="mgt-10"></div>
+
+            <!-- start: Venue -->
+            <div class="row" id="step1">
+				<div class="col-lg-12 col-md-12 col-xs-12 col-12">
+					<div id="mapSelectArea" class="row-no-gutters text-center">
+<div class="col-lg-12 col-md-12 col-xs-12 col-12">
+    <div class="panel-heading">
+        <div class="step"></div>
+        <span>Choose Your Section</span>
+    </div>
+    <div id="mapContainer"><div class="col-md-12 col-xs-12 venue-area"><button id="enlargeMap" class="btn btn-default d-block d-sm-none mx-auto"><i class="fa fa-search-plus"></i></button><!--?xml version="1.0" encoding="UTF-8"?-->
+<svg id="Indoor_Stadium" xmlns="http://www.w3.org/2000/svg" width="1262.6" height="1181.7" version="1.1" viewBox="0 0 1262.6 1181.7">
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <g id="sections">
+    <g id="field_328" isolation="isolate">
+      <polygon points="420.1 151.9 389.1 158.6 386.1 159.3 385.4 159.4 285.4 181.4 286.5 189.4 325.6 210.6 326.7 211.2 338.8 217.7 421.3 159.9 420.1 151.9" fill="#e18c22"></polygon>
+      <polygon points="337.5 209.6 325.5 203.1 324.4 202.5 285.4 181.4 286.5 189.4 325.6 210.6 326.7 211.2 338.8 217.7 337.5 209.6" fill="#d18320"></polygon>
+      <polygon points="420.1 151.9 421.3 159.9 338.8 217.7 337.5 209.6 420.1 151.9" fill="#de8b22"></polygon>
+      <polygon points="285.4 181.4 385.4 159.4 386.1 159.3 389.1 158.6 420.1 151.9 337.5 209.6 325.5 203.1 324.4 202.5 285.4 181.4" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_329" isolation="isolate">
+      <polygon points="329.2 215.5 274.2 185.8 226.1 195.3 203.9 211 205.1 219.1 279.4 259.3 330.3 223.6 329.2 215.5" fill="#e18c22"></polygon>
+      <polygon points="329.2 215.5 330.3 223.6 279.4 259.3 278.2 251.3 329.2 215.5" fill="#de8b22"></polygon>
+      <polygon points="278.2 251.3 279.4 259.3 205.1 219.1 203.9 211 278.2 251.3" fill="#d18320"></polygon>
+      <polygon points="226.1 195.3 274.2 185.8 329.2 215.5 278.2 251.3 203.9 211 226.1 195.3" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_330" isolation="isolate">
+      <polygon points="248.9 248.1 195.2 219.1 145.5 253.7 146.7 261.9 200.5 291 250.2 256.2 248.9 248.1" fill="#e18c22"></polygon>
+      <polygon points="248.9 248.1 250.2 256.2 200.5 291 199.3 282.9 248.9 248.1" fill="#de8b22"></polygon>
+      <polygon points="199.3 282.9 200.5 291 146.7 261.9 145.5 253.7 199.3 282.9" fill="#d18320"></polygon>
+      <polygon points="195.2 219.1 248.9 248.1 199.3 282.9 145.5 253.7 195.2 219.1" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_331" isolation="isolate">
+      <polygon points="189.6 289.8 135.8 260.6 86.4 295.1 87.6 303.2 141.4 332.4 190.7 297.8 189.6 289.8" fill="#e18c22"></polygon>
+      <polygon points="189.6 289.8 190.7 297.8 141.4 332.4 140.2 324.3 189.6 289.8" fill="#de8b22"></polygon>
+      <polygon points="140.2 324.3 141.4 332.4 87.6 303.2 86.4 295.1 140.2 324.3" fill="#d18320"></polygon>
+      <polygon points="135.8 260.6 189.6 289.8 140.2 324.3 86.4 295.1 135.8 260.6" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_332" isolation="isolate">
+      <polygon points="129.2 331.9 75.5 302.8 27.6 336.4 28.8 344.4 82.6 373.6 130.5 340.1 129.2 331.9" fill="#e18c22"></polygon>
+      <polygon points="129.2 331.9 130.5 340.1 82.6 373.6 81.4 365.4 129.2 331.9" fill="#de8b22"></polygon>
+      <polygon points="81.4 365.4 82.6 373.6 28.8 344.4 27.6 336.4 81.4 365.4" fill="#d18320"></polygon>
+      <polygon points="75.5 302.8 129.2 331.9 81.4 365.4 27.6 336.4 75.5 302.8" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_324" isolation="isolate">
+      <polygon points="897.2 60.8 861.5 41.5 745.2 73.2 746.4 81.4 822.1 122.4 822.1 122.4 898.4 68.8 897.2 60.8" fill="#5cb444"></polygon>
+      <polygon points="897.2 60.8 836.5 103.3 820.9 114.2 822.1 122.4 837.6 111.4 898.4 68.8 897.2 60.8" fill="#5bb243"></polygon>
+      <polygon points="820.9 114.2 822.1 122.4 746.4 81.4 745.2 73.2 820.9 114.2" fill="#56a83f"></polygon>
+      <polygon points="745.2 73.2 768.9 66.8 861.5 41.5 897.2 60.8 836.5 103.3 820.9 114.2 745.2 73.2" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_323" isolation="isolate">
+      <path d="M955.5,92.3l-48-26-17.4,12.2-58.9,41.2,1.2,8.2,48,26,58.9-41.3,17.4-12.1s-1.2-8.2-1.2-8.2Z" fill="#5cb444"></path>
+      <polygon points="955.5 92.3 938.1 104.5 879.2 145.9 880.5 153.9 939.4 112.6 956.8 100.5 955.5 92.3" fill="#5bb243"></polygon>
+      <polygon points="879.2 145.9 880.5 153.9 832.4 127.9 831.2 119.8 879.2 145.9" fill="#56a83f"></polygon>
+      <polygon points="907.5 66.3 955.5 92.3 938.1 104.5 879.2 145.9 831.2 119.8 890.1 78.6 907.5 66.3" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_322" isolation="isolate">
+      <polygon points="990.8 139.7 990.8 139.7 943 113.9 899.3 144.5 889.5 151.3 890.7 159.4 938.4 185.3 937.3 177.2 938.4 185.3 948.3 178.5 992 147.8 990.8 139.7" fill="#5cb444"></polygon>
+      <polygon points="990.8 139.7 947.1 170.4 937.3 177.2 938.4 185.3 948.3 178.5 992 147.8 990.8 139.7" fill="#5bb243"></polygon>
+      <polygon points="937.3 177.2 938.4 185.3 890.7 159.4 889.5 151.3 937.3 177.2" fill="#56a83f"></polygon>
+      <polygon points="943 113.9 990.8 139.7 947.1 170.4 937.3 177.2 889.5 151.3 899.3 144.5 943 113.9" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_320" isolation="isolate">
+      <polygon points="1107.5 203 1059.8 177.1 1016.1 207.7 1006.2 214.6 1007.4 222.7 1055.2 248.6 1065 241.6 1108.7 211.1 1107.5 203" fill="#5cb444"></polygon>
+      <polygon points="1107.5 203 1063.8 233.5 1054 240.5 1055.2 248.6 1065 241.6 1108.7 211.1 1107.5 203" fill="#5bb243"></polygon>
+      <polygon points="1054 240.5 1055.2 248.6 1007.4 222.7 1006.2 214.6 1054 240.5" fill="#56a83f"></polygon>
+      <polygon points="1059.8 177.1 1107.5 203 1063.8 233.5 1054 240.5 1006.2 214.6 1016.1 207.7 1059.8 177.1" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_319" isolation="isolate">
+      <polygon points="1188.4 218.4 1140.8 192.8 1126.9 202.5 1064.5 246.2 1065.7 254.3 1113.2 279.9 1175.5 236.3 1189.5 226.5 1188.4 218.4" fill="#5cb444"></polygon>
+      <polygon points="1188.4 218.4 1174.4 228.3 1112.1 271.9 1113.2 279.9 1175.5 236.3 1189.5 226.5 1188.4 218.4" fill="#5bb243"></polygon>
+      <polygon points="1112.1 271.9 1113.2 279.9 1065.7 254.3 1064.5 246.2 1112.1 271.9" fill="#56a83f"></polygon>
+      <polygon points="1140.8 192.8 1188.4 218.4 1174.4 228.3 1112.1 271.9 1064.5 246.2 1126.9 202.5 1140.8 192.8" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_318" isolation="isolate">
+      <polygon points="1232.5 242.3 1198.2 223.8 1189.9 229.6 1128.8 272.3 1121.9 277.2 1123.1 285.3 1194.3 323.8 1197.9 317.1 1229.4 258.4 1233.7 250.4 1232.5 242.3" fill="#5cb444"></polygon>
+      <polygon points="1232.5 242.3 1228.2 250.3 1196.6 309 1193 315.8 1194.3 323.8 1197.9 317.1 1229.4 258.4 1233.7 250.4 1232.5 242.3" fill="#5ab142"></polygon>
+      <polygon points="1193 315.8 1194.3 323.8 1123.1 285.3 1121.9 277.2 1193 315.8" fill="#56a83f"></polygon>
+      <polygon points="1198.2 223.8 1232.5 242.3 1228.2 250.3 1196.6 309 1193 315.8 1121.9 277.2 1128.8 272.3 1189.9 229.6 1198.2 223.8" fill="#5cb444"></polygon>
+    </g>
+    <g id="field_PEND">
+      <polygon points="713.2 353.3 712 345.3 642.8 307.7 698 269.1 696.8 261 652.1 236.8 581.3 255.4 513.3 302.9 514.5 311.1 674.9 398 713.4 371.1 713.2 353.3" fill="#00e7e7"></polygon>
+      <polygon points="696.8 261 698 269.1 636.7 311.9 635.6 303.8 696.8 261" fill="#00e5e5"></polygon>
+      <polygon points="712 345.3 713.2 353.3 713.4 371.1 712.1 363 712 345.3" fill="#00e3e3"></polygon>
+      <polygon points="673.8 389.9 674.9 398 514.5 311.1 513.3 302.9 673.8 389.9" fill="#00d8d8"></polygon>
+      <polygon points="712.1 363 713.4 371.1 674.9 398 673.8 389.9 712.1 363" fill="#00e5e5"></polygon>
+      <polygon points="581.3 255.4 652.1 236.8 696.8 261 635.6 303.8 712 345.3 712.1 363 673.8 389.9 513.3 302.9 581.3 255.4" fill="#00e7e7"></polygon>
+    </g>
+    <g id="field_VPEND" class="empty">
+      <polygon points="673.8 389.9 513.3 302.9 453.6 344.7 454.8 352.8 600.9 431.9 630.4 429.1 674.9 398 673.8 389.9" fill="#f8b1ce"></polygon>
+      <polygon points="599.7 423.8 600.9 431.9 454.8 352.8 453.6 344.7 599.7 423.8" fill="#f1aec9"></polygon>
+      <polygon points="629.3 421 630.4 429.1 600.9 431.9 599.7 423.8 629.3 421" fill="#f5b0cc"></polygon>
+      <polygon points="513.3 302.9 673.8 389.9 629.3 421 599.7 423.8 453.6 344.7 513.3 302.9" fill="#f9b2cf"></polygon>
+      <polygon points="673.8 389.9 674.9 398 630.4 429.1 629.3 421 673.8 389.9" fill="#f8b1ce"></polygon>
+    </g>
+    <g id="field_PENC">
+      <polygon points="948 396.9 901.2 371.7 840 414.5 763.6 373.1 734.9 375.3 696.5 402.2 697.7 410.3 858.2 497.1 925.4 450.1 949.2 405.1 948 396.9" fill="#00d8d8"></polygon>
+      <polygon points="948 396.9 949.2 405.1 925.4 450.1 924.1 442.1 948 396.9" fill="#00e3e3"></polygon>
+      <polygon points="924.1 442.1 925.4 450.1 858.2 497.1 857 489.1 924.1 442.1" fill="#00e5e5"></polygon>
+      <polygon points="734.9 375.3 763.6 373.1 840 414.5 901.2 371.7 948 396.9 924.1 442.1 857 489.1 696.5 402.2 734.9 375.3" fill="#00e7e7"></polygon>
+      <polygon points="857 489.1 858.2 497.1 697.7 410.3 696.5 402.2 857 489.1" fill="#00d8d8"></polygon>
+    </g>
+    <g id="field_VPENC" class="empty">
+      <polygon points="857 489.1 696.5 402.2 651.8 433.6 651.2 451.8 652.5 459.9 798.6 539 858.2 497.1 857 489.1" fill="#f1aec9"></polygon>
+      <polygon points="696.5 402.2 857 489.1 797.3 530.9 651.2 451.8 651.8 433.6 696.5 402.2" fill="#f9b2cf"></polygon>
+      <polygon points="857 489.1 858.2 497.1 798.6 539 797.3 530.9 857 489.1" fill="#f8b1ce"></polygon>
+      <polygon points="797.3 530.9 798.6 539 652.5 459.9 651.2 451.8 797.3 530.9" fill="#f1aec9"></polygon>
+    </g>
+    <g id="field_VPENB" class="empty">
+      <polygon points="474.8 392.7 423.6 364.9 292.1 457 293.2 465 344.6 492.9 373.7 490.3 475.8 418.9 476.1 400.7 474.8 392.7" fill="#f9b2cf"></polygon>
+      <polygon points="474.8 392.7 476.1 400.7 475.8 418.9 474.6 410.7 474.8 392.7" fill="#f4afcb"></polygon>
+      <polygon points="343.3 484.7 344.6 492.9 293.2 465 292.1 457 343.3 484.7" fill="#f1aec9"></polygon>
+      <polygon points="372.5 482.2 373.7 490.3 344.6 492.9 343.3 484.7 372.5 482.2" fill="#f5b0cc"></polygon>
+      <polygon points="474.6 410.7 475.8 418.9 373.7 490.3 372.5 482.2 474.6 410.7" fill="#f8b1ce"></polygon>
+      <polygon points="423.6 364.9 474.8 392.7 474.6 410.7 372.5 482.2 343.3 484.7 292.1 457 423.6 364.9" fill="#f9b2cf"></polygon>
+    </g>
+    <g id="field_VPENA" class="empty">
+      <polygon points="767.3 551 715.9 523.2 686.8 525.8 584.7 597.2 584.5 615.3 585.6 623.4 637 651.2 768.4 559.1 767.3 551" fill="#f1aec9"></polygon>
+      <polygon points="686.8 525.8 715.9 523.2 767.3 551 635.8 643.1 584.5 615.3 584.7 597.2 686.8 525.8" fill="#f9b2cf"></polygon>
+      <polygon points="767.3 551 768.4 559.1 637 651.2 635.8 643.1 767.3 551" fill="#f8b1ce"></polygon>
+      <polygon points="635.8 643.1 637 651.2 585.6 623.4 584.5 615.3 635.8 643.1" fill="#f1aec9"></polygon>
+    </g>
+    <g id="field_232" isolation="isolate">
+      <polygon points="261.7 432 212.9 405.6 212.4 405.3 181.9 388.8 157.8 375.8 142 367.2 116.9 384.7 118.2 392.8 134 401.4 158.1 414.5 188.6 431 189.1 431.2 237.8 457.6 262.8 440.1 261.7 432" fill="#30a1d3"></polygon>
+      <polygon points="236.6 449.5 187.8 423.1 187.3 422.9 156.9 406.3 132.8 393.3 116.9 384.7 118.2 392.8 134 401.4 158.1 414.5 188.6 431 189.1 431.2 237.8 457.6 236.6 449.5" fill="#2d96c5"></polygon>
+      <polygon points="261.7 432 262.8 440.1 237.8 457.6 236.6 449.5 261.7 432" fill="#309fd1"></polygon>
+      <polygon points="142 367.2 157.8 375.8 181.9 388.8 212.4 405.3 212.9 405.6 261.7 432 236.6 449.5 187.8 423.1 187.3 422.9 156.9 406.3 132.8 393.3 116.9 384.7 142 367.2" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_231" isolation="isolate">
+      <polygon points="366.6 344.3 329.1 323.9 328.5 323.7 274 294.1 258.1 285.5 147.9 362.8 149.1 370.8 165 379.4 219.5 408.9 220 409.2 257.5 429.5 367.8 352.4 366.6 344.3" fill="#30a1d3"></polygon>
+      <polygon points="256.4 421.5 218.8 401.2 218.3 400.9 163.7 371.3 147.9 362.8 149.1 370.8 165 379.4 219.5 408.9 220 409.2 257.5 429.5 256.4 421.5" fill="#2d96c5"></polygon>
+      <polygon points="366.6 344.3 367.8 352.4 257.5 429.5 256.4 421.5 366.6 344.3" fill="#309fd1"></polygon>
+      <polygon points="258.1 285.5 274 294.1 328.5 323.7 329.1 323.9 366.6 344.3 256.4 421.5 218.8 401.2 218.3 400.9 163.7 371.3 147.9 362.8 258.1 285.5" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_230" isolation="isolate">
+      <polygon points="405.2 331.2 356.5 304.8 356 304.5 301.3 275 285.5 266.4 263.4 281.8 264.7 289.9 280.5 298.5 335.1 328.1 335.6 328.3 384.3 354.7 406.4 339.3 405.2 331.2" fill="#30a1d3"></polygon>
+      <polygon points="383.1 346.6 334.3 320.2 333.9 320 279.3 290.4 263.4 281.8 264.7 289.9 280.5 298.5 335.1 328.1 335.6 328.3 384.3 354.7 383.1 346.6" fill="#2d96c5"></polygon>
+      <polygon points="405.2 331.2 406.4 339.3 384.3 354.7 383.1 346.6 405.2 331.2" fill="#309fd1"></polygon>
+      <polygon points="285.5 266.4 301.3 275 356 304.5 356.5 304.8 405.2 331.2 383.1 346.6 334.3 320.2 333.9 320 279.3 290.4 263.4 281.8 285.5 266.4" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_229" isolation="isolate">
+      <polygon points="464.5 290 415.7 263.6 415.2 263.3 360.6 233.8 344.8 225.2 294.8 260.2 295.9 268.3 311.8 276.8 366.4 306.4 366.9 306.7 415.6 333 465.7 298 464.5 290" fill="#30a1d3"></polygon>
+      <polygon points="414.5 325 365.7 298.6 365.2 298.4 310.6 268.7 294.8 260.2 295.9 268.3 311.8 276.8 366.4 306.4 366.9 306.7 415.6 333 414.5 325" fill="#2d96c5"></polygon>
+      <polygon points="464.5 290 465.7 298 415.6 333 414.5 325 464.5 290" fill="#309fd1"></polygon>
+      <polygon points="344.8 225.2 360.6 233.8 415.2 263.3 415.7 263.6 464.5 290 414.5 325 365.7 298.6 365.2 298.4 310.6 268.7 294.8 260.2 344.8 225.2" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_228" isolation="isolate">
+      <polygon points="526.1 246.9 461.5 211.9 422.2 190.7 406.4 182.1 354.1 218.6 355.4 226.7 371.2 235.3 410.4 256.5 475 291.5 527.2 255 526.1 246.9" fill="#30a1d3"></polygon>
+      <polygon points="473.8 283.4 409.3 248.5 370 227.2 354.1 218.6 355.4 226.7 371.2 235.3 410.4 256.5 475 291.5 473.8 283.4" fill="#2d96c5"></polygon>
+      <polygon points="526.1 246.9 527.2 255 475 291.5 473.8 283.4 526.1 246.9" fill="#309fd1"></polygon>
+      <polygon points="406.4 182.1 422.2 190.7 461.5 211.9 526.1 246.9 473.8 283.4 409.3 248.5 370 227.2 354.1 218.6 406.4 182.1" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_227">
+      <path d="M557.9,224.5l-33.3-34.8-12.3-12.8-17.2-17.9-11.1-11.6-6.3-6.6-5-5.2-57.1,40.1,1.2,8.1,6.7,3.6,9.1,5,15.8,8.5,23.8,12.9,17.5,9.5,46.7,25.3,22.7-15.9-1.2-8.1h0ZM431.3,184.2l-9.1-4.9,9.1,4.9,15.8,8.6-15.8-8.6Z" fill="#30a1d3"></path>
+      <polygon points="557.9 224.5 559.1 232.6 536.4 248.6 535.2 240.4 557.9 224.5" fill="#309fd1"></polygon>
+      <polygon points="535.2 240.4 488.5 215.1 471.1 205.7 447.2 192.8 431.3 184.2 422.2 179.3 415.5 175.7 416.7 183.7 423.5 187.4 432.6 192.3 448.4 200.8 472.2 213.8 489.7 223.3 536.4 248.6 535.2 240.4" fill="#2d96c5"></polygon>
+      <polygon points="472.7 135.6 477.6 140.8 483.9 147.4 495 159 512.2 176.9 524.5 189.8 557.9 224.5 535.2 240.4 488.5 215.1 471.1 205.7 447.2 192.8 431.3 184.2 422.2 179.3 415.5 175.7 472.7 135.6" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_226">
+      <polygon points="579 200.7 606.8 194.9 605.6 186.8 580.6 98.9 490.5 125.7 491.6 133.8 570.3 228 583.3 220.3 582.2 212.1 579 200.7" fill="#d74c4c"></polygon>
+      <polygon points="605.6 186.8 606.8 194.9 578 200.9 576.8 192.9 605.6 186.8" fill="#e24f4f"></polygon>
+      <polygon points="582.2 212.1 583.3 220.3 570.3 228 569 219.9 582.2 212.1" fill="#e55050"></polygon>
+      <polygon points="490.5 125.7 580.6 98.9 605.6 186.8 576.8 192.9 582.2 212.1 569 219.9 490.5 125.7" fill="#e75151"></polygon>
+      <polygon points="569 219.9 570.3 228 491.6 133.8 490.5 125.7 569 219.9" fill="#d74c4c"></polygon>
+    </g>
+    <g id="field_225">
+      <polygon points="697.2 85.4 596.8 95.7 598 103.8 619.7 193.8 641.6 193.2 642.2 198 643.5 206.1 657.2 204.2 698.3 93.5 697.2 85.4" fill="#e14f4f"></polygon>
+      <polygon points="618.5 185.7 619.7 193.8 598 103.8 596.8 95.7 618.5 185.7" fill="#d74c4c"></polygon>
+      <polygon points="640.6 185.1 641.8 193.2 619.7 193.8 618.5 185.7 640.6 185.1" fill="#df4e4e"></polygon>
+      <polygon points="596.8 95.7 697.2 85.4 656.1 196.2 642.2 198 640.6 185.1 618.5 185.7 596.8 95.7" fill="#e75151"></polygon>
+      <polygon points="656.1 196.2 657.2 204.2 643.5 206.1 642.2 198 656.1 196.2" fill="#e04f4f"></polygon>
+      <polygon points="697.2 85.4 698.3 93.5 657.2 204.2 656.1 196.2 697.2 85.4" fill="#e14f4f"></polygon>
+    </g>
+    <g id="field_224">
+      <path d="M793.9,133.1l-77.2-41.8-22.7,50.2-7.2,15.9-19.4,42.7,1.2,8.1,17.4,9.4,42.8-29.9,15.8-11.1,50.5-35.4-1.2-8.1h0Z" fill="#30a1d3"></path>
+      <polygon points="684.8 209.5 686 217.6 668.6 208.2 667.4 200.1 684.8 209.5" fill="#2d96c5"></polygon>
+      <polygon points="793.9 133.1 743.4 168.4 727.5 179.6 684.8 209.5 686 217.6 728.8 187.7 744.6 176.6 795.1 141.2 793.9 133.1" fill="#309fd1"></polygon>
+      <polygon points="716.7 91.3 793.9 133.1 743.4 168.4 727.5 179.6 684.8 209.5 667.4 200.1 686.8 157.5 694 141.5 716.7 91.3" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_223" isolation="isolate">
+      <polygon points="859.2 159.8 800.8 200.7 800.4 200.9 800.8 200.7 859.2 159.8 811.6 134.1 753.2 174.9 752.6 175.4 695.6 215.3 696.8 223.4 744.4 249.2 801.4 209.3 802.1 208.8 860.5 167.9 859.2 159.8" fill="#30a1d3"></polygon>
+      <polygon points="859.2 159.8 800.8 200.7 800.1 201.1 743.2 241.1 744.4 249.2 801.4 209.3 802.1 208.8 860.5 167.9 859.2 159.8" fill="#309fd1"></polygon>
+      <polygon points="743.2 241.1 744.4 249.2 696.8 223.4 695.6 215.3 743.2 241.1" fill="#2d96c5"></polygon>
+      <polygon points="811.6 134.1 859.2 159.8 800.8 200.7 800.1 201.1 743.2 241.1 695.6 215.3 752.6 175.4 753.2 174.9 811.6 134.1" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_222" isolation="isolate">
+      <polygon points="917.3 191.2 869.9 165.6 798.6 215.5 797.9 216.1 753.8 246.9 755.1 255 802.4 280.7 846.4 249.8 847.1 249.3 918.5 199.3 917.3 191.2" fill="#30a1d3"></polygon>
+      <polygon points="917.3 191.2 846 241.2 845.2 241.7 801.2 272.5 802.4 280.7 846.4 249.8 847.1 249.3 918.5 199.3 917.3 191.2" fill="#309fd1"></polygon>
+      <polygon points="801.2 272.5 802.4 280.7 755.1 255 753.8 246.9 801.2 272.5" fill="#2d96c5"></polygon>
+      <polygon points="869.9 165.6 917.3 191.2 846 241.2 845.2 241.7 801.2 272.5 753.8 246.9 797.9 216.1 798.6 215.5 869.9 165.6" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_221" isolation="isolate" class="empty">
+      <polygon points="975.6 222.8 928 197 869.6 237.9 868.8 238.4 811.8 278.3 813.1 286.3 860.7 312.1 917.5 272.4 918.3 271.8 976.7 230.9 975.6 222.8" fill="#97d0e9"></polygon>
+      <polygon points="975.6 222.8 917.1 263.7 916.3 264.3 859.4 304.1 860.7 312.1 917.5 272.4 918.3 271.8 976.7 230.9 975.6 222.8" fill="#97cfe8"></polygon>
+      <polygon points="859.4 304.1 860.7 312.1 813.1 286.3 811.8 278.3 859.4 304.1" fill="#96cae2"></polygon>
+      <polygon points="928 197 975.6 222.8 917.1 263.7 916.3 264.3 859.4 304.1 811.8 278.3 868.8 238.4 869.6 237.9 928 197" fill="#97d0e9"></polygon>
+    </g>
+    <g id="field_220" isolation="isolate">
+      <polygon points="1033.6 254.3 986.3 228.6 927.8 269.5 926.9 270.1 870.1 309.8 871.3 317.9 918.7 343.6 975.4 303.8 975.9 303.5 1034.8 262.3 1033.6 254.3" fill="#30a1d3"></polygon>
+      <polygon points="1033.6 254.3 974.7 295.5 974.3 295.8 917.5 335.5 918.7 343.6 975.4 303.8 975.9 303.5 1034.8 262.3 1033.6 254.3" fill="#309fd1"></polygon>
+      <polygon points="917.5 335.5 918.7 343.6 871.3 317.9 870.1 309.8 917.5 335.5" fill="#2d96c5"></polygon>
+      <polygon points="986.3 228.6 1033.6 254.3 974.7 295.5 974.3 295.8 917.5 335.5 870.1 309.8 926.9 270.1 927.8 269.5 986.3 228.6" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_219" isolation="isolate">
+      <polygon points="1091.7 285.6 1044.6 260.2 985.1 301.7 928.4 341.4 929.6 349.5 976.7 375 1033.6 335.2 1092.8 293.7 1091.7 285.6" fill="#30a1d3"></polygon>
+      <polygon points="1091.7 285.6 1032.3 327.1 975.5 366.9 976.7 375 1033.6 335.2 1092.8 293.7 1091.7 285.6" fill="#309fd1"></polygon>
+      <polygon points="975.5 366.9 976.7 375 929.6 349.5 928.4 341.4 975.5 366.9" fill="#2d96c5"></polygon>
+      <polygon points="1044.6 260.2 1091.7 285.6 1032.3 327.1 975.5 366.9 928.4 341.4 985.1 301.7 1044.6 260.2" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_218" isolation="isolate">
+      <polygon points="1170.4 336.1 1095.6 295.7 1043.6 332 1027.8 343.1 1019.6 348.8 985.8 372.5 987 380.6 1001.9 388.6 1054.3 375 1066.1 371.9 1091 365.3 1171.7 344.2 1170.4 336.1" fill="#30a1d3"></polygon>
+      <polygon points="1170.4 336.1 1089.9 357.3 1064.9 363.8 1053 366.9 1000.8 380.6 1001.9 388.6 1054.3 375 1066.1 371.9 1091 365.3 1171.7 344.2 1170.4 336.1" fill="#2f9dce"></polygon>
+      <polygon points="1000.8 380.6 1001.9 388.6 987 380.6 985.8 372.5 1000.8 380.6" fill="#2d96c5"></polygon>
+      <polygon points="1095.6 295.7 1170.4 336.1 1089.9 357.3 1064.9 363.8 1053 366.9 1000.8 380.6 985.8 372.5 1019.6 348.8 1027.8 343.1 1043.6 332 1095.6 295.7" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_217">
+      <polygon points="1179.6 348.6 1006.3 387.9 1005.1 396.5 1006.3 404.7 1027.4 404 1028 409.4 1029.2 417.6 1176.9 419.3 1180.8 356.7 1179.6 348.6" fill="#e75151"></polygon>
+      <polygon points="1026.3 395.9 1027.5 404 1006.3 404.7 1005.1 396.5 1026.3 395.9" fill="#df4e4e"></polygon>
+      <polygon points="1175.7 411.2 1176.9 419.3 1029.2 417.6 1028 409.4 1175.7 411.2" fill="#de4e4e"></polygon>
+      <polygon points="1179.6 348.6 1180.8 356.7 1176.9 419.3 1175.7 411.2 1179.6 348.6" fill="#de4e4e"></polygon>
+      <polygon points="1006.3 387.9 1179.6 348.6 1175.7 411.2 1028 409.4 1026.3 395.9 1005.1 396.5 1006.3 387.9" fill="#e75151"></polygon>
+    </g>
+    <g id="field_216">
+      <polygon points="1173.5 423.9 1028.7 419.9 1022.6 438.3 990.8 437.5 980.2 446.4 981.4 454.6 1143 490.5 1174.8 432 1173.5 423.9" fill="#e75151"></polygon>
+      <polygon points="1141.8 482.4 1143 490.5 981.4 454.6 980.2 446.4 1141.8 482.4" fill="#db4d4d"></polygon>
+      <polygon points="1173.5 423.9 1174.8 432 1143 490.5 1141.8 482.4 1173.5 423.9" fill="#e35050"></polygon>
+      <polygon points="990.8 437.5 1022.6 438.3 1028.7 419.9 1173.5 423.9 1141.8 482.4 980.2 446.4 990.8 437.5" fill="#e75151"></polygon>
+    </g>
+    <g id="field_215">
+      <polygon points="1127.2 493 1119.5 491 1116.4 490.2 1109.9 488.5 1075.9 479.7 1070.4 478.4 1046.2 472.1 1027.5 467.3 971.8 452.9 951.7 467 952.9 475.1 995.9 498.4 1010.3 506.1 1028.9 516.3 1032.6 518.3 1059.6 532.7 1064.5 535.5 1067.1 536.9 1072.8 540 1128.4 501.1 1127.2 493" fill="#30a1d3"></polygon>
+      <polygon points="1127.2 493 1128.4 501.1 1072.8 540 1071.7 531.9 1127.2 493" fill="#309fd1"></polygon>
+      <polygon points="1071.7 531.9 1066 528.8 1063.4 527.4 1058.3 524.7 1031.5 510.2 1027.8 508.1 1009.1 498.1 994.8 490.2 951.7 467 952.9 475.1 995.9 498.4 1010.3 506.1 1028.9 516.3 1032.6 518.3 1059.6 532.7 1064.5 535.5 1067.1 536.9 1072.8 540 1071.7 531.9" fill="#2d96c5"></polygon>
+      <polygon points="971.8 452.9 1027.5 467.3 1046.2 472.1 1070.4 478.4 1075.9 479.7 1109.9 488.5 1116.4 490.2 1119.5 491 1127.2 493 1071.7 531.9 1066 528.8 1063.4 527.4 1058.3 524.7 1031.5 510.2 1027.8 508.1 1009.1 498.1 994.8 490.2 951.7 467 971.8 452.9" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_214" isolation="isolate">
+      <polygon points="1061.4 539.1 1053.1 534.5 1048.2 531.8 998 504.6 941.5 474 891.1 509.4 892.4 517.4 948.8 548.1 998.9 575.2 1004 577.9 1012.2 582.4 1062.7 547.1 1061.4 539.1" fill="#30a1d3"></polygon>
+      <polygon points="1011 574.4 1002.7 569.8 997.8 567.1 947.5 539.9 891.1 509.4 892.4 517.4 948.8 548.1 998.9 575.2 1004 577.9 1012.2 582.4 1011 574.4" fill="#2d96c5"></polygon>
+      <polygon points="1061.4 539.1 1062.7 547.1 1012.2 582.4 1011 574.4 1061.4 539.1" fill="#309fd1"></polygon>
+      <polygon points="941.5 474 998 504.6 1048.2 531.8 1053.1 534.5 1061.4 539.1 1011 574.4 1002.7 569.8 997.8 567.1 947.5 539.9 891.1 509.4 941.5 474" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_213" isolation="isolate">
+      <polygon points="1001.7 580.9 993.4 576.3 988.3 573.6 922.4 537.9 921.9 537.6 881.8 515.9 831.7 551 832.9 559 873.2 580.9 873.5 581 939.6 616.8 944.5 619.5 952.9 624 1002.9 589 1001.7 580.9" fill="#30a1d3"></polygon>
+      <polygon points="951.7 615.9 943.4 611.4 938.3 608.6 872.4 572.9 872.1 572.8 831.7 551 832.9 559 873.2 580.9 873.5 581 939.6 616.8 944.5 619.5 952.9 624 951.7 615.9" fill="#2d96c5"></polygon>
+      <polygon points="1001.7 580.9 1002.9 589 952.9 624 951.7 615.9 1001.7 580.9" fill="#309fd1"></polygon>
+      <polygon points="881.8 515.9 921.9 537.6 922.4 537.9 988.3 573.6 993.4 576.3 1001.7 580.9 951.7 615.9 943.4 611.4 938.3 608.6 872.4 572.9 872.1 572.8 831.7 551 881.8 515.9" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_212" isolation="isolate">
+      <polygon points="941.4 623.1 933 618.6 928.1 615.9 861.8 580 821.4 558.1 772.7 592.3 773.9 600.4 814.5 622.4 880.5 658.1 885.5 660.8 893.8 665.4 942.6 631.2 941.4 623.1" fill="#30a1d3"></polygon>
+      <polygon points="892.7 657.2 884.4 652.7 879.3 650 813.3 614.3 772.7 592.3 773.9 600.4 814.5 622.4 880.5 658.1 885.5 660.8 893.8 665.4 892.7 657.2" fill="#2d96c5"></polygon>
+      <polygon points="941.4 623.1 942.6 631.2 893.8 665.4 892.7 657.2 941.4 623.1" fill="#309fd1"></polygon>
+      <polygon points="821.4 558.1 861.8 580 928.1 615.9 933 618.6 941.4 623.1 892.7 657.2 884.4 652.7 879.3 650 813.3 614.3 772.7 592.3 821.4 558.1" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_211" isolation="isolate">
+      <polygon points="882.1 664.5 873.8 660.1 868.9 657.4 802.7 621.6 762.2 599.6 712.5 634.4 713.8 642.5 754.5 664.5 820.4 700.3 825.4 703 833.7 707.4 883.4 672.7 882.1 664.5" fill="#30a1d3"></polygon>
+      <polygon points="832.5 699.3 824.2 694.9 819.2 692.1 753.2 656.5 712.5 634.4 713.8 642.5 754.5 664.5 820.4 700.3 825.4 703 833.7 707.4 832.5 699.3" fill="#2d96c5"></polygon>
+      <polygon points="882.1 664.5 883.4 672.7 833.7 707.4 832.5 699.3 882.1 664.5" fill="#309fd1"></polygon>
+      <polygon points="762.2 599.6 802.7 621.6 868.9 657.4 873.8 660.1 882.1 664.5 832.5 699.3 824.2 694.9 819.2 692.1 753.2 656.5 712.5 634.4 762.2 599.6" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_210" isolation="isolate">
+      <polygon points="822.8 706.2 814.5 701.7 809.4 698.9 755.7 669.8 743.6 663.3 702.8 641.2 653.9 675.5 655.1 683.6 707.9 712.2 708.3 712.4 761.7 741.3 766.8 744.1 775.1 748.5 824 714.2 822.8 706.2" fill="#30a1d3"></polygon>
+      <polygon points="773.8 740.4 765.5 736 760.5 733.2 707 704.3 706.7 704.1 653.9 675.5 655.1 683.6 707.9 712.2 708.3 712.4 761.7 741.3 766.8 744.1 775.1 748.5 773.8 740.4" fill="#2d96c5"></polygon>
+      <polygon points="822.8 706.2 824 714.2 775.1 748.5 773.8 740.4 822.8 706.2" fill="#309fd1"></polygon>
+      <polygon points="702.8 641.2 743.6 663.3 755.7 669.8 809.4 698.9 814.5 701.7 822.8 706.2 773.8 740.4 765.5 736 760.5 733.2 707 704.3 706.7 704.1 653.9 675.5 702.8 641.2" fill="#30a1d3"></polygon>
+    </g>
+    <g id="field_314" isolation="isolate">
+      <polygon points="1095.4 533.4 1025.6 582.2 1026.8 590.3 1037.4 596 1071.9 614.7 1090.7 558.6 1090.8 558.4 1096.5 541.5 1095.4 533.4" fill="#e18c22"></polygon>
+      <polygon points="1070.6 606.6 1036.3 587.9 1025.6 582.2 1026.8 590.3 1037.4 596 1071.9 614.7 1070.6 606.6" fill="#d18320"></polygon>
+      <polygon points="1095.4 533.4 1089.7 550.2 1089.6 550.6 1070.6 606.6 1071.9 614.7 1090.7 558.6 1090.8 558.4 1096.5 541.5 1095.4 533.4" fill="#da8921"></polygon>
+      <polygon points="1095.4 533.4 1089.7 550.2 1089.6 550.6 1070.6 606.6 1036.3 587.9 1025.6 582.2 1095.4 533.4" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_313" isolation="isolate">
+      <polygon points="1064.4 616.6 1014.9 589.7 966.3 623.8 967.4 631.9 1034 668 1059.5 650.2 1065.7 624.7 1064.4 616.6" fill="#e18c22"></polygon>
+      <polygon points="1064.4 616.6 1065.7 624.7 1059.5 650.2 1058.2 642.1 1064.4 616.6" fill="#da8821"></polygon>
+      <polygon points="1058.2 642.1 1059.5 650.2 1034 668 1032.9 659.9 1058.2 642.1" fill="#de8b22"></polygon>
+      <polygon points="1032.9 659.9 1034 668 967.4 631.9 966.3 623.8 1032.9 659.9" fill="#d18320"></polygon>
+      <polygon points="1014.9 589.7 1064.4 616.6 1058.2 642.1 1032.9 659.9 966.3 623.8 1014.9 589.7" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_312" isolation="isolate">
+      <polygon points="1022.5 667 966.6 636.7 966.3 636.6 955.9 631 908.6 664.2 909.8 672.3 920.1 677.9 920.4 678 976.3 708.3 1023.7 675.1 1022.5 667" fill="#e18c22"></polygon>
+      <polygon points="975.1 700.3 919.2 669.9 919 669.8 908.6 664.2 909.8 672.3 920.1 677.9 920.4 678 976.3 708.3 975.1 700.3" fill="#d18320"></polygon>
+      <polygon points="1022.5 667 1023.7 675.1 976.3 708.3 975.1 700.3 1022.5 667" fill="#de8b22"></polygon>
+      <polygon points="955.9 631 966.3 636.6 966.6 636.7 1022.5 667 975.1 700.3 919.2 669.9 919 669.8 908.6 664.2 955.9 631" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_311" isolation="isolate">
+      <polygon points="962.6 709 906.6 678.7 906.3 678.5 896.1 672.9 847.8 706.8 849 714.9 859.3 720.4 859.6 720.6 915.6 750.9 963.8 717.1 962.6 709" fill="#e18c22"></polygon>
+      <polygon points="914.3 742.8 858.4 712.5 858.2 712.4 847.8 706.8 849 714.9 859.3 720.4 859.6 720.6 915.6 750.9 914.3 742.8" fill="#d18320"></polygon>
+      <polygon points="962.6 709 963.8 717.1 915.6 750.9 914.3 742.8 962.6 709" fill="#de8b22"></polygon>
+      <polygon points="896.1 672.9 906.3 678.5 906.6 678.7 962.6 709 914.3 742.8 858.4 712.5 858.2 712.4 847.8 706.8 896.1 672.9" fill="#e18c22"></polygon>
+    </g>
+    <g id="field_310" isolation="isolate">
+      <path d="M905.1,758.1l-1.1-8.1-66.6-36-49,34.3,1.2,8.1,66.5,36.1,49-34.4h0Z" fill="#e18c22"></path>
+      <polygon points="904 750.1 905.1 758.1 856.1 792.5 855 784.3 904 750.1" fill="#de8b22"></polygon>
+      <polygon points="856.1 792.5 855 784.3 799 754.1 799 754.1 798.8 754 788.4 748.3 789.7 756.4 802.5 763.4 802.5 763.3 856.1 792.5" fill="#d18320"></polygon>
+      <polygon points="837.4 714 847.7 719.6 847.9 719.8 904 750.1 855 784.3 799 754.1 798.8 754 788.4 748.3 837.4 714" fill="#e18c22"></polygon>
+    </g>
+  </g>
+  <g id="FOH">
+    <polygon points="723.1 275.3 724.2 283.3 686.6 309.7 685.5 301.6 723.1 275.3" fill="#221e1f"></polygon>
+    <polygon points="872 355.9 873.2 364 724.2 283.3 723.1 275.3 872 355.9" fill="#201c1d"></polygon>
+    <polygon points="834.4 382.2 835.6 390.3 686.6 309.7 685.5 301.6 834.4 382.2"></polygon>
+    <polygon points="723.1 275.3 872 355.9 834.4 382.2 685.5 301.6 723.1 275.3"></polygon>
+    <polygon points="872 355.9 873.2 364 835.6 390.3 834.4 382.2 872 355.9"></polygon>
+    <polygon points="873.4 355.8 874.7 363.9 835.9 391 834.7 382.9 873.4 355.8" fill="#221e1f"></polygon>
+    <path d="M684,301.8l39-27.3,150.3,81.4-38.7,27.1-.4.2-150.3-81.4h.1ZM872,355.9l-148.9-80.6-37.6,26.3,148.9,80.6,37.6-26.3" fill="#221e1f"></path>
+    <polygon points="834.7 382.9 835.9 391 835.6 391.2 834.4 383.1 834.7 382.9" fill="#221e1f"></polygon>
+    <polygon points="834.4 383.1 835.6 391.2 685.2 309.8 684 301.8 834.4 383.1" fill="#201c1d"></polygon>
+  </g>
+  <g id="text">
+    <g>
+      <path d="M726.8,692.1c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <polygon points="734.6 686.8 744 691.9 742.9 692.7 734.8 688.4 734.3 690.4 732.8 690.4 733.5 687.4 734.6 686.8"></polygon>
+      <path d="M740.2,682.8c2.1-1.4,5.4-1.7,8.5,0s3.5,3.5,1.1,5.2-5.4,1.7-8.5,0-3.5-3.5-1.2-5.2h.1ZM748.8,687.4c1.6-1,.9-2.5-1.3-3.7s-4.8-1.3-6.2-.3-.9,2.5,1.3,3.7,4.8,1.3,6.2.3"></path>
+      <polygon points="795.3 644.3 804.7 649.4 803.5 650.3 795.5 645.9 794.9 648 793.5 648 794.2 645 795.3 644.3"></polygon>
+      <polygon points="800.4 640.6 810 645.8 808.8 646.6 800.6 642.2 800.2 644.4 798.8 644.3 799.5 641.4 800.4 640.6"></polygon>
+      <path d="M787.5,649.6c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M858.1,600.1c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <polygon points="853.4 603.6 862.9 608.7 861.7 609.6 853.6 605.1 853.1 607.3 851.7 607.2 852.4 604.3 853.4 603.6"></polygon>
+      <path d="M845.7,608.9c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M917.6,558.5c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.5-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <polygon points="912.9 561.9 922.4 567 921.1 567.8 913.1 563.5 912.6 565.7 911.1 565.6 911.9 562.6 912.9 561.9"></polygon>
+      <path d="M905.1,567.2c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M984.1,520.4l1.4-1,1,.5-1.4,1,1.7.9-1.1.8-1.7-.9-4.5,3.1-.8-.4-2.3-7,1-.7,6.7,3.6h-.1ZM983,521.3l-4.9-2.6,1.7,4.9,3.1-2.2"></path>
+      <polygon points="970 521.9 979.5 527.1 978.3 527.9 970.2 523.4 969.8 525.6 968.4 525.5 969.1 522.6 970 521.9"></polygon>
+      <path d="M962.2,527.3c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <polygon points="1012.1 302.3 1021.7 307.4 1020.4 308.2 1012.4 303.8 1011.8 305.9 1010.4 305.9 1011.2 302.9 1012.1 302.3"></polygon>
+      <path d="M1017.3,298.5c1.9-1.3,4.9-1.6,7.1-.3,3.4,1.9,3.2,4.9,1.1,6.8l-1.3-.3c1.3-1.4,1.9-3.3.3-4.9,0,.7-.6,1.6-1.6,2.2-1.7,1.1-4.1,1.4-6,.4s-1.7-2.7.3-4h0ZM1023.3,299h0c-1.6-.9-3.5-.7-4.8.1s-1.2,2.1-.2,2.7,2.7.5,3.9-.4,1.3-1.6,1-2.4"></path>
+      <path d="M1004.4,307.6c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M887.1,243.6c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <polygon points="902.1 233.1 911.6 238.3 910.4 239.1 902.3 234.7 901.8 236.9 900.3 236.8 901.2 233.9 902.1 233.1"></polygon>
+      <path d="M894.3,238.5c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M841.7,202.3c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M834.5,207.4c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M827.2,212.4c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M778.1,176.9c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M770.8,182c1.6-1.1,4-1.6,5.8-.5s1.6,1.3,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M785.3,171.8c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.2.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.5-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M439.9,222.2c1.4-.5,3.1-.6,4.3,0s1.1,2.5-.7,3.8-4.6,1.8-6.1.9-1.3-1.8-.6-2.7c-.9.3-2.4.4-3.4-.1-1.6-.8-1.1-2.2.5-3.3s3.9-1.6,5.4-.7,1,1.4.6,2.1h0ZM442.5,225.5c1.3-.9,1.3-2,.4-2.5s-2.7-.4-4,.5-1.4,2-.3,2.5,2.7.3,3.9-.6M434.7,223.4c.8.5,2.2.2,3.2-.5s1.2-1.6.4-2.1-2.3-.3-3.3.4-1.1,1.6-.3,2.1"></path>
+      <path d="M426.2,226.3c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M418.9,231.4c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M374.1,262.7c1.9-1.3,4.9-1.6,7.1-.3,3.4,1.9,3.2,4.9,1.1,6.8l-1.3-.3c1.3-1.4,1.9-3.3.3-4.9,0,.7-.6,1.6-1.6,2.2-1.7,1.1-4.1,1.4-6,.5s-1.7-2.7.3-4h0ZM380,263.2h0c-1.6-.9-3.5-.7-4.8.1s-1.2,2.1-.2,2.7,2.7.5,3.9-.4,1.3-1.6,1-2.4"></path>
+      <path d="M366.3,268.1c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M359.1,273.2c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M256.9,266.3c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.2.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.4-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M249.6,271.4c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M265.3,260.5c2.1-1.4,5.4-1.7,8.5,0s3.5,3.5,1.1,5.2-5.4,1.7-8.5,0-3.5-3.5-1.2-5.2h.1ZM273.8,265.1c1.6-1,.9-2.5-1.3-3.7s-4.8-1.3-6.2-.3-.9,2.5,1.3,3.7,4.8,1.3,6.2.3"></path>
+      <polygon points="254 346.9 263.4 352.1 262.3 352.9 254.2 348.6 253.7 350.6 252.2 350.5 253 347.6 254 346.9"></polygon>
+      <path d="M246,352.4c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M238.7,357.6c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M105.2,374.3c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M119.9,364c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M112.5,369.2c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.4-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.4-.8,0-1.9,1.3-2.8h.1Z"></path>
+      <path d="M953.1,272.5c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M945.9,277.7c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M961.2,266.8c2.1-1.4,5.4-1.7,8.5,0s3.5,3.5,1.1,5.2-5.4,1.7-8.5,0-3.5-3.5-1.2-5.2h.1ZM969.8,271.4c1.6-1,.9-2.5-1.3-3.7s-4.8-1.3-6.2-.3-.9,2.5,1.3,3.7,4.8,1.3,6.2.3"></path>
+      <g isolation="isolate">
+        <path d="M843.8,738.8c2.1-1.4,5.4-1.7,8.5,0s3.5,3.5,1.1,5.2-5.4,1.7-8.5,0-3.5-3.5-1.2-5.2h.1ZM852.4,743.4c1.6-1,.9-2.5-1.3-3.7s-4.8-1.3-6.2-.3-.9,2.5,1.3,3.7,4.8,1.3,6.2.3"></path>
+        <polygon points="838.2 742.8 847.7 747.9 846.6 748.7 838.4 744.4 838 746.4 836.6 746.4 837.3 743.4 838.2 742.8"></polygon>
+        <path d="M830.2,748.3c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      </g>
+      <path d="M890.9,705.7c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.4-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <polygon points="904.2 696.6 913.7 701.7 912.4 702.5 904.4 698.2 903.9 700.4 902.4 700.3 903.1 697.3 904.2 696.6"></polygon>
+      <polygon points="898.9 700.3 908.4 705.4 907.2 706.3 899.1 701.9 898.7 704 897.2 703.9 898 701 898.9 700.3"></polygon>
+      <path d="M961.8,656.2c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <polygon points="957.1 659.6 966.6 664.7 965.4 665.6 957.3 661.1 956.8 663.3 955.3 663.2 956 660.3 957.1 659.6"></polygon>
+      <path d="M949.1,665.1c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <polygon points="1016.6 618 1026 623 1024.9 623.9 1016.8 619.5 1016.3 621.6 1014.8 621.6 1015.6 618.6 1016.6 618"></polygon>
+      <path d="M1008.5,623.4c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8,1.1-.8,1.3-1.8.3-2.3s-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M1021.4,614.4c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h0Z"></path>
+      <path d="M1043.6,578.1c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,0s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h0Z"></path>
+      <polygon points="1051.6 572.6 1061.1 577.8 1060 578.6 1051.8 574.2 1051.4 576.3 1049.9 576.2 1050.7 573.3 1051.6 572.6"></polygon>
+      <path d="M1065.7,571.2l1.4-1,1,.5-1.4,1,1.7.9-1.1.8-1.7-.9-4.5,3.1-.8-.4-2.3-7,1-.7,6.7,3.6h-.1ZM1064.6,572l-4.9-2.6,1.7,4.9,3.2-2.2"></path>
+      <path d="M338.4,184.8c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M330.9,190.1c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.5-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.4-.8,0-1.9,1.3-2.8l.2-.2h0Z"></path>
+      <path d="M352,180.7c1.4-.5,3.1-.6,4.5,0s1.1,2.5-.7,3.8-4.6,1.8-6.1.9-1.3-1.8-.6-2.7c-.9.3-2.4.4-3.4-.1-1.6-.8-1.1-2.2.5-3.3s3.9-1.6,5.4-.7,1,1.4.6,2.1h-.1ZM354.6,184.1c1.3-.9,1.3-2,.4-2.5s-2.7-.4-4,.5-1.4,2-.3,2.5,2.7.3,3.9-.6M346.9,182c.8.5,2.2.3,3.2-.5s1.2-1.6.4-2.1-2.3-.3-3.3.4-1.1,1.6-.3,2.1"></path>
+      <path d="M241.4,212.2c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M256.6,201.6c1.9-1.3,4.9-1.6,7.1-.3,3.4,1.9,3.2,4.9,1.1,6.8l-1.3-.3c1.3-1.4,1.9-3.3.3-4.9,0,.7-.6,1.6-1.6,2.2-1.7,1.1-4.1,1.4-6,.4s-1.7-2.7.3-4h0ZM262.5,202h0c-1.6-.9-3.5-.7-4.8.1s-1.2,2.1-.2,2.7,2.7.5,3.9-.4,1.3-1.6,1-2.4"></path>
+      <path d="M248.8,206.9c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M189.8,246.9c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M182.4,252.2c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.5-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4c-1,.7-1.1,1.2-.9,1.9l-1.4.4c-.4-.8,0-1.9,1.3-2.8l.2-.2h0Z"></path>
+      <path d="M198.2,241.1c2.1-1.4,5.4-1.7,8.5,0s3.5,3.5,1.1,5.2-5.4,1.7-8.5,0-3.5-3.5-1.2-5.2h.1ZM206.7,245.8c1.6-1,.9-2.5-1.3-3.7s-4.8-1.3-6.2-.3-.9,2.5,1.3,3.7,4.8,1.3,6.2.3"></path>
+      <path d="M131.3,288.2c1.7-1.1,3.8-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.5-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M123.9,293.4c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <polygon points="139.4 282.7 148.8 287.8 147.7 288.6 139.6 284.3 139.1 286.5 137.6 286.3 138.4 283.3 139.4 282.7"></polygon>
+      <path d="M63.9,335.4c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.4.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h.1Z"></path>
+      <path d="M71.5,330.1c1.7-1.1,3.9-1.6,5.5-.7s1.2,1.3.7,2.2h0c1.4-.5,2.9-.5,4,.1s1.2,2.4-.5,3.6-3.6,1.6-5.2,1.3l.6-.9c1.1.2,2.3,0,3.4-.8s1.3-1.8.3-2.3-2.4-.4-3.8.5l-.8.5-1-.5.9-.6c1.2-.8,1-1.7.2-2.1s-2.4-.3-3.3.4-1.1,1.2-.9,1.9l-1.4.4c-.3-.8,0-1.9,1.3-2.8v-.2h0Z"></path>
+      <path d="M78.9,324.9c1.6-1.1,4-1.6,5.8-.5s1.6,1.3,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <polygon points="491.9 179.4 492.7 179.8 497.8 187.3 496.4 188 491.7 180.9 487 184.2 485.9 183.5 491.9 179.4"></polygon>
+      <path d="M481.8,186.3c1.6-1,4-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M474.5,191.5c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1-.1-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M545.1,151.4c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M564.1,142.6c1.8-1.2,4.1-1.6,6-.5s1.7,2.7-.3,4-4.9,1.6-7.1.4c-3.4-1.9-3.3-4.8-1.2-6.7l1.3.3c-1.3,1.4-1.8,3.2-.3,4.8,0-.7.6-1.4,1.6-2.1v-.2h.1ZM568.8,145.5c1.2-.9,1.1-2,0-2.6s-2.8-.4-4,.4-1.2,1.7-1,2.4h0c1.4.8,3.5.7,4.9-.2"></path>
+      <path d="M552.4,146.4c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M648.7,121.1l1,.6-4,2.8,2.5,1.6c.3-.4.8-.9,1.2-1.1,1.8-1.2,4.2-1.6,6.1-.5s1.7,2.7-.3,4-3.1,1.4-4.8,1.4l.2-.9c1.1,0,2.4-.2,3.4-.9s1.4-2.1.2-2.7-3.1-.3-4.2.5-1,.9-1.1,1.4l-.9.4-4.5-2.8,5.1-3.6v-.2h.1Z"></path>
+      <path d="M638.3,128.4c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M630.9,133.4c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M710.9,149.7c1.6-1,3.9-1.6,5.7-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <path d="M734.5,141.6l1.4-1,1,.5-1.4,1,1.7.9-1.1.8-1.7-.9-4.5,3.1-.8-.4-2.3-7,1-.7,6.7,3.6h-.1ZM733.3,142.4l-4.9-2.6,1.7,4.9,3.1-2.2"></path>
+      <path d="M718.1,144.5c1.6-1.1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.8,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h0Z"></path>
+      <polygon points="1022.1 485.4 1031.5 490.6 1030.4 491.4 1022.3 487.1 1021.8 489.2 1020.3 489.2 1021 486.2 1022.1 485.4"></polygon>
+      <path d="M1014.3,490.8c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M1030,479.9l1,.6-4,2.8,2.5,1.6c.3-.4.8-.9,1.2-1.1,1.8-1.2,4.2-1.6,6.1-.5s1.7,2.7-.3,4-3.1,1.4-4.8,1.4l.2-.9c1.1,0,2.4-.2,3.4-.9s1.4-2.1.2-2.7-3.1-.3-4.2.5-1,.9-1.1,1.4l-.9.4-4.5-2.8,5.1-3.6v-.2h.1Z"></path>
+      <g isolation="isolate">
+        <polygon points="1071.4 439.9 1080.9 445.1 1079.6 445.9 1071.6 441.4 1071.1 443.6 1069.6 443.5 1070.4 440.6 1071.4 439.9"></polygon>
+        <path d="M1063.6,445.3c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      </g>
+      <path d="M1080.7,437.8c1.8-1.2,4.1-1.6,6-.5s1.7,2.7-.3,4-4.9,1.6-7.1.3c-3.4-1.9-3.3-4.8-1.2-6.7l1.3.3c-1.3,1.4-1.8,3.2-.3,4.8,0-.7.6-1.4,1.6-2.2h.1ZM1085.3,440.7c1.2-.9,1.2-2,0-2.6s-2.8-.4-4,.4-1.2,1.7-.9,2.4h0c1.4.8,3.5.7,4.8-.2"></path>
+      <polygon points="1115.5 383.7 1124.9 388.8 1123.8 389.7 1115.7 385.3 1115.2 387.4 1113.7 387.4 1114.4 384.4 1115.5 383.7"></polygon>
+      <polygon points="1123 378.4 1123.9 378.8 1128.8 386.3 1127.5 387 1122.8 379.8 1118.2 383.1 1117 382.6 1123 378.4"></polygon>
+      <path d="M1107.7,389c1.6-1,4-1.6,5.8-.5s1.6,1.4,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.4-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M1186.4,268.2c1.6-.6,3.5-.7,5,0s1.3,2.8-.8,4.3-5.1,2-6.8,1-1.6-2-.7-3h0c-1,.4-2.7.4-3.8-.2-1.8-.9-1.3-2.5.5-3.7s4.3-1.8,6-.8,1.2,1.7.7,2.3h0ZM1189.4,272c1.4-1,1.6-2.3.5-2.8s-3.1-.4-4.6.6-1.7,2.2-.4,2.8,3.1.3,4.5-.6M1180.5,269.7c.9.5,2.4.3,3.6-.5s1.4-1.8.4-2.3-2.5-.3-3.7.5-1.2,1.8-.3,2.3"></path>
+      <polygon points="1173.9 270.9 1184.5 276.7 1183.2 277.7 1174.1 272.7 1173.4 275.2 1171.9 275.1 1172.7 271.8 1173.9 270.9"></polygon>
+      <path d="M1164.7,277.1c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1.1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.2-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.2,0Z"></path>
+      <g isolation="isolate">
+        <path d="M1116.5,234.8c2.2-1.4,5.5-1.8,8-.4,3.9,2.1,3.6,5.5,1.2,7.8l-1.6-.3c1.4-1.7,2.2-3.7.4-5.5,0,.8-.7,1.8-1.8,2.5-1.9,1.3-4.7,1.7-6.7.5s-1.9-3,.3-4.6h.1ZM1123.2,235.2h0c-1.8-1-3.9-.8-5.4.1s-1.4,2.3-.2,3,3.1.5,4.5-.4,1.6-1.8,1.2-2.7"></path>
+        <polygon points="1110.6 238.9 1121.4 244.7 1120 245.7 1110.9 240.8 1110.3 243.2 1108.7 243.1 1109.6 239.8 1110.6 238.9"></polygon>
+        <path d="M1101.6,245.1c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.3-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.1Z"></path>
+      </g>
+      <path d="M1061,200.8c2.4-1.7,6-1.9,9.5,0s3.9,4,1.3,5.8-6,1.9-9.5,0-3.9-4-1.3-5.8ZM1070.7,206.1c1.8-1.2,1-2.8-1.4-4.2s-5.4-1.6-6.9-.4-1,2.8,1.4,4.2,5.4,1.4,6.9.4"></path>
+      <path d="M1051.9,207.3c1.8-1.2,4.5-1.7,6.5-.6s1.8,1.6,1.8,3.2v3.5h0l4.9-3.4,1.2.6-6.8,4.8-.9-.5v-4.7c0-1.1,0-2.2-1.2-2.7s-2.9-.5-4.1.3-1.3,1.6-.8,2.4l-1.7.3c-.6-1-.3-2.3,1.3-3.5v.3h-.1Z"></path>
+      <path d="M1043.4,213.2c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1.1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.2-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.2,0Z"></path>
+      <g isolation="isolate">
+        <path d="M933.6,144.7c1.8-1.2,4.6-1.7,6.5-.6s1.8,1.6,1.8,3.2v3.5h0l4.9-3.4,1.2.6-6.8,4.8-.9-.5v-4.7c0-1.1,0-2.2-1.2-2.7s-2.9-.5-4.1.3-1.3,1.6-.8,2.4l-1.7.3c-.6-1-.3-2.3,1.3-3.5v.3h-.1Z"></path>
+        <path d="M925.1,150.6c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.2-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.2Z"></path>
+      </g>
+      <path d="M941.7,138.9c1.8-1.2,4.6-1.7,6.5-.6s1.8,1.6,1.8,3.2v3.5h0l4.9-3.4,1.2.6-6.8,4.8-.9-.5v-4.7c0-1.1,0-2.2-1.2-2.7s-2.9-.5-4.1.3-1.3,1.6-.8,2.4l-1.7.3c-.6-1-.3-2.3,1.3-3.5v.3h-.1Z"></path>
+      <path d="M878.3,111.1c1.8-1.2,4.5-1.7,6.5-.6s1.8,1.6,1.8,3.2v3.5h0l4.9-3.4,1.2.6-6.8,4.8-.9-.5v-4.7c0-1.1,0-2.2-1.2-2.7s-2.9-.5-4.1.3-1.3,1.6-.8,2.5l-1.7.3c-.6-1-.3-2.3,1.3-3.5v.2h-.1Z"></path>
+      <path d="M869.8,117c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1.1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.2-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.2Z"></path>
+      <path d="M886.5,105.4c1.9-1.3,4.3-1.8,6.2-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.6,4-4,1.8-5.9,1.4l.6-1.1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.4-.9,1.1-1.9.2-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.2Z"></path>
+      <path d="M834.8,75.4l1.6-1.1,1.1.6-1.6,1.1,1.9,1-1.3.9-1.9-1-5.1,3.5-.9-.5-2.6-8,1.1-.8,7.7,4.1h0ZM833.5,76.3l-5.4-2.9,1.9,5.4,3.5-2.5"></path>
+      <path d="M816.3,78.7c1.8-1.2,4.5-1.7,6.5-.6s1.8,1.6,1.8,3.2v3.5h0l4.9-3.4,1.2.6-6.8,4.8-.9-.5v-4.7c0-1.1,0-2.2-1.2-2.7s-2.9-.5-4.1.3-1.3,1.6-.8,2.4l-1.7.3c-.6-1-.3-2.3,1.3-3.5v.3h-.1Z"></path>
+      <path d="M807.9,84.6c1.9-1.3,4.3-1.8,6.1-.8s1.3,1.4.8,2.4h0c1.6-.5,3.3-.5,4.6.1s1.4,2.7-.5,4-4,1.8-5.9,1.4l.6-1c1.2.2,2.6,0,3.9-.9s1.4-2,.3-2.6-2.7-.5-4.3.6l-.9.6-1.1-.6,1-.7c1.3-.9,1.1-1.9.3-2.3s-2.7-.3-3.8.5-1.2,1.4-1,2.1l-1.7.4c-.4-.9,0-2.1,1.6-3.2h.1Z"></path>
+      <path d="M1082.3,331.8c1.4-.5,3.1-.6,4.3,0s1.1,2.5-.7,3.8-4.6,1.8-6.1.9-1.3-1.8-.6-2.7c-.9.3-2.4.4-3.4-.1-1.6-.8-1.1-2.2.5-3.3s3.9-1.6,5.4-.7,1,1.4.6,2.1h0ZM1085,335.1c1.3-.9,1.3-2,.4-2.5s-2.7-.4-4,.5-1.4,2-.3,2.5,2.7.3,3.9-.6M1077.2,333c.8.5,2.2.2,3.2-.5s1.2-1.6.4-2.1-2.3-.3-3.3.4-1.1,1.6-.3,2.1"></path>
+      <polygon points="1071.2 334.2 1080.7 339.4 1079.5 340.2 1071.4 335.7 1071 337.9 1069.5 337.8 1070.2 334.9 1071.2 334.2"></polygon>
+      <path d="M1063.5,339.6c1.6-1,4-1.6,5.8-.5s1.6,1.3,1.6,2.9v3.1h0l4.2-3,1,.6-6.1,4.2-.8-.4v-4.1c0-1,0-1.9-1-2.4s-2.6-.5-3.6.3-1.1,1.3-.7,2.2l-1.4.3c-.5-.9-.3-2.1,1.2-3.1h-.1Z"></path>
+      <path d="M341.2,446.7c1.1-.8,2.8-1.4,4.7-1.7l.2,1.1c-1.6.2-2.8.6-3.6,1.2s-1.3,1.7-.4,2.2c1,.5,2.4,0,4.1-.6,2.5-.9,4.5-1.7,6.4-.6s1.2,2.8-.6,4.1-3.2,1.7-5.4,1.8v-1.1c1.6,0,3.2-.6,4.2-1.3s1.7-1.9.6-2.4-2.5,0-4.5.6c-2.2.8-4.5,1.6-6.3.5s-1.3-2.5.5-3.8h0Z"></path>
+      <polygon points="353.7 438 354.9 438.6 351.6 440.9 360.9 446 359.7 446.9 350.4 441.8 347.2 444.1 345.9 443.4 353.7 438"></polygon>
+      <polygon points="373.4 424.2 383.8 429.9 382.5 430.9 368.3 430.7 368.2 430.7 376.5 435.1 375.1 436.1 364.7 430.4 366 429.4 380.4 429.7 372 425.2 373.4 424.2"></polygon>
+      <path d="M358.9,434.4l14.6,2.8-1.3.9-3.5-.7-4.8,3.3,1.7,2.1-1.3.9-6.4-8.5,1.3-.9h-.2ZM363.1,440l3.9-2.8-7.2-1.4h0l3.3,4.2"></path>
+      <path d="M407.1,400.4c1.4-1,3.4-1.8,5.7-2v1c-1.8.2-3.2.7-4.5,1.6-2.3,1.6-2.3,3.6.2,5s5.7,1.1,8.1-.5,1.8-1.6,2-2.5l-2.3-1.2-3.1,2.2-1.1-.6,4.5-3.1,4.1,2.3c-.2,1.1-1.1,2.5-2.8,3.6-3.1,2.2-7.5,2.7-10.7.8s-3.3-4.3,0-6.6h-.1Z"></path>
+      <polygon points="399.8 405.8 410.2 411.5 408.9 412.4 394.7 412.1 402.9 416.6 401.6 417.5 391.1 411.8 392.4 411 406.8 411.2 398.4 406.8 399.8 405.8"></polygon>
+      <polygon points="388.4 413.8 398.8 419.5 397.6 420.4 387 414.7 388.4 413.8"></polygon>
+      <path d="M379.2,420.2c3.4-2.4,7.8-2.7,10.9-1s3.1,4.3-.3,6.7l-3.2,2.3-10.5-5.7,3.2-2.3h-.1ZM388.5,425.3c2.6-1.9,2.6-3.9.2-5.2s-5.8-1-8.3.7l-1.9,1.3,8.2,4.5,1.9-1.3"></path>
+      <path d="M376,444.4c2.5-1.8,5-1.8,6.8-.7s1.7,2.8-.5,4.5l-2.2,1.6,4,2.2-1.3.9-10.5-5.7,3.7-2.6h-.1ZM380.9,447.6c1.8-1.2,1.7-2.3.4-2.9s-3-.5-4.3.5l-2.3,1.7,4.1,2.3,2.1-1.4"></path>
+      <polygon points="388.1 436.1 389.2 436.7 383.9 440.3 387.4 442.3 391.8 439.3 392.9 439.9 388.7 442.9 392.1 444.7 397.7 440.8 398.8 441.5 392 446.3 381.4 440.6 388.1 436.1"></polygon>
+      <path d="M416.1,422.6c1.6-.7,3.4-.9,4.9-.1s1.8,2.4-.7,4l-3.9,2.7-10.5-5.7,3.5-2.5c2.1-1.4,4.2-2,6-1s1.4,1.4.7,2.5h0ZM419,425.9c1.4-.9,1.8-2,.5-2.6s-2.8-.4-4.5.7l-2.3,1.6,3.7,2,2.5-1.8M408.4,423.2l3.3,1.9,2.2-1.6c1.1-.7,1.7-1.8.4-2.4s-2.4-.4-3.9.7l-2.1,1.4"></path>
+      <polygon points="399.1 428.3 409.6 434 408.3 434.9 394 434.6 394 434.7 402.3 439.2 400.9 440.1 390.4 434.4 391.7 433.5 406.2 433.8 397.8 429.2 399.1 428.3"></polygon>
+      <path d="M624.5,595.2c1.2-.8,2.8-1.4,4.7-1.7l.2,1.1c-1.6.2-2.8.7-3.6,1.2s-1.3,1.7-.4,2.2,2.4,0,4.1-.6c2.5-.9,4.5-1.7,6.4-.6s1.2,2.8-.6,4.1-3.2,1.7-5.4,1.8v-1.1c1.6,0,3.2-.6,4.2-1.3s1.7-1.9.6-2.4-2.5,0-4.5.6c-2.2.8-4.5,1.6-6.3.5s-1.3-2.5.5-3.8h0Z"></path>
+      <path d="M662.5,568.8c3.4-2.4,7.8-2.7,10.9-1s3.1,4.3-.3,6.7l-3.2,2.3-10.5-5.7,3.2-2.3h-.1ZM671.8,573.9c2.6-1.9,2.6-3.9.2-5.2s-5.8-1-8.3.7l-1.9,1.3,8.2,4.5,1.9-1.3"></path>
+      <polygon points="656.7 572.8 667.2 578.5 665.8 579.4 651.6 579.1 651.6 579.2 659.8 583.7 658.5 584.6 648 578.9 649.3 578 663.7 578.3 655.4 573.7 656.7 572.8"></polygon>
+      <path d="M642.2,583l14.6,2.8-1.3.9-3.5-.7-4.8,3.3,1.7,2.1-1.3.9-6.4-8.5,1.3-.9h-.2,0ZM646.4,588.4l3.9-2.8-7.2-1.4h0l3.3,4.2"></path>
+      <polygon points="637.1 586.6 638.2 587.2 635 589.5 644.3 594.6 643 595.5 633.6 590.4 630.4 592.6 629.3 592 637.1 586.6"></polygon>
+      <polygon points="671.6 562.4 682.2 568.1 680.9 569 670.4 563.3 671.6 562.4"></polygon>
+      <polygon points="683.1 554.4 693.6 560 692.2 561 678 560.7 678 560.7 686.2 565.2 684.9 566.1 674.4 560.4 675.7 559.5 690.2 559.8 681.8 555.2 683.1 554.4"></polygon>
+      <path d="M690.5,549c1.4-1,3.4-1.8,5.7-2v1c-1.8.2-3.2.7-4.6,1.6-2.3,1.6-2.3,3.6.2,5s5.7,1.1,8.1-.5,1.8-1.6,2-2.5l-2.3-1.2-3.1,2.2-1.1-.6,4.5-3.1,4.1,2.3c-.2,1.1-1.1,2.5-2.8,3.6-3.1,2.2-7.5,2.6-10.7.8s-3.3-4.3,0-6.6h0Z"></path>
+      <path d="M659,593.2c2.5-1.8,5-1.8,6.8-.7s1.7,2.8-.5,4.3l-2.2,1.6,4,2.2-1.3.9-10.5-5.7,3.7-2.6h-.1ZM664,596.4c1.8-1.2,1.7-2.3.4-2.9s-3-.5-4.3.5l-2.3,1.7,4.1,2.3,2.1-1.4"></path>
+      <polygon points="671.1 584.8 672.3 585.4 667 589.1 670.5 591 674.8 588 676 588.7 671.6 591.7 675.2 593.5 680.7 589.6 681.9 590.3 674.9 595.1 664.5 589.4 671.1 584.8"></polygon>
+      <polygon points="682.1 577.1 692.7 582.8 691.3 583.7 677 583.4 685.3 587.9 684 588.9 673.5 583.2 674.7 582.2 689.1 582.5 680.9 578 682.1 577.1"></polygon>
+      <path d="M693.3,569.2l14.6,2.8-1.3.9-3.5-.7-4.8,3.3,1.7,2.1-1.3.9-6.4-8.5,1.3-.9h-.2,0ZM697.5,574.8l3.9-2.8-7.2-1.4h0l3.3,4.2"></path>
+      <polygon points="548.4 343.2 549.6 343.9 546.4 346.2 555.7 351.2 554.4 352.1 545 347 541.8 349.3 540.7 348.7 548.4 343.2"></polygon>
+      <path d="M535.9,351.9c1.2-.8,2.8-1.4,4.7-1.7l.2,1.1c-1.6.2-2.8.7-3.6,1.2s-1.3,1.7-.4,2.2c1,.5,2.4,0,4.1-.6,2.5-.9,4.5-1.7,6.4-.6s1.2,2.8-.6,4.1-3.2,1.7-5.4,1.8v-1.1c1.6,0,3.2-.6,4.2-1.3s1.7-1.9.6-2.4-2.5-.1-4.5.6c-2.2.8-4.5,1.6-6.3.5s-1.3-2.5.5-3.8h0Z"></path>
+      <polygon points="568.1 329.5 578.6 335.2 577.2 336.1 562.9 335.8 571.2 340.4 569.9 341.2 559.4 335.5 560.7 334.7 575 334.9 566.8 330.5 568.1 329.5"></polygon>
+      <path d="M553.6,339.7l14.6,2.8-1.3.9-3.5-.7-4.8,3.3,1.7,2.1-1.3.9-6.4-8.5,1.3-.9h-.2,0ZM557.8,345.2l3.9-2.8-7.2-1.4h0l3.3,4.2"></path>
+      <polygon points="594.5 311 605 316.7 603.6 317.6 589.3 317.3 589.3 317.4 597.6 321.9 596.3 322.8 585.8 317.1 587.1 316.2 601.5 316.5 593.2 311.9 594.5 311"></polygon>
+      <polygon points="583 319 593.6 324.7 592.2 325.6 581.8 319.9 583 319"></polygon>
+      <path d="M573.9,325.4c3.4-2.4,7.8-2.7,10.9-1s3.1,4.3-.3,6.7l-3.2,2.3-10.5-5.7,3.2-2.3h-.1ZM583.2,330.5c2.6-1.9,2.6-3.9.2-5.2s-5.8-1-8.3.7l-1.9,1.3,8.2,4.5,1.9-1.3"></path>
+      <path d="M601.9,305.7c1.4-1,3.4-1.8,5.7-2v1c-1.8.2-3.2.7-4.6,1.6-2.3,1.6-2.3,3.6.2,5s5.7,1.1,8.1-.5,1.8-1.6,2-2.5l-2.3-1.2-3.1,2.2-1.1-.6,4.5-3.1,4.1,2.3c-.2,1.1-1.1,2.5-2.8,3.6-3.1,2.2-7.5,2.7-10.7.8s-3.3-4.3,0-6.6h0Z"></path>
+      <polygon points="593.2 334 603.6 339.7 602.3 340.6 588 340.3 596.3 344.8 594.9 345.8 584.5 340.1 585.7 339.1 600.2 339.5 591.8 334.9 593.2 334"></polygon>
+      <polygon points="582.1 341.7 583.2 342.4 577.9 346.1 581.5 347.9 585.8 344.9 586.9 345.6 582.7 348.6 586.1 350.4 591.7 346.6 592.9 347.2 586 352 575.5 346.3 582.1 341.7"></polygon>
+      <path d="M570,350.2c2.5-1.8,5-1.8,6.8-.7s1.7,2.8-.5,4.3l-2.2,1.6,4,2.2-1.3.9-10.5-5.7,3.7-2.6h-.1ZM574.9,353.3c1.8-1.2,1.7-2.3.4-2.9s-2.9-.5-4.3.5l-2.3,1.7,4.1,2.3,2.1-1.4"></path>
+      <path d="M603.1,327c3.4-2.4,7.8-2.7,10.9-1s3.1,4.3-.3,6.7l-3.2,2.3-10.5-5.7,3.2-2.3h-.1ZM612.4,332.1c2.6-1.9,2.6-3.9.2-5.2s-5.8-1-8.3.7l-1.9,1.3,8.2,4.5,1.9-1.3"></path>
+      <path d="M811.2,423.7c1.4-1,3.4-1.8,5.7-2v1c-1.8.2-3.2.7-4.6,1.6-2.3,1.6-2.3,3.6.2,5s5.7,1.1,8.1-.5,1.8-1.6,2-2.5l-2.3-1.2-3.1,2.2-1.1-.6,4.5-3.1,4.1,2.3c-.2,1.1-1.1,2.5-2.8,3.6-3.1,2.2-7.5,2.7-10.7.8s-3.3-4.3,0-6.6h0Z"></path>
+      <g isolation="isolate">
+        <polygon points="803.8 429 814.3 434.7 813 435.7 798.8 435.4 798.7 435.4 807 439.9 805.7 440.8 795.1 435.1 796.5 434.2 810.9 434.5 802.5 429.9 803.8 429"></polygon>
+        <polygon points="792.5 437.1 802.9 442.8 801.7 443.7 791.1 438 792.5 437.1"></polygon>
+        <path d="M783.2,443.5c3.4-2.4,7.8-2.7,10.9-1s3.1,4.3-.3,6.7l-3.2,2.3-10.5-5.7,3.2-2.3h-.1ZM792.6,448.6c2.6-1.9,2.6-3.9.2-5.2s-5.8-1-8.3.7l-1.9,1.3,8.2,4.5,1.9-1.3"></path>
+      </g>
+      <polygon points="777.4 447.5 787.9 453.2 786.6 454.2 772.4 453.9 772.3 454 780.5 458.4 779.3 459.3 768.7 453.7 770.1 452.7 784.5 453 776.1 448.5 777.4 447.5"></polygon>
+      <path d="M762.9,457.7l14.6,2.8-1.3.9-3.5-.7-4.8,3.3,1.7,2.1-1.3.9-6.4-8.5,1.3-.9h-.2,0ZM767.2,463.2l3.9-2.8-7.2-1.4h0l3.3,4.2"></path>
+      <polygon points="757.8 461.3 759 461.9 755.7 464.2 765.1 469.3 763.8 470.2 754.5 465.1 751.3 467.3 750 466.7 757.8 461.3"></polygon>
+      <path d="M745.2,469.9c1.1-.8,2.8-1.4,4.7-1.7l.2,1.1c-1.6.2-2.8.7-3.6,1.2s-1.3,1.7-.4,2.2c1,.5,2.3,0,4.1-.6,2.5-.9,4.5-1.7,6.4-.6s1.2,2.8-.6,4.1-3.2,1.7-5.4,1.8v-1.1c1.6,0,3.2-.6,4.2-1.3s1.7-1.9.6-2.4-2.5,0-4.5.6c-2.2.8-4.5,1.6-6.3.6s-1.3-2.5.5-3.8h0Z"></path>
+      <path d="M779.4,468.2c2.5-1.8,5-1.8,6.8-.7s1.7,2.8-.5,4.3l-2.2,1.6,4,2.2-1.3.9-10.5-5.7,3.7-2.6h-.1ZM784.4,471.4c1.8-1.2,1.7-2.3.4-2.9s-2.9-.5-4.3.5l-2.3,1.7,4.1,2.3,2.1-1.4"></path>
+      <polygon points="791.4 459.8 792.7 460.4 787.4 464.1 790.9 466 795.1 463 796.4 463.6 792 466.6 795.6 468.5 801.2 464.6 802.3 465.2 795.4 470.1 784.9 464.4 791.4 459.8"></polygon>
+      <path d="M814,443.8c1.6-1,3.7-1.8,6.2-1.9l-.2,1.1c-2,0-3.5.5-4.8,1.3-2.4,1.7-2.2,3.7.2,5s5.8,1,8.1-.6,1.8-2.1,1.7-3.1l1.8-.2c.2,1.2-.3,2.7-2.2,4-2.9,2.1-7.2,2.7-10.7.8s-3.5-4.2,0-6.6h-.1Z"></path>
+      <polygon points="802.5 452 813.1 457.7 811.7 458.6 797.4 458.4 797.4 458.4 805.7 462.9 804.4 463.8 793.8 458.1 795.1 457.2 809.5 457.5 801.3 452.9 802.5 452"></polygon>
+      <path d="M768.2,326.9c2.8-2,6.9-2.4,9.9-.8s2.8,4.2,0,6.2-7.1,2.4-10,.8-2.9-4.1,0-6.2h.1ZM777.1,331.7c2.1-1.4,2.1-3.4,0-4.7s-5.5-.9-7.6.5-2.1,3.5,0,4.8,5.4.9,7.6-.5" fill="#f7f7f7"></path>
+      <polygon points="762.3 331.2 763.5 331.8 758.3 335.3 761.7 337.2 766.2 334.2 767.2 334.8 762.8 337.8 767 340.1 765.7 340.9 756 335.6 762.3 331.2" fill="#f7f7f7"></polygon>
+      <polygon points="783 316.7 792.9 322 791.6 322.8 787.5 320.6 782.3 324.2 786.5 326.5 785.2 327.3 775.4 322.1 776.6 321.1 781.2 323.6 786.5 320 781.9 317.5 783 316.7" fill="#f7f7f7"></polygon>
+    </g>
+  </g>
+  <g id="STAGE">
+    <g id="STAGE1">
+      <polygon points="522.6 419 523.8 427 459.7 472 458.5 463.9 522.6 419" fill="#221e1f"></polygon>
+      <polygon points="495.6 484 496.8 492.1 459.7 472 458.5 463.9 495.6 484" fill="#e6e6e6"></polygon>
+      <polygon points="494.2 484.1 495.3 492.2 458.3 472.1 457 464 494.2 484.1" fill="#201c1d"></polygon>
+      <polygon points="664.9 496 666 504.2 523.8 427 522.6 419 664.9 496" fill="#201c1d"></polygon>
+      <polygon points="287.4 509.6 288.7 517.6 198.8 580.6 197.6 572.4 287.4 509.6" fill="#221e1f"></polygon>
+      <polygon points="495.6 484 496.8 492.1 385.5 570 384.2 561.9 495.6 484" fill="#221e1f"></polygon>
+      <polygon points="384.2 561.9 385.5 570 288.7 517.6 287.4 509.6 384.2 561.9" fill="#201c1d"></polygon>
+      <polygon points="600.7 540.9 602 549 566.2 529.6 565 521.6 600.7 540.9" fill="#e6e6e6"></polygon>
+      <polygon points="664.9 496 666 504.2 602 549 600.7 540.9 664.9 496" fill="#f5f5f5"></polygon>
+      <polygon points="666.4 495.9 667.5 504 602 549.9 600.7 541.9 666.4 495.9" fill="#221e1f"></polygon>
+      <polygon points="565 521.6 566.2 529.6 454.8 607.6 453.7 599.5 565 521.6" fill="#f5f5f5"></polygon>
+      <polygon points="600.7 541.9 602 549.9 566.2 530.6 565 522.5 600.7 541.9" fill="#201c1d"></polygon>
+      <polygon points="565 522.5 566.2 530.6 456.3 607.5 455.2 599.4 565 522.5" fill="#221e1f"></polygon>
+      <polygon points="549.9 651.6 551 659.7 454.8 607.6 453.7 599.5 549.9 651.6" fill="#201c1d"></polygon>
+      <polygon points="459.9 714.5 461.2 722.6 198.8 580.6 197.6 572.4 459.9 714.5" fill="#e6e6e6"></polygon>
+      <polygon points="549.9 651.6 551 659.7 461.2 722.6 459.9 714.5 549.9 651.6" fill="#f5f5f5"></polygon>
+      <polygon points="287.4 509.6 384.2 561.9 495.6 484 458.5 463.9 522.7 419 664.9 496 600.7 540.9 565 521.6 453.7 599.5 549.9 651.6 459.9 714.5 197.6 572.4 287.4 509.6" fill="#f7f7f7"></polygon>
+      <path d="M457,464l65.5-45.9,143.7,77.9-65.5,45.9-35.7-19.4-109.8,76.9,96.2,52.1-91.3,64-263.8-142.9,91.3-64,96.8,52.4,109.8-76.9-37.1-20.1h-.1ZM664.9,496l-142.2-77-64.1,44.9,37.1,20.1-111.3,78-96.8-52.4-89.9,62.9,262.3,142,89.9-62.9-96.2-52.1,111.3-78,35.7,19.4,64.1-44.9" fill="#221e1f"></path>
+      <polygon points="551.3 651.5 552.5 659.6 461.2 723.6 459.9 715.4 551.3 651.5" fill="#221e1f"></polygon>
+      <polygon points="459.9 715.4 461.2 723.6 197.4 580.7 196.1 572.6 459.9 715.4" fill="#201c1d"></polygon>
+    </g>
+    <g id="text_STAGE">
+      <g isolation="isolate">
+        <polygon points="361.7 590.7 377.4 599.2 374.9 601 368.4 597.5 348.7 611.2 346 609.8 365.7 596 359.3 592.5 361.7 590.7" fill="#1d1a1b"></polygon>
+        <path d="M354.8,614.5l30.3-11.1,2.7,1.4-13.9,20-2.8-1.6,3.4-4.9-9.7-5.3-7.4,2.7-2.8-1.6v.2h.1ZM383.3,606.5h0l-15,5.6,8,4.3,7.1-9.9" fill="#1d1a1b"></path>
+        <path d="M386.5,618c6.6-4.7,15.5-5.7,22.1-2.1s5,3.9,4.8,6.9l-3.5.2c0-2.2-1.3-3.9-3.8-5.3-4.6-2.5-11.4-1.9-16.7,1.8s-5.5,7.9-.6,10.5,4.8,1.9,7.6,1.9l4.8-3.3-6.3-3.4,2.5-1.8,9,4.9-8.8,6.1c-3.7,0-7.9-.8-11.3-2.6-6.2-3.4-6.5-8.9.3-13.7h.1Z" fill="#1d1a1b"></path>
+      </g>
+      <path d="M325.8,594.9l3.8-.5c-.4,2.3.9,4.2,3,5.4s5.7,1.6,7.9,0,1.1-3.2-.6-5.6c-2-2.6-3.8-5.4,0-8.1s8.8-2.5,12.5-.5,3.9,3.2,4.2,5.5l-3.7.6c-.3-2-1.3-3.5-3-4.3s-5-1.3-7.1.2c-2.2,1.4-.9,3.1.7,5.3,2.2,3,4.2,5.4.1,8.3s-9.7,2.5-13.6.4-4.5-3.7-4.2-6.5h0Z" fill="#1d1a1b"></path>
+      <polygon points="421.7 623.2 435 630.5 432.6 632.1 421.9 626.4 414.5 631.6 423.2 636.3 420.8 638 412 633.4 404.7 638.5 416 644.6 413.5 646.3 399.6 638.8 421.7 623.2" fill="#1d1a1b"></polygon>
+    </g>
+  </g>
+  <g id="text_box">
+    <g id="box">
+      <g isolation="isolate">
+        <g isolation="isolate">
+          <text transform="translate(529.4 908.8)" font-family="Averta-Semibold, Averta" font-size="16.5" font-weight="600" isolation="isolate"><tspan x="0" y="0">VIP STANDING ticket holders get priority entry to Standing Pen.</tspan></text>
+        </g>
+        <g isolation="isolate">
+          <text transform="translate(529.4 928.5)" font-family="Averta-Semibold, Averta" font-size="16.5" font-weight="600" isolation="isolate"><tspan x="0" y="0">No designated area within the standing pen for</tspan></text>
+        </g>
+        <g isolation="isolate">
+          <text transform="translate(899.9 928.5)" font-family="Averta-Semibold, Averta" font-size="16.5" font-weight="600" isolation="isolate"><tspan x="0" y="0">VIP STANDING</tspan></text>
+        </g>
+        <g isolation="isolate">
+          <text transform="translate(1021 928.5)" font-family="Averta-Semibold, Averta" font-size="16.5" font-weight="600" isolation="isolate"><tspan x="0" y="0">ticket holders.</tspan></text>
+        </g>
+      </g>
+      <g isolation="isolate">
+        <g isolation="isolate">
+          <text transform="translate(521.5 908.1)" font-family="Averta-Bold, Averta" font-size="16.3" font-weight="700" isolation="isolate"><tspan x="0" y="0">*</tspan></text>
+        </g>
+      </g>
+      <rect x="506.7" y="880" width="633.1" height="70.6" fill="none" stroke="#d93a3a" stroke-miterlimit="10"></rect>
+    </g>
+  </g>
+  <g id="legend">
+    <g id="notes" isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(26.5 1065.6)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">- Seat plan is not drawn to scale</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(26.5 1089.1)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">- Colour indicates price category</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(26.5 1112.6)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">- Ticket prices exclude booking fees</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(26.5 1136.1)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">- Seating layout subject to change</tspan></text>
+      </g>
+    </g>
+    <g isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(61.5 924.3)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">CAT 1 STANDING</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(239.5 924.3)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">    </tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(381.9 924.3)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$298</tspan></text>
+      </g>
+    </g>
+    <rect x="26.5" y="909.2" width="29.7" height="14.8" fill="#00efef"></rect>
+    <g isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(61.5 952.7)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">CAT 2</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(132.7 952.7)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">       </tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(381.9 952.7)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$308</tspan></text>
+      </g>
+    </g>
+    <rect x="26.5" y="937.6" width="29.7" height="14.8" fill="#32a6da"></rect>
+    <g isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(61.5 981.1)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">CAT 3</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(132.7 981.1)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">       </tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(381.9 981.1)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$268</tspan></text>
+      </g>
+    </g>
+    <rect x="26.5" y="966" width="29.7" height="14.8" fill="#ef5454"></rect>
+    <g isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(61.5 1009.5)" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">CAT 4</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(132.7 1009.5)" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">       </tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(381.9 1009.5)" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$228</tspan></text>
+      </g>
+    </g>
+    <rect x="26.5" y="993.2" width="29.7" height="14.8" fill="#5fba46"></rect>
+    <g isolation="isolate">
+      <g isolation="isolate">
+        <text transform="translate(61.5 1035.4)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">CAT 5</tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(132.7 1035.4)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">       </tspan></text>
+      </g>
+      <g isolation="isolate">
+        <text transform="translate(381.9 1035.4)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$188</tspan></text>
+      </g>
+    </g>
+    <rect x="26.5" y="1020.3" width="29.7" height="14.8" fill="#e89123"></rect>
+    <g>
+      <rect x="26.5" y="879.8" width="29.7" height="14.8" fill="#fc68a4"></rect>
+      <g isolation="isolate">
+        <g isolation="isolate">
+          <text transform="translate(61.3 893.5)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">VIP STANDING</tspan></text>
+        </g>
+        <g isolation="isolate">
+          <text transform="translate(203.7 893.5)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate" letter-spacing="1.5em"><tspan x="0" y="0" xml:space="preserve">     </tspan></text>
+        </g>
+        <g isolation="isolate">
+          <text transform="translate(381.7 893.5)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="19.6" isolation="isolate"><tspan x="0" y="0">$348</tspan></text>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="directions">
+    <g>
+      <polygon points="974.6 185.7 987.3 192.7 985.6 193.9 967.8 193.8 967.7 193.9 977.9 199.3 976.1 200.5 963.4 193.6 965 192.4 983.1 192.4 972.8 187 974.6 185.7" fill="#221e1f"></polygon>
+      <polygon points="1028 148.3 1040.7 155.3 1039.1 156.4 1033.7 153.5 1026.4 158.6 1031.8 161.5 1030.2 162.7 1017.3 155.8 1019 154.6 1025 157.9 1032.2 152.8 1026.2 149.5 1028 148.3" fill="#221e1f"></polygon>
+      <polygon points="1015 157.3 1016.5 158.2 1012.2 161.1 1023.6 167.3 1022 168.4 1010.6 162.3 1006.5 165.2 1005 164.4 1015 157.3" fill="#221e1f"></polygon>
+      <g isolation="isolate">
+        <path d="M1007.9,172.1h8.8l-2.1,1.4h-8.6l-2.5,1.7,4.9,2.7-1.7,1.1-12.8-6.9,4.9-3.4c3.2-2.3,6.3-2.3,8.6-1s2.1,2.7.3,4.5h.2ZM1002.3,174.3l2.8-2c2.3-1.7,2.2-2.9.7-3.7s-3.6-.5-5.6.8l-3,2.1,5.1,2.7" fill="#221e1f"></path>
+        <path d="M984.2,178.8c3.8-2.7,9.5-3.4,13.5-1.3s3.5,5.6-.4,8.4-9.6,3.4-13.5,1.3-3.6-5.6.4-8.4ZM995.8,185.1c2.9-2,3.1-4.8,0-6.3s-7.4-1.1-10.1.8-3,4.8,0,6.3,7.2,1.1,10.2-.9" fill="#221e1f"></path>
+      </g>
+      <polygon points="946.1 751.5 947.5 752.2 940.8 757 945.1 759.3 950.6 755.4 952 756.2 946.5 760.1 950.8 762.4 957.9 757.3 959.3 758.1 950.4 764.3 937.6 757.4 946.1 751.5" fill="#221e1f"></polygon>
+      <path d="M954.9,745.3l18,3.2-1.8,1.2-4.3-.8-6.2,4.3,1.9,2.6-1.8,1.2-7.6-10.6,1.7-1.1h.1ZM959.9,752.2l5.1-3.6-9-1.7h0l3.9,5.3" fill="#221e1f"></path>
+      <polygon points="982.3 726.1 983.8 726.9 979.5 729.9 990.9 736 989.3 737.2 977.9 731 973.7 733.9 972.3 733.2 982.3 726.1" fill="#221e1f"></polygon>
+      <path d="M966.1,737.3c1.6-1,3.6-1.9,5.9-2.3l.2,1.4c-2,.3-3.6.9-4.7,1.7s-1.8,2.1-.6,2.8c1.2.7,2.9,0,5.3-.8,3.2-1.1,5.7-2.3,8.1-.9s1.3,3.5-1,5.2-4.1,2.2-6.8,2.4v-1.4c2.1,0,4.1-.8,5.5-1.8s2.2-2.4.8-3.1-3,0-5.6.8c-2.8,1-5.7,2.1-7.9.8s-1.6-3.1.8-4.8h0Z" fill="#221e1f"></path>
+      <path d="M86,251.8c1.6-1,3.6-1.9,5.9-2.3l.2,1.4c-2,.3-3.6.9-4.7,1.7-1,.7-1.8,2.1-.6,2.8,1.2.7,2.9,0,5.3-.8,3.2-1.1,5.7-2.3,8.1-.9,2.4,1.3,1.3,3.5-1,5.2s-4.1,2.2-6.8,2.4v-1.4c2.1,0,4-.8,5.5-1.8s2.2-2.4.8-3-3-.1-5.6.8c-2.8,1-5.7,2.1-7.9.8s-1.6-3.1.8-4.8h0Z" fill="#221e1f"></path>
+      <polygon points="79.1 256.6 80.6 257.5 73.8 262.2 78 264.5 83.6 260.6 85 261.4 79.4 265.2 83.7 267.6 90.9 262.5 92.3 263.3 83.5 269.6 70.6 262.6 79.1 256.6" fill="#221e1f"></polygon>
+      <polygon points="68.3 264.3 76.7 274.2 75 275.5 61.3 272 68.5 279.9 66.9 281.2 49.6 277.2 51.5 276 65.2 279.2 58 271.4 59.9 270.1 73.2 273.5 66.5 265.5 68.3 264.3" fill="#221e1f"></polygon>
+      <polygon points="102.1 240.6 103.6 241.3 99.3 244.2 110.7 250.4 109.1 251.6 97.7 245.5 93.5 248.4 92.1 247.5 102.1 240.6" fill="#221e1f"></polygon>
+    </g>
+  </g>
+  <g id="title" isolation="isolate">
+    <g isolation="isolate">
+      <text transform="translate(20.8 -41.7)" fill="#231f20" font-family="Averta-Bold, Averta" font-size="26" font-weight="700" isolation="isolate"><tspan x="0" y="0">2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE</tspan></text>
+    </g>
+    <g isolation="isolate">
+      <text transform="translate(20.8 -15.3)" fill="#231f20" font-family="Averta-Regular, Averta" font-size="22" isolation="isolate"><tspan x="0" y="0">SINGAPORE INDOOR STADIUM</tspan></text>
+    </g>
+  </g>
+</svg></div></div>
+</div>
+<script src="/js/queue-it/queueclient.min.js"></script>
+<script src="/js/queue-it/queueconfigloader.min.js" data-queueit-intercept-domain="ticketmaster.sg" data-queueit-intercept="true" data-queueit-c="tixcraft"></script>
+<script src="/assets/b7dd4dcc/jquery.min.js"></script>
+<script>
+var zone = {"field_VPENA":{"areaNo":1,"sectionCode":"field_VPENA","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"STANDING PEN A","areaColor":"ff56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/1/89","groupName":"VIP STANDING PEN A","groupOrder":"1","price":[{"ticketPriceText":"VIP","ticketPrice":"$348.00"}]},"field_VPENB":{"areaNo":2,"sectionCode":"field_VPENB","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"STANDING PEN B","areaColor":"ff56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/2/98","groupName":"VIP STANDING PEN B","groupOrder":"1","price":[{"ticketPriceText":"VIP","ticketPrice":"$348.00"}]},"field_VPENC":{"areaNo":3,"sectionCode":"field_VPENC","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"STANDING PEN C","areaColor":"ff56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/3/7","groupName":"VIP STANDING PEN C","groupOrder":"1","price":[{"ticketPriceText":"VIP","ticketPrice":"$348.00"}]},"field_VPEND":{"areaNo":4,"sectionCode":"field_VPEND","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"STANDING PEN D","areaColor":"ff56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/4/16","groupName":"VIP STANDING PEN D","groupOrder":"1","price":[{"ticketPriceText":"VIP","ticketPrice":"$348.00"}]},"field_PENC":{"areaNo":5,"sectionCode":"field_PENC","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"STANDING PEN C","areaColor":"56ffff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/5/25","groupName":"CAT 1 STANDING PEN C","groupOrder":"2","price":[{"ticketPriceText":"Standard","ticketPrice":"$298.00"}]},"field_PEND":{"areaNo":6,"sectionCode":"field_PEND","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"STANDING PEN D","areaColor":"56ffff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/6/34","groupName":"CAT 1 STANDING PEN D","groupOrder":"2","price":[{"ticketPriceText":"Standard","ticketPrice":"$298.00"}]},"field_210":{"areaNo":9,"sectionCode":"field_210","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"210","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/9/61","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_211":{"areaNo":11,"sectionCode":"field_211","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"211","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/11/89","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_212":{"areaNo":13,"sectionCode":"field_212","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"212","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/13/87","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_213":{"areaNo":15,"sectionCode":"field_213","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"213","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/15/85","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_214":{"areaNo":16,"sectionCode":"field_214","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"214","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/16/84","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_215":{"areaNo":17,"sectionCode":"field_215","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"215","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/17/83","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_218":{"areaNo":22,"sectionCode":"field_218","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"218","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/22/96","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_219":{"areaNo":24,"sectionCode":"field_219","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"219","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/24/94","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_220":{"areaNo":26,"sectionCode":"field_220","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"220","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/26/92","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_221":{"areaNo":28,"sectionCode":"field_221","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"221","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/28/90","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_222":{"areaNo":30,"sectionCode":"field_222","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"222","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/30/6","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_223":{"areaNo":32,"sectionCode":"field_223","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"223","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/32/4","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_224":{"areaNo":33,"sectionCode":"field_224","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"224","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/33/3","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_227":{"areaNo":40,"sectionCode":"field_227","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"227","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/40/14","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_228":{"areaNo":41,"sectionCode":"field_228","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"228","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/41/13","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_229":{"areaNo":43,"sectionCode":"field_229","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"229","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/43/11","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_230":{"areaNo":45,"sectionCode":"field_230","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"230","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/45/19","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_231":{"areaNo":47,"sectionCode":"field_231","areaStatus":"SINGLE SEATS","areaStatusText":"<font class=\"text-warning\">NEARLY GONE/SINGLE SEATS</font>","description":"231","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/47/17","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_232":{"areaNo":49,"sectionCode":"field_232","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"232","areaColor":"007fff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/49/15","groupName":"CAT 2","groupOrder":"3","price":[{"ticketPriceText":"Standard","ticketPrice":"$308.00"}]},"field_216":{"areaNo":19,"sectionCode":"field_216","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"216","areaColor":"ff5656","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/19/81","groupName":"CAT 3","groupOrder":"4","price":[{"ticketPriceText":"Standard","ticketPrice":"$268.00"}]},"field_217":{"areaNo":21,"sectionCode":"field_217","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"217","areaColor":"ff5656","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/21/97","groupName":"CAT 3","groupOrder":"4","price":[{"ticketPriceText":"Standard","ticketPrice":"$268.00"}]},"field_225":{"areaNo":37,"sectionCode":"field_225","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"225","areaColor":"ff5656","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/37/9","groupName":"CAT 3","groupOrder":"4","price":[{"ticketPriceText":"Standard","ticketPrice":"$268.00"}]},"field_226":{"areaNo":39,"sectionCode":"field_226","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"226","areaColor":"ff5656","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/39/7","groupName":"CAT 3","groupOrder":"4","price":[{"ticketPriceText":"Standard","ticketPrice":"$268.00"}]},"field_318":{"areaNo":57,"sectionCode":"field_318","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"318","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/57/25","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_319":{"areaNo":58,"sectionCode":"field_319","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"319","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/58/24","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_320":{"areaNo":59,"sectionCode":"field_320","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"320","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/59/23","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_322":{"areaNo":60,"sectionCode":"field_322","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"322","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/60/30","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_323":{"areaNo":61,"sectionCode":"field_323","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"323","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/61/39","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_324":{"areaNo":62,"sectionCode":"field_324","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"324","areaColor":"00bf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/62/38","groupName":"CAT 4","groupOrder":"5","price":[{"ticketPriceText":"Standard","ticketPrice":"$228.00"}]},"field_310":{"areaNo":52,"sectionCode":"field_310","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"310","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/52/20","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_311":{"areaNo":53,"sectionCode":"field_311","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"311","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/53/29","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_312":{"areaNo":54,"sectionCode":"field_312","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"312","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/54/28","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_313":{"areaNo":55,"sectionCode":"field_313","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"313","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/55/27","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_314":{"areaNo":56,"sectionCode":"field_314","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"314","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/56/26","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_328":{"areaNo":63,"sectionCode":"field_328","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"328","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/63/37","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_329":{"areaNo":64,"sectionCode":"field_329","areaStatus":"LIMITED AVAILABILITY","areaStatusText":"RUNNING LOW","description":"329","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/64/36","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_330":{"areaNo":65,"sectionCode":"field_330","areaStatus":"SELLING FAST","areaStatusText":"SELLING FAST","description":"330","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/65/35","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_331":{"areaNo":66,"sectionCode":"field_331","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"331","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/66/34","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_332":{"areaNo":67,"sectionCode":"field_332","areaStatus":"AVAILABLE","areaStatusText":"AVAILABLE","description":"332","areaColor":"ff7f00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/67/33","groupName":"CAT 5","groupOrder":"6","price":[{"ticketPriceText":"Standard","ticketPrice":"$188.00"}]},"field_209":{"areaNo":7,"sectionCode":"field_209","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"209","areaColor":"bfbf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/7/43","groupName":"CAT 6 (RESTRICTED VIEW)","groupOrder":"7","price":[{"ticketPriceText":"Restricted View","ticketPrice":"$268.00"}]},"field_233":{"areaNo":50,"sectionCode":"field_233","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"233","areaColor":"bfbf00","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/50/22","groupName":"CAT 6 (RESTRICTED VIEW)","groupOrder":"7","price":[{"ticketPriceText":"Restricted View","ticketPrice":"$268.00"}]},"field_309":{"areaNo":51,"sectionCode":"field_309","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"309","areaColor":"aa56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/51/21","groupName":"CAT 7 (RESTRICTED VIEW)","groupOrder":"8","price":[{"ticketPriceText":"Restricted View","ticketPrice":"$188.00"}]},"field_333":{"areaNo":68,"sectionCode":"field_333","areaStatus":"UNAVAILABLE","areaStatusText":"UNAVAILABLE","description":"333","areaColor":"aa56ff","areaUrl":"https://ticketmaster.sg/ticket/ticket/26sg_riize/2923/68/32","groupName":"CAT 7 (RESTRICTED VIEW)","groupOrder":"8","price":[{"ticketPriceText":"Restricted View","ticketPrice":"$188.00"}]}},
+    fieldImageType = 1,
+    imageTypeHide = 0,
+    imageTypeSVG = 1,
+    imageTypeFile = 2,
+    selSec = "";
+
+if (fieldImageType == imageTypeSVG) {
+    $.ajax(
+    {
+        url: "https://static.ticketmaster.sg/images/field/field_1080_ca27edeebbf52b752a7825de0a76cae86dd7b460f70d3b6be788b1_o.svg?v=1760094999" ,
+        dataType: "html",
+        type: "GET",
+        success: function(response)
+        {
+            $("div#mapContainer").html("<div class=\"col-md-12 col-xs-12 venue-area\"><button id=\"enlargeMap\" class=\"btn btn-default d-block d-sm-none mx-auto\"><i class=\"fa fa-search-plus\"></i></button>" + response + "</div>");
+
+            $("svg>g#sections>g").each(function(e) {
+                areaInfo = zone[$(this).attr("id")];
+                if(!areaInfo || areaInfo.areaStatus == "UNAVAILABLE"){
+                    $(this).addClass("empty");
+                    highlight($(this));
+                }
+            });
+
+            $("div#mapContainer").off("mouseover").off("mouseout").off("click");
+            $("div#mapContainer").on("mouseover", "svg>g#sections>g", function(e) {
+                var areaInfo = zone[$(this).attr("id")];
+                if ($(this).attr("id") != selSec) {
+                    highlight($(this));
+                    if (areaInfo && areaInfo.areaStatus != "UNAVAILABLE") {
+                        $(this).css({"cursor":"pointer"});
+                        var info = " Available Seats: <strong>" + areaInfo.areaStatusText + "</strong><br><hr>" + areaInfo.description;
+                        var x = e.pageX + 20;
+                        var y = e.pageY;
+                        $("div#sectionInfo").css({
+                            left: x + "px",
+                            top: y + "px"
+                        }).html(info);
+                        $("div#sectionInfo").show();
+                    } else if (areaInfo || ($(this).attr("id") && $(this).attr("id").indexOf("field_") != -1)) {
+                        $(this).css({"cursor":"pointer"});
+                        unhighlight($(this));
+                        var info = " Available Seats: <strong>UNAVAILABLE</strong>";
+                        var x = e.pageX + 20;
+                        var y = e.pageY;
+                        $("div#sectionInfo").css({
+                            left: x + "px",
+                            top: y + "px"
+                        }).html(info);
+                        $("div#sectionInfo").show();
+                    } else if (!areaInfo){
+                        $(this).css({"cursor":"default"});
+                        unhighlight($(this));
+                    }
+                }
+            }).on("mouseout", "svg>g#sections>g", function() {
+                var areaInfo = zone[$(this).attr("id")];
+                if( $(this).attr("id") != selSec　){
+                    unhighlight($(this));
+                    if( areaInfo　&& areaInfo.areaStatus != "UNAVAILABLE" ){
+                    }
+                    else if( areaInfo || !areaInfo ){
+                        highlight($(this));
+                    }
+                }
+                $("div#sectionInfo").hide();
+            }).on("click", "svg>g#sections>g", function() {
+				$("#mapContainer .venue-area").removeClass("enlarged");
+				$("#enlargeMap").html("<i class=\"fa fa-search-plus\"></i>");
+				$("div#sectionInfo").hide();
+                areaTicket($(this).attr("id"), "map");
+            });
+
+            if (Object.keys(zone).length == 1) {
+                const areaId = Object.keys(zone)[0];
+                areaTicket(areaId, "map");
+            }
+        },
+        error: function(xhr){
+            alert("There was a connection failure. Please contact our customer service so that we can help you.");
+            $("#mapContainer").html("");
+        }
+    });
+}
+
+if (fieldImageType == imageTypeHide || fieldImageType == imageTypeFile) {
+    $("div#mapContainer").html("<img id=\"loadingmap\" src=\"/images/loading.GIF\" alt=\"loadingmap\">");
+    $.ajax({
+        type: "GET",
+        url: "https://ticketmaster.sg/ticket/get-area-list/26sg_riize/2923",
+        dataType: "json",
+
+        success: function(response) {
+            $("div#mapContainer").html(response);
+
+            var selSec = "";
+            const isSingleZone = Object.keys(zone).length == 1;
+
+            $("div#mapContainer").off("click");
+            $("div#mapContainer").on("click", "div>ul>li>a", function() {
+                areaTicket($(this).attr("id"), "list");
+            });
+            if (isSingleZone) {
+                $("div#mapContainer div>ul>li>a").trigger("click");
+            }
+            if (isSingleZone && fieldImageType == imageTypeHide) {
+                $("#mapSelectArea").hide();
+            }
+            if (isSingleZone && fieldImageType == imageTypeFile) {
+                $(".area_select").hide();
+            }
+        },
+        error: function(xhr){
+            alert("There was a connection failure. Please contact our customer service so that we can help you.");
+            $("#mapContainer").html("");
+        }
+    });
+}
+
+function colorNameToHex(color) {
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.fillStyle = color;
+    return ctx.fillStyle;
+}
+
+function highlight(section){
+    jQuery.each(section.children(), function(){
+        var is3d = true;
+        var fill = jQuery(this).find(">:first-child").attr("fill");
+        if (typeof fill === "string" && !fill.startsWith("#")) {
+            fill = colorNameToHex(fill);
+        }
+        rgb = hexToRgb(fill);
+        if( !rgb ){
+            is3d = false;
+            var fill = jQuery(this).attr("fill");
+            if (typeof fill === "string" && !fill.startsWith("#")) {
+                fill = colorNameToHex(fill);
+            }
+            rgb = hexToRgb(fill);
+        }
+
+        //Brighter color
+        rgb.r = parseInt(255-(255-rgb.r)/2);
+        rgb.g = parseInt(255-(255-rgb.g)/2);
+        rgb.b = parseInt(255-(255-rgb.b)/2);
+        if( !is3d ){
+            jQuery(this).attr("fill", rgbToHex(rgb.r, rgb.g, rgb.b));
+        }
+        else {
+            jQuery(this).find(">:first-child").attr("fill", rgbToHex(rgb.r, rgb.g, rgb.b));
+        }
+    });
+}
+
+function unhighlight(section){
+    jQuery.each(section.children(), function(){
+        var is3d = true;
+        var fill = jQuery(this).find(">:first-child").attr("fill");
+        if (typeof fill === "string" && !fill.startsWith("#")) {
+            fill = colorNameToHex(fill);
+        }
+        rgb = hexToRgb(fill);
+        if( !rgb ){
+            is3d = false;
+            var fill = jQuery(this).attr("fill");
+            if (typeof fill === "string" && !fill.startsWith("#")) {
+                fill = colorNameToHex(fill);
+            }
+            rgb = hexToRgb(fill);
+        }
+        //Darker color
+        rgb.r = parseInt(rgb.r*2-255) >= 0 ? parseInt(rgb.r*2-255) : 0;
+        rgb.g = parseInt(rgb.g*2-255) >= 0 ? parseInt(rgb.g*2-255) : 0;
+        rgb.b = parseInt(rgb.b*2-255) >= 0 ? parseInt(rgb.b*2-255) : 0;
+        if( !is3d ){
+            jQuery(this).attr("fill", rgbToHex(rgb.r, rgb.g, rgb.b));
+        }
+        else {
+            jQuery(this).find(">:first-child").attr("fill", rgbToHex(rgb.r, rgb.g, rgb.b));
+        }
+    });
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function hexToRgb(hex){
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+
+    return result? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function areaTicket(id, type){
+    var areaInfo = zone[id];
+    if (id != selSec && areaInfo && areaInfo.areaStatus != "UNAVAILABLE") {
+        if(selSec!=""){
+            $("#" + selSec).removeClass("selected");
+            if(type == "map"){
+                unhighlight($("#" + selSec));
+            }
+        }
+        selSec = id;
+        $("#" + selSec).addClass("selected");
+        $("#priceList").html("<img id=\"loadingmap\" src=\"/images/loading.GIF\" alt=\"loadingmap\">");
+
+        $.ajax({
+            type: "GET",
+            url: areaInfo.areaUrl,
+            success: function(response) {
+                $("#priceList").html(response);
+                $("#groupName").html(areaInfo.groupName)
+            },
+            error: function(xhr){
+                if(xhr.responseJSON){
+                    alert(xhr.responseJSON.message);
+                }
+                $("#priceList").html("");
+            }
+        });
+
+        if (Object.keys(zone).length != 1) {
+            jQuery("body,html").animate({
+                scrollTop: $("div#priceList").offset().top-$("#header").outerHeight()
+            }, 800);
+        }
+    }
+}</script></div>
+				</div>
+            </div>
+            <!-- end: Venue -->
+            <!-- start: Ticket -->
+            <div class="row" id="step2">
+				<div class="col-lg-12 col-md-12 col-xs-12 col-12 mgt-10">
+					<div id="priceList" class="row-no-gutters text-center"></div>
+				</div>
+            </div>
+            <!-- start: Ticket -->
+        </div>
+        </div>
+    <!-- end: Flow-Content -->
+</div>
+<!-- end: Container -->
+    </div>
+    <!-- AD LIGHT SECTION -->
+
+    <div class="banner_space bottom_slot mgt-32 mgb-16"><script type="text/plain" class="optanon-category-C0004">
+	window.googletag = window.googletag || {cmd: []};
+	googletag.cmd.push(function() {
+	var mapping2 = googletag.sizeMapping()
+			.addSize([1024, 400], [[970, 250], [970, 90], [728, 90]])
+			.addSize([768, 400], [[728, 90], [320, 50], [300, 250], [320, 100]])
+			.addSize([470, 400], [[320, 50], [300, 250], [320, 100]])
+			.addSize([360, 400], [[320, 50], [320, 100], [300, 250]])
+			.addSize([0, 0], [[320, 50], [320, 100], [300, 250]])
+			.build();
+	googletag.defineSlot('/6025/tmsg', [ [728, 90], [970, 90] ], 'bottom-banner-1').defineSizeMapping(mapping2).setTargeting('pagepos','502').setTargeting('page', ['event']).addService(googletag.pubads());
+	googletag.pubads().enableSingleRequest();
+	googletag.enableServices();
+	});
+</script>
+<div id="bottom-banner-1" class="text-center banner-container ">
+	<script type="text/plain" class="optanon-category-C0004">
+		googletag.cmd.push(function() {
+		googletag.display('bottom-banner-1');
+		});
+	</script>
+</div><div class="adsdisclaimer">Advertisement</div></div>
+    <!-- FOOTER -->
+    <footer class="footer clearfix">
+        <div class="container">
+            <div class="row no-gutters">
+<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12 col-12"><a class="logo" href="/"><img class="brand " src="https://static.ticketmaster.sg/images/logo/internet.svg" alt="Logo"></a>
+<div class="community-group">Let's Connect
+<div class="community"><a href="https://www.facebook.com/TicketmasterSG/" target="_blank" rel="noopener"><img title="Facebook" src="/images/logo/facebook.svg" alt="Facebook"></a> <a href="https://x.com/TicketmasterSG/" target="_blank" rel="noopener"><img title="X" src="/images/logo/x.svg" alt="X"></a> <a href="https://www.instagram.com/TicketmasterSG/" target="_blank" rel="noopener"><img class="Instagram" title="Instagram" src="/images/logo/instagram.svg"></a></div>
+</div>
+<div class="community-group">
+<p>By continuing past this page, you agree to our <a href="/terms-of-use"><strong>terms of use</strong></a></p>
+</div>
+</div>
+<div class="col-lg-9 col-md-9 col-sm-6 col-xs-12 col-12">
+<div class="row">
+<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 col-12 collapseBox"><span class="d-none d-md-block togglebtn">Categories</span> <a class="d-block d-md-none togglebtn" role="button" href="#categories" data-bs-toggle="collapse" aria-expanded="false" aria-controls="categories"> Categories <svg class="arrowDown" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"> <path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path> </svg> </a>
+<ul id="categories" class="footer-link collapse"><li id="3"><a class="en " href="/categories/concerts">Concerts</a></li><li id="4"><a class="en " href="/categories/sports">Sports</a></li><li id="38"><a class="en " href="/categories/arts-theatre-comedy">Arts, Theatre &amp; Comedy</a></li><li id="39"><a class="en " href="/categories/family-entertainment">Family Entertainment</a></li></ul>
+</div>
+<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 col-12 collapseBox"><span class="d-none d-md-block togglebtn">Customer Care</span> <a class="d-block d-md-none togglebtn" role="button" href="#customercare" data-bs-toggle="collapse" aria-expanded="false" aria-controls="customercare"> Customer Care <svg class="arrowDown" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"> <path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path> </svg> </a>
+<ul id="customercare" class="footer-link collapse">
+<li><a href="https://help.ticketmaster.sg/">Help Center</a></li>
+<li><a href="https://help.ticketmaster.sg/hc/en-us/requests/new?ticket_form_id=6418821778065">Contact Us</a></li>
+<li><a href="/terms-of-use">Terms of Use</a></li>
+<li><a href="/news">News</a></li>
+</ul>
+</div>
+<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 col-12 collapseBox"><span class="d-none d-md-block togglebtn">Be Part Of It</span> <a class="d-block d-md-none togglebtn" role="button" href="#business" data-bs-toggle="collapse" aria-expanded="false" aria-controls="business"> Be Part Of It <svg class="arrowDown" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"> <path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path> </svg> </a>
+<ul id="business" class="footer-link collapse">
+<li><a href="/ticket-your-event">Ticket Your Event</a></li>
+<li><a href="https://blog.ticketmaster.sg/" target="_blank" rel="noopener">Blog</a></li>
+</ul>
+</div>
+<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 col-12 collapseBox"><span class="d-none d-md-block togglebtn">Corporate</span> <a class="d-block d-md-none togglebtn" role="button" href="#aboutus" data-bs-toggle="collapse" aria-expanded="false" aria-controls="aboutus"> Corporate <svg class="arrowDown" width="1.5em" height="1.5em" aria-hidden="true" focusable="false"> <path d="M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z"></path> </svg> </a>
+<ul id="aboutus" class="footer-link collapse">
+<li><a href="https://business.ticketmaster.sg" target="_blank" rel="noopener">Who We Are</a></li>
+<li><a href="https://livenation.wd1.myworkdayjobs.com/en-US/TMExternalSite" target="_blank" rel="noopener">Careers</a></li>
+<li><a href="https://www.ticketmaster.com/international" target="_blank" rel="noopener">Across The Globe</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="copyright row no-gutters">
+<div class="sitemap col-lg-6 col-md-6 col-sm-12 col-xs-12 col-12"><a href="/purchase">Purchase Policy</a> | <a href="https://privacy.ticketmaster.sg/privacy-policy">Privacy Policy</a> | <a href="https://privacy.ticketmaster.sg/cookie-policy">Cookies</a></div>
+<div class="copyrightLabel col-lg-6 col-md-6 col-sm-12 col-xs-12 col-12">© 1999-2025 Ticketmaster. All rights reserved.</div>
+</div>
+<!-- Fastly EPS -->
+<p>
+<script async="" src="/eps-mgr" type="text/javascript"></script>
+</p>
+<!-- End Fastly EPS Code -->        </div>
+    </footer>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.2.0/jquery.magnific-popup.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" integrity="sha512-fCRpXk4VumjVNtE0j+OyOqzPxF1eZwacU3kN3SsznRPWHgMTSSo7INc8aY03KQDBWztuMo5KjKzCFXI/a5rVYQ=="></script>
+<script src="/js/queue-it/queueclient.min.js"></script>
+<script src="/js/queue-it/queueconfigloader.min.js" data-queueit-intercept-domain="ticketmaster.sg" data-queueit-intercept="true" data-queueit-c="tixcraft"></script>
+<script>
+jQuery(document).ready(function() {
+    /* category dropdown */
+    jQuery("#Categories").on("click", function() {
+        if (jQuery(this).hasClass("opened-menu")) {
+            jQuery(this).removeClass("opened-menu");
+            jQuery(".catList").css("display", "none");
+        } else {
+            jQuery(".catList").css("display", "flex");
+            jQuery(this).addClass("opened-menu");
+        }
+    });
+    jQuery("#Categories").mouseenter(function() {
+        var x = jQuery(this).offset().left;
+        var y = jQuery(this).offset().top;
+        jQuery(this).addClass("opened-menu");
+        jQuery(".catList").slideDown("fast").css("display", "flex");
+    });
+    jQuery("#Categories").mouseleave(function(e) {
+        jQuery(".catList").hide();
+        jQuery(this).removeClass("opened-menu");
+    });
+    /* MORE button on smaller screen */
+    jQuery("#moreMenu").on("touchend", function(e) {
+        if (!jQuery(e.target).parent().find("#megaMenuContainer a").length) {
+            //do nothing
+        } else {
+            if (jQuery(this).hasClass("opened-menu")) {
+                jQuery(this).removeClass("opened-menu");
+                jQuery("#megaMenuContainer").slideUp("slow").css("display", "none");
+            } else {
+                jQuery("#megaMenuContainer").slideDown("fast").css("display", "flex");
+                jQuery(this).addClass("opened-menu");
+            }
+        }
+    });
+    jQuery("#moreMenu").mouseenter(function() {
+        var x = jQuery(this).offset().left;
+        var y = jQuery(this).offset().top;
+        jQuery(this).addClass("opened-menu");
+        jQuery("#megaMenuContainer").slideDown("fast").css("display", "flex");
+    });
+
+    jQuery("#moreMenu").mouseleave(function(e) {
+        jQuery("#megaMenuContainer").hide();
+        jQuery(this).removeClass("opened-menu");
+    });
+    /* news height */
+    var sameHeightTop = jQuery(".eqParent");
+    if (sameHeightTop.length !== 0) {
+        sameHeightTop.each(function () {
+            var tallest = 0;
+            var sameHeightChildren = jQuery(this).find(".eqChild");
+            sameHeightChildren.each(function () {
+                var thisHeight = jQuery(this).height();
+                if (thisHeight > tallest) {
+                    tallest = thisHeight;
+                }
+            });
+            sameHeightChildren.height(tallest);
+        });
+    }
+    /* footer quickLinks */
+    jQuery("#quickLinks a").click(function(event) {
+        jQuery("#quickLinks").collapse("hide");
+    });
+    jQuery(".systempageContainer a[href^='\#'\]").on("click", function(event) {
+        if (this.hash !== "") {
+            event.preventDefault();
+            var hash = this.hash;
+            jQuery("html, body").animate({
+                scrollTop: jQuery(hash).offset().top
+            }, 800, function() {
+                window.location.hash = hash;
+            });
+        }
+    });
+});
+
+
+/* open/close Region / Language sidebar*/
+function toggle_menu(menuType) {
+    jQuery(".countryList button").removeClass("currentSelected");
+    jQuery(".countryList").removeClass("opened");
+    jQuery("#languageList").removeClass("d-none");
+     jQuery("#overseasList").removeClass("d-none");
+
+    if (menuType == "lang") {
+        jQuery("#overseasList").prev().find(".chZcwd").css("transform", "none");
+        jQuery("#languageList").prev().find(".chZcwd").css("transform", "rotate(180deg)");
+        var e = document.getElementById("myLoc");
+        if (e.classList.contains("showing")) {
+          e.classList.remove("showing");
+          document.getElementById("overlayLocation").style.display = "none";
+          jQuery("body").removeClass("modal-open");
+        } else {
+          e.classList.add("showing");
+          jQuery("#languageList").closest(".countryList").addClass("opened");
+          jQuery("#languageList").prev("button").addClass("currentSelected");
+          jQuery("#overseasList").addClass("d-none");
+          document.getElementById("overlayLocation").style.display = "block";
+          jQuery("body").addClass("modal-open");
+        }
+    } else if (menuType == "country") {
+        jQuery("#languageList").prev().find(".chZcwd").css("transform", "none");
+        jQuery("#overseasList").prev().find(".chZcwd").css("transform", "rotate(180deg)");
+        var e = document.getElementById("myLoc");
+        if (e.classList.contains("showing")) {
+          e.classList.remove("showing");
+          document.getElementById("overlayLocation").style.display = "none";
+          jQuery("body").removeClass("modal-open");
+        } else {
+          e.classList.add("showing");
+
+           jQuery("#overseasList").closest(".countryList").addClass("opened");
+          jQuery("#overseasList").prev("button").addClass("currentSelected");
+          jQuery("#languageList").addClass("d-none");
+          document.getElementById("overlayLocation").style.display = "block";
+          jQuery("body").addClass("modal-open");
+        }
+    }  else {
+        var e = document.getElementById("myLoc");
+        if (e.classList.contains("showing")) {
+          e.classList.remove("showing");
+          document.getElementById("overlayLocation").style.display = "none";
+          jQuery("body").removeClass("modal-open");
+        } else {
+          e.classList.add("showing");
+          document.getElementById("overlayLocation").style.display = "block";
+          jQuery("body").addClass("modal-open");
+        }
+    }
+
+}
+
+/* override menu collapse on mobile - smooth animation*/
+function toggle_NavMenu() {
+    if (jQuery("#bs-navbar2").hasClass("showing")) {
+        jQuery("#bs-navbar2").removeClass("showing");
+        jQuery("#overlayLocation").hide();
+        jQuery("body").removeClass("modal-open");
+    } else {
+        jQuery("#bs-navbar2").addClass("showing");
+        jQuery("#overlayLocation").show();
+        jQuery("body").addClass("modal-open");
+    }
+}
+ /* close location sidebar when clicking overlay */
+    function closeNav2() {
+        jQuery("#myLoc").removeClass("showing");
+        jQuery("#bs-navbar2").removeClass("showing");//to close sidebar menu on smaller device
+        jQuery("body").removeClass("modal-open");
+        jQuery("#overlayLocation").hide();
+    }
+/* end - put outside/before jQuery(function($) */
+</script>
+<script>jQuery(function ($) {
+dataLayer.push({"event":"EnterTicketArea","eventTitle1":"2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE","eventTitle2":"2026 RIIZE CONCERT TOUR [RIIZING LOUD] IN SINGAPORE","eventTitle3":false,"venue":"Singapore Indoor Stadium","eventDate":"24 Jan 2026 (Sat.) 07:00 pm","gameCode":"26sg_riize","gameId":2923,"coupon":null,"childCategoryId":"19","childCategoryName":"Korean Pop (CON)","parentCategoryId":"1","parentCategoryName":"Concerts","artistId":"520","artistName":"RIIZE","promoter":"Idea Entertainment Asia Pte Ltd","venueId":"1080"});
+getArea();
+
+function getArea(){
+    $("div#mapSelectArea").html("<img id=\"loadingmap\" src=\"/images/loading.GIF\" alt=\"loadingmap\">");
+
+    $.ajax({
+        type: "GET",
+        url: "https://ticketmaster.sg/ticket/get-area-map/26sg_riize/2923",
+        dataType: "json",
+
+        success: function(responseArea) {
+
+            $("div#mapSelectArea").html(responseArea);
+        },
+        error: function(xhr){
+            alert("There was a connection failure. Please contact our customer service so that we can help you.");
+            $("div#mapSelectArea").html("");
+        }
+    });
+}
+$( "body" ).on( "click", "#mapContainer #enlargeMap", function() {
+	if($("#mapContainer .venue-area").hasClass("enlarged")) {
+		$("#mapContainer .venue-area").removeClass("enlarged");
+		$(this).html("<i class=\"fa fa-search-plus\"></i>");
+	} else {
+		$("#mapContainer .venue-area").addClass("enlarged");
+		$(this).html("<i class=\"fa fa-search-minus\"></i>");
+	}
+});
+
+
+    $("#gameId").off("change");
+    $("#gameId").on("change", function(event) {
+        window.location.href = "https://ticketmaster.sg/ticket/area/26sg_riize/" + $(event.target).val() + "";
+    });
+jQuery(document).ready(function() {
+    notWorkingProperlyWarning(["/ticket/area","/ticket/checkout"], "/html/adblock.html");
+});
+
+function setErrorLog(message, category) {
+    $.post('/log/set-error-log', {
+        "message": message,
+        "category": category
+    });
+}
+
+var goSearch = function() {
+    var url = jQuery(".search-btn").attr("data-href"),
+        keyword = jQuery(".searchBox input[type=text]").val();
+    if (keyword.indexOf("/") != -1) {
+        alert("Please do not use / in your search keywords.");
+    } else {
+        window.location.href = url + "/" + keyword;
+    }
+}
+jQuery(".search-btn").off("click");
+jQuery(".search-btn").on("click", function() {
+    goSearch();
+});
+jQuery(".searchBox input[type=text]").off("keydown");
+jQuery(".searchBox input[type=text]").on("keydown", function(event) {
+    if ([13].indexOf(event.keyCode) !== -1) {
+        goSearch();
+    }
+});
+
+jQuery(function() {
+    jQuery("li.account-login").mouseenter(function() {
+        var x = jQuery(this).offset().left;
+        var y = jQuery(this).offset().top;
+        jQuery("#accountFunc").slideDown("fast");
+    });
+    jQuery("li.account-login")
+    .mouseleave(function(e) {
+    jQuery("#accountFunc").hide();
+    });
+    jQuery("li.account-login > a").on("touchend", function(e) {
+        if (!jQuery(e.target).find("#accountFunc a").length) {
+            if (jQuery("#accountFunc").css("display") == "block") {
+                jQuery("#accountFunc").slideUp("slow").css("display", "none");
+            } else {
+                jQuery("#accountFunc").slideDown("fast").css("display", "block");
+            }
+        } else {
+
+        }
+    });
+
+});
+
+function preg_quote (str, delimiter) {
+  return (str + "")
+    .replace(new RegExp("[.\\+*?\[\^\]jQuery() {}=!<>|:\\" + (delimiter || "") + "-]", "g"), "\$&")
+}
+function highlight(str, search) {
+    return str.replace(new RegExp("(" + preg_quote(search) + ")", "gi"), "<b>$1</b>");
+}
+
+/* open submenu on mobile menu*/
+jQuery(".has-submenu").on("click", function() {
+    if (jQuery(this).hasClass("has-submenu opened"))  {
+        jQuery(this).find("svg").css("transform", "none");
+        jQuery(this).find(".submenu").addClass("d-none");
+        jQuery(this).removeClass("opened");
+    } else {
+        jQuery(this).find("svg").css("transform", "rotate(180deg)");
+        jQuery(this).find(".submenu").removeClass("d-none");
+        jQuery(this).addClass("opened");
+    }
+});
+
+/* open/close country list*/
+jQuery(".countryList").on("click", function() {
+    jQuery(this).find(".chZcwd").css("transform", "none");
+    if (jQuery(this).hasClass("opened")) {
+        jQuery(this).removeClass("opened");
+        jQuery(this).find(".overseasList").addClass("d-none");
+    } else {
+        jQuery(this).find(".chZcwd").css("transform", "rotate(180deg)");
+        jQuery(this).find(".overseasList").removeClass("d-none");
+        jQuery(this).addClass("opened");
+    }
+});
+
+
+
+/* footer menu mobile */
+jQuery(".togglebtn").on("click", function() {
+     if (jQuery(this).attr("aria-expanded") === "false") {
+        jQuery(this).find("svg").css("transform", "none");
+    } else {
+        jQuery(this).find("svg").css("transform", "rotate(180deg)");
+    }
+});
+
+
+/* search function box */
+jQuery("#txt_search").focus(function() {
+    jQuery(this).parent().addClass("textFocus");
+
+});
+
+jQuery(document).on("mouseup", function(e) {
+    var container = jQuery(".searchContainer");
+    if (!container.is(e.target) && container.has(e.target).length === 0) {
+        jQuery(".searchBox .input-group").removeClass("textFocus");
+        jQuery(".clearSearch").hide();
+        jQuery(".searchResultBox").hide();
+    }
+});
+
+var globalTimeout = null;
+//為了ios中文輸入特別處理
+var lock = false;
+jQuery("#txt_search").on({
+    input: function() {
+        if(!lock) search_background();
+    },
+    compositionstart: function() {
+        lock = true;
+    },
+    compositionend: function() {
+        lock = false;
+        search_background();
+    }
+});
+
+function search_background(){
+    jQuery(".searchTitle").html("Loading");
+    var search = jQuery("#txt_search").val();
+    jQuery(".clearSearch").show();
+
+    if (search != "") {
+        if (byteLength(search.trim()) < 2) {
+                jQuery("#searchResult").empty();
+                jQuery(".searchTitle").html("Type at least 2 characters");
+                jQuery(".searchResultBox").show();
+        }
+        else {
+            if (globalTimeout != null) {
+                clearTimeout(globalTimeout);
+            }
+            globalTimeout = setTimeout(function() {
+                var search = jQuery("#txt_search").val();
+                if(search.length <= 0 ){
+                    return;
+                }
+                globalTimeout = null;
+                /* TODO: ajax call for search function */
+                jQuery.ajax({
+                    url: "/activity/search-suggest/"+search,
+                    dataType: "json",
+                    data:{"_csrf":"QxX5qmTsoD3liNcM-4KtR71Y5X4yO7H27FeYatzwmYUGXI7SJdT1ULbG5ECdzd82-w7WDAR83M6KGs84jLv-tw=="},
+                }).done(function(result) {
+                    var response = result;
+                    var len = response.length;
+                    if (len < 1) {
+                        jQuery("#searchResult").empty();
+                        jQuery(".searchTitle").html("No results found");
+                        jQuery(".searchResultBox").show();
+                    } else {
+                        jQuery(".searchTitle").html("Search suggestions");
+                        jQuery("#searchResult").empty();
+                        jQuery(".searchResultBox").show();
+                        for (var i = 0; i< len; i++) {
+                            var eventName = response[i]["eventName"];
+                            var url = response[i]["eventPg"];
+                            var event = highlight(eventName, search);
+                            jQuery("#searchResult").append("<li><a href='"+url+"'>"+event+"<svg class=\"eQMPXe lh3nx1-6 elqISe\" viewBox=\"0 0 24 24\" width=\"1.5em\" height=\"1.5em\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.99 9.16a.6.6 0 00-.4-.16.6.6 0 00-.42.16.5.5 0 00-.17.37c0 .14.07.28.17.37l5.45 4.92c.04.06.09.1.15.15.14.05.3.05.44 0a.6.6 0 00.18-.11l5.45-4.92a.5.5 0 00.16-.37.5.5 0 00-.16-.37.6.6 0 00-.41-.16.6.6 0 00-.41.16l-5.03 4.46-5-4.5z\"></path></svg></a></li>");
+                        }
+                    }
+                });
+            }, 600);
+        }
+    } else {
+            jQuery("#searchResult").empty();
+            jQuery(".searchResultBox").hide();
+            jQuery(".clearSearch").hide();
+        }
+};
+
+jQuery(".clearSearch").on("click", function() {
+    jQuery("#txt_search").val("");
+    jQuery(this).hide();
+    jQuery(".searchResultBox").hide();
+    jQuery("#txt_search").focus();
+});
+});</script>
+
+
+        <div id="adblockModal" tabindex="-1" role="dialog" aria-labelledby="adblockModal" class="modal fade show" aria-modal="true" style="display: block;">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content"><style>
+    #adblockModal h1 {
+        font-size: 20px;
+        font-weight: 400;
+        margin-bottom: 10px;
+        font-family: 'Averta', helvetica, arial, sans-serif;
+        padding-bottom: 16px;
+        margin-top: 0;
+        letter-spacing: normal;
+        line-height: 1.5;
+    }
+    #adblockModal p {
+        margin: 0 0 10px;
+        font-family: 'Averta', helvetica, arial, sans-serif;
+        letter-spacing: normal;
+        line-height: 1.5;
+        font-weight: 400;
+        font-size: 16px;
+    }
+    #adblockModal .modal-dialog {
+        height: 80%;
+        display: flex;
+        align-items: center;
+    }
+    #adblockModal .modal-content {
+        padding: 32px 16px;
+        margin: 0 auto;
+    }
+    #adblockModal .modal-content .fa-warning {
+        color: #f2bd2a;
+        font-size: 5em;
+        padding-bottom: 8px;
+    }
+    @font-face {
+        font-family: 'Averta';
+        src: url('/fonts/avertape-light.woff') format('woff');
+        font-weight: 300;
+    }
+    @font-face {
+        font-family: 'Averta';
+        src: url('/fonts/avertape-regular.woff') format('woff'),
+            url('/fonts/avertape-regular.woff2') format('woff2');
+        font-weight: 400;
+    }
+
+    @font-face {
+        font-family: 'Averta';
+        src: url('/fonts/avertape-semibold.woff') format('woff'),
+            url('/fonts/avertape-semibold.woff2') format('woff2');
+        font-weight: 600;
+    }
+
+    @font-face {
+        font-family: 'Averta';
+        src: url('/fonts/avertape-bold.woff') format('woff'),
+            url('/fonts/avertape-bold.woff2') format('woff2');
+        font-weight: 800;
+    }
+</style>
+
+		<div class="row text-center">
+			<div class="col-lg-12 col-md-12 col-12"><i class="fa fa-warning"></i></div>
+			<div class="col-lg-12 col-md-12 col-12">
+			  <h1>Ad Blocker Detected</h1>
+			  <p>We have detected that you have enabled ad blocker which restricts some essential features on this site.</p>
+			  <p>Please disable ad blocker for Ticketmaster, and refresh the page to continue with your purchase.</p>
+			  <hr>
+			  <p>For more information, please refer to the setting instructions related to your ad blocker and follow the steps.</p>
+			</div>
+		</div>
+</div>
+            </div>
+        </div>
+    <div class="modal-backdrop fade show"></div><div><div class="grecaptcha-badge" data-style="bottomright" style="width: 256px; height: 60px; display: block; transition: right 0.3s; position: fixed; bottom: 14px; right: -186px; box-shadow: gray 0px 0px 5px; border-radius: 2px; overflow: hidden;"><div class="grecaptcha-logo"><iframe title="reCAPTCHA" width="256" height="60" role="presentation" name="a-v0zaelb5sfbv" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="https://recaptcha.net/recaptcha/enterprise/anchor?ar=1&amp;k=6LcvL3UrAAAAAO_9u8Seiuf-I6F_tP_jSS-zndXV&amp;co=aHR0cHM6Ly90aWNrZXRtYXN0ZXIuc2c6NDQz&amp;hl=zh-TW&amp;v=naPR4A6FAh-yZLuCX253WaZq&amp;size=invisible&amp;anchor-ms=20000&amp;execute-ms=15000&amp;cb=tuf3s6wf7cm2"></iframe></div><div class="grecaptcha-error"></div><textarea id="g-recaptcha-response-100000" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;"></iframe></div></body>

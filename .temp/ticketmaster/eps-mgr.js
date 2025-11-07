@@ -1,0 +1,14 @@
+var epsSID = '';
+var epsfToken = '6f53fb50321a5d88.1762512236.foja0IeJoHIuTlfA69SIpI/JNJOzvJGxEr+3+yOtpqE=';
+var gecToken = epsfToken;
+;var client_ip = '125.228.69.250';
+var dt = '2025-11-07T16:50:36Z900';
+s = document.createElement('script');
+s.src = 'https://ticketmaster.sg/epsf/asset/eps.js';
+s.setAttribute('fetchpriority', 'high');
+s.charset = 'utf-8';
+document.head.appendChild(s);
+var d_f = new Map([["auth.ticketmaster.com", ["n", "g"]], ["uat.eticketing.co.uk", ["g"]], ["billetterie.groupama-stadium.com", ["g"]], ["billetterie-stg.groupama-stadium.com", ["g"]], ["billetterie-stg.ldlcarena.com", ["g"]], ["billetterie.cultura.com", ["g"]], ["billetterie-stg.accorarena.com", ["g"]], ["billetterie.accorarena.com", ["g"]], ["recette.spectacles.carrefour.fr", ["g"]], ["spectacles.carrefour.fr", ["g"]], ["www.spectacles.carrefour.fr", ["g"]], ["www.spectaclescarrefour.leparisien.fr", ["g"]], ["www.leclercbilletterie.com", ["g"]], ["billetterie.adidasarena.com", ["g"]], ["tickets.cdiscount.com", ["g"]], ["billetterie.adidasarena.com", ["g"]], ["billetterie.arkeaarena.com", ["g"]], ["billetterie.arenaaix.com", ["g"]], ["www.loisirs.showroomprive.com", ["g"]], ["tickets.parisladefense-arena.com", ["g"]], ["www.ticketmaster.fr", ["g"]], ["www.ticketmaster.de", ["g"]], ["www.ticketmaster.dk", ["g"]], ["www.ticketmaster.es", ["g"]], ["www.ticketmaster.fi", ["g"]], ["www.ticketmaster.it", ["g"]], ["www.ticketmaster.nl", ["g"]], ["www.ticketmaster.no", ["g"]], ["www.ticketmaster.pl", ["g"]], ["www.ticketmaster.ae", ["g"]], ["www.ticketmaster.at", ["g"]], ["www.ticketmaster.be", ["g"]], ["www.ticketmaster.ch", ["g"]], ["www.ticketmaster.cz", ["g"]], ["www.ticketmaster.se", ["g"]], ["www.ticketmaster.co.za", ["g"]], ["www.zz.ticketmaster.eu", ["g"]], ["www.ticketmaster.co.uk", ["g"]], ["www.ticketmaster.com.au", ["g"]], ["www.ticketmaster.com.mx", ["g"]], ["www.ticketmaster.ie", ["g"]], ["www.ticketmaster.co.nz", ["g"]], ["ticketmaster.sg", ["g"]], ["ticketmaster.ph", ["g"]], ["www.ticketmaster.sg", ["g"]], ["www.ticketmaster.com", ["g"]], ["www.ticketmaster.ca", ["g"]], ["concerts.livenation.com", ["g"]], ["my.ticketmaster.com", ["g"]], ["my.livenation.com", ["g"]], ["my.ticketmaster.ca", ["g"]], ["billetterie.ldlcarena.com", ["g"]]]);
+var h = window.location.host;
+var n_f = d_f.get(h);
+let features = (typeof n_f == 'undefined') ? ['g'] : [...new Set([...d_f.get(h)])];

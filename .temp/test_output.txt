@@ -1,0 +1,466 @@
+https://www.famiticket.com.tw/Home/User/SignIn
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully

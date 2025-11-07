@@ -1,0 +1,66 @@
+To exit web server press Ctrl + C.
+server running on port: 16888
+goto url: http://127.0.0.1:16888/settings.html
+run button pressed.
+execute in shell mode.
+try python
+https://www.famiticket.com.tw/Home/User/SignIn
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...
+[LOGIN] Login redirect timeout after 15.0s, returning to allow retry
+[FAMITICKET] Routing to login handler
+[LOGIN] Detected FamiTicket login page
+[LOGIN] Account filled successfully
+[LOGIN] Submit button clicked
+[LOGIN] Form submitted, waiting for redirect...

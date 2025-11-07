@@ -1,0 +1,463 @@
+https://www.famiticket.com.tw/Sales/Home/Index/694bc18c-d2ab-495d-9454-72dfa44abeda
+日期頁面
+需要點到日期區域的按鈕:<button type="button" class="session__buy btn btn-buy">立即購買</button>
+
+<div>
+        
+
+<script>
+    var root = '/Sales/';
+
+    function buyTicket(sessionSeq, placeSeq, prefSeq, sessionName, sessionTime) {
+        app.startBuyTicket("26410c5b-b0b9-4d79-acbf-2b2f1ce01071",
+            { seq: sessionSeq, name: sessionName, time: sessionTime },
+            placeSeq, prefSeq, document.getElementById("defaultView"));
+    }
+
+    function showIntro(index) {
+            document.getElementById("Intro_" + 0).style.display = "none";
+            document.getElementById("Intro_" + 1).style.display = "none";
+            document.getElementById("Intro_" + 2).style.display = "none";
+            document.getElementById("Intro_" + 3).style.display = "none";
+        document.getElementById("Intro_" + index).style.display = "block";
+    }
+
+    function gotoMemberEdit() {
+        location.href = 'https://www.famiticket.com.tw/Home/User/Edit/#btnGvVerify';
+    }
+</script>
+<div id="app"><div class="modal show"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div></div><button type="button" class="close"><span>×</span></button></div><div></div></div></div></div></div>
+
+
+<script src="/Sales/Scripts/bundle.js?20250818"></script>
+
+        
+            <div id="defaultView" class="detail container thin">
+                <ul class="progressbar" data-li-count="6">
+                    <li class="active">
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>場次
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>區域
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>票種
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>劃位
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>結帳
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>完成
+                    </li>
+                </ul>
+                <h4 class="detail__title">
+                    <!--活動名稱-->
+                    有鷹來同樂
+                </h4>
+                <figure class="detail__banner">
+                    <!--活動圖片-->
+                    <img class="detail__banner-img" src="https://www.famiticket.com.tw/Home/api/getimage/13765" alt="">
+                </figure>
+                <div class="session">
+                            <ul class="nav nav-tabs">
+
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-toggle="tab" href="javscript: void(0);" onclick="changeMonth('2025-11', '2025100010')">
+                                            2025-11
+                                        </a>
+                                    </li>
+                            </ul>
+                                                    <div id="slist"><table class="session__list"><thead><tr><th><i class="session__icon session__icon--time"></i>場次時間</th><th><i class="session__icon session__icon--title"></i>場次名稱</th><th><i class="session__icon session__icon--battle"></i>對戰組合</th><th><i class="session__icon session__icon--locate"></i>場地</th><th>購買狀態</th></tr></thead><tbody><tr><td data-title="時間" class="session__m-icon session__m-icon--time">2025.11.09 (日) 10:00</td><td data-title="名稱" class="session__m-icon session__m-icon--title">練習賽</td><td data-title="對戰" class="session__m-icon session__m-icon--battle">臺中台壽霸龍 vs 台鋼雄鷹</td><td data-title="場地" class="session__m-icon session__m-icon--locate">澄清湖棒球場</td><td data-title="購買狀態"><button type="button" class="session__buy btn btn-buy">立即購買</button></td></tr></tbody></table></div>
+                </div>
+                <ul class="nav nav-tabs notes-tab">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#intro_0">活動介紹</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#intro_1">注意事項</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#intro_2">購票須知</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#intro_3">退票須知</a>
+                        </li>
+                </ul>
+                <div class="tab-content">
+                        <div class="tab-pane fade active show" id="intro_0">
+                            <p><span style="font-size:18px;">【2025台鋼雄鷹🦅《有鷹來同樂 TSG Party》活動售票資訊】</span><br>
+<span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">準備好一起嗨翻澄清湖了嗎？🎉<br>
+一年一度最期待的時刻──2025《有鷹來同樂 TSG Party》即將正式開賣！💚<br>
+11/9（日），歡迎所有鷹國人一起回到澄清湖棒球場，讓這今年賽季的回憶不只停在比賽中，而是和雄鷹一起用笑聲、熱情與回憶，為2025賽季畫下完美句點，迎接更強的2026！</span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13762" style="width: 100%; height: 100%;"></span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">🎟️活動售票資訊</span><br>
+<span style="color:#ff0000;"><span style="font-size:12pt"><span style="line-height:115%">《有鷹來同樂<span lang="EN-US"> </span></span></span><span style="font-size:16px;">TSG <span style="font-size:12pt"><span style="line-height:115%"><span lang="EN-US"> </span></span></span>Party</span><span style="font-size:12pt"><span style="line-height:115%">》所有活動與攤位（含鷹國會員限定活動）都需要購票才能參加與入場喔！</span></span></span><br>
+<span style="font-size:16px;">每張300元（全票、半票同價），身心優待票150元<br>
+⚠️當日無現場購票及補票服務，請提前購買！</span><br>
+<span style="font-size:12pt"><span style="line-height:115%">※2025台鋼雄鷹《有鷹來同樂<span lang="EN-US"> </span></span></span><span style="color:#000000;"><span style="font-size:16px;">TSG <span style="font-size:12pt"><span style="line-height:115%"><span lang="EN-US"> </span></span></span>Party</span></span><span style="font-size:12pt"><span style="line-height:115%">》購票連結<span lang="EN-US">👉</span><a href="https://reurl.cc/7b9do1" style="color:#467886; text-decoration:underline">https://www.fami.tw/2025TSGPARTY</a></span></span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">⏰會員優先購票時間（限於FamiTicket售票網購票）<br>
+📍【鷹國皇家】11月3日（一）10：00～12：00（每人限購4張）<br>
+📍【鷹國尊爵】11月3日（一）12：30～14：30（每人限購4張）<br>
+📍【TAKAO親子卡】11月3日（一）15：00～17：00（每人限購4張）<br>
+📍【鷹國人】11月3日（一）17：30～19：30（每人限購2張）</span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">⏰【全面開放購票】<br>
+11月3日（一）20：00起至11月9日（日）19：00止，全面開放於FamiTicket及FamiPort購票</span></span></p>
+
+<p><br>
+<span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">【優先購票注意事項】<br>
+★會員優先購票序號為「會員身分證字號」，範例：會員身分證字號為E123456789，則序號為「E123456789」，將不另行發放序號，請妥善保管<br>
+★TAKAO親子卡會員優先購票序號為登記之「家長」身分證字號<br>
+★若未填寫完整會員資料，將可能影響優先購票權益，如需確認序號請於服務時間（上午9：00～17：00）來信至service@TSGhawks.com</span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">🎉</span><span style="font-size:12.0pt"><span style="line-height:115%">「有鷹來同樂</span></span><span style="font-size:16px;">TSG Party</span><span style="font-size:12.0pt"><span style="line-height:115%">」活動資訊</span></span><span style="font-size:16px;">🎉</span><br>
+<span style="font-size:16px;">活動日期｜11/9（日）<br>
+活動時間｜10:00～15:30<br>
+活動地點｜澄清湖棒球場</span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:12pt"><span style="line-height:115%"><span lang="EN-US">📢</span>入場時間說明：鷹國會員限定活動9:45開放進場，僅限獲得活動資格之會員參加。未獲得鷹國會員限定活動參加資格者，最早可於</span></span><span style="font-size:16px;">11:00</span><span style="font-size:12pt"><span style="line-height:115%">起開放入場。敬請依公告時間入場，感謝您的配合。</span></span><br>
+<span style="font-size:16px;">活動內容｜<br>
+10：00～12：00｜鷹國會員限定活動@場內互動遊戲（進場時間為9：45 - 10：30）<br>
+11：00｜球迷開放進場@球場2樓平台活動攤位、場內美食開放<br>
+12：20開始｜台鋼鷹雄╱Wing Stars簽名會<br>
+14：10開始｜應援台表演活動<br>
+17：05開始｜《秋訓練習賽》&nbsp;</span></span></p>
+
+<p style="margin:0cm 0cm 8pt"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">⚾台鋼雄鷹《秋訓練習賽》賽事資訊⚾&nbsp;<br>
+對戰組合｜臺中台壽霸龍VS.台鋼雄鷹<br>
+賽事日期｜11/9（日）<br>
+賽事時間｜17：05開始</span></span><br>
+<br>
+<span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">📢以上活動皆需購買門票入場<br>
+📢更多活動內容與資訊，敬請關注官方粉專公告！<br>
+📢如因天候狀況影響，主辦單位有權調整活動場地，並保留更改、暫停、取消、解釋活動辦法之權利</span></span></p>
+
+<p><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;">【購票注意事項】<br>
+◆2025年台鋼雄鷹澄清湖主場為「全主場應援」<br>
+◆《秋訓練習賽》主場球隊球員休息室位於一壘側<br>
+◆L、M、N、O區、 VIP A、VIP B、VIP C區為「非站立應援區」，選購座位時請多加留意，票券售出後恕不得更換座位<br>
+◆內野下層皆為對號座，不開放上層與外野自由座<br>
+◆身心障礙人士及陪同者一名，可購票身心優待票（入場須持相關證件）<br>
+◆115公分(含)以下孩童可免票入場，但不得佔位，亦不得領取入場贈品<br>
+◆若因天候或不可抗力因素以致練習賽無法進行，票券恕不退換<br>
+◆台鋼雄鷹棒球隊保有修改及變更內容之權利<br>
+◆會員與票務相關問題諮詢信箱：service@TSGhawks.com<br>
+◆FamiTicket線上LINE客服諮詢ID：@famiticket</span></span><br>
+&nbsp;</p>
+
+                        </div>
+                        <div class="tab-pane fade" id="intro_1">
+                            <p><meta charset="utf-8"></p>
+
+<p dir="ltr"><meta charset="utf-8"></p>
+
+<p align="center" style="text-align:center; margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:18px;"><span style="line-height:115%"><b><span style="line-height:115%">【注意事項】</span></b> </span></span></span></p>
+
+<ol>
+	<li style="margin-top:12.0pt; margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">本票券限票列當場次使用，遺失破損不補發。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">本券於比賽中請妥善保存，入場後中途離場者，需加蓋外出章，以利入場。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">凡完成購票動作，即視同您已了解戶外運動賽事可能因天候因素造成比賽延後開打或中途暫停、取消之狀況，不得請求補償或退票。若因天候或不可抗力因素以致練習賽無法進行，票券恕不退換。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">國泰世紀產物保險公司為本次活動投保公共意外責任險之理賠公司，持票者若有理賠需求，請於事發當日主動告知工作人員；非因球賽而發生之意外（含突發性疾病）不予理賠。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">禁止攜帶任何政治性標語或旗桿入場，違反者主辦單位及執法人員有權驅離現場，除吸菸區外禁止吸菸，禁止拋灑紙花、攜帶大型旗幟與標語、瓦斯汽笛、鞭炮、樂器類，或容易製造噪音之加油器材及其他危險物品入場。煙火施放時，部分區域可能有煙塵飄落，請球迷注意自身安全，離場時請將垃圾拿至垃圾桶丟棄，請勿隨意丟棄。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">球場內禁止觀眾攜帶300mm及以上規格之望遠鏡頭(含各式腳架)入場拍攝，以免影響觀眾席動線及觀賽；且不得使用閃光燈，以免影響場上選手之視線進而影響比賽之進行。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">為顧及觀眾安全及球場秩序，如帶兒童觀賽時，成人應全程陪同並妥善照顧，避免意外發生。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">如患有心臟病、氣喘、癲癇等疾病或孕婦，務請評估自身情況及相關風險後，再入場觀賞球賽。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">持票者明白自身與相關之未成年參與者為自願入場，並了解參與本球賽有潛在受傷（或致死）及隨身物品毀損之可能性。行使本票券權利以入場、觀賽之觀眾，即為同意並承擔自身及相關未成年參與者，有於比賽過程及前後過程（包括但不限於熱身練習、中場表演、餘興節目或散場等）相關活動中，因包括但不限於飛球、落地球之射倖性或拋射彩帶之娛樂性物體，及因其他觀眾不當或過失行為受傷之風險。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">購買身心優待票者，入場時請出示相關證件(證明)，身障陪同者需與其購買者持證一同入場。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">聯盟及其相關單位得不受地域限制、永久性且無償利用或授權他人使用，任何出現於實況直播、電視轉播、錄音廣播、攝影、錄影、錄音等重製球賽過程相關方式之持票者肖像、姓名、聲音、評論或其他相關權利，並進一步以包括但不限於公開傳輸、公開播送、公開上映、重製等方式，全部或一部使用該內容。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">票券持有人不得攜帶寵物進入球場(球團申請之主題日除外)。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">不得有妨礙比賽正常進行或意圖與球賽參與者接觸之行為，且不得以任何方式展示具攻擊性之標語。違反規定且經勸阻無效者，聯盟有權要求票券持有人離開球場。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">為提供球迷良好觀賽體驗，球場內工作人員得於賽事中進行走動、拍攝、安全管制等必要行為。請勿對各區安全管制、拍攝工作人員言語辱罵或有推擠、腳踢等其他危險動作及肢體接觸。</span></span></span></span></li>
+	<li style="margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">違反本票券使用規則及安全規定者，台鋼雄鷹棒球隊得拒絕票券持有人行使票券之權利，違規情節嚴重且或影響公共安全者，將移請警方處理。</span></span></span></span></li>
+	<li style="margin-bottom:12.0pt; margin:0cm"><span style="font-family:Comic Sans MS,cursive;"><span style="font-size:16px;"><span style="line-height:115%"><span style="line-height:115%">各球場皆有設立站立應援區域（區域詳請見各球團公告），若有視線上的疑慮，請購買遠離該區域之座位；球賽期間，請小心飛球，注意安全。</span></span></span></span></li>
+</ol>
+
+<p style="margin:0cm">&nbsp;</p>
+
+                        </div>
+                        <div class="tab-pane fade" id="intro_2">
+                            <p align="center"><span style="font-size:18px;"><strong>【購票須知】</strong></span></p>
+
+<ol>
+	<li><span style="font-size:16px;">欲購票者，請先註冊並登入【FamiTicket 會員】始可開始購票，未完成註冊認證者，恕無法購票，建議購票前提早完成。</span></li>
+	<li><span style="font-size:16px;">單筆訂單限購4張，可支援行動裝置購票。</span></li>
+	<li><span style="font-size:16px;">購票時選擇【電腦配位】可加速購票流程。台鋼雄鷹主場請依照購買的座位入座，除不劃位座位區外，請依照購買的座位入座。</span></li>
+	<li><span style="font-size:16px;">購票時僅可選擇【電子票】及【全家取票】。</span></li>
+	<li><span style="font-size:16px;">注意：選擇全家取票，每筆訂單需支付25元取票手續費。選擇電子票後不可更改為全家取票。</span></li>
+	<li><span style="font-size:16px;">取票流程：訂單成立後，至全家FamiPort輸入「訂單編號」列印取票條碼單，每筆訂單編號取票手續費25元(跨區重新計算)，於同店櫃檯過刷取票條碼單時以現金付款</span></li>
+	<li><span style="font-size:16px;">信用卡持卡人與訂購人必需相同，若因資料不同，導致後續訂單問題，請訂購人自行負責。未有信用卡者如需用他人信用卡付費 / 例如 : 子女需用家長的信用卡付費，則請家長加入會員，以新會員，以持卡人為訂購人身份進行訂票。</span></li>
+	<li><span style="font-size:16px;">票券請妥善保管，若遺失或毀損、逾期作廢或影印本皆視為無效，恕不補發退換。</span></li>
+	<li><span style="font-size:16px;">入場時請出示實體票券或電子票卷，每張門票僅限一人使用，逾期作廢，恕不接受退換。</span></li>
+	<li><span style="font-size:16px;">有鑒於網路拍賣風氣盛行，有許多來路不明的票券在拍賣網站出售競標，但這些票券來源不明、真偽難辨，票務糾紛層出不窮，為確保您的權益，請勿於拍賣網站或是其他非正式授權售票之管道購票，如發生無法順利觀看節目或其他損害個人權益之事宜，本售票系統恕不負責。</span></li>
+	<li><span style="font-size:16px;">如有不當行為經規勸無效者，則須立即離場且不得有異議，門票亦不作補發退換。</span></li>
+	<li><span style="font-size:16px;">活動內容如有更改，以台鋼雄鷹官方粉絲專頁公告訊息為主，恕不另行通知。</span></li>
+	<li><span style="font-size:16px;">購票即表示同意遵守上述所列規則，違反主辦單位票券使用規則及安全規定者，主辦單位有拒絕其入場或要求離場之權利，違規情節嚴重或影響公共安全者，主辦單位將移請警方處理。</span></li>
+	<li><span style="font-size:16px;">主辦單位將保留一切事宜最終決定權。</span></li>
+	<li><span style="font-size:16px;">若有任何形式非供自用而加價轉售圖利之情事經查屬實者，得依社會秩序維護法第64條第2款逕向警方檢舉。</span></li>
+</ol>
+
+<p><span style="font-size:16px;">※購買票券前，請先了解並同意以上規範，如不同意請勿購買，以免產生不必要之糾紛及損害；當進行購票及退票作業時，將視同您已瞭解並同意遵守以上全部事項。</span></p>
+
+                        </div>
+                        <div class="tab-pane fade" id="intro_3">
+                            <p align="center"><span style="font-size:18px;"><strong>【退票須知】</strong></span></p>
+
+<p><span style="font-size:16px;">個人因素退票者酌收票價10%手續費，請於該場次開打3天前（不含開打日）將退票資料寄至全網購票網，逾期恕不受理。<br>
+★舉例：2025/3/19場次之票券，於2025/3/16截止收件；2025/3/17起不再收件。（比賽前2天內購買之預售票，恕不接受退換票）<br>
+★收到退票至退款需25個工作天（不包含假日）；若超過工作天數尚未收到退款，請來信至全網購票網信箱查詢。</span></p>
+
+<p><span style="font-size:16px;">一、全家FamiPort</span></p>
+
+<p><span style="font-size:16px;">於<b>「全家FamiPort機台購票」</b>並以<b>「現金付款」</b>者，將以匯款退費。請將退票資料以掛號郵寄或快遞寄至【10491台北市中山區中山北路二段44號8樓 全網購票 收】，逾期恕不受理。<br>
+★退票資料：票券正本、存摺封面影本（限台灣本地銀行或郵局）、聯絡人姓名、聯絡電話。<br>
+（存摺封面影本須包含帳戶名稱、帳號、銀行名、分行行號或分行名，不接受以手寫方式提供帳戶資料）</span></p>
+
+<p><span style="font-size:16px;">全家FamiPort機台退票：票券 &gt; 運動 &gt; 台鋼雄鷹&nbsp;&gt; 退票 &gt; 閱讀並同意相關條款 &gt; 輸入退票者「手機號碼」&gt; 輸入票券條碼 &gt; 確認退票明細 &gt; 列印退費單 &gt; 至櫃檯過刷。<br>
+可於比賽日前三日23:59止，至全家便利商店辦理退票（退票服務時間為7:00~23:00），逾期恕不受理。</span></p>
+
+<p>&nbsp;</p>
+
+<p><span style="font-size:16px;">二、FamiTicket全網購票網</span></p>
+
+<p><span style="font-size:16px;">於<b>「網路購票」</b>並以<b>「信用卡付款」</b>者，將以刷退至原購票之信用卡帳戶辦理；無法匯至其他帳戶。<br>
+<b>◆&nbsp;</b><b>已取票券者</b>：請至FamiTicket全網購票網 &gt; 首頁下方 &gt; 申請退票 &gt; 已取票退票 &gt; 填寫完成後下載印出退票申請書並簽名。<br>
+◎檢附「已簽名退票申請書、完整票券正本」以掛號郵寄或快遞至【10491台北市中山區中山北路二段44號8樓 全網購票 收】，逾期恕不受理。</span></p>
+
+<p><span style="font-size:16px;"><b>◆&nbsp;未取票券者</b>：請至FamiTicket全網購票網 &gt; 首頁下方 &gt; 申請退票 (逾期恕不受理)</span></p>
+
+<p><span style="font-size:16px;"><b>◆&nbsp;電子票券者</b>：請至FamiTicket全網購票網 &gt; 首頁下方 &gt; 申請退票 (選擇未取票方式，輸入訂單編號及身分證字號；逾期恕不受理)</span></p>
+
+<p><span style="font-size:16px;">◎如電子票券已轉贈其他會員，請受贈會員將票券轉回原購票會員，方可由購票會員進行退票。</span></p>
+
+                        </div>
+                </div>
+            </div>
+        
+
+        <script>
+
+            changeMonth('2025-11', '2025100010', 'VERSUS');
+        </script>
+
+<div class="d-flex justify-content-center goTop__wrap no-print">
+    <a class="goTop" href="#">
+        <span class="goTop__text">TOP</span>
+    </a>
+</div>
+<footer class="footer-outer no-print">
+    <div class="container ">
+        <div class="row footer">
+            <div class="col-lg-4 col-sm-10 footer__desc">
+                <img class="footer__desc-img" src="/Sales/images/logofooter.png">
+                <ul>
+                    <li>
+                        <i class="fas fa-clock"></i>服務時間：
+                        <br>星期一～星期五 09:00~17:00
+                        <br>國定假日公休
+                    </li>
+                    
+                    <li class="line-cs"><span>LINE線上客服</span><a href="https://lin.ee/q5kJ632"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="36" border="0"></a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__service">
+                <ul>
+                    <li><a href="http://www.familynet.com.tw" target="_blank">關於全網</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Home/Cooperation">廠商合作</a></li>
+                    <li><a href="#" onclick="showData('ServiceTermModal');">會員服務條款</a></li>
+                    <li><a href="#" onclick="showData('SecurityStatementModal');">資安聲明</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__account">
+                <ul>
+                    <li><a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx" target="_blank">發票查詢</a></li>
+                    <li><a href="#" onclick="showData('InvoiceNoticeModal');">發票開立須知</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/GetPage" target="_blank">申請退票</a></li>
+                    <li><a href="/Sales/Template/%e9%80%80%e7%a5%a8%e7%94%b3%e8%ab%8b%e6%9b%b8.xlsx" download="">退票申請書下載</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/RefundProcess" target="_blank">退票進度查詢</a></li>
+                    <li><a href="https://www.family.com.tw/marketing/inquiry.aspx" target="_blank">取票店鋪查詢</a></li>
+                </ul>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        <div class="container">
+            <div class="copyright__inner row">
+                <div class="col-sm-12 color-w">
+                    Copyright © FamilyNet Co., Ltd. 全網行銷股份有限公司  統一編號：27560883
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="ServiceTermModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        會員服務條款
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="STText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="SecurityStatementModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        資安聲明
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="SSText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="InvoiceNoticeModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        發票開立須知
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="ISText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script>
+    $('a.goTop').on('click', function (e) {
+        e.preventDefault();
+        $('html, body').stop().animate({ scrollTop: 0 }, 300);
+    });
+</script>
+<script>
+    var $catgBar = $('.catg-bar');
+    $catgBar.each(function (index, element) {
+        var $this = $(this),
+            $catgDropDown = $this.find('.catg-bar__dropdown'),
+            $catgBarCategory = $this.find('.catg-bar__category');
+        $catgBarCategory.on('mouseenter', function (e) {
+            var $this = $(this),
+                index = $(this).index();
+            $catgBarCategory.removeClass('catg-bar__category--active');
+            $this.addClass('catg-bar__category--active');
+            if ($catgDropDown.find('.category__list').eq(index).length) {
+                $this.addClass('catg-bar__category--haschild');
+            }
+            $catgDropDown.css('top', $this.position().top + $this.innerHeight());
+            $catgDropDown.addClass('catg-bar__dropdown--active');
+            $catgDropDown.find('.category__list').removeClass('category__list--active');
+            $catgDropDown.find('.category__list').eq(index).addClass('category__list--active');
+        });
+        $this.on('mouseleave', function () {
+            $catgDropDown.removeClass('catg-bar__dropdown--active');
+            $catgBarCategory.removeClass('catg-bar__category--active');
+        });
+    });
+    setContainerMinHht('.min-hight-container');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('.header').outerHeight(),
+            navHht = $('.header__navbar').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight(),
+            goTopHht = $('.goTop__wrap').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - navHht - footerHht - goTopHht);
+        }
+    }
+    function showData(type) {
+
+        $.ajax('/Sales/Home/FooterData', {
+            dataType: 'json',
+            data: JSON.stringify({ "type": type }),
+            contentType: "application/json; charset=utf-8",
+            type: "POST",
+        })
+            .done(function (res) {
+                debugger;
+                if (res.STATUS == "OK") {
+  
+                    if (res.TYPE == "ServiceTermModal") {                        
+                        $('#STText').append(res.CONTENT);
+                        $("#ServiceTermModal").modal('show');
+                    }
+                    if (res.TYPE == "SecurityStatementModal") {
+                        $('#SSText').append(res.CONTENT);
+                        $("#SecurityStatementModal").modal('show');
+                    }
+                    if (res.TYPE == "InvoiceNoticeModal") {
+                        debugger;
+                        $('#ISText').append(res.CONTENT);
+                        $("#InvoiceNoticeModal").modal('show');
+                    }
+                }
+            });
+    }
+</script>
+
+    </div>
