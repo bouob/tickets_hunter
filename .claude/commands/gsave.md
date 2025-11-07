@@ -149,6 +149,7 @@ Closes #123
    .specify/         - 規格模板和指令碼
    specs/            - 功能規格和設計文件
    FAQ/              - 常見問題解答
+   .temp/            - 臨時測試資料（HTML/JS 網頁內容）
    ```
 
    **分離流程**：
@@ -234,7 +235,7 @@ Closes #123
 
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ⚠️  FILTER MARKER FOR /publicpr ⚠️
-   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .temp/
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ```
 
@@ -361,7 +362,7 @@ Files modified:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  FILTER MARKER FOR /publicpr ⚠️
-Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .temp/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 影響檔案：

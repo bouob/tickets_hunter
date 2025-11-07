@@ -34,6 +34,7 @@ docs/             - 技術文件和指南
 .specify/         - 規格模板和指令碼
 specs/            - 功能規格和設計文件
 FAQ/              - 常見問題解答
+.temp/            - 臨時測試資料（HTML/JS 網頁內容）
 ```
 
 ---
@@ -95,7 +96,7 @@ git log private/main..HEAD --format=%B | grep "🔒 PRIVATE COMMIT"
 
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ⚠️  FILTER MARKER FOR /publicpr ⚠️
-   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .temp/
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 3. 推送到 private
@@ -154,6 +155,7 @@ git remote get-url private
   ✓ .specify/
   ✓ specs/
   ✓ FAQ/
+  ✓ .temp/
 
 安全保證:
   ✓ 只推送到私人 repo (private remote)
