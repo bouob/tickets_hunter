@@ -80,6 +80,8 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*tagtoo.co/*",
 "*ticketmaster.sg/js/adblock*",
 "*ticketmaster.sg/js/adblock.js*",
+"*ticketmaster.sg/js/ads.js*",
+"*ticketmaster.sg/epsf/asset/eps.js*",
 "*tixcraft.com/js/analytics.js*",
 "*tixcraft.com/js/common.js*",
 "*tixcraft.com/js/custom.js*",
