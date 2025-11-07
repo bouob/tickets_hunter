@@ -1,5 +1,5 @@
 ---
-description: "推送機敏檔案到私人 repo"
+description: "只推送機敏檔案到私人 repo"
 allowed-tools: ["Bash"]
 ---
 
