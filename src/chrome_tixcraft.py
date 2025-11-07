@@ -1526,11 +1526,6 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
             if zone_info[row]["areaStatus"] != "UNAVAILABLE":
                 row_is_enabled = True
 
-            if zone_info[row]["areaStatus"] == "SINGLE SEATS":
-                row_is_enabled = True
-                if config_dict["ticket_number"] > 1:
-                    row_is_enabled = False
-
             row_text = ""
             if row_is_enabled:
                 try:
