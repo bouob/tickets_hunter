@@ -199,32 +199,32 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 - [ ] T041 [US1] 實作驗證碼偵測（基礎） (src/util.py - detect_captcha_basic - FR-031-032)
 - [ ] T042 [US1] [P] 實作手動驗證碼輸入回退 (src/util.py - manual_captcha_fallback - FR-037)
 - [ ] T043 [US1] [P] 實作表單欄位填寫（基礎） (src/util.py - fill_form_basic - FR-040-043)
-- [ ] T044 [US1] [P] 實作同意核取方塊自動勾選 (src/util.py - auto_check_agreements - FR-048-051)
+- [ ] T044 [US1] [P] 實作同意核取方塊自動勾選 (src/util.py - auto_check_agreements - FR-044-047)
 
 ### 階段 10：訂單確認與送出
 
-- [ ] T045 [US1] 實作訂單詳情審查 (src/nodriver_tixcraft.py - review_order - FR-052)
-- [ ] T046 [US1] [P] 實作訂單送出按鈕偵測與點擊 (src/nodriver_tixcraft.py - submit_order - FR-053)
+- [ ] T045 [US1] 實作訂單詳情審查 (src/nodriver_tixcraft.py - review_order - FR-048)
+- [ ] T046 [US1] [P] 實作訂單送出按鈕偵測與點擊 (src/nodriver_tixcraft.py - submit_order - FR-049)
   - 使用 CDP perform_search() 查找送出按鈕
   - 使用 CDP dispatch_mouse_event() 點擊
-  - 禁止 JavaScript 回退（FR-064, FR-068）
+  - 禁止 JavaScript 回退（FR-060, FR-064）
 
-- [ ] T047 [US1] [P] 實作確認對話框處理 (src/util.py - handle_confirmation_dialog - FR-054)
-- [ ] T048 [US1] [P] 實作音訊通知（基礎） (src/util.py - play_notification_basic - FR-055-056)
-- [ ] T049 [US1] [P] 實作訂單成功驗證 (src/nodriver_tixcraft.py - verify_order_success - FR-057)
+- [ ] T047 [US1] [P] 實作確認對話框處理 (src/util.py - handle_confirmation_dialog - FR-050)
+- [ ] T048 [US1] [P] 實作音訊通知（基礎） (src/util.py - play_notification_basic - FR-051-052)
+- [ ] T049 [US1] [P] 實作訂單成功驗證 (src/nodriver_tixcraft.py - verify_order_success - FR-053)
 
 ### 階段 11-12：排隊與錯誤處理
 
-- [ ] T050 [US1] 實作排隊流程處理 (src/nodriver_tixcraft.py - handle_queue - FR-058-061)
-- [ ] T051 [US1] [P] 實作錯誤類型偵測與分類 (src/util.py - classify_error - FR-062)
-- [ ] T052 [US1] [P] 實作詳細錯誤日誌 (src/util.py - detailed_error_logging - FR-063)
-- [ ] T053 [US1] [P] 實作 CDP 原生重試機制 (src/util.py - cdp_native_retry - FR-064)
+- [ ] T050 [US1] 實作排隊流程處理 (src/nodriver_tixcraft.py - handle_queue - FR-054-057)
+- [ ] T051 [US1] [P] 實作錯誤類型偵測與分類 (src/util.py - classify_error - FR-058)
+- [ ] T052 [US1] [P] 實作詳細錯誤日誌 (src/util.py - detailed_error_logging - FR-059)
+- [ ] T053 [US1] [P] 實作 CDP 原生重試機制 (src/util.py - cdp_native_retry - FR-060)
   - 使用 CDP dispatch_mouse_event() 重試點擊
   - 使用 CDP perform_search() 重新查詢元素
-  - 禁止回退到 JavaScript（FR-064 明確禁止）
+  - 禁止回退到 JavaScript（FR-060 明確禁止）
 
-- [ ] T054 [US1] [P] 實作錯誤通知 (src/util.py - error_notification - FR-066)
-- [ ] T055 [US1] [P] 實作售罄狀態持續重試機制 (src/util.py - handle_sold_out - FR-067)
+- [ ] T054 [US1] [P] 實作錯誤通知 (src/util.py - error_notification - FR-062)
+- [ ] T055 [US1] [P] 實作售罄狀態持續重試機制 (src/util.py - handle_sold_out - FR-063)
   - 根據 auto_reload_page_interval 持續刷新頁面
   - 監控票券狀態直到可用
   - 避免在售罄時停止程式

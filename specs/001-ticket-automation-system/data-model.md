@@ -32,20 +32,18 @@ config_dict = {
     "webdriver_type": str,        # "nodriver" | "uc" | "selenium"
     "ticket_number": int,         # 購票數量（1-6）
 
-    # 日期選擇配置 (v1.2 更新)
+    # 日期選擇配置
     "date_auto_select": {
         "enable": bool,           # 啟用自動日期選擇
-        "date_keyword": str,      # 日期關鍵字（分號分隔）："10/15;10/16"
-        "mode": str,              # 回退模式："from top to bottom" | "from bottom to top" | "center" | "random"
-        "date_auto_fallback": bool # 關鍵字失敗時是否回退到 mode（預設 false - Strict Mode）
+        "date_keyword": str,      # 日期關鍵字（逗號分隔）："10/15,10/16"
+        "mode": str               # 回退模式："from top to bottom" | "from bottom to top" | "center" | "random"
     },
 
-    # 區域選擇配置 (v1.2 更新)
+    # 區域選擇配置
     "area_auto_select": {
         "enable": bool,           # 啟用自動區域選擇
-        "area_keyword": str,      # 區域關鍵字（分號分隔）："VIP區;搖滾區A"
-        "mode": str,              # 回退模式（同上）
-        "area_auto_fallback": bool # 關鍵字失敗時是否回退到 mode（預設 false - Strict Mode）
+        "area_keyword": str,      # 區域關鍵字（逗號分隔）："VIP區,搖滾區A"
+        "mode": str               # 回退模式（同上）
     },
 
     # 座位選擇配置
@@ -63,16 +61,13 @@ config_dict = {
         "address": str            # 地址（部分平台需要）
     },
 
-    # 驗證碼配置 (v1.2 更新)
+    # 驗證碼配置
     "ocr_captcha": {
-        "enable": bool,           # 啟用自動 OCR（圖像驗證碼）
+        "enable": bool,           # 啟用自動 OCR
         "beta": bool,             # 使用 beta 模型（較慢但更準確）
         "force_submit": bool,     # OCR 失敗時強制送出
         "retry": int              # OCR 重試次數（1-5）
     },
-
-    # 問答驗證配置 (v1.2 新增)
-    "user_guess_string": str,     # 預設答案（活動知識問答），多個答案用分號分隔
 
     # 進階配置
     "advanced": {
@@ -515,36 +510,27 @@ selected_date = {
 }
 ```
 
-**選擇邏輯（v1.2 更新）**：
+**選擇邏輯**：
 ```python
-# 第 1 層：關鍵字匹配（Early Return 策略）
+# 第 1 層：關鍵字匹配
 date_keyword = config_dict["date_auto_select"]["date_keyword"]
-keywords = date_keyword.split(';')  # v1.2: 分號分隔
+keywords = date_keyword.split(',')
 
-for keyword in keywords:  # 按順序檢查（優先順序）
-    for date in available_dates:
+for date in available_dates:
+    for keyword in keywords:
         if keyword in date["text"]:
             date["match_keyword"] = True
             selected_date = date
-            break  # Early Return：首次匹配立即停止
-    if selected_date:
-        break
+            break
 
-# 第 2 層：模式選擇（Strict Mode 預設）
+# 第 2 層：模式選擇
 if not selected_date:
-    date_auto_fallback = config_dict["date_auto_select"].get("date_auto_fallback", False)
-
-    if date_auto_fallback:  # Auto Mode
-        mode = config_dict["date_auto_select"]["mode"]
-        if mode == "from top to bottom":
-            selected_date = available_dates[0]
-        elif mode == "from bottom to top":
-            selected_date = available_dates[-1]
-        # ... 其他模式
-    else:  # Strict Mode（預設）
-        # 停止並等待手動介入
-        print("[WARNING] 關鍵字不匹配，等待手動選擇...")
-        # 暫停自動化
+    mode = config_dict["date_auto_select"]["mode"]
+    if mode == "from top to bottom":
+        selected_date = available_dates[0]
+    elif mode == "from bottom to top":
+        selected_date = available_dates[-1]
+    # ... 其他模式
 ```
 
 #### 6.2 區域選擇資料
