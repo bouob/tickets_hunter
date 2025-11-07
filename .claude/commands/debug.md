@@ -1,5 +1,6 @@
 ---
 description: 統合 Spec 檢查、憲法合規驗證、代碼定位的專業除錯工具 - 快速識別 bug 根因並生成結構化分析報告
+model: sonnet
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json --paths-only
   ps: scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly

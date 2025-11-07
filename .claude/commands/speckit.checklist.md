@@ -1,5 +1,6 @@
 ---
 description: 根據用戶需求，為當前功能產生自訂檢查清單。
+model: sonnet
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json
   ps: scripts/powershell/check-prerequisites.ps1 -Json

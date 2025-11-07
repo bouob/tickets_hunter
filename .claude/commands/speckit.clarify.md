@@ -1,5 +1,6 @@
 ---
 description: 透過提出最多 5 個高度針對性的釐清問題，找出目前功能規格說明中規格不明確的區域，並將答案編碼回規格說明中。
+model: sonnet
 scripts:
    sh: scripts/bash/check-prerequisites.sh --json --paths-only
    ps: scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly

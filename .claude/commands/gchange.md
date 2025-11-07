@@ -1,7 +1,8 @@
 ---
-allowed-tools: Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git status:*), Bash(git fetch:*), Bash(git rev-list:*), Bash(date:*), Bash(Get-Date:*), Read, Edit, Write, Grep, AskUserQuestion
 description: 根據未推送的 commits 自動生成 CHANGELOG.md（PR 前使用）
 argument-hint: [count] (可選：分析最近幾個 commits，預設分析所有未推送的)
+model: haiku
+allowed-tools: Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git status:*), Bash(git fetch:*), Bash(git rev-list:*), Bash(date:*), Bash(Get-Date:*), Read, Edit, Write, Grep, AskUserQuestion
 ---
 
 ## 使用者輸入

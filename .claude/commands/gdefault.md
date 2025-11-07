@@ -1,6 +1,7 @@
 ---
 description: "清除本地敏感設定檔案，避免提交到 Git"
 allowed-tools: ["Bash"]
+model: haiku
 ---
 
 ## 使用者輸入

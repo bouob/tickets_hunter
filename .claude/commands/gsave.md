@@ -1,5 +1,6 @@
 ---
 description: "產生英文 emoji 版 Git commit 訊息並提交變更"
+model: sonnet
 allowed-tools: ["Bash"]
 ---
 

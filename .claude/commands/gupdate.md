@@ -1,4 +1,8 @@
-# 更新專案版本日期
+---
+description: "更新專案版本日期"
+allowed-tools: ["Bash"]
+model: haiku
+---
 
 自動更新所有檔案中的 `CONST_APP_VERSION` 為當前日期。
 

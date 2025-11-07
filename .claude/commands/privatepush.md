@@ -1,5 +1,6 @@
 ---
 description: "只推送機敏檔案到私人 repo"
+model: haiku
 allowed-tools: ["Bash"]
 ---
 

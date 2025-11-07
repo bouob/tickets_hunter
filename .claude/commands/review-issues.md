@@ -1,3 +1,9 @@
+---
+description: "分析開啟狀態的 GitHub issues，整理相似問題並提供處理建議"
+model: sonnet
+allowed-tools: ["Bash"]
+---
+
 # Review GitHub Issues 指令
 
 請分析當前專案（Tickets Hunter）的 **開啟狀態（open）** GitHub issues，整理相似問題並提供處理建議。

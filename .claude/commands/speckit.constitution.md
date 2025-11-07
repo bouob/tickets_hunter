@@ -1,5 +1,6 @@
 ---
 description: 透過互動模式 (Interactive mode) 或提供的原則輸入，建立或更新專案憲章，並確保所有相依的模板保持同步。
+model: sonnet
 ---
 
 ## 用戶輸入

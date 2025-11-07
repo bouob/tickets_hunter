@@ -1,6 +1,7 @@
 ---
 description: "推送公開 commits 到私人 repo"
 allowed-tools: ["Bash"]
+model: haiku
 ---
 
 ## 使用者輸入

@@ -1,5 +1,6 @@
 ---
 description: 使用計劃模板（plan template）執行實作規劃工作流程，以產生設計產物。
+model: sonnet
 scripts:
   sh: scripts/bash/setup-plan.sh --json
   ps: scripts/powershell/setup-plan.ps1 -Json
