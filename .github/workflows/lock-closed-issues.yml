@@ -82,10 +82,7 @@ jobs:
                 - 完整錯誤訊息
                 - 基本資訊（OS、版本號、平台等）
 
-                感謝您的理解與配合！
-
-                ---
-                *自動化系統 - Lock Closed Issues*"
+                感謝您的理解與配合"
 
                 # 新增評論
                 if gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$COMMENT_BODY"; then
