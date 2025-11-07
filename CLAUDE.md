@@ -30,69 +30,27 @@
 
 ## 工作模式決策樹
 
-根據任務類型選擇工作流程（**遵循憲法第 VII 條 MVP 原則**）：
+### 📝 一般開發流程（日常使用）
 
-### 🆕 新功能開發（完整 speckit 流程）
-1. `/speckit.specify [描述]` - 建立功能規格（遵循憲法 II、III 條）
-2. `/speckit.plan` - 生成實作計畫（遵循憲法 I、IV 條）
-3. `/speckit.tasks` - 生成任務清單（遵循憲法 VII 條 MVP）
-4. `/speckit.implement` - 執行實作（遵循所有憲法原則）
-5. `/speckit.analyze` - 一致性檢查（遵循憲法 VIII 條）
+**適用場景**：日常開發、小型功能、Bug 修復
 
-### 📝 現有功能修改
-- **小型修改**：傳統流程（Accept Edits On）
-- **大型重構**：考慮啟用 speckit 流程
-- **必須遵循**：憲法第 III 條（三問法則）決策
+- **小型功能開發**：Accept Edits On 模式直接開發
+- **Bug 修復**：規格檢查 → 快速除錯 → 修復 → 測試
+- **代碼重構**：遵循憲法第 III 條（三問法則）決策
 
-### 🐛 Bug 修復
-- **流程**：規格檢查 → 快速除錯 → 修復 → 測試
-- **必須遵循**：
-  - 憲法第 VI 條（測試驅動穩定性）
-  - **檢查相關 spec 需求**（確保修復符合原始設計）
+**必須遵循**：
+- 憲法規範（`.specify/memory/constitution.md`）
+- 測試驅動穩定性（憲法第 VI 條）
+- 文件與代碼同步（憲法第 VIII 條）
 
-### ❓ 規格澄清
-- `/speckit.clarify` - 識別規格不足並提問（最多 5 個關鍵問題）
+### 🏗️ 重大功能開發（speckit 規格驅動）
 
----
+**適用場景**：
+- 跨多個模組的大型功能
+- 需要詳細設計文件的複雜功能
+- 多人協作的專案
 
-## speckit 指令參考
-
-### 規格開發階段
-- **`/speckit.specify [描述]`** - 從自然語言建立功能規格（spec.md）
-- **`/speckit.clarify`** - 識別規格不足（最多 5 個問題）
-- **`/speckit.constitution`** - 建立/更新專案憲章
-
-### 實作規劃階段
-- **`/speckit.plan`** - 生成設計文件
-  - `research.md`（決策與理由）
-  - `data-model.md`（資料結構）
-  - `contracts/`（API 契約）
-  - `quickstart.md`（快速開始）
-- **`/speckit.tasks`** - 從 plan.md 生成可執行任務清單（tasks.md）
-
-### 執行與驗證階段
-- **`/speckit.implement`** - 執行 tasks.md 中的所有任務（自動背景測試）
-- **`/speckit.analyze`** - 跨文件一致性檢查
-  - spec.md ↔ plan.md ↔ tasks.md 同步檢查
-  - 憲法原則遵循檢查
-- **`/speckit.checklist`** - 為當前功能生成自訂檢查清單
-
-### 規格資料夾結構
-```
-specs/[功能分支]/
-├── spec.md                  ← 功能規格（需求）
-├── research.md              ← 技術研究與決策
-├── data-model.md            ← 資料結構設計
-├── plan.md                  ← 實作規劃
-├── tasks.md                 ← 任務清單（可執行）
-├── quickstart.md            ← 快速開始指南
-├── contracts/               ← API 契約
-│   ├── platform-interface.md
-│   ├── util-interface.md
-│   └── config-schema.md
-└── checklists/
-    └── requirements.md      ← 品質檢查清單
-```
+**流程**：查看「speckit 工作流程」區塊（文件後段）
 
 ---
 
@@ -126,21 +84,38 @@ specs/[功能分支]/
 1. `docs/02-development/development_guide.md` - 開發規範
 2. `docs/02-development/ticket_automation_standard.md` - 12 階段標準
 3. `docs/02-development/structure.md` - 現有實作參考
-4. `docs/06-api-reference/cdp_protocol_reference.md` - CDP 協議完整參考（NoDriver 深入）⭐
-5. `docs/06-api-reference/nodriver_api_guide.md` - NoDriver API（優先）
-6. `docs/02-development/coding_templates.md` - 程式寫法範本
+4. `docs/03-mechanisms/` - 12 階段機制文件 ⭐
+   - `04-date-selection.md` - 日期選擇機制（含代碼片段）
+   - `05-area-selection.md` - 區域選擇機制（含代碼片段）
+   - `07-captcha-handling.md` - 驗證碼處理機制（含代碼片段）
+5. `docs/06-api-reference/cdp_protocol_reference.md` - CDP 協議完整參考（NoDriver 深入）⭐
+6. `docs/06-api-reference/nodriver_api_guide.md` - NoDriver API（優先）
+7. `docs/06-api-reference/nodriver_selector_analysis.md` - 選擇器優化指南
+8. `docs/02-development/coding_templates.md` - 程式寫法範本
 
 ### 🔍 除錯問題
 **按順序查閱**：
 1. `docs/02-development/structure.md` - 查找函數定義
-2. `docs/06-api-reference/cdp_protocol_reference.md` - CDP 協議參考（推薦深入閱讀）⭐
-3. `docs/06-api-reference/nodriver_api_guide.md` - NoDriver API（推薦）
-4. `docs/07-testing-debugging/debugging_methodology.md` - 除錯方法論
-5. `docs/08-troubleshooting/README.md` - 修復記錄索引
+2. `docs/05-validation/` - 規格驗證與程式碼對照 ⭐
+   - `spec-validation-matrix.md` - 追蹤 FR 實作狀態
+   - `platform-checklist.md` - 評估平台完成度
+   - `fr-to-code-mapping.md` - 快速找到程式碼位置
+3. `docs/06-api-reference/cdp_protocol_reference.md` - CDP 協議參考（推薦深入閱讀）⭐
+4. `docs/06-api-reference/nodriver_api_guide.md` - NoDriver API（推薦）
+5. `docs/06-api-reference/shadow_dom_pierce_guide.md` - Shadow DOM 穿透指南（ibon 必讀）⭐
+6. `docs/07-testing-debugging/debugging_methodology.md` - 除錯方法論
+7. `docs/08-troubleshooting/README.md` - 修復記錄索引
 
 ### 🧪 執行測試
 1. `docs/07-testing-debugging/testing_execution_guide.md` - 標準測試流程
 2. `docs/07-testing-debugging/debugging_methodology.md` - 除錯方法
+
+### 🔗 Git 與發布工作流程
+1. `docs/12-git-workflow/dual-repo-workflow.md` - 雙 Repo 維護指南 ⭐
+   - 日常開發流程（/gsave → /gpush → /privatepush）
+   - 發布流程（/publicpr 到公開 Repo）
+   - 機敏檔案管理
+   - 常見問題排解
 
 ---
 
@@ -280,6 +255,21 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 - **Shadow DOM** → `docs/07-testing-debugging/debugging_methodology.md`
 - **NoDriver API** → `docs/06-api-reference/nodriver_api_guide.md`
 
+### 📊 規格與驗證問題
+- **FR 實作狀態查詢** → `docs/05-validation/spec-validation-matrix.md`
+- **平台功能完整性** → `docs/05-validation/platform-checklist.md`
+- **快速定位函數位置** → `docs/05-validation/fr-to-code-mapping.md`
+
+### 🏗️ 新平台開發流程
+- **12-Stage 機制文件** → `docs/03-mechanisms/README.md`
+- **日期選擇實作** → `docs/03-mechanisms/04-date-selection.md`
+- **區域選擇實作** → `docs/03-mechanisms/05-area-selection.md`
+- **驗證碼處理實作** → `docs/03-mechanisms/07-captcha-handling.md`
+
+### 🌐 Shadow DOM & 選擇器
+- **Shadow DOM 穿透** → `docs/06-api-reference/shadow_dom_pierce_guide.md`
+- **選擇器優化** → `docs/06-api-reference/nodriver_selector_analysis.md`
+
 ### 🎫 平台問題
 - **ibon Cookie** → `docs/08-troubleshooting/ibon_cookie_troubleshooting.md`
 - **ibon NoDriver 座位選擇** → `docs/08-troubleshooting/ibon_nodriver_fixes_2025-10-03.md`
@@ -308,6 +298,25 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 ### 其他規範
 詳細規範請查詢：`.specify/memory/constitution.md`（暫停機制、安全性原則、Code Review 標準等）
+
+---
+
+## 🏗️ speckit 工作流程（規格驅動開發）
+
+**使用時機**：僅限重大功能開發、跨模組功能、多人協作專案
+
+### 完整流程
+1. `/speckit.specify [描述]` - 建立功能規格
+2. `/speckit.clarify` - 澄清規格不足（可選）
+3. `/speckit.plan` - 生成實作計畫
+4. `/speckit.tasks` - 生成任務清單
+5. `/speckit.implement` - 執行實作
+6. `/speckit.analyze` - 一致性檢查
+
+### 詳細說明
+完整的 speckit 指令說明、規格資料夾結構、使用範例，請查閱：
+- `.specify/memory/` - speckit 系統文件與憲法
+- 相關 slash commands: `/speckit.*`
 
 ---
 

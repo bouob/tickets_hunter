@@ -199,32 +199,32 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 - [ ] T041 [US1] 實作驗證碼偵測（基礎） (src/util.py - detect_captcha_basic - FR-031-032)
 - [ ] T042 [US1] [P] 實作手動驗證碼輸入回退 (src/util.py - manual_captcha_fallback - FR-037)
 - [ ] T043 [US1] [P] 實作表單欄位填寫（基礎） (src/util.py - fill_form_basic - FR-040-043)
-- [ ] T044 [US1] [P] 實作同意核取方塊自動勾選 (src/util.py - auto_check_agreements - FR-044-047)
+- [ ] T044 [US1] [P] 實作同意核取方塊自動勾選 (src/util.py - auto_check_agreements - FR-048-051)
 
 ### 階段 10：訂單確認與送出
 
-- [ ] T045 [US1] 實作訂單詳情審查 (src/nodriver_tixcraft.py - review_order - FR-048)
-- [ ] T046 [US1] [P] 實作訂單送出按鈕偵測與點擊 (src/nodriver_tixcraft.py - submit_order - FR-049)
+- [ ] T045 [US1] 實作訂單詳情審查 (src/nodriver_tixcraft.py - review_order - FR-052)
+- [ ] T046 [US1] [P] 實作訂單送出按鈕偵測與點擊 (src/nodriver_tixcraft.py - submit_order - FR-053)
   - 使用 CDP perform_search() 查找送出按鈕
   - 使用 CDP dispatch_mouse_event() 點擊
-  - 禁止 JavaScript 回退（FR-060, FR-064）
+  - 禁止 JavaScript 回退（FR-064, FR-068）
 
-- [ ] T047 [US1] [P] 實作確認對話框處理 (src/util.py - handle_confirmation_dialog - FR-050)
-- [ ] T048 [US1] [P] 實作音訊通知（基礎） (src/util.py - play_notification_basic - FR-051-052)
-- [ ] T049 [US1] [P] 實作訂單成功驗證 (src/nodriver_tixcraft.py - verify_order_success - FR-053)
+- [ ] T047 [US1] [P] 實作確認對話框處理 (src/util.py - handle_confirmation_dialog - FR-054)
+- [ ] T048 [US1] [P] 實作音訊通知（基礎） (src/util.py - play_notification_basic - FR-055-056)
+- [ ] T049 [US1] [P] 實作訂單成功驗證 (src/nodriver_tixcraft.py - verify_order_success - FR-057)
 
 ### 階段 11-12：排隊與錯誤處理
 
-- [ ] T050 [US1] 實作排隊流程處理 (src/nodriver_tixcraft.py - handle_queue - FR-054-057)
-- [ ] T051 [US1] [P] 實作錯誤類型偵測與分類 (src/util.py - classify_error - FR-058)
-- [ ] T052 [US1] [P] 實作詳細錯誤日誌 (src/util.py - detailed_error_logging - FR-059)
-- [ ] T053 [US1] [P] 實作 CDP 原生重試機制 (src/util.py - cdp_native_retry - FR-060)
+- [ ] T050 [US1] 實作排隊流程處理 (src/nodriver_tixcraft.py - handle_queue - FR-058-061)
+- [ ] T051 [US1] [P] 實作錯誤類型偵測與分類 (src/util.py - classify_error - FR-062)
+- [ ] T052 [US1] [P] 實作詳細錯誤日誌 (src/util.py - detailed_error_logging - FR-063)
+- [ ] T053 [US1] [P] 實作 CDP 原生重試機制 (src/util.py - cdp_native_retry - FR-064)
   - 使用 CDP dispatch_mouse_event() 重試點擊
   - 使用 CDP perform_search() 重新查詢元素
-  - 禁止回退到 JavaScript（FR-060 明確禁止）
+  - 禁止回退到 JavaScript（FR-064 明確禁止）
 
-- [ ] T054 [US1] [P] 實作錯誤通知 (src/util.py - error_notification - FR-062)
-- [ ] T055 [US1] [P] 實作售罄狀態持續重試機制 (src/util.py - handle_sold_out - FR-063)
+- [ ] T054 [US1] [P] 實作錯誤通知 (src/util.py - error_notification - FR-066)
+- [ ] T055 [US1] [P] 實作售罄狀態持續重試機制 (src/util.py - handle_sold_out - FR-067)
   - 根據 auto_reload_page_interval 持續刷新頁面
   - 監控票券狀態直到可用
   - 避免在售罄時停止程式
@@ -247,7 +247,7 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 3. 驗證關鍵字匹配邏輯（第一選擇 90% 成功率 - SC-002）
 4. 驗證回退策略（模式選擇正確執行）
 
-### 日期選擇高級版（使用 CDP 原生方法）
+### 日期選擇高級版（使用 CDP 原生方法 + v1.2 更新）
 
 - [ ] T059 [US2] 實作日期選擇佈局類型偵測 (src/util.py - detect_date_layout - FR-014)
   - 使用 CDP perform_search() 偵測按鈕/下拉/日曆佈局
@@ -256,8 +256,18 @@ Phase 10: 效能與品質驗證（NFR 驗證）
   - 使用 CDP perform_search() 提取所有日期選項
   - 使用 CDP describe_node() 解析屬性（disabled 狀態）
 
-- [ ] T061 [US2] [P] 實作多關鍵字日期匹配 (src/util.py - match_date_keywords - FR-017)
-- [ ] T062 [US2] [P] 實作日期回退模式選擇 (src/util.py - fallback_date_selection - FR-018)
+- [ ] T061 [US2] [P] 實作多關鍵字日期匹配（**v1.2: Early Return + 分號分隔**）(src/util.py - match_date_keywords - FR-017-1)
+  - **分號分隔關鍵字**：解析 settings.json 的 date_keyword（例如 "10/03;10/04"）
+  - **Early Return 策略**：按順序檢查關鍵字，首次匹配立即停止並返回（快 30%）
+  - **優先順序語義**：關鍵字順序即優先順序（第一個 = 最高優先）
+  - 支援關鍵字模糊匹配（部分字串匹配）
+
+- [ ] T062 [US2] [P] 實作日期回退邏輯（**v1.2: Strict Mode 預設**）(src/util.py - fallback_date_selection - FR-017-2/017-3)
+  - **讀取 date_auto_fallback 設定**：預設 false（Strict Mode）
+  - **Strict Mode 行為**：關鍵字失敗時停止並等待手動介入
+  - **Auto Mode 行為**：date_auto_fallback=true 時回退到 auto_select_mode（上/下/中/隨機）
+  - **設計理由說明**：預設 strict mode 減少 40% 錯誤場次投訴
+
 - [ ] T063 [US2] [P] 實作日期選擇驗證 (src/util.py - verify_date_selected - FR-019)
 
 ### 區域/座位選擇高級版（使用 CDP 原生方法）
@@ -270,8 +280,18 @@ Phase 10: 效能與品質驗證（NFR 驗證）
   - 使用 CDP get_outer_html() 提取定價資訊
 
 - [ ] T066 [US2] [P] 實作排除關鍵字過濾 (src/util.py - filter_excluded_areas - FR-022)
-- [ ] T067 [US2] [P] 實作多關鍵字區域匹配 (src/util.py - match_area_keywords - FR-023)
-- [ ] T068 [US2] [P] 實作區域回退模式選擇 (src/util.py - fallback_area_selection - FR-024)
+- [ ] T067 [US2] [P] 實作多關鍵字區域匹配（**v1.2: Early Return + 分號分隔**）(src/util.py - match_area_keywords - FR-023-1)
+  - **分號分隔關鍵字**：解析 settings.json 的 area_keyword（例如 "VIP;A區"）
+  - **Early Return 策略**：按順序檢查關鍵字，首次匹配立即停止並返回（快 30%）
+  - **優先順序語義**：關鍵字順序即優先順序（第一個 = 最高優先）
+  - 支援關鍵字模糊匹配（部分字串匹配）
+  - 支援排除關鍵字過濾（keyword_exclude，分號分隔）
+
+- [ ] T068 [US2] [P] 實作區域回退邏輯（**v1.2: Strict Mode 預設**）(src/util.py - fallback_area_selection - FR-023-2/023-3)
+  - **讀取 area_auto_fallback 設定**：預設 false（Strict Mode）
+  - **Strict Mode 行為**：關鍵字失敗時停止並等待手動介入
+  - **Auto Mode 行為**：area_auto_fallback=true 時回退到 auto_select_mode（上/下/中/隨機）
+  - **設計理由說明**：預設 strict mode 減少錯誤區域選擇投訴
 - [ ] T069 [US2] [P] 實作自動座位選擇演算法 (src/util.py - auto_select_seats - FR-025)
 - [ ] T070 [US2] [P] 實作相鄰座位切換支援 (src/util.py - allow_non_adjacent_seats - FR-026)
 - [ ] T071 [US2] [P] 實作區域選擇驗證 (src/util.py - verify_area_selected)
@@ -296,17 +316,17 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 
 ### 錯誤分類與重試基礎
 
-- [ ] T075 [US7] 實作錯誤型別分類系統 (src/util.py - error_classifier - FR-058)
-- [ ] T076 [US7] [P] 實作詳細錯誤日誌系統 (src/util.py - verbose_error_logging - FR-059)
-- [ ] T077 [US7] [P] 實作指數退避重試策略 (src/util.py - exponential_backoff - FR-060)
-- [ ] T078 [US7] [P] 實作可配置重試限制 (src/util.py - retry_limits config - FR-061)
+- [ ] T075 [US7] 實作錯誤型別分類系統 (src/util.py - error_classifier - FR-062)
+- [ ] T076 [US7] [P] 實作詳細錯誤日誌系統 (src/util.py - verbose_error_logging - FR-063)
+- [ ] T077 [US7] [P] 實作指數退避重試策略 (src/util.py - exponential_backoff - FR-064)
+- [ ] T078 [US7] [P] 實作可配置重試限制 (src/util.py - retry_limits config - FR-065)
 
 ### CDP 原生操作層面重試（遵循 TDR-004）
 
-- [ ] T079 [US7] 實作 CDP 點擊重試機制 (src/nodriver_tixcraft.py - cdp_click_retry - FR-060)
+- [ ] T079 [US7] 實作 CDP 點擊重試機制 (src/nodriver_tixcraft.py - cdp_click_retry - FR-064)
   - 使用 dispatch_mouse_event() 重試
   - 記錄重試次數與延遲
-  - 禁止回退到 JavaScript（FR-060 明確規定）
+  - 禁止回退到 JavaScript（FR-064 明確規定）
 
 - [ ] T080 [US7] [P] 實作 CDP DOM 重新查詢機制 (src/util.py - cdp_requery_element)
   - 使用 perform_search() 重新查找元素
@@ -317,12 +337,12 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 
 ### 特殊場景處理
 
-- [ ] T082 [US7] 實作售罄狀態偵測與自動重試邏輯 (src/util.py - handle_sold_out - FR-063)
+- [ ] T082 [US7] 實作售罄狀態偵測與自動重試邏輯 (src/util.py - handle_sold_out - FR-067)
   - 偵測售罄狀態（文字匹配、元素檢查）
   - 根據配置的刷新間隔持續重試
   - 在 verbose 模式下記錄重試日誌
 
-- [ ] T083 [US7] [P] 實作錯誤通知與警報 (src/util.py - error_notification - FR-062)
+- [ ] T083 [US7] [P] 實作錯誤通知與警報 (src/util.py - error_notification - FR-066)
 - [ ] T084 [US7] [P] 實作頁面變更時的重試邏輯 (src/util.py - retry_on_page_change)
 
 ### US7 測試
@@ -391,8 +411,8 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 
 - [ ] T101 [US6] 實作票券數量配置 (ticket_number in settings.json)
 - [ ] T102 [US6] [P] 實作日期/區域關鍵字配置 (date_keyword, area_keyword, mode)
-- [ ] T103 [US6] [P] 實作自動重載間隔配置 (auto_reload_page_interval - FR-009, FR-061)
-- [ ] T104 [US6] [P] 實作聲音通知配置 (play_sound settings - FR-051-052)
+- [ ] T103 [US6] [P] 實作自動重載間隔配置 (auto_reload_page_interval - FR-009, FR-065)
+- [ ] T104 [US6] [P] 實作聲音通知配置 (play_sound settings - FR-055-056)
 - [ ] T105 [US6] [P] 實作重試參數配置 (retry limits, exponential backoff)
 - [ ] T106 [US6] [P] 實作 OCR 相關配置（與 US4 整合） (ocr_captcha settings)
 - [ ] T107 [US6] [P] 實作 WebDriver 類型配置 (webdriver_type - NoDriver/Chrome/Selenium)
@@ -414,40 +434,103 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 
 ## Phase 7：[US4] 驗證碼處理（P2）
 
-**使用者故事**：身為購票者，我希望系統使用 OCR 自動辨識並輸入驗證碼。
+**使用者故事**：身為購票者，我希望系統自動處理驗證碼挑戰（圖像 OCR 或活動知識問答）。
 
 **獨立測試標準**：
-1. 配置 OCR 相關設定
-2. 遇到驗證碼挑戰
-3. 驗證 OCR 辨識準確率 70%+（SC-004）
+1. 配置驗證碼相關設定（OCR 或 user_guess_string）
+2. 遇到驗證碼挑戰（圖像或問答）
+3. 驗證 OCR 辨識準確率 70%+（SC-004）或 Q&A 匹配成功
 4. 驗證手動輸入回退正常運作
 
-### 驗證碼偵測
+---
 
-- [ ] T115 [US4] 實作驗證碼類型偵測 (img, canvas, reCAPTCHA, hCaptcha) (src/util.py - detect_captcha_type - FR-031)
+### Phase 7.1：圖像驗證碼（OCR-based）
+
+**適用平台**：TixCraft、iBon、KHAM（圖像驗證碼）
+
+#### 驗證碼偵測
+
+- [ ] T115 [US4] 實作圖像驗證碼類型偵測 (img, canvas, reCAPTCHA, hCaptcha) (src/util.py - detect_image_captcha_type - FR-031)
   - 使用 CDP perform_search() 查找驗證碼元素
+  - 區分圖像類型（canvas、img、iframe）
 
 - [ ] T116 [US4] [P] 實作驗證碼圖片提取 (canvas/img) (src/util.py - extract_captcha_image - FR-032)
+  - 支援 canvas toDataURL
+  - 支援 img src 提取
 
-### OCR 辨識
+#### OCR 辨識
 
 - [ ] T117 [US4] 實作 ddddocr 整合 (src/util.py - ocr_recognize_captcha - FR-033)
 - [ ] T118 [US4] [P] 實作 Beta OCR 模型支援 (ddddocr beta model - FR-034)
 - [ ] T119 [US4] [P] 實作 OCR 準確率測試 (達到 70%+ 目標 - SC-004)
 
-### 驗證碼輸入與回退
+#### 驗證碼輸入與回退
 
 - [ ] T120 [US4] 實作自動驗證碼輸入 (src/util.py - auto_input_captcha - FR-035)
 - [ ] T121 [US4] [P] 實作強制送出 vs. 等待手動確認邏輯 (FR-036)
 - [ ] T122 [US4] [P] 實作手動驗證碼輸入回退 (src/util.py - manual_captcha_input - FR-037)
-- [ ] T123 [US4] [P] 實作驗證碼重新整理功能 (FR-038)
-- [ ] T124 [US4] [P] 實作可配置重試次數 (FR-039)
 
-### US4 測試
+#### Phase 7.1 測試
 
 - [ ] T125 [US4] 建立 OCR 辨識測試 (tests/unit/test_ocr_recognition.py)
-- [ ] T126 [US4] [P] 建立驗證碼處理測試 (tests/unit/test_captcha_handling.py)
+- [ ] T126 [US4] [P] 建立圖像驗證碼處理測試 (tests/unit/test_image_captcha_handling.py)
 - [ ] T127 [US4] [P] 手動驗證 TixCraft OCR 辨識（測試帳號） (manual verification with real captchas)
+
+---
+
+### Phase 7.2：活動知識問答（Event Knowledge Q&A）
+
+**適用平台**：KKTIX、TicketPlus（問答式驗證）
+
+**v1.2 新增**：活動知識問答機制，需要使用者對活動有一定了解才能回答。
+
+#### 問答驗證偵測與配置
+
+- [ ] T128 [US4] 實作問答式驗證偵測 (src/util.py - detect_qa_captcha - FR-038)
+  - 偵測文字輸入欄位 + 問題提示
+  - 區分與一般表單欄位的差異
+
+- [ ] T129 [US4] [P] 實作 user_guess_string 配置支援 (src/util.py - load_user_guess - FR-039)
+  - 讀取 settings.json 的 user_guess_string
+  - 支援多種答案格式（活動日期、樂團名稱、特定規則）
+  - 範例：活動日期（"2024/10/03"）、樂團英文名稱（"BAND NAME"）、全大寫要求
+
+#### fail_list 機制
+
+- [ ] T130 [US4] 實作 fail_list 機制 (src/util.py - manage_fail_list - FR-040)
+  - 記錄失敗答案到記憶體列表
+  - 避免重複嘗試相同答案
+  - 支援會話內持久化
+
+#### 線上答案檔整合
+
+- [ ] T131 [US4] [P] 實作線上答案檔整合 (src/util.py - load_answer_database - FR-041)
+  - 支援從遠端 URL 載入答案資料庫
+  - 支援從本地檔案載入（JSON 格式）
+  - 答案匹配邏輯（關鍵字 → 答案對應）
+
+#### 人類化延遲重試
+
+- [ ] T132 [US4] [P] 實作人類化延遲重試 (src/util.py - humanized_retry - FR-042)
+  - 隨機延遲 0.5-2 秒
+  - 避免觸發反機器人偵測
+  - 可配置重試次數
+
+#### AI API 整合（未來擴充）
+
+- [ ] T133 [US4] [P] 預留 AI API 整合介面 (src/util.py - ai_captcha_solver_stub - FR-043)
+  - 定義 AI API 呼叫介面（OpenAI、Claude）
+  - 預留錯誤處理與回退邏輯
+  - 標記為未來擴充（暫不實作）
+
+#### Phase 7.2 測試
+
+- [ ] T134 [US4] 建立問答驗證處理測試 (tests/unit/test_qa_captcha_handling.py)
+  - 測試 user_guess_string 讀取
+  - 測試 fail_list 機制
+  - 測試人類化延遲
+
+- [ ] T135 [US4] [P] 手動驗證 KKTIX Q&A 處理（測試帳號） (manual verification with real Q&A)
 
 ---
 
@@ -562,39 +645,50 @@ Phase 10: 效能與品質驗證（NFR 驗證）
 
 **目的**：驗證非功能性需求達標，確保生產就緒
 
-### 效能驗證（NFR-001 至 NFR-003）
+### 效能驗證（NFR-001 至 NFR-003，v1.2 平台分級）
 
-- [ ] T156 [NFR-001] 建立 Shadow DOM 查詢效能測試 (tests/performance/test_dom_query_speed.py)
-  - 目標：2-5秒內完成（平均值）
-  - 測試平台：iBon（Shadow DOM）、TicketPlus（展開面板）
-  - 測量方法：time.time() 計時 perform_search() 執行時間
-  - 記錄：verbose 模式輸出 "[PERF] DOM query completed in X.Xs"
+- [ ] T156 [NFR-001] 建立端到端購票流程效能測試 (tests/performance/test_end_to_end_performance.py)
+  - **目標**：從頁面載入到進入結帳頁面的完整購票流程，**3 秒內完成**（不含排隊等待）
+  - **測試平台**：所有平台（TixCraft、KKTIX、iBon、TicketPlus、KHAM）
+  - **測量方法**：time.time() 計時整個購票流程（Stage 1-10）
+  - **記錄**：verbose 模式輸出 "[PERF] End-to-end completed in X.Xs"
 
-- [ ] T157 [P] [NFR-002] 建立首次成功率統計工具 (tests/performance/test_first_attempt_success_rate.py)
-  - 目標：>= 95% 首次找到目標元素
-  - 測試方法：執行 100 次 perform_search()，統計 count > 0 的比例
-  - 記錄成功率至日誌
+- [ ] T157 [P] [NFR-002a] 建立標準 DOM 平台查詢效能測試 (tests/performance/test_standard_dom_query_speed.py)
+  - **目標**：元素查詢必須在 **1 秒內完成**，首次成功率 ≥ 95%
+  - **測試平台**：TixCraft、KKTIX、TicketPlus、KHAM
+  - **測量方法**：
+    - time.time() 計時單次 perform_search() 執行時間
+    - 執行 100 次查詢，統計 count > 0 的比例（首次成功率）
+  - **記錄**：verbose 模式輸出 "[PERF] Standard DOM query: X.Xs, Success rate: Y%"
 
-- [ ] T158 [P] [NFR-003] 建立記憶體消耗測試 (tests/performance/test_memory_usage.py)
+- [ ] T158 [P] [NFR-002b] 建立 Shadow DOM 平台查詢效能測試 (tests/performance/test_shadow_dom_query_speed.py)
+  - **目標**：元素查詢必須在 **2-5 秒內完成**，首次成功率 ≥ 95%
+  - **測試平台**：iBon（closed Shadow DOM）、FamiTicket
+  - **測量方法**：
+    - time.time() 計時單次 perform_search() 執行時間
+    - 執行 100 次查詢，統計 count > 0 的比例（首次成功率）
+  - **記錄**：verbose 模式輸出 "[PERF] Shadow DOM query: X.Xs, Success rate: Y%"
+
+- [ ] T159 [P] [NFR-003] 建立記憶體消耗測試 (tests/performance/test_memory_usage.py)
   - 目標：單次 DOM 查詢 < 5MB
   - 測量方法：使用 tracemalloc 測量 perform_search() 記憶體峰值
   - 對比：DOMSnapshot 方法（應為 50MB+）
 
 ### 反偵測驗證（NFR-004 至 NFR-006）
 
-- [ ] T159 [NFR-004] 建立 JavaScript 執行偵測測試 (tests/security/test_no_javascript_execution.py)
+- [ ] T160 [NFR-004] 建立 JavaScript 執行偵測測試 (tests/security/test_no_javascript_execution.py)
   - 目標：NoDriver 版本 100% 避免 JavaScript 執行
   - 測試方法：
     - 靜態程式碼分析（grep 搜尋 tab.evaluate）
     - 執行時監控（檢查 CDP JavaScript.evaluate 調用）
   - 斷言：0 次 JavaScript 執行
 
-- [ ] T160 [P] [NFR-005] 建立 CDP 原生事件驗證測試 (tests/security/test_cdp_native_events.py)
+- [ ] T161 [P] [NFR-005] 建立 CDP 原生事件驗證測試 (tests/security/test_cdp_native_events.py)
   - 目標：所有互動使用 CDP 原生事件
   - 驗證：所有點擊使用 dispatch_mouse_event()
   - 驗證：所有滾動使用 scroll_into_view_if_needed()
 
-- [ ] T161 [P] [NFR-006] 建立反機器人檢測通過測試 (tests/security/test_anti_bot_detection.py)
+- [ ] T162 [P] [NFR-006] 建立反機器人檢測通過測試 (tests/security/test_anti_bot_detection.py)
   - 目標：通過 reCAPTCHA v2、Cloudflare Challenge
   - 測試平台：TixCraft、iBon（實際反機器人場景）
   - 測量：執行 10 次購票流程，記錄是否被標記
