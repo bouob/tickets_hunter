@@ -1,5 +1,5 @@
 ---
-description: "推送私人檔案到私人 repos，避免推送到公開 repos"
+description: "推送機敏檔案到私人 repo"
 allowed-tools: ["Bash"]
 ---
 
@@ -13,15 +13,18 @@ $ARGUMENTS
 
 ---
 
-# 私人檔案推送指令
+# 推送機敏檔案到私人 Repo
 
-強制推送私人檔案（文件、設定、規格）到私人 repos，確保不會意外洩露到公開 repos。
+推送機敏檔案（內部文件、設定）到私人倉庫，確保不洩露到公開 repo。
+
+**目標**: `private` remote（私人 repo）
+**推送內容**: 機敏檔案 commits（帶 🔒 PRIVATE 標記）
 
 ---
 
-## ⚠️ 私人檔案清單
+## ⚠️ 機敏檔案清單
 
-**以下目錄和檔案僅推送到私人 repos：**
+以下檔案**僅推送到私人 repo**：
 
 ```
 .claude/          - Claude 自動化設定
@@ -32,257 +35,216 @@ specs/            - 功能規格和設計文件
 FAQ/              - 常見問題解答
 ```
 
-**重要警告：** 這些檔案包含：
-- 內部開發流程和工具設定
-- 專案架構和技術決策
-- 私人功能規格
-- 可能的敏感資訊
-
 ---
 
-## 📋 前置條件檢查
+## 📝 執行流程
 
-在執行推送前，必須確認以下設定：
+### 步驟 1 - 檢測 PRIVATE Commits
 
-### 1. Private Remote 已設定
+**優先檢查**: 是否有未推送的 PRIVATE commits
 
 ```bash
-git remote get-url private
-# 應該顯示：https://github.com/bouob/private-tickets-hunter.git
-# 或 SSH：git@github.com:victor/private-tickets-hunter.git
+# 檢查本地 commits
+git log private/main..HEAD --oneline
+
+# 過濾 PRIVATE commits
+git log private/main..HEAD --format=%B | grep "🔒 PRIVATE COMMIT"
 ```
 
-**如果未設定，執行：**
+**兩種模式**:
 
-```bash
-# HTTPS 版本（推薦）
-git remote add private https://github.com/bouob/private-tickets-hunter.git
+**模式 A - 推送現有 PRIVATE commits**（優先）:
+- 檢測到未推送的 PRIVATE commits
+- 直接推送這些 commits
+- 無需重新 commit
 
-# SSH 版本
-git remote add private git@github.com:victor/private-tickets-hunter.git
+**模式 B - 手動建立 PRIVATE commit**（回退）:
+- 無現有 PRIVATE commits
+- 使用 `git add -f` 強制加入機敏檔案
+- 建立新的 PRIVATE commit
+
+### 步驟 2 - 執行推送
+
+**模式 A 流程**:
+```
+✅ 找到 1 個未推送的 PRIVATE commit
+📝 Commit: docs(private): update internal documentation
+
+詢問: 「確定推送此 PRIVATE commit 到 private repo？(y/N)」
+執行: git push private main
 ```
 
-### 2. 確認兩個 Remote 都已設定
+**模式 B 流程**:
+```
+⚠️ 無未推送的 PRIVATE commits
 
-```bash
-git remote -v
+詢問: 「是否手動建立 PRIVATE commit？(y/n)」
 
-# 應該顯示：
-# origin    https://github.com/bouob/tickets_hunter.git (fetch)
-# origin    https://github.com/bouob/tickets_hunter.git (push)
-# private   https://github.com/bouob/private-tickets-hunter.git (fetch)
-# private   https://github.com/bouob/private-tickets-hunter.git (push)
+若選擇 y:
+1. 強制加入機敏檔案
+   git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ FAQ/
+
+2. 建立 PRIVATE commit
+   git commit -m "📝 docs(private): update private documentation
+
+   🔒🔒🔒 PRIVATE COMMIT - DO NOT PUSH TO PUBLIC REPO 🔒🔒🔒
+
+   Files modified:
+     - [列出變更檔案]
+
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⚠️  FILTER MARKER FOR /publicpr ⚠️
+   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+3. 推送到 private
+   git push private main
 ```
 
----
-
-## 🔐 執行推送 (安全模式)
-
-### 完整流程（包含多層驗證）
+### 步驟 3 - 驗證推送結果
 
 ```bash
-cd "$(git rev-parse --show-toplevel)"
-
-echo "=== 私人檔案推送流程 ==="
-echo ""
-echo "🔐 安全檢查開始"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# 0️⃣ 驗證 private remote 設定
-echo "0️⃣ 驗證 private remote 設定..."
-if ! git remote get-url private > /dev/null 2>&1; then
-  echo "❌ 錯誤：private remote 未設定！"
-  echo ""
-  echo "請先執行以下命令設定私人 repos："
-  echo "  git remote add private https://github.com/bouob/private-tickets-hunter.git"
-  echo ""
-  echo "或如果使用 SSH："
-  echo "  git remote add private git@github.com:victor/private-tickets-hunter.git"
-  exit 1
-fi
-
-PRIVATE_URL=$(git remote get-url private)
-echo "✅ private remote 已設定"
-echo "   URL: $PRIVATE_URL"
-echo ""
-
-# 🔐 關鍵檢查：驗證目標 URL（必須通過）
-echo "🔐 驗證私人 repos 目標..."
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "⚠️  關鍵確認：驗證推送目標"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "檢測到的私人 repos URL："
-echo "  $PRIVATE_URL"
-echo ""
-echo "預期的私人 repos URL："
-echo "  ✓ https://github.com/bouob/private-tickets-hunter.git"
-echo "  ✓ git@github.com:victor/private-tickets-hunter.git"
-echo ""
-echo "❌❌❌ 如果 URL 不符合上述任何一個，請勿繼續！❌❌❌"
-echo ""
-read -p "確認目標 URL 正確無誤？(y/N) " url_confirm
-if [[ ! "$url_confirm" =~ ^[Yy]$ ]]; then
-  echo ""
-  echo "❌ URL 驗證失敗！已取消推送"
-  echo ""
-  echo "檢查當前 remote 設定："
-  echo "  git remote -v"
-  echo ""
-  echo "修正 remote URL："
-  echo "  git remote set-url private <正確的URL>"
-  exit 1
-fi
-
-echo ""
-echo "✅ 目標 URL 驗證通過 - 可以繼續"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "1️⃣ 檢查本地變更..."
-git status
-
-echo ""
-echo "2️⃣ 強制加入私人檔案..."
-echo "   ⚠️  將會推送以下敏感檔案到私人 repos："
-echo "   - .claude/     (Claude 自動化設定)"
-echo "   - CLAUDE.md    (開發規範文件)"
-echo "   - docs/        (技術文件和指南)"
-echo "   - .specify/    (規格模板和指令碼)"
-echo "   - specs/       (功能設計規格)"
-echo "   - FAQ/         (常見問題解答)"
-echo ""
-git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ FAQ/
-
-echo ""
-echo "3️⃣ 提交變更..."
-git commit -m "docs: update private documentation and configuration" || echo "⚠️ 無新變更需要提交"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "⚠️  最終確認：即將推送敏感檔案"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "推送目標："
-echo "  Remote：$PRIVATE_URL"
-echo "  分支：main (設定追蹤)"
-echo ""
-echo "敏感檔案列表："
-echo "  ✓ .claude/"
-echo "  ✓ CLAUDE.md"
-echo "  ✓ docs/"
-echo "  ✓ .specify/"
-echo "  ✓ specs/"
-echo "  ✓ FAQ/"
-echo ""
-echo "安全保證："
-echo "  ✓ 只推送到私人 repos (private remote)"
-echo "  ✓ 不會推送到公開 repos (origin)"
-echo "  ✓ 公開 repos 受 .gitignore 保護"
-echo ""
-read -p "最終確認：執行推送？(y/N) " final_confirm
-if [[ ! "$final_confirm" =~ ^[Yy]$ ]]; then
-  echo ""
-  echo "❌ 已取消推送"
-  exit 0
-fi
-
-echo ""
-echo "4️⃣ 推送到私人 repos..."
-git push -u private main
-
-echo ""
-echo "✅ 私人檔案推送完成！"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "驗證推送結果"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "最近 commits："
+# 顯示最近 commits
 git log --oneline -3
-echo ""
-echo "分支追蹤設定："
+
+# 顯示分支追蹤
 git branch -vv | grep main
-echo ""
-echo "✅ 推送成功！"
+
+# 確認推送成功
+✅ 機敏檔案推送完成！
 ```
 
 ---
 
-## 快速推送（已驗證設定後）
+## ⚠️ 安全機制
 
-如果你已經確認 private remote 設定無誤，可以簡化版本：
+### URL 驗證（必須通過）
+
+執行前必須驗證 private remote URL:
 
 ```bash
-git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ FAQ/
-git commit -m "docs: update private documentation and configuration" || true
-git push -u private main
+# 顯示 private remote URL
+git remote get-url private
+
+# 預期 URL（擇一）:
+✓ https://github.com/bouob/private-tickets-hunter.git
+✓ git@github.com:victor/private-tickets-hunter.git
+
+詢問: 「確認目標 URL 正確無誤？(y/N)」
+若回覆 N → 取消推送
+```
+
+### 最終確認
+
+所有推送前必須明確確認:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  最終確認：即將推送機敏檔案
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+推送目標: https://github.com/bouob/private-tickets-hunter.git
+分支: main
+
+機敏檔案列表:
+  ✓ .claude/
+  ✓ CLAUDE.md
+  ✓ docs/
+  ✓ .specify/
+  ✓ specs/
+  ✓ FAQ/
+
+安全保證:
+  ✓ 只推送到私人 repo (private remote)
+  ✓ 不會推送到公開 repo (origin)
+  ✓ 公開 repo 受 .gitignore 保護
+
+最終確認: 執行推送？(y/N)
 ```
 
 ---
 
-## 注意事項
+## 💡 使用場景
 
-### ✅ 應該執行的命令
+### 場景 1: /gsave 後推送（推薦）
 
 ```bash
-git push private main                   # 只推送到私人 repos
-git push -u private main                # 設定追蹤並推送
-git push origin main                    # 推送公開程式碼到公開 repos
+# 修改程式碼 + 內部文件
+/gsave
+# → 建立 2 個 commits:
+#    Commit 1: ✨ feat(nodriver): add feature X (公開)
+#    Commit 2: 📝 docs(private): update docs (機敏)
+
+/gpush
+# → 推送 Commit 1 到 private
+
+/privatepush
+# → 檢測到 Commit 2（PRIVATE 標記）
+# → 推送 Commit 2 到 private
 ```
 
-### ❌ 不要執行
+### 場景 2: 手動修改機敏檔案
 
 ```bash
-git push                                # 預設可能推送到 origin 或 private
-git push origin main                    # 絕不推送私人檔案到公開 repos（已由 .gitignore 防護）
-git push origin --all                   # 推送所有分支，包括私人內容
+# 手動編輯 docs/02-development/structure.md
+# 手動編輯 CLAUDE.md
+
+/privatepush
+# → 無現有 PRIVATE commits
+# → 詢問是否手動建立
+# → 使用 git add -f + commit + push
+```
+
+### 場景 3: 補推遺漏的機敏檔案
+
+```bash
+# 忘記推送 .claude/ 變更
+
+/privatepush
+# → 檢測機敏檔案變更
+# → 建立 PRIVATE commit
+# → 推送到 private
 ```
 
 ---
 
-## 故障排除
+## 🚨 故障排除
 
-### 問題 1：Remote 未設定
+### 問題 1: Private Remote 未設定
 
-**症狀：** 執行時出現 `fatal: 'private' does not appear to be a 'git' repository`
+**症狀**: `fatal: 'private' does not appear to be a 'git' repository`
 
-**解決方案：**
-
+**解決方案**:
 ```bash
 git remote add private https://github.com/bouob/private-tickets-hunter.git
 ```
 
-### 問題 2：推送失敗（認證錯誤）
+### 問題 2: 推送失敗（認證錯誤）
 
-**症狀：** 出現 `fatal: Authentication failed`
+**症狀**: `fatal: Authentication failed`
 
-**解決方案：**
-
+**解決方案**:
 ```bash
 # 檢查 remote URL
 git remote -v
 
-# 確認 GitHub 認證已設定（SSH key 或 token）
-# 或使用正確的 HTTPS URL 與認證
+# 確認 GitHub 認證（SSH key 或 token）
 git remote set-url private https://github.com/bouob/private-tickets-hunter.git
 ```
 
-### 問題 3：推送了敏感檔案到公開 repos
+### 問題 3: 誤推到公開 repo
 
-**症狀：** 私人檔案被推送到 origin
+**症狀**: 機敏檔案被推送到 origin
 
-**緊急恢復：**
-
+**緊急恢復**:
 ```bash
 # 1. 移除最後一個 commit
 git reset --soft HEAD~1
 
-# 2. 移除敏感檔案
+# 2. 移除機敏檔案
 git rm --cached .claude/ docs/ .specify/ specs/ FAQ/ CLAUDE.md
 
-# 3. 重新提交（不含敏感檔案）
+# 3. 重新提交（不含機敏檔案）
 git commit -m "docs: remove sensitive files from public repo"
 
 # 4. 強制推送（小心使用！）
@@ -293,40 +255,31 @@ git push origin main --force-with-lease
 
 ---
 
+## 📚 相關指令
+
+- `/gsave` - 提交變更（自動分離公開/機敏）
+- `/gpush` - 推送公開 commits
+- `/publicpr` - 建立 PR 到公開 repo
+- `/gdefault` - 清除本地敏感設定
+
+---
+
 ## 檢查清單
 
-執行 `/privatepush` 之前：
+執行 `/privatepush` 之前:
 
 - [ ] 確認在正確的專案目錄（`tickets_hunter/`）
 - [ ] 確認 private remote 已設定（`git remote -v`）
-- [ ] 確認 private remote 指向正確的私人 repos
+- [ ] 確認 private remote 指向正確的私人 repo
 - [ ] 確認沒有未提交的公開代碼變更
-- [ ] 檢查是否有新的私人檔案需要推送
-- [ ] 確認提交訊息清晰明確
+- [ ] 檢查是否有新的機敏檔案需要推送
 - [ ] 再次確認推送目標是 `private`，不是 `origin`
 
 ---
 
-## 相關命令
+## 延伸閱讀
 
-- `/gpush` - 推送公開代碼到公開 repos
-- `/gsave` - 保存並提交所有變更
-- `/gdefault` - 清除本地敏感設定
-- `/gchange` - 生成 CHANGELOG
+- **工作流程**: `docs/11-git-workflow/dual-repo-workflow.md`
+- **專案憲章**: `.specify/memory/constitution.md` 第 IX 條
 
----
-
-## 設定持久化
-
-如果想自動追蹤 private 分支，可以一次性執行：
-
-```bash
-# 設定 main 分支追蹤 private/main
-git branch -u private/main main
-
-# 驗證
-git branch -vv
-# 應該顯示：main -> private/main
-```
-
-這樣下次推送時，可以直接用 `git push` 而不用指定 remote。
+$ARGUMENTS

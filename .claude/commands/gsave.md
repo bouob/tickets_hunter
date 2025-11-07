@@ -138,16 +138,46 @@ Closes #123
    - 將所有變更合併為單一邏輯性 commit
    - 自動產生包含所有變更的綜合訊息
 
-6. **分析變更並分類**：
-   將變更檔案按照性質分類：
-   - 檢查所有變更檔案的類型和變更性質
-   - 根據變更目的將檔案歸類到相同類別
+6. **分離公開與機敏檔案（核心邏輯）**：
+
+   **機敏檔案清單定義**：
+   ```
+   .claude/          - Claude 自動化設定
+   CLAUDE.md         - 專案開發規範
+   docs/             - 技術文件和指南
+   .specify/         - 規格模板和指令碼
+   specs/            - 功能規格和設計文件
+   FAQ/              - 常見問題解答
+   ```
+
+   **分離流程**：
+   - 讀取所有變更檔案清單（已過濾 .gitignore）
+   - 依據機敏檔案清單，將檔案分為兩組：
+     - **公開檔案組**：src/, tests/, README.md, CHANGELOG.md 等程式碼和公開文件
+     - **機敏檔案組**：上述機敏檔案清單中的檔案
+
+   **分組策略**：
+   - 如果同時有公開和機敏檔案變更 → 建立兩個 commits
+   - 如果只有公開檔案變更 → 建立一個 commit（標準流程）
+   - 如果只有機敏檔案變更 → 建立一個 commit（標記為 PRIVATE）
+
+6.1. **分析公開檔案變更並分類**：
+   對公開檔案組進行分類（如果有）：
+   - 檢查所有公開檔案的類型和變更性質
+   - 根據變更目的將檔案歸類到相同類別（feat, fix, docs, refactor 等）
    - 相同類別的變更將合併為單一 commit
+   - 不同類別的變更將建立多個 commits
+
+6.2. **分析機敏檔案變更**：
+   對機敏檔案組進行分析（如果有）：
+   - 統計機敏檔案變更數量
+   - 列出所有機敏檔案路徑
+   - 準備建立 PRIVATE 標記的 commit
 
 6.5. **智慧 scope 推薦**：
    根據修改的檔案路徑，自動推薦合適的 scope（遵循憲章第 IX 條）：
 
-   **推薦規則**：
+   **公開檔案 scope 推薦規則**：
    - 修改 `src/nodriver_*.py` → 推薦 scope: `nodriver` 或 `nodriver_engine`
    - 修改 `src/*_tixcraft.py` → 推薦 scope: `tixcraft`
    - 修改 `src/*_kktix.py` → 推薦 scope: `kktix`
@@ -156,9 +186,12 @@ Closes #123
    - 修改 `src/*_kham.py` → 推薦 scope: `kham`
    - 修改 `src/util.py` → 推薦 scope: `util`
    - 修改 `src/settings.py` 或 `src/config_*.py` → 推薦 scope: `config`
-   - 修改 `docs/**/*.md` → 推薦 scope: `docs`
    - 修改 `.github/workflows/*` → 推薦 scope: `ci`
    - 修改多個平台檔案 → 推薦 scope: `core` 或留空
+
+   **機敏檔案固定使用 scope: `private`**：
+   - 所有機敏檔案變更統一使用 `docs(private):` 或 `chore(private):`
+   - 不需要細分 scope，因為這些檔案不會推送到公開 repo
 
    **注意**：scope 為推薦值，可以手動調整或省略。Scope 應加在 type 後面，格式為 `type(scope):`。
 
@@ -175,7 +208,7 @@ Closes #123
    - 🔧 `chore` - Maintenance work (維護工作)
    - 👷 `ci` - CI/CD configuration (CI/CD 配置)
 
-   **完整格式範例**：
+   **7.1 公開檔案 Commit 訊息格式**（標準格式）：
    ```
    ✨ feat(nodriver): implement auto ticket selection
 
@@ -184,80 +217,191 @@ Closes #123
    - Integrate new functions into main workflow (整合至主流程)
    ```
 
+   **7.2 機敏檔案 Commit 訊息格式**（帶 PRIVATE 標記）：
+   ```
+   📝 docs(private): update internal documentation
+
+   🔒🔒🔒 PRIVATE COMMIT - DO NOT PUSH TO PUBLIC REPO 🔒🔒🔒
+
+   This commit contains sensitive/internal files that should ONLY
+   exist in the private repository.
+
+   Files modified:
+     - .claude/commands/gpush.md
+     - docs/02-development/structure.md
+     - CLAUDE.md
+
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⚠️  FILTER MARKER FOR /publicpr ⚠️
+   Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ```
+
+   **關鍵設計**：
+   - 🔒 符號和 "PRIVATE COMMIT" 文字：視覺警告
+   - "DO NOT PUSH TO PUBLIC REPO"：明確指令
+   - 檔案清單：便於審查
+   - "FILTER MARKER FOR /publicpr"：供自動化工具識別
+   - 分隔線：增強視覺區分
+
 8. **預覽變更**：
-   - 按類別列出變更摘要
-   - 顯示各類別對應的英文 commit 訊息
-   - 組合成完整的英文 commit 訊息
-   - 確認變更內容正確無誤
-   - **如果使用 `--force-clean` 選項**：提示將建立乾淨的 commit 避免歷史問題
 
+   **8.1 顯示分離結果摘要**：
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📋 檔案分離結果
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-8.5. **檢視並編輯 Commit 訊息**：
-   在建立 commit 之前，允許使用者檢視並編輯自動產生的訊息。
+   公開檔案 (3 個):
+     ✓ src/nodriver_tixcraft.py
+     ✓ tests/test_tixcraft.py
+     ✓ README.md
 
-   **A. 顯示 Commits 預覽**
-   - 將所有即將建立的 commits 依序編號（1, 2, 3...）
+   機敏檔案 (2 個):
+     🔒 .claude/commands/gpush.md
+     🔒 docs/02-development/structure.md
+
+   將建立 2 個 commits：
+     1. 公開檔案 commit (標準格式)
+     2. 機敏檔案 commit (PRIVATE 標記)
+
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ```
+
+   **8.2 顯示 Commits 預覽**：
+   - 按順序顯示所有即將建立的 commits（公開 → 機敏）
    - 完整顯示：Emoji + Type(scope): Subject + Body + 影響檔案
+   - 機敏檔案 commit 會明確標示 🔒 PRIVATE 標記
 
-   **B. 詢問使用者**
+   **8.3 詢問使用者**：
    「📝 檢視上述 commits，是否需要調整？(y/n/skip)」
 
-   **C. 編輯模式（若選擇 y）**
+   **8.4 編輯模式（若選擇 y）**：
    1. 選擇要編輯的 Commits（例如：1,3,5 或 all）
    2. 逐一編輯：Type, Scope, Subject, Body
    3. 完成後總預覽並最終確認
 
-   **D. 直接提交（若選擇 n 或 skip）**
+   **8.5 直接提交（若選擇 n 或 skip）**：
    - 使用自動產生的訊息，直接進入 Step 9
 
-9. **執行分類提交**：
-   按變更類別建立 commit：
-   - 將相同性質的檔案歸為一組
-   - 為每個類別產生統一的 commit 訊息（主題英文，描述可雙語）
-   - **智慧提交策略**：
-     - 一般模式：依序執行 `git add` 和 `git commit`
-     - `--force-clean` 模式：建立不含歷史問題的乾淨提交
-     - `--squash` 模式：單一 commit 包含所有變更
-   - 顯示每個類別的提交成功訊息
+9. **執行分離提交**：
+
+   **9.1 先提交公開檔案 commits**（如果有）：
+   - 按類別依序建立 commits（feat, fix, docs 等）
+   - 使用標準 commit 訊息格式
+   - 執行流程：
+     ```bash
+     git add [公開檔案清單]
+     git commit -m "[標準訊息]"
+     ```
+   - 顯示提交成功訊息
+
+   **9.2 後提交機敏檔案 commit**（如果有）：
+   - 使用 `git add -f` 強制加入機敏檔案（繞過 .gitignore）
+   - 使用帶有 🔒 PRIVATE 標記的 commit 訊息
+   - 執行流程：
+     ```bash
+     git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ FAQ/
+     git commit -m "[PRIVATE 標記訊息]"
+     ```
+   - 顯示 🔒 PRIVATE COMMIT 提交成功訊息
+
+   **9.3 智慧提交策略**（進階選項）：
+   - **一般模式**：依序執行上述 9.1 → 9.2 流程
+   - **`--force-clean` 模式**：建立不含歷史問題的乾淨提交
+   - **`--squash` 模式**：將公開檔案合併為單一 commit，機敏檔案仍獨立
+
+   **提交順序重要性**：
+   - ✅ 先公開後機敏：確保公開 commits 在 history 前面，方便 `/publicpr` cherry-pick
+   - ✅ 機敏檔案獨立：便於識別和過濾
+   - ✅ 清晰的視覺區分：commit log 一目了然
 
 ## Commit 訊息格式範例（主題英文，描述可雙語）
 
-### 分類提交範例：
+### 分離提交範例（推薦模式）：
+
+**情境：同時修改程式碼和內部文件**
+
+```bash
+# 變更檔案：
+# - src/nodriver_tixcraft.py  (公開)
+# - tests/test_tixcraft.py     (公開)
+# - docs/02-development/structure.md  (機敏)
+# - .claude/commands/gpush.md (機敏)
+
+# /gsave 會自動分離為兩個 commits：
+```
+
+**Commit #1（公開檔案）：**
+```
+✨ feat(nodriver): implement auto ticket selection
+
+- Add nodriver_tixcraft_date_auto_select function (新增日期自動選擇函數)
+- Add async/await support for ticket selection logic (加入異步支援)
+- Integrate new functions into main workflow (整合至主流程)
+
+影響檔案：
+  M src/nodriver_tixcraft.py
+  A tests/test_tixcraft.py
+```
+
+**Commit #2（機敏檔案）：**
+```
+📝 docs(private): update internal documentation
+
+🔒🔒🔒 PRIVATE COMMIT - DO NOT PUSH TO PUBLIC REPO 🔒🔒🔒
+
+This commit contains sensitive/internal files that should ONLY
+exist in the private repository.
+
+Files modified:
+  - docs/02-development/structure.md (更新函數索引)
+  - .claude/commands/gpush.md (更新指令說明)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  FILTER MARKER FOR /publicpr ⚠️
+Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+影響檔案：
+  M docs/02-development/structure.md
+  M .claude/commands/gpush.md
+```
+
+---
+
+### 傳統分類提交範例（向下相容）：
 
 **設定檔類變更（多個 settings.json）：**
 ```
-🔧 Optimize default settings and path configurations
+🔧 chore(config): optimize default settings and path configurations
 
 - Restore auto_reload_page_interval to 5 seconds (恢復刷新間隔為 5 秒)
 - Restore window_size to 600x1024 (恢復視窗大小)
 - Fix CONST_EXCLUDE_DEFAULT spacing (修正關鍵字間距)
-- Add SCRIPT_DIR path resolution (新增路徑解析)
-- Update .gitignore for new src/ structure (更新 gitignore 適配新結構)
 ```
 
 **功能實作類變更（多個 .py 檔案）：**
 ```
-✨ Implement nodriver version auto ticket selection
+✨ feat(nodriver): implement nodriver version auto ticket selection
 
 - Add nodriver_tixcraft_date_auto_select function (新增日期自動選擇函數)
 - Add nodriver_tixcraft_area_auto_select function (新增區域自動選擇函數)
 - Add async/await support for all ticket selection logic (加入異步支援)
-- Integrate new functions into main nodriver workflow (整合至主流程)
 ```
 
-**文件類變更（多個 .md 檔案）：**
+**文件類變更（僅公開文件，如 README）：**
 ```
-📝 Update documentation for new src/ directory structure
+📝 docs(readme): update documentation for new src/ directory structure
 
 - Update execution commands to use 'cd tickets_hunter/src' pattern (更新執行指令路徑)
 - Reorganize project structure diagram (重組專案架構圖)
-- Remove internal docs/ section from user-facing README (移除內部文件說明)
 - Simplify Python module table (簡化模組說明表格)
 ```
 
 **修復類變更（多個相關檔案）：**
 ```
-🐛 Fix ticket selection and OCR handling issues
+🐛 fix(tixcraft): fix ticket selection and OCR handling issues
 
 - Fix dropdown selection logic in chrome_tixcraft.py (修正下拉選單邏輯)
 - Improve OCR error handling in util.py (改善 OCR 錯誤處理)
@@ -265,6 +409,13 @@ Closes #123
 ```
 
 ## 工作流程優勢
+
+### 自動分離公開與機敏檔案（新功能）
+- **天然區分**：Commit history 天然區分公開/機敏，一目了然
+- **自動過濾**：`/publicpr` 可直接識別 🔒 PRIVATE 標記跳過機敏 commits
+- **降低風險**：減少誤推機敏資料到公開 repo 的風險
+- **視覺警告**：🔒 符號和分隔線提供強烈視覺提示
+- **單一職責**：符合憲法第 IV 條，一個 commit 只做一件事
 
 ### 邏輯化版本控制
 - **類別分組**：相同性質的變更合併為單一 commit

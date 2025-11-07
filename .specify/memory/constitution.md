@@ -340,8 +340,9 @@ to handle deeply nested Shadow DOM structures in iBon platform.
 Closes #123
 ```
 
-**提交工具**（可選但推薦）：
-- 使用 `/gsave` 指令（在 speckit 工作流中）自動生成規範化提交訊息
+**提交工具**（推薦使用）：
+- 使用 `/gsave` 指令自動生成規範化提交訊息
+- `/gsave` 會自動分離公開檔案與機敏檔案為不同 commits（參見「雙 Repo 維護」區塊）
 
 **分支策略**：
 - 主線：`main`（生產發佈）
@@ -354,6 +355,41 @@ Closes #123
 - 提交訊息必須遵循本規範
 - PR 本身應链接相關 issues 或 spec 文件
 - 檢查是否遵循前述所有 8 條原則（I-VIII）
+
+**雙 Repo 維護**（重要）：
+
+本專案採用雙 repo 架構：
+- **Private Repo**（主力開發庫）：包含所有程式碼與機敏檔案（.claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/）
+- **Origin Repo**（公開發布庫）：僅包含公開程式碼，不含機敏檔案
+
+**自動分離機制**：
+- `/gsave` 指令會自動將變更分離為兩個 commits：
+  - **公開檔案 commit**：標準 commit 訊息（可推送到公開 repo）
+  - **機敏檔案 commit**：帶有 `🔒 PRIVATE COMMIT` 標記（僅推送到私人 repo）
+
+**標記格式**（機敏檔案 commit）：
+```
+📝 docs(private): update internal documentation
+
+🔒🔒🔒 PRIVATE COMMIT - DO NOT PUSH TO PUBLIC REPO 🔒🔒🔒
+
+Files modified:
+  - .claude/commands/gpush.md
+  - docs/02-development/structure.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  FILTER MARKER FOR /publicpr ⚠️
+Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**優勢**：
+- 天然區分公開/機敏 commits，Git history 一目了然
+- `/publicpr` 可透過 `FILTER MARKER` 快速識別並跳過機敏 commits
+- 降低誤推機敏資料到公開 repo 的風險
+- 符合憲法第 IV 條「單一職責原則」
+
+詳細工作流程參考：`docs/11-git-workflow/dual-repo-workflow.md`
 
 ---
 
