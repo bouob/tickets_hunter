@@ -3395,7 +3395,10 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
     return is_ticket_number_assigned
 
 async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
-    """簡化版本：參考 Chrome 邏輯檢查票券選擇器，並過濾 disabled/售完的選項"""
+    """
+    Enhanced ticket type selection with keyword matching support
+    支援票種關鍵字選擇（indievox 類型 B 頁面：直接跳到 /ticket/ticket/）
+    """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
@@ -3427,8 +3430,25 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     if show_debug_message and form_select_count > 0:
         print(f"[TICKET SELECT] Found {form_select_count} select element(s)")
 
-    # 過濾掉 disabled 或只有售完選項的 select（使用 NoDriver Element API）
-    valid_selects = []
+    # Get area keyword configuration
+    import json
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+
+    # Parse keywords using JSON
+    area_keyword_array = []
+    if area_keyword:
+        try:
+            area_keyword_array = json.loads("[" + area_keyword + "]")
+            if show_debug_message:
+                print(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Keyword parse error: {e}")
+
+    # 過濾並收集票種資訊（包含票種名稱）
+    valid_ticket_types = []
     sold_out_keywords = ["選購一空", "已售完", "Sold out", "No tickets available", "空席なし", "完売した"]
 
     # 使用 NoDriver Element API 檢查每個 select 元素
@@ -3457,7 +3477,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                     await option_element.update()
                     option_attrs = option_element.attrs or {}
                     option_value = option_attrs.get('value', '')
-                    option_text = option_element.text or ''  # .text 是屬性，不需要 await
+                    option_text = option_element.text or ''
                     option_disabled = 'disabled' in option_attrs
 
                     option_values.append(option_value)
@@ -3474,32 +3494,138 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                         print(f"[TICKET SELECT] Error checking option: {opt_exc}")
                     continue
 
-            if has_valid_option:
-                valid_selects.append(select_element)
-                if show_debug_message:
-                    print(f"[TICKET SELECT] Valid select found: {select_id}")
-            else:
+            if not has_valid_option:
                 if show_debug_message:
                     print(f"[TICKET SELECT] Skipping select (all options sold out or disabled): {select_id}")
-                    print(f"[TICKET SELECT]   Option values: {option_values}")
+                continue
+
+            # 嘗試獲取票種名稱（從父元素 <tr> 中的 <h4> 或 <td> 提取）
+            ticket_type_name = ""
+            try:
+                # 查找父元素 <tr>
+                parent_row = select_element
+                for _ in range(5):  # 最多向上查找 5 層
+                    parent_row = parent_row.parent
+                    if parent_row and parent_row.tag.lower() == 'tr':
+                        break
+
+                if parent_row and parent_row.tag.lower() == 'tr':
+                    # 嘗試找 <h4> 標籤
+                    h4_element = await parent_row.query_selector('h4')
+                    if h4_element:
+                        ticket_type_name = h4_element.text or ""
+                    else:
+                        # 嘗試找 <td class="fcBlue">
+                        td_element = await parent_row.query_selector('td.fcBlue')
+                        if td_element:
+                            ticket_type_name = td_element.text or ""
+
+                    ticket_type_name = ticket_type_name.strip()
+
+            except Exception as name_exc:
+                if show_debug_message:
+                    print(f"[TICKET SELECT] Failed to extract ticket type name: {name_exc}")
+
+            # 加入 valid_ticket_types
+            valid_ticket_types.append({
+                'select': select_element,
+                'id': select_id,
+                'name': ticket_type_name,
+                'index': idx
+            })
+
+            if show_debug_message:
+                print(f"[TICKET SELECT] Valid ticket type: {select_id} - '{ticket_type_name}'")
 
         except Exception as exc:
             if show_debug_message:
                 print(f"[TICKET SELECT] Error checking select element: {exc}")
-            # 發生錯誤時，將此 select 加入作為備用
-            valid_selects.append(select_element)
 
     if show_debug_message:
-        print(f"[TICKET SELECT] Valid (available) selects: {len(valid_selects)}/{form_select_count}")
+        print(f"[TICKET SELECT] Valid ticket types: {len(valid_ticket_types)}/{form_select_count}")
 
-    if len(valid_selects) == 0:
+    if len(valid_ticket_types) == 0:
         if show_debug_message:
             print("[TICKET SELECT] Warning: All ticket types are sold out or disabled")
         return False, None
 
-    # 使用第一個可用的 select
-    select_obj = valid_selects[0]
-    form_select_count = len(valid_selects)
+    # Keyword matching logic (similar to area selection)
+    matched_ticket = None
+    is_keyword_matched = False
+
+    if area_keyword_array:
+        if show_debug_message:
+            print(f"[TICKET SELECT] Starting keyword matching with {len(area_keyword_array)} keyword(s)")
+
+        for keyword_index, keyword_item in enumerate(area_keyword_array):
+            if show_debug_message:
+                print(f"[TICKET SELECT] Checking keyword #{keyword_index + 1}: '{keyword_item}'")
+
+            # Check each valid ticket type
+            for ticket_info in valid_ticket_types:
+                ticket_name = ticket_info['name']
+
+                # Apply exclude keyword filter
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
+                    if show_debug_message:
+                        print(f"[TICKET SELECT]   Excluded by keyword_exclude: {ticket_name}")
+                    continue
+
+                # Keyword matching (support space-separated AND logic)
+                keyword_parts = keyword_item.split(' ')
+                row_text = util.format_keyword_string(ticket_name)
+                is_match = True
+
+                for kw in keyword_parts:
+                    formatted_kw = util.format_keyword_string(kw)
+                    if formatted_kw not in row_text:
+                        is_match = False
+                        break
+
+                if is_match:
+                    matched_ticket = ticket_info
+                    is_keyword_matched = True
+                    if show_debug_message:
+                        print(f"[TICKET SELECT]   ✓ Keyword matched: '{ticket_name}'")
+                    break
+
+            if matched_ticket:
+                break  # Early return: first match wins
+
+        if not matched_ticket and show_debug_message:
+            print(f"[TICKET SELECT] All keywords failed to match")
+
+    # Fallback logic (similar to area selection)
+    if not matched_ticket:
+        if area_keyword_array and not area_auto_fallback:
+            # Strict mode: no keyword match and fallback disabled
+            if show_debug_message:
+                print(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
+                print(f"[TICKET SELECT] No ticket type selected")
+            return False, None
+        else:
+            # Fallback enabled or no keyword specified
+            if area_keyword_array and show_debug_message:
+                print(f"[TICKET SELECT] area_auto_fallback=true, using fallback selection")
+
+            # Select based on auto_select_mode
+            matched_ticket = util.get_target_item_from_matched_list(
+                [t['select'] for t in valid_ticket_types],
+                auto_select_mode
+            )
+            # Find the ticket_info for the matched select
+            for ticket_info in valid_ticket_types:
+                if ticket_info['select'] == matched_ticket:
+                    matched_ticket = ticket_info
+                    break
+
+            if show_debug_message and matched_ticket:
+                selection_type = "fallback" if area_keyword_array else "mode-based"
+                print(f"[TICKET SELECT] Selected ticket type ({selection_type}): '{matched_ticket['name']}'")
+
+    # Use the matched ticket select
+    select_obj = matched_ticket['select'] if matched_ticket else None
+    form_select_count = len(valid_ticket_types)
 
     # 檢查是否已經選擇了票券數量（非 "0"）
     if form_select_count > 0:
