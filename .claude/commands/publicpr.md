@@ -273,30 +273,34 @@ URL: https://github.com/bouob/tickets_hunter.git
 
 #### A. 生成 PR 標題和描述
 
-**PR 標題格式**（繁體中文）：
+**PR 標題格式**（英文）：
 ```
-[Public Release] 發布 [日期] 更新
+chore(release): sync public repo with [date] updates
 ```
 
-**PR 描述格式**（繁體中文）：
+**範例**：
+- `chore(release): sync public repo with 2025-11-08 updates`
+- `chore(release): sync public repo with Nov 8, 2025 updates`
+
+**PR 描述格式**（繁體中文，標題可用 emoji，內容不用）：
 ```markdown
 ## 📋 變更摘要
 
 本次發布包含以下更新：
 
-### ✨ 新功能
+### 新功能
 - 新增 TicketPlus 平台支援
 
-### 🐛 錯誤修復
+### 錯誤修復
 - 修正 OCR 超時問題
 
-### ♻️ 重構
+### 重構
 - 改善錯誤處理機制
 
-### 🧪 測試
+### 測試
 - 新增整合測試
 
-### 📝 文件
+### 文件
 - 更新 README
 
 ---
