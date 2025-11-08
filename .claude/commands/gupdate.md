@@ -48,7 +48,7 @@ grep "CONST_APP_VERSION" src/nodriver_tixcraft.py | head -1
 grep "CONST_APP_VERSION" src/config_launcher.py | head -1
 grep "CONST_APP_VERSION" src/settings.py | head -1
 grep "版本.*TicketsHunter" README.md | head -1
-grep "TicketsHunter" src/www/settings.html | grep -v "<" | head -1
+grep "版本.*Tickets Hunter" src/www/settings.html | head -1
 grep "^版本：" build_scripts/README_Release.txt
 grep "^最後更新：" build_scripts/README_Release.txt
 ```
@@ -87,7 +87,7 @@ grep "CONST_APP_VERSION" src/chrome_tixcraft.py | head -1
 grep "CONST_APP_VERSION" src/nodriver_tixcraft.py | head -1
 grep "CONST_APP_VERSION" src/config_launcher.py | head -1
 grep "CONST_APP_VERSION" src/settings.py | head -1
-grep "TicketsHunter" src/www/settings.html | grep -v "<" | head -1
+grep "版本.*Tickets Hunter" src/www/settings.html | head -1
 grep "^版本：" build_scripts/README_Release.txt
 grep "^最後更新：" build_scripts/README_Release.txt
 ```
@@ -140,9 +140,19 @@ CONST_APP_VERSION = "TicketsHunter (當前日期)"
 
 ### settings.html
 
-**行 79** - 網頁介面版本：
+**行 141** - 網頁介面版本（注意：有空格）：
 ```html
-TicketsHunter (YYYY.MM.DD)
+Tickets Hunter (YYYY.MM.DD)
+```
+
+**搜尋模式**：
+```html
+<strong>版本</strong>：Tickets Hunter (YYYY.MM.DD)
+```
+
+**替換為**：
+```html
+<strong>版本</strong>：Tickets Hunter (當前日期)
 ```
 
 ### README_Release.txt
@@ -191,7 +201,7 @@ CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 **⚡ 版本**：TicketsHunter (2025.10.17)
-TicketsHunter (2025.10.17)
+<strong>版本</strong>：Tickets Hunter (2025.10.17)
 版本：2025.10.17
 最後更新：2025-10-17
 
@@ -210,7 +220,7 @@ CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 **⚡ 版本**：TicketsHunter (2025.10.18)
-TicketsHunter (2025.10.18)
+<strong>版本</strong>：Tickets Hunter (2025.10.18)
 版本：2025.10.18
 最後更新：2025-10-18
 
