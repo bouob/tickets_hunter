@@ -47,7 +47,6 @@ grep "CONST_APP_VERSION" src/chrome_tixcraft.py | head -1
 grep "CONST_APP_VERSION" src/nodriver_tixcraft.py | head -1
 grep "CONST_APP_VERSION" src/config_launcher.py | head -1
 grep "CONST_APP_VERSION" src/settings.py | head -1
-grep "版本.*TicketsHunter" README.md | head -1
 grep "版本.*Tickets Hunter" src/www/settings.html | head -1
 grep "^版本：" build_scripts/README_Release.txt
 grep "^最後更新：" build_scripts/README_Release.txt
@@ -55,16 +54,15 @@ grep "^最後更新：" build_scripts/README_Release.txt
 
 ### 3. 更新所有檔案
 
-使用當前日期更新所有 7 個檔案：
+使用當前日期更新所有 6 個檔案：
 
 **目標檔案清單**：
 1. `src/chrome_tixcraft.py` (行 47)
 2. `src/nodriver_tixcraft.py` (行 36)
 3. `src/config_launcher.py` (行 27)
 4. `src/settings.py` (行 42)
-5. `README.md` (行 5, 484)
-6. `src/www/settings.html` (行 79)
-7. `build_scripts/README_Release.txt` (行 230-231)
+5. `src/www/settings.html` (行 79)
+6. `build_scripts/README_Release.txt` (行 230-231)
 
 **格式**：`CONST_APP_VERSION = "TicketsHunter (YYYY.MM.DD)"`
 
@@ -111,7 +109,7 @@ git status --short
 ```
 
 **預期結果**：
-- 所有 7 個檔案的版本號更新為今天日期
+- 所有 6 個檔案的版本號更新為今天日期
 - 顯示更新前後的版本號對比
 - 顯示 Git 狀態
 
@@ -122,7 +120,7 @@ git status --short
 ```
 
 **預期結果**：
-- 所有 7 個檔案的版本號更新為指定日期 (2025.10.20)
+- 所有 6 個檔案的版本號更新為指定日期 (2025.10.20)
 
 ## 🎯 更新邏輯
 
@@ -187,7 +185,7 @@ Tickets Hunter (YYYY.MM.DD)
    - Commit 訊息格式：`🔖 Update version to TicketsHunter (YYYY.MM.DD)`
 
 4. **檢查清單**：
-   - [ ] 確認所有 7 個檔案都已更新
+   - [ ] 確認所有 6 個檔案都已更新
    - [ ] 驗證日期格式正確（注意 README_Release.txt 使用連字號）
    - [ ] 檢查 Git 狀態無誤
    - [ ] 建立版本更新 commit
@@ -200,7 +198,6 @@ CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
-**⚡ 版本**：TicketsHunter (2025.10.17)
 <strong>版本</strong>：Tickets Hunter (2025.10.17)
 版本：2025.10.17
 最後更新：2025-10-17
@@ -210,7 +207,6 @@ CONST_APP_VERSION = "TicketsHunter (2025.10.17)"
 ✓ 已更新 src/nodriver_tixcraft.py
 ✓ 已更新 src/config_launcher.py
 ✓ 已更新 src/settings.py
-✓ 已更新 README.md
 ✓ 已更新 src/www/settings.html
 ✓ 已更新 build_scripts/README_Release.txt
 
@@ -219,13 +215,11 @@ CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
 CONST_APP_VERSION = "TicketsHunter (2025.10.18)"
-**⚡ 版本**：TicketsHunter (2025.10.18)
 <strong>版本</strong>：Tickets Hunter (2025.10.18)
 版本：2025.10.18
 最後更新：2025-10-18
 
 === Git 狀態 ===
- M README.md
  M build_scripts/README_Release.txt
  M src/chrome_tixcraft.py
  M src/config_launcher.py
