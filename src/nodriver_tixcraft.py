@@ -6941,7 +6941,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         print("date_keyword:", date_keyword)
         print("auto_select_mode:", auto_select_mode)
 
-    # Step 1: Initial wait and check if buttons already exist
+    # Step 1: Initial wait for Angular to initialize
     if show_debug_message:
         print("[IBON DATE PIERCE] Waiting for Angular to initialize...")
 
@@ -6949,38 +6949,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     initial_wait = random.uniform(1.2, 1.8)
     await tab.sleep(initial_wait)
 
-    # Check if buttons already exist before scrolling (optimization)
-    buttons_exist = False
-    try:
-        search_id, result_count = await tab.send(cdp.dom.perform_search(
-            query='button.btn-buy',
-            include_user_agent_shadow_dom=True
-        ))
-        try:
-            await tab.send(cdp.dom.discard_search_results(search_id=search_id))
-        except:
-            pass
-        buttons_exist = (result_count > 0)
-        if show_debug_message and buttons_exist:
-            print(f"[IBON DATE PIERCE] Buttons already loaded ({result_count} found), skipping scroll")
-    except:
-        pass
-
-    # Step 2: Scroll to trigger lazy loading only if buttons not found
-    if not buttons_exist:
-        try:
-            await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-            await tab  # Sync state
-            if show_debug_message:
-                print("[IBON DATE PIERCE] Scrolled to bottom")
-            # Scroll back to top for better UX
-            await tab.evaluate('window.scrollTo(0, 0);')
-            if show_debug_message:
-                print("[IBON DATE PIERCE] Scrolled back to top")
-        except:
-            pass
-
-    # Step 3: Intelligent waiting - poll for button presence using CDP search
+    # Step 2: Poll and wait for button presence using CDP search
     # Must use CDP perform_search to penetrate Shadow DOM (regular JS querySelectorAll won't work)
     max_wait = 5  # Max 5 seconds additional wait
     check_interval = 0.3
@@ -7387,44 +7356,13 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
     is_date_assigned = False
 
-    # Balanced wait for page to load (1.2-1.8s: stable for slower Angular pages, ~20% faster than original 1.5-2.0s)
+    # Wait for page to load (1.2-1.8s: stable for slower Angular pages)
     wait_time = random.uniform(1.2, 1.8)
     if show_debug_message:
         print(f"[IBON DATE] Waiting {wait_time:.2f} seconds for Angular to load...")
     await tab.sleep(wait_time)
 
-    # Check if buttons already exist before scrolling (optimization)
-    buttons_exist = False
-    try:
-        search_id, result_count = await tab.send(cdp.dom.perform_search(
-            query='button.btn-buy',
-            include_user_agent_shadow_dom=True
-        ))
-        try:
-            await tab.send(cdp.dom.discard_search_results(search_id=search_id))
-        except:
-            pass
-        buttons_exist = (result_count > 0)
-        if show_debug_message and buttons_exist:
-            print(f"[IBON DATE] Buttons already loaded ({result_count} found), skipping scroll")
-    except:
-        pass
-
-    # Scroll down to trigger lazy loading only if buttons not found
-    if not buttons_exist:
-        try:
-            await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-            await tab.sleep(0.2)
-            if show_debug_message:
-                print("[IBON DATE] Scrolled to bottom to trigger content loading")
-            # Scroll back to top for better UX
-            await tab.evaluate('window.scrollTo(0, 0);')
-            if show_debug_message:
-                print("[IBON DATE] Scrolled back to top")
-        except:
-            pass
-
-    # Wait for Angular content to render (use CDP search to penetrate Shadow DOM)
+    # Poll and wait for purchase buttons to render (use CDP search to penetrate Shadow DOM)
     content_appeared = False
     max_wait = 2  # Max 2 seconds wait (reduced from 10s)
     check_interval = 0.3
