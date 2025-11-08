@@ -9283,55 +9283,48 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
-            import json
-            # Parse keywords - support multiple formats:
-            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-            # 2. keyword1,keyword2,keyword3 (without quotes)
-            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
+            # Upper layer (line 10908) splits by comma using JSON parsing:
+            #   Input: "\"5600\",\"5,600\""
+            #   After JSON: ["5600", "5,600"]
+            #   This function is called once per keyword: "5600" or "5,600"
+            #
+            # DO NOT split by comma again here, or "5,600" becomes ['5', '600'] (BUG!)
+            # Only support space-separated AND logic within each keyword
+
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Treat the entire string as a single keyword
+            keyword_item = area_keyword_clean
 
             if show_debug_message:
-                print(f"[IBON AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON AREA KEYWORD] Checking keyword: {keyword_item}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all areas for this keyword
+            for area in valid_areas:
+                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = util.format_keyword_string(row_text)
 
-                # Check all areas for this keyword
-                for area in valid_areas:
-                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-                    row_text = util.format_keyword_string(row_text)
+                # Support AND logic with space-separated sub-keywords
+                # Example: "VIP 區" → ['VIP', '區'] → must match both
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
-                    # Support both AND (space) and OR (semicolon) logic
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T013: Keyword matched log - IMMEDIATELY select and stop
-                        matched_areas = [area]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # Keyword matched - IMMEDIATELY select and stop
+                    matched_areas = [area]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                        print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
-            # T014: All keywords failed log
+            # All keywords failed log
             if not target_found:
                 if show_debug_message:
-                    print(f"[IBON AREA KEYWORD] All keywords failed to match")
+                    print(f"[IBON AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
             if show_debug_message:
                 print(f"[IBON AREA] Keyword parse error: {e}")
