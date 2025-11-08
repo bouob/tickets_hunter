@@ -15,6 +15,7 @@ assignees: 'bouob'
 3. 預期應該要：
 
 ## 💻 基本資訊
+- Release 版本：[例如：2025.11.07]
 - 作業系統：[Windows/Mac/Linux]
 - 執行方式：[exe執行檔/Python原始碼]
 - Python版本：[如果使用原始碼，請執行 `python --version` 查看]
