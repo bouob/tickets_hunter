@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.06)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.08)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -114,7 +114,7 @@ def get_default_config():
     config_dict["ocr_captcha"]["beta"] = True
     config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
-    config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_UC
+    config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_NODRIVER
 
     config_dict["date_auto_select"] = {}
     config_dict["date_auto_select"]["enable"] = True

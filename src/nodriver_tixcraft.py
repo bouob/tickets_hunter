@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.06)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.08)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -80,6 +80,8 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*tagtoo.co/*",
 "*ticketmaster.sg/js/adblock*",
 "*ticketmaster.sg/js/adblock.js*",
+"*ticketmaster.sg/js/ads.js*",
+"*ticketmaster.sg/epsf/asset/eps.js*",
 "*tixcraft.com/js/analytics.js*",
 "*tixcraft.com/js/common.js*",
 "*tixcraft.com/js/custom.js*",
@@ -1704,11 +1706,12 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
                 print(f"[KKTIX DATE FALLBACK] Selecting available session based on date_select_order='{auto_select_mode}'")
             matched_blocks = formated_session_list
         else:
-            # T019: Fallback disabled - strict mode (do not select anything)
+            # T019: Fallback disabled - strict mode (no selection, but continue to check for reload)
             if show_debug_message:
                 print(f"[KKTIX DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[KKTIX DATE SELECT] Waiting for manual intervention")
-            return False  # Return immediately without selection
+                print(f"[KKTIX DATE SELECT] No date selected, will check if reload needed")
+            # Don't return - let the function continue to check if selection succeeded
+            # matched_blocks remains empty (no selection will be made)
 
     # DEPRECATED: Old unconditional fallback logic
     # Will be removed after 2 weeks (2025-11-14)
@@ -2141,16 +2144,22 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             print(f"[KKTIX AREA FALLBACK] Selecting available ticket based on area_select_order='{auto_select_mode}'")
                         is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
                     else:
-                        # T023: Fallback disabled - strict mode (do not select anything)
+                        # T023: Fallback disabled - strict mode (no selection, but still reload)
                         if show_debug_message:
                             print(f"[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                            print(f"[KKTIX AREA SELECT] Waiting for manual intervention")
-                        # Return without modifying is_need_refresh
-                        return fail_list, played_sound_ticket
+                            print(f"[KKTIX AREA SELECT] No area selected, will reload page and retry")
+                        # Don't return - let reload logic execute below
+                        # is_ticket_number_assigned remains False (no selection made)
+                        # Continue to line 2261 where is_need_refresh check happens
+                else:
+                    # T024: is_need_refresh_final=False but no ticket assigned (all options sold out or excluded)
+                    if show_debug_message:
+                        print(f"[KKTIX AREA FALLBACK] No available options after exclusion")
+                        print(f"[KKTIX AREA SELECT] Will reload page and retry")
 
                 # If fallback still failed (or was attempted), then refresh
                 if not is_ticket_number_assigned:
-                    is_need_refresh = is_need_refresh_final
+                    is_need_refresh = True  # Always reload when no ticket assigned
 
             # DEPRECATED: Old unconditional fallback logic
             # Will be removed after 2 weeks (2025-11-14)
@@ -2731,8 +2740,15 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 # Check coming soon
                 if all(cond in row_text for cond in coming_soon_condictions_list):
                     is_coming_soon = True
+                    if show_debug_message:
+                        print(f"[DATE SELECT] Detected coming soon countdown")
                     if auto_reload_coming_soon_page_enable:
+                        if show_debug_message:
+                            print(f"[DATE SELECT] auto_reload_coming_soon_page=true, will reload and retry")
                         break
+                    else:
+                        # Skip this row (don't add to formated_area_list)
+                        continue
 
                 # Check if row has ticket text
                 row_is_enabled = any(text in row_text for text in find_ticket_text_list)
@@ -2870,19 +2886,27 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 print(f"[DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
             matched_blocks = formated_area_list
         else:
-            # T019: Fallback disabled - strict mode (do not select anything)
+            # T019: Fallback disabled - strict mode (no selection, but still reload)
             if show_debug_message:
                 print(f"[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[DATE SELECT] Waiting for manual intervention")
-            return False  # Return immediately without selection
+                print(f"[DATE SELECT] No date selected, will reload page and retry")
+            # Don't return - let reload logic execute below
+            # matched_blocks remains None (no selection will be made)
 
-    # T020: Handle case when formated_area_list is empty or None (all options excluded)
+    # T020: Handle case when formated_area_list is empty or None (all options excluded or sold out)
     if formated_area_list is None or len(formated_area_list) == 0:
         if show_debug_message:
             print(f"[DATE FALLBACK] No available options after exclusion")
-        return False
-
-    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+            print(f"[DATE SELECT] Will reload page and retry")
+        # Don't return - let reload logic execute at function end
+        is_date_clicked = False
+        target_area = None  # Skip selection when no options available
+    elif matched_blocks is None or len(matched_blocks) == 0:
+        # matched_blocks is None when fallback=false and keyword didn't match
+        target_area = None
+        is_date_clicked = False
+    else:
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     if show_debug_message:
         if target_area and matched_blocks:
@@ -2989,6 +3013,19 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 print("[DATE SELECT] All click methods failed")
                 print(f"[DATE SELECT] ========================================")
 
+    # Auto refresh if no date was selected (for strict mode or sold out scenarios)
+    if not is_date_clicked:
+        if show_debug_message:
+            print(f"[DATE SELECT] No date selected, reloading page...")
+        try:
+            await tab.reload()
+        except:
+            pass
+
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            await asyncio.sleep(interval)
+
     return is_date_clicked
 
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
@@ -3088,24 +3125,29 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
                 is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
                 is_fallback_selection = True  # Mark as fallback selection
             else:
-                # T023: Fallback disabled - strict mode (do not select anything)
+                # T023: Fallback disabled - strict mode (no selection, but still reload)
                 if show_debug_message:
                     print(f"[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                    print(f"[AREA SELECT] Waiting for manual intervention")
-                return False  # Return immediately without selection
+                    print(f"[AREA SELECT] No area selected, will reload page and retry")
+                # Don't return - let reload logic execute below
+                # matched_blocks remains None (no selection will be made)
+                # is_need_refresh remains True (will trigger reload)
     else:
         is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
         # No keyword specified, treat as mode-based selection (similar to fallback)
         if not area_keyword:
             is_fallback_selection = True
 
-    # T024: Handle case when matched_blocks is empty or None (all options excluded)
+    # T024: Handle case when matched_blocks is empty or None (all options excluded or sold out)
     if matched_blocks is None or len(matched_blocks) == 0:
         if show_debug_message:
             print(f"[AREA FALLBACK] No available options after exclusion")
-        return False
-
-    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+            print(f"[AREA SELECT] Will reload page and retry")
+        # Don't return - let reload logic execute below
+        is_need_refresh = True  # Ensure reload will happen
+        target_area = None  # Skip selection when no options available
+    else:
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if target_area:
         # T013: Log selected area with selection type
         if show_debug_message:
@@ -4465,11 +4507,12 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                     print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
                 matched_blocks = formated_area_list
             else:
-                # T019: Fallback disabled - strict mode
+                # T019: Fallback disabled - strict mode (no selection, but continue to JavaScript)
                 if show_debug_message:
                     print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                    print(f"[TicketPlus DATE SELECT] Waiting for manual intervention")
-                return False
+                    print(f"[TicketPlus DATE SELECT] No date selected, will check if reload needed")
+                # Don't return - let JavaScript handle the logic and return is_date_clicked=False
+                # JavaScript will return {success: false, strict_mode: true}
     else:
         if show_debug_message:
             print("date date-time-position is None or empty")
@@ -4546,9 +4589,9 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                             console.log('[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback');
                             matchedContainers = sessionContainers;
                         }} else {{
-                            // T019: Fallback disabled - strict mode
+                            // T019: Fallback disabled - strict mode (no selection, will reload)
                             console.log('[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus DATE SELECT] Waiting for manual intervention');
+                            console.log('[TicketPlus DATE SELECT] No date selected, will reload page and retry');
                             return {{
                                 success: false,
                                 error: 'No keyword matches and fallback is disabled',
@@ -7218,11 +7261,11 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                 print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=true, triggering auto fallback")
             matched_buttons = enabled_buttons
         else:
-            # T019: Fallback disabled - strict mode
+            # T019: Fallback disabled - strict mode (no selection, will reload)
             if show_debug_message:
                 print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[IBON DATE PIERCE SELECT] Waiting for manual intervention")
-            return False
+                print(f"[IBON DATE PIERCE SELECT] No date selected, will reload page and retry")
+            return False  # Return False to trigger reload logic in caller
 
     # Step 9: Select target based on mode
     if auto_select_mode == "random":
@@ -7619,14 +7662,11 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                 print(f"[IBON DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
             matched_buttons = enabled_buttons
         else:
-            # T019: Fallback disabled - strict mode (do not select anything)
+            # T019: Fallback disabled - strict mode (no selection, will reload)
             if show_debug_message:
                 print(f"[IBON DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[IBON DATE SELECT] Waiting for manual intervention")
-            # T020: No available options after keyword matching failed
-            if show_debug_message:
-                print(f"[IBON DATE FALLBACK] No available options after keyword matching")
-            return False
+                print(f"[IBON DATE SELECT] No date selected, will reload page and retry")
+            return False  # Return False to trigger reload logic in caller
 
     # Step 8: Select target button based on mode
     if auto_select_mode == "random":
@@ -8776,10 +8816,10 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 print(f"[IBON EVENT AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
             matched_areas = valid_areas
         else:
-            # T023: Fallback disabled - strict mode (do not select anything)
+            # T023: Fallback disabled - strict mode (no selection, will reload)
             if show_debug_message:
                 print(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                print(f"[IBON EVENT AREA SELECT] Waiting for manual intervention")
+                print(f"[IBON EVENT AREA SELECT] No area selected, will reload page and retry")
             # T024: No available options after keyword matching failed
             if len(valid_areas) == 0:
                 if show_debug_message:
@@ -9358,10 +9398,10 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 print(f"[IBON AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
             matched_areas = valid_areas
         else:
-            # T023: Fallback disabled - strict mode (do not select anything)
+            # T023: Fallback disabled - strict mode (no selection, will reload)
             if show_debug_message:
                 print(f"[IBON AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                print(f"[IBON AREA SELECT] Waiting for manual intervention")
+                print(f"[IBON AREA SELECT] No area selected, will reload page and retry")
             # T024: No available options after keyword matching failed
             if len(valid_areas) == 0:
                 if show_debug_message:
@@ -10900,11 +10940,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                     print(f"[IBON AREA] Falling back to auto_select_mode: {auto_select_mode}")
                                 is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, "")
                             else:
-                                # Feature 003: Fallback disabled - do not select anything
+                                # Feature 003: Fallback disabled - strict mode (no selection, will reload)
                                 show_debug_message = config_dict["advanced"].get("verbose", False)
                                 if show_debug_message:
                                     print(f"[IBON AREA] All keyword groups failed, area_auto_fallback=false")
-                                    print(f"[IBON AREA] Waiting for manual intervention (strict mode)")
+                                    print(f"[IBON AREA] No area selected, will reload page and retry")
                                 # Keep is_price_assign_by_bot=False and is_need_refresh=True
                                 # This will trigger page reload in the outer loop
                 else:
@@ -11224,11 +11264,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                     print(f"[IBON EVENT] Falling back to auto_select_mode: {auto_select_mode}")
                                 is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, "")
                             else:
-                                # Feature 003: Fallback disabled - do not select anything
+                                # Feature 003: Fallback disabled - strict mode (no selection, will reload)
                                 show_debug_message = config_dict["advanced"].get("verbose", False)
                                 if show_debug_message:
                                     print(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=false")
-                                    print(f"[IBON EVENT] Waiting for manual intervention (strict mode)")
+                                    print(f"[IBON EVENT] No area selected, will reload page and retry")
                                 # Keep is_price_assign_by_bot=False and is_need_refresh=True
                                 # This will trigger page reload in the outer loop
                 else:
@@ -12412,11 +12452,11 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                     print(f"[KHAM DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
                 matched_blocks = formated_area_list
             else:
-                # Fallback disabled - strict mode (do not select anything)
+                # Fallback disabled - strict mode (no selection, will reload)
                 if show_debug_message:
                     print(f"[KHAM DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                    print(f"[KHAM DATE SELECT] Waiting for manual intervention")
-                return False  # Return immediately without selection
+                    print(f"[KHAM DATE SELECT] No date selected, will reload page and retry")
+                return False  # Return False to trigger reload logic in caller
 
     # Handle case when formated_area_list is empty or None (all options excluded)
     if formated_area_list is None or len(formated_area_list) == 0:
@@ -12729,11 +12769,11 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                             print(f"[KHAM AREA FALLBACK] Selecting from {len(available_options)} available options using mode='{auto_select_mode}'")
                         matched_options = available_options
                     else:
-                        # Fallback disabled - strict mode (wait for manual intervention)
+                        # Fallback disabled - strict mode (no selection, will reload)
                         if show_debug_message:
                             print(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (dropdown)")
-                            print(f"[KHAM AREA SELECT] Waiting for manual intervention")
-                        return False, False, False
+                            print(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
+                        return False, False, False  # Return to trigger reload logic
                 else:
                     # No available options (all excluded)
                     if show_debug_message:
@@ -12983,12 +13023,11 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                             print(f"[KHAM AREA FALLBACK] Selecting from {len(final_rows)} available rows using mode='{auto_select_mode}'")
                         matched_blocks = final_rows
                     else:
-                        # Fallback disabled - strict mode (wait for manual intervention)
-                        # This prevents infinite refresh loop
+                        # Fallback disabled - strict mode (no selection, will reload)
                         if show_debug_message:
                             print(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (table)")
-                            print(f"[KHAM AREA SELECT] Waiting for manual intervention (no refresh)")
-                        return False, False, False
+                            print(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
+                        return False, False, False  # Return to trigger reload logic
                 else:
                     # No available rows (all filtered out or sold out)
                     if show_debug_message:
@@ -13188,10 +13227,10 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
             # is_need_refresh=False, is_price_assign_by_bot=False, is_keyword_matched=False
             if not is_need_refresh and not is_price_assign_by_bot:
                 if is_last_keyword:
-                    # Last keyword failed in strict mode - stop
+                    # Last keyword failed in strict mode - will reload
                     if show_debug_message:
                         print(f"[KHAM PERFORMANCE] All keywords exhausted, strict mode stops")
-                        print(f"[KHAM PERFORMANCE] Waiting for manual intervention")
+                        print(f"[KHAM PERFORMANCE] Will reload page and retry")
                     break
                 else:
                     # Not last keyword - continue trying
@@ -16537,6 +16576,12 @@ async def nodrver_block_urls(tab, config_dict):
         '*player.youku.*',
         '*syndication.twitter.com/*',
         '*youtube.com/*',
+        '*ticketmaster.sg/js/adblock*',
+        '*ticketmaster.sg/js/adblock.js*',
+        '*ticketmaster.sg/js/ads.js*',
+        '*ticketmaster.sg/epsf/asset/eps.js*',
+        '*ticketmaster.com/js/ads.js*',
+        '*ticketmaster.com/epsf/asset/eps.js*',
     ]
 
     if config_dict["advanced"]["hide_some_image"]:

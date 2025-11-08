@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Q&A / 問題解答
+    url: https://github.com/bouob/tickets_hunter/discussions/categories/q-a
+    about: 有使用上的疑問？先在 Discussions Q&A 提問，社群成員會協助解答
+  - name: 💡 Ideas / 功能建議
+    url: https://github.com/bouob/tickets_hunter/discussions/categories/ideas
+    about: 想建議新功能或改進？到 Discussions Ideas 分享你的想法
+  - name: 🎯 Show and Tell / 成功案例
+    url: https://github.com/bouob/tickets_hunter/discussions/categories/show-and-tell
+    about: 成功搶到票？分享你的設定和經驗到 Show and Tell
+  - name: 💬 General / 一般討論
+    url: https://github.com/bouob/tickets_hunter/discussions/categories/general
+    about: 其他任何與專案相關的討論，歡迎到 General 分類
