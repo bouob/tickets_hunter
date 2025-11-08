@@ -8,7 +8,9 @@
 **🚨 嚴正警告**：使用本程式當黃牛或有任何加價轉售牟利行為，本人代表各粉絲祝福您，**早生貴子胎胎都三胞胎**！本程式僅供個人合法使用，嚴禁商業牟利。  
 
 > **💬 需要協助或回報問題？**
-> - 🐛 [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md) - 遇到問題請點這裡
+> - 💬 [加入 Discussions 社群](https://github.com/bouob/tickets_hunter/discussions) - 提問討論、分享經驗、功能建議
+> - 🙋 [Q&A 問題解答](https://github.com/bouob/tickets_hunter/discussions/categories/q-a) - 使用疑問先來這裡問
+> - 🐛 [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md) - 確定是程式錯誤請開 Issue
 > - 🚀 [提出新功能建議](https://github.com/bouob/tickets_hunter/issues/new?template=feature_request.md) - 想要新功能請點這裡
 > - 💬 [查看已知問題](https://github.com/bouob/tickets_hunter/issues?q=is%3Aissue) - 搜尋是否有人遇到相同問題
 > - 📝 [更新紀錄](https://github.com/bouob/tickets_hunter/blob/main/CHANGELOG.md) - 查看版本更新歷史

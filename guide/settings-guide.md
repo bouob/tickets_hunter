@@ -746,6 +746,17 @@ iBon 的 Cookie qware，用於快速登入。
 
 ---
 
+## 💬 需要協助？
+
+遇到問題或有疑問？歡迎到社群尋求協助：
+
+- 🙋 **[Q&A 問題解答](https://github.com/bouob/tickets_hunter/discussions/categories/q-a)** - 使用疑問先來這裡問
+- 💬 **[一般討論](https://github.com/bouob/tickets_hunter/discussions/categories/general)** - 分享使用經驗
+- 🐛 **[回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md)** - 確定是程式錯誤請開 Issue
+- 💡 **[功能建議](https://github.com/bouob/tickets_hunter/discussions/categories/ideas)** - 想要新功能到這裡提案
+
+---
+
 **祝您搶票成功！** 🎉
 
 *最後更新：2025-10-29 | 版本：1.2*
