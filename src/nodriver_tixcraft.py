@@ -6434,8 +6434,18 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
 
                 for (const entry of entries) {
                     if (entry.name && entry.name.includes('apis.ticketplus.com.tw/config/api/')) {
-                        if (entry.name.includes('get?productId=') || entry.name.includes('get?ticketAreaId=')) {
+                        // 支援新格式 API (eventId-based, 2024+ confirmed)
+                        if (entry.name.includes('get?eventId=')) {
                             apiUrl = entry.name;
+                            console.log('[API CHECK] Using new format: eventId-based');
+                            break;
+                        }
+                        // 舊格式 API (productId/ticketAreaId-based, legacy support)
+                        // 保留以確保向下相容，如確認完全停用可移除
+                        if (entry.name.includes('get?productId=') ||
+                            entry.name.includes('get?ticketAreaId=')) {
+                            apiUrl = entry.name;
+                            console.log('[API CHECK] Using legacy format: productId/ticketAreaId-based');
                             break;
                         }
                     }
@@ -6447,10 +6457,30 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
-                // 檢查是否為 pending 狀態
-                if (data.result && data.result.product && data.result.product.length > 0) {
-                    if (data.result.product[0].status === "pending") {
-                        return { isPending: true, reason: 'API status pending' };
+                // 檢查是否為 pending 狀態（支援多種資料結構）
+                if (data.result) {
+                    // 檢查 product 欄位（舊格式）
+                    if (data.result.product && data.result.product.length > 0) {
+                        if (data.result.product[0].status === "pending") {
+                            return { isPending: true, reason: 'API status pending (product)' };
+                        }
+                    }
+
+                    // 檢查 session 欄位（新格式可能使用）
+                    if (data.result.session && data.result.session.length > 0) {
+                        if (data.result.session[0].status === "pending") {
+                            return { isPending: true, reason: 'API status pending (session)' };
+                        }
+                    }
+
+                    // 檢查 event 欄位
+                    if (data.result.event && data.result.event.status === "pending") {
+                        return { isPending: true, reason: 'API status pending (event)' };
+                    }
+
+                    // 檢查 result 直接的 status
+                    if (data.result.status === "pending") {
+                        return { isPending: true, reason: 'API status pending (result)' };
                     }
                 }
 
@@ -6762,21 +6792,88 @@ async def nodriver_ticketplus_check_next_button(tab):
 
 
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
-    """處理活動專屬代碼 - 直接跳過處理"""
+    """處理活動專屬代碼（折價券/優惠序號）"""
     show_debug_message = config_dict["advanced"]["verbose"]
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
         return False, fail_list, False
 
+    # 讀取折價券代碼設定
+    discount_code = config_dict["advanced"].get("ticketplus_discount_code", "").strip()
+
+    # 如果沒有設定折價券代碼，直接跳過
+    if not discount_code:
+        if show_debug_message:
+            print("[DISCOUNT CODE] No discount code configured, skipping")
+        return False, fail_list, False
+
     if show_debug_message:
-        print("Skipping discount code processing")
+        print(f"[DISCOUNT CODE] Attempting to fill discount code: {discount_code}")
 
-    # 直接返回預設值：未送出答案，原有失敗清單，無彈窗問題
-    is_answer_sent = False
-    is_question_popup = False
+    try:
+        # 轉義 JavaScript 字串，避免注入攻擊
+        escaped_discount_code = discount_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
 
-    return is_answer_sent, fail_list, is_question_popup
+        # 使用 JavaScript 注入填入折價券代碼
+        result = await tab.evaluate(f'''
+            (function() {{
+                const keywords = ['序號', '加購', '優惠'];
+                const discountCode = '{escaped_discount_code}';
+                let filledCount = 0;
+
+                // 策略 1: 透過標籤文字偵測
+                const labelDivs = document.querySelectorAll('.exclusive-code .label');
+                for (let label of labelDivs) {{
+                    const labelText = label.textContent.trim();
+                    const container = label.closest('.exclusive-code');
+                    if (!container) continue;
+
+                    const input = container.querySelector('.v-text-field__slot input[type="text"]');
+
+                    // 檢查是否包含任一關鍵字
+                    const hasKeyword = keywords.some(keyword => labelText.includes(keyword));
+                    if (hasKeyword && input && !input.value) {{
+                        input.value = discountCode;
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        filledCount++;
+                    }}
+                }}
+
+                return {{
+                    success: filledCount > 0,
+                    filledCount: filledCount
+                }};
+            }})()
+        ''')
+
+        # 處理返回結果（可能是 dict 或其他類型）
+        if result:
+            # 確保 result 是字典類型
+            if isinstance(result, dict):
+                success = result.get('success', False)
+                filled_count = result.get('filledCount', 0)
+            else:
+                # 如果返回非 dict，記錄並假設成功
+                if show_debug_message:
+                    print(f"[DISCOUNT CODE] Unexpected result type: {type(result)}, value: {result}")
+                success = True
+                filled_count = 1
+
+            if success and filled_count > 0:
+                if show_debug_message:
+                    print(f"[DISCOUNT CODE] Successfully filled {filled_count} discount code field(s)")
+                return True, fail_list, False
+
+        if show_debug_message:
+            print("[DISCOUNT CODE] No matching discount code fields found on page")
+        return False, fail_list, False
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[DISCOUNT CODE] Error filling discount code: {str(e)}")
+        return False, fail_list, False
 
 async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
