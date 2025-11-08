@@ -63,20 +63,52 @@ git rev-list --count origin/main..HEAD  # 計算未推送的 commits
 - 如果 CHANGELOG.md 不存在 → 自動創建新檔案
 - 如果 git fetch 失敗 → 提示檢查網路連線
 
-### 第二階段：Commit 分析
+### 第二階段：Commit 分析與機敏資料過濾
 
 **分析目標 commits**
 - **預設**：`git log origin/main..HEAD --no-merges`
 - **指定數量**：`git log HEAD~N..HEAD --no-merges`
 
-**Commit 訊息智慧解析**
+**🔒 機敏資料過濾（自動執行）**
+
+**必須排除的 Commits（優先檢查）**：
+1. **PRIVATE 標記識別**
+   - Commit 訊息包含 `🔒 PRIVATE COMMIT`
+   - Commit 訊息包含 `FILTER MARKER FOR /publicpr`
+   - Scope 為 `(private)` 的 commits（如 `docs(private):`）
+
+2. **機敏檔案變更檢測**
+   - 使用 `git show <commit> --name-only` 檢查變更檔案
+   - 排除僅修改以下路徑的 commits：
+     - `.claude/` - Claude 自動化設定
+     - `CLAUDE.md` - 專案開發規範
+     - `docs/` - 技術文件和指南
+     - `.specify/` - 規格模板和指令碼
+     - `specs/` - 功能規格和設計文件
+     - `FAQ/` - 常見問題解答
+     - `.temp/` - 臨時測試資料
+
+3. **混合 Commits 處理**
+   - 如果 commit 同時包含公開和機敏檔案變更
+   - **僅提取公開檔案的變更說明**
+   - 在 CHANGELOG 中不提及機敏檔案的修改
+
+**過濾後顯示**：
+```
+🔍 Commit 分析結果:
+  ✅ 共 10 個 commits
+  🔒 跳過 3 個 PRIVATE commits
+  ✅ 將分析 7 個公開 commits
+```
+
+**Commit 訊息智慧解析（僅公開 commits）**
 
 **🎯 核心分類（優先生成）：**
 - ✨ **新功能 (feat)** - 新增功能、平台支援、重要改善
 - 🐛 **Bug 修復 (fix)** - 問題修正、錯誤處理、穩定性改善
 
 **📋 次要分類（選擇性）：**
-- 📝 **文件更新 (docs)** - 使用者文件、指南改善
+- 📝 **文件更新 (docs)** - 使用者文件、指南改善（僅公開文件）
 - 🔧 **配置變更 (chore)** - 設定檔調整、工具更新
 - 💄 **UI/樣式 (style)** - 介面優化、視覺改善
 - ♻️ **重構 (refactor)** - 程式碼重構（僅當影響使用者時才記錄）
@@ -260,6 +292,7 @@ git rev-list --count origin/main..HEAD  # 計算未推送的 commits
 - ✅ **智慧分類** - 自動識別變更類型和重要程度
 - ✅ **歷史保護** - 絕不修改 CHANGELOG 的舊版本條目
 - ✅ **預覽確認** - 更新前必須經過使用者確認
+- 🔒 **機敏資料過濾** - 自動排除 PRIVATE commits 和機敏檔案變更
 
 ---
 
@@ -273,5 +306,6 @@ git rev-list --count origin/main..HEAD  # 計算未推送的 commits
 - 自動轉換技術性 commit 為使用者友善的描述
 - **預覽確認機制**：更新前可檢查並調整內容
 - 完全保護歷史記錄，僅插入新條目
+- **自動過濾機敏資料**：排除 PRIVATE commits 和內部文件變更
 
 $ARGUMENTS
