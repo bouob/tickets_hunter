@@ -48,6 +48,16 @@
   - Bootstrap Select 參數序列化問題
   - UTK0202 頁面完整流程分析
 
+- **[TicketPlus 日期選擇修復 (2025-10-25)](ticketplus_date_selection_fix_2025-10-25.md)**
+  - 日期關鍵字匹配失敗修復
+  - 雙重過濾邏輯問題
+  - NoDriver + CDP 實作
+
+- **[TicketPlus 折價券輸入功能實作 (2025-11-08)](ticketplus_discount_code_implementation_2025-11-08.md)**
+  - 優惠序號/加購序號自動填入
+  - API 檢查邏輯修復 (eventId 格式)
+  - 完整流程圖與實作細節
+
 ---
 
 ## 🔧 其他常見問題
@@ -158,4 +168,4 @@ chmod +x *.py
 
 ---
 
-**最後更新：** 2025-10-31
+**最後更新：** 2025-11-09
