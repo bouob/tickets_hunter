@@ -6941,7 +6941,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         print("date_keyword:", date_keyword)
         print("auto_select_mode:", auto_select_mode)
 
-    # Step 1: Initial wait and scroll to trigger Angular rendering
+    # Step 1: Initial wait and check if buttons already exist
     if show_debug_message:
         print("[IBON DATE PIERCE] Waiting for Angular to initialize...")
 
@@ -6949,14 +6949,36 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     initial_wait = random.uniform(1.2, 1.8)
     await tab.sleep(initial_wait)
 
-    # Step 2: Scroll to trigger lazy loading
+    # Check if buttons already exist before scrolling (optimization)
+    buttons_exist = False
     try:
-        await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-        await tab  # Sync state
-        if show_debug_message:
-            print("[IBON DATE PIERCE] Scrolled to bottom")
+        search_id, result_count = await tab.send(cdp.dom.perform_search(
+            query='button.btn-buy',
+            include_user_agent_shadow_dom=True
+        ))
+        try:
+            await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+        except:
+            pass
+        buttons_exist = (result_count > 0)
+        if show_debug_message and buttons_exist:
+            print(f"[IBON DATE PIERCE] Buttons already loaded ({result_count} found), skipping scroll")
     except:
         pass
+
+    # Step 2: Scroll to trigger lazy loading only if buttons not found
+    if not buttons_exist:
+        try:
+            await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
+            await tab  # Sync state
+            if show_debug_message:
+                print("[IBON DATE PIERCE] Scrolled to bottom")
+            # Scroll back to top for better UX
+            await tab.evaluate('window.scrollTo(0, 0);')
+            if show_debug_message:
+                print("[IBON DATE PIERCE] Scrolled back to top")
+        except:
+            pass
 
     # Step 3: Intelligent waiting - poll for button presence using CDP search
     # Must use CDP perform_search to penetrate Shadow DOM (regular JS querySelectorAll won't work)
@@ -7371,43 +7393,70 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
         print(f"[IBON DATE] Waiting {wait_time:.2f} seconds for Angular to load...")
     await tab.sleep(wait_time)
 
-    # Scroll down to trigger lazy loading
+    # Check if buttons already exist before scrolling (optimization)
+    buttons_exist = False
     try:
-        await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-        # Reduced wait after scroll (0.5s -> 0.2s) as scroll is immediate
-        await tab.sleep(0.2)
-        if show_debug_message:
-            print("[IBON DATE] Scrolled to bottom to trigger content loading")
+        search_id, result_count = await tab.send(cdp.dom.perform_search(
+            query='button.btn-buy',
+            include_user_agent_shadow_dom=True
+        ))
+        try:
+            await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+        except:
+            pass
+        buttons_exist = (result_count > 0)
+        if show_debug_message and buttons_exist:
+            print(f"[IBON DATE] Buttons already loaded ({result_count} found), skipping scroll")
     except:
         pass
 
-    # Wait for Angular content to render (check for .tr containers which hold date info)
-    content_appeared = False
-    max_wait_attempts = 20  # 20 * 0.5s = 10 seconds
-    if show_debug_message:
-        print("[IBON DATE] Waiting for date content to render...")
-
-    for attempt in range(max_wait_attempts):
+    # Scroll down to trigger lazy loading only if buttons not found
+    if not buttons_exist:
         try:
-            # Check for .tr containers (which contain date info and buttons)
-            content_check = await tab.evaluate('''
-                () => {
-                    // ibon uses .tr or .d-flex containers for date rows
-                    const containers = document.querySelectorAll('.tr, .d-flex[class*="tr"]');
-                    return containers.length;
-                }
-            ''')
-            if content_check > 0:
+            await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
+            await tab.sleep(0.2)
+            if show_debug_message:
+                print("[IBON DATE] Scrolled to bottom to trigger content loading")
+            # Scroll back to top for better UX
+            await tab.evaluate('window.scrollTo(0, 0);')
+            if show_debug_message:
+                print("[IBON DATE] Scrolled back to top")
+        except:
+            pass
+
+    # Wait for Angular content to render (use CDP search to penetrate Shadow DOM)
+    content_appeared = False
+    max_wait = 2  # Max 2 seconds wait (reduced from 10s)
+    check_interval = 0.3
+    max_attempts = int(max_wait / check_interval)
+    if show_debug_message:
+        print("[IBON DATE] Waiting for purchase buttons to render...")
+
+    for attempt in range(max_attempts):
+        try:
+            # Use CDP search to check button presence (penetrates Shadow DOM, same as pierce method)
+            search_id, result_count = await tab.send(cdp.dom.perform_search(
+                query='button.btn-buy',
+                include_user_agent_shadow_dom=True
+            ))
+
+            # Clean up search
+            try:
+                await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+            except:
+                pass
+
+            if result_count > 0:
                 content_appeared = True
                 if show_debug_message:
-                    print(f"[IBON DATE] Found {content_check} date container(s) after {attempt * 0.5:.1f}s")
+                    print(f"[IBON DATE] Found {result_count} purchase button(s) after {attempt * check_interval:.1f}s")
                 break
         except:
             pass
-        await tab.sleep(0.5)
+        await tab.sleep(check_interval)
 
     if not content_appeared and show_debug_message:
-        print(f"[IBON DATE] No content found after {max_wait_attempts * 0.5}s, proceeding with snapshot anyway...")
+        print(f"[IBON DATE] No buttons found after {max_wait}s, proceeding with snapshot anyway...")
 
     # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
     if show_debug_message:
