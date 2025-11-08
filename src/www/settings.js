@@ -78,6 +78,7 @@ const kham_password = document.querySelector('#kham_password');
 const ticket_password = document.querySelector('#ticket_password');
 const udn_password = document.querySelector('#udn_password');
 const ticketplus_password = document.querySelector('#ticketplus_password');
+const ticketplus_discount_code = document.querySelector('#ticketplus_discount_code');
 const urbtix_password = document.querySelector('#urbtix_password');
 const hkticketing_password = document.querySelector('#hkticketing_password');
 
@@ -220,6 +221,7 @@ function load_settins_to_form(settings)
         ticket_password.value = settings.advanced.ticket_password;
         udn_password.value = settings.advanced.udn_password;
         ticketplus_password.value = settings.advanced.ticketplus_password;
+        ticketplus_discount_code.value = settings.advanced.ticketplus_discount_code || '';
         urbtix_password.value = settings.advanced.urbtix_password;
         hkticketing_password.value = settings.advanced.hkticketing_password;
 
@@ -457,6 +459,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.ticket_password = ticket_password.value;
             settings.advanced.udn_password = udn_password.value;
             settings.advanced.ticketplus_password = ticketplus_password.value;
+            settings.advanced.ticketplus_discount_code = ticketplus_discount_code.value;
             settings.advanced.urbtix_password = urbtix_password.value;
             settings.advanced.hkticketing_password = hkticketing_password.value;
 
@@ -574,6 +577,7 @@ function check_unsaved_fields()
             "ticket_password",
             "udn_password",
             "ticketplus_password",
+            "ticketplus_discount_code",
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
