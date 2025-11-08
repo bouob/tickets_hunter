@@ -541,23 +541,6 @@
           </div>
         </div>
 
-        <div class="row mb-3">
-          <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數
-            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
-              title="目前只有拓元的「日期頁面」與「票價頁面」有支援這個功能。">?</span>
-          </label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="auto_reload_overheat_count" value="" />
-          </div>
-        </div>
-
-        <div class="row mb-3">
-          <label for="auto_reload_overheat_cd" class="col-sm-2 col-form-label">達成最多刷新次數的冷確時間(秒)</label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="auto_reload_overheat_cd" value="" />
-          </div>
-        </div>
-
 
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
@@ -761,6 +744,17 @@
           </div>
         </div>
 
+        <!-- TicketPlus 折價券 -->
+        <div class="row mb-3">
+          <label for="ticketplus_discount_code" class="col-sm-2 col-form-label">TicketPlus 折價券</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" id="ticketplus_discount_code" value="" class="form-control" placeholder="優惠序號 / 加購序號">
+            <small class="form-text text-muted">
+              適用於所有類型的折價券代碼（優惠序號、加購序號等），程式會自動偵測並填入所有符合的輸入欄位
+            </small>
+          </div>
+        </div>
+
       </div>
 
       <!-- tab 5 -->
@@ -873,14 +867,7 @@
               <span class="input-group-text" id="inputGroup-sizing-default">密碼</span>
               <input type="password" id="ticketplus_password" value="" class="form-control" autocomplete="current-password">
             </div>
-            <div class="input-group mt-2">
-              <span class="input-group-text" id="inputGroup-sizing-default">折價券</span>
-              <input type="text" id="ticketplus_discount_code" value="" class="form-control" placeholder="優惠序號 / 加購序號">
-            </div>
             </form>
-            <small class="form-text text-muted">
-              適用於所有類型的折價券代碼（優惠序號、加購序號等），程式會自動偵測並填入所有符合的輸入欄位
-            </small>
           </div>
         </div>
 
