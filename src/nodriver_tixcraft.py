@@ -3059,20 +3059,12 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     matched_blocks = None
 
     if area_keyword:
-        # Parse keywords - support multiple formats:
-        # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-        # 2. keyword1,keyword2,keyword3 (without quotes)
-        # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+        # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
+        # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
+        # Supports OR logic - iterates through keywords until match found (Line 3086-3099)
         try:
-            area_keyword_clean = area_keyword.strip()
-            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
-                area_keyword_clean = area_keyword_clean[1:-1]
-
-            area_keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Use JSON parsing instead of simple comma split to handle keywords with commas
+            area_keyword_array = json.loads("[" + area_keyword + "]")
         except Exception as e:
             if show_debug_message:
                 print(f"[AREA KEYWORD] Parse error: {e}")
@@ -6464,23 +6456,15 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     # 獲取關鍵字設定（修正讀取路徑）
     area_keyword_raw = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
 
-    # Parse keywords - support multiple formats (same as ibon):
-    # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-    # 2. keyword1,keyword2,keyword3 (without quotes)
-    # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+    # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
+    # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
+    # NOTE: JavaScript only supports max 2 keywords with AND logic (keyword1 && keyword2)
     if area_keyword_raw:
         try:
-            area_keyword_clean = area_keyword_raw.strip()
-            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
-                area_keyword_clean = area_keyword_clean[1:-1]
+            # Use JSON parsing instead of simple comma split to handle keywords with commas
+            keyword_array = json.loads("[" + area_keyword_raw + "]")
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space for JavaScript parsing (JS splits by space)
+            # Join with space for JavaScript parsing (JS splits by space into keyword1 and keyword2)
             area_keyword = ' '.join(keyword_array) if len(keyword_array) > 0 else ''
 
             if show_debug_message:
@@ -8698,58 +8682,51 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
-            import json
-            # Parse keywords - support multiple formats:
-            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-            # 2. keyword1,keyword2,keyword3 (without quotes)
-            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
+            # Upper layer (line 11225) splits by comma using JSON parsing:
+            #   Input: "\"5600\",\"5,600\""
+            #   After JSON: ["5600", "5,600"]
+            #   This function is called once per keyword: "5600" or "5,600"
+            #
+            # DO NOT split by comma again here, or "5,600" becomes ['5', '600'] (BUG!)
+            # Only support space-separated AND logic within each keyword
+
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Treat the entire string as a single keyword
+            keyword_item = area_keyword_clean
 
             if show_debug_message:
-                print(f"[IBON EVENT AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON EVENT AREA KEYWORD] Checking keyword: {keyword_item}")
                 print(f"[IBON EVENT AREA KEYWORD] Total valid areas: {len(valid_areas)}")
                 if len(valid_areas) > 0:
                     print(f"[IBON EVENT AREA KEYWORD] First 5 areas: {[a['areaName'] for a in valid_areas[:5]]}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON EVENT AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all areas for this keyword
+            for area in valid_areas:
+                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = util.format_keyword_string(row_text)
 
-                # Check all areas for this keyword
-                for area in valid_areas:
-                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-                    row_text = util.format_keyword_string(row_text)
+                # Support AND logic with space-separated sub-keywords
+                # Example: "VIP 區" → ['VIP', '區'] → must match both
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
-                    # Support both AND (space) and OR (semicolon) logic
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T013: Keyword matched log - IMMEDIATELY select and stop
-                        matched_areas = [area]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON EVENT AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # Keyword matched - IMMEDIATELY select and stop
+                    matched_areas = [area]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON EVENT AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                        print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
-            # T014: All keywords failed log
+            # All keywords failed log
             if not target_found:
                 if show_debug_message:
-                    print(f"[IBON EVENT AREA KEYWORD] All keywords failed to match")
+                    print(f"[IBON EVENT AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
             if show_debug_message:
                 print(f"[IBON EVENT AREA] Keyword parse error: {e}")
@@ -12628,21 +12605,18 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     # Feature 003: Safe access for conditional fallback switch
     area_auto_fallback = config_dict.get('area_auto_fallback', False)
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer JSON parsing (line 13180)
+    # Upper layer at line 13180: area_keyword_array = json.loads("[" + area_keyword + "]")
+    # Then loops through and passes each keyword individually to this function (line 13185-13187)
+    # Therefore, we should NOT split by comma again here - just clean the quotes
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[KHAM AREA] Keyword parse error: {e}")
@@ -14147,21 +14121,17 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # Clean keyword quotes
+    # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
+    # For multiple keywords with OR logic, caller should use JSON parsing and iterate
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[KHAM SEAT TYPE] Keyword parse error: {e}")
@@ -15089,21 +15059,17 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # Clean keyword quotes
+    # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
+    # For multiple keywords with OR logic, caller should use JSON parsing and iterate
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[TICKET SEAT TYPE] Keyword parse error: {e}")
