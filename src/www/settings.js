@@ -32,8 +32,6 @@ const max_dwell_time = document.querySelector('#max_dwell_time');
 const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
 
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
-const auto_reload_overheat_count = document.querySelector('#auto_reload_overheat_count');
-const auto_reload_overheat_cd = document.querySelector('#auto_reload_overheat_cd');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
 const proxy_server_port = document.querySelector('#proxy_server_port');
 const window_size = document.querySelector('#window_size');
@@ -167,8 +165,6 @@ function load_settins_to_form(settings)
         cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
-        auto_reload_overheat_count.value = settings.advanced.auto_reload_overheat_count;
-        auto_reload_overheat_cd.value = settings.advanced.auto_reload_overheat_cd;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
         proxy_server_port.value  = settings.advanced.proxy_server_port;
         window_size.value  = settings.advanced.window_size;
@@ -406,8 +402,6 @@ function save_changes_to_dict(silent_flag)
             settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;
 
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
-            settings.advanced.auto_reload_overheat_count = Number(auto_reload_overheat_count.value);
-            settings.advanced.auto_reload_overheat_cd = Number(auto_reload_overheat_cd.value);
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
             settings.advanced.proxy_server_port = proxy_server_port.value;
             settings.advanced.window_size = window_size.value;
@@ -581,8 +575,6 @@ function check_unsaved_fields()
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
-            "auto_reload_overheat_count",
-            "auto_reload_overheat_cd",
             "reset_browser_interval",
             "proxy_server_port",
             "window_size",
