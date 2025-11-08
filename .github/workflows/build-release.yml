@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # Trigger on tags like v2025.11.03
 
+permissions:
+  contents: write  # Required for creating releases
+
 jobs:
   build-windows:
     runs-on: windows-latest
