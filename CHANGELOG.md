@@ -1,5 +1,19 @@
 # Changelog
 
+## 2025.11.09
+
+- TixCraft SID 輸入驗證：偵測錯誤格式並顯示警告
+- TicketPlus 折價券自動填表及 API 驗證檢查改善
+- TixCraft 票券類型關鍵字匹配支援（IndieVox）
+- 修復關鍵字解析：正確處理逗號分隔的關鍵字值
+- iBon 逗號分隔關鍵字解析修復
+- iBon 日期選擇效能優化與使用者體驗改善
+- NoDriver 自動重載：fallback 禁用或全部門票售完時持續監控
+- TixCraft 自動重載邏輯改善
+- TicketMaster 單座限制移除
+- Bug 回報範本新增版本欄位
+
+
 ## 2025.11.08
 
 ### 🐛 Bug 修復

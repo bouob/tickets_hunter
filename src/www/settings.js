@@ -32,8 +32,6 @@ const max_dwell_time = document.querySelector('#max_dwell_time');
 const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
 
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
-const auto_reload_overheat_count = document.querySelector('#auto_reload_overheat_count');
-const auto_reload_overheat_cd = document.querySelector('#auto_reload_overheat_cd');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
 const proxy_server_port = document.querySelector('#proxy_server_port');
 const window_size = document.querySelector('#window_size');
@@ -78,6 +76,7 @@ const kham_password = document.querySelector('#kham_password');
 const ticket_password = document.querySelector('#ticket_password');
 const udn_password = document.querySelector('#udn_password');
 const ticketplus_password = document.querySelector('#ticketplus_password');
+const ticketplus_discount_code = document.querySelector('#ticketplus_discount_code');
 const urbtix_password = document.querySelector('#urbtix_password');
 const hkticketing_password = document.querySelector('#hkticketing_password');
 
@@ -166,8 +165,6 @@ function load_settins_to_form(settings)
         cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
-        auto_reload_overheat_count.value = settings.advanced.auto_reload_overheat_count;
-        auto_reload_overheat_cd.value = settings.advanced.auto_reload_overheat_cd;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
         proxy_server_port.value  = settings.advanced.proxy_server_port;
         window_size.value  = settings.advanced.window_size;
@@ -220,6 +217,7 @@ function load_settins_to_form(settings)
         ticket_password.value = settings.advanced.ticket_password;
         udn_password.value = settings.advanced.udn_password;
         ticketplus_password.value = settings.advanced.ticketplus_password;
+        ticketplus_discount_code.value = settings.advanced.ticketplus_discount_code || '';
         urbtix_password.value = settings.advanced.urbtix_password;
         hkticketing_password.value = settings.advanced.hkticketing_password;
 
@@ -404,8 +402,6 @@ function save_changes_to_dict(silent_flag)
             settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;
 
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
-            settings.advanced.auto_reload_overheat_count = Number(auto_reload_overheat_count.value);
-            settings.advanced.auto_reload_overheat_cd = Number(auto_reload_overheat_cd.value);
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
             settings.advanced.proxy_server_port = proxy_server_port.value;
             settings.advanced.window_size = window_size.value;
@@ -457,6 +453,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.ticket_password = ticket_password.value;
             settings.advanced.udn_password = udn_password.value;
             settings.advanced.ticketplus_password = ticketplus_password.value;
+            settings.advanced.ticketplus_discount_code = ticketplus_discount_code.value;
             settings.advanced.urbtix_password = urbtix_password.value;
             settings.advanced.hkticketing_password = hkticketing_password.value;
 
@@ -574,11 +571,10 @@ function check_unsaved_fields()
             "ticket_password",
             "udn_password",
             "ticketplus_password",
+            "ticketplus_discount_code",
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
-            "auto_reload_overheat_count",
-            "auto_reload_overheat_cd",
             "reset_browser_interval",
             "proxy_server_port",
             "window_size",
@@ -983,6 +979,28 @@ searchButtons.forEach(btnId => {
             searchQuestion(engine, e);
         }
     });
+});
+
+// TixCraft SID validation
+tixcraft_sid?.addEventListener('input', () => {
+    const warningElement = document.getElementById('tixcraft-sid-warning');
+    const value = tixcraft_sid.value.trim();
+
+    if (value.startsWith('g.')) {
+        // Show warning with fade-in effect
+        warningElement.style.display = 'block';
+        setTimeout(() => {
+            warningElement.classList.add('show');
+        }, 10);
+    } else {
+        // Hide warning with fade-out effect
+        if (warningElement.classList.contains('show')) {
+            warningElement.classList.remove('show');
+            setTimeout(() => {
+                warningElement.style.display = 'none';
+            }, 150);
+        }
+    }
 });
 
 // Clean up when page unloads
