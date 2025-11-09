@@ -138,7 +138,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.08) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.09) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -541,23 +541,6 @@
           </div>
         </div>
 
-        <div class="row mb-3">
-          <label for="auto_reload_overheat_count" class="col-sm-2 col-form-label">每2.5秒最多可以刷新次數
-            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
-              title="目前只有拓元的「日期頁面」與「票價頁面」有支援這個功能。">?</span>
-          </label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="auto_reload_overheat_count" value="" />
-          </div>
-        </div>
-
-        <div class="row mb-3">
-          <label for="auto_reload_overheat_cd" class="col-sm-2 col-form-label">達成最多刷新次數的冷確時間(秒)</label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="auto_reload_overheat_cd" value="" />
-          </div>
-        </div>
-
 
         <div class="row mb-3">
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
@@ -761,6 +744,17 @@
           </div>
         </div>
 
+        <!-- TicketPlus 折價券 -->
+        <div class="row mb-3">
+          <label for="ticketplus_discount_code" class="col-sm-2 col-form-label">TicketPlus 折價券</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input type="text" id="ticketplus_discount_code" value="" class="form-control" placeholder="優惠序號 / 加購序號">
+            <small class="form-text text-muted">
+              適用於所有類型的折價券代碼（優惠序號、加購序號等），程式會自動偵測並填入所有符合的輸入欄位
+            </small>
+          </div>
+        </div>
+
       </div>
 
       <!-- tab 5 -->
@@ -769,6 +763,13 @@
           <label for="tixcraft_sid" class="col-sm-2 col-form-label">拓元家族 cookie SID</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="tixcraft_sid" value="" />
+            <div class="alert alert-warning alert-dismissible fade mt-2" id="tixcraft-sid-warning" role="alert" style="display: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+              </svg>
+              <strong>警告：</strong>您貼上的可能不是正確的 SID！TixCraft SID 不應該以 "g." 開頭。
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
           </div>
         </div>
 

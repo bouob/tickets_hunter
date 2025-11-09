@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.08)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.09)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -3059,20 +3059,12 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     matched_blocks = None
 
     if area_keyword:
-        # Parse keywords - support multiple formats:
-        # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-        # 2. keyword1,keyword2,keyword3 (without quotes)
-        # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+        # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
+        # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
+        # Supports OR logic - iterates through keywords until match found (Line 3086-3099)
         try:
-            area_keyword_clean = area_keyword.strip()
-            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
-                area_keyword_clean = area_keyword_clean[1:-1]
-
-            area_keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Use JSON parsing instead of simple comma split to handle keywords with commas
+            area_keyword_array = json.loads("[" + area_keyword + "]")
         except Exception as e:
             if show_debug_message:
                 print(f"[AREA KEYWORD] Parse error: {e}")
@@ -3403,7 +3395,10 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
     return is_ticket_number_assigned
 
 async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
-    """簡化版本：參考 Chrome 邏輯檢查票券選擇器，並過濾 disabled/售完的選項"""
+    """
+    Enhanced ticket type selection with keyword matching support
+    支援票種關鍵字選擇（indievox 類型 B 頁面：直接跳到 /ticket/ticket/）
+    """
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
@@ -3435,8 +3430,25 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     if show_debug_message and form_select_count > 0:
         print(f"[TICKET SELECT] Found {form_select_count} select element(s)")
 
-    # 過濾掉 disabled 或只有售完選項的 select（使用 NoDriver Element API）
-    valid_selects = []
+    # Get area keyword configuration
+    import json
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+
+    # Parse keywords using JSON
+    area_keyword_array = []
+    if area_keyword:
+        try:
+            area_keyword_array = json.loads("[" + area_keyword + "]")
+            if show_debug_message:
+                print(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Keyword parse error: {e}")
+
+    # 過濾並收集票種資訊（包含票種名稱）
+    valid_ticket_types = []
     sold_out_keywords = ["選購一空", "已售完", "Sold out", "No tickets available", "空席なし", "完売した"]
 
     # 使用 NoDriver Element API 檢查每個 select 元素
@@ -3465,7 +3477,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                     await option_element.update()
                     option_attrs = option_element.attrs or {}
                     option_value = option_attrs.get('value', '')
-                    option_text = option_element.text or ''  # .text 是屬性，不需要 await
+                    option_text = option_element.text or ''
                     option_disabled = 'disabled' in option_attrs
 
                     option_values.append(option_value)
@@ -3482,32 +3494,138 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                         print(f"[TICKET SELECT] Error checking option: {opt_exc}")
                     continue
 
-            if has_valid_option:
-                valid_selects.append(select_element)
-                if show_debug_message:
-                    print(f"[TICKET SELECT] Valid select found: {select_id}")
-            else:
+            if not has_valid_option:
                 if show_debug_message:
                     print(f"[TICKET SELECT] Skipping select (all options sold out or disabled): {select_id}")
-                    print(f"[TICKET SELECT]   Option values: {option_values}")
+                continue
+
+            # 嘗試獲取票種名稱（從父元素 <tr> 中的 <h4> 或 <td> 提取）
+            ticket_type_name = ""
+            try:
+                # 查找父元素 <tr>
+                parent_row = select_element
+                for _ in range(5):  # 最多向上查找 5 層
+                    parent_row = parent_row.parent
+                    if parent_row and parent_row.tag.lower() == 'tr':
+                        break
+
+                if parent_row and parent_row.tag.lower() == 'tr':
+                    # 嘗試找 <h4> 標籤
+                    h4_element = await parent_row.query_selector('h4')
+                    if h4_element:
+                        ticket_type_name = h4_element.text or ""
+                    else:
+                        # 嘗試找 <td class="fcBlue">
+                        td_element = await parent_row.query_selector('td.fcBlue')
+                        if td_element:
+                            ticket_type_name = td_element.text or ""
+
+                    ticket_type_name = ticket_type_name.strip()
+
+            except Exception as name_exc:
+                if show_debug_message:
+                    print(f"[TICKET SELECT] Failed to extract ticket type name: {name_exc}")
+
+            # 加入 valid_ticket_types
+            valid_ticket_types.append({
+                'select': select_element,
+                'id': select_id,
+                'name': ticket_type_name,
+                'index': idx
+            })
+
+            if show_debug_message:
+                print(f"[TICKET SELECT] Valid ticket type: {select_id} - '{ticket_type_name}'")
 
         except Exception as exc:
             if show_debug_message:
                 print(f"[TICKET SELECT] Error checking select element: {exc}")
-            # 發生錯誤時，將此 select 加入作為備用
-            valid_selects.append(select_element)
 
     if show_debug_message:
-        print(f"[TICKET SELECT] Valid (available) selects: {len(valid_selects)}/{form_select_count}")
+        print(f"[TICKET SELECT] Valid ticket types: {len(valid_ticket_types)}/{form_select_count}")
 
-    if len(valid_selects) == 0:
+    if len(valid_ticket_types) == 0:
         if show_debug_message:
             print("[TICKET SELECT] Warning: All ticket types are sold out or disabled")
         return False, None
 
-    # 使用第一個可用的 select
-    select_obj = valid_selects[0]
-    form_select_count = len(valid_selects)
+    # Keyword matching logic (similar to area selection)
+    matched_ticket = None
+    is_keyword_matched = False
+
+    if area_keyword_array:
+        if show_debug_message:
+            print(f"[TICKET SELECT] Starting keyword matching with {len(area_keyword_array)} keyword(s)")
+
+        for keyword_index, keyword_item in enumerate(area_keyword_array):
+            if show_debug_message:
+                print(f"[TICKET SELECT] Checking keyword #{keyword_index + 1}: '{keyword_item}'")
+
+            # Check each valid ticket type
+            for ticket_info in valid_ticket_types:
+                ticket_name = ticket_info['name']
+
+                # Apply exclude keyword filter
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
+                    if show_debug_message:
+                        print(f"[TICKET SELECT]   Excluded by keyword_exclude: {ticket_name}")
+                    continue
+
+                # Keyword matching (support space-separated AND logic)
+                keyword_parts = keyword_item.split(' ')
+                row_text = util.format_keyword_string(ticket_name)
+                is_match = True
+
+                for kw in keyword_parts:
+                    formatted_kw = util.format_keyword_string(kw)
+                    if formatted_kw not in row_text:
+                        is_match = False
+                        break
+
+                if is_match:
+                    matched_ticket = ticket_info
+                    is_keyword_matched = True
+                    if show_debug_message:
+                        print(f"[TICKET SELECT]   ✓ Keyword matched: '{ticket_name}'")
+                    break
+
+            if matched_ticket:
+                break  # Early return: first match wins
+
+        if not matched_ticket and show_debug_message:
+            print(f"[TICKET SELECT] All keywords failed to match")
+
+    # Fallback logic (similar to area selection)
+    if not matched_ticket:
+        if area_keyword_array and not area_auto_fallback:
+            # Strict mode: no keyword match and fallback disabled
+            if show_debug_message:
+                print(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
+                print(f"[TICKET SELECT] No ticket type selected")
+            return False, None
+        else:
+            # Fallback enabled or no keyword specified
+            if area_keyword_array and show_debug_message:
+                print(f"[TICKET SELECT] area_auto_fallback=true, using fallback selection")
+
+            # Select based on auto_select_mode
+            matched_ticket = util.get_target_item_from_matched_list(
+                [t['select'] for t in valid_ticket_types],
+                auto_select_mode
+            )
+            # Find the ticket_info for the matched select
+            for ticket_info in valid_ticket_types:
+                if ticket_info['select'] == matched_ticket:
+                    matched_ticket = ticket_info
+                    break
+
+            if show_debug_message and matched_ticket:
+                selection_type = "fallback" if area_keyword_array else "mode-based"
+                print(f"[TICKET SELECT] Selected ticket type ({selection_type}): '{matched_ticket['name']}'")
+
+    # Use the matched ticket select
+    select_obj = matched_ticket['select'] if matched_ticket else None
+    form_select_count = len(valid_ticket_types)
 
     # 檢查是否已經選擇了票券數量（非 "0"）
     if form_select_count > 0:
@@ -6316,8 +6434,18 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
 
                 for (const entry of entries) {
                     if (entry.name && entry.name.includes('apis.ticketplus.com.tw/config/api/')) {
-                        if (entry.name.includes('get?productId=') || entry.name.includes('get?ticketAreaId=')) {
+                        // 支援新格式 API (eventId-based, 2024+ confirmed)
+                        if (entry.name.includes('get?eventId=')) {
                             apiUrl = entry.name;
+                            console.log('[API CHECK] Using new format: eventId-based');
+                            break;
+                        }
+                        // 舊格式 API (productId/ticketAreaId-based, legacy support)
+                        // 保留以確保向下相容，如確認完全停用可移除
+                        if (entry.name.includes('get?productId=') ||
+                            entry.name.includes('get?ticketAreaId=')) {
+                            apiUrl = entry.name;
+                            console.log('[API CHECK] Using legacy format: productId/ticketAreaId-based');
                             break;
                         }
                     }
@@ -6329,10 +6457,30 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
-                // 檢查是否為 pending 狀態
-                if (data.result && data.result.product && data.result.product.length > 0) {
-                    if (data.result.product[0].status === "pending") {
-                        return { isPending: true, reason: 'API status pending' };
+                // 檢查是否為 pending 狀態（支援多種資料結構）
+                if (data.result) {
+                    // 檢查 product 欄位（舊格式）
+                    if (data.result.product && data.result.product.length > 0) {
+                        if (data.result.product[0].status === "pending") {
+                            return { isPending: true, reason: 'API status pending (product)' };
+                        }
+                    }
+
+                    // 檢查 session 欄位（新格式可能使用）
+                    if (data.result.session && data.result.session.length > 0) {
+                        if (data.result.session[0].status === "pending") {
+                            return { isPending: true, reason: 'API status pending (session)' };
+                        }
+                    }
+
+                    // 檢查 event 欄位
+                    if (data.result.event && data.result.event.status === "pending") {
+                        return { isPending: true, reason: 'API status pending (event)' };
+                    }
+
+                    // 檢查 result 直接的 status
+                    if (data.result.status === "pending") {
+                        return { isPending: true, reason: 'API status pending (result)' };
                     }
                 }
 
@@ -6464,23 +6612,15 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     # 獲取關鍵字設定（修正讀取路徑）
     area_keyword_raw = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
 
-    # Parse keywords - support multiple formats (same as ibon):
-    # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-    # 2. keyword1,keyword2,keyword3 (without quotes)
-    # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+    # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
+    # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
+    # NOTE: JavaScript only supports max 2 keywords with AND logic (keyword1 && keyword2)
     if area_keyword_raw:
         try:
-            area_keyword_clean = area_keyword_raw.strip()
-            if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
-                area_keyword_clean = area_keyword_clean[1:-1]
+            # Use JSON parsing instead of simple comma split to handle keywords with commas
+            keyword_array = json.loads("[" + area_keyword_raw + "]")
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space for JavaScript parsing (JS splits by space)
+            # Join with space for JavaScript parsing (JS splits by space into keyword1 and keyword2)
             area_keyword = ' '.join(keyword_array) if len(keyword_array) > 0 else ''
 
             if show_debug_message:
@@ -6652,21 +6792,88 @@ async def nodriver_ticketplus_check_next_button(tab):
 
 
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
-    """處理活動專屬代碼 - 直接跳過處理"""
+    """處理活動專屬代碼（折價券/優惠序號）"""
     show_debug_message = config_dict["advanced"]["verbose"]
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
         return False, fail_list, False
 
+    # 讀取折價券代碼設定
+    discount_code = config_dict["advanced"].get("ticketplus_discount_code", "").strip()
+
+    # 如果沒有設定折價券代碼，直接跳過
+    if not discount_code:
+        if show_debug_message:
+            print("[DISCOUNT CODE] No discount code configured, skipping")
+        return False, fail_list, False
+
     if show_debug_message:
-        print("Skipping discount code processing")
+        print(f"[DISCOUNT CODE] Attempting to fill discount code: {discount_code}")
 
-    # 直接返回預設值：未送出答案，原有失敗清單，無彈窗問題
-    is_answer_sent = False
-    is_question_popup = False
+    try:
+        # 轉義 JavaScript 字串，避免注入攻擊
+        escaped_discount_code = discount_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
 
-    return is_answer_sent, fail_list, is_question_popup
+        # 使用 JavaScript 注入填入折價券代碼
+        result = await tab.evaluate(f'''
+            (function() {{
+                const keywords = ['序號', '加購', '優惠'];
+                const discountCode = '{escaped_discount_code}';
+                let filledCount = 0;
+
+                // 策略 1: 透過標籤文字偵測
+                const labelDivs = document.querySelectorAll('.exclusive-code .label');
+                for (let label of labelDivs) {{
+                    const labelText = label.textContent.trim();
+                    const container = label.closest('.exclusive-code');
+                    if (!container) continue;
+
+                    const input = container.querySelector('.v-text-field__slot input[type="text"]');
+
+                    // 檢查是否包含任一關鍵字
+                    const hasKeyword = keywords.some(keyword => labelText.includes(keyword));
+                    if (hasKeyword && input && !input.value) {{
+                        input.value = discountCode;
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        filledCount++;
+                    }}
+                }}
+
+                return {{
+                    success: filledCount > 0,
+                    filledCount: filledCount
+                }};
+            }})()
+        ''')
+
+        # 處理返回結果（可能是 dict 或其他類型）
+        if result:
+            # 確保 result 是字典類型
+            if isinstance(result, dict):
+                success = result.get('success', False)
+                filled_count = result.get('filledCount', 0)
+            else:
+                # 如果返回非 dict，記錄並假設成功
+                if show_debug_message:
+                    print(f"[DISCOUNT CODE] Unexpected result type: {type(result)}, value: {result}")
+                success = True
+                filled_count = 1
+
+            if success and filled_count > 0:
+                if show_debug_message:
+                    print(f"[DISCOUNT CODE] Successfully filled {filled_count} discount code field(s)")
+                return True, fail_list, False
+
+        if show_debug_message:
+            print("[DISCOUNT CODE] No matching discount code fields found on page")
+        return False, fail_list, False
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[DISCOUNT CODE] Error filling discount code: {str(e)}")
+        return False, fail_list, False
 
 async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
@@ -6941,7 +7148,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         print("date_keyword:", date_keyword)
         print("auto_select_mode:", auto_select_mode)
 
-    # Step 1: Initial wait and scroll to trigger Angular rendering
+    # Step 1: Initial wait for Angular to initialize
     if show_debug_message:
         print("[IBON DATE PIERCE] Waiting for Angular to initialize...")
 
@@ -6949,16 +7156,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     initial_wait = random.uniform(1.2, 1.8)
     await tab.sleep(initial_wait)
 
-    # Step 2: Scroll to trigger lazy loading
-    try:
-        await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-        await tab  # Sync state
-        if show_debug_message:
-            print("[IBON DATE PIERCE] Scrolled to bottom")
-    except:
-        pass
-
-    # Step 3: Intelligent waiting - poll for button presence using CDP search
+    # Step 2: Poll and wait for button presence using CDP search
     # Must use CDP perform_search to penetrate Shadow DOM (regular JS querySelectorAll won't work)
     max_wait = 5  # Max 5 seconds additional wait
     check_interval = 0.3
@@ -7365,49 +7563,45 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
     is_date_assigned = False
 
-    # Balanced wait for page to load (1.2-1.8s: stable for slower Angular pages, ~20% faster than original 1.5-2.0s)
+    # Wait for page to load (1.2-1.8s: stable for slower Angular pages)
     wait_time = random.uniform(1.2, 1.8)
     if show_debug_message:
         print(f"[IBON DATE] Waiting {wait_time:.2f} seconds for Angular to load...")
     await tab.sleep(wait_time)
 
-    # Scroll down to trigger lazy loading
-    try:
-        await tab.evaluate('window.scrollTo(0, document.body.scrollHeight);')
-        # Reduced wait after scroll (0.5s -> 0.2s) as scroll is immediate
-        await tab.sleep(0.2)
-        if show_debug_message:
-            print("[IBON DATE] Scrolled to bottom to trigger content loading")
-    except:
-        pass
-
-    # Wait for Angular content to render (check for .tr containers which hold date info)
+    # Poll and wait for purchase buttons to render (use CDP search to penetrate Shadow DOM)
     content_appeared = False
-    max_wait_attempts = 20  # 20 * 0.5s = 10 seconds
+    max_wait = 2  # Max 2 seconds wait (reduced from 10s)
+    check_interval = 0.3
+    max_attempts = int(max_wait / check_interval)
     if show_debug_message:
-        print("[IBON DATE] Waiting for date content to render...")
+        print("[IBON DATE] Waiting for purchase buttons to render...")
 
-    for attempt in range(max_wait_attempts):
+    for attempt in range(max_attempts):
         try:
-            # Check for .tr containers (which contain date info and buttons)
-            content_check = await tab.evaluate('''
-                () => {
-                    // ibon uses .tr or .d-flex containers for date rows
-                    const containers = document.querySelectorAll('.tr, .d-flex[class*="tr"]');
-                    return containers.length;
-                }
-            ''')
-            if content_check > 0:
+            # Use CDP search to check button presence (penetrates Shadow DOM, same as pierce method)
+            search_id, result_count = await tab.send(cdp.dom.perform_search(
+                query='button.btn-buy',
+                include_user_agent_shadow_dom=True
+            ))
+
+            # Clean up search
+            try:
+                await tab.send(cdp.dom.discard_search_results(search_id=search_id))
+            except:
+                pass
+
+            if result_count > 0:
                 content_appeared = True
                 if show_debug_message:
-                    print(f"[IBON DATE] Found {content_check} date container(s) after {attempt * 0.5:.1f}s")
+                    print(f"[IBON DATE] Found {result_count} purchase button(s) after {attempt * check_interval:.1f}s")
                 break
         except:
             pass
-        await tab.sleep(0.5)
+        await tab.sleep(check_interval)
 
     if not content_appeared and show_debug_message:
-        print(f"[IBON DATE] No content found after {max_wait_attempts * 0.5}s, proceeding with snapshot anyway...")
+        print(f"[IBON DATE] No buttons found after {max_wait}s, proceeding with snapshot anyway...")
 
     # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
     if show_debug_message:
@@ -8711,58 +8905,51 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
-            import json
-            # Parse keywords - support multiple formats:
-            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-            # 2. keyword1,keyword2,keyword3 (without quotes)
-            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
+            # Upper layer (line 11225) splits by comma using JSON parsing:
+            #   Input: "\"5600\",\"5,600\""
+            #   After JSON: ["5600", "5,600"]
+            #   This function is called once per keyword: "5600" or "5,600"
+            #
+            # DO NOT split by comma again here, or "5,600" becomes ['5', '600'] (BUG!)
+            # Only support space-separated AND logic within each keyword
+
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Treat the entire string as a single keyword
+            keyword_item = area_keyword_clean
 
             if show_debug_message:
-                print(f"[IBON EVENT AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON EVENT AREA KEYWORD] Checking keyword: {keyword_item}")
                 print(f"[IBON EVENT AREA KEYWORD] Total valid areas: {len(valid_areas)}")
                 if len(valid_areas) > 0:
                     print(f"[IBON EVENT AREA KEYWORD] First 5 areas: {[a['areaName'] for a in valid_areas[:5]]}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON EVENT AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all areas for this keyword
+            for area in valid_areas:
+                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = util.format_keyword_string(row_text)
 
-                # Check all areas for this keyword
-                for area in valid_areas:
-                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-                    row_text = util.format_keyword_string(row_text)
+                # Support AND logic with space-separated sub-keywords
+                # Example: "VIP 區" → ['VIP', '區'] → must match both
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
-                    # Support both AND (space) and OR (semicolon) logic
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T013: Keyword matched log - IMMEDIATELY select and stop
-                        matched_areas = [area]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON EVENT AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # Keyword matched - IMMEDIATELY select and stop
+                    matched_areas = [area]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON EVENT AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                        print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
-            # T014: All keywords failed log
+            # All keywords failed log
             if not target_found:
                 if show_debug_message:
-                    print(f"[IBON EVENT AREA KEYWORD] All keywords failed to match")
+                    print(f"[IBON EVENT AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
             if show_debug_message:
                 print(f"[IBON EVENT AREA] Keyword parse error: {e}")
@@ -9296,55 +9483,48 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
-            import json
-            # Parse keywords - support multiple formats:
-            # 1. "keyword1,keyword2,keyword3" (with outer quotes)
-            # 2. keyword1,keyword2,keyword3 (without quotes)
-            # 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+            # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer
+            # Upper layer (line 10908) splits by comma using JSON parsing:
+            #   Input: "\"5600\",\"5,600\""
+            #   After JSON: ["5600", "5,600"]
+            #   This function is called once per keyword: "5600" or "5,600"
+            #
+            # DO NOT split by comma again here, or "5,600" becomes ['5', '600'] (BUG!)
+            # Only support space-separated AND logic within each keyword
+
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
+            # Treat the entire string as a single keyword
+            keyword_item = area_keyword_clean
 
             if show_debug_message:
-                print(f"[IBON AREA KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON AREA KEYWORD] Checking keyword: {keyword_item}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON AREA KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all areas for this keyword
+            for area in valid_areas:
+                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = util.format_keyword_string(row_text)
 
-                # Check all areas for this keyword
-                for area in valid_areas:
-                    row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-                    row_text = util.format_keyword_string(row_text)
+                # Support AND logic with space-separated sub-keywords
+                # Example: "VIP 區" → ['VIP', '區'] → must match both
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
 
-                    # Support both AND (space) and OR (semicolon) logic
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in row_text.lower() for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T013: Keyword matched log - IMMEDIATELY select and stop
-                        matched_areas = [area]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # Keyword matched - IMMEDIATELY select and stop
+                    matched_areas = [area]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                        print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
-            # T014: All keywords failed log
+            # All keywords failed log
             if not target_found:
                 if show_debug_message:
-                    print(f"[IBON AREA KEYWORD] All keywords failed to match")
+                    print(f"[IBON AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
             if show_debug_message:
                 print(f"[IBON AREA] Keyword parse error: {e}")
@@ -12648,21 +12828,18 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     # Feature 003: Safe access for conditional fallback switch
     area_auto_fallback = config_dict.get('area_auto_fallback', False)
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # NOTE: area_keyword_item is already a SINGLE keyword string from upper layer JSON parsing (line 13180)
+    # Upper layer at line 13180: area_keyword_array = json.loads("[" + area_keyword + "]")
+    # Then loops through and passes each keyword individually to this function (line 13185-13187)
+    # Therefore, we should NOT split by comma again here - just clean the quotes
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[KHAM AREA] Keyword parse error: {e}")
@@ -14167,21 +14344,17 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # Clean keyword quotes
+    # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
+    # For multiple keywords with OR logic, caller should use JSON parsing and iterate
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[KHAM SEAT TYPE] Keyword parse error: {e}")
@@ -15109,21 +15282,17 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_seat_type_assigned = False
 
-    # Parse keywords - support multiple formats (same as ibon)
+    # Clean keyword quotes
+    # NOTE: This function only supports single keyword or space-separated AND logic (e.g., "VIP 區")
+    # For multiple keywords with OR logic, caller should use JSON parsing and iterate
     if area_keyword_item and len(area_keyword_item) > 0:
         try:
             area_keyword_clean = area_keyword_item.strip()
             if area_keyword_clean.startswith('"') and area_keyword_clean.endswith('"'):
                 area_keyword_clean = area_keyword_clean[1:-1]
 
-            keyword_array = [
-                kw.strip().strip('"').strip("'")
-                for kw in area_keyword_clean.split(',')
-                if kw.strip()
-            ]
-
-            # Join with space to maintain existing logic
-            area_keyword_item = ' '.join(keyword_array) if len(keyword_array) > 0 else area_keyword_item
+            # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
+            area_keyword_item = area_keyword_clean
         except Exception as e:
             if show_debug_message:
                 print(f"[TICKET SEAT TYPE] Keyword parse error: {e}")
