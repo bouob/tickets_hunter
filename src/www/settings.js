@@ -982,26 +982,28 @@ searchButtons.forEach(btnId => {
 });
 
 // TixCraft SID validation
-tixcraft_sid?.addEventListener('input', () => {
-    const warningElement = document.getElementById('tixcraft-sid-warning');
-    const value = tixcraft_sid.value.trim();
+if (tixcraft_sid) {
+    tixcraft_sid.addEventListener('input', () => {
+        const warningElement = document.getElementById('tixcraft-sid-warning');
+        const value = tixcraft_sid.value.trim();
 
-    if (value.startsWith('g.')) {
-        // Show warning with fade-in effect
-        warningElement.style.display = 'block';
-        setTimeout(() => {
-            warningElement.classList.add('show');
-        }, 10);
-    } else {
-        // Hide warning with fade-out effect
-        if (warningElement.classList.contains('show')) {
-            warningElement.classList.remove('show');
+        if (value.startsWith('g.')) {
+            // Show warning with fade-in effect
+            warningElement.style.display = 'block';
             setTimeout(() => {
-                warningElement.style.display = 'none';
-            }, 150);
+                warningElement.classList.add('show');
+            }, 10);
+        } else {
+            // Hide warning with fade-out effect
+            if (warningElement.classList.contains('show')) {
+                warningElement.classList.remove('show');
+                setTimeout(() => {
+                    warningElement.style.display = 'none';
+                }, 150);
+            }
         }
-    }
-});
+    });
+}
 
 // Clean up when page unloads
 window.addEventListener('beforeunload', () => {
