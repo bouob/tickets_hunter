@@ -11891,85 +11891,324 @@ async def nodriver_cityline_login(tab, cityline_account):
             print(exc)
             pass
 
-async def nodriver_cityline_date_auto_select(tab, auto_select_mode, date_keyword):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+async def nodriver_cityline_date_auto_select(tab, config_dict):
+    """
+    Cityline date selection with conditional fallback mechanism
+    Reference: spec.md FR-003, FR-003a, FR-003b, fallback-mechanism.md
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict["date_auto_select"].get("date_auto_fallback", False)
+    auto_reload_coming_soon_page = config_dict.get("auto_reload_coming_soon_page", False)
 
     ret = False
 
+    # Stage 1: Query all date buttons
     area_list = None
     try:
         my_css_selector = "button.date-time-position"
         area_list = await tab.query_selector_all(my_css_selector)
     except Exception as exc:
-        #print(exc)
-        pass
+        if show_debug_message:
+            print(f"[ERROR] find date list fail: {exc}")
 
-    matched_blocks = None
+    # Stage 2: Format and filter enabled dates
+    formated_area_list = []
     if area_list:
-        formated_area_list = None
         area_list_count = len(area_list)
         if show_debug_message:
-            print("date_list_count:", area_list_count)
+            print(f"[CITYLINE DATE] Found {area_list_count} date buttons")
 
         if area_list_count > 0:
-            formated_area_list = area_list
-            if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
+            formated_area_list = area_list  # NoDriver elements are already enabled
 
-            if len(date_keyword) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # match keyword.
+    # Stage 3: Keyword matching
+    matched_blocks = []
+    if len(date_keyword) == 0:
+        # Empty keyword matches all available dates
+        matched_blocks = formated_area_list
+    else:
+        # Match keyword
+        if show_debug_message:
+            print(f"[DATE KEYWORD] Matching keyword: {date_keyword}")
+
+        for row in formated_area_list:
+            row_text = ""
+            try:
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+            except Exception as exc:
                 if show_debug_message:
-                    print("start to match keyword:", date_keyword)
-                matched_blocks = []
+                    print(f"[DEBUG] get row html error: {exc}")
+                break
 
-                for row in formated_area_list:
-                    row_text = ""
-                    row_html = ""
-                    try:
-                        row_html = await row.get_html()
-                        row_text = util.remove_html_tags(row_html)
-                        # PS: get_js_attributes on cityline due to: the JSON object must be str, bytes or bytearray, not NoneType
-                        #js_attr = await row.get_js_attributes()
-                        #row_html = js_attr["innerHTML"]
-                        #row_text = js_attr["innerText"]
-                    except Exception as exc:
-                        if show_debug_message:
-                            print(exc)
-                        # error, exit loop
+            if len(row_text) > 0:
+                if show_debug_message:
+                    print(f"[DEBUG] row_text: {row_text}")
+                is_match_area = util.is_row_match_keyword(date_keyword, row_text)
+                if is_match_area:
+                    matched_blocks.append(row)
+                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
 
-                    if len(row_text) > 0:
-                        if show_debug_message:
-                            print("row_text:", row_text)
-                        is_match_area = util.is_row_match_keyword(date_keyword, row_text)
-                        if is_match_area:
-                            matched_blocks.append(row)
-                            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                break
+    if show_debug_message:
+        print(f"[DATE KEYWORD] Matched {len(matched_blocks)} dates")
 
-                if show_debug_message:
-                    if not matched_blocks is None:
-                        print("after match keyword, found count:", len(matched_blocks))
+    # Stage 4: Conditional fallback mechanism
+    if len(matched_blocks) == 0:
+        if date_auto_fallback:
+            # Fallback mode: select from all available dates
+            matched_blocks = formated_area_list
+            print(f"[DATE FALLBACK] date_auto_fallback=true, selecting from all available dates (total: {len(formated_area_list)})")
         else:
-            print("not found date-time-position")
-            pass
-    else:
-        #print("date date-time-position is None")
-        pass
+            # Strict mode
+            print("[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            if auto_reload_coming_soon_page and len(formated_area_list) == 0:
+                # Auto reload if no dates available
+                print("[DATE FALLBACK] Auto-reloading page...")
+                try:
+                    await tab.reload()
+                    await asyncio.sleep(config_dict.get("auto_reload_page_interval", 1.5))
+                except:
+                    pass
+            else:
+                print("[DATE FALLBACK] Waiting for manual intervention...")
+            return False
 
+    # Stage 5: Select target date
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-    if not target_area is None:
+    if target_area:
         try:
             await target_area.scroll_into_view()
             await target_area.click()
+            if show_debug_message:
+                print("[CITYLINE DATE] Purchase button clicked")
+
+            # Wait for reCAPTCHA (FR-012)
+            print("[CITYLINE DATE] Waiting 6 seconds for reCAPTCHA...")
+            await asyncio.sleep(6)
+
             ret = True
         except Exception as exc:
-            print(exc)
+            print(f"[ERROR] click date button fail: {exc}")
 
     return ret
+
+async def nodriver_cityline_area_auto_select(tab, config_dict):
+    """
+    Cityline area selection with conditional fallback mechanism
+    Reference: spec.md FR-004, FR-004a, FR-004b, fallback-mechanism.md
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_fallback = config_dict["area_auto_select"].get("area_auto_fallback", False)
+
+    is_price_assigned = False
+
+    # Stage 1: Query all area options
+    area_list = None
+    try:
+        my_css_selector = "div.form-check"
+        area_list = await tab.query_selector_all(my_css_selector)
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[ERROR] find area list fail: {exc}")
+
+    # Stage 2: Filter soldout areas
+    available_areas = []
+    if area_list:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print(f"[CITYLINE AREA] Found {area_list_count} area options")
+
+        for row in area_list:
+            is_available = True
+            try:
+                # Check soldout status
+                soldout_span = await row.query_selector('span.price-limited > span[data-i18n*="soldout"]')
+                if soldout_span:
+                    is_available = False
+            except:
+                pass
+
+            if is_available:
+                available_areas.append(row)
+
+        if show_debug_message:
+            soldout_count = area_list_count - len(available_areas)
+            print(f"[CITYLINE AREA] Filtered {soldout_count} soldout areas, {len(available_areas)} available")
+
+    # Stage 3: Keyword matching
+    matched_areas = []
+    if len(area_keyword) == 0:
+        # Empty keyword matches all available areas
+        matched_areas = available_areas
+    else:
+        # Match keyword
+        for row in available_areas:
+            row_text = ""
+            try:
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[DEBUG] get row html error: {exc}")
+                break
+
+            if len(row_text) > 0:
+                # Check keyword exclude
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
+
+            if len(row_text) > 0:
+                row_text = util.format_keyword_string(row_text)
+                if show_debug_message:
+                    print(f"[DEBUG] row_text: {row_text}")
+
+                # AND logic keyword matching
+                is_match_area = True
+                area_keyword_array = area_keyword.split(' ')
+                for keyword in area_keyword_array:
+                    keyword = util.format_keyword_string(keyword)
+                    if keyword not in row_text:
+                        is_match_area = False
+                        break
+
+                if is_match_area:
+                    matched_areas.append(row)
+                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        break
+
+    if show_debug_message:
+        print(f"[AREA KEYWORD] Matched {len(matched_areas)} areas")
+
+    # Stage 4: Conditional fallback mechanism
+    if len(matched_areas) == 0:
+        if area_auto_fallback:
+            # Fallback mode: select from all available areas
+            matched_areas = available_areas
+            print(f"[AREA FALLBACK] area_auto_fallback=true, selecting from all available areas (total: {len(available_areas)})")
+        else:
+            # Strict mode: wait for manual intervention
+            print("[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+            print("[AREA FALLBACK] Waiting for manual intervention to avoid selecting unwanted area...")
+            return False
+
+    # Stage 5: Select target area
+    target_area = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
+    if target_area:
+        try:
+            # Find radio button within target area
+            radio_btn = await target_area.query_selector('input[type=radio]')
+            if radio_btn:
+                await radio_btn.scroll_into_view()
+                await radio_btn.click()
+                is_price_assigned = True
+                if show_debug_message:
+                    print("[CITYLINE AREA] Radio button checked")
+        except Exception as exc:
+            print(f"[ERROR] click radio button fail: {exc}")
+
+    return is_price_assigned
+
+async def nodriver_cityline_ticket_number_auto_select(tab, config_dict):
+    """
+    Cityline ticket number selection
+    Reference: spec.md FR-005, cityline-interface.md
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 1)
+
+    is_ticket_number_assigned = False
+
+    try:
+        my_css_selector = "select.select-num"
+        select_obj = await tab.query_selector(my_css_selector)
+
+        if select_obj:
+            if show_debug_message:
+                print(f"[CITYLINE TICKET] Ticket number selector found")
+
+            # Use JavaScript to set the select value
+            is_ticket_number_assigned = await tab.evaluate(f'''
+                (function() {{
+                    const select = document.querySelector('{my_css_selector}');
+                    if (select) {{
+                        const options = select.options;
+                        for (let i = 0; i < options.length; i++) {{
+                            if (options[i].value == {ticket_number}) {{
+                                select.selectedIndex = i;
+                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                return true;
+                            }}
+                        }}
+                    }}
+                    return false;
+                }})();
+            ''')
+
+            if is_ticket_number_assigned and show_debug_message:
+                print(f"[CITYLINE TICKET] Ticket number set to {ticket_number}")
+    except Exception as exc:
+        print(f"[ERROR] Ticket number selection fail: {exc}")
+
+    return is_ticket_number_assigned
+
+async def nodriver_cityline_next_button_press(tab):
+    """
+    Cityline next button press
+    Reference: spec.md FR-006, cityline-interface.md
+    """
+    is_button_clicked = False
+
+    try:
+        # Try to find and click the next button
+        # Common selectors for next button on Cityline
+        selectors = [
+            'button[type="submit"]',
+            'button.btn-next',
+            'button.next-button',
+            'input[type="submit"]'
+        ]
+
+        for selector in selectors:
+            try:
+                next_btn = await tab.query_selector(selector)
+                if next_btn:
+                    await next_btn.scroll_into_view()
+                    await next_btn.click()
+                    is_button_clicked = True
+                    print(f"[CITYLINE] Next button clicked: {selector}")
+                    break
+            except:
+                continue
+    except Exception as exc:
+        print(f"[ERROR] Next button press fail: {exc}")
+
+    return is_button_clicked
+
+async def nodriver_cityline_performance(tab, config_dict):
+    """
+    Cityline performance page (area + ticket number + next button)
+    Reference: Chrome UC version cityline_performance
+    """
+    is_price_assigned = False
+
+    # Step 1: Area selection
+    is_price_assigned = await nodriver_cityline_area_auto_select(tab, config_dict)
+
+    if is_price_assigned:
+        # Step 2: Ticket number selection
+        is_ticket_number_assigned = await nodriver_cityline_ticket_number_auto_select(tab, config_dict)
+
+        if is_ticket_number_assigned:
+            # Step 3: Press next button
+            await asyncio.sleep(random.uniform(0.3, 0.7))
+            is_button_clicked = await nodriver_cityline_next_button_press(tab)
+
+    return is_price_assigned
 
 async def nodriver_check_modal_dialog_popup(tab):
     ret = False
@@ -11983,17 +12222,14 @@ async def nodriver_check_modal_dialog_popup(tab):
     return ret
 
 async def nodriver_cityline_purchase_button_press(tab, config_dict):
-    date_auto_select_mode = config_dict["date_auto_select"]["mode"]
-    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-    is_date_assign_by_bot = await nodriver_cityline_date_auto_select(tab, date_auto_select_mode, date_keyword)
+    """
+    Cityline purchase button press (calls date_auto_select)
+    Note: date_auto_select already includes reCAPTCHA wait
+    """
+    is_date_assigned = await nodriver_cityline_date_auto_select(tab, config_dict)
 
-    is_button_clicked = False
-    if is_date_assign_by_bot:
-        print("press purchase button")
-        await nodriver_press_button(tab, 'button.purchase-btn')
-        is_button_clicked = True
-        # wait reCAPTCHA popup.
-        await asyncio.sleep(6)
+    is_button_clicked = is_date_assigned
+    # Note: reCAPTCHA wait is already handled in date_auto_select
 
     return is_button_clicked
 
@@ -12015,6 +12251,82 @@ async def nodriver_cityline_close_second_tab(tab, url):
                         break
     return new_tab
 
+async def nodriver_cityline_cookie_accept(tab):
+    """
+    Cityline cookie consent acceptance
+    Reference: spec.md FR-010
+    """
+    is_accepted = False
+
+    try:
+        # Try to find and click cookie accept button
+        cookie_selectors = [
+            'button.cookie-accept',
+            'button[id*="cookie"]',
+            'button[class*="cookie"]',
+            '.cookie-consent button',
+            '#cookie-consent button'
+        ]
+
+        for selector in cookie_selectors:
+            try:
+                cookie_btn = await tab.query_selector(selector)
+                if cookie_btn:
+                    await cookie_btn.click()
+                    is_accepted = True
+                    print(f"[CITYLINE] Cookie consent accepted: {selector}")
+                    break
+            except:
+                continue
+    except Exception as exc:
+        pass
+
+    return is_accepted
+
+async def nodriver_cityline_clean_ads(tab):
+    """
+    Cityline advertisement removal
+    Reference: spec.md FR-008
+    """
+    is_ads_removed = False
+
+    try:
+        # Use JavaScript to remove common ad elements
+        is_ads_removed = await tab.evaluate('''
+            (function() {
+                let removed_count = 0;
+                const ad_selectors = [
+                    '.advertisement',
+                    '.ad-banner',
+                    '[id*="ad-"]',
+                    '[class*="ad-"]',
+                    '.popup-ad',
+                    '.modal-ad'
+                ];
+
+                ad_selectors.forEach(selector => {
+                    const ads = document.querySelectorAll(selector);
+                    ads.forEach(ad => {
+                        ad.remove();
+                        removed_count++;
+                    });
+                });
+
+                if (removed_count > 0) {
+                    console.log("Removed " + removed_count + " ad elements");
+                }
+
+                return removed_count > 0;
+            })();
+        ''')
+
+        if is_ads_removed:
+            print("[CITYLINE] Advertisements removed")
+    except Exception as exc:
+        pass
+
+    return is_ads_removed
+
 async def nodriver_cityline_main(tab, url, config_dict):
     global cityline_dict
     if not 'cityline_dict' in globals():
@@ -12034,11 +12346,20 @@ async def nodriver_cityline_main(tab, url, config_dict):
             #await nodriver_cityline_auto_retry_access(tab, url, config_dict)
             pass
 
+    # Cookie acceptance (FR-010)
+    if '.cityline.com/Events.html' in url:
+        await nodriver_cityline_cookie_accept(tab)
+
+    # Advertisement removal (FR-008)
+    await nodriver_cityline_clean_ads(tab)
+
+    # Login page
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         if len(cityline_account) > 4:
             await nodriver_cityline_login(tab, cityline_account)
 
+    # Multi-tab handling (FR-009)
     tab = await nodriver_cityline_close_second_tab(tab, url)
 
     # date page.
@@ -12060,13 +12381,17 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
 
     # area page:
-    # TODO:
-    #https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
-    if 'venue.cityline.com' in url and '/performance?':
+    # https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
+    if 'venue.cityline.com' in url and '/performance?' in url:
+        # Play sound when entering performance page
         if config_dict["advanced"]["play_sound"]["ticket"]:
             if not cityline_dict["played_sound_ticket"]:
                 play_sound_while_ordering(config_dict)
             cityline_dict["played_sound_ticket"] = True
+
+        # Integrated performance page processing (area + ticket number + next button)
+        if config_dict["area_auto_select"]["enable"]:
+            await nodriver_cityline_performance(tab, config_dict)
     else:
         cityline_dict["played_sound_ticket"] = False
 
