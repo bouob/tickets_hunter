@@ -1,30 +1,40 @@
 ---
 name: 🐛 Bug Report
 about: Report a bug to help us improve
-title: '[BUG] <請描述問題>'
+title: '[BUG] 用一句話描述問題'
 labels: 'bug'
 assignees: 'bouob'
 ---
 
-## 🐛 Bug 描述
-簡單描述遇到的問題
+<!--
+📝 填寫說明：
+- 請將標題修改為具體描述問題，例如：「拓元自動刷新失效」、「ibon 座位區無法點擊」
+- 標示 ⭐ 的欄位為必填項目
+- 請盡量提供完整資訊，有助於快速定位問題
+-->
 
-## 🔄 重現步驟
-1. 我在做什麼：
-2. 發生了什麼問題：
-3. 預期應該要：
+## 🐛 Bug 描述 ⭐
+**用一句話說明問題**：例如「拓元設定自動刷新但沒有作用」
 
-## 💻 基本資訊
-- Release 版本：[例如：2025.11.07]
-- 作業系統：[Windows/Mac/Linux]
-- 執行方式：[exe執行檔/Python原始碼]
-- Python版本：[如果使用原始碼，請執行 `python --version` 查看]
-- 票務平台：[TixCraft/KKTIX/其他]
-- 目標網址：[https://tixcraft.com/activity/detail/xi198964]
-- WebDriver：[undetected_chromedriver/nodriver/selenium]
+**詳細描述**：補充更多細節
+
+
+## 🔄 重現步驟 ⭐
+1. **我在做什麼**：例如「使用機器人搶拓元的票」
+2. **發生了什麼問題**：例如「進入頁面後沒有自動刷新，需要手動點擊」
+3. **預期應該要**：例如「應該依照設定的秒數自動刷新頁面」
+
+## 💻 基本資訊 ⭐
+- **Release 版本**：
+- **作業系統**：[Windows/macOS/Linux]
+- **執行方式**：[exe執行檔/Python原始碼]
+- **Python版本**：[如果使用原始碼，請執行 `python --version` 查看，例如：3.10.11]
+- **票務平台** ⭐：[TixCraft/ibon/KKTIX]
+- **目標網址** ⭐：
+- **WebDriver**：[nodriver(預設)/undetected_chromedriver/selenium]
 
 ## 📋 錯誤訊息
-如果有錯誤訊息請貼在這裡：
+如果有錯誤訊息或 log 檔案，請貼在這裡：
 ```
 錯誤訊息
 ```
