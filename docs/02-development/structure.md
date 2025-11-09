@@ -94,16 +94,16 @@
 #### NoDriver
 ```
 拓元主流程
-├── nodriver_tixcraft_main               # 行 1889
-├── nodriver_tixcraft_date_auto_select   # 行 1144
-├── nodriver_tixcraft_area_auto_select   # 行 1327
-├── nodriver_get_tixcraft_target_area    # 行 1379
-├── nodriver_tixcraft_assign_ticket_number # 行 1490
-├── nodriver_tixcraft_ticket_main        # 行 1563
-├── nodriver_tixcraft_ticket_main_agree  # 行 1545
-├── nodriver_tixcraft_verify             # 行 1103
-├── nodriver_tixcraft_ticket_main_ocr    # 行 1846
-└── nodriver_tixcraft_keyin_captcha_code # 行 1609
+├── nodriver_tixcraft_main               # 行 4115
+├── nodriver_tixcraft_date_auto_select   # 行 2670
+├── nodriver_tixcraft_area_auto_select   # 行 3031
+├── nodriver_get_tixcraft_target_area    # 行 3083
+├── nodriver_tixcraft_assign_ticket_number # 行 3397 ✅ (v1.3+ 支援 Indievox 票種關鍵字匹配)
+├── nodriver_tixcraft_ticket_main        # 行 3676
+├── nodriver_tixcraft_ticket_main_agree  # 行 3658
+├── nodriver_tixcraft_verify             # 行 2629
+├── nodriver_tixcraft_ticket_main_ocr    # 行 4013
+└── nodriver_tixcraft_keyin_captcha_code # 行 3726
 ```
 
 #### Chrome/Undetected
@@ -224,24 +224,24 @@ Cityline 主流程
 #### NoDriver （🥇 金級實作 - 95% 完整度）
 ```
 iBon 主流程
-├── nodriver_ibon_login                      # 行 5806 ✅ (98行, Cookie 登入)
-├── nodriver_ibon_date_auto_select           # 行 6192 ✅ (282行, Shadow DOM 平坦化)
-├── nodriver_ibon_event_area_auto_select     # 行 9528 ✅🆕 (393行, Angular SPA Event 頁面)
-├── nodriver_ibon_area_auto_select           # 行 9921 ✅ (457行, 舊版 .aspx 頁面)
-├── nodriver_ibon_ticket_number_auto_select  # 行 10378 ✅ (93行, 票數自動設定)
-├── nodriver_ibon_get_captcha_image          # 行 10471 ✅ (204行, Shadow DOM 截圖)
-├── nodriver_ibon_keyin_captcha_code         # 行 10675 ✅ (219行, 驗證碼輸入)
-├── nodriver_ibon_refresh_captcha            # 行 10894 ✅ (34行, 刷新驗證碼)
-├── nodriver_ibon_auto_ocr                   # 行 10928 ✅ (151行, OCR 自動識別)
-│   └── 🆕 OCR 失敗處理機制 (3次重試 + 5次手動輸入)
-├── nodriver_ibon_captcha                    # 行 11079 ✅ (93行, 驗證碼主控制)
-├── nodriver_ibon_purchase_button_press      # 行 11172 ✅ (57行, 購票按鈕)
-├── nodriver_ibon_check_sold_out             # 行 11229 ✅ (38行, 售罄檢查)
-├── nodriver_ibon_verification_question      # 行 11267 ✅ (54行, 驗證問題)
-├── nodriver_ibon_ticket_agree               # 行 9491 ✅ (6行, 同意條款)
-├── nodriver_ibon_allow_not_adjacent_seat    # 行 9497 ✅ (28行, 非連續座位)
-└── nodriver_ibon_main                       # 行 11321 ✅ (209行, 主流程完整)
-    └── 🆕 編碼修正：移除所有 emoji 避免 cp950 錯誤
+├── nodriver_ibon_login                      # 行 7014 ✅ (Cookie 登入)
+├── nodriver_ibon_date_auto_select           # 行 7519 ✅ (v1.3+ 性能優化：80% 效能提升)
+│   ├── nodriver_ibon_date_auto_select_pierce # 行 7128 (Shadow DOM 穿透)
+│   └── nodriver_ibon_date_auto_select_domsnapshot # 行 7543 (DOMSnapshot 快照)
+├── nodriver_ibon_event_area_auto_select     # 行 8622 ✅ (Angular SPA Event 頁面)
+├── nodriver_ibon_area_auto_select           # 行 9127 ✅ (舊版 .aspx 頁面)
+├── nodriver_ibon_ticket_number_auto_select  # 行 9707 ✅ (票數自動設定)
+├── nodriver_ibon_get_captcha_image_from_shadow_dom # 行 9864 ✅ (Shadow DOM 截圖)
+├── nodriver_ibon_keyin_captcha_code         # 行 10068 ✅ (驗證碼輸入)
+├── nodriver_ibon_refresh_captcha            # 行 10315 ✅ (刷新驗證碼)
+├── nodriver_ibon_auto_ocr                   # 行 10349 ✅ (OCR 自動識別)
+├── nodriver_ibon_captcha                    # 行 10521 ✅ (驗證碼主控制)
+├── nodriver_ibon_purchase_button_press      # 行 10618 ✅ (購票按鈕)
+├── nodriver_ibon_check_sold_out             # 行 10675 ✅ (售罄檢查)
+├── nodriver_ibon_verification_question      # 行 10825 ✅ (驗證問題)
+├── nodriver_ibon_ticket_agree               # 行 8585 ✅ (同意條款)
+├── nodriver_ibon_allow_not_adjacent_seat    # 行 8591 ✅ (非連續座位)
+└── nodriver_ibon_main                       # 行 10879 ✅ (主流程完整)
 ```
 
 #### Chrome/Undetected
@@ -359,28 +359,26 @@ TicketPlus 主流程
 #### NoDriver
 ```
 TicketPlus 主流程
-├── nodriver_ticketplus_main                      # 行 5782 ✅
-├── nodriver_ticketplus_detect_layout_style       # 行 3106 ✅ (額外功能)
-├── nodriver_ticketplus_account_sign_in           # 行 3236 ✅
-├── nodriver_ticketplus_is_signin                 # 行 3296 ✅ (額外功能)
-├── nodriver_ticketplus_account_auto_fill         # 行 3312 ✅
-├── nodriver_ticketplus_date_auto_select          # 行 3364 ✅
-├── nodriver_ticketplus_unified_select            # 行 3745 ✅ (額外功能)
-├── nodriver_ticketplus_order_expansion_auto_select # 行 4297 ✅
-├── nodriver_ticketplus_assign_ticket_number      # 行 4844 ✅
-├── nodriver_ticketplus_ticket_agree              # 行 5018 ✅
-├── nodriver_ticketplus_accept_realname_card      # 行 5079 ✅
-├── nodriver_ticketplus_accept_other_activity     # 行 5092 ✅
-├── nodriver_ticketplus_accept_order_fail         # 行 5105 ✅
-├── nodriver_ticketplus_check_queue_status        # 行 5186 ✅ (額外功能)
-├── nodriver_ticketplus_order_auto_reload_coming_soon # 行 5270 ✅
-├── nodriver_ticketplus_confirm                   # 行 5322 ✅
-├── nodriver_ticketplus_order                     # 行 5352 ✅
-├── nodriver_ticketplus_check_next_button         # 行 5537 ✅ (額外功能)
-├── nodriver_ticketplus_click_next_button_simplified # 行 5570 ✅ (額外功能)
-├── nodriver_ticketplus_click_next_button         # 行 5600 ✅ (額外功能)
-├── nodriver_ticketplus_order_expansion_panel     # 行 5650 ✅
-└── nodriver_ticketplus_order_exclusive_code      # 行 5765 ✅
+├── nodriver_ticketplus_main                      # 行 6878 ✅
+├── nodriver_ticketplus_detect_layout_style       # 行 4228 ✅ (額外功能)
+├── nodriver_ticketplus_account_sign_in           # 行 4358 ✅
+├── nodriver_ticketplus_is_signin                 # 行 4418 ✅ (額外功能)
+├── nodriver_ticketplus_account_auto_fill         # 行 4434 ✅
+├── nodriver_ticketplus_date_auto_select          # 行 4486 ✅
+├── nodriver_ticketplus_unified_select            # 行 4815 ✅ (額外功能)
+├── nodriver_ticketplus_click_next_button_unified # 行 5314 ✅ (額外功能)
+├── nodriver_ticketplus_order_expansion_auto_select # 行 5419 ✅
+├── nodriver_ticketplus_assign_ticket_number      # 行 5995 ✅
+├── nodriver_ticketplus_ticket_agree              # 行 6173 ✅
+├── nodriver_ticketplus_accept_realname_card      # 行 6238 ✅
+├── nodriver_ticketplus_accept_other_activity     # 行 6251 ✅
+├── nodriver_ticketplus_accept_order_fail         # 行 6264 ✅
+├── nodriver_ticketplus_check_queue_status        # 行 6342 ✅ (額外功能)
+├── nodriver_ticketplus_order_auto_reload_coming_soon # 行 6421 ✅
+├── nodriver_ticketplus_confirm                   # 行 6532 ✅
+├── nodriver_ticketplus_order                     # 行 6562 ✅
+├── nodriver_ticketplus_check_next_button         # 行 6758 ✅ (額外功能)
+└── nodriver_ticketplus_order_exclusive_code      # 行 6794 ✅ (v1.3+ 折扣碼自動填入)
 ```
 
 ### 🎪 **FamiTicket 全家**

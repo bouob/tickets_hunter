@@ -38,6 +38,12 @@
   - 日期上下文提取與關鍵字匹配實作
   - 回退策略實作（關鍵字 → 模式）
 
+- **iBon 日期選擇性能優化 (2025-11-08)** ⭐ 新增
+  - 移除不必要的滾動操作
+  - 性能提升 80% (Pierce: 6.6s → 1.3s, DOMSnapshot: 10s → 2s)
+  - 簡化日期選擇邏輯
+  - 程式碼行數減少約 60 行
+
 - **[年代售票 NoDriver 下拉選單序列化問題](kham_nodriver_dropdown_serialization.md)**
   - 年代售票（ticket.com.tw）下拉選單問題
   - JavaScript 序列化錯誤修復
@@ -53,10 +59,26 @@
   - 雙重過濾邏輯問題
   - NoDriver + CDP 實作
 
-- **[TicketPlus 折價券輸入功能實作 (2025-11-08)](ticketplus_discount_code_implementation_2025-11-08.md)**
+- **TicketPlus 折扣碼自動填入功能 (2025-11-08)** ⭐ 新增
   - 優惠序號/加購序號自動填入
-  - API 檢查邏輯修復 (eventId 格式)
-  - 完整流程圖與實作細節
+  - 支援新版 API 格式 (eventId-based)
+  - JavaScript 注入 + Vue.js 事件觸發
+  - 安全性：字串轉義防止注入攻擊
+  - settings.json 新增 ticketplus_discount_code 欄位
+
+- **TixCraft/Indievox 票種關鍵字匹配 (2025-11-08)** ⭐ 新增
+  - 支援 Indievox Type B 頁面票種關鍵字匹配
+  - 實作 area_keyword 和 area_auto_fallback 邏輯
+  - 支援 AND 邏輯和排除關鍵字 (keyword_exclude)
+  - 從 HTML 提取票種名稱 (<h4> 或 <td> 標籤)
+  - 修復之前忽略關鍵字設定的問題
+
+- **關鍵字逗號處理修復 (2025-11-08)** ⭐ 新增
+  - 修復 "5,600" 被錯誤分割成 ['5', '600'] 的問題
+  - 影響 6 個位置：TixCraft、TicketPlus、iBon、KHAM、年代售票
+  - 使用 JSON 解析替代逗號分割
+  - 移除雙重分割問題
+  - area_auto_fallback=false 現在正確運作
 
 ---
 
@@ -168,4 +190,4 @@ chmod +x *.py
 
 ---
 
-**最後更新：** 2025-11-09
+**最後更新：** 2025-11-08
