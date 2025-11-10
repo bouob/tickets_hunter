@@ -29,8 +29,6 @@ const play_sound_filename = document.querySelector('#play_sound_filename');
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
 
-const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
-
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
 const proxy_server_port = document.querySelector('#proxy_server_port');
@@ -161,8 +159,6 @@ function load_settins_to_form(settings)
 
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
         max_dwell_time.value = settings.kktix.max_dwell_time;
-
-        cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
@@ -398,8 +394,6 @@ function save_changes_to_dict(silent_flag)
 
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
-
-            settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;
 
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);

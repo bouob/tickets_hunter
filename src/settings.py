@@ -133,7 +133,6 @@ def get_default_config():
     config_dict["kktix"]["max_dwell_time"] = 90
 
     config_dict['cityline']={}
-    config_dict["cityline"]["cityline_queue_retry"] = True
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
