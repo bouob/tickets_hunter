@@ -402,6 +402,15 @@ def clean_tmp_file():
         if item.endswith(".tmp"):
             os.remove(os.path.join(Root_Dir, item))
 
+class NoCacheStaticFileHandler(StaticFileHandler):
+    """Custom StaticFileHandler that prevents caching of settings.html"""
+    def set_extra_headers(self, path):
+        # Disable caching only for settings.html to prevent stale UI issues
+        if path == 'settings.html':
+            self.set_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.set_header('Pragma', 'no-cache')
+            self.set_header('Expires', '0')
+
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
         """Read MAXBOT_QUESTION.txt and return its content"""
@@ -649,7 +658,7 @@ async def main_server():
         ("/ocr", OcrHandler),
         ("/query", QueryHandler),
         ("/question", QuestionHandler),
-        ('/(.*)', StaticFileHandler, {"path": os.path.join(SCRIPT_DIR, 'www')}),
+        ('/(.*)', NoCacheStaticFileHandler, {"path": os.path.join(SCRIPT_DIR, 'www')}),
     ])
     app.ocr = ocr;
     app.version = CONST_APP_VERSION;
