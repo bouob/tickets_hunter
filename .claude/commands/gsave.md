@@ -229,7 +229,7 @@ Closes #123
    exist in the private repository.
 
    Files modified:
-     - .claude/commands/gpush.md
+     - .claude/commands/gupdate.md
      - docs/02-development/structure.md
      - CLAUDE.md
 
@@ -260,7 +260,7 @@ Closes #123
      ✓ README.md
 
    機敏檔案 (2 個):
-     🔒 .claude/commands/gpush.md
+     🔒 .claude/commands/gupdate.md
      🔒 docs/02-development/structure.md
 
    將建立 2 個 commits：
@@ -329,7 +329,7 @@ Closes #123
 # - src/nodriver_tixcraft.py  (公開)
 # - tests/test_tixcraft.py     (公開)
 # - docs/02-development/structure.md  (機敏)
-# - .claude/commands/gpush.md (機敏)
+# - .claude/commands/gupdate.md (機敏)
 
 # /gsave 會自動分離為兩個 commits：
 ```
@@ -358,7 +358,7 @@ exist in the private repository.
 
 Files modified:
   - docs/02-development/structure.md (更新函數索引)
-  - .claude/commands/gpush.md (更新指令說明)
+  - .claude/commands/gupdate.md (更新指令說明)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  FILTER MARKER FOR /publicpr ⚠️
@@ -367,7 +367,7 @@ Private file patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .tem
 
 影響檔案：
   M docs/02-development/structure.md
-  M .claude/commands/gpush.md
+  M .claude/commands/gupdate.md
 ```
 
 ---
@@ -432,9 +432,6 @@ gsave -> 讀取 .gitignore -> 過濾忽略檔案 -> 分析後歸類為 2 個類�
   filtered out: settings.json, *.log, chrome_profile/ (被 .gitignore 忽略)
   commit 1: ♻️ Refactor tixcraft date selection logic (1 個 .py 檔案)
   commit 2: 📝 Update command documentation (1 個 .md 檔案)
-
-# 統一推送到遠端
-gpush -> 檢查 2 個 commits -> 檢查分支保護 -> 推送到 main 或建立 PR
 ```
 
 ### 清晰的版本歷史
@@ -454,7 +451,7 @@ gpush -> 檢查 2 個 commits -> 檢查分支保護 -> 推送到 main 或建立 
 2. **分支保護相關**：
    - 預先檢查可能的推送限制
    - 建議適當的提交策略
-   - 提醒後續 gpush 時的注意事項
+   - 提醒後續 使用 /gpush 時的注意事項
 
 3. **大量檔案變更**：
    - 自動建議使用 `--smart` 進行智慧分組
@@ -495,6 +492,6 @@ gsave --force-clean
 - **專案憲章**：`.specify/memory/constitution.md`（第 IX 條：Git 提交規範與工作流程）
 - **Conventional Commits 規範**：https://www.conventionalcommits.org/
 - **專案開發指引**：`CLAUDE.md`（Git 工作流程章節）
-- **配對指令**：`/gpush`（推送變更至遠端）、`/gdefault`（清除敏感設定）
+- **配對指令**：`/gupdate`（更新版本）、`/gdefault`（清除敏感設定）
 
 $ARGUMENTS
