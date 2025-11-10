@@ -266,6 +266,84 @@ if auto_reload_config["enable"]:
 
 ---
 
+### 7. 條件回退設定 (Conditional Fallback Configuration)
+
+**用途**：控制日期與區域選擇的條件回退行為（Feature 003 新增功能）
+
+**資料來源**：`settings.json` 設定檔（頂層）
+
+**欄位**：
+
+| 欄位名稱 | 類型 | 必填 | 預設值 | 說明 | 來源設定檔路徑 |
+|---------|------|------|--------|------|----------------|
+| `date_auto_fallback` | boolean | ✅ | `False` | 日期選擇條件回退開關 | `date_auto_fallback`（頂層） |
+| `area_auto_fallback` | boolean | ✅ | `False` | 區域選擇條件回退開關 | `area_auto_fallback`（頂層） |
+
+**資料結構（settings.json 範例）**：
+```json
+{
+  "date_auto_select": { ... },
+  "area_auto_select": { ... },
+  "date_auto_fallback": false,  // 預設：嚴格模式（新增，Session 2025-11-10）
+  "area_auto_fallback": false   // 預設：嚴格模式（新增，Session 2025-11-10）
+}
+```
+
+**行為邏輯（日期選擇）**：
+```python
+# 讀取設定（預設 False，嚴格模式）
+date_auto_fallback = config_dict.get('date_auto_fallback', False)
+
+# 關鍵字匹配失敗後的條件回退
+if matched_dates is None or len(matched_dates) == 0:
+    if date_auto_fallback:
+        # 模式 A：回退模式（date_auto_fallback=true）
+        print("[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+        matched_dates = all_available_dates  # 回退到所有可用日期
+        # 繼續執行 auto_select_mode 選擇
+    else:
+        # 模式 B：嚴格模式（date_auto_fallback=false，預設）
+        print("[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+        return False  # 停止執行，不選擇任何日期
+```
+
+**行為邏輯（區域選擇）**：
+```python
+# 讀取設定（預設 False，嚴格模式）
+area_auto_fallback = config_dict.get('area_auto_fallback', False)
+
+# 關鍵字匹配失敗後的條件回退
+if matched_areas is None or len(matched_areas) == 0:
+    if area_auto_fallback:
+        # 模式 A：回退模式（area_auto_fallback=true）
+        print("[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+        matched_areas = all_available_areas  # 回退到所有可用區域
+        # 繼續執行 auto_select_mode 選擇
+    else:
+        # 模式 B：嚴格模式（area_auto_fallback=false，預設）
+        print("[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+        return False  # 停止執行，不選擇任何區域，避免誤購
+```
+
+**設計原則**：
+- **預設為嚴格模式（`False`）**：避免誤購不想要的票券（來自 Clarification Session 2025-11-10，答案 A）
+- **與其他平台一致**：TixCraft、KKTIX、iBon、TicketPlus、Cityline 均採用相同設計
+- **設定檔位置**：頂層（與 `date_auto_select`、`area_auto_select` 同級）（來自 Clarification Session 2025-11-10，答案 A）
+- **日誌格式統一**：使用通用前綴 `[DATE FALLBACK]` 和 `[AREA FALLBACK]`（來自 Clarification Session 2025-11-10，答案 B）
+
+**驗證規則**：
+- 兩個欄位均為布林值（`true` 或 `false`）
+- 若設定檔未提供，必須使用預設值 `False`（嚴格模式）
+- 日誌訊息必須包含當前 fallback 狀態（`date_auto_fallback=true/false`）
+
+**參考實作**：
+- NoDriver Feature 003：`src/nodriver_tixcraft.py:1508-1711`（TixCraft 日期回退）
+- NoDriver Feature 003：`src/nodriver_tixcraft.py:2090-2149`（TixCraft 區域回退）
+- Cityline spec：`specs/006-cityline-nodriver-migration/spec.md` (FR-003a/b, FR-004a/b)
+- Feature 003 詳細文件：`specs/003-keyword-priority-fallback/completion-report-tixcraft-nodriver.md`
+
+---
+
 ## 實體關係圖 (Entity Relationships)
 
 ```
@@ -292,6 +370,10 @@ if auto_reload_config["enable"]:
              │
              ├─ 關鍵字匹配 ← date_keyword (設定檔)
              │
+             ├─ 條件回退 ← date_auto_fallback (設定檔，預設 false) ⭐
+             │            若 true → 回退至 auto_select_mode
+             │            若 false → 返回 False（嚴格模式）
+             │
              ↓ 選擇目標日期
 ┌─────────────────────────┐
 │  Area List              │
@@ -299,6 +381,10 @@ if auto_reload_config["enable"]:
 └────────────┬────────────┘
              │
              ├─ 關鍵字匹配 ← area_keyword (設定檔)
+             │
+             ├─ 條件回退 ← area_auto_fallback (設定檔，預設 false) ⭐
+             │            若 true → 回退至 auto_select_mode
+             │            若 false → 返回 False（嚴格模式）
              │
              ↓ 選擇目標區域
 ┌─────────────────────────┐

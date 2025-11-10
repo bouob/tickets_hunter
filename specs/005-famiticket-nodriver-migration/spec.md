@@ -5,6 +5,16 @@
 **狀態**: 草稿
 **輸入**: 用戶描述: "將 FamiTicket (全家網) 從 Chrome 遷移到 NoDriver，實作完整票務自動化流程（帳號密碼登入、日期/區域選擇、驗證問題、自動補票），參考 Chrome 實作邏輯與 NoDriver TixCraft/KKTIX 模式"
 
+## Clarifications
+
+### Session 2025-11-10
+
+- Q: FamiTicket 是否應該採用相同的預設值（嚴格模式）？ → A: 採用嚴格模式（預設 `date_auto_fallback=false`, `area_auto_fallback=false`），與其他平台一致
+- Q: 當 `date_auto_fallback=false` 且關鍵字匹配失敗時，FamiTicket 應該如何處理？ → A: 直接返回 `False`，停止執行，等待手動介入（最嚴格模式）
+- Q: 當 `area_auto_fallback=false` 且關鍵字匹配失敗時，FamiTicket 應該如何處理？ → A: 返回 `False`，不選擇任何區域，等待手動介入
+- Q: FamiTicket 應該使用哪種日誌前綴格式？ → A: 使用通用前綴 `[DATE FALLBACK]` 和 `[AREA FALLBACK]`
+- Q: FamiTicket 的 `date_auto_fallback` 和 `area_auto_fallback` 設定應該放在 `settings.json` 的哪個位置？ → A: 頂層（與 `date_auto_select`、`area_auto_select` 同級）
+
 ## 用戶情境與測試 *(必填)*
 
 ### User Story 1 - 使用帳號密碼登入 FamiTicket (Priority: P1)
@@ -35,9 +45,10 @@
 
 1. **假設** 使用者設定日期關鍵字為 "週六"，**當** 系統掃描日期列表，**則** 系統僅選擇日期文字中包含「週六」的項目
 2. **假設** 使用者設定多個日期關鍵字（逗號分隔："12/25,12/26"），**當** 系統掃描日期列表，**則** 系統選擇任一匹配關鍵字的日期（OR 邏輯）
-3. **假設** 沒有日期匹配關鍵字，**當** 系統完成掃描，**則** 系統使用自動選擇模式（`auto_select_mode`）作為回退機制
-4. **假設** 日期列表包含已售完的日期，**當** 系統掃描，**則** 系統僅選擇包含「立即購買」按鈕的日期，過濾已售完項目
-5. **假設** 日期列表為空（即將開賣頁面），**當** 使用者啟用自動補票功能，**則** 系統等待指定間隔後自動重新載入活動頁面
+3. **假設** 沒有日期匹配關鍵字且 `date_auto_fallback=true`，**當** 系統完成掃描，**則** 系統使用自動選擇模式（`auto_select_mode`）從所有可用日期中選擇，並記錄 `[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback` 日誌
+4. **假設** 沒有日期匹配關鍵字且 `date_auto_fallback=false`（預設，嚴格模式），**當** 系統完成掃描，**則** 系統返回 `False` 停止執行，不選擇任何日期，並記錄 `[DATE FALLBACK] date_auto_fallback=false, fallback is disabled` 日誌
+5. **假設** 日期列表包含已售完的日期，**當** 系統掃描，**則** 系統僅選擇包含「立即購買」按鈕的日期，過濾已售完項目
+6. **假設** 日期列表為空（即將開賣頁面），**當** 使用者啟用自動補票功能，**則** 系統等待指定間隔後自動重新載入活動頁面
 
 ---
 
@@ -54,7 +65,8 @@
 1. **假設** 使用者設定區域關鍵字為 "VIP"，**當** 系統掃描區域列表，**則** 系統僅選擇區域文字中包含「VIP」的項目
 2. **假設** 使用者設定多組 AND 關鍵字（例如："VIP,一樓"），**當** 系統掃描，**則** 系統僅選擇同時包含「VIP」和「一樓」的區域
 3. **假設** 區域列表包含已售完的區域（class 包含 `"area disabled"`），**當** 系統掃描，**則** 系統自動過濾這些區域，僅選擇可購買的項目
-4. **假設** 沒有區域匹配關鍵字，**當** 系統完成掃描，**則** 系統使用自動選擇模式作為回退機制
+4. **假設** 沒有區域匹配關鍵字且 `area_auto_fallback=true`，**當** 系統完成掃描，**則** 系統使用自動選擇模式（`auto_select_mode`）從所有可用區域中選擇，並記錄 `[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback` 日誌
+5. **假設** 沒有區域匹配關鍵字且 `area_auto_fallback=false`（預設，嚴格模式），**當** 系統完成掃描，**則** 系統返回 `False`，不選擇任何區域，等待手動介入，並記錄 `[AREA FALLBACK] area_auto_fallback=false, fallback is disabled` 日誌
 
 ---
 
@@ -107,8 +119,14 @@
 - **當 FamiTicket 更改頁面結構導致 CSS 選擇器失效時會怎樣？**
   系統應記錄「元素未找到」錯誤，並在除錯模式下輸出詳細的 HTML 結構，協助開發者更新選擇器。
 
-- **當使用者同時設定多組區域關鍵字但都無法匹配時會怎樣？**
-  系統應嘗試所有關鍵字組合後，使用自動選擇模式（`auto_select_mode`）作為最終回退機制。
+- **當使用者同時設定多組區域關鍵字但都無法匹配，且 `area_auto_fallback=true` 時會怎樣？**
+  系統應嘗試所有關鍵字組合後，使用自動選擇模式（`auto_select_mode`）作為最終回退機制，並記錄 `[AREA FALLBACK] area_auto_fallback=true` 日誌。
+
+- **當使用者同時設定多組區域關鍵字但都無法匹配，且 `area_auto_fallback=false`（預設，嚴格模式）時會怎樣？**
+  系統應嘗試所有關鍵字組合後，返回 `False`，不選擇任何區域，並記錄 `[AREA FALLBACK] area_auto_fallback=false, fallback is disabled` 日誌，避免誤購不想要的區域。
+
+- **當日期關鍵字無法匹配，且 `date_auto_fallback=false`（嚴格模式）時會怎樣？**
+  系統應返回 `False` 停止執行，不自動選擇任何日期，等待使用者手動介入或調整關鍵字設定。
 
 - **當購買按鈕（`#buyWaiting`）不存在時會怎樣？**
   系統應重新整理頁面（最多重試 3 次），若仍未出現則記錄錯誤並停止執行。
@@ -138,7 +156,9 @@
 - **FR-011**: 系統必須根據關鍵字匹配目標日期，支援多關鍵字（逗號分隔）與 OR 邏輯
 - **FR-012**: 系統必須僅選擇包含「立即購買」按鈕的日期，過濾已售完項目
 - **FR-013**: 系統必須支援從日期列中提取日期文字（CSS 選擇器：`td:nth-child(1)`）與區域文字（`td:nth-child(2)`）
-- **FR-014**: 當沒有匹配的日期時，系統必須使用自動選擇模式（`date_auto_select.mode`）作為回退機制（例如：選擇第一個可用日期）
+- **FR-014**: 系統必須支援 `date_auto_fallback` 條件回退機制（參考 Feature 003 實作）：當日期關鍵字無法匹配且 `date_auto_fallback=true` 時，回退到 `auto_select_mode` 自動選擇可用日期；當 `date_auto_fallback=false`（預設，嚴格模式）時，返回 `False` 停止執行，不選擇任何日期
+- **FR-014a**: 系統必須從設定檔頂層讀取 `date_auto_fallback` 設定（與 `date_auto_select`、`area_auto_select` 同級），預設值為 `False`（嚴格模式）
+- **FR-014b**: 系統必須在日期選擇的條件回退流程中記錄結構化日誌，使用 `[DATE FALLBACK]` 前綴，包含 `date_auto_fallback` 狀態與選擇策略資訊
 - **FR-015**: 當啟用自動補票（`tixcraft.auto_reload_coming_soon_page: true`）且日期列表為空時，系統必須等待指定間隔（`advanced.auto_reload_page_interval`）後重新載入活動頁面
 
 #### 區域選擇（Area Selection）
@@ -147,7 +167,9 @@
 - **FR-017**: 系統必須掃描所有可用區域（CSS 選擇器：`div > a.area`）
 - **FR-018**: 系統必須根據關鍵字匹配目標區域，支援 AND 邏輯（多關鍵字必須同時存在）
 - **FR-019**: 系統必須過濾已停用的區域（class 屬性包含 `"area disabled"`）
-- **FR-020**: 當沒有匹配的區域時，系統必須使用自動選擇模式（`area_auto_select.mode`）作為回退機制
+- **FR-020**: 系統必須支援 `area_auto_fallback` 條件回退機制（參考 Feature 003 實作）：當區域關鍵字無法匹配且 `area_auto_fallback=true` 時，回退到 `auto_select_mode` 自動選擇可用區域；當 `area_auto_fallback=false`（預設，嚴格模式）時，返回 `False`，不選擇任何區域，避免誤購
+- **FR-020a**: 系統必須從設定檔頂層讀取 `area_auto_fallback` 設定（與 `date_auto_select`、`area_auto_select` 同級），預設值為 `False`（嚴格模式）
+- **FR-020b**: 系統必須在區域選擇的條件回退流程中記錄結構化日誌，使用 `[AREA FALLBACK]` 前綴，包含 `area_auto_fallback` 狀態與選擇策略資訊
 
 #### 驗證問題（Verification Question）
 
@@ -188,6 +210,7 @@
 - **驗證問題答案字典**: 代表預設的驗證問題答案集合，用於自動填寫或猜測答案
 - **錯誤答案清單（fail_list）**: 代表已嘗試但失敗的答案集合，避免重複嘗試
 - **自動補票設定**: 代表自動重新載入的開關與間隔設定（`auto_reload_coming_soon_page`、`auto_reload_page_interval`）
+- **條件回退設定**: 代表日期與區域選擇的條件回退開關（`date_auto_fallback`、`area_auto_fallback`），位於設定檔頂層，預設值為 `False`（嚴格模式），與其他平台（TixCraft、KKTIX、iBon、TicketPlus、Cityline）保持一致
 
 ## 成功標準 *(必填)*
 
@@ -202,7 +225,10 @@
 - **SC-007**: 所有 FamiTicket NoDriver 函數通過 30 秒背景測試無 Python 語法錯誤，通過率達 100%
 - **SC-008**: 使用者可透過設定檔切換 `webdriver_type` 為 `chrome` 或 `nodriver`，無需修改其他設定，相容性達 100%
 - **SC-009**: 系統可在驗證問題頁面正確填寫答案，當答案正確時提交成功率達 100%
-- **SC-010**: 當所有關鍵字匹配失敗時，系統可正確啟用自動選擇模式（`auto_select_mode`）作為回退機制，回退觸發率達 100%
+- **SC-010**: 當日期關鍵字匹配失敗且 `date_auto_fallback=false`（預設，嚴格模式）時，系統 100% 正確返回 `False` 停止執行，不自動選擇任何日期，並記錄 `[DATE FALLBACK] date_auto_fallback=false, fallback is disabled` 日誌
+- **SC-011**: 當區域關鍵字匹配失敗且 `area_auto_fallback=false`（預設，嚴格模式）時，系統 100% 正確返回 `False`，不選擇任何區域，並記錄 `[AREA FALLBACK] area_auto_fallback=false, fallback is disabled` 日誌
+- **SC-012**: 當 `date_auto_fallback=true` 時，系統在關鍵字匹配失敗後能正確回退到 `auto_select_mode`，回退觸發率達 100%
+- **SC-013**: 當 `area_auto_fallback=true` 時，系統在關鍵字匹配失敗後能正確回退到 `auto_select_mode`，回退觸發率達 100%
 
 ## 假設與約束 *(選填)*
 

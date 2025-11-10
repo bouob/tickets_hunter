@@ -1,7 +1,8 @@
-# 任務：FamiTicket NoDriver 遷移
+# 任務:FamiTicket NoDriver 遷移
 
 **輸入**：來自 `/specs/005-famiticket-nodriver-migration/` 的設計文件
-**前置需求**：plan.md、spec.md、research.md、data-model.md、contracts/function-signatures.md、contracts/config-schema.md
+**前置需求**：plan.md、spec.md, research.md、data-model.md、contracts/function-signatures.md、contracts/config-schema.md
+**最後更新**：2025-11-10（新增 Feature 003 條件回退機制）
 
 **測試**：本專案採用「真實頁面測試」策略（遵循憲法第 VI 條），每個 User Story 完成後必須在真實 FamiTicket 頁面測試。
 
@@ -65,48 +66,78 @@
 
 ## 階段四：User Story 2 - 根據日期關鍵字自動選擇日期 (Priority: P1)
 
-**目標**：實作日期關鍵字匹配（OR 邏輯）與自動選擇功能（FR-010 至 FR-015）
+**目標**：實作日期關鍵字匹配（OR 邏輯）與自動選擇功能，含條件回退機制（FR-010 至 FR-015，含 FR-014a/b）
 
 **獨立測試**：
 1. 修改 `src/settings.json` 設定 `date_auto_select.date_keyword: "2025-11-10,週六"`
 2. 執行程式並觀察日期選擇流程
-3. 檢查 `.temp/test_output.txt` 中的 `[DATE KEYWORD]` 與 `[DATE SELECT]` 訊息
+3. 檢查 `.temp/test_output.txt` 中的 `[DATE KEYWORD]`、`[DATE SELECT]`、`[DATE FALLBACK]` 訊息
 4. 驗證關鍵字匹配邏輯（包含「2025-11-10」或「週六」的日期被選中）
-5. 驗證回退機制（若無匹配 → 使用 `auto_select_mode` 選擇第一個可用日期）
-6. 驗證成功標準：SC-002（90% 日期列表掃描成功率，< 2 秒）
+5. **驗證條件回退機制**：
+   - **嚴格模式測試**（`date_auto_fallback=false`，預設）：關鍵字無匹配 → 返回 `False`，不選擇任何日期
+   - **回退模式測試**（`date_auto_fallback=true`）：關鍵字無匹配 → 回退至 `auto_select_mode` 選擇第一個可用日期
+6. 驗證成功標準：SC-002（90% 日期列表掃描成功率，< 2 秒）、SC-010（嚴格模式正確性）、SC-012（回退模式正確性）
 
 ### User Story 2 實作
 
-- [ ] T007 [US2] 實作 `nodriver_fami_date_auto_select()` 於 `src/nodriver_tixcraft.py`（不含自動補票）：掃描日期列表（CSS: `table.session__list > tbody > tr`）、提取日期文字/區域文字/購買按鈕、關鍵字匹配（OR 邏輯，使用 `format_keyword_string()`）、回退至 `auto_select_mode`（參考 Chrome 版本 line 3380）
+- [ ] T007 [US2] 實作 `nodriver_fami_date_auto_select()` 於 `src/nodriver_tixcraft.py`（基礎版本，不含自動補票）：掃描日期列表（CSS: `table.session__list > tbody > tr`）、提取日期文字/區域文字/購買按鈕、關鍵字匹配（OR 邏輯，使用 `format_keyword_string()`）、回退至 `auto_select_mode`（參考 Chrome 版本 line 3380）
 
-**檢查點**：執行 30 秒背景測試（驗證日期匹配數量 `Total dates matched`）+ 真實 FamiTicket 日期選擇頁面測試
+- [ ] T007A [US2] 在 `nodriver_fami_date_auto_select()` 中新增條件回退機制（Feature 003）：
+  - 從 `config_dict` 頂層讀取 `date_auto_fallback`（預設 `False`，嚴格模式）
+  - 關鍵字匹配失敗時：
+    - 若 `date_auto_fallback=true`（回退模式）→ 記錄 `[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback`，回退至 `auto_select_mode`
+    - 若 `date_auto_fallback=false`（嚴格模式，預設）→ 記錄 `[DATE FALLBACK] date_auto_fallback=false, fallback is disabled`，返回 `False` 停止執行
+  - 參考實作：
+    - `src/nodriver_tixcraft.py:1508-1711`（TixCraft 日期回退）
+    - `specs/006-cityline-nodriver-migration/spec.md` (FR-003a/b)
+    - `specs/003-keyword-priority-fallback/completion-report-tixcraft-nodriver.md`
+
+**檢查點**：
+- 執行 30 秒背景測試（驗證日期匹配數量 `Total dates matched`、fallback 日誌）
+- 真實 FamiTicket 日期選擇頁面測試（兩種模式：`date_auto_fallback=true/false`）
+- 驗證成功標準：SC-002、SC-010（嚴格模式）、SC-012（回退模式）
 
 ---
 
 ## 階段五：User Story 3 - 根據區域關鍵字自動選擇區域 (Priority: P1)
 
-**目標**：實作區域關鍵字匹配（AND/OR 邏輯）與自動選擇功能（FR-016 至 FR-021）
+**目標**：實作區域關鍵字匹配（AND/OR 邏輯）與自動選擇功能，含條件回退機制（FR-016 至 FR-020b）
 
 **獨立測試**：
 1. 修改 `src/settings.json` 設定 `area_auto_select.area_keyword_and: [["搖滾區", "不含柱"], ["VIP", "前排"]]`
 2. 執行程式並觀察區域選擇流程
-3. 檢查 `.temp/test_output.txt` 中的 `[AREA KEYWORD]` 與 `[AREA SELECT]` 訊息
+3. 檢查 `.temp/test_output.txt` 中的 `[AREA KEYWORD]`、`[AREA SELECT]`、`[AREA FALLBACK]` 訊息
 4. 驗證 AND 邏輯（選擇同時包含「搖滾區」**且**「不含柱」的區域）
-5. 驗證回退機制（第一組無匹配 → 嘗試下一組 → 若所有組都無匹配 → 使用 `area_keyword` OR 邏輯 → 最終回退至 `auto_select_mode`）
-6. 驗證已停用區域過濾（class 包含 `"area disabled"` 的區域被跳過）
-7. 驗證成功標準：SC-003（90% 區域列表掃描成功率，< 2 秒）
+5. **驗證條件回退機制**：
+   - **嚴格模式測試**（`area_auto_fallback=false`，預設）：關鍵字無匹配 → 返回 `False`，不選擇任何區域
+   - **回退模式測試**（`area_auto_fallback=true`）：關鍵字無匹配 → 回退至 `auto_select_mode` 選擇第一個可用區域
+6. 驗證回退機制（第一組無匹配 → 嘗試下一組 → 若所有組都無匹配 → 使用 `area_keyword` OR 邏輯 → 最終回退至 `auto_select_mode` 或返回 `False`）
+7. 驗證已停用區域過濾（class 包含 `"area disabled"` 的區域被跳過）
+8. 驗證成功標準：SC-003（90% 區域列表掃描成功率，< 2 秒）、SC-011（嚴格模式正確性）、SC-013（回退模式正確性）
 
 ### User Story 3 實作
 
-- [ ] T008 [US3] 實作 `nodriver_fami_area_auto_select()` 於 `src/nodriver_tixcraft.py`：掃描區域列表（CSS: `div > a.area`）、過濾已停用區域（class 包含 `"area disabled"`）、AND 邏輯匹配（`area_keyword_and`）、OR 邏輯匹配（`area_keyword`）、回退至 `auto_select_mode`（參考 Chrome 版本 line 3514）
+- [ ] T008 [US3] 實作 `nodriver_fami_area_auto_select()` 於 `src/nodriver_tixcraft.py`（基礎版本）：掃描區域列表（CSS: `div > a.area`）、過濾已停用區域（class 包含 `"area disabled"`）、AND 邏輯匹配（`area_keyword_and`）、OR 邏輯匹配（`area_keyword`）、回退至 `auto_select_mode`（參考 Chrome 版本 line 3514）
 
-**檢查點**：執行 30 秒背景測試（驗證區域匹配數量 `Total areas matched` 與 AND 邏輯正確性）+ 真實 FamiTicket 區域選擇頁面測試
+- [ ] T008A [US3] 在 `nodriver_fami_area_auto_select()` 中新增條件回退機制（Feature 003）：
+  - 從 `config_dict` 頂層讀取 `area_auto_fallback`（預設 `False`，嚴格模式）
+  - 關鍵字匹配失敗時：
+    - 若 `area_auto_fallback=true`（回退模式）→ 記錄 `[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback`，回退至 `auto_select_mode`
+    - 若 `area_auto_fallback=false`（嚴格模式，預設）→ 記錄 `[AREA FALLBACK] area_auto_fallback=false, fallback is disabled`，返回 `False`，不選擇任何區域
+  - 參考實作：
+    - `src/nodriver_tixcraft.py:2090-2149`（TixCraft 區域回退）
+    - `specs/006-cityline-nodriver-migration/spec.md` (FR-004a/b)
+
+**檢查點**：
+- 執行 30 秒背景測試（驗證區域匹配數量 `Total areas matched`、AND 邏輯正確性、fallback 日誌）
+- 真實 FamiTicket 區域選擇頁面測試（兩種模式：`area_auto_fallback=true/false`）
+- 驗證成功標準：SC-003、SC-011（嚴格模式）、SC-013（回退模式）
 
 ---
 
 ## 階段六：User Story 4 - 自動處理驗證問題 (Priority: P1)
 
-**目標**：實作驗證問題偵測、自動填寫與猜測功能（FR-022 至 FR-025）
+**目標**：實作驗證問題偵測、自動填寫與猜測功能（FR-021 至 FR-025）
 
 **獨立測試**：
 1. 修改 `src/settings.json` 設定 `advanced.auto_guess_options: true`
@@ -132,10 +163,11 @@
 
 **獨立測試**：
 1. 選擇一個即將開賣或已開賣的 FamiTicket 活動
-2. 修改 `src/settings.json` 設定完整參數（帳號密碼、日期關鍵字、區域關鍵字）
+2. 修改 `src/settings.json` 設定完整參數（帳號密碼、日期關鍵字、區域關鍵字、`date_auto_fallback`、`area_auto_fallback`）
 3. 執行程式並觀察完整流程：登入 → 活動頁面 → 日期選擇 → 區域選擇 → 驗證問題（若有）
 4. 驗證每個步驟都能正確執行
 5. 驗證 URL 路由正確性（不同 URL 模式分派至對應函數）
+6. **驗證條件回退機制**：測試嚴格模式與回退模式的完整流程
 
 ### 整合實作
 
@@ -143,13 +175,13 @@
 - [ ] T011 [US1-4] 實作 `nodriver_famiticket_main()` 於 `src/nodriver_tixcraft.py`：根據 URL 模式分派至對應函數（`/Home/User/SignIn` → login、`/Home/Activity/Info/` → activity、`/Home/Activity` → home、日期選擇頁面 → date_to_area、驗證頁面 → verify，參考 TixCraft NoDriver 的 `nodriver_tixcraft_main()` 模式）
 - [ ] T012 [US1-4] 解除 NoDriver 主循環中的 FamiTicket 註解於 `src/nodriver_tixcraft.py` line 16841-16842：修改為 `await nodriver_famiticket_main(tab, url, config_dict)`
 
-**檢查點**：執行 30 秒背景測試（驗證 URL 路由正確性）+ 真實 FamiTicket 完整購票流程測試（登入 → 日期 → 區域 → 驗證）
+**檢查點**：執行 30 秒背景測試（驗證 URL 路由正確性、條件回退日誌）+ 真實 FamiTicket 完整購票流程測試（登入 → 日期 → 區域 → 驗證）
 
 ---
 
 ## 階段八：User Story 5 - 自動補票功能 (Priority: P2)
 
-**目標**：實作自動補票功能（當日期列表為空時自動重新載入活動頁面，FR-028、FR-029）
+**目標**：實作自動補票功能（當日期列表為空時自動重新載入活動頁面，FR-015）
 
 **獨立測試**：
 1. 修改 `src/settings.json` 設定 `tixcraft.auto_reload_coming_soon_page: true` 與 `advanced.auto_reload_page_interval: 5.0`
@@ -174,11 +206,11 @@
 
 **目的**：優化除錯訊息、錯誤處理與文件更新
 
-- [ ] T014 [P] 新增除錯訊息（show_debug_message）於所有 FamiTicket 函數：日期匹配訊息（`[DATE KEYWORD] Matched keyword: "xxx"`）、區域匹配訊息（`[AREA KEYWORD] AND logic: ["xxx", "yyy"]`）、選擇結果訊息（`[DATE SELECT] Selected date: "xxx"`）、錯誤訊息（`[ERROR] Element not found: #usr_act`，參考 TixCraft NoDriver 除錯訊息格式）
+- [ ] T014 [P] 新增除錯訊息（show_debug_message）於所有 FamiTicket 函數：日期匹配訊息（`[DATE KEYWORD] Matched keyword: "xxx"`）、區域匹配訊息（`[AREA KEYWORD] AND logic: ["xxx", "yyy"]`）、選擇結果訊息（`[DATE SELECT] Selected date: "xxx"`）、條件回退訊息（`[DATE FALLBACK] date_auto_fallback=true/false`、`[AREA FALLBACK] area_auto_fallback=true/false`）、錯誤訊息（`[ERROR] Element not found: #usr_act`，參考 TixCraft NoDriver 除錯訊息格式）
 - [ ] T015 [P] 強化錯誤處理與回退機制於所有 FamiTicket 函數：try-except 包裹所有 CDP 操作、返回布林值（簡化狀態管理）、備用方案（CDP 點擊失敗 → element.click()，參考 `research.md` 非同步錯誤處理模式）
 - [ ] T016 [P] 更新 `docs/02-development/structure.md`：新增 FamiTicket NoDriver 函數索引（8 個函數：nodriver_famiticket_main、nodriver_fami_login、nodriver_fami_activity、nodriver_fami_date_auto_select、nodriver_fami_area_auto_select、nodriver_fami_verify、nodriver_fami_date_to_area、nodriver_fami_home_auto_select）
-- [ ] T017 [P] 更新 `docs/10-project-tracking/accept_changelog.md`：記錄 FamiTicket NoDriver 遷移變更（遵循 Conventional Commits 格式，參考 `docs/10-project-tracking/changelog_guide.md`）
-- [ ] T018 執行 quickstart.md 驗證：依照 `specs/005-famiticket-nodriver-migration/quickstart.md` 的 5 分鐘快速測試流程，確保所有步驟可順利執行（修改 settings.json → 30 秒背景測試 → 驗證輸出 → 真實頁面測試）
+- [ ] T017 [P] 更新 `docs/10-project-tracking/accept_changelog.md`：記錄 FamiTicket NoDriver 遷移變更（遵循 Conventional Commits 格式，包含條件回退機制，參考 `docs/10-project-tracking/changelog_guide.md`）
+- [ ] T018 執行 quickstart.md 驗證：依照 `specs/005-famiticket-nodriver-migration/quickstart.md` 的 5 分鐘快速測試流程，確保所有步驟可順利執行（修改 settings.json → 30 秒背景測試 → 驗證輸出 → 真實頁面測試 → 測試條件回退機制）
 
 **檢查點**：所有文件更新完成，quickstart.md 驗證通過
 
@@ -192,34 +224,35 @@
 - **基礎建設（階段二）**：無（本專案無阻斷性基礎建設）
 - **User Stories（階段三至八）**：
   - **US1（階段三）**：依賴初始化完成（T001-T003）——不依賴其他 User Stories
-  - **US2（階段四）**：依賴初始化完成（T001-T003）——可與 US1 平行開發
-  - **US3（階段五）**：依賴初始化完成（T001-T003）——可與 US1、US2 平行開發
+  - **US2（階段四）**：依賴初始化完成（T001-T003）——可與 US1 平行開發（T007 → T007A 順序執行）
+  - **US3（階段五）**：依賴初始化完成（T001-T003）——可與 US1、US2 平行開發（T008 → T008A 順序執行）
   - **US4（階段六）**：依賴初始化完成（T001-T003）——可與 US1、US2、US3 平行開發
-  - **整合（階段七）**：依賴 US1、US2、US3、US4 完成（T004-T009）
-  - **US5（階段八）**：依賴 US2 完成（T007，因需修改 `nodriver_fami_date_auto_select()`）
-- **優化（階段九）**：依賴所有 User Stories 完成（T004-T013）
+  - **整合（階段七）**：依賴 US1、US2、US3、US4 完成（T004-T009，包含 T007A、T008A）
+  - **US5（階段八）**：依賴 US2 完成（T007+T007A，因需修改 `nodriver_fami_date_auto_select()`）
+- **優化（階段九）**：依賴所有 User Stories 完成（T004-T013，包含 T007A、T008A）
 
 ### User Story 相依性
 
 ```
 初始化 (T001-T003)
     ├──> US1 (T004-T006) ──┐
-    ├──> US2 (T007) ───────┤
-    ├──> US3 (T008) ───────┼──> 整合 (T010-T012) ──> 優化 (T014-T018)
+    ├──> US2 (T007 → T007A [順序])───────┤
+    ├──> US3 (T008 → T008A [順序])───────┼──> 整合 (T010-T012) ──> 優化 (T014-T018)
     └──> US4 (T009) ───────┘              ↓
                                       US5 (T013)
 ```
 
 **關鍵決策**：
 - US1-US4 可平行開發（如團隊人力允許）
-- 整合（T010-T012）必須等待 US1-US4 完成
-- US5（自動補票）依賴 US2（日期選擇）完成，因需修改 `nodriver_fami_date_auto_select()` 函數
+- US2 與 US3 內部必須順序執行：T007 → T007A（日期選擇基礎 → 條件回退）、T008 → T008A（區域選擇基礎 → 條件回退）
+- 整合（T010-T012）必須等待 US1-US4 完成（包含條件回退機制）
+- US5（自動補票）依賴 US2（T007+T007A）完成，因需修改 `nodriver_fami_date_auto_select()` 函數
 
 ### 每個 User Story 內部
 
 - **US1**：T004 → T005 → T006（依序執行，T005 依賴 T004 的登入流程）
-- **US2**：T007（單一任務，無內部相依性）
-- **US3**：T008（單一任務，無內部相依性）
+- **US2**：T007 → T007A（順序執行，T007A 必須在 T007 基礎版本完成後加入）
+- **US3**：T008 → T008A（順序執行，T008A 必須在 T008 基礎版本完成後加入）
 - **US4**：T009（單一任務，無內部相依性）
 - **整合**：T010 → T011 → T012（依序執行，T011 依賴 T010 的協調器，T012 依賴 T011 的主函數）
 - **US5**：T013（單一任務，但需修改 T007 的函數）
@@ -235,19 +268,23 @@ Task: "新增 nodriver_search_element() 工具函數於 src/nodriver_tixcraft.py
 Task: "驗證現有工具函數可用性：src/util.py"
 ```
 
-#### User Stories 平行開發（T004-T009）
-基礎建設完成後，所有 P1 User Stories 可平行啟動（如團隊人力允許）：
+#### User Stories 平行開發（T004-T009，包含 T007A、T008A）
+基礎建設完成後，所有 P1 User Stories 可平行啟動（如團隊人力允許），但 US2 與 US3 內部必須順序執行：
 ```bash
 # 開發者 A：US1
 Task: "實作 nodriver_fami_login() 於 src/nodriver_tixcraft.py"
 Task: "實作 nodriver_fami_activity() 於 src/nodriver_tixcraft.py"
 Task: "實作 nodriver_fami_home_auto_select() 於 src/nodriver_tixcraft.py"
 
-# 開發者 B：US2
-Task: "實作 nodriver_fami_date_auto_select() 於 src/nodriver_tixcraft.py"
+# 開發者 B：US2（順序執行）
+Task: "實作 nodriver_fami_date_auto_select() 於 src/nodriver_tixcraft.py（基礎版本）"
+  ↓
+Task: "在 nodriver_fami_date_auto_select() 中新增條件回退機制（Feature 003）"
 
-# 開發者 C：US3
-Task: "實作 nodriver_fami_area_auto_select() 於 src/nodriver_tixcraft.py"
+# 開發者 C：US3（順序執行）
+Task: "實作 nodriver_fami_area_auto_select() 於 src/nodriver_tixcraft.py（基礎版本）"
+  ↓
+Task: "在 nodriver_fami_area_auto_select() 中新增條件回退機制（Feature 003）"
 
 # 開發者 D：US4
 Task: "實作 nodriver_fami_verify() 於 src/nodriver_tixcraft.py"
@@ -258,7 +295,7 @@ Task: "實作 nodriver_fami_verify() 於 src/nodriver_tixcraft.py"
 #### 優化階段（T014-T017）
 文件更新任務可平行執行：
 ```bash
-Task: "新增除錯訊息於所有 FamiTicket 函數"
+Task: "新增除錯訊息於所有 FamiTicket 函數（含條件回退日誌）"
 Task: "強化錯誤處理與回退機制於所有 FamiTicket 函數"
 Task: "更新 docs/02-development/structure.md"
 Task: "更新 docs/10-project-tracking/accept_changelog.md"
@@ -266,22 +303,19 @@ Task: "更新 docs/10-project-tracking/accept_changelog.md"
 
 ---
 
-## 平行作業範例：User Story 1
+## 平行作業範例：User Story 2（含條件回退）
 
-由於 US1 包含 3 個函數，且有相依性（login → activity → home），建議依序執行：
+US2 包含 2 個任務，且必須順序執行（T007 → T007A）：
 
 ```bash
-# Step 1: 登入功能（阻斷後續）
-Task: "實作 nodriver_fami_login() 於 src/nodriver_tixcraft.py"
+# Step 1: 日期選擇基礎版本（阻斷後續）
+Task: "實作 nodriver_fami_date_auto_select() 於 src/nodriver_tixcraft.py（基礎版本）"
 
-# Step 2: 活動頁面（依賴登入成功）
-Task: "實作 nodriver_fami_activity() 於 src/nodriver_tixcraft.py"
-
-# Step 3: 首頁入口（依賴登入成功）
-Task: "實作 nodriver_fami_home_auto_select() 於 src/nodriver_tixcraft.py"
+# Step 2: 新增條件回退機制（依賴基礎版本）
+Task: "在 nodriver_fami_date_auto_select() 中新增條件回退機制（Feature 003）"
 ```
 
-**測試檢查點**（每個 Task 完成後）：
+**測試檢查點**（T007 完成後）：
 ```bash
 # 執行 30 秒背景測試
 cd /d/Desktop/bouob-TicketHunter\(MaxBot\)/tickets_hunter
@@ -289,36 +323,53 @@ rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt
 echo "" > .temp/test_output.txt
 timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
 
-# 驗證輸出
-grep "login\|SignIn\|usr_act" .temp/test_output.txt
+# 驗證基礎版本輸出（無條件回退日誌）
 grep "\[DATE KEYWORD\]\|\[DATE SELECT\]" .temp/test_output.txt
-grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
+```
+
+**測試檢查點**（T007A 完成後）：
+```bash
+# 測試嚴格模式（date_auto_fallback=false）
+# 修改 settings.json: "date_keyword": "NOTEXIST", "date_auto_fallback": false
+timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
+grep "\[DATE FALLBACK\]" .temp/test_output.txt
+# 預期：包含 "fallback is disabled"
+
+# 測試回退模式（date_auto_fallback=true）
+# 修改 settings.json: "date_keyword": "NOTEXIST", "date_auto_fallback": true
+timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
+grep "\[DATE FALLBACK\]" .temp/test_output.txt
+# 預期：包含 "triggering auto fallback"
 ```
 
 ---
 
 ## 實作策略
 
-### 先做 MVP（僅限 User Story 1-4）
+### 先做 MVP（僅限 User Story 1-4，含條件回退）
 
 1. **完成階段一**：初始化（T001-T003）
 2. **完成階段三**：User Story 1（T004-T006）
 3. **停止並驗證**：真實 FamiTicket 登入頁面測試
-4. **完成階段四至六**：User Story 2-4（T007-T009）
-5. **完成階段七**：整合所有 P1 User Stories（T010-T012）
-6. **停止並驗證**：真實 FamiTicket 完整購票流程測試
-7. **若已準備好則展示**：FamiTicket NoDriver 版本可用（P1 MVP）
+4. **完成階段四**：User Story 2（T007 → T007A，含條件回退）
+5. **完成階段五**：User Story 3（T008 → T008A，含條件回退）
+6. **完成階段六**：User Story 4（T009）
+7. **完成階段七**：整合所有 P1 User Stories（T010-T012）
+8. **停止並驗證**：真實 FamiTicket 完整購票流程測試（含條件回退機制驗證）
+9. **若已準備好則展示**：FamiTicket NoDriver 版本可用（P1 MVP，含 Feature 003）
 
 ### 漸進式交付
 
 1. **初始化完成** → 工具函數就緒
 2. **US1 完成（登入）** → 獨立測試 → 可展示登入功能
-3. **US2 完成（日期選擇）** → 獨立測試 → 可展示日期關鍵字匹配
-4. **US3 完成（區域選擇）** → 獨立測試 → 可展示區域關鍵字匹配（AND/OR 邏輯）
-5. **US4 完成（驗證問題）** → 獨立測試 → 可展示驗證問題自動處理
-6. **整合完成** → 真實頁面測試 → **MVP 達成！**（完整購票流程）
-7. **US5 完成（自動補票）** → 獨立測試 → 增加自動補票功能（P2）
-8. **優化完成** → quickstart.md 驗證 → **遷移完成！**
+3. **US2 T007 完成（日期選擇基礎）** → 獨立測試 → 可展示日期關鍵字匹配（基礎回退）
+4. **US2 T007A 完成（條件回退）** → 獨立測試 → 可展示條件回退機制（嚴格模式/回退模式）
+5. **US3 T008 完成（區域選擇基礎）** → 獨立測試 → 可展示區域關鍵字匹配（AND/OR 邏輯）
+6. **US3 T008A 完成（條件回退）** → 獨立測試 → 可展示條件回退機制（嚴格模式/回退模式）
+7. **US4 完成（驗證問題）** → 獨立測試 → 可展示驗證問題自動處理
+8. **整合完成** → 真實頁面測試 → **MVP 達成！**（完整購票流程 + Feature 003）
+9. **US5 完成（自動補票）** → 獨立測試 → 增加自動補票功能（P2）
+10. **優化完成** → quickstart.md 驗證 → **遷移完成！**
 
 ### 團隊平行開發策略
 
@@ -327,8 +378,8 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 1. **團隊共同完成**：初始化（T001-T003）
 2. **初始化完成後分工**：
    - 開發者 A：US1（登入功能，T004-T006）
-   - 開發者 B：US2（日期選擇，T007）
-   - 開發者 C：US3（區域選擇，T008）
+   - 開發者 B：US2（日期選擇，T007 → T007A，順序執行）
+   - 開發者 C：US3（區域選擇，T008 → T008A，順序執行）
    - 開發者 D：US4（驗證問題，T009）
 3. **US1-4 完成後整合**：開發者 A 負責整合（T010-T012）
 4. **整合完成後**：開發者 B 負責 US5（自動補票，T013，需修改 T007 的函數）
@@ -336,8 +387,8 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 **注意**：由於所有函數都在同一個檔案（`src/nodriver_tixcraft.py`），建議使用 Git 功能分支避免衝突：
 - `feat/us1-login`
-- `feat/us2-date-selection`
-- `feat/us3-area-selection`
+- `feat/us2-date-selection-with-fallback`
+- `feat/us3-area-selection-with-fallback`
 - `feat/us4-verify`
 - `feat/us5-auto-reload`
 
@@ -349,15 +400,26 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 - [ ] 函數簽章符合 `contracts/function-signatures.md`（async/await、show_debug_message 參數、返回布林值）
 - [ ] 函數命名遵循 `nodriver_fami_*` 規範（FR-039）
-- [ ] 設定檔欄位符合 `contracts/config-schema.md`（完全重用現有欄位，無新增）
-- [ ] 資料結構符合 `data-model.md`（6 個核心實體）
-- [ ] 除錯訊息格式一致（`[DATE KEYWORD]`、`[AREA SELECT]` 等）
+- [ ] 設定檔欄位符合 `contracts/config-schema.md`（完全重用現有欄位，新增 `date_auto_fallback`、`area_auto_fallback` 於頂層）
+- [ ] 資料結構符合 `data-model.md`（7 個核心實體，含條件回退設定）
+- [ ] 除錯訊息格式一致（`[DATE KEYWORD]`、`[AREA SELECT]`、`[DATE FALLBACK]`、`[AREA FALLBACK]` 等）
 - [ ] 錯誤處理完整（try-except + 布林返回值）
+
+### 條件回退機制檢查（Feature 003）
+
+- [ ] `date_auto_fallback` 從頂層讀取（預設 `False`）
+- [ ] `area_auto_fallback` 從頂層讀取（預設 `False`）
+- [ ] 嚴格模式（`fallback=false`）正確返回 `False`，不自動選擇
+- [ ] 回退模式（`fallback=true`）正確觸發 `auto_select_mode`
+- [ ] 日誌前綴統一使用 `[DATE FALLBACK]` 和 `[AREA FALLBACK]`
+- [ ] 日誌包含 fallback 狀態（`date_auto_fallback=true/false`）
+- [ ] 與其他平台行為一致（TixCraft、KKTIX、iBon、TicketPlus、Cityline）
 
 ### 測試驗證
 
 - [ ] 30 秒背景測試通過（SC-006、SC-007）：無崩潰、無死循環
 - [ ] 真實頁面測試通過（每個 User Story 獨立測試）
+- [ ] 條件回退測試通過（嚴格模式 + 回退模式）
 - [ ] 效能目標達成：
   - 登入操作 < 5 秒
   - 日期列表掃描 < 2 秒（SC-002）
@@ -367,13 +429,13 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 ### 憲法遵循
 
 - [ ] ✅ I. NoDriver First：使用 NoDriver API（async/await、CDP、Pierce 方法）
-- [ ] ✅ II. 資料結構優先：所有實體定義於 `data-model.md`
+- [ ] ✅ II. 資料結構優先：所有實體定義於 `data-model.md`（含條件回退設定）
 - [ ] ✅ III. 三問法則：核心問題、簡單性、相容性
 - [ ] ✅ IV. 單一職責與可組合性：每個函數職責單一，可組合
-- [ ] ✅ V. 設定驅動開發：所有行為由 `settings.json` 控制
+- [ ] ✅ V. 設定驅動開發：所有行為由 `settings.json` 控制（含 `date_auto_fallback`、`area_auto_fallback`）
 - [ ] ✅ VI. 測試驅動穩定性：30 秒背景測試 + 真實頁面測試
 - [ ] ✅ VII. MVP 原則：P1 User Stories 優先完成，可獨立測試
-- [ ] ✅ VIII. 文件與代碼同步：更新 `structure.md` 與 `accept_changelog.md`
+- [ ] ✅ VIII. 文件與代碼同步：更新 `structure.md`、`accept_changelog.md`、`data-model.md`
 - [ ] ✅ IX. Git 提交規範：使用 `/gsave` 指令，Conventional Commits 格式
 
 ---
@@ -382,9 +444,10 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 - **[P] 任務**：可平行執行（不同功能或文件，無相依性）
 - **[Story] 標籤**：將任務對應到特定 User Story，方便追蹤進度
+- **順序執行任務**：T007 → T007A（日期選擇基礎 → 條件回退）、T008 → T008A（區域選擇基礎 → 條件回退）
 - **每個 User Story 都應能獨立完成與測試**（遵循 MVP 原則）
 - **30 秒背景測試**：每個任務完成後必須執行（驗證邏輯正確性，無崩潰）
-- **真實頁面測試**：每個 User Story 完成後必須執行（驗證實際票務流程）
+- **真實頁面測試**：每個 User Story 完成後必須執行（驗證實際票務流程 + 條件回退機制）
 - **每完成一個任務或邏輯群組就提交（commit）**：使用 `/gsave` 指令
 - **可在任何檢查點停止**：獨立驗證 User Story，確保漸進式交付
 - **避免**：任務描述模糊、同檔案衝突（使用功能分支）、跨 User Story 的相依性導致無法獨立
@@ -393,13 +456,13 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 ## 任務總結
 
-**任務總數**：18 個任務
+**任務總數**：20 個任務（新增 T007A、T008A）
 
 **各 User Story 任務數**：
 - 初始化（Setup）：3 個任務（T001-T003）
 - User Story 1（登入）：3 個任務（T004-T006）
-- User Story 2（日期選擇）：1 個任務（T007）
-- User Story 3（區域選擇）：1 個任務（T008）
+- User Story 2（日期選擇 + 條件回退）：2 個任務（T007 → T007A，順序執行）
+- User Story 3（區域選擇 + 條件回退）：2 個任務（T008 → T008A，順序執行）
 - User Story 4（驗證問題）：1 個任務（T009）
 - 整合（所有 P1 User Stories）：3 個任務（T010-T012）
 - User Story 5（自動補票，P2）：1 個任務（T013）
@@ -407,24 +470,24 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 **平行執行機會**：
 - 初始化階段：T001-T003（3 個任務可平行）
-- User Stories 階段：US1-US4（4 個 User Stories 可平行開發，需注意同檔案衝突）
+- User Stories 階段：US1-US4（4 個 User Stories 可平行開發，但 US2、US3 內部必須順序執行）
 - 優化階段：T014-T017（4 個任務可平行）
 
 **建議 MVP 範圍**：
 - **最小 MVP**：初始化 + US1（登入功能）
-- **完整 MVP**：初始化 + US1-US4 + 整合（完整購票流程，P1 優先級）
+- **完整 MVP**：初始化 + US1-US4 + 整合（完整購票流程 + Feature 003 條件回退，P1 優先級）
 - **增強版**：完整 MVP + US5（自動補票，P2 優先級）
 
 **預估完成時間**（單人開發）：
 - 初始化：1-2 小時
 - US1（登入）：2-3 小時
-- US2（日期選擇）：2-3 小時
-- US3（區域選擇）：2-3 小時
+- US2（日期選擇 + 條件回退）：3-4 小時（T007: 2-3h, T007A: 1h）
+- US3（區域選擇 + 條件回退）：3-4 小時（T008: 2-3h, T008A: 1h）
 - US4（驗證問題）：1-2 小時
 - 整合：2-3 小時
 - US5（自動補票）：1-2 小時
 - 優化與文件：2-3 小時
-- **總計**：13-21 小時（約 2-3 個工作日）
+- **總計**：15-24 小時（約 2-3 個工作日）
 
 **格式驗證**：✅ 所有任務均符合檢查清單格式（核取方塊、ID、標籤、檔案路徑）
 

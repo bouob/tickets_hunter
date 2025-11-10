@@ -423,42 +423,60 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 
 #### Step 4：日期選擇（P1 User Story 2）
 
-**目標**：實作日期關鍵字匹配與自動選擇（FR-010 至 FR-015）
+**目標**：實作日期關鍵字匹配與條件回退機制（FR-010 至 FR-015，含 FR-014a/b 條件回退）
 
 **任務清單**：
-7. **實作 `nodriver_fami_date_auto_select()`（不含自動補票）**
+7. **實作 `nodriver_fami_date_auto_select()`（含條件回退機制）**
    - 位置：`src/nodriver_tixcraft.py`
    - 功能：
      - 掃描日期列表（CSS: `table.session__list > tbody > tr`）
      - 提取日期文字、區域文字、購買按鈕
      - 關鍵字匹配（OR 邏輯，使用 `format_keyword_string()`）
-     - 回退至 `auto_select_mode`（若無匹配）
-   - 參考：`src/chrome_tixcraft.py` line 3380（`fami_date_auto_select()`）
+     - **條件回退機制（FR-014, FR-014a, FR-014b）**：
+       - 讀取 `date_auto_fallback` 設定（頂層，預設 `False`）
+       - 若匹配失敗且 `date_auto_fallback=true` → 回退至 `auto_select_mode`，記錄 `[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback`
+       - 若匹配失敗且 `date_auto_fallback=false`（預設，嚴格模式）→ 返回 `False` 停止執行，記錄 `[DATE FALLBACK] date_auto_fallback=false, fallback is disabled`
+   - 參考：
+     - Chrome 版本：`src/chrome_tixcraft.py` line 3380（`fami_date_auto_select()`）
+     - NoDriver Feature 003 實作：`src/nodriver_tixcraft.py:1508-1711`（TixCraft 條件回退）
+     - Cityline spec：`specs/006-cityline-nodriver-migration/spec.md` (FR-003a/b)
    - 相依性：Step 1 的工具函數、`util.py` 的 `format_keyword_string()`
    - 測試方法：
-     - 30 秒背景測試（驗證日期匹配數量）
-     - 真實 FamiTicket 日期選擇頁面測試
-   - 成功標準：SC-002（90% 日期列表掃描成功率，< 2 秒）
+     - 30 秒背景測試（驗證日期匹配數量、fallback 日誌）
+     - 真實 FamiTicket 日期選擇頁面測試（測試兩種模式：`date_auto_fallback=true/false`）
+   - 成功標準：
+     - SC-002（90% 日期列表掃描成功率，< 2 秒）
+     - SC-010（嚴格模式 100% 正確返回 False）
+     - SC-012（回退模式 100% 正確觸發 auto_select_mode）
 
 #### Step 5：區域選擇（P1 User Story 3）
 
-**目標**：實作區域關鍵字匹配（AND/OR 邏輯）與自動選擇（FR-016 至 FR-021）
+**目標**：實作區域關鍵字匹配（AND/OR 邏輯）與條件回退機制（FR-016 至 FR-020b）
 
 **任務清單**：
-8. **實作 `nodriver_fami_area_auto_select()`**
+8. **實作 `nodriver_fami_area_auto_select()`（含條件回退機制）**
    - 位置：`src/nodriver_tixcraft.py`
    - 功能：
      - 掃描區域列表（CSS: `div > a.area`）
      - 過濾已停用區域（class 包含 `"area disabled"`）
      - AND 邏輯匹配（`area_keyword_and`，所有關鍵字必須同時存在）
      - OR 邏輯匹配（`area_keyword`，任一關鍵字匹配）
-     - 回退至 `auto_select_mode`（若無匹配）
-   - 參考：`src/chrome_tixcraft.py` line 3514（`fami_area_auto_select()`）
+     - **條件回退機制（FR-020, FR-020a, FR-020b）**：
+       - 讀取 `area_auto_fallback` 設定（頂層，預設 `False`）
+       - 若匹配失敗且 `area_auto_fallback=true` → 回退至 `auto_select_mode`，記錄 `[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback`
+       - 若匹配失敗且 `area_auto_fallback=false`（預設，嚴格模式）→ 返回 `False`，不選擇任何區域，記錄 `[AREA FALLBACK] area_auto_fallback=false, fallback is disabled`
+   - 參考：
+     - Chrome 版本：`src/chrome_tixcraft.py` line 3514（`fami_area_auto_select()`）
+     - NoDriver Feature 003 實作：`src/nodriver_tixcraft.py:2090-2149`（TixCraft 條件回退）
+     - Cityline spec：`specs/006-cityline-nodriver-migration/spec.md` (FR-004a/b)
    - 相依性：Step 1 的工具函數、`util.py` 的 `format_keyword_string()`
    - 測試方法：
-     - 30 秒背景測試（驗證區域匹配數量、AND 邏輯正確性）
-     - 真實 FamiTicket 區域選擇頁面測試
-   - 成功標準：SC-003（90% 區域列表掃描成功率，< 2 秒）
+     - 30 秒背景測試（驗證區域匹配數量、AND 邏輯正確性、fallback 日誌）
+     - 真實 FamiTicket 區域選擇頁面測試（測試兩種模式：`area_auto_fallback=true/false`）
+   - 成功標準：
+     - SC-003（90% 區域列表掃描成功率，< 2 秒）
+     - SC-011（嚴格模式 100% 正確返回 False）
+     - SC-013（回退模式 100% 正確觸發 auto_select_mode）
 
 #### Step 6：流程協調器（P1 完整流程）
 
