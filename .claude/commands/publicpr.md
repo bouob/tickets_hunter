@@ -42,6 +42,7 @@ docs/             - 技術文件和指南
 .specify/         - 規格模板和指令碼
 specs/            - 功能規格和設計文件
 FAQ/              - 常見問題解答
+.temp/            - 臨時測試資料（HTML/JS 網頁內容）
 ```
 
 ### 多層確認機制
@@ -114,7 +115,7 @@ FAQ/              - 常見問題解答
 **方法 2：檔案清單掃描（回退方法）**
 - 對於沒有 PRIVATE 標記的 commits：
   - 執行 `git show --name-only [commit-hash]` 取得檔案清單
-  - 比對機敏檔案清單（`.claude/`, `docs/`, `CLAUDE.md`, `.specify/`, `specs/`, `FAQ/`）
+  - 比對機敏檔案清單（`.claude/`, `docs/`, `CLAUDE.md`, `.specify/`, `specs/`, `FAQ/`, `.temp/`）
   - 過濾掉包含機敏檔案的 commits
 
 **為什麼需要兩種方法？**
