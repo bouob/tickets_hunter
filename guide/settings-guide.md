@@ -90,7 +90,8 @@ python settings.py
 **平台支援狀態**：
 - **TixCraft / KKTIX / TicketPlus / KHAM / 年代**：NoDriver ✅ 完全支援
 - **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
-- **Cityline / Urbtix**：建議使用 Chrome 版本，等待重構
+- **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
+- **Urbtix**：建議使用 Chrome 版本，等待重構
 
 ---
 
@@ -522,11 +523,52 @@ python settings.py
 
 ### Cityline（Cityline 買飛）
 
-#### cityline queue retry
-類型：布林值 | 預設：啟用
+#### ⚠️ 半自動登入模式
 
-排隊失敗時是否自動重試。
+**重要說明**：Cityline 採用**半自動登入策略**，需要使用者配合手動操作。
 
+**登入流程**：
+
+1. **自動填入帳號**
+   - 程式會自動填入您在設定中輸入的 Email 帳號
+   - 顯示訊息：`[CITYLINE LOGIN] Email entered: vic***`
+   - 提示：`[CITYLINE LOGIN] Please manually enter password and click login button`
+
+2. **手動輸入密碼**
+   - 在瀏覽器視窗中輸入您的密碼
+
+3. **到信箱收取驗證碼**
+   - Cityline 會發送驗證碼到您的註冊信箱
+   - 開啟信箱，找到驗證碼
+   - 在登入頁面輸入驗證碼
+
+4. **完成 Cloudflare Turnstile 驗證**
+   - 登入頁面會顯示 Cloudflare Turnstile 驗證（類似 reCAPTCHA）
+   - 程式會自動等待驗證完成（登入按鈕從 `opacity: 0.3` 變為 `opacity: 1`）
+
+5. **手動點擊登入按鈕**
+   - 所有驗證完成後，**手動點擊「登入」按鈕**
+   - 程式會自動偵測登入完成（URL 變化或 DOM 元素出現）
+   - 顯示：`[CITYLINE LOGIN] Login completed after Xs`
+
+6. **自動繼續搶票**
+   - 登入成功後，程式會：
+     - 自動重定向到目標活動頁面（`[CITYLINE LOGIN] Redirecting to target page...`）
+     - 繼續執行搶票流程（日期選擇 → 區域選擇 → 購票）
+
+**時間限制**：
+- ⏱️ 程式會等待最長 **5 分鐘**（300 秒）供您完成手動登入
+- 每 10 秒顯示一次等待提示：`[CITYLINE LOGIN] Still waiting... (Xs elapsed)`
+
+**為什麼不能全自動登入？**
+- Cityline 使用 **Email 驗證碼**（需要收信）
+- Cloudflare Turnstile 驗證需要真實使用者互動
+- 使用 **HttpOnly Session Cookie**，無法透過程式碼存取
+- 半自動模式在安全性與自動化之間取得平衡
+
+**設定位置**：
+- 在圖形介面中找到「進階設定」→「帳號密碼設定」→「cityline」
+- 只需填寫**帳號（Email）**，密碼欄位可留空
 
 ---
 

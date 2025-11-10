@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.11)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -133,7 +133,6 @@ def get_default_config():
     config_dict["kktix"]["max_dwell_time"] = 90
 
     config_dict['cityline']={}
-    config_dict["cityline"]["cityline_queue_retry"] = True
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
