@@ -119,10 +119,15 @@
 
 **⚠️ Git 推送安全規則（NON-NEGOTIABLE）**：
 
-**所有 push 操作只能推送到私人庫**：
-- 私人庫位址：`https://github.com/bouob/private-tickets-hunter.git` (remote: `private`)
-- 公開庫位址：`https://github.com/bouob/tickets_hunter.git` (remote: `origin`)
-- **嚴格禁止**直接推送到公開庫（`origin`）
+**核心原則**：
+- ✅ **強制使用 `/gsave` 建立 commit**（包含 AI 自動模式）
+- ❌ **嚴禁使用 `git commit` 手動提交**
+- ✅ **所有 push 操作只能推送到私人庫**（`private`）
+- ❌ **嚴格禁止直接推送到公開庫**（`origin`）
+
+**Repo 位址**：
+- 私人庫：`https://github.com/bouob/private-tickets-hunter.git` (remote: `private`)
+- 公開庫：`https://github.com/bouob/tickets_hunter.git` (remote: `origin`)
 
 **推送指令用途**：
 1. **`/gpush`** - 推送一般 commits 到私人庫
@@ -148,12 +153,14 @@
 /publicpr       # 建立 PR 到公開庫（發布時使用）
 ```
 
-**錯誤範例**：
-- ❌ `git push origin main` - 嚴格禁止！可能洩露機敏資料
+**錯誤範例**（嚴格禁止）：
+- ❌ `git commit -m "..."` - 手動提交，必須使用 `/gsave`
+- ❌ `git push origin main` - 直接推送到公開庫，可能洩露機敏資料
 - ❌ `git push` - 預設 remote 可能錯誤
 - ❌ 直接推送到 origin - 必須使用 `/publicpr`
 
 **正確範例**：
+- ✅ `/gsave` - 建立 commit（唯一合法方式）
 - ✅ `/gpush` - 推送一般 commits
 - ✅ `/privatepush` - 推送機敏 commits
 - ✅ `/publicpr` - 建立 PR 發布到公開庫
@@ -166,11 +173,12 @@
 1. **完成功能修改** → 符合所有憲法規範（遵循 constitution.md）
 2. **自動執行背景測試** → 30 秒 timeout，輸出至 `.temp/test_output.txt`
 3. **分析測試結果** → 失敗時觸發文件檢查模式
-4. **[強制] 記錄完成項目** → `docs/10-project-tracking/accept_changelog.md`
-5. **[speckit 專案] 一致性檢查** → 執行 `/speckit.analyze`（如適用）
-6. **驗證記錄完成** → 檢查點
-7. **標記 todo 完成**
-8. **查找下一個 todo** → `docs/10-project-tracking/todo.md`
+4. **[強制] 使用 `/gsave` 提交變更** → 自動分離公開/機敏檔案，確保 commit 品質
+5. **[強制] 記錄完成項目** → `docs/10-project-tracking/accept_changelog.md`
+6. **[speckit 專案] 一致性檢查** → 執行 `/speckit.analyze`（如適用）
+7. **驗證記錄完成** → 檢查點
+8. **標記 todo 完成**
+9. **查找下一個 todo** → `docs/10-project-tracking/todo.md`
 
 ### 文件檢查模式（測試失敗時）
 0. **檢查 Spec**（新增）：`specs/001-ticket-automation-system/spec.md` + `plan.md`

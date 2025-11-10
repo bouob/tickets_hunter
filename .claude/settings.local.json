@@ -5,9 +5,7 @@
       "Bash(timeout:*)",
       "Bash(cat:*)",
       "Bash(grep:*)",
-      "Bash(python -c \"print(''File check OK'')\")",
       "Bash(lsof:*)",
-      "Bash(python -c \"import time; time.sleep(2); print(''Wait complete'')\")",
       "Bash(tasklist)",
       "Bash(findstr:*)",
       "WebFetch(domain:github.com)",
@@ -33,8 +31,7 @@
       "WebFetch(domain:chromedevtools.github.io)",
       "SlashCommand(/speckit.analyze)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:pypi.org)",
-      "SlashCommand(/speckit.specify 將 FamiTicket (全家網) 從 Chrome 遷移到 NoDriver，實作完整票務自動化流程（帳號密碼登入、日期/區域選擇、驗證問題、自動補票），參考 Chrome 實作邏輯與 NoDriver TixCraft/KKTIX 模式)"
+      "WebFetch(domain:pypi.org)"
     ],
     "deny": [],
     "ask": []
