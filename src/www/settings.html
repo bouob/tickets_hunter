@@ -138,7 +138,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.09) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.11) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -877,8 +877,21 @@
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
               <span class="input-group-text" id="inputGroup-sizing-default">帳號</span>
-              <input type="text" id="cityline_account" value="" class="form-control">
+              <input type="text" id="cityline_account" value="" class="form-control" placeholder="請輸入 Email 帳號">
             </div>
+          </div>
+        </div>
+
+        <div class="row mb-3 bd-callout bd-callout-warning">
+          <div class="col">
+            <strong>⚠️ Cityline 登入說明（半自動模式）：</strong>
+            <ol class="mb-0 mt-2">
+              <li>程式會自動填入帳號（Email）</li>
+              <li>到信箱收取驗證碼並輸入</li>
+              <li>完成 Cloudflare Turnstile 驗證</li>
+              <li>驗證完成後，手動點擊「登入」按鈕</li>
+              <li>登入成功後，程式會自動偵測並繼續執行搶票流程</li>
+            </ol>
           </div>
         </div>
 

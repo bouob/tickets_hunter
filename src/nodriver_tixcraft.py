@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.11)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -11806,9 +11806,9 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
 
 async def nodriver_cityline_login(tab, cityline_account):
     """
-    Cityline login with manual password input
-    Strategy: Input email → Wait for user to manually complete login → Detect URL change
-    Reference: Simplified approach (cookie login is unreliable due to HttpOnly session cookies)
+    Cityline login with auto-click when button becomes enabled
+    Strategy: Input email → Monitor login button → Auto-click when enabled
+    Reference: button.login-btn.submit-btn (becomes enabled after password + verification)
     """
     global is_cityline_account_assigned
     if not 'is_cityline_account_assigned' in globals():
@@ -11825,10 +11825,43 @@ async def nodriver_cityline_login(tab, cityline_account):
                 await asyncio.sleep(random.uniform(0.4, 0.7))
                 is_cityline_account_assigned = True
                 print(f"[CITYLINE LOGIN] Email entered: {cityline_account[:3]}***")
-                print("[CITYLINE LOGIN] Please manually enter password and click login button")
+                print("[CITYLINE LOGIN] Please manually enter password and verification code")
+                print("[CITYLINE LOGIN] Monitoring login button... will auto-click when enabled")
         except Exception as exc:
             print(f"[ERROR] Failed to input email: {exc}")
             pass
+    else:
+        # Step 2: Monitor login button and auto-click when enabled
+        try:
+            # Check if login button is enabled (no disabled attribute)
+            button_enabled = await tab.evaluate('''
+                (function() {
+                    const loginBtn = document.querySelector('button.login-btn.submit-btn');
+                    if (loginBtn) {
+                        return !loginBtn.hasAttribute('disabled') && !loginBtn.disabled;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if button_enabled:
+                # Auto-click the login button
+                click_result = await tab.evaluate('''
+                    (function() {
+                        const loginBtn = document.querySelector('button.login-btn.submit-btn');
+                        if (loginBtn) {
+                            loginBtn.click();
+                            return true;
+                        }
+                        return false;
+                    })()
+                ''')
+
+                if click_result:
+                    print("[CITYLINE LOGIN] Login button auto-clicked!")
+                    await asyncio.sleep(random.uniform(1.0, 2.0))
+        except Exception as exc:
+            pass  # Silent fail, will retry on next loop
 
 async def nodriver_cityline_handle_login_redirect(tab, url, config_dict):
     """
@@ -11944,7 +11977,7 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-    date_auto_fallback = config_dict["date_auto_select"].get("date_auto_fallback", False)
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)  # Read from top level
     auto_reload_coming_soon_page = config_dict.get("auto_reload_coming_soon_page", False)
 
     ret = False
@@ -12044,6 +12077,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
     """
     Check and handle login modal on eventDetail page
     Reference: .temp/cityline/54510/1.html - div.modal-content with login form
+    Uses global flag to prevent duplicate clicks on same modal
     """
     # Check pause state
     if await check_and_handle_pause(config_dict):
@@ -12051,6 +12085,11 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_modal_handled = False
+
+    # Global flag to track if modal has been handled
+    global cityline_modal_handled
+    if not 'cityline_modal_handled' in globals():
+        cityline_modal_handled = False
 
     try:
         # Wait for modal to appear (if it will)
@@ -12070,7 +12109,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
             })()
         ''')
 
-        if modal_visible:
+        if modal_visible and not cityline_modal_handled:
             print("[CITYLINE LOGIN MODAL] Login modal detected, waiting for button to be enabled...")
 
             # Wait for login button to be enabled (opacity: 1 after Turnstile)
@@ -12096,28 +12135,26 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
                 await asyncio.sleep(1)
 
             if button_enabled:
-                # Click the login button
-                click_result = await tab.evaluate('''
-                    (function() {
-                        const loginBtn = document.querySelector('button.btn-login');
-                        if (loginBtn) {
-                            loginBtn.click();
-                            return true;
-                        }
-                        return false;
-                    })()
-                ''')
+                # Use CDP to click the login button (to properly trigger onclick event)
+                try:
+                    login_btn = await tab.find('button.btn-login', timeout=3)
+                    if login_btn:
+                        await login_btn.click()
+                        print("[CITYLINE LOGIN MODAL] Login button clicked successfully (CDP)")
+                        is_modal_handled = True
+                        cityline_modal_handled = True  # Mark as handled to prevent duplicate clicks
 
-                if click_result:
-                    print("[CITYLINE LOGIN MODAL] Login button clicked successfully")
-                    is_modal_handled = True
-
-                    # Wait for modal to process and close
-                    await asyncio.sleep(random.uniform(2.0, 3.0))
-                else:
-                    print("[CITYLINE LOGIN MODAL] Failed to click login button")
+                        # Wait longer for modal to fully close and process
+                        await asyncio.sleep(random.uniform(4.0, 5.0))
+                    else:
+                        print("[CITYLINE LOGIN MODAL] Login button not found")
+                except Exception as e:
+                    print(f"[CITYLINE LOGIN MODAL] Failed to click login button: {e}")
             else:
                 print("[CITYLINE LOGIN MODAL] Button not enabled after timeout")
+        elif cityline_modal_handled:
+            # Modal already handled, skip silently
+            pass
         else:
             if show_debug_message:
                 print("[CITYLINE LOGIN MODAL] No login modal detected")
@@ -12129,9 +12166,9 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
 
 async def nodriver_cityline_continue_button_press(tab, config_dict):
     """
-    Click the 'Continue' button on eventDetail page after date selection
-    Handles login modal if it appears before continue button
+    Click the 'Continue' button on eventDetail page to proceed to performance page
     Reference: .temp/cityline/54510/1.html - button.btn-outline-primary.purchase-btn
+    Note: Login modal is already handled in parent function, no need to check again
     """
     # Check pause state
     if await check_and_handle_pause(config_dict):
@@ -12141,10 +12178,7 @@ async def nodriver_cityline_continue_button_press(tab, config_dict):
     is_button_clicked = False
 
     try:
-        # Step 1: Check and handle login modal (if appears after Turnstile)
-        await nodriver_cityline_check_login_modal(tab, config_dict)
-
-        # Step 2: Wait a moment for page to update after modal handling
+        # Wait a moment for page to stabilize
         await asyncio.sleep(random.uniform(0.5, 1.0))
 
         # Check if continue button exists
@@ -12200,7 +12234,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    area_auto_fallback = config_dict["area_auto_select"].get("area_auto_fallback", False)
+    area_auto_fallback = config_dict.get("area_auto_fallback", False)  # Read from top level
 
     is_price_assigned = False
 
@@ -12391,28 +12425,33 @@ async def nodriver_cityline_next_button_press(tab):
 
 async def nodriver_cityline_performance(tab, config_dict):
     """
-    Cityline performance page (area + ticket number + next button)
-    Reference: Chrome UC version cityline_performance
+    Cityline performance page (date + area + ticket number + next button)
+    Reference: .temp/cityline/54510/2.html - 選擇日期與票價的頁面
     Returns True only if the entire flow completes (including next button click)
     """
     # Check pause state
     if await check_and_handle_pause(config_dict):
         return False
 
+    is_date_assigned = False
     is_price_assigned = False
     is_button_clicked = False
 
-    # Step 1: Area selection
-    is_price_assigned = await nodriver_cityline_area_auto_select(tab, config_dict)
+    # Step 1: Date selection (if date buttons exist on this page)
+    is_date_assigned = await nodriver_cityline_date_auto_select(tab, config_dict)
 
-    if is_price_assigned:
-        # Step 2: Ticket number selection
-        is_ticket_number_assigned = await nodriver_cityline_ticket_number_auto_select(tab, config_dict)
+    if is_date_assigned:
+        # Step 2: Area selection
+        is_price_assigned = await nodriver_cityline_area_auto_select(tab, config_dict)
 
-        if is_ticket_number_assigned:
-            # Step 3: Press next button
-            await asyncio.sleep(random.uniform(0.3, 0.7))
-            is_button_clicked = await nodriver_cityline_next_button_press(tab)
+        if is_price_assigned:
+            # Step 3: Ticket number selection
+            is_ticket_number_assigned = await nodriver_cityline_ticket_number_auto_select(tab, config_dict)
+
+            if is_ticket_number_assigned:
+                # Step 4: Press next button
+                await asyncio.sleep(random.uniform(0.3, 0.7))
+                is_button_clicked = await nodriver_cityline_next_button_press(tab)
 
     # Return True only if next button was successfully clicked
     return is_button_clicked
@@ -12462,9 +12501,14 @@ async def nodriver_check_modal_dialog_popup(tab):
 
 async def nodriver_cityline_purchase_button_press(tab, config_dict):
     """
-    Cityline eventDetail page integrated processing
-    1. Date selection (includes Turnstile wait)
-    2. Click 'Continue' button to proceed to performance page
+    Cityline eventDetail page processing (NO DATE SELECTION HERE)
+
+    eventDetail page flow:
+    1. Click 'Continue' button to proceed to performance page
+
+    Note:
+    - Login modal is checked in main loop (outside this function)
+    - Date/Area selection happens on performance page, NOT here
     Reference: .temp/cityline/54510/1.html
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -12475,19 +12519,10 @@ async def nodriver_cityline_purchase_button_press(tab, config_dict):
 
     is_button_clicked = False
 
-    # Step 1: Date selection (includes Turnstile wait)
+    # Click 'Continue' button to go to performance page
     if show_debug_message:
-        print("[CITYLINE EVENTDETAIL] Starting date selection...")
-    is_date_assigned = await nodriver_cityline_date_auto_select(tab, config_dict)
-
-    if is_date_assigned:
-        if show_debug_message:
-            print("[CITYLINE EVENTDETAIL] Date selected, proceeding to continue button...")
-        # Step 2: Click 'Continue' button
-        is_button_clicked = await nodriver_cityline_continue_button_press(tab, config_dict)
-    else:
-        if show_debug_message:
-            print("[CITYLINE EVENTDETAIL] Date selection failed, skipping continue button")
+        print("[CITYLINE EVENTDETAIL] Clicking continue button...")
+    is_button_clicked = await nodriver_cityline_continue_button_press(tab, config_dict)
 
     return is_button_clicked
 
@@ -12707,21 +12742,27 @@ async def nodriver_cityline_main(tab, url, config_dict):
     if '/Events.html' in url:
         await nodriver_cityline_clean_ads(tab)
 
+        # Auto-redirect to target event page after successful login
+        target_url = config_dict["homepage"]
+        if target_url and 'shows.cityline.com' in target_url:
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+            if show_debug_message:
+                print(f"[CITYLINE LOGIN] Redirecting to target page: {target_url}")
+            try:
+                await tab.get(target_url)
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                # Update URL after redirect
+                url = await tab.evaluate('window.location.href')
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[ERROR] Redirect failed: {exc}")
+
     # Login page
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         if len(cityline_account) > 4:
+            # Auto-fill email and monitor login button (will auto-click when enabled)
             await nodriver_cityline_login(tab, cityline_account)
-
-            # Handle login completion and redirect to target event page
-            has_redirected = await nodriver_cityline_handle_login_redirect(tab, url, config_dict)
-
-            # Update URL after redirect for subsequent processing
-            if has_redirected:
-                try:
-                    url = await tab.evaluate('window.location.href')
-                except:
-                    pass
 
     # Multi-tab handling (FR-009)
     tab = await nodriver_cityline_close_second_tab(tab, url)
@@ -12755,7 +12796,11 @@ async def nodriver_cityline_main(tab, url, config_dict):
     if not 'cityline_purchase_button_pressed' in globals():
         cityline_purchase_button_pressed = False
 
-    if '/eventDetail?' in url:
+    if 'venue.cityline.com' in url and '/eventDetail?' in url:
+        # Always check for login modal (independent of flag, for cookie capture)
+        await nodriver_cityline_check_login_modal(tab, config_dict)
+
+        # Then proceed with purchase button if not already processed
         if not cityline_purchase_button_pressed:
             if config_dict["date_auto_select"]["enable"]:
                 is_button_clicked = await nodriver_cityline_purchase_button_press(tab, config_dict)
@@ -12772,7 +12817,13 @@ async def nodriver_cityline_main(tab, url, config_dict):
     if not 'cityline_performance_processed' in globals():
         cityline_performance_processed = False
 
+    global cityline_modal_handled
+    if not 'cityline_modal_handled' in globals():
+        cityline_modal_handled = False
+
     if 'venue.cityline.com' in url and '/performance?' in url:
+        # Reset modal flag when successfully navigated to performance page
+        cityline_modal_handled = False
         # Play sound when entering performance page
         if config_dict["advanced"]["play_sound"]["ticket"]:
             if not cityline_dict["played_sound_ticket"]:
