@@ -1,0 +1,1787 @@
+偵測網頁變化 如果進到 https://venue.cityline.com/utsvInternet/internet/shoppingBasket?lang=TW
+代表以金在購物車了 所以要有音效通知
+<body class="isLoggedIn" data-theme="default">
+<!-- header -->
+<div id="s_header">
+
+
+
+
+
+<!-- header -->
+<div id="mobile" class="d-lg-none"></div>
+
+<div class="header container-fluid">
+	<nav class="navbar navbar-expand-lg container">
+		<div style="height: 28px">
+			<button id="navbar-toggler" class="navbar-toggler" type="button" onclick="toggleBtnOnclick()">
+				<span id="togglerIcon" class="navbar-toggler-icon"></span>
+			</button>
+		</div>
+		<div>
+
+			<a id="citylineLogo" onclick="goToCitylineWithCheck()" class="navbar nav-logo cursor-pointer"> <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/citylinelogo.png" alt="Cityline">
+			</a>
+		</div>
+		<div class="navbar-login">
+			<div class="login-btn-group">
+				<a class="mr-1 login-btn" href="https://www.cityline.com/Login.html?&amp;lang=zh_HK&amp;targetUrl=https%3A%2F%2Fvenue.cityline.com%2FutsvInternet%2Finternet%2FshoppingBasket%3Flang%3DTW%26from%3DcitylineMember%26loginPrompt%3Dtrue" style="font-weight: normal;" data-i18n="app-nav-login">登入</a>
+				<!-- / -->
+				<!-- <a class="ml-1" target="_blank" style="font-weight: normal;" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+			</div>
+			<div class="account-btn-group">
+				<a class="mr-2 cart-btn" href="javascript:void(0)" onclick="goToBasket()"><i class="bi bi-cart2"></i><span class="badge badge-pill badge-primary cart-qty">1</span></a>
+				<a class="ml-2" href="javascript:void(0)" style="font-weight: normal;" data-i18n="app-nav-logout" onclick="logoutCheck()">登出</a>
+			</div>
+		</div>
+		<div class="navbar navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav first-collapse">
+				<li>
+					<a target="_blank" href="https://shows.cityline.com" data-i18n="app-nav-coming-soon">即將發售</a>
+				</li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+				<li>
+					<a target="_blank" href="https://www.cityline.com/Tdm.html" data-i18n="app-nav-get-ticket">如何取票</a>
+				</li>
+				<!-- <li class="nav-item"><a class="nav-link" href="/utsvInternet" data-switch-lang="true" data-i18n="app-nav-events">Events</a></li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+				<li class="nav-item"><a class="nav-link" target="_blank" href="https://live.cityline.com?ft=Online" data-langunderscoremap="true" data-i18n="app-nav-digital-theatre">Online</a></li>				 -->
+				<!-- <li class="nav-item nav-display before-line"><a class="nav-link" onclick="goToOpenData()" data-i18n="app-nav-open-data" href="javascript:void(0)">Open Data</a></li> -->
+				<!-- <li class="nav-item nav-display"><a class="nav-link" target="_blank" href="https://business.cityline.com/" data-i18n="app-nav-business-news">Business</a></li>
+				<li class="collapse-bottom p-0">
+					<div class="switch-locale">
+						<a class="nav-link" href="javascript:void(0)" data-locale="en"><span data-i18n="app-locale-en">EN</span></a><span data-locale="en" style="color: #8e8e8e" class="d-none">&nbsp;&nbsp;&nbsp;|&nbsp;</span>
+						<a class="nav-link" href="javascript:void(0)" data-locale="TW"><span data-i18n="app-locale-tw">繁</span></a><span data-locale="CN" style="color: #8e8e8e" class="d-none">&nbsp;&nbsp;&nbsp;|&nbsp;</span>
+						<a class="nav-link" href="javascript:void(0)" data-locale="CN"><span data-i18n="app-locale-cn">简</span></a>
+					</div>
+					<div class="navbar-search-mobile">
+						<img class="search-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="" onclick="showInput('mobile')">
+						<form class="search-input-hidden-mobile searchForm" id="isShowMobile" action="/utsvInternet/internet/search">
+							<div>
+								<input name="lang" value="" hidden>
+								<input class="form-control searchField" type="text" name="keyword" 
+									data-i18n-placeholder="app-nav-search-placeholder" placeholder="Enter event name">
+								<span onclick="closeInput('mobile')"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt=""></span>
+							</div>
+							<button class="btn btn-search" type="submit">
+								<img src="./revamp/images/searchClick.da2014ea.svg" alt="">
+							</button>
+						</form>
+					</div>
+				</li> -->
+			</ul>
+
+			<ul class="navbar-nav second-collapse">
+				<!-- <li class="dropdown nav-item">
+					<button class="btn global-btn" type="button" data-toggle="dropdown" aria-expanded="false">
+						<i class="bi bi-globe"></i>
+					</button>
+					<ul class="dropdown-menu switch-locale" style="min-width:30px">
+						<li><a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a></li>
+						<li><a class="TW" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a></li>
+						<li><a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a></li>
+					</ul>
+				</li>  -->
+
+				<li class="nav-item switch-locale">
+					<a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a>
+					<a class="TW lang-active" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a>
+					<a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a>
+				</li>
+
+				<li class="nav-item fontsize-wrap">
+					<a class="font-size-btn fs14px" onclick="changeFontSize('14px',this)"><span>A</span></a>
+					<a class="font-size-btn fs16px font-size-btn-active" onclick="changeFontSize('16px',this)"><span>A</span></a>
+					<a class="font-size-btn fs18px" onclick="changeFontSize('18px',this)"><span>A</span></a>
+				</li>
+
+				<li class="nav-item color-wrap">
+					<button class="switch-theme icon-blue default switch-theme-active" onclick="changeThemeColor('default',this)">
+						<i class="bi-sun-fill"></i>
+					</button>
+					<button class="switch-theme icon-grey night" onclick="changeThemeColor('night',this)">
+						<i class="bi-moon-fill"></i>
+					</button>
+					<button class="switch-theme icon-white black" onclick="changeThemeColor('black',this)" style="background-color: #000;">
+						<i class="bi-eye-fill"></i>
+					</button>
+				</li>
+
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+
+				<!-- <li class="nav-item switch-locale">
+					<a class="nav-link" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a><img data-locale="en" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+					<a class="nav-link" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a><img data-locale="TW" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+					<a class="nav-link" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a><img data-locale="CN" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+				</li> -->
+				<!-- <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="goToOpenData()" data-i18n="app-nav-open-data">Open Data</a></li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt=""> -->
+
+				<li class="nav-item"><a class="nav-link" target="_blank" href="https://business.cityline.com/" data-i18n="app-nav-business-news">商業快訊</a></li>
+				<!-- <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt=""> -->
+				
+				<li class="nav-item nav-login">
+					<div class="login-btn-group">
+						<!-- <a class="nav-link mr-4" target="_blank" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+						<a class="login-btn" href="https://www.cityline.com/Login.html?&amp;lang=zh_HK&amp;targetUrl=https%3A%2F%2Fvenue.cityline.com%2FutsvInternet%2Finternet%2FshoppingBasket%3Flang%3DTW%26from%3DcitylineMember%26loginPrompt%3Dtrue" role="button"><button type="button" class="btn-login" data-i18n="app-nav-login" tabindex="-1">登入</button></a>
+					</div>
+					<div class="account-btn-group">
+						<a class="nav-link mr-2 cart-btn" href="javascript:void(0)" onclick="goToBasket()" role="button">
+							<i class="bi bi-cart2"></i><span class="badge badge-pill badge-primary cart-qty" aria-hidden="true">1</span>
+							<span class="sr-only"><span data-i18n="shopping-basket">購物籃</span><span class="cart-qty-sr"> <span class="cart-qty">1</span> <span data-i18n="qty-items">件物品</span></span></span>
+						</a>
+
+						<!-- <span class="memberName d-none">
+							<span data-i18n="app-nav-greeting">Hi！</span>
+							<span class="firstName"></span>
+							<span class="lastName"></span>
+						</span> -->
+
+						<button type="button" class="btn btn-logout mr-2" onclick="logoutCheck()"><span data-i18n="app-nav-logout">登出</span></button>
+					</div>
+				</li>		
+						
+				<li class="navbar-search"><a href="javascript:void(0);" onclick="showInput('pc')" role="button"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="Search"></a>
+					<form class="search-input-hidden searchForm" id="isShow" action="/utsvInternet/internet/search">
+						<div>
+							<input name="lang" value="" hidden="">
+							<input class="form-control searchField" type="text" name="keyword" data-i18n-placeholder="app-nav-search-placeholder" placeholder="輸入節目名稱"> 
+							<button class="btn close-btn" onclick="closeInput('pc')" type="button"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt="Close search"></button>
+						</div>
+						<button class="btn btn-search" type="submit">
+							<!-- <img src="./revamp/images/searchClick.da2014ea.svg" alt="Submit Search"> -->
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/searchClick.da2014ea.svg" alt="Submit Search">
+						</button>
+					</form>
+				</li>
+			</ul>
+			<div class="mobile-navbar">
+				<div class="mobile-navbar-box">
+					<!-- <ul>
+						<li><a href="https://www.cityline.com/AboutUs.html" data-citylinelangmap="true" data-i18n="app-footer-about-us" target="_blank">About us </a></li>
+						<li><a href="https://www.business.cityline.com" data-citylinelangmap="true" data-i18n="app-footer-job" target="_blank">Business</a></li>
+						<li><a href="https://www.cityline.com/Blogs.html" data-citylinelangmap="true" data-i18n="app-footer-blogs" target="_blank">Blogs </a></li>
+						<li><a href="https://www.cityline.com/system-maintenance-schedule.html" data-citylinelangmap="true" data-i18n="app-footer-system-maintenance" target="_blank"> System maintenance  </a></li>
+						<li><a href="https://www.cityline.com/ReleaseNotes.html" data-citylinelangmap="true" data-i18n="app-footer-release-notes" target="_blank">Release notes </a></li> -->
+						<!-- <li><a href="https://www.cityline.com/CS.html" data-citylinelangmap="true" data-i18n="app-footer-cs" target="_blank">Customer service</a></li> -->
+						<!-- <li><a href="https://www.cityline.com/ContactUs.html" data-citylinelangmap="true" data-i18n="app-footer-contact-us" target="_blank">Contact us</a></li>
+						<li><a href="https://www.cityline.com/TermsOfUse.html" data-citylinelangmap="true" data-i18n="app-footer-terms" target="_blank">Terms of use</a></li>
+						<li><a href="https://www.cityline.com/Help.html" data-citylinelangmap="true" data-i18n="app-footer-help" target="_blank">Help</a></li>
+					</ul> -->
+
+					<ul class="mobile-navbar-left">
+						<li class="navbar-left-item"><a target="_blank" href="https://shows.cityline.com" data-i18n="app-nav-coming-soon">即將發售</a></li>
+						<li class="navbar-left-item"><a target="_blank" href="https://www.cityline.com/Tdm.html" data-i18n="app-nav-get-ticket">如何取票</a></li>
+					</ul>
+
+					<ul class="mobile-navbar-right">
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-about-cityline">關於CITYLINE</li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/AboutUs.html" data-i18n="app-footer-company-information">公司資料</a></li>
+						<li class="navbar-right-item"><a href="https://www.business.cityline.com" data-i18n="app-footer-job" target="_blank">業務合作</a></li>
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-news">最新消息</li>
+						<li class="navbar-right-item"><a href="https://www.business.cityline.com/news" data-i18n="app-footer-blogs" target="_blank">博客</a></li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/ReleaseNotes.html" data-i18n="app-footer-website-information">網站資訊</a></li>
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-enquiries">查詢</li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/Help.html" data-i18n="app-footer-help">幫助</a></li>
+					</ul>
+				</div>
+				<ul class="menuLogin">
+					<li class="collapse-bottom p-0">
+						<div>
+							<span class="switch-locale">
+								<!-- <a class="nav-link" href="javascript:void(0)" data-locale="en"><span data-i18n="app-locale-en">EN</span></a><span data-locale="en" style="color: #8e8e8e" class="d-none">&nbsp;|&nbsp;</span>
+								<a class="nav-link" href="javascript:void(0)" data-locale="TW"><span data-i18n="app-locale-tw">繁</span></a><span data-locale="CN" style="color: #8e8e8e" class="d-none">&nbsp;|&nbsp;</span>
+								<a class="nav-link" href="javascript:void(0)" data-locale="CN"><span data-i18n="app-locale-cn">简</span></a> -->
+								<a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a>
+								<a class="TW lang-active" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a>
+								<a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a>
+							</span>
+
+							<span class="fontsize-wrap">
+								<a class="font-size-btn fs14px" onclick="changeFontSize('14px',this)"><span>A</span></a>
+								<a class="font-size-btn fs16px font-size-btn-active" onclick="changeFontSize('16px',this)"><span>A</span></a>
+								<a class="font-size-btn fs18px" onclick="changeFontSize('18px',this)"><span>A</span></a>
+							</span>
+
+							<span>
+								<button class="switch-theme icon-blue default switch-theme-active" onclick="changeThemeColor('default',this)">
+									<i class="bi-sun-fill"></i>
+								</button>
+								<button class="switch-theme icon-grey night" onclick="changeThemeColor('night',this)">
+									<i class="bi-moon-fill"></i>
+								</button>
+								<button class="switch-theme icon-white black" onclick="changeThemeColor('black',this)" style="background-color: #000;">
+									<i class="bi-eye-fill"></i>
+								</button>
+							</span>
+
+
+						</div>
+
+						<div class="navbar-search-mobile">
+							<img class="search-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="" onclick="showInput('mobile')">
+							<form class="search-input-hidden-mobile searchForm" id="isShowMobile" action="/utsvInternet/internet/search">
+								<div>
+									<input name="lang" value="" hidden="">
+									<input class="form-control searchField" type="text" name="keyword" data-i18n-placeholder="app-nav-search-placeholder" placeholder="輸入節目名稱">
+									<span onclick="closeInput('mobile')"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt=""></span>
+								</div>
+								<button class="btn btn-search" type="submit">
+									<!-- <img src="./revamp/images/searchClick.da2014ea.svg" alt=""> -->
+									<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/searchClick.da2014ea.svg" alt="">
+								</button>
+							</form>
+						</div>
+					</li>
+
+					<li class="navbar-iconList">
+						<a href="https://www.facebook.com/CitylineHK/?fref=ts&amp;amp;ref=br_tf" target="_blank">
+							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAYAAACohjseAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAoUSURBVHgB1VoLbBTHGf5n997Gr9rGNg+FABVPBRoXKRihUCrRNpWKWtVNGom0pWla0iaU8IpI1BgUpKAmUqJKfbglpqkiQkhaUKhKSAWueCQ0JWkKmIRCMbbhbJ99d/Y99vb2Mf3/8e6Zw2dzZx+2+aS5nZ3bnZ1v/ufMLoPbgJrHuPN6WeQ+0zSXSeCYDdycyyWYin95gYtLYhzYJQbmZ3h6WXJqR/zPl1+A2wAGecKM+lBJQmGrsMu1WGqxqTCX+3Eg3fjzN5D46/6dRUeAMQ55wKgJFq+7WuotKv0RVjdjKYc8AAf1CXD+S7+vaC/UMxNGgVERrNza+wQDaRsAr4LbAQbNKMcf+3cVncSzEUl0RASrNyp3gVNv4JyvgjEAY9IrEOzd5m+YGocckTPB6qd7vsq561Wc0GoYQ+BA/8uZsarjhdKWXO6Tsr0QpcWqNvZ8m4Nj/1iTE88H+Dxw+Vjlpo6FudyXlQSJXPWW8BqQ5D/CeINBALj2pY5dZc2QhV1mQ5BN2dxZa8jew2jwk2AigMMVbppf7nyxpAVuQfJWBFnZhrYpTmfR+2jp0yFPKPYwuGeaBPOqZT67QganDBBNcPD3mnClx2ShOIdLARO6o3yYgfNTBfGTKy/96oEkDEPSATBMH2ijSG53vshNLmSwdqkL1t3vBJfM7GdkxHOHEtBwQhuyL8yEauOepRiiYHuqKQMyOhmyubq6Oql6U+BRJPcVyANmlUtw6PECWL/SZZMbNUxJ3lK94fq99fX11GHGTjMSZIzB+94NVVx27YA8oBIlt+9RL0wvzVtmaMPDHb5dSJB4ZE1QqKY+eRbllJMhD/jF190wtSTriJQbJGll1VPty1HjMkpx0FNJ3JO/e7CcSe7HIA+YhsS+tdgJuSKnvEzy/mT//v0ZpcgynMtl668+5PSU/gnygB/WOuH5b3iGvSaqktfkEIwN5NWvfaDBuxd0yBqdJ+9eHnu1DYlSJ6n5SfOiJD0ssstV9Ehe1iqIpXfLw/5/7KLBnz6gsNbgKJ9Ydu8P9u/52k6spa0+0lS0qalJKp1Z5+GSvBzyhPLCoW0vgrHv8b15IEeQnPfPmDGDHiZhFBhotivkiYigc9Uz9+GpB/KE4mF6+vCqAWElP7rCmLwovPg5WrZJjMKAhRsJMjED3rJaGCNc7x3VWjYNnLESufyemdDPaTBBqsdiMYckue6CMYKZP34CsrtgDh0gA0ERQwzDkHDFMA/uVEjOCujnlJKiIGilOlIwGJRRl6fAHQomOz6HSFNRESaQIFiNEh+hg6GAnmsiRquK6UNkOO1hM+dNGEzAi0lI5EtaWlpEGxFkK1asIA8qCIpeR5Ay/vWnPrFayAWrMcNZnSHLIS8/f0c0dw9rGoIDkrPTNi6mD8nRQSooKMBzM+eNnXyjC9eBIwkfzNT66FBZWZlmgxwlKP5HLyqZmtoK44yrPSNzr1yPh/HAOjs7ATkNOBlLPcHn8wHoSguMM7qiIyNoRgPtdEQJ2lo5EAfR+7B4HPcKEj1XYJxxpmVkBPWYvxsGJCjaBEE84bIsm2iDXGk9/k8YZ1zoNCBXcCN5TTm+83xhYaFYTaAEhRGnVhOBQKC/8o9tF32L1oaZJJdADjh/3YBWz2AvunCqBB5HZu/aFeHQGhwsrbbQCPJTTbmodn+WVJHctGnTeHu70NZ+gpa+0pMMUFWDxzuOsUlTvwk54OFGJWP7sZ/7YG5V5iXT4fMabD2gQj6gBy8cxgMvKioicjRDYpZsGzSJtdVoJK+fOQR3ELihh5Wm7UexakiSZC940wgSayFBr9drxI5t/4hrsU/hDgGPB5r0zg+jWNXD4bBZU1NjWulnWrItpIdLKUNSWhW9/fQeuBPAwYh98MJvk8kk7W+QdzLQ0XAkmK6iVjEwVNBuq9bzl+8f4Vr8EkxwGJHWg7GPGq9hVUNiBuahRkVFxSAVBauBSOqqqmouFk8mzu/bNcL3jmMCrqv+xOlXGrFK0tMjkYjucDj4ggULUoNOEcR9jJQUMR5qqKpa/OimM0bwypswQaFdO9WQOLunjapWMdBZGrZ6Em5eq9AFGuakmkpiRAR+v/glMxmbcKpqhv73dvCN1e+gIOjliyionrod4G2kCLL+rxrImxr2DVgSdFSObt3C9YQfJgh4IvivrsYlL2JVQ+dCgVTF/FPDZRKNPW1f9GYJpuyQbvJ4PIJo5JPX2vre2/Qk15ROGGdwLXI5/OeHnwFNU91utyBXUlKSxPzTJpeGoQga5eXlGhosSVB0ol/Y29b396d+xnWlC8YJptJ9Ovz2mifUtlNBGhNCQc+ZwNhNghgkPUKm/QJBsLu7mwjSjZSDJdAcVeU/r7f1vfvkOjMR+jeMMYyei28FGxZtVq8epRUDTbqYfJRi0u/32zFwkMsf6u2SUFNrZqgjxSpJ5dy+a8HfLVhvdJ1tRMerwO2GoQXVTw88G/jDF1/WExGhTTQWXLuKiUdB0BiJYNYvQO0gaeLMaHaHWGgrI0bneiKqBhqX7Y69t3GtGe+8LcsrjrumeujygdAbD6wJHXykCZs0l8uVQIkROcxH4mLCYUBy2b/hFQ/o3+A3MK+jTohkHCUqiDqdTuFdox/vbg3+Zt4m5fTL68xIx3Hon8lRMjPjRvDim33vrH2wu+ELLxkdZ0IWkQR6zDja3Y3kNBxmRtW0MeQ7egobBGufX6xpFEXsBJloj9Spl+q6rjtjJ3acw/KsZ853prgXf69WLp+zjLmL5+Ieqw9uSYh6SfSgXTdrHedOxE/UH1c7zlLibOJE0oSR5FQkJ1SyuLhY6e3tVS2Cxg2vITLzgOxAkparq6udqLYu6N879VpHFw7EiXPhRLISOiYZj+Cuqil0L3xwZv1DsybXzKmsKMGFmsPt9RmGxpV4oq+vL9R75OOe0K/fOnVFbT7gh3g7EeB4r3By2CXlGRqFAiSRQKQcC5HGbMW0MpZRfUZy83UOqzgnTZrkjkajRNBtk6R2HJPDmhAiy4isdUx7FuWM1uCIlJAjdmFY2mGnXupNxW4fFA6GggOyg+gMpaTjbIqcFfNVAwmSCiUxIXDjfy60D0ESi4yDlXGwgqhFLo2gTYq6tYlh0VEddVRHO5OySdmeMmOsGw4572FbZikGjrmfjOmRkCgWUl27LkhaJe1lCAkaiQASEQNFLibWDWs9p2UoOgxkV2IIkANy/vTByllJ/40lS5bYakS2EbVKBEsvFtpl7kPpRqx6BO0pguToPIKEqIhr6Igq34dmSv/FMK+kkKTgbp9qEbPjXM5rt9F+uGLfb0vIfjeXskMctIQeJSVBJAKo2gADaWH/ZpdVnz9/vtHc3CzqlhefMAtSYWd1dXUyzjwRJJV1oxrbHteHXpjCxo3FM3v2bDeScln32Co9sUETT+/8rS+QbFsUxG0iNBEwIPm8fwI1nhhTMv8Hk7PsL6+UqmYAAAAASUVORK5CYII=" alt="Facebook">
+						</a>
+						<a href="https://www.instagram.com/citylinehk/" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-intagram.png" alt="Instagram">
+						</a>
+						<a href="https://www.linkedin.com/company/cityline-hong-kong-limited?trk=biz-companies-cym" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-linkin.png" alt="LinkedIn">
+						</a>
+						<a href="https://www.xiaohongshu.com/user/profile/6508fed60000000016038a44" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-xiaohongshu.png" alt="Xiaohongshu" class="side-xiaohongshu">
+						</a>
+						<a href="https://v.douyin.com/i6uD7Kng/" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-douyin.png" alt="Douyin" class="side-douyin">
+						</a>
+						<a href="https://mp.weixin.qq.com/s/aHJbshkM7GEPcVcNCNeMOQ" target="_blank">
+							<img data-v-6dc9f104="" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-wechat.png" alt="Wechat" class="side-wechat">
+						</a>
+						<button class="buttonLink noBtn" onclick="footerModalIsDisplay('#newsModal','block')">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/news-footer.png" alt="Newsletter">
+						</button>
+						<!-- <button class="buttonLink noBtn" onclick="footerModalIsDisplay('#subscribeModal','block')">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/subscribe-footer.png" alt="Latest News">
+						</button> -->
+					</li>
+
+					<li class="memberName d-none">
+						<span data-i18n="app-nav-greeting">你好！</span>
+						<span class="firstName"></span>
+						<span class="lastName"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+</div>
+
+<!-- Login popup -->
+<section class="login">
+	<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="#loginModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content h-100">
+				<div class="modal-header">
+					<h5 class="modal-title" id="loginModalLabel" data-i18n="app-login-title">會員登錄</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="loginForm" onsubmit="return submitLogin(event)">
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-login-fail">你輸入的電郵/登入名稱或密碼不正確</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-captcha">輸入驗證碼和圖中數字不同。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-recaptcha">reCAPTCHA驗證失敗。 請再試一次。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-turnstile">turnstile驗證失敗。 請再試一次。</div>
+						<!-- <div class="form-group input-email">
+							<label for="inputEmail" data-i18n="app-login-login-id">Email / Login ID</label>
+							<input type="text" class="form-control" id="inputEmail" aria-describedby="emailHelp"
+							 	data-i18n-placeholder="app-login-login-id-placeholder" placeholder="Enter email / login ID" autocomplete="username" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+						</div>
+						<div class="form-group input-pwd">
+							<label for="inputPassword" data-i18n="app-login-password">Password</label> 
+							<input type="password" class="form-control" id="inputPassword" 
+							 	data-i18n-placeholder="app-login-password-placeholder" placeholder="Password" autocomplete="current-password" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+							<a href="https://www.cityline.com/ForgotPassword.do" 
+								class="forgot-pwd" data-citylinelangmap="true" data-i18n="app-login-forgot-password">Forgot Password</a>
+						</div> -->
+			            <div class="form-group input-captcha" style="display: none;">
+							<label for="inputCaptcha" data-i18n="app-login-captcha">驗證碼</label> 
+							<img class="captcha m-0 p-0" src="" alt="驗證碼" data-i18n-alt="app-login-captcha-alt">
+							<button type="button" class="btn p-0" onclick="getCaptcha()"><i class="bi bi-arrow-clockwise"></i></button>
+							<input type="number" class="form-control no-arrow" id="inputCaptcha" data-i18n-placeholder="app-login-captcha-placeholder" placeholder="請輸入圖中數字" required="">
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-g-recaptcha" style="display: none;">
+							<div id="loginRecaptcha"></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-c-turnstile" style="display: none;">
+							<div id="loginTurnstile"></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<input type="submit" class="hidden">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn-login" style="opacity: 0.3" onclick="submitLogin()" disabled="">
+						<span data-i18n="app-nav-login">登入</span>
+					</button>
+					<!-- <a class="btn btn-register" target="_blank" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- Login popup end -->
+
+<!-- Concurrent login popup -->
+<section class="common-modal">
+	<div class="modal" id="concurrentLoginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+		<input id="concurrentLoginPrevSessionId" value="" hidden="">
+		<input id="concurrentLoginToken" value="" hidden="">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<p data-i18n="[html]app-concurrent-login-msg-1">系統偵測到以下問題： <ul class="ml-4"><li>閣下的戶口已被登入；或 </li><li>閣下上一次未能成功登出</li></ul></p>
+					<p data-i18n="app-concurrent-login-msg-2">請注意：如重新登入，上述情況所預留的座位將不再保留。要繼續？</p>
+					<div class="modal-btn-group">
+						<button type="button" class="btn btn-outline-primary confirm-btn" onclick="concurrentLogin()">
+							<span data-i18n="app-btn-confirm">確認</span></button>
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary">
+							<span data-i18n="app-btn-cancel">取消</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- Concurrent login popup end -->
+
+
+
+<!-- common warning modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonWarningMessageModal" tabindex="-1" role="dialog" style="display: none; z-index: 1051" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title"></h4>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p class="message"></p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- common warning modal end -->
+
+<!-- show enlarged image modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonImageModal" tabindex="-1" role="dialog" style="display: none; z-index: 1051" aria-hidden="true" data-backdrop="true" data-keyboard="false">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content" aria-label="Close" data-dismiss="modal">
+				<div class="modal-body" style="max-height: 50rem; overflow-y: auto;">
+					<img class="image" src="" alt="" style="width: 100%">
+					<div class="reference-only-seat-msg d-none" data-i18n="reference-only-seat" style="font-style: italic;">座位圖僅供參考，主辦單位有權更改票價，座位編排以及數目。</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- show enlarged image modal end -->
+
+<!-- common confirm modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonConfirmMessageModal" tabindex="-1" role="dialog" style="z-index: 1051" aria-hidden="true" data-backdrop="static">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p class="message"></p>
+					<div class="modal-btn-group">
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary confirm-btn">
+							<span data-i18n="app-btn-confirm">確認</span></button>
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary cancel-btn">
+							<span data-i18n="app-btn-cancel">取消</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- common confirm modal end -->
+
+
+
+
+
+<!-- load cityline web page modal -->
+<section class="common-modal">
+    <div class="modal" id="openCitylineModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="openCitylineModalCenterTitle" data-i18n="basket-contain-ticket-title">確認離開</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span data-i18n="basket-contain-ticket-content">您的購物籃尚有已選擇之座位, 如您選擇 "確認", 系統會釋放所有座位並自動登出系統。</span>
+                    <div class="modal-btn-group">
+                        <button type="button" data-dismiss="modal" class="btn btn-outline-primary cancel-btn">
+                            <span data-i18n="app-btn-cancel">取消</span></button>
+                        <button id="confirmRemoveButton" data-dismiss="modal" type="button" class="btn btn-outline-primary confirm-btn" onclick="confirmRemoveBasket(this)">
+                            <span data-i18n="app-btn-confirm">確認</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+<!-- header---end -->
+<!-- main content -->
+<section class="main container-fluid">
+    <div class="col-12 remaining-time1 p-0 d-block d-lg-none">
+        <p> <span data-i18n="time-left-title">剩餘時間</span> &nbsp;<span class="remaining-session-time">08:37</span></p>
+    </div>
+    <div class="error-msg1 col-12 d-block d-lg-none empty-basket">
+    </div>
+    <div class="container row" id="mainContainer">
+        <div class="col-12 col-lg-8" id="proceedDisplay">
+            <div class="steps-box">
+              <div class="steps">
+                <div>
+                  <span class="step step-finish">01</span>
+                  <div class="dash-line"></div>
+                </div>
+                <div> 
+                  <div class="dash-line-center"></div>
+                  <span class="step">02</span>
+                  <div class="dash-line-center"></div>
+                </div>
+                <div>
+                  <div class="step">03</div>
+                  <div class="dash-line"></div>
+                </div>
+              </div>
+              <div class="steps-name">
+                <div data-i18n="shopping-cart-title">購物籃</div>
+                <div data-i18n="transaction-preview-title">交易預覽</div>
+                <div data-i18n="receipt-title">收據</div>
+              </div>
+            </div>
+            <div class="error-msg1 col-12 d-none d-lg-block empty-basket">
+            </div>
+            <div class="tips">
+                <p>
+                    - <span data-i18n="purchase-note-1">請查看閣下所選之座位及票價．適用之優惠價格已自動計算在內．</span> <br>
+                    - <span data-i18n="purchase-note-2">你可以按個別場次之「修改」鍵以改變票類或作出刪減。如果你想取消個別場次之所有門票，請按「移除」鍵。</span><br>
+                    - <span data-i18n="purchase-note-3">前往付款區，請按「結帳」鍵。</span>
+                </p>
+            </div>
+            <div class="error-msg1">
+                <p id="error-section">
+                </p>
+            </div>
+            <form>
+                <!--Case for Error message:set mask-layer "display:block" -->
+                <div class="mask-layer"></div>
+                <div class="row">
+                    <div class="col-12">
+                        <p data-i18n="personal-particular-title">個人資料</p>
+                    </div>
+                    <!-- <div class="col-6 col-md-3 form-group">
+                        <label for="surname" class="required-item" data-i18n="surname-title" >Surname</label>
+                        <input type="text" class="form-control" id="surname" aria-required="true" required>
+                    </div>
+                    <div class="col-6 col-md-3 form-group">
+                        <label for="firstname" class="required-item text-nowrap" data-i18n="firstname-title">First Name</label>
+                        <input type="text" class="form-control" id="firstname" aria-required="true" required>
+                    </div> -->
+                    <div class="col-6 col-md-6 form-group">
+                        <label for="fullname" class="required-item" data-i18n="name-title">姓名</label>
+                        <input type="text" class="form-control" id="fullname" aria-required="true" required="" placeholder="輸入姓名">
+                    </div>
+                    <div class="col-12 col-md-6 form-group">
+                        <label for="phone" class="required-item text-nowrap" data-i18n="contact-phone-no-title">聯絡電話</label>
+                        <div style="display: flex;">
+                            <div class="select-box country-dial-code-select form-control"><i class="bi bi-chevron-down select-icon"></i>
+                                <div class="select-header" tabindex="0">852</div>
+                                <ul class="select-content" id="countryDialCode"><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="852">852</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="853">853</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="86">86</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="886">886</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="1">1</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="7">7</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="20">20</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="27">27</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="30">30</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="31">31</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="32">32</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="33">33</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="34">34</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="36">36</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="39">39</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="40">40</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="41">41</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="43">43</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="44">44</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="45">45</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="46">46</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="47">47</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="48">48</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="49">49</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="51">51</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="52">52</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="53">53</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="54">54</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="55">55</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="56">56</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="57">57</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="58">58</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="60">60</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="61">61</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="62">62</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="63">63</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="64">64</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="65">65</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="66">66</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="77">77</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="81">81</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="82">82</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="84">84</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="90">90</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="91">91</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="92">92</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="93">93</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="94">94</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="95">95</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="98">98</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="211">211</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="212">212</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="213">213</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="216">216</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="218">218</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="220">220</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="221">221</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="222">222</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="223">223</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="224">224</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="225">225</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="226">226</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="227">227</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="228">228</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="229">229</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="230">230</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="231">231</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="232">232</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="233">233</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="234">234</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="235">235</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="236">236</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="237">237</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="238">238</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="239">239</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="240">240</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="241">241</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="242">242</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="243">243</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="244">244</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="245">245</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="246">246</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="248">248</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="249">249</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="250">250</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="251">251</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="252">252</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="253">253</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="254">254</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="255">255</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="256">256</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="257">257</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="258">258</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="260">260</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="261">261</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="262">262</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="262">262</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="263">263</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="264">264</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="265">265</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="266">266</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="267">267</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="268">268</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="269">269</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="290">290</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="291">291</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="297">297</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="298">298</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="299">299</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code=" 345"> 345</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="350">350</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="351">351</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="352">352</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="353">353</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="354">354</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="355">355</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="356">356</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="357">357</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="358">358</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="358">358</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="359">359</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="370">370</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="371">371</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="372">372</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="373">373</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="374">374</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="375">375</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="376">376</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="377">377</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="378">378</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="379">379</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="380">380</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="381">381</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="382">382</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="385">385</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="386">386</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="387">387</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="389">389</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="420">420</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="421">421</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="423">423</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="500">500</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="501">501</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="502">502</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="503">503</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="504">504</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="505">505</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="506">506</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="507">507</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="508">508</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="509">509</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="590">590</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="591">591</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="593">593</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="594">594</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="595">595</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="596">596</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="597">597</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="598">598</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="599">599</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="670">670</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="672">672</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="673">673</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="674">674</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="675">675</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="676">676</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="677">677</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="678">678</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="679">679</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="680">680</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="681">681</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="682">682</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="683">683</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="685">685</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="686">686</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="687">687</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="688">688</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="689">689</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="690">690</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="691">691</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="692">692</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="850">850</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="855">855</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="856">856</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="872">872</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="880">880</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="960">960</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="961">961</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="962">962</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="963">963</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="964">964</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="965">965</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="966">966</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="967">967</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="968">968</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="970">970</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="971">971</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="972">972</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="973">973</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="974">974</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="975">975</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="976">976</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="977">977</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="992">992</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="993">993</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="994">994</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="995">995</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="996">996</li><li class="select-item" onclick="doCountryDialCode(this)" data-country-dial-code="998">998</li></ul>
+                            </div>
+                            <input type="text" class="form-control" id="phone" data-error-label-group="memReg.errmsg.mobile_phone_req" aria-required="true" required="" style="width: 83%; display: inline-block;" placeholder="輸入聯絡電話">
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-md-6 form-group" id="emailDiv" style="display: flex; flex-direction: column;">
+                        <label for="email" class="text-nowrap required-item">
+	                        <span class="required-item" data-i18n="email-address-title">電郵地址</span> &nbsp;
+	                        <small id="emailHelp" class="form-text text-muted text-nowrap" data-i18n="ticket-confirm-title">確認電郵會在交易完成後發出</small>
+                        </label>
+                        <input type="email" class="form-control" id="email" aria-required="true" required="" style="display: none;" placeholder="輸入電郵">
+                    <label id="emailAddressLabel" style="font-weight: 400;">victorz.zhj@gmail.com</label></div>
+                    <div class="col-12 col-md-6 form-group d-none" id="confirmEmailDiv">
+                        <label for="email" class="text-nowrap required-item">
+                            <span class="required-item" data-i18n="confirm-email-address">確認電郵地址</span> &nbsp;
+	                        <!-- <small id="emailHelp" class="form-text text-muted text-nowrap" data-i18n="ticket-confirm-title">for receiving ticket confirmation</small> -->
+                        </label>
+                        <input type="email" class="form-control" id="confirmEmail" autocomplete="current-email" oncopy="return false" onpaste="return false" aria-required="true" required="" placeholder="確認電郵地址">
+                    </div>
+                    
+                    <div class="col-12">
+                        <p data-i18n="delivery-details-title">取票方法</p>
+                    </div>
+                    <div class="col-12 col-md-6 form-group">
+                        <label tabindex="0" class="text-nowrap required-item" data-i18n="delivery-method-title">取票方法</label><a href="javascript: popUpDeliveryCharges()" class="form-text" data-i18n="check-mailing-charge-title">查看送遞費</a>
+                        <div class="select-box delivery-select form-control"><i class="bi bi-chevron-down select-icon"></i>
+                          <div class="select-header" tabindex="0">順豐自助櫃 ($40)</div>
+                          <ul class="select-content" id="delivery" placeholder="輸入取票方法"><li class="select-item" onclick="doDeliveryChange(this,event)" data-delivery-id="1248" data-is-required-address="true">順豐自助櫃 ($40)</li><li class="select-item" onclick="doDeliveryChange(this,event)" data-delivery-id="1099" data-is-required-address="true">本地快遞 ($40)</li></ul>
+                        </div>
+                        <div id="noDelivery" class="error-msg1 d-none" style="text-align: left" data-i18n="no-delivery-method">請使用不同取票方法購買不同節目</div>
+                    </div>
+                    <div style="width: 100%;">
+                        <div class="col-12 col-md-6 form-group delivery-confirm-contact-phone-no-msg" id="confirmContactPhoneNoDiv" style="">
+                            <label for="phone" class="required-item" data-i18n="confirm-contact-phone-no">確認聯絡電話</label>
+                            <!-- <small id="phoneHelp" class="form-text text-muted" data-label-group="mailing.phone.help.text"></small> -->
+                            <div class="confirmContactPhoneNoContent">
+                                <label id="country-dial-code-label">852</label>
+                                <label>-</label>
+                                <input type="text" class="form-control" id="confirmPhone" autocomplete="current-phone" oncopy="return false" onpaste="return false" aria-required="true" required="" placeholder="確認聯絡電話">
+                            </div>
+                        </div>                           
+                    </div>
+                    <div class="col-12 col-md-6 form-group delivery-msg" style="display: block;">
+                        <label for="country" class="required-item" data-i18n="country-title">國家/城市</label>
+                        <select class="form-control" id="country" title="Select Country" aria-required="true" required=""><option value="145" data-external-url="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/delivery/SFLOC40OFF-TW.json">香港</option></select>
+                    </div>
+                    <div class="col-12 col-md-6 form-group delivery-msg" style="display: block;">
+                        <label for="region" data-i18n="region-title">省/區</label>
+                        <select class="form-control" id="region" title="Select Region" aria-required="true" required="">
+                            
+                        <option value="-">請選擇</option><option value="香港">香港</option><option value="九龍">九龍</option><option value="新界">新界</option></select>
+                    </div>
+                    <div class="col-12 col-md-6 form-group delivery-msg" id="cityDiv" style="display: block;">
+                        <label for="city" class="required-item" data-i18n="city-title">地區</label>
+                        
+                    <select id="city" title="Select Area" class="form-control"><option value="-">請選擇</option></select></div>
+                    <div class="col-12 col-md-6 form-group delivery-sub-area-msg" id="subAreaDiv" style="">
+                        <label for="subArea" class="required-item" data-i18n="sub-area-title">子地區</label>
+                                                
+                    <select id="subArea" title="Select Sub Area" class="form-control"><option value="-">請選擇</option></select></div>
+                    <div class="col-12 col-md-6 form-group delivery-detail-msg" style="display: none;">
+                        <label for="addr3" class="" data-i18n="addr3-title">區域</label>
+                        <input type="text" class="form-control" id="addr3" placeholder="輸入區域">
+                    </div>                    
+                    <div class="col-12 col-md-6 form-group delivery-detail-msg" style="display: none;">
+                        <label for="postalCode" class="" data-i18n="postal-code-title">郵遞區號／郵政號碼</label>
+                        <input type="text" class="form-control" id="postalCode" placeholder="輸入郵遞區號／郵政號碼">
+                    </div>
+                    <div class="col-12 col-md-6 form-group delivery-detail-msg" style="display: none;">
+                        <label for="addr2" class="" data-i18n="addr2-title">街道/屋苑</label>
+                        <input type="text" class="form-control" id="addr2" placeholder="輸入街道/屋苑">
+                    </div>
+                    <div class="col-12 col-md-6 form-group delivery-msg" id="addr1Div" style="display: block;">
+                        <label id="addr1-label" for="addr1" class="required-item" data-i18n="addr1-title">順豐自助櫃 ($40) 地址</label>
+                        
+                    <select id="addr1" title="Select Address" class="form-control"><option value="">請選擇</option></select></div>
+                    
+                    <div class="col-12 col-md-6 form-group credit-card-code-redemption d-none">
+                        <input type="radio" id="creditCardRedemption" name="creditCardCodeRedemption" value="creditCard" onclick="changeRedemption(this)">
+                        <label for="creditCardRedemption" data-i18n="redemption-credit-card">以信用卡領取</label><br>
+                        <input type="radio" id="codeRedemption" name="creditCardCodeRedemption" value="code" onclick="changeRedemption(this)">
+                        <label for="codeRedemption" data-i18n="redemption-claim-id">以取票編碼及密碼提取</label><br>
+                    </div>
+                    <div class="col-12"></div>
+                    <div class="col-12 col-md-6 form-group redemption-msg" style="display: none;">
+                        <label for="claimPassword" class="required-item" data-i18n="claim-password-title">取票密碼</label><small class="form-text text-muted" data-i18n="claim-password-rule">6-20個數字</small>
+                        <input type="text" inputmode="numeric" class="form-control number-input" id="claimPassword" maxlength="20" aria-required="true" required="" placeholder="輸入取票密碼" pattern="\d*">
+                    </div>
+                    <div class="col-12 col-md-6 form-group redemption-msg" style="display: none;">
+                        <label for="ReTypePwd" class="required-item" data-i18n="confirm-password-title">確認密碼</label>
+                        <input type="text" inputmode="numeric" class="form-control number-input" id="ReTypePwd" maxlength="20" aria-required="true" required="" placeholder="輸入確認密碼" pattern="\d*">
+                    </div>
+                    <div class="col-12 redemption-msg form-group redemption-msg-last" style="display: none;">
+                        <div>
+                            <label data-i18n="ticket-redeem-title">以取票編碼及密碼提取</label>
+                            <p>
+                                <span data-i18n="ticket-redeem-note1">1. 取票編碼將會在交易完成後自動產生</span><br>
+                                <span data-i18n="ticket-redeem-note2">2. 請輸入取票密碼</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        
+
+  
+    <!--suppress ALL -->
+    <style lang="css">
+      :root {
+        --pg-root-font: inherit;
+        --pg-title-font: inherit;
+        --pg-refundable-font: inherit;
+        --pg-subheader-font: inherit;
+        --pg-features-font: inherit;
+        --pg-refund-text-prefix-font: inherit;
+        --pg-refund-text-font: inherit;
+        --pg-refund-text-suffix-font: inherit;
+        --pg-non-refundable-font: inherit;
+        --pg-text-colour: #000000;
+        --pg-link-colour: #6f8bfe;
+        --pg-background-colour: #FFFFFF;
+        --pg-title-text-colour: #4659ba;
+        --pg-title-background-colour: #FFFFFF;
+        --pg-title-badge-text-colour: #FFFFFF;
+        --pg-title-badge-background-colour: #000000;
+        --pg-title-icon-colour: #FFFFFF;
+        --pg-refundable-text-colour: #FFFFFF;
+        --pg-refundable-background-colour: #005C3D;
+        --pg-refundable-selected-text-colour: #FFFFFF;
+        --pg-refundable-selected-background-colour: #4659ba;
+        --pg-subheader-text-colour: #00b67a;
+        --pg-subheader-background-colour: #F2F2F2;
+        --pg-subheader-icon-colour: #00b67a;
+        --pg-non-refundable-text-colour: #000000;
+        --pg-non-refundable-background-colour: #ffffff;
+        --pg-non-refundable-border-colour: #ccc;
+        --pg-non-refundable-selected-text-colour: #4659ba;
+        --pg-non-refundable-selected-background-colour: #ffffff;
+        --pg-non-refundable-selected-border-colour: #4659ba;
+        --pg-feature-text-colour: #000000;
+        --pg-feature-icon-colour: #00b67a;
+        --pg-refund-text-prefix-colour: #005C3D;
+        --pg-refund-text-colour: #000000;
+        --pg-refund-text-suffix-colour: #005C3D;
+        --pg-refund-text-highlight-colour: #000000;
+        --pg-dark-grey: #666666;
+        --pg-border: #ccc;
+        --pg-white: #ffffff;
+        --pg-grey: #bdbdc7;
+        --pg-border-radius: 5px;
+        --5-px: 0.313em;
+        --8-px: 0.5em;
+        --10-px: 0.625em;
+        --12-px: 0.75em;
+        --15-px: 0.938em;
+        --20-px: 1.25em;
+        --25-px: 1.563em;
+        --30-px: 1.875em;
+        --35-px: 2.188em;
+        --40-px: 2.5em;
+      }
+
+      .refundRoot {
+        font-family: var(--pg-root-font);
+        font-weight: 400;
+        font-size: inherit;
+        line-height: 1.5;
+        color: var(--pg-text-colour);
+        text-align: left;
+        background-color: var(--pg-background-colour);
+        border-radius: var(--pg-border-radius);
+        padding: var(--10-px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .refundRoot h2,
+      .refundRoot h3 {
+        font-weight: unset;
+        text-indent: unset;
+      }
+
+      .refundTitle {
+        font-family: var(--pg-title-font);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background-color: var(--pg-title-background-colour);
+        padding: var(--10-px);
+        border-radius: var(--pg-border-radius);
+      }
+
+      .refundTitle h4 {
+        font-size: 1.25em;
+        padding-right: 0;
+        margin: 0;
+        color: var(--pg-title-text-colour);
+      }
+
+      .refundTitle i {
+        font-size: 1.5em;
+        color: var(--pg-title-icon-colour);
+      }
+
+      .refundHeaderBadge {
+        display: inline-block;
+        padding: var(--8-px) var(--15-px);
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 25px;
+        font-size: 0.875em;
+      }
+
+      .refundTitle .refundHeaderBadge {
+        color: var(--pg-title-badge-text-colour);
+        background-color: var(--pg-title-badge-background-colour);
+        margin-top: var(--5-px);
+        font-size: 1em;
+      }
+
+      .refundRoot .refundable {
+        font-family: var(--pg-refundable-font);
+      }
+
+      .refundRoot .nonRefundable {
+        font-family: var(--pg-non-refundable-font);
+      }
+
+      .refundPrice h3 {
+        font-weight: 600;
+      }
+
+      .refundPerTicket {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .refundPerTicket p {
+        margin: 0;
+        font-size: var(--12-px);
+      }
+
+      .refundSubHeader {
+        font-family: var(--pg-subheader-font);
+        position: relative;
+        padding: var(--10-px);
+        padding-bottom: var(--20-px);
+        border-radius: 0;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        color: var(--pg-subheader-text-colour);
+        /* background-color: var(--pg-subheader-background-colour); */
+        /* border-right: 1px solid var(--pg-border);
+        border-left: 1px solid var(--pg-border); */
+      }
+
+      .refundSubHeader a {
+        color: var(--pg-subheader-text-colour);
+      }
+
+      .refundSubHeader i {
+        font-size: 1.5em;
+        padding-right: var(--5-px);
+        color: var(--pg-subheader-icon-colour);
+      }
+
+      .refundFeaturesWrapper {
+        padding: var(--10-px);
+        /* display: flex;
+        flex-wrap: wrap;
+        padding: var(--10-px) 0 var(--10-px) var(--20-px);
+        border-left: 1px solid var(--pg-border);
+        border-right: 1px solid var(--pg-border);
+        border-bottom: 1px solid var(--pg-border);
+        border-radius: 0 0 var(--pg-border-radius) var(--pg-border-radius); */
+      }
+
+      .refundFeatures {
+        width: 100%;
+      }
+
+      .refundFeatures {
+        font-family: var(--pg-features-font);
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .refundFeature {
+        display: flex;
+        flex: 100%;
+        align-items: center;
+        padding: var(--5-px) 0;
+        line-height: 1.1;
+        font-size: 1em;
+      }
+
+      .refundFeature i {
+        font-size: 1em;
+        font-weight: bold;
+        padding-right: var(--10-px);
+        color: var(--pg-feature-icon-colour);
+      }
+
+      .refundFeature p {
+        margin: 0;
+        font-size: var(--15-px);
+        font-weight: 500;
+        color: var(--pg-feature-text-colour);
+      }
+
+      .refundFeature a {
+        color: var(--pg-link-colour);
+      }
+
+      .protectionText p {
+        font-family: var(--pg-refund-text-font);
+        font-size: 1em;
+        padding: var(--10-px);
+        margin-bottom: 0px;
+      }
+
+      .protectionTextPrefix {
+        font-family: var(--pg-refund-text-prefix-font);
+        font-size: 1em;
+        padding-top: var(--10-px);
+      }
+
+      .protectionTextSuffix {
+        font-family: var(--pg-refund-text-suffix-font);
+        font-size: 1em;
+        padding-bottom: var(--10-px);
+      }
+
+      .protectionText,
+      .protectionTextPrefix,
+      .protectionTextSuffix {
+        /* padding-left: var(--15-px);
+        padding-right: var(--15-px); */
+      }
+
+      .protectionTextPrefix,
+      .protectionTextSuffix {
+        display: flex;
+        align-items: center;
+      }
+
+      .protectionTextPrefix,
+      .protectionTextPrefix i,
+      .protectionTextPrefix a,
+      .protectionTextPrefix p {
+        color: var(--pg-refund-text-prefix-colour);
+      }
+
+      .protectionTextSuffix,
+      .protectionTextSuffix i,
+      .protectionTextSuffix a,
+      .protectionTextSuffix p {
+        color: var(--pg-refund-text-suffix-colour);
+      }
+
+      .protectionTextPrefix i,
+      .protectionTextSuffix i {
+        font-size: var(--25-px);
+        font-weight: bold;
+        padding-right: var(--10-px);
+      }
+
+      .protectionText,
+      .protectionTextPrefix p,
+      .protectionTextSuffix p {
+        margin: 0;
+      }
+
+      .protectionText p {
+        color: var(--pg-text-colour) !important;
+        font-weight: normal;
+      }
+
+      .protectionText a {
+        color: var(--pg-link-colour);
+        font-size: 1em;
+      }
+
+      .protectionText strong {
+        color: var(--pg-refund-text-highlight-colour);
+      }
+
+      .tpWrapper {
+        width: 100%;
+      }
+
+      .tpWrapper iframe {
+        padding-top: var(--15-px);
+      }
+
+      .tpWrapper a {
+        display: none;
+      }
+
+      .refundRoot input[type="radio"] {
+        appearance: none;
+        background-color: transparent;
+      }
+
+      .refundRoot input[type="radio"]~label {
+        cursor: pointer;
+      }
+
+      .refundRoot label {
+        display: flex;
+        align-items: center;
+        border-radius: var(--pg-border-radius);
+        padding: var(--15-px) var(--20-px);
+      }
+
+      .refundRoot label h3 {
+        margin: 0;
+      }
+
+      .refundRoot input.yes+label {
+        /* border-radius: var(--pg-border-radius) var(--pg-border-radius) 0 0; */
+      }
+
+      .refundRoot input.yes+label .refundHeaderBadge {
+        color: var(--pg-refundable-background-colour);
+        background-color: var(--pg-refundable-text-colour);
+        margin-left: var(--15-px);
+        display: none;
+      }
+
+      .refundRoot input[type="radio"]+label::before {
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        content: "\f111";
+        color: var(--pg-grey);
+        font-size: 1em;
+        border-radius: 50%;
+        text-align: center;
+        width: var(--25-px);
+      }
+
+      /* .refundRoot input.yes[type="radio"]+label::before {
+        color: var(--pg-refundable-text-colour);
+      } */
+
+      /* .refundRoot input.yes[type="radio"]+label {
+        background: var(--pg-refundable-background-colour);
+        color: var(--pg-refundable-text-colour);
+      } */
+
+      .refundRoot input+label {
+      /* .refundRoot input.no+label { */
+        border: 1px solid var(--pg-non-refundable-border-colour);
+        border-radius: var(--pg-border-radius);
+      }
+
+      .refundRoot input[type="radio"]:checked+label {
+        border: none;
+        color: var(--pg-non-refundable-selected-text-colour);
+        background-color: var(--pg-non-refundable-selected-background-colour);
+        border: 2px solid var(--pg-non-refundable-selected-border-colour);
+        font-weight: 600;
+      }
+
+      .refundRoot input[type="radio"]:checked+label h3 {
+        color: var(--pg-non-refundable-selected-text-colour);
+      }
+
+      .refundRoot input.yes[type="radio"]:checked+label::before {
+        content: "\f00c";
+        color: var(--pg-refundable-selected-text-colour);
+        background: var(--pg-refundable-selected-background-colour);
+      }
+
+      /* .refundRoot input.yes[type="radio"]:checked+label {
+        color: var(--pg-refundable-selected-text-colour);
+        background-color: var(--pg-refundable-selected-background-colour);
+      } */
+
+      /* .refundRoot input.yes[type="radio"]:checked+label h3 {
+        color: var(--pg-refundable-selected-text-colour);
+      }
+
+      .refundRoot input.yes[type="radio"]:checked+label .refundHeaderBadge {
+        color: var(--pg-refundable-selected-background-colour);
+        background-color: var(--pg-refundable-selected-text-colour);
+      } */
+
+      .refundRoot input[type="radio"]:checked+label::before {
+        content: "\f00d";
+        color: var(--pg-non-refundable-selected-text-colour);
+        background: var(--pg-non-refundable-selected-background-colour);
+      }
+
+      /* .refundRoot label.refundable h3 {
+        color: var(--pg-refundable-text-colour);
+      } */
+
+      .arrows {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        height: inherit;
+      }
+
+      .refundRoot input.yes[type="radio"]:checked+label .arrows {
+        display: none;
+      }
+
+      .arrow {
+        max-width: 40px;
+        max-height: 40px;
+        border: 5px solid;
+        border-color: var(--pg-refundable-text-colour) transparent transparent var(--pg-refundable-text-colour);
+        transform: rotate(-45deg);
+      }
+
+      .arrow-slide {
+        position: absolute;
+        animation: slide 3s linear infinite;
+      }
+
+      .delay {
+        animation-delay: 1s;
+      }
+
+      .delay-1 {
+        animation-delay: 2s;
+      }
+
+      .inputFocus {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: var(--35-px);
+      }
+
+      .refundContent {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding-left: var(--10-px);
+      }
+
+      .refundContent .refundLabel {
+        display: inline-flex;
+        font-size: 1em;
+        align-items: center;
+      }
+
+      .refundContent h3 {
+        font-size: 1em;
+      }
+
+      @keyframes slide {
+        0% {
+          opacity: 0;
+          transform: translateX(17px);
+        }
+
+        20% {
+          opacity: 1;
+          transform: translateX(11px);
+        }
+
+        80% {
+          opacity: 1;
+          transform: translateX(-5px);
+        }
+
+        100% {
+          opacity: 0;
+          transform: translateX(-7px);
+        }
+      }
+
+      /* Small mobile */
+      @media (max-width: 490px) {
+        .refundHeader {
+          flex-direction: column;
+          justify-content: flex-start;
+        }
+
+        .refundHeader .refundHeaderLeft,
+        .refundHeader .refundHeaderRight {
+          width: 100%;
+        }
+
+        .refundHeader .refundHeaderLeft {
+          justify-content: space-between;
+        }
+
+        .refundHeader .refundHeaderRight {
+          justify-content: flex-end;
+        }
+
+        .refundFeaturesWrapper {
+          flex-wrap: wrap-reverse;
+        }
+      }
+
+      @media (min-width: 490px) and (max-width: 510px) {
+        .refundFeaturesWrapper iFrame {
+          margin-left: var(--5-px);
+        }
+      }
+
+      /* Tablet */
+      @media (min-width: 800px) {
+        .refundRoot {
+          font-size: inherit;
+          position: relative;
+        }
+
+        .refundRoot:not(.small)>.refundFeaturesWrapper .tpWrapper {
+          display: block;
+          position: absolute;
+          top: 0;
+          right: -30px;
+          width: auto;
+        }
+      }
+
+      @media (min-width: 42.733em) {
+        .refundRoot {
+          font-size: inherit;
+        }
+
+        .refundRoot:not(.small) .refundTitle>div:first-child,
+        .refundRoot:not(.small) .refundTitle>div:nth-child(2) {
+          width: auto;
+          align-items: center;
+        }
+
+        .refundTitle h2 {
+          font-size: 1.25em;
+        }
+
+        .refundTitle i {
+          font-size: 1.5em;
+        }
+
+        .refundRoot:not(.small) .refundHeaderBadge {
+          font-size: 0.875em;
+        }
+
+        .refundRoot:not(.small) .refundTitle .refundHeaderBadge {
+          font-size: 1em;
+        }
+
+        .refundRoot:not(.small) .refundSubHeader {
+          font-size: 1em;
+        }
+
+        .refundRoot:not(.small) .refundSubHeader i {
+          font-size: 1.5em;
+        }
+
+        .refundRoot.large .refundSubHeader {
+          border-radius: 0;
+        }
+
+        .refundRoot.large .refundFeaturesWrapper {
+          /* padding-left: var(--20-px); */
+        }
+
+        .refundRoot:not(.small) .refundFeature {
+          flex: 0 0 50%;
+          font-size: 1em;
+        }
+
+        .refundRoot:not(.small) .protectionText {
+          font-size: 1em !important;
+        }
+
+        .refundRoot:not(.small) .protectionTextPrefix {
+          font-size: 1em;
+        }
+
+        .refundRoot:not(.small) .protectionTextSuffix {
+          font-size: 1em;
+        }
+      }
+
+      /* Desktop */
+      @media (min-width: 64.067em) {
+        .refundRoot {
+          position: relative;
+        }
+
+        .refundRoot.large {
+          font-size: inherit;
+        }
+
+        .refundRoot.large .refundTitle h2 {
+          font-size: 2.25em;
+        }
+
+        .refundRoot.large .refundTitle i {
+          font-size: 1.5em;
+        }
+
+        .refundRoot.medium .refundTitle i {
+          font-size: 2.5em;
+        }
+
+        .refundRoot.medium .refundTitle h2 {
+          font-size: 1.25em;
+        }
+
+        .refundRoot:not(.small) .refundTitle .refundHeaderBadge {
+          display: none;
+        }
+
+        .refundRoot:not(.small) input.yes+label .refundHeaderBadge {
+          display: inline-flex;
+        }
+
+        .refundRoot.large .refundHeaderBadge {
+          font-size: 0.875em;
+        }
+
+        .refundRoot:not(.small) label .refundContent h3 {
+          font-size: 1em;
+        }
+
+        .refundRoot.large .refundSubHeader {
+          font-size: 1em;
+          border-radius: 0 0 var(--pg-border-radius) var(--pg-border-radius);
+          border: none;
+        }
+
+        .refundRoot.large .refundSubHeader i {
+          font-size: 1.5em;
+        }
+
+        .refundRoot:not(.small) .refundFeature {
+          flex: 0 0 33%
+        }
+
+        .refundRoot.medium .refundFeature {
+          flex: 0 0 50%;
+        }
+
+        .refundRoot.large .refundFeaturesWrapper {
+          display: inline-flex;
+          flex-wrap: wrap-reverse;
+          /* padding-top: var(--20-px); */
+          border: none;
+        }
+
+        .refundRoot.large .refundFeatures {
+          flex: 0 0 100%;
+        }
+
+        .refundRoot.large .refundFeature {
+          flex: 0 0 33%;
+          font-size: 1em;
+        }
+
+        .refundRoot.large .tpWrapper iframe {
+          padding-top: 0;
+        }
+
+        .refundRoot.large .protectionText p,
+        .refundRoot.large .protectionText a {
+          font-size: 1em !important;
+        }
+
+        .refundRoot.large .protectionTextPrefix {
+          font-size: 1em;
+        }
+
+        .refundRoot.large .protectionTextSuffix {
+          font-size: 1em;
+        }
+
+        .refundRoot.large .noProtectionWrapper {
+          border: 1px solid var(--pg-border);
+        }
+      }
+
+      .refundRoot.large{
+        border: 1px solid var(--pg-non-refundable-border-colour);
+        padding: var(--20-px);
+      }
+      .design-preview {
+        box-shadow: 0px 0px 14px 5px rgba(33, 80, 222, 0.49);
+      }
+
+      .refundModuleTitle{
+        font-weight: bold;
+        background-color: #f1c94b;
+        padding-top: var(--5-px);
+        padding-bottom: var(--5-px);
+        padding-left: var(--12-px);
+        padding-right: var(--12-px);
+        border-radius: 15px;
+        z-index: 1;
+        position: absolute;
+        left: var(--25-px);
+        top: -18px;
+      }
+      .refundWrapper {
+        position: relative;
+        margin-top: var(--20-px);
+        margin-bottom: 1.25rem;
+      }
+      .refundFeature a{
+        color: #4659ba;
+      }
+      .icon-shield-circle{
+        background: var(--pg-title-text-colour);
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        margin-right: var(--5-px);
+      }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <div class="refundWrapper">
+      <span class="refundModuleTitle">
+        <span data-i18n="refund-recommended-title">推薦</span>
+      </span>
+
+      <div class="refundRoot large">
+        <input type="hidden" name="ProductId" value="16">
+        <div class="refundTitle">
+          <div>
+            <div class="icon-shield-circle">
+              <i class="fas fa-shield-alt d-flex align-items-center justify-content-center w-100 h-100" style="font-size: 1rem;"></i>
+            </div>
+          </div>
+          <div>
+            <h4>
+              <span style="font-weight: bold;" data-i18n="refund-title">將我的門票退款</span>
+            </h4>
+          </div>
+        </div>
+        <div class="refundFeaturesWrapper">
+          <div class="refundFeatures">
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span data-i18n="refund-reason-accident-illness">意外或疾病</span>
+              </p>
+            </div>
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span data-i18n="refund-reason-family-emergency">家庭緊急情況</span>
+              </p>
+            </div>
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span data-i18n="refund-reason-lost-documents">證件丟失或被盜</span>
+              </p>
+            </div>
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span data-i18n="refund-reason-severe-weather">惡劣天氣</span>
+              </p>
+            </div>
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span data-i18n="refund-reason-transport-disruptions">交通延誤</span>
+              </p>
+            </div>
+            <div class="refundFeature">
+              <i class="fa fa-check"></i>
+              <p>
+                <span>
+                  <span data-i18n="refund-reason-other">還有很多！</span>
+                </span>
+              </p>
+            </div>
+        </div>
+      </div>
+      <div class="protectionText">
+        <p>
+          <span data-i18n="[html]refund-full-guarantee-1">升級您的門票，若您因我們條款與細則中列明的原因之一無法出席並能提供證明，<strong>我們將為您全額退款</strong>。選擇可退款門票即表示您同意這些</span>
+          <a id="refundTermsLink" href="javascript:void(0)" data-i18n="refund-terms-conditions">條款</a>
+          <span data-i18n="refund-full-guarantee-2">。</span>
+        </p>
+      </div>
+      <div class="refundSubHeader">
+        <i class="fa fa-clock"></i>
+        <span>
+          <span style="font-weight: bold;" data-i18n="refund-processing-time">僅限可退款門票可申請退款 — 請於結帳前選擇</span>
+        </span>
+      </div>
+        <input onclick="handleRefundBooking()" type="radio" name="16-is-sold" value="true" id="16-sold" class="yes">
+        <label class="refundable jsRpLabel" for="16-sold" aria-label="Refundable Booking" data-event-args="{&quot;productId&quot;: 16, &quot;inputId&quot;: &quot;16-sold&quot;, &quot;sold&quot;: true}">
+          <div class="refundContent">
+            <div class="refundLabel">
+              <h3>
+                <span data-i18n="refund-refundable-Booking">可退款門票</span>
+              </h3>
+            </div>
+            <div class="refundPrice">
+              <div class="refundPerTicket">
+                <!-- <span data-i18n="refund-get-quote">Get Quote</span> -->
+                <span id="refundablePriceSection">
+                  <span>HK$</span><span id="refundablePrice">97</span>
+                </span>
+                <!-- <span id="getQuote" data-i18n="refund-get-quote">Get Quote</span> -->
+                <p></p>
+              </div>
+            </div>
+          </div>
+        </label>
+
+        <input onclick="handleNonRefundBooking()" type="radio" name="16-is-sold" value="false" id="16-not-sold" class="no">
+        <label for="16-not-sold" class="nonRefundable jsRpLabel" aria-label="Non-Refundable Booking" data-event-args="{&quot;productId&quot;: 16, &quot;inputId&quot;: &quot;16-not-sold&quot;, &quot;sold&quot;: false}">
+          <div class="refundContent">
+            <div>
+              <h3>
+                <span data-i18n="refund-non-refundable-booking">不可退款門票</span>
+              </h3>
+            </div>
+          </div>
+        </label>
+
+        <div id="err-msg-select-ticket-refundable" class="d-none">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span class="error-msg1" data-i18n="select-ticket-refundable-msg">請選擇此門票是否可退款</span>
+        </div>
+      </div>
+    </div>
+
+    <script nonce="">
+      (function() {
+        const labels = document.getElementsByClassName('jsRpLabel');
+        for (let i = 0; i < labels.length; i++) {
+          labels[i].addEventListener('click', function(e) {
+            const eventArgs = e.currentTarget.getAttribute('data-event-args');
+            document.dispatchEvent(new CustomEvent('pg-change', {
+              detail: JSON.parse(eventArgs)
+            }));
+          })
+        }
+
+        $("#refundTermsLink").on("click", function(e) {
+          e.preventDefault();
+          console.log("get_lang()",get_lang());
+          let currentLang = get_lang(); 
+          let langMap = {
+            'en': 'en',
+            'CN': 'zh-cn',
+            'TW': 'zh-tw',
+          }
+          let langPath = langMap[currentLang];
+          let url = "https://refundable.me/" + langPath;
+          window.open(url, '_blank');
+        });
+      })()
+
+
+      function fillEstimateQuote(totalAmount){
+        let grandTotal = totalAmount ? totalAmount : removeFormattedPrice($("#subtotal").text()) + removeFormattedPrice($("#handlingFee").text()) + removeFormattedPrice($("#promotionOfferCharge").text()) + tmpDeliveryCharge;
+        let quoteAmount = Math.ceil(grandTotal * 0.1);
+        $('#refundablePrice').text(getFormattedPrice(quoteAmount));
+      }
+
+      var handleRefundBooking = function(){
+        $('#err-msg-select-ticket-refundable').addClass('d-none');
+
+        pageLoaded = false;
+
+        $('#16-sold').prop('checked', true);
+        $('#16-not-sold').prop('checked', false);
+
+        $('#16-sold').prop('disabled',true);
+        $('#16-not-sold').prop('disabled',false);
+
+        let getRefundableQuoteUrl = contextPath + "/internet/api/refundable/quote";
+        let grandTotalWithoutRefundableCharge = 
+        parseFloat(removeFormattedPrice($("#subtotal").text())) + 
+        parseFloat(removeFormattedPrice($("#handlingFee").text())) + 
+        parseFloat(removeFormattedPrice($("#promotionOfferCharge").text())  + 
+        parseFloat(removeFormattedPrice($("#deliveryCharge").text())));
+        
+        let amountInCents = grandTotalWithoutRefundableCharge * 100;
+        
+        let payload = {
+          amountInCents
+        }
+
+        $.ajax({
+          type: 'POST',
+          url: getRefundableQuoteUrl,
+          data: JSON.stringify(payload),
+          success: function(data) {
+            if(data.result == 'SUCCESS'){
+              let quotePrice = getFormattedPrice(data.quotePrice);
+              $('#refundablePrice').text(quotePrice);
+
+              $('#refundableChargeSection').removeClass('d-none');
+              $('#refundableChargeSection #refundableCharge').text(quotePrice);
+
+              getGrandTotal();
+            }else{
+              $('#commonWarningMessageModal .message').text($.i18n("apply-refundable-booking-fail"));
+              $('#commonWarningMessageModal').modal('show');
+              handleNonRefundBooking();
+            }
+
+          },
+          error: function(xhr, status, error) {
+            console.log("Error message: " + error);
+          },
+          contentType: "application/json",
+          dataType: 'json'
+        });
+      }
+
+      var requestRemoveRefundable = function(url){
+        $.getJSON(url, function(data){
+          if(data.result == 'SUCCESS') {
+
+            $('#refundableChargeSection').addClass('d-none');
+            $('#refundableChargeSection #refundableCharge').text(0);
+
+            errorSectionCache = null;
+          }
+          else {
+            showError($("#error-section"), data.errorMessages);
+            errorSectionCache = new ErrorCache($("#error-section"), data.errorMessages);
+          }
+          fillEstimateQuote();
+          getGrandTotal();
+        });
+      }
+
+      var handleNonRefundBooking = function(){
+        $('#err-msg-select-ticket-refundable').addClass('d-none');
+        pageLoaded = false;
+
+        $('#16-sold').prop('checked', false);
+        $('#16-not-sold').prop('checked', true);
+        
+        $('#16-sold').prop('disabled',false);
+        $('#16-not-sold').prop('disabled',true);
+
+        let removePromoteCodeUrl = contextPath + "/internet/api/refundable/quote/remove";
+        requestRemoveRefundable(removePromoteCodeUrl);
+      }
+
+      // price changes when Refundable is selected
+      var handleNoRefundSelection = function(){
+        $('#err-msg-select-ticket-refundable').addClass('d-none');
+        $('#16-sold').prop('checked', false);
+        $('#16-not-sold').prop('checked', false);
+
+        $('#16-sold').prop('disabled',false);
+        $('#16-not-sold').prop('disabled',false);
+
+        let clearPromoteCodeUrl = contextPath + "/internet/api/refundable/quote/clear";
+        requestRemoveRefundable(clearPromoteCodeUrl);
+      }
+    </script>
+  
+
+                    </div>
+
+                    <div class="col-12">
+                        <p data-i18n="[html]shopping-basket-payment-details-title">付款詳情</p>
+                    </div>
+                    <div class="col-12">
+                        <label class="required-item text-nowrap" data-i18n="select-payment-type-title">選擇付款方法</label>
+                        <div class="payment-method"><button class="payment" data-payment-id="275" data-payment-code="WECHAT"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/WECHAT.jpg" alt="微信支付"></button><button class="payment" data-payment-id="276" data-payment-code="ALIPAY"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/ALIPAY.jpg" alt="支付寶"></button><button class="payment" data-payment-id="277" data-payment-code="ALIPAYHK"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/ALIPAYHK.jpg" alt="支付寶(香港)"></button><button class="payment" data-payment-id="278" data-payment-code="PAYME"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/PAYME.jpg" alt="PayMe"></button><button class="payment" data-payment-id="347" data-payment-code="BOCPAY"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/BOCPAY.jpg" alt="BoC Pay"></button><button class="payment" data-payment-id="419" data-payment-code="OCTOPUS"><img width="66" height="66" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/default/payment/OCTOPUS.jpg" alt="八達通"></button></div>
+                        <div id="redemptionWarning" class="error-msg1 d-none" style="text-align: left" data-i18n="redemption-warning" tabindex="0">如果使用虛擬卡，請選擇 以取票編碼及密碼 提取</div>
+                    </div>
+                    <div class="col-12 col-md-6 form-group holder-section d-none">
+                        <label for="holder" class="required-item" data-i18n="holder-name-title">持卡人姓名</label>
+                        <input type="text" class="form-control" id="holder" aria-required="true" required="" placeholder="輸入持卡人姓名">
+                    </div>
+                    <div class="col-12 col-md-6 form-group card-section d-none">
+                        <label for="card" class="required-item" data-i18n="card-no-title">信用卡號碼</label>
+                        <input type="text" inputmode="numeric" class="form-control number-input" id="card" aria-required="true" required="" placeholder="輸入信用卡號碼" pattern="\d*">
+                    </div>
+                    <div class="col-12 col-md-3 form-group expiry-section d-none">
+                        <label for="expiry" class="required-item d-none d-lg-inline-block text-nowrap"><span class="required-item" data-i18n="expiry-date-title">有效期至</span> <small class="text-muted">(MM/YY)</small></label>
+                        <input type="text" class="form-control d-none d-lg-block" maxlength="5" id="expiry" onkeyup="addSlash(event)" aria-required="true" required="" placeholder="MM/YY">
+                        <label for="" class="required-item d-lg-none text-nowrap" data-i18n="expiry-date-title">有效期至</label>
+                        <div class="d-lg-none d-flex justify-content-between month-year-box">
+                            <select class="form-control" id="expiryMonth" aria-required="true" required="">
+                                <option disabled="" selected="" value="" style="color: #999; font-size: 14px;" data-i18n="month-title">月</option>
+                                <option value="01">01</option>
+                                <option value="02">02</option>
+                                <option value="03">03</option>
+                                <option value="04">04</option>
+                                <option value="05">05</option>
+                                <option value="06">06</option>
+                                <option value="07">07</option>
+                                <option value="08">08</option>
+                                <option value="09">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                            <select class="form-control" id="expiryYear" aria-required="true" required="">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 form-group code-section d-none">
+                        <label for="code" class="required-item text-nowrap" data-i18n="security-code-title">安全碼</label>
+                        <input type="text" inputmode="numeric" class="form-control number-input" id="code" aria-required="true" required="" placeholder="輸入安全碼" pattern="\d*">
+                    </div>
+                    <div class="col-12 form-group promotion-section">
+                        <label data-i18n="select-offer-title">選擇優惠</label>
+                        <div class="promotion-offers-section"><div class="offer-item"> <div data-promotion-offer-code="MEMBER50">   <input type="radio" name="promotionOffer" onclick="offerValidation(this)" data-promotion-offer-code="MEMBER50" id="MEMBER50">   <label for="MEMBER50">Cityline會員積分使用</label> </div> <div style="padding-left: 1.4rem;"><i class="bi bi-info-circle-fill"></i>凡消費滿$2,000，可以20,000積分扣$50</div></div><div class="offer-item"> <div data-promotion-offer-code="SAMSUNG60OFF">   <input type="radio" name="promotionOffer" onclick="offerValidation(this)" data-promotion-offer-code="SAMSUNG60OFF" id="SAMSUNG60OFF">   <label for="SAMSUNG60OFF">Samsung Pay $60 電子券</label> </div><div style="margin-left: 1.4rem;padding-left: .2rem;width: 50%;border-radius: .25rem;"><input type="text" class="offer-code-input" oninput="applyOfferCodeChange()" style="background: transparent;border: none;border-bottom: 1px solid #ced4da;outline: none;" placeholder="輸入優惠代碼"><a data-i18n="apply-title" class="offer-code-apply" onclick="applyOfferCode()" href="javascript:void(0)" style="opacity: .3;vertical-align: -webkit-baseline-middle;">送出</a><label class="promoteCodeDisplay"></label></div></div><div class="offer-item"> <div>   <input type="radio" checked="true" name="promotionOffer" onclick="offerRemoveClick()" id="removePromotionOffer">   <label for="removePromotionOffer">不使用</label> </div></div></div>
+                    </div>
+
+                    <div class="col-12 col-lg-3 offset-lg-9 btn-group1">
+                        <!-- <button type="button" class="btn btn-outline-primary d-none d-lg-block" onclick="goToHome()">
+                            <span data-i18n="buy-more-title">Buy More</span></button> -->
+                        <button type="button" class="btn btn-outline-primary check-btn check-btn" onclick="checkout()">
+                            <span data-i18n="checkout-title">結帳</span></button>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-12 col-lg-4 proceed-right p-0" id="proceedRight">
+        <h4 class="d-none d-lg-block" data-i18n="performance-title">表演</h4>
+            <div class="ticket-box">
+                <span id="ticketSection"><div class="ticket perf-87478">	<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/largecover/54510_T26JCM-410.jpg" alt="">	<div class="ticket-details">		<div class="ticket-title">			<p><a href="/utsvInternet/internet/eventDetail?event=54510">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</a></p>			<span>HK$880</span>		</div>		<div><span data-i18n="basket-venue-title">場地</span>: <span>澳門銀河 - 銀河綜藝館</span></div>		<div><span data-i18n="basket-date-title">日期</span>: <span>2026/01/24 週六 下午 07:00</span></div>		<div><span data-i18n="basket-quantity-title">數量</span>: <span>1</span>        <div class="seat-details d-lg-none float-right">			  <a href="javascript:void(0)" onclick="showSeatDetailstnc(0)" data-i18n="seat-details-title" class="action-btn" role="button">座位資料<i class="bi bi-chevron-up detail-icon0"></i></a>        </div>   </div>		<div class="ticket-bottom">			<div class="seat-details d-none d-lg-block">				<a href="javascript:void(0)" onclick="showSeatDetails(0)" data-i18n="seat-details-title" class="action-btn" role="button">座位資料<i class="bi bi-chevron-up detail-icon"></i></a>			</div>			<div class="operation">				<a class="action-btn ticket-edit-btn" data-i18n="edit-title" data-toggle="modal" id="modal" data-target="#editModal" data-perf-id="87478" data-prompt-on-load="false" data-last-added="true" data-backdrop="static" href="javascript:void(0)" tabindex="0">修改</a>				<a class="action-btn ticket-rmv-btn" data-i18n="remove-title" data-toggle="modal" data-target="#confirmModal" data-perf-id="87478" onclick="confirmRemoveOrderByPerf(this)" href="javascript:void(0)" tabindex="0">移除</a>			</div>		</div>	</div>	<div class="table-box table-box-detail">		<table>			<tbody><tr>				<th data-i18n="section-title">段</th><th>&nbsp;</th><th>&nbsp;</th>			</tr>			<tr>				<td class="text-nowrap">CAT 2</td><td colspan="2">| 對號入座 (以官方門票上座號為準)</td>				<td>| 正價票 |  HK$880 | CAT 2</td>			</tr>		</tbody></table>	</div>	<div class="table-box d-lg-none table-box-detail-mobile0">		<table>			<tbody><tr>				<th data-i18n="section-title">段</th><th>&nbsp;</th><th>&nbsp;</th>			</tr>			<tr>				<td class="text-nowrap">CAT 2</td><td colspan="2">| 對號入座 (以官方門票上座號為準)</td>				<td>| 正價票 |  HK$880 | CAT 2</td>			</tr>		</tbody></table>	</div> <div class="table-box edit-box edit-box-mobile d-lg-none edit-box-mobile-0" data-prompt-on-load="false" data-last-added="true">	 <div class="float-right remove-pointer" data-i18n="remove-title" data-toggle="modal" data-target="#confirmModal" data-order-id="1" data-perf-id="87478" data-order-item-id="1" onclick="confirmRemoveOrderByOrderItem(this)">移除</div>  <table class="order-item"> 	<tbody><tr>				<th data-i18n="section-title">段</th>				<th>&nbsp;</th>				<th>&nbsp;</th> 	</tr> 	<tr> 	  <td>CAT 2</td><td colspan="2">| 對號入座 (以官方門票上座號為準)</td> 	  <td> 	  <select data-index="0" data-seat-id="54062016" data-order-item-id="1" data-perf-id="87478" class="form-control ticket-type-change"><option value="100" selected="selected">正價票 HK$880</option> 	  </select> 	  </td> 	</tr> 	<tr class="d-none seat-section-error"> 		<td colspan="5"><div class="error-msg1" style="display: block"></div></td> 	</tr>  </tbody></table>  <div class="line"></div>  <div class="edit-bottom">	  <a href="#" onclick="doCancelEditMobile(0)" data-i18n="app-btn-cancel">取消</a>	  <a href="#" onclick="updateOrderMobile(87478,0)" data-i18n="app-btn-done">完成</a>  </div> </div> <div class="operation operation-mobile d-lg-none"><span data-i18n="edit-title" onclick="doEditMobile(0)">修改</span><span data-i18n="remove-title" data-toggle="modal" data-target="#confirmModal" data-perf-id="87478" onclick="confirmRemoveOrderByPerf(this)">移除</span>
+ </div></div><div class="line perf-87478"></div></span>
+                <div class="promote-box d-none d-lg-block">
+                    <p class="promote-title">
+                      <span>
+                        <i class="bi bi-exclamation-circle-fill orange" id="promote-tips-hover" onmouseover="showTips()" onmouseout="hideTips()"></i>
+                        <a href="javascript:void(0)" onclick="enterPromoteCode()" data-i18n="enter-promote-code-title">輸入優惠碼</a>
+                      </span>
+                    </p>
+                    <div class="promote-hover-box">
+                      <span data-i18n="shopping-basket-discount">享有折扣優惠 ?</span>
+                      <p data-i18n="coupon-message">如果你想使用你擁有的優惠，請將優惠碼填在右方空格內，然後按下"遞交"。當系統確認優惠碼後，所能兌換的優惠將反映於購物籃內。</p>
+                    </div>
+                </div>
+                <br>
+                <div class="input-promote">
+                    <!-- when the promote code is not valid -- add class: wrong-code -->
+                    <a class="d-block d-lg-none" style="font-size: 14px;margin-bottom: 4px;text-indent: 1px;"><span data-i18n="enter-promote-code-title">輸入優惠碼</span></a>
+                    <input id="promoteCode" class="form-control" oninput="applyChange()" type="text" placeholder="輸入優惠碼">
+                    <a data-i18n="apply-title" class="applyTitle" id="applyTitle" onclick="applyPromoteCode()" href="javascript:void(0)">送出</a>
+                    <p><label class="input-warning d-none" for="promoteCode"></label></p>
+                </div>
+                <br>
+                <div class="subtotal-title">
+                    <p><span data-i18n="ticket-total-price-title">門票總值</span> <span class="float-right" id="subtotal">880</span><span class="float-right">HK$</span></p>
+                    <p id="discountSection" class="d-none"><span data-i18n="discount-title">門票折扣</span><br> <a href="javascript: void(0)" class="remove-code" onclick="removePromoteCode()"><span data-i18n="remove-promote-code-title">移除優惠碼</span></a> <span class="float-right" id="discount" style="color:#13CAA9">0</span><span class="float-right" style="color:#13CAA9">HK$</span></p>
+                    <p id="promotionOfferSection" class="d-none"><span data-i18n="offer-discount-title">優惠</span> <span class="float-right" id="promotionOfferCharge">0</span><span class="float-right">HK$</span></p>
+                    <p><span data-i18n="handling-fee-title">服務費</span> <span class="float-right" id="handlingFee">50</span><span class="float-right">HK$</span></p>
+                    <p><span data-i18n="delivery-charge-title">送遞費</span> <span class="float-right" id="deliveryCharge">40</span><span class="float-right">HK$</span></p>
+                    <p id="refundableChargeSection" class="d-none"><span data-i18n="refundable-charge-title">可退款門票費</span> <span class="float-right" id="refundableCharge">0</span><span class="float-right">HK$</span></p>
+                </div>
+                <div class="line"></div>
+                <div class="grand-total"><span data-i18n="grand-total-title">合計</span> <span class="float-right" id="grandTotal">970</span><span class="float-right">HK$</span>
+                </div>
+            </div>
+            <div class="remaining-time d-none d-lg-block">
+                <div class="remaining"><span data-i18n="time-left-title">剩餘時間</span>
+                    <span class="countdown remaining-session-time">08:37</span>
+                </div>
+                <div class="notice" data-i18n="remaining-time-notice">請於剩餘時間內完成交易，否則逾時後系統會釋放已選擇之座位並自動登出系統。</div>
+            </div>
+            <div class="btn-group1">
+                <button type="button" class="btn btn-outline-primary" onclick="goToHome()">
+                    <span data-i18n="buy-more-title">購買更多</span></button>
+                <button type="button" onclick="proceed()" id="proceed" class="btn btn-outline-primary check-btn  d-lg-none">
+                    <span data-i18n="proceed-title">繼續</span></button>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- main---end -->
+
+<!-- edit modal -->
+<section class="edit-modal-box d-none d-lg-block">
+    <div class="modal" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalCenterTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="ticket-box">
+                        <span id="modalTicketSection"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- remove modal -->
+<section class="edit-modal-box">
+    <div class="modal" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalCenterTitle" data-i18n="remove-title">移除</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span data-i18n="remove-confirm-msg-1">你確定要移除?</span>
+                    <div class="btn-group-remove">
+                        <button type="button" data-dismiss="modal" class="btn btn-outline-primary cancel-btn">
+                            <span data-i18n="app-btn-cancel">取消</span></button>
+                        <button id="confirmRemoveButton" data-dismiss="modal" type="button" class="btn btn-outline-primary confirm-btn" onclick="confirmRemove()">
+                            <span data-i18n="app-btn-confirm">確認</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- view seat modal -->
+<section class="select-seat">
+    <div class="modal fade" id="viewSeatModal" tabindex="-1" role="dialog" aria-labelledby="viewSeatModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewSeatModalTitle" data-i18n="view-seat">查看座位</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="overflow: hidden;">
+                    <iframe id="seatPlanFrame"></iframe>
+				</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+</body>

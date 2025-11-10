@@ -1,0 +1,862 @@
+<body class="isLoggedIn" data-theme="default">
+<div id="mobile" class="d-lg-none"></div>
+<!-- header -->
+<div id="s_header">
+
+
+
+
+
+<!-- header -->
+<div id="mobile" class="d-lg-none"></div>
+
+<div class="header container-fluid">
+	<nav class="navbar navbar-expand-lg container">
+		<div style="height: 28px">
+			<button id="navbar-toggler" class="navbar-toggler" type="button" onclick="toggleBtnOnclick()">
+				<span id="togglerIcon" class="navbar-toggler-icon"></span>
+			</button>
+		</div>
+		<div>
+
+			<a id="citylineLogo" onclick="goToCitylineWithCheck()" class="navbar nav-logo cursor-pointer"> <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/citylinelogo.png" alt="Cityline">
+			</a>
+		</div>
+		<div class="navbar-login">
+			<div class="login-btn-group">
+				<a class="mr-1 login-btn" href="https://www.cityline.com/Login.html?&amp;lang=zh_HK&amp;targetUrl=https%3A%2F%2Fvenue.cityline.com%2FutsvInternet%2Finternet%2Fperformance%3Fevent%3D54510%26perfId%3D87478%26from%3DcitylineMember%26loginPrompt%3Dtrue" style="font-weight: normal;" data-i18n="app-nav-login">登入</a>
+				<!-- / -->
+				<!-- <a class="ml-1" target="_blank" style="font-weight: normal;" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+			</div>
+			<div class="account-btn-group">
+				<a class="mr-2 cart-btn" href="javascript:void(0)" onclick="goToBasket()"><i class="bi bi-cart2"></i><span class="badge badge-pill badge-primary d-none cart-qty"></span></a>
+				<a class="ml-2" href="javascript:void(0)" style="font-weight: normal;" data-i18n="app-nav-logout" onclick="logoutCheck()">登出</a>
+			</div>
+		</div>
+		<div class="navbar navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav first-collapse">
+				<li>
+					<a target="_blank" href="https://shows.cityline.com" data-i18n="app-nav-coming-soon">即將發售</a>
+				</li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+				<li>
+					<a target="_blank" href="https://www.cityline.com/Tdm.html" data-i18n="app-nav-get-ticket">如何取票</a>
+				</li>
+				<!-- <li class="nav-item"><a class="nav-link" href="/utsvInternet" data-switch-lang="true" data-i18n="app-nav-events">Events</a></li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+				<li class="nav-item"><a class="nav-link" target="_blank" href="https://live.cityline.com?ft=Online" data-langunderscoremap="true" data-i18n="app-nav-digital-theatre">Online</a></li>				 -->
+				<!-- <li class="nav-item nav-display before-line"><a class="nav-link" onclick="goToOpenData()" data-i18n="app-nav-open-data" href="javascript:void(0)">Open Data</a></li> -->
+				<!-- <li class="nav-item nav-display"><a class="nav-link" target="_blank" href="https://business.cityline.com/" data-i18n="app-nav-business-news">Business</a></li>
+				<li class="collapse-bottom p-0">
+					<div class="switch-locale">
+						<a class="nav-link" href="javascript:void(0)" data-locale="en"><span data-i18n="app-locale-en">EN</span></a><span data-locale="en" style="color: #8e8e8e" class="d-none">&nbsp;&nbsp;&nbsp;|&nbsp;</span>
+						<a class="nav-link" href="javascript:void(0)" data-locale="TW"><span data-i18n="app-locale-tw">繁</span></a><span data-locale="CN" style="color: #8e8e8e" class="d-none">&nbsp;&nbsp;&nbsp;|&nbsp;</span>
+						<a class="nav-link" href="javascript:void(0)" data-locale="CN"><span data-i18n="app-locale-cn">简</span></a>
+					</div>
+					<div class="navbar-search-mobile">
+						<img class="search-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="" onclick="showInput('mobile')">
+						<form class="search-input-hidden-mobile searchForm" id="isShowMobile" action="/utsvInternet/internet/search">
+							<div>
+								<input name="lang" value="" hidden>
+								<input class="form-control searchField" type="text" name="keyword" 
+									data-i18n-placeholder="app-nav-search-placeholder" placeholder="Enter event name">
+								<span onclick="closeInput('mobile')"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt=""></span>
+							</div>
+							<button class="btn btn-search" type="submit">
+								<img src="./revamp/images/searchClick.da2014ea.svg" alt="">
+							</button>
+						</form>
+					</div>
+				</li> -->
+			</ul>
+
+			<ul class="navbar-nav second-collapse">
+				<!-- <li class="dropdown nav-item">
+					<button class="btn global-btn" type="button" data-toggle="dropdown" aria-expanded="false">
+						<i class="bi bi-globe"></i>
+					</button>
+					<ul class="dropdown-menu switch-locale" style="min-width:30px">
+						<li><a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a></li>
+						<li><a class="TW" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a></li>
+						<li><a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a></li>
+					</ul>
+				</li>  -->
+
+				<li class="nav-item switch-locale">
+					<a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a>
+					<a class="TW lang-active" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a>
+					<a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a>
+				</li>
+
+				<li class="nav-item fontsize-wrap">
+					<a class="font-size-btn fs14px" onclick="changeFontSize('14px',this)"><span>A</span></a>
+					<a class="font-size-btn fs16px font-size-btn-active" onclick="changeFontSize('16px',this)"><span>A</span></a>
+					<a class="font-size-btn fs18px" onclick="changeFontSize('18px',this)"><span>A</span></a>
+				</li>
+
+				<li class="nav-item color-wrap">
+					<button class="switch-theme icon-blue default switch-theme-active" onclick="changeThemeColor('default',this)">
+						<i class="bi-sun-fill"></i>
+					</button>
+					<button class="switch-theme icon-grey night" onclick="changeThemeColor('night',this)">
+						<i class="bi-moon-fill"></i>
+					</button>
+					<button class="switch-theme icon-white black" onclick="changeThemeColor('black',this)" style="background-color: #000;">
+						<i class="bi-eye-fill"></i>
+					</button>
+				</li>
+
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt="">
+
+				<!-- <li class="nav-item switch-locale">
+					<a class="nav-link" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a><img data-locale="en" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+					<a class="nav-link" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a><img data-locale="TW" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+					<a class="nav-link" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a><img data-locale="CN" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="d-none after-line" alt="">
+				</li> -->
+				<!-- <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="goToOpenData()" data-i18n="app-nav-open-data">Open Data</a></li>
+				<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt=""> -->
+
+				<li class="nav-item"><a class="nav-link" target="_blank" href="https://business.cityline.com/" data-i18n="app-nav-business-news">商業快訊</a></li>
+				<!-- <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/vertical-line.svg" class="after-line" alt=""> -->
+				
+				<li class="nav-item nav-login">
+					<div class="login-btn-group">
+						<!-- <a class="nav-link mr-4" target="_blank" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+						<a class="login-btn" href="https://www.cityline.com/Login.html?&amp;lang=zh_HK&amp;targetUrl=https%3A%2F%2Fvenue.cityline.com%2FutsvInternet%2Finternet%2Fperformance%3Fevent%3D54510%26perfId%3D87478%26from%3DcitylineMember%26loginPrompt%3Dtrue" role="button"><button type="button" class="btn-login" data-i18n="app-nav-login" tabindex="-1">登入</button></a>
+					</div>
+					<div class="account-btn-group">
+						<a class="nav-link mr-2 cart-btn" href="javascript:void(0)" onclick="goToBasket()" role="button">
+							<i class="bi bi-cart2"></i><span class="badge badge-pill badge-primary d-none cart-qty" aria-hidden="true"></span>
+							<span class="sr-only"><span data-i18n="shopping-basket">購物籃</span><span class="cart-qty-sr d-none"> <span class="cart-qty d-none">0</span> <span data-i18n="qty-items">件物品</span></span></span>
+						</a>
+
+						<!-- <span class="memberName d-none">
+							<span data-i18n="app-nav-greeting">Hi！</span>
+							<span class="firstName"></span>
+							<span class="lastName"></span>
+						</span> -->
+
+						<button type="button" class="btn btn-logout mr-2" onclick="logoutCheck()"><span data-i18n="app-nav-logout">登出</span></button>
+					</div>
+				</li>		
+						
+				<li class="navbar-search"><a href="javascript:void(0);" onclick="showInput('pc')" role="button"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="Search"></a>
+					<form class="search-input-hidden searchForm" id="isShow" action="/utsvInternet/internet/search">
+						<div>
+							<input name="lang" value="" hidden="">
+							<input class="form-control searchField" type="text" name="keyword" data-i18n-placeholder="app-nav-search-placeholder" placeholder="輸入節目名稱"> 
+							<button class="btn close-btn" onclick="closeInput('pc')" type="button"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt="Close search"></button>
+						</div>
+						<button class="btn btn-search" type="submit">
+							<!-- <img src="./revamp/images/searchClick.da2014ea.svg" alt="Submit Search"> -->
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/searchClick.da2014ea.svg" alt="Submit Search">
+						</button>
+					</form>
+				</li>
+			</ul>
+			<div class="mobile-navbar">
+				<div class="mobile-navbar-box">
+					<!-- <ul>
+						<li><a href="https://www.cityline.com/AboutUs.html" data-citylinelangmap="true" data-i18n="app-footer-about-us" target="_blank">About us </a></li>
+						<li><a href="https://www.business.cityline.com" data-citylinelangmap="true" data-i18n="app-footer-job" target="_blank">Business</a></li>
+						<li><a href="https://www.cityline.com/Blogs.html" data-citylinelangmap="true" data-i18n="app-footer-blogs" target="_blank">Blogs </a></li>
+						<li><a href="https://www.cityline.com/system-maintenance-schedule.html" data-citylinelangmap="true" data-i18n="app-footer-system-maintenance" target="_blank"> System maintenance  </a></li>
+						<li><a href="https://www.cityline.com/ReleaseNotes.html" data-citylinelangmap="true" data-i18n="app-footer-release-notes" target="_blank">Release notes </a></li> -->
+						<!-- <li><a href="https://www.cityline.com/CS.html" data-citylinelangmap="true" data-i18n="app-footer-cs" target="_blank">Customer service</a></li> -->
+						<!-- <li><a href="https://www.cityline.com/ContactUs.html" data-citylinelangmap="true" data-i18n="app-footer-contact-us" target="_blank">Contact us</a></li>
+						<li><a href="https://www.cityline.com/TermsOfUse.html" data-citylinelangmap="true" data-i18n="app-footer-terms" target="_blank">Terms of use</a></li>
+						<li><a href="https://www.cityline.com/Help.html" data-citylinelangmap="true" data-i18n="app-footer-help" target="_blank">Help</a></li>
+					</ul> -->
+
+					<ul class="mobile-navbar-left">
+						<li class="navbar-left-item"><a target="_blank" href="https://shows.cityline.com" data-i18n="app-nav-coming-soon">即將發售</a></li>
+						<li class="navbar-left-item"><a target="_blank" href="https://www.cityline.com/Tdm.html" data-i18n="app-nav-get-ticket">如何取票</a></li>
+					</ul>
+
+					<ul class="mobile-navbar-right">
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-about-cityline">關於CITYLINE</li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/AboutUs.html" data-i18n="app-footer-company-information">公司資料</a></li>
+						<li class="navbar-right-item"><a href="https://www.business.cityline.com" data-i18n="app-footer-job" target="_blank">業務合作</a></li>
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-news">最新消息</li>
+						<li class="navbar-right-item"><a href="https://www.business.cityline.com/news" data-i18n="app-footer-blogs" target="_blank">博客</a></li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/ReleaseNotes.html" data-i18n="app-footer-website-information">網站資訊</a></li>
+						<li class="navbar-right-item navbar-item-title" data-i18n="app-footer-enquiries">查詢</li>
+						<li class="navbar-right-item"><a href="https://www.cityline.com/Help.html" data-i18n="app-footer-help">幫助</a></li>
+					</ul>
+				</div>
+				<ul class="menuLogin">
+					<li class="collapse-bottom p-0">
+						<div>
+							<span class="switch-locale">
+								<!-- <a class="nav-link" href="javascript:void(0)" data-locale="en"><span data-i18n="app-locale-en">EN</span></a><span data-locale="en" style="color: #8e8e8e" class="d-none">&nbsp;|&nbsp;</span>
+								<a class="nav-link" href="javascript:void(0)" data-locale="TW"><span data-i18n="app-locale-tw">繁</span></a><span data-locale="CN" style="color: #8e8e8e" class="d-none">&nbsp;|&nbsp;</span>
+								<a class="nav-link" href="javascript:void(0)" data-locale="CN"><span data-i18n="app-locale-cn">简</span></a> -->
+								<a class="en" onclick="changeLang(this,'en')" href="javascript:void(0)" data-locale="en" title="EN" data-i18n="app-locale-en">EN</a>
+								<a class="TW lang-active" onclick="changeLang(this,'TW')" href="javascript:void(0)" data-locale="TW" title="繁" data-i18n="app-locale-tw">繁</a>
+								<a class="CN" onclick="changeLang(this,'CN')" href="javascript:void(0)" data-locale="CN" title="简" data-i18n="app-locale-cn">简</a>
+							</span>
+
+							<span class="fontsize-wrap">
+								<a class="font-size-btn fs14px" onclick="changeFontSize('14px',this)"><span>A</span></a>
+								<a class="font-size-btn fs16px font-size-btn-active" onclick="changeFontSize('16px',this)"><span>A</span></a>
+								<a class="font-size-btn fs18px" onclick="changeFontSize('18px',this)"><span>A</span></a>
+							</span>
+
+							<span>
+								<button class="switch-theme icon-blue default switch-theme-active" onclick="changeThemeColor('default',this)">
+									<i class="bi-sun-fill"></i>
+								</button>
+								<button class="switch-theme icon-grey night" onclick="changeThemeColor('night',this)">
+									<i class="bi-moon-fill"></i>
+								</button>
+								<button class="switch-theme icon-white black" onclick="changeThemeColor('black',this)" style="background-color: #000;">
+									<i class="bi-eye-fill"></i>
+								</button>
+							</span>
+
+
+						</div>
+
+						<div class="navbar-search-mobile">
+							<img class="search-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-search.svg" alt="" onclick="showInput('mobile')">
+							<form class="search-input-hidden-mobile searchForm" id="isShowMobile" action="/utsvInternet/internet/search">
+								<div>
+									<input name="lang" value="" hidden="">
+									<input class="form-control searchField" type="text" name="keyword" data-i18n-placeholder="app-nav-search-placeholder" placeholder="輸入節目名稱">
+									<span onclick="closeInput('mobile')"><img class="close-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/x.png" alt=""></span>
+								</div>
+								<button class="btn btn-search" type="submit">
+									<!-- <img src="./revamp/images/searchClick.da2014ea.svg" alt=""> -->
+									<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/searchClick.da2014ea.svg" alt="">
+								</button>
+							</form>
+						</div>
+					</li>
+
+					<li class="navbar-iconList">
+						<a href="https://www.facebook.com/CitylineHK/?fref=ts&amp;amp;ref=br_tf" target="_blank">
+							<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAYAAACohjseAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAoUSURBVHgB1VoLbBTHGf5n997Gr9rGNg+FABVPBRoXKRihUCrRNpWKWtVNGom0pWla0iaU8IpI1BgUpKAmUqJKfbglpqkiQkhaUKhKSAWueCQ0JWkKmIRCMbbhbJ99d/Y99vb2Mf3/8e6Zw2dzZx+2+aS5nZ3bnZ1v/ufMLoPbgJrHuPN6WeQ+0zSXSeCYDdycyyWYin95gYtLYhzYJQbmZ3h6WXJqR/zPl1+A2wAGecKM+lBJQmGrsMu1WGqxqTCX+3Eg3fjzN5D46/6dRUeAMQ55wKgJFq+7WuotKv0RVjdjKYc8AAf1CXD+S7+vaC/UMxNGgVERrNza+wQDaRsAr4LbAQbNKMcf+3cVncSzEUl0RASrNyp3gVNv4JyvgjEAY9IrEOzd5m+YGocckTPB6qd7vsq561Wc0GoYQ+BA/8uZsarjhdKWXO6Tsr0QpcWqNvZ8m4Nj/1iTE88H+Dxw+Vjlpo6FudyXlQSJXPWW8BqQ5D/CeINBALj2pY5dZc2QhV1mQ5BN2dxZa8jew2jwk2AigMMVbppf7nyxpAVuQfJWBFnZhrYpTmfR+2jp0yFPKPYwuGeaBPOqZT67QganDBBNcPD3mnClx2ShOIdLARO6o3yYgfNTBfGTKy/96oEkDEPSATBMH2ijSG53vshNLmSwdqkL1t3vBJfM7GdkxHOHEtBwQhuyL8yEauOepRiiYHuqKQMyOhmyubq6Oql6U+BRJPcVyANmlUtw6PECWL/SZZMbNUxJ3lK94fq99fX11GHGTjMSZIzB+94NVVx27YA8oBIlt+9RL0wvzVtmaMPDHb5dSJB4ZE1QqKY+eRbllJMhD/jF190wtSTriJQbJGll1VPty1HjMkpx0FNJ3JO/e7CcSe7HIA+YhsS+tdgJuSKnvEzy/mT//v0ZpcgynMtl668+5PSU/gnygB/WOuH5b3iGvSaqktfkEIwN5NWvfaDBuxd0yBqdJ+9eHnu1DYlSJ6n5SfOiJD0ssstV9Ehe1iqIpXfLw/5/7KLBnz6gsNbgKJ9Ydu8P9u/52k6spa0+0lS0qalJKp1Z5+GSvBzyhPLCoW0vgrHv8b15IEeQnPfPmDGDHiZhFBhotivkiYigc9Uz9+GpB/KE4mF6+vCqAWElP7rCmLwovPg5WrZJjMKAhRsJMjED3rJaGCNc7x3VWjYNnLESufyemdDPaTBBqsdiMYckue6CMYKZP34CsrtgDh0gA0ERQwzDkHDFMA/uVEjOCujnlJKiIGilOlIwGJRRl6fAHQomOz6HSFNRESaQIFiNEh+hg6GAnmsiRquK6UNkOO1hM+dNGEzAi0lI5EtaWlpEGxFkK1asIA8qCIpeR5Ay/vWnPrFayAWrMcNZnSHLIS8/f0c0dw9rGoIDkrPTNi6mD8nRQSooKMBzM+eNnXyjC9eBIwkfzNT66FBZWZlmgxwlKP5HLyqZmtoK44yrPSNzr1yPh/HAOjs7ATkNOBlLPcHn8wHoSguMM7qiIyNoRgPtdEQJ2lo5EAfR+7B4HPcKEj1XYJxxpmVkBPWYvxsGJCjaBEE84bIsm2iDXGk9/k8YZ1zoNCBXcCN5TTm+83xhYaFYTaAEhRGnVhOBQKC/8o9tF32L1oaZJJdADjh/3YBWz2AvunCqBB5HZu/aFeHQGhwsrbbQCPJTTbmodn+WVJHctGnTeHu70NZ+gpa+0pMMUFWDxzuOsUlTvwk54OFGJWP7sZ/7YG5V5iXT4fMabD2gQj6gBy8cxgMvKioicjRDYpZsGzSJtdVoJK+fOQR3ELihh5Wm7UexakiSZC940wgSayFBr9drxI5t/4hrsU/hDgGPB5r0zg+jWNXD4bBZU1NjWulnWrItpIdLKUNSWhW9/fQeuBPAwYh98MJvk8kk7W+QdzLQ0XAkmK6iVjEwVNBuq9bzl+8f4Vr8EkxwGJHWg7GPGq9hVUNiBuahRkVFxSAVBauBSOqqqmouFk8mzu/bNcL3jmMCrqv+xOlXGrFK0tMjkYjucDj4ggULUoNOEcR9jJQUMR5qqKpa/OimM0bwypswQaFdO9WQOLunjapWMdBZGrZ6Em5eq9AFGuakmkpiRAR+v/glMxmbcKpqhv73dvCN1e+gIOjliyionrod4G2kCLL+rxrImxr2DVgSdFSObt3C9YQfJgh4IvivrsYlL2JVQ+dCgVTF/FPDZRKNPW1f9GYJpuyQbvJ4PIJo5JPX2vre2/Qk15ROGGdwLXI5/OeHnwFNU91utyBXUlKSxPzTJpeGoQga5eXlGhosSVB0ol/Y29b396d+xnWlC8YJptJ9Ovz2mifUtlNBGhNCQc+ZwNhNghgkPUKm/QJBsLu7mwjSjZSDJdAcVeU/r7f1vfvkOjMR+jeMMYyei28FGxZtVq8epRUDTbqYfJRi0u/32zFwkMsf6u2SUFNrZqgjxSpJ5dy+a8HfLVhvdJ1tRMerwO2GoQXVTw88G/jDF1/WExGhTTQWXLuKiUdB0BiJYNYvQO0gaeLMaHaHWGgrI0bneiKqBhqX7Y69t3GtGe+8LcsrjrumeujygdAbD6wJHXykCZs0l8uVQIkROcxH4mLCYUBy2b/hFQ/o3+A3MK+jTohkHCUqiDqdTuFdox/vbg3+Zt4m5fTL68xIx3Hon8lRMjPjRvDim33vrH2wu+ELLxkdZ0IWkQR6zDja3Y3kNBxmRtW0MeQ7egobBGufX6xpFEXsBJloj9Spl+q6rjtjJ3acw/KsZ853prgXf69WLp+zjLmL5+Ieqw9uSYh6SfSgXTdrHedOxE/UH1c7zlLibOJE0oSR5FQkJ1SyuLhY6e3tVS2Cxg2vITLzgOxAkparq6udqLYu6N879VpHFw7EiXPhRLISOiYZj+Cuqil0L3xwZv1DsybXzKmsKMGFmsPt9RmGxpV4oq+vL9R75OOe0K/fOnVFbT7gh3g7EeB4r3By2CXlGRqFAiSRQKQcC5HGbMW0MpZRfUZy83UOqzgnTZrkjkajRNBtk6R2HJPDmhAiy4isdUx7FuWM1uCIlJAjdmFY2mGnXupNxW4fFA6GggOyg+gMpaTjbIqcFfNVAwmSCiUxIXDjfy60D0ESi4yDlXGwgqhFLo2gTYq6tYlh0VEddVRHO5OySdmeMmOsGw4572FbZikGjrmfjOmRkCgWUl27LkhaJe1lCAkaiQASEQNFLibWDWs9p2UoOgxkV2IIkANy/vTByllJ/40lS5bYakS2EbVKBEsvFtpl7kPpRqx6BO0pguToPIKEqIhr6Igq34dmSv/FMK+kkKTgbp9qEbPjXM5rt9F+uGLfb0vIfjeXskMctIQeJSVBJAKo2gADaWH/ZpdVnz9/vtHc3CzqlhefMAtSYWd1dXUyzjwRJJV1oxrbHteHXpjCxo3FM3v2bDeScln32Co9sUETT+/8rS+QbFsUxG0iNBEwIPm8fwI1nhhTMv8Hk7PsL6+UqmYAAAAASUVORK5CYII=" alt="Facebook">
+						</a>
+						<a href="https://www.instagram.com/citylinehk/" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-intagram.png" alt="Instagram">
+						</a>
+						<a href="https://www.linkedin.com/company/cityline-hong-kong-limited?trk=biz-companies-cym" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-linkin.png" alt="LinkedIn">
+						</a>
+						<a href="https://www.xiaohongshu.com/user/profile/6508fed60000000016038a44" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-xiaohongshu.png" alt="Xiaohongshu" class="side-xiaohongshu">
+						</a>
+						<a href="https://v.douyin.com/i6uD7Kng/" target="_blank">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-douyin.png" alt="Douyin" class="side-douyin">
+						</a>
+						<a href="https://mp.weixin.qq.com/s/aHJbshkM7GEPcVcNCNeMOQ" target="_blank">
+							<img data-v-6dc9f104="" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-wechat.png" alt="Wechat" class="side-wechat">
+						</a>
+						<button class="buttonLink noBtn" onclick="footerModalIsDisplay('#newsModal','block')">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/news-footer.png" alt="Newsletter">
+						</button>
+						<!-- <button class="buttonLink noBtn" onclick="footerModalIsDisplay('#subscribeModal','block')">
+							<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/subscribe-footer.png" alt="Latest News">
+						</button> -->
+					</li>
+
+					<li class="memberName d-none">
+						<span data-i18n="app-nav-greeting">你好！</span>
+						<span class="firstName"></span>
+						<span class="lastName"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+</div>
+
+<!-- Login popup -->
+<section class="login">
+	<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="#loginModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content h-100">
+				<div class="modal-header">
+					<h5 class="modal-title" id="loginModalLabel" data-i18n="app-login-title">會員登錄</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="loginForm" onsubmit="return submitLogin(event)">
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-login-fail">你輸入的電郵/登入名稱或密碼不正確</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-captcha">輸入驗證碼和圖中數字不同。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-recaptcha">reCAPTCHA驗證失敗。 請再試一次。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-turnstile">turnstile驗證失敗。 請再試一次。</div>
+						<!-- <div class="form-group input-email">
+							<label for="inputEmail" data-i18n="app-login-login-id">Email / Login ID</label>
+							<input type="text" class="form-control" id="inputEmail" aria-describedby="emailHelp"
+							 	data-i18n-placeholder="app-login-login-id-placeholder" placeholder="Enter email / login ID" autocomplete="username" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+						</div>
+						<div class="form-group input-pwd">
+							<label for="inputPassword" data-i18n="app-login-password">Password</label> 
+							<input type="password" class="form-control" id="inputPassword" 
+							 	data-i18n-placeholder="app-login-password-placeholder" placeholder="Password" autocomplete="current-password" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+							<a href="https://www.cityline.com/ForgotPassword.do" 
+								class="forgot-pwd" data-citylinelangmap="true" data-i18n="app-login-forgot-password">Forgot Password</a>
+						</div> -->
+			            <div class="form-group input-captcha" style="display: none;">
+							<label for="inputCaptcha" data-i18n="app-login-captcha">驗證碼</label> 
+							<img class="captcha m-0 p-0" src="" alt="驗證碼" data-i18n-alt="app-login-captcha-alt">
+							<button type="button" class="btn p-0" onclick="getCaptcha()"><i class="bi bi-arrow-clockwise"></i></button>
+							<input type="number" class="form-control no-arrow" id="inputCaptcha" data-i18n-placeholder="app-login-captcha-placeholder" placeholder="請輸入圖中數字" required="">
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-g-recaptcha" style="display: none;">
+							<div id="loginRecaptcha"></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-c-turnstile" style="display: none;">
+							<div id="loginTurnstile"></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<input type="submit" class="hidden">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn-login" style="opacity: 0.3" onclick="submitLogin()" disabled="">
+						<span data-i18n="app-nav-login">登入</span>
+					</button>
+					<!-- <a class="btn btn-register" target="_blank" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- Login popup end -->
+
+<!-- Concurrent login popup -->
+<section class="common-modal">
+	<div class="modal" id="concurrentLoginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+		<input id="concurrentLoginPrevSessionId" value="" hidden="">
+		<input id="concurrentLoginToken" value="" hidden="">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<p data-i18n="[html]app-concurrent-login-msg-1">系統偵測到以下問題： <ul class="ml-4"><li>閣下的戶口已被登入；或 </li><li>閣下上一次未能成功登出</li></ul></p>
+					<p data-i18n="app-concurrent-login-msg-2">請注意：如重新登入，上述情況所預留的座位將不再保留。要繼續？</p>
+					<div class="modal-btn-group">
+						<button type="button" class="btn btn-outline-primary confirm-btn" onclick="concurrentLogin()">
+							<span data-i18n="app-btn-confirm">確認</span></button>
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary">
+							<span data-i18n="app-btn-cancel">取消</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- Concurrent login popup end -->
+
+
+
+<!-- common warning modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonWarningMessageModal" tabindex="-1" role="dialog" style="display: none; z-index: 1051" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title"></h4>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p class="message"></p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- common warning modal end -->
+
+<!-- show enlarged image modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonImageModal" tabindex="-1" role="dialog" style="display: none; z-index: 1051" aria-hidden="true" data-backdrop="true" data-keyboard="false">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content" aria-label="Close" data-dismiss="modal">
+				<div class="modal-body" style="max-height: 50rem; overflow-y: auto;">
+					<img class="image" src="" alt="" style="width: 100%">
+					<div class="reference-only-seat-msg d-none" data-i18n="reference-only-seat" style="font-style: italic;">座位圖僅供參考，主辦單位有權更改票價，座位編排以及數目。</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- show enlarged image modal end -->
+
+<!-- common confirm modal start -->
+<section class="common-modal">
+	<div class="modal" id="commonConfirmMessageModal" tabindex="-1" role="dialog" style="z-index: 1051" aria-hidden="true" data-backdrop="static">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p class="message"></p>
+					<div class="modal-btn-group">
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary confirm-btn">
+							<span data-i18n="app-btn-confirm">確認</span></button>
+						<button type="button" data-dismiss="modal" class="btn btn-outline-primary cancel-btn">
+							<span data-i18n="app-btn-cancel">取消</span></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!-- common confirm modal end -->
+
+
+
+
+
+<!-- load cityline web page modal -->
+<section class="common-modal">
+    <div class="modal" id="openCitylineModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="openCitylineModalCenterTitle" data-i18n="basket-contain-ticket-title">確認離開</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span data-i18n="basket-contain-ticket-content">您的購物籃尚有已選擇之座位, 如您選擇 "確認", 系統會釋放所有座位並自動登出系統。</span>
+                    <div class="modal-btn-group">
+                        <button type="button" data-dismiss="modal" class="btn btn-outline-primary cancel-btn">
+                            <span data-i18n="app-btn-cancel">取消</span></button>
+                        <button id="confirmRemoveButton" data-dismiss="modal" type="button" class="btn btn-outline-primary confirm-btn" onclick="confirmRemoveBasket(this)">
+                            <span data-i18n="app-btn-confirm">確認</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+<!-- header---end -->
+<!-- main content -->
+<section class="main container-fluid performance-page">
+    <div class="col-12 remaining-time1 p-0 d-block d-lg-none">
+        <p> <span data-i18n="time-left-title">剩餘時間</span> &nbsp;<span class="remaining-session-time">09:16</span></p>
+    </div>
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-12 col-lg-7 col-xl-8 purchase-msg">
+                <div class="row">
+
+                    <div class="col-12 col-lg-5 msg-one">
+                        <div class="row">
+                            <div class="col-3 col-lg-12 msg-img">
+                                <img class="item-img selectSeat-img cursor-pointer" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/largecover/54510_T26JCM-410.jpg" alt="" onclick="showEnlargedImage('event')">
+                                <!-- <span class="seat-plan-display d-none"><img class="item-img d-none d-lg-block seat-plan-url" src="" alt="" onclick="showEnlargedImage('seat')"></span> -->
+                            </div>
+
+                            <div class="col-9 col-xl-8 selectSeat-msg  d-lg-none">
+                                <div class="item-title h1">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</div>
+                                <div class="event-detail">
+                                    <a href="/utsvInternet/internet/eventDetail?event=54510" class="event-detail-url"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/file-text.svg" alt=""><span data-i18n="event-detail-title">節目詳情</span></a>
+                                </div>
+
+                            </div>
+
+                            <div class="purchase">
+                              <div class="calendar-box mobile-performance"></div>
+                              <div class="date-box mobile-performance"><button type="button" class="btn btn-outline-primary date-time-position" data-perf-id="87478" aria-pressed="false"> 	<div class="date-left" aria-label="2026年 1月 24日 ">		<span class="month-year"> 一月， 2026</span> <span class="day">24</span>	</div>	<div class="date-right">		<span class="time">周六， 19:00</span> <span class="concert-title">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</span>	</div></button></div>
+                            </div>
+                            <div class="col-12 tips-select d-lg-none">
+                                <p>
+                                    <span data-i18n="select-price-zone-title">選擇相關票價, 優惠種類及數量</span>
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-7 selectSeat-details">
+                        <div class=" purchase-msg-details selectSeat-msg d-none d-lg-block">
+                            <div class="item-title h1">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</div>
+                            <div class="event-detail">
+                                <a href="/utsvInternet/internet/eventDetail?event=54510" class="event-detail-url"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/file-text.svg" alt=""><span style="color: #5577FF" data-i18n="event-detail-title">節目詳情</span></a>
+                            </div>
+                            <div class="tips-select">
+                                <p>
+                                    <span data-i18n="select-price-zone-title">選擇相關票價, 優惠種類及數量</span>
+                                </p>
+                            </div>
+                        </div>
+
+
+                        <div class="price-detail d-flex">
+                            <!-- <span class="seat-plan-display d-none"><img class="price-seat d-lg-none seat-plan-url" src="" alt=""></span> -->
+
+                            <div class="price-box1">
+                                <h4 data-i18n="price-zone-title">票價等級及價格</h4>
+                                <div class="price"><div class="form-check formcheck0" style="height: 32px;">	<input type="radio" class="ticket-price-btn" name="ticketPrice" id="ticketPrice0" checked="" value="46198" tabindex="0">	<label class="" for="ticketPrice0">		<span class="ring-style"></span>	<div>		<span class="price-degree degree0" style="background-color: #FF0000;color: white;">VIP</span>		<span class="price-num" style="width: 67px;">HK$1,380 </span>		<span class="price-limited"><img class="limited-img" src="./revamp/images/limited1.svg" alt=""><span data-i18n="status-title-limit">少量</span></span>	</div>	</label></div><div class="form-check formcheck1" style="height: 32px;">	<input type="radio" class="ticket-price-btn" name="ticketPrice" id="ticketPrice1" value="46199" tabindex="0">	<label class="" for="ticketPrice1">		<span class="ring-style"></span>	<div>		<span class="price-degree degree1" style="background-color: #626EA8;color: white;">CAT 1</span>		<span class="price-num" style="width: 67px;">HK$1,080 </span>	</div>	</label></div><div class="form-check formcheck2" style="height: 32px;">	<input type="radio" class="ticket-price-btn" name="ticketPrice" id="ticketPrice2" value="46200" tabindex="0">	<label class="" for="ticketPrice2">		<span class="ring-style"></span>	<div>		<span class="price-degree degree2" style="background-color: #4E80E0;color: white;">CAT 2</span>		<span class="price-num" style="width: 67px;">HK$880 </span>	</div>	</label></div><div class="form-check formcheck3" style="height: 32px;">	<input type="radio" class="ticket-price-btn" name="ticketPrice" id="ticketPrice3" value="46201" tabindex="0">	<label class="" for="ticketPrice3">		<span class="ring-style"></span>	<div>		<span class="price-degree degree3" style="background-color: #FACF41;color: #333333;">CAT 3</span>		<span class="price-num" style="width: 67px;">HK$680 </span>	</div>	</label></div><div class="form-check formcheck4" style="height: 32px;">	<input type="radio" class="ticket-price-btn" name="ticketPrice" id="ticketPrice4" value="46202" tabindex="0" data-disabled="true" style="pointer-events:none">	<label class="" for="ticketPrice4">		<span class="ring-style"></span>	<div>		<span class="price-degree degree4" style="background-color: #A8BF93;color: #333333;">CAT 4</span>		<span class="price-num" style="width: 67px;">HK$480 </span>		<span class="price-limited"><img class="limited-img" src="./revamp/images/limited1.svg" alt=""><span data-i18n="status-title-soldout">售罄</span></span>	</div>	</label></div></div>
+                            </div>
+                            <div class="discount">
+                                <div class="discount-title">
+                                    <h4 class="d-inline-block h4-discount" data-i18n="ticket-type-title">優惠種類及購買數量</h4>
+                                    <!-- <a href="" data-toggle="modal" id="modal" data-target="#ticketDetailModal" class="d-inline-block"><img src="./revamp/images/file-text.svg" alt=""
+                                                                           class=""><span data-i18n="ticket-detail-title">Ticket Detail</span></a> -->
+                                    <span data-toggle="modal" id="modal" data-target="#ticketDetailModal" class="d-inline-block ticket-detail-box">
+                                      <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/file-text.svg">
+                                      <a data-i18n="ticket-detail-title" class="ticket-detail-title" href="javascript:void(0)">門票詳情</a>
+                                    </span>
+                                </div>
+
+                                <p id="error-msg-ticket-quantity" class="d-none" style="padding-top: 0.3rem;max-width: 17.5rem"> 
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                    <span style="font-size: 0.875rem;color: #EB5757;margin-left: 0.2rem;" data-i18n="requested-ticket-quantity-error-msg">所請求的數量未能提供，請再次選擇。</span>
+                                </p>
+                             
+                                <div class="discount-degree"><div><label class="ticketTypeLabel" for="ticketType0">正價票</label><select class="form-control select-num " id="ticketType0" name="ticketType0" onchange="numChange(this)" data-ticket-quantity="2" data-ticket-type-id="100">	<option selected="">0</option>	<option>1</option>	<option>2</option></select></div><div class="check-box" id="adjacentSeat-check-box" style="display: none;">    <input type="checkbox" class="check1 adjacentSeat" id="adjacentSeat" name="adjacentSeat" value="#f0544d" checked="checked" title="相連座位">    <label for="adjacentSeat"></label>    <span>相連座位</span></div></div>
+                            </div>
+
+
+                            <div id="no-price-zone-info-mobile" class="d-none no-price-zone-msg">
+                                <span data-i18n="no-price-zone-info-msg">沒有合適的票格及種類，請選擇其他日子/場次</span>
+                            </div>
+                            <div id="error-msg-no-enough" class="d-lg-none error-msg-no-enough">
+                            </div>
+                            <span class="seat-plan-display"><img class="price-seat d-lg-none seat-plan-url cursor-pointer" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/seat_plan/87478_Seat Plan (3).jpg" alt="" onclick="showEnlargedImage('seat')"></span>
+
+                        </div>
+                        <div id="no-price-zone-info-pc" class="d-none no-price-zone-msg">
+                            <span data-i18n="no-price-zone-info-msg">沒有合適的票格及種類，請選擇其他日子/場次</span>
+                        </div>
+                        <div id="error-msg-no-enough" class="d-none d-lg-block error-msg-no-enough">
+                        </div>
+                        <div class="select-performance" style="display: none;">
+                            <h4 data-i18n="select-performance-title">請先選擇日期</h4>
+                        </div>
+                        <span class="seat-plan-display"><img class="item-img d-none d-lg-block seat-plan-url cursor-pointer" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/seat_plan/87478_Seat Plan (3).jpg" alt="" onclick="showEnlargedImage('seat')"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12 col-lg-5 col-xl-4 purchase">
+                <div class="puechase-top purchase-performance">
+                    <div class="date-title"><span data-i18n="date-title">日期</span></div>
+                    <div class="calendar-box"></div>
+                    <div class="date-box"><button type="button" class="btn btn-outline-primary date-time-position item-onclick" data-perf-id="87478" aria-pressed="false"> 	<div class="date-left" aria-label="2026年 1月 24日 ">		<span class="month-year"> 一月， 2026</span> <span class="day">24</span>	</div>	<div class="date-right">		<span class="time">周六， 19:00</span> <span class="concert-title">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</span>	</div></button></div>
+                </div>
+                <div class="puchase-bottom">
+                  <div class="remaining-time d-none d-lg-block">
+                      <div class="remaining"><span data-i18n="time-left-title">剩餘時間</span>
+                          <span class="countdown remaining-session-time">09:16</span>
+                      </div>
+                      <div class="notice" data-i18n="remaining-time-notice">請於剩餘時間內完成交易，否則逾時後系統會釋放已選擇之座位並自動登出系統。</div>
+                  </div>
+                  <div class="btn-group1">
+                      <!-- <button type="button" class="btn btn-outline-primary" id="example"><span>Normal
+                              Purchase</span>
+                      </button> -->
+                      <button type="button" class="btn btn-outline-primary btn-normal-purchase" onclick="purchase(normalPurchaseCallBack, false)" style="display: none;">2026年 1月 24日 19:00<br>一般購票</button>
+
+                      <button id="expressPurchaseBtn" type="button" class="btn btn-outline-primary purchase-btn btn-popover d-none d-lg-block btn-express-purchase" data-container="body" data-toggle="popover" data-placement="bottom" data-content="由電腦選擇最佳座位" data-i18n="express-purchase-title" onclick="purchase(expressPurchaseCallBack, true)" data-original-title="" title="">2026年 1月 24日 19:00<br>快速購票</button>
+
+                      <button id="expressPurchaseBtn" type="button" class="btn btn-outline-primary purchase-btn d-lg-none btn-express-purchase" data-i18n="express-purchase-title" onclick="purchase(expressPurchaseCallBack, true)">2026年 1月 24日 19:00<br>快速購票</button>
+                  </div>
+              </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+<!-- main---end -->
+<!-- footer -->
+<div id="s_footer">
+
+
+
+<!-- footer -->
+<form name="formFooter" method="post" target="footerWindow" action=""></form>
+<footer class="footer container-fluid">
+  <div class="container">
+    <div class="row">
+      <div class="about col">
+
+        <!-- for pc -->
+        <table class="element-hidden-below-1025">
+            <tbody><tr class="leftUl">
+              <td class="purplelink">
+                <strong data-i18n="app-footer-about-cityline">關於CITYLINE</strong>
+              </td>
+              <td class="purplelink">
+                <strong data-i18n="app-footer-news">最新消息</strong>
+              </td>
+              <td class="purplelink">
+                <strong data-i18n="app-footer-enquiries">查詢</strong>
+              </td>
+              <td class="purplelink">
+                <strong data-i18n="app-footer-get-our-app">應用程式</strong>
+              </td>
+            </tr>
+            <tr class="leftUl">
+              <td class="purplelink">
+                <a class="purplelink" href="https://www.cityline.com/AboutUs.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-company-information">公司資料</a>
+              </td>
+              <td class="purplelink">
+                <a class="purplelink" href="https://www.business.cityline.com/news?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-blogs" target="_blank">博客</a>
+              </td>
+              <td class="purplelink">
+                <a class="purplelink" href="https://www.cityline.com/Help.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-help">幫助</a>
+              </td>
+              <td rowspan="2" class="footer-link" style="width: 100px;">
+                <ul>
+                  <li>
+                    <a href="https://apps.apple.com/hk/app/cityline-%E8%B3%BC%E7%A5%A8%E9%80%9A-ticketing/id496488073" class="app-icon hidden-small" target="_blank"><img class="app-store-icon" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/AppStore.svg" alt="App Store"></a>
+                  </li>
+                  <li>
+                    <a href="https://play.google.com/store/apps/details?id=com.cityline&amp;hl=en_US&amp;gl=US" class="app-icon hidden-small" target="_blank"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/GooglePlay.svg" alt="Google Play"></a>
+                  </li>
+                  <li>
+                    <a href="https://www.cityline.com/data/app/cityline.apk" class="app-icon hidden-small" target="_blank"><img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/citylineApk.png" alt="Android"></a>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            <tr class="leftUl">
+              <td class="purplelink">
+                <a class="purplelink" href="https://www.business.cityline.com?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-job" target="_blank">業務合作</a>
+              </td>
+              <td class="purplelink">
+                <a class="purplelink" href="https://www.cityline.com/ReleaseNotes.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-website-information">網站資訊</a>
+              </td>
+            </tr>
+        </tbody></table>
+
+
+        <!-- for mobile -->
+        <table class="element-show-below-1025">
+          <tbody><tr class="leftUl">
+            <td class="purplelink">
+              <strong data-i18n="app-footer-about-cityline">關於CITYLINE</strong>
+            </td>
+            <td class="purplelink">
+              <a class="purplelink" href="https://www.cityline.com/AboutUs.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-company-information">公司資料</a>
+            </td>
+            <td class="purplelink">
+              <a class="purplelink" href="https://www.business.cityline.com?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-job" target="_blank">業務合作</a>
+            </td>
+          </tr>
+          <tr class="leftUl">
+            <td class="purplelink">
+              <strong data-i18n="app-footer-news">最新消息</strong>
+            </td>
+            <td class="purplelink">
+              <a class="purplelink" href="https://www.business.cityline.com/news?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-blogs" target="_blank">博客</a>
+            </td>
+            <td class="purplelink">
+              <a class="purplelink" href="https://www.cityline.com/ReleaseNotes.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-website-information">網站資訊</a>
+            </td>
+          </tr>
+          <tr class="leftUl">
+            <td class="purplelink">
+              <strong data-i18n="app-footer-enquiries">查詢</strong>
+            </td>
+            <td class="purplelink">
+              <a class="purplelink" href="https://www.cityline.com/Help.html?lang=zh_HK" data-citylinelangmap="true" data-i18n="app-footer-help">幫助</a>
+            </td>
+          </tr>
+        </tbody></table>
+      </div>
+
+      <div class="element-show-below-1025 footerRightLink">
+        <table>
+          <tbody><tr>
+            <td colspan="2" class="purplelink" style="width: 100%; text-align: left; font-size: 1.125rem; padding-bottom: 0px;">
+              <strong data-i18n="app-footer-get-our-app">應用程式</strong>
+            </td>
+          </tr>
+          <tr class="bigImgBox" style="padding-bottom: 15px;">
+            <td colspan="2">
+              <a href="https://apps.apple.com/hk/app/cityline-%E8%B3%BC%E7%A5%A8%E9%80%9A-ticketing/id496488073">
+                <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/AppStore.svg" alt="Apple Store" class="bigimg">
+              </a>
+            </td>
+            <td colspan="2">
+              <a target="_blank" href="https://play.google.com/store/apps/details?id=com.cityline&amp;hl=en_US&amp;gl=US">
+                <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/GooglePlay.svg" alt="Google Play" class="bigimg">
+              </a>
+            </td>
+          </tr>
+          <tr class="bigImgBox">
+            <td colspan="2">
+              <a href="https://www.cityline.com/data/app/cityline.apk">
+                <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/citylineApk.png" alt="Android" class="bigimg">
+              </a>
+            </td>
+          </tr>
+        </tbody></table>
+      </div>
+
+    </div>
+    <div class="row">
+      <span class="copyright-title">Copyright © 2025 Cityline (Hong Kong) Limited. 版權所有 不得轉載</span>
+    </div>
+  </div>
+
+
+    <div class="social-bar">
+      <a href="https://www.facebook.com/CitylineHK/?fref=ts&amp;amp;ref=br_tf" target="_blank">
+        <img src="data:image/png;base64,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" alt="Facebook">
+      </a>
+      <a href="https://www.instagram.com/citylinehk/" target="_blank">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-intagram.png" alt="Instagram">
+      </a>
+      <a href="https://www.linkedin.com/company/cityline-hong-kong-limited?trk=biz-companies-cym" target="_blank">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-linkin.png" alt="LinkedIn">
+      </a>
+      <!-- <button class="buttonLink noBtn" onclick="footerModalIsDisplay('#subscribeModal','block')">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-subscribe.png" alt="Newsletter">
+      </button> -->
+      <a href="https://www.xiaohongshu.com/user/profile/6508fed60000000016038a44" target="_blank">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-xiaohongshu.png" alt="Xiaohongshu" class="side-xiaohongshu">
+      </a>
+      <a href="https://v.douyin.com/i6uD7Kng/" target="_blank">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-douyin.png" alt="Douyin" class="side-douyin">
+      </a>
+      <a href="https://mp.weixin.qq.com/s/aHJbshkM7GEPcVcNCNeMOQ" target="_blank">
+        <img data-v-6dc9f104="" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-wechat.png" alt="Wechat" class="side-wechat">
+      </a>
+      <button class="buttonLink noBtn" onclick="footerModalIsDisplay('#newsModal','block')">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/icon-news.png" alt="Latest News" style="transform: translateY(4px);">
+      </button>
+    </div>
+</footer>
+
+<!-- news modal -->
+<div class=" footer-modal" id="newsModal">
+  <div class="modal-content footer-modal-content">
+    <div class="modal-header d-flex justify-content-between">
+      <div class="align-self-end">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/news-footer.png" alt="" class="modal-header-icon">
+        <h3 data-i18n="app-footer-news">最新消息</h3>
+      </div>
+      <button class="footer-close" type="button" onclick="footerModalIsDisplay('#newsModal','none')">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <div class="modal-body cw-scrollbar">
+        <div class="newsList"><div class="showallbtnPopupNewsTitle" onclick="showallbtnPopupNews(1397)"><span> - 香港演藝學院伯大尼票房於2025年11月1日起暫停服務</span></div></div>
+    </div>
+  </div>
+</div>
+
+<section class="common-modal">
+  <div class="modal" id="newsDetailModal" tabindex="-1" role="dialog" style="z-index: 1051" aria-hidden="true" data-backdrop="static">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+        <button class="noBtn fancybox-close" data-dismiss="modal" aria-label="Close">
+          <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/news_modal_close.png" alt="关闭">
+        </button>
+
+        <div class="latestNewsTextBox cw-scrollbar">
+          <span class="latestNewsBox_title"></span>
+          <span class="latestNewsBox_content"></span>
+        </div>
+			</div>
+		</div>
+	</div>
+</section>
+
+
+
+
+
+
+<!-- subscribe modal -->
+<div class="fancybox d-none">
+  <span data-i18n="subscribe-title" class="submitSubscribeBox_title">多謝你的訂閱</span>
+  <span data-i18n="subscribe-body" class="submitSubscribeBox_message">通訊將很快送達您的電子郵件地址。</span>
+</div>
+<div class="footer-modal" id="subscribeModal" style="z-index: 2">
+  <div class="modal-content footer-modal-content footer-bottom-modal-content">
+    <div class="modal-header d-flex justify-content-between">
+      <div class="align-self-end">
+        <img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/subscribe-footer.png" alt="" class="modal-header-icon">
+        <h3 data-i18n="app-footer-subscribeModal">新聞信件</h3>
+      </div>
+      <button class="footer-close" type="button" onclick="footerModalIsDisplay('#subscribeModal','none'); clearSubscribe()">
+        <span>×</span>
+      </button>
+    </div>
+    <form class="modal-body subscribe-form" action="https://www.cityline.com/Member/Subscribe.do?redirectUrl=https%3A%2F%2Fvenue.cityline.com%2FutsvInternet%2Finternet%2Fperformance%3Fevent%3D54510%26perfId%3D87478" data-citylinelangmap="true" method="post">
+      <input name="lang" value="" data-citylinelangmap="true" hidden="">
+      <span id="subscribeError" data-i18n="app-footer-subscribe-invalid" class="d-none" style="display:block; color: red; text-indent: 12px; font-size: 1rem">請輸入有效的電郵地址。</span>
+      <input type="text" name="subscribeEmail" class="form-control" required="" id="mobileSubscribeEmail" data-i18n-aria-label="app-footer-subscribe-aria-label" data-i18n-placeholder="app-footer-subscribe-placeholder" placeholder="您的電郵地址" aria-label="請輸入您的電郵地址">
+      <button type="submit" class="btn btn-outline-primary" data-i18n="app-footer-subscribe" onclick="return validateSubscribe(true)">提交</button>
+    </form>
+  </div>
+</div>
+
+
+  <!-- footer end -->
+
+</div>
+<!-- footer end -->
+<!-- Modal -->
+<section class="select-seat">
+    <div class="modal fade" id="selectSeatModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle" data-i18n="select-seat-title">選擇座位</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="overflow: hidden;">
+                    <iframe id="seatPlanFrame"></iframe>	<!-- Desktop/Mobile version of seat-plan within the iframe -->
+				</div>
+            </div>
+        </div>
+</div></section>
+
+<section class="ticket-modal-box">
+    <div class="modal" id="ticketDetailModal" tabindex="-1" role="dialog" aria-labelledby="ticketDetailModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ticketDetailModalTitle" data-i18n="ticket-discount-details-title">門票折扣詳情</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="discount-scrollbar">
+                  <div class="modal-body">
+                      <table width="100%" id="ticketPriceTable" tabindex="0">
+                      </table>
+                  </div>
+                </div>
+            </div>
+        </div>
+	</div>
+</section>
+
+
+<div><div class="grecaptcha-badge" data-style="bottomright" style="width: 256px; height: 60px; position: fixed; visibility: hidden; display: block; transition: right 0.3s; bottom: 14px; right: -186px; box-shadow: gray 0px 0px 5px; border-radius: 2px; overflow: hidden;"><div class="grecaptcha-logo"><iframe title="reCAPTCHA" width="256" height="60" role="presentation" name="a-j9c8c0px4dtm" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="https://www.recaptcha.net/recaptcha/enterprise/anchor?ar=1&amp;k=6LfZK_4qAAAAAA4y8ZpLWw-WY7u9SBPJfbPd_E3R&amp;co=aHR0cHM6Ly92ZW51ZS5jaXR5bGluZS5jb206NDQz&amp;hl=zh-TW&amp;v=naPR4A6FAh-yZLuCX253WaZq&amp;size=invisible&amp;anchor-ms=20000&amp;execute-ms=15000&amp;cb=nnihc72pou07"></iframe></div><div class="grecaptcha-error"></div><textarea id="g-recaptcha-response-100000" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;"></iframe></div></body>

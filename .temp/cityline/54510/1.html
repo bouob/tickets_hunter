@@ -1,0 +1,156 @@
+還在活動資訊頁面:https://venue.cityline.com/utsvInternet/internet/eventDetail?event=54510&lang=TW
+
+要點到按鈕:
+<button type="button" class="btn btn-outline-primary purchase-btn" data-i18n="button.purchase.title">繼續</button>
+才會進入下一個頁面
+由於前一個頁面已經登入過 但是不知道為什麼還要再登入一次
+檢查<div class="modal-content h-100">
+				<div class="modal-header">
+					<h5 class="modal-title" id="loginModalLabel" data-i18n="app-login-title">會員登錄</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form id="loginForm" onsubmit="return submitLogin(event)">
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-login-fail">你輸入的電郵/登入名稱或密碼不正確</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-captcha">輸入驗證碼和圖中數字不同。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-recaptcha">reCAPTCHA驗證失敗。 請再試一次。</div>
+						<div class="alert alert-danger errorMsg" role="alert" data-i18n="err-form-turnstile">turnstile驗證失敗。 請再試一次。</div>
+						<!-- <div class="form-group input-email">
+							<label for="inputEmail" data-i18n="app-login-login-id">Email / Login ID</label>
+							<input type="text" class="form-control" id="inputEmail" aria-describedby="emailHelp"
+							 	data-i18n-placeholder="app-login-login-id-placeholder" placeholder="Enter email / login ID" autocomplete="username" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+						</div>
+						<div class="form-group input-pwd">
+							<label for="inputPassword" data-i18n="app-login-password">Password</label> 
+							<input type="password" class="form-control" id="inputPassword" 
+							 	data-i18n-placeholder="app-login-password-placeholder" placeholder="Password" autocomplete="current-password" required>
+						 	<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">This field is required.</span>
+							</div>
+							<a href="https://www.cityline.com/ForgotPassword.do" 
+								class="forgot-pwd" data-citylinelangmap="true" data-i18n="app-login-forgot-password">Forgot Password</a>
+						</div> -->
+			            <div class="form-group input-captcha" style="display: none;">
+							<label for="inputCaptcha" data-i18n="app-login-captcha">驗證碼</label> 
+							<img class="captcha m-0 p-0" src="" alt="驗證碼" data-i18n-alt="app-login-captcha-alt">
+							<button type="button" class="btn p-0" onclick="getCaptcha()"><i class="bi bi-arrow-clockwise"></i></button>
+							<input type="number" class="form-control no-arrow" id="inputCaptcha" data-i18n-placeholder="app-login-captcha-placeholder" placeholder="請輸入圖中數字" required="">
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-g-recaptcha" style="display: none;">
+							<div id="loginRecaptcha"></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<div class="form-group input-c-turnstile" style="">
+							<div id="loginTurnstile"><div><template shadowrootmode="closed"><iframe src="https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/turnstile/f/ov2/av0/rch/1o1b3/0x4AAAAAAAWNjB2Bt2Whyc7f/light/fbE/new/normal?lang=zh-tw" allow="cross-origin-isolated; fullscreen; autoplay" sandbox="allow-same-origin allow-scripts allow-popups" id="cf-chl-widget-1o1b3" tabindex="0" title="包含 Cloudflare 安全性查問的小工具" style="border: none; overflow: hidden; width: 300px; height: 65px;"></iframe></template><input type="hidden" name="cf-turnstile-response" id="cf-chl-widget-1o1b3_response" value="0.AMes-tOfmQnbwr7fcz_3zoYAYcO1eOvQPinu_T9oNinzCiZ-IwyQLe5goVh6Ega9LNssVNg2vdlXialgDb4oN_eccdO2XdaHU5GdZ1Y-1RWLvZjA3wZGPpTvvopK6vf-CzVdedRoiRGx3oLTu86Qhrfjk9-_ML2lqwxMo6HH26Z0CWlpxPBXnWMDtOOv0yAfEfGEIitSAB4hbSyr2MB5meAt7_Rjsd_KzhWlBmz8sWq7LCHiXJ7Y75H0KUH3uSG69KXgoIDJ9-pdGUOc5lmEXhqRkU1pG7schUuUTd5_zop8oTRBQyZqnc4rQGjPOpG_QeF_8iPVxwzzU4pSXh07sNN7nupPSYJPCwfWCys1V6If_K5TV9kb4RSHLwoMv3Uz6rf3izQ9CsNVyeevDBKSy82x6dm_-7Cw-j4p0BQ22ondnfvj04YZae1IshNICDlj0q11iKiKwn-QKJqRMxtZSGc4REXx8mB5HXc0tVRdrcpYABvgc1DX9EuBE4dslwXlvyby5NvHY-wLXqNsXUTUWMnPoL_t4wTNM18VGzv0fb2w86ZE7s55XeJKNRasBgfXLGFbuz7KcRuwBujVFjdsDsAfrVQ65c0ZvBW8l2sXT8RPKtPHZ105A07D2L-VRBbhFAM6_8IRTb2YRQ7pHfnzJEwHiv6T7bKwall24uhXU9Vg8VJZa9RBH1f65VKPSKB89TKRUPzQ1lidm8Za4qdqowy3VL2aIFB-XkHMBBDWeO3nrcjNlm-rCM7M6gf4CYGp8oYjtN7CWFf7TptLWbXGFaXKd2KPlxXmCz0rKVHyKjSVN1KMBYg3HkVJq76GrtAi9J8pmiOhfBGQjEQU5eDOvPT5cF3E3yU0Fv0k0KzFqh2sOj_0YrfLFCA6CJptnVpyTuP8naLic5yOK32_7GNKJjYH9jc2AbAA5ir2MtPr_0t4n0qxqnggvHXawFTZ2qCLzqBHQyg240KcR7-K9T3q2A.PDEBeGTkTtIRhIu9klPg6Q.984ca921d243e5e5593fe0a5c06374c4bae88cfc86567c96ca9cf84b1383ea61"></div></div>
+							<div class="invalid-feedback">
+								<span class="invalid-required" data-i18n="err-form-required">必填項目</span>
+							</div>
+						</div>
+						<input type="submit" class="hidden">
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn-login" style="opacity: 1" onclick="submitLogin()">
+						<span data-i18n="app-nav-login">登入</span>
+					</button>
+					<!-- <a class="btn btn-register" target="_blank" href="https://www.cityline.com/Register.do" data-citylinelangmap="true" data-i18n="app-nav-register">Register</a> -->
+				</div>
+			</div>
+			然後點登入的按鈕
+
+參考body:
+<section class="main container-fluid event-detail-page">
+		<div class="container">
+			<div class="row">
+		        <div class="col-md-12 col-lg-7 col-xl-8 purchase-msg">
+		        	
+<div class="row">
+	<div class="col-md-12 col-lg-5 img-padding">
+		<img id="eventLargeCoverUrl" class="item-img img-responsive" src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/largecover/54510_T26JCM-410.jpg" alt="" onclick="showEnlargedImage(&quot;event&quot;)">
+	</div>
+	<div class="col-md-12 col-lg-7 purchase-msg-details">
+		<div id="eventName" class="item-title h1">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</div>
+		<div>
+			<p>
+				<span class="status-title" data-i18n="event-status">狀態:</span><span class="status">售票中</span>
+			</p>
+			<p id="eventDateSection" style="">
+				<span class="event-date-title" data-i18n="event-date" style="vertical-align: top">日期:</span><span class="event-date">2026/01/24</span>
+
+				<script type="application/ld+json">{
+"@context":"https://schema.org",
+"@type":"Event",
+"name":"2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站",
+"startDate":"2026-01-24",
+"location":"澳門銀河 - 銀河綜藝館",
+"endDate":"2026-01-24",
+"image":[
+"https://add-to-calendar-button.com/demo_assets/img/1x1.png",
+"https://add-to-calendar-button.com/demo_assets/img/4x3.png",
+"https://add-to-calendar-button.com/demo_assets/img/16x9.png"]
+}</script><add-to-calendar-button style="" id="addToCal" name="2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站" startdate="2026-01-24" buttonstyle="custom" options="[&quot;Google|Google日曆&quot;,&quot;iCal|iCal日曆&quot;,&quot;Outlook.com|Outlook日曆&quot;]" liststyle="dropdown-static" trigger="click" hideiconlist="" hidecheckmark="" hidebackground="" hideiconbutton="" label=" " customcss="/utsvInternet/internet/revamp/css/addToCalendar.css" atcb-button-id="atcb-btn-1" class="atcb-light" atcb-last-event="initialization:atcb-btn-1" customlabels="{&quot;close&quot;:&quot;關閉&quot;,&quot;label.addtocalendar&quot;:&quot;添加到日曆&quot;}" location="澳門銀河 - 銀河綜藝館"><template shadowrootmode="open"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><link rel="stylesheet" type="text/css" href="/utsvInternet/internet/revamp/css/addToCalendar.css"><div class="atcb-initialized" style="display: block; position: relative; width: fit-content;" lang="en"><div class="atcb-button-wrapper" style="--base-font-size-l: 16px; --base-font-size-m: 16px; --base-font-size-s: 16px;"><button class="atcb-button atcb-click" type="button" id="atcb-btn-1" aria-label=" "><span class="atcb-text"> </span><div class="atcb-dropdown-anchor"></div></button></div></div></template></add-to-calendar-button>
+
+			</p>
+			<p>
+				<span data-i18n="event-venue">場地:</span><span class="venue">澳門銀河 - 銀河綜藝館</span>
+			</p>
+			<p style="display: none" class="related-link-display">
+			  <a href="javascript:void(0)" class="related-link"><i class="bi bi-link-45deg"></i><span style="color: #5577ff" data-i18n="related-link">相關節目</span></a>
+			</p>
+			<p>
+			  <a href="" style="display: none" class="website-link" target="_blank">
+			    <i class="bi bi-link-45deg"></i><span style="color: #5577ff" data-i18n="related-website">相關網址</span>
+			  </a>
+			</p>
+			<p class="row eventItem_share_iconList">
+				<a target="_blank" class="isActiveFacebook" onclick="shareViaEvent('facebook')">
+					<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/facebook.png" alt="Facebook">
+				</a>
+				<a target="_blank" class="isActiveEmail" onclick="shareViaEvent('email')">
+					<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/email.png" alt="邮箱">
+				</a>
+				<button class="noBtn isActiveLink" onclick="shareViaEvent('link')">
+					<img src="https://utsv-event-images.s3.ap-east-1.amazonaws.com/internet-archive/resources/2.72.0/internet/revamp/images/share-link.png" alt="复制链接">
+				</button>
+			</p>
+			<p id="eventTags">
+			</p>
+		</div>
+	</div>
+</div>
+<div class="row purchase-details">
+	<div class="col-12">
+		<p data-i18n="event-presenter">主辦機構</p>
+		<p class="m-0" id="presenterName">開思文化</p>
+	</div>
+	<span id="firstDesc"><div class="col-12"><p>節目簡介</p><p class="m-0">時隔6年，陳小春終於在歌迷的期待下，啟動『2025陳小春生‧旦‧淨‧末‧丑巡迴演唱會』。<br><br>擁有26張專輯，50多首經典歌曲，陳小春天生就是屬於舞台的。<br><br>【生旦淨末丑】來源於陳小春的經典歌曲【算你狠】的歌詞，作為一個中國人，人生之路的角色逃不出生旦淨末醜。每個人都在不同時期扮演不同的角色，卸下濃妝和面具，你還能看清原本的自己嗎？2025年，陳小春會用歌曲和舞台，給所有的觀眾講一個屬於每個人的故事。<br><br>2025年陳小春演唱會將從上海啟航，首輪將落地10+城市，每個城市將帶給觀眾不同的故事。<br><br>本次演唱會在舞美和視覺上都會衝破傳統，打破舞台區域和觀眾區域的界限，把觀眾也融進表演，成為整個演唱會的一部分，視覺將啟用國內頂尖的視效團隊，打造裸眼3D的場景。<br><br>歌曲和舞台的編排也會引入音樂劇理念，歌曲融入表演，舞蹈也是講故事，給觀眾帶來一次視聽盛宴。<br><br>累積6年，再次開啟演唱會，陳小春本人也成為了更多的角色，那些經典歌曲帶給所有人的將是另一種感動。</p></div></span>
+	<div class="col-12 more-details">
+		<span id="moreDetails" onclick="moreDetails()"> <span data-i18n="event-more-detail">更多資訊</span><i class="bi bi-chevron-down"></i></span>
+	</div>
+	<div class="col-12" id="clickShow"><div><p><b></b></p><p class="m-0"><b></b></p></div><div><p>票務資料</p><p class="m-0">門票於2025年11月7日下午1時18分起在Cityline票務平台公開發售。<br><br><u>票價(港幣$)</u><br>VIP/ $1,380<br>CAT 1/ $1,080<br>CAT 2/ $880<br>CAT 3/ $680<br>CAT 4/ $480</p></div><div><p>服務費</p><p class="m-0">網上訂票: 每張門票港幣$50</p></div><div><p>實體門票送遞</p><p class="m-0">1. 每張門票會收取HK$50服務費及至送遞香港地區每次需收取HK$40送遞費（每次交易最多4張門票）。交易已繳付的相關費用，包括但不限於服務費及送遞費， 在任何情況下均不獲退還。<br><br>2. 門票將送遞到購票者交易時註明的香港地址及香港電話，只限香港地區。購票者必須確保該收件地址／資料正確無誤，已提交的地址均不可更改，主辦方及本票務平台恕不負責因錯誤或不完整之收件地址／資料而導致之門票失遞。</p></div><div><p>購票者須知</p><p class="m-0">詳情請參閱︰<a href="https://shows.cityline.com/tc/2026/jordanchan.html">https://shows.cityline.com/tc/2026/jordanchan.html</a></p></div></div>
+	<div class="col-12 more-details">
+		<span id="lessDetails" onclick="lessDetails()"> <span data-i18n="event-less-detail">減少資訊</span><i class="bi bi-chevron-up detail-icon"></i></span>
+	</div>
+</div>
+		        </div>
+		        <div class="col-md-12 col-lg-5 col-xl-4 purchase">
+					<div class="puechase-top event-top">
+						<div class="date-title" data-i18n="date-title">日期</div>
+						<div class="calendar-box"></div>
+						<div class="date-box"><button type="button" class="btn btn-outline-primary date-time-position" data-perf-id="87478" aria-pressed="false"> 	<div class="date-left" aria-label="2026年 1月 24日 ">		<span class="month-year"> 一月， 2026</span> <span class="day">24</span>	</div>	<div class="date-right">		<span class="time">周六， 19:00</span> <span class="concert-title">2025-2026 陳小春 生‧旦‧淨‧末‧丑 巡迴演唱會-澳門站</span>	</div></button></div>
+						<div class="puchase-bottom"><div class="price-box">	<div class="date-title price-title1" data-i18n="price-title">價格種類</div>	<div><button type="button" class="btn btn-outline-primary price-btn"><div><span>1,380</span><img class="limited-img" src="./revamp/images/limited2.svg" alt=""></div></button> <button type="button" class="btn btn-outline-primary price-btn"><div><span>1,080</span></div></button> <button type="button" class="btn btn-outline-primary price-btn"><div><span>880</span></div></button> <button type="button" class="btn btn-outline-primary price-btn"><div><span>680</span></div></button> <button type="button" class="btn btn-outline-primary price-btn"><div><span>480</span><img class="limited-img" src="./revamp/images/limited2.svg" alt=""></div></button> </div></div><div class="ticketCard"> 	<button type="button" class="btn btn-outline-primary purchase-btn" data-i18n="button.purchase.title">繼續</button></div></div>
+					</div>
+		        </div>
+	        </div>
+        </div>
+	</section>
