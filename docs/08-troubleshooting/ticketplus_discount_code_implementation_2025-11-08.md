@@ -23,18 +23,23 @@ TicketPlus 部分活動需要輸入「優惠序號」或「加購序號」才能
 
 ### 已完成項目
 
-1. **settings.json** (Line 75)
-   - 新增 `ticketplus_discount_code` 欄位
+**注意**：自 2025-11-11 起，欄位名稱已從 `ticketplus_discount_code` 改為通用的 `discount_code`
 
-2. **settings.html** (Line 876-883)
-   - 新增折價券代碼輸入框
-   - 包含使用說明文字
+1. **settings.json**
+   - 欄位：`advanced.discount_code`（原 `ticketplus_discount_code`，已改為通用設定）
 
-3. **settings.js** (Line 81, 224, 462, 580)
+2. **settings.html** (Line 744-753)
+   - 新增折價券代碼輸入框（ID: `discount_code`）
+   - 標籤：「優惠折價券」（原「TicketPlus 折價券」）
+   - 包含使用說明文字：「適用於所有平台的折價券代碼，目前支援：TicketPlus」
+
+3. **settings.js** (Line 77, 216, 450, 568)
+   - 變數名稱：`discount_code`（原 `ticketplus_discount_code`）
    - 新增讀取/儲存邏輯
 
-4. **nodriver_tixcraft.py** (Line 6764-6846)
+4. **nodriver_tixcraft.py** (Line 6794-6876)
    - 實作 `nodriver_ticketplus_order_exclusive_code()` 函數
+   - 讀取 `config_dict["advanced"]["discount_code"]`（原 `ticketplus_discount_code`）
    - 自動填入折價券邏輯
 
 ### 核心特性
@@ -169,7 +174,7 @@ is_answer_sent, ticketplus_dict["fail_list"], is_question_popup = \
     ┌───────────────────────────────────────────────────┐
     │  檢查 2: 讀取折價券代碼設定                         │
     │  discount_code = config_dict["advanced"]          │
-    │      .get("ticketplus_discount_code", "").strip() │
+    │      .get("discount_code", "").strip()            │
     └────┬──────────────────────────────────────────────┘
          │
     (是否有設定?)
@@ -358,39 +363,43 @@ Logs: [DISCOUNT CODE] Successfully filled 2 discount code field(s)
 
 ### 設定檔案
 
-**settings.json** (Line 75)：
+**settings.json**：
 ```json
 {
   "advanced": {
-    "ticketplus_discount_code": "YOUR_CODE_HERE"
+    "discount_code": "YOUR_CODE_HERE"
   }
 }
 ```
 
+**註**：原欄位名稱 `ticketplus_discount_code` 已於 2025-11-11 改為通用的 `discount_code`
+
 ### UI 介面
 
-**settings.html** (Line 876-883)：
+**settings.html** (Line 744-753)：
 ```html
-<div class="input-group mt-2">
-  <span class="input-group-text">折價券</span>
-  <input type="text" id="ticketplus_discount_code"
-         placeholder="優惠序號 / 加購序號">
+<div class="row mb-3">
+  <label for="discount_code" class="col-sm-2 col-form-label">優惠折價券</label>
+  <div class="col-sm-10 col-lg-8 col-xl-6">
+    <input type="text" id="discount_code" value="" class="form-control"
+           placeholder="優惠序號 / 加購序號">
+    <small class="form-text text-muted">
+      適用於所有平台的折價券代碼（優惠序號、加購序號等），
+      程式會自動偵測並填入所有符合的輸入欄位。目前支援：TicketPlus
+    </small>
+  </div>
 </div>
-<small class="form-text text-muted">
-  適用於所有類型的折價券代碼（優惠序號、加購序號等），
-  程式會自動偵測並填入所有符合的輸入欄位
-</small>
 ```
 
 ### JavaScript 處理
 
 **settings.js**：
 ```javascript
-// 讀取 (Line 224)
-ticketplus_discount_code.value = settings.advanced.ticketplus_discount_code || '';
+// 讀取 (Line 216)
+discount_code.value = settings.advanced.discount_code || '';
 
-// 儲存 (Line 462)
-settings.advanced.ticketplus_discount_code = ticketplus_discount_code.value;
+// 儲存 (Line 450)
+settings.advanced.discount_code = discount_code.value;
 ```
 
 ---
@@ -400,7 +409,7 @@ settings.advanced.ticketplus_discount_code = ticketplus_discount_code.value;
 ### 情境 1：有折價券代碼
 
 ```
-設定：ticketplus_discount_code = "SUMMER2025"
+設定：discount_code = "SUMMER2025"
 
 執行流程：
 1. 進入訂票頁面
@@ -418,7 +427,7 @@ Logs 輸出：
 ### 情境 2：無折價券代碼
 
 ```
-設定：ticketplus_discount_code = ""
+設定：discount_code = ""
 
 執行流程：
 1. 進入訂票頁面
@@ -434,7 +443,7 @@ Logs 輸出：
 ### 情境 3：頁面無折價券欄位
 
 ```
-設定：ticketplus_discount_code = "TEST123"
+設定：discount_code = "TEST123"
 
 執行流程：
 1. 進入訂票頁面
@@ -485,15 +494,15 @@ Logs:
 | 功能 | 檔案 | 行數 | 說明 |
 |------|------|------|------|
 | 函數呼叫 | `nodriver_tixcraft.py` | 6665 | 票種選擇成功後呼叫 |
-| 函數定義 | `nodriver_tixcraft.py` | 6764-6846 | 完整實作邏輯 |
-| JavaScript 注入 | `nodriver_tixcraft.py` | 6789-6816 | 折價券填入邏輯 |
-| 安全性處理 | `nodriver_tixcraft.py` | 6786 | 字串轉義 |
-| 設定欄位 | `settings.json` | 75 | `ticketplus_discount_code` |
-| UI 輸入框 | `settings.html` | 876-883 | 折價券輸入欄位 |
-| JS 宣告 | `settings.js` | 81 | 元素選擇器 |
-| JS 讀取 | `settings.js` | 224 | 載入設定值 |
-| JS 儲存 | `settings.js` | 462 | 儲存設定值 |
-| JS 欄位清單 | `settings.js` | 580 | 欄位追蹤 |
+| 函數定義 | `nodriver_tixcraft.py` | 6794-6876 | 完整實作邏輯 |
+| JavaScript 注入 | `nodriver_tixcraft.py` | 6819-6849 | 折價券填入邏輯 |
+| 安全性處理 | `nodriver_tixcraft.py` | 6816 | 字串轉義 |
+| 設定欄位 | `settings.json` | - | `discount_code` (原 `ticketplus_discount_code`) |
+| UI 輸入框 | `settings.html` | 744-753 | 折價券輸入欄位 |
+| JS 宣告 | `settings.js` | 77 | 元素選擇器 |
+| JS 讀取 | `settings.js` | 216 | 載入設定值 |
+| JS 儲存 | `settings.js` | 450 | 儲存設定值 |
+| JS 欄位清單 | `settings.js` | 568 | 欄位追蹤 |
 
 ---
 
@@ -501,12 +510,13 @@ Logs:
 
 ### 1. 單一欄位設計 (vs. 多欄位設計)
 
-**決策**: 使用單一 `ticketplus_discount_code` 欄位
+**決策**: 使用單一 `discount_code` 欄位（原 `ticketplus_discount_code`，於 2025-11-11 改為通用名稱）
 
 **理由**:
 - 優惠序號和加購序號本質相同
 - 使用單一欄位簡化 UI
 - 程式自動偵測並填入所有符合的欄位
+- 通用名稱可支援未來其他平台的折價券功能
 
 **行為**:
 - 自動偵測「優惠序號」和「加購序號」
