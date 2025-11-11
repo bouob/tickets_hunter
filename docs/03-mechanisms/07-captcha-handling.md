@@ -389,19 +389,43 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
 
 ## 平台實作差異
 
+### 標準驗證碼機制
+
 | 平台 | 驗證碼類型 | 擷取方式 | OCR 引擎 | 特殊處理 | 函數名稱 | 完成度 |
 |------|-----------|---------|---------|---------|---------|--------|
 | **KKTIX** | 問答式 | DOM 查詢 | ❌ 不需要 | fail_list 機制 | `nodriver_kktix_reg_captcha()` | 100% ✅ |
 | **TixCraft** | 圖形 4字 | Canvas | ddddocr | NonBrowser fallback | `nodriver_tixcraft_get_ocr_answer()` | 100% ✅ |
 | **iBon** | 圖形 4字 | Shadow DOM | ddddocr | DOMSnapshot + Screenshot | `nodriver_ibon_captcha()` | 100% ✅ |
 | **KHAM** | 圖形 4字 | Canvas | ddddocr | 3域名變體支援 | `nodriver_kham_captcha()` | 100% ✅ |
-| **TicketPlus** | ❌ 無 | - | - | - | - | N/A |
+| **TicketPlus** | ❌ 無標準驗證碼 | - | - | - | - | N/A |
 
 **程式碼位置**（`nodriver_tixcraft.py`）：
 - **KKTIX**: Line 1171 (`nodriver_kktix_reg_captcha`, 問答式主要範例) ⭐
 - **TixCraft**: Line 3724 (`nodriver_tixcraft_get_ocr_answer`, OCR 主要範例) ⭐
 - iBon: Line 9643 (`nodriver_ibon_get_captcha_image_from_shadow_dom`, Shadow DOM 範例)
 - KHAM: Line 13101 (`nodriver_kham_captcha`)
+
+### 特殊功能：優惠代碼填寫（非驗證碼）
+
+| 平台 | 功能類型 | 使用場景 | 實作方式 | 函數名稱 | 完成度 |
+|------|---------|---------|---------|---------|--------|
+| **TicketPlus** | 優惠序號自動填寫 | 特定活動要求先輸入優惠序號才能購票 | 關鍵字偵測 + JavaScript 注入 + Vue.js 事件 | `nodriver_ticketplus_order_exclusive_code()` | 100% ✅ |
+| **KKTIX** | 會員序號自動填寫 | 特定活動需要會員序號資格驗證 | Class 選擇器 + JavaScript 注入 + AngularJS 綁定 | `nodriver_kktix_order_member_code()` | 100% ✅ |
+
+**說明**：
+- **不是驗證碼**：優惠代碼並非安全驗證機制，而是活動購票資格限制
+- **觸發條件**：僅在特定活動頁面出現代碼欄位時才需要
+- **設定方式**：`settings.json` → `advanced.discount_code`（通用設定）
+- **TicketPlus 特性**：
+  - 關鍵字偵測：自動偵測包含「序號」、「加購」、「優惠」等關鍵字的欄位
+  - Vue.js 事件：觸發 `input` + `change` 事件
+  - 程式碼位置：`nodriver_tixcraft.py:6794`
+- **KKTIX 特性**：
+  - 選擇器策略：`input.member-code` + `input[ng-model*="member_codes"]`（雙重保障）
+  - AngularJS 綁定：觸發 `input` + `change` + `blur` 事件 + `scope.$apply()`
+  - 插入時機：票數選擇完成後、播放音效之前（`nodriver_kktix_reg_new_main:2188`）
+  - 程式碼位置：`nodriver_tixcraft.py:2625`
+- **通用設計**：使用單一 `discount_code` 設定支援所有平台，程式自動偵測欄位類型
 
 ---
 
