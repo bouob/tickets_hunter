@@ -57,7 +57,8 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
 "*anymind360.com/*",
-"*adx.c.appier.net/*",
+"*.appier.net/*",
+"*.c.appier.net/*",
 "*cdn.cookielaw.org/*",
 "*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
 "*clarity.ms/*",
@@ -1791,6 +1792,74 @@ async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
         print(f"Error clicking events next button: {exc}")
         return False
 
+async def nodriver_kktix_check_guest_modal(tab, config_dict):
+    """
+    Check and handle KKTIX guest modal (立刻成為 KKTIX 會員)
+    Reference: .temp/kktix/kktix-qa-code.html Line 157-172
+    Modal appears when user is not logged in on /registrations/new page
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_modal_handled = False
+
+    try:
+        # Wait for modal to possibly appear
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+
+        # Check if guest modal exists and is visible
+        modal_visible = await tab.evaluate('''
+            (function() {
+                const modal = document.querySelector('#guestModal');
+                if (modal) {
+                    // Check if modal is actually visible
+                    const style = window.getComputedStyle(modal);
+                    const isVisible = style.display !== 'none' &&
+                                    style.visibility !== 'hidden' &&
+                                    parseFloat(style.opacity) > 0;
+                    return isVisible;
+                }
+                return false;
+            })()
+        ''')
+
+        if modal_visible:
+            if show_debug_message:
+                print("[KKTIX GUEST MODAL] Guest modal detected, clicking dismiss button...")
+
+            # Click the dismiss button (暫時不要)
+            click_result = await tab.evaluate('''
+                (function() {
+                    const dismissBtn = document.querySelector('#guestModal button[data-dismiss="modal"]');
+                    if (dismissBtn) {
+                        dismissBtn.click();
+                        return { success: true, clicked: true };
+                    }
+                    return { success: false, error: 'Dismiss button not found' };
+                })()
+            ''')
+
+            # Parse result using utility function
+            click_result = util.parse_nodriver_result(click_result)
+
+            if click_result and click_result.get('clicked'):
+                if show_debug_message:
+                    print("[KKTIX GUEST MODAL] Successfully dismissed guest modal")
+                # Wait for modal to close
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+                is_modal_handled = True
+        else:
+            if show_debug_message:
+                print("[KKTIX GUEST MODAL] No guest modal detected")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[ERROR] Guest modal check failed: {exc}")
+
+    return is_modal_handled
+
 async def nodriver_kktix_press_next_button(tab, config_dict=None):
     """使用 JavaScript 點擊下一步按鈕，包含重試和等待機制"""
     # 函數開始時檢查暫停
@@ -2078,6 +2147,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # 增加執行計數器，防止無限迴圈 - 2025-11-11
+    global kktix_dict
+    if 'kktix_dict' in globals():
+        kktix_dict["reg_execution_count"] = kktix_dict.get("reg_execution_count", 0) + 1
+        if show_debug_message:
+            print(f"[KKTIX REG] Execution count: {kktix_dict['reg_execution_count']}")
+
     # T010: Check main switch (defensive programming)
     if not config_dict["area_auto_select"]["enable"]:
         if show_debug_message:
@@ -2185,6 +2261,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
+                # 填寫會員序號（如果有設定）
+                await nodriver_kktix_order_member_code(tab, config_dict)
+
+                # 會員序號填寫後檢查暫停
+                if await check_and_handle_pause(config_dict):
+                    return fail_list, played_sound_ticket
+
                 if config_dict["advanced"]["play_sound"]["ticket"]:
                     if not played_sound_ticket:
                         play_sound_while_ordering(config_dict)
@@ -2203,10 +2286,54 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
                 # single option question
                 if not is_question_popup:
+                    # Check and dismiss guest modal again (in case it appears after captcha)
+                    # This ensures modal doesn't block the next button - 2025-11-11
+                    await nodriver_kktix_check_guest_modal(tab, config_dict)
+
                     # no captcha text popup, goto next page.
                     control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
                     if show_debug_message:
                         print("control_text:", control_text)
+
+                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text - 2025-11-11
+                    if 'kktix_dict' in globals() and kktix_dict.get("reg_execution_count", 0) > 2:
+                        if len(control_text) > 0:
+                            # 檢查票券數量和序號是否已填寫
+                            try:
+                                all_fields_filled = await tab.evaluate('''
+                                    () => {
+                                        // 檢查票券數量
+                                        const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                        let hasTicket = false;
+                                        for (let input of ticketInputs) {
+                                            const val = parseInt(input.value);
+                                            if (!isNaN(val) && val > 0) {
+                                                hasTicket = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!hasTicket) return false;
+
+                                        // 檢查優惠序號（如果有的話）
+                                        const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                        if (memberCodeInputs.length > 0) {
+                                            for (let input of memberCodeInputs) {
+                                                if (!input.value || input.value.trim() === '') {
+                                                    return false;
+                                                }
+                                            }
+                                        }
+
+                                        return true;
+                                    }
+                                ''')
+                                if all_fields_filled:
+                                    if show_debug_message:
+                                        print(f"[KKTIX FORCE CLEAR] Execution count {kktix_dict['reg_execution_count']}, all fields filled, clearing control_text to break loop")
+                                    control_text = ""
+                            except Exception as exc:
+                                if show_debug_message:
+                                    print(f"[KKTIX FORCE CLEAR] Check failed: {exc}")
 
                     if len(control_text) > 0:
                         input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
@@ -2217,9 +2344,25 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #print(exc)
                             pass
                         if input_text_element is None:
-                            radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
+                            # 嘗試多種選擇器來找到資格 radio - 2025-11-11
+                            radio_selectors = [
+                                'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',  # 最精確
+                                'div.code-input input[type="radio"]',  # 次要選擇
+                                'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'  # 原始選擇器
+                            ]
+                            radio_element = None
+                            for radio_css in radio_selectors:
+                                try:
+                                    radio_element = await tab.query_selector(radio_css)
+                                    if radio_element:
+                                        if show_debug_message:
+                                            print(f"[KKTIX RADIO] Found radio with selector: {radio_css}")
+                                        break
+                                except Exception:
+                                    pass
+
                             try:
-                                radio_element = await tab.query_selector(radio_css)
+                                pass  # 保持原有的 try block 結構
                                 if radio_element:
                                     print("found radio")
                                     joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
@@ -2227,9 +2370,88 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                     if joined_element:
                                         control_text = ""
                                         print("member joined")
+                                    else:
+                                        # 沒有 "已加入" 標記，需要勾選 radio - 2025-11-11
+                                        try:
+                                            # 檢查 radio 是否被禁用
+                                            is_disabled = await radio_element.get_attribute('disabled')
+                                            if not is_disabled:
+                                                if show_debug_message:
+                                                    print("[KKTIX RADIO] Clicking radio qualification option")
+                                                await radio_element.click()
+                                                await tab.sleep(0.3)  # 短暫等待 AngularJS 更新
+                                        except Exception as click_exc:
+                                            if show_debug_message:
+                                                print(f"[KKTIX RADIO ERROR] {click_exc}")
                             except Exception as exc:
                                 print(exc)
                                 pass
+
+                            # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
+                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位 - 2025-11-11
+                            if radio_element is None:
+                                if show_debug_message:
+                                    print(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
+                                control_text = ""
+                            else:
+                                # 有 radio 元素：檢查所有必填欄位是否已填寫 - 2025-11-11
+                                try:
+                                    all_inputs_filled_result = await tab.evaluate('''
+                                        () => {
+                                            // 策略 1: 使用 ng-model 檢查票券數量（KKTIX 使用 AngularJS）
+                                            const ngModelInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
+                                            let hasTicketSelected = false;
+                                            for (let input of ngModelInputs) {
+                                                if (parseInt(input.value) > 0) {
+                                                    hasTicketSelected = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            // 策略 2: 檢查 name 屬性開頭為 tickets 的輸入框
+                                            if (!hasTicketSelected) {
+                                                const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                                for (let input of ticketInputs) {
+                                                    const value = input.value.trim();
+                                                    if (!input.disabled && value !== '' && value !== '0') {
+                                                        hasTicketSelected = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            // 如果沒有選擇票券，返回 false
+                                            if (!hasTicketSelected) return false;
+
+                                            // 檢查會員序號欄位
+                                            const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                            if (memberCodeInputs.length === 0) return true;  // 沒有會員序號欄位 = 已完成
+
+                                            for (let input of memberCodeInputs) {
+                                                if (!input.disabled && (!input.value || input.value.trim() === '')) {
+                                                    return false;  // 有未填寫的會員序號欄位
+                                                }
+                                            }
+
+                                            // 不檢查 Radio 勾選狀態 - 2025-11-11
+                                            // 因為「本票券需要符合以下任一資格才可以購買」只是說明文字
+                                            // 不是必填欄位，票券和序號完成後就應該點擊下一步
+
+                                            return true;  // 所有欄位都已填寫
+                                        }
+                                    ''')
+                                    all_inputs_filled = util.parse_nodriver_result(all_inputs_filled_result)
+
+                                    if all_inputs_filled:
+                                        if show_debug_message:
+                                            print(f"[KKTIX] All required fields filled (tickets + member code), clearing control_text to proceed")
+                                        control_text = ""
+                                    else:
+                                        if show_debug_message:
+                                            print(f"[KKTIX] Some required fields not filled yet, keeping control_text")
+                                except Exception as exc:
+                                    if show_debug_message:
+                                        print(f"[KKTIX] Input fields check failed: {exc}")
 
                     if len(control_text) == 0:
                         # 檢查是否在驗證碼處理時已經點擊過按鈕
@@ -2265,6 +2487,61 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #set_kktix_control_label_text(driver, config_dict)
                             pass
             else:
+                # is_ticket_number_assigned is False
+                # 檢查票券是否已經在上一次填寫完成 - 2025-11-11
+                if not is_need_refresh:
+                    # 沒有需要重新載入，可能是票券已選擇但 matched_blocks 為空
+                    # 檢查是否所有必填欄位都已填寫
+                    try:
+                        all_fields_filled_result = await tab.evaluate('''
+                            () => {
+                                // 檢查票券數量輸入框
+                                const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                let hasTicketSelected = false;
+                                for (let input of ticketInputs) {
+                                    const value = input.value.trim();
+                                    if (!input.disabled && value !== '' && value !== '0') {
+                                        hasTicketSelected = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!hasTicketSelected) return false;
+
+                                // 檢查會員序號欄位（如果有的話）
+                                const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                for (let input of memberCodeInputs) {
+                                    if (!input.disabled && (!input.value || input.value.trim() === '')) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        ''')
+                        all_fields_filled = util.parse_nodriver_result(all_fields_filled_result)
+
+                        if all_fields_filled:
+                            if show_debug_message:
+                                print("[KKTIX] Tickets already filled but not assigned this round, attempting to click next button")
+
+                            # 檢查是否已經跳轉到成功頁面
+                            try:
+                                current_url = await tab.evaluate('window.location.href')
+                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                                    if show_debug_message:
+                                        print("[KKTIX] Already on order page, skipping button click")
+                                else:
+                                    # 嘗試點擊下一步按鈕
+                                    if config_dict["kktix"]["auto_press_next_step_button"]:
+                                        await nodriver_kktix_press_next_button(tab, config_dict)
+                            except Exception as exc:
+                                if show_debug_message:
+                                    print(f"[KKTIX] Button click attempt failed: {exc}")
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[KKTIX] Filled fields check failed: {exc}")
+
                 if is_need_refresh:
                     # reset to play sound when ticket avaiable.
                     played_sound_ticket = False
@@ -2328,6 +2605,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["played_sound_order"] = False
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
+        kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -2344,6 +2622,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
+            # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
+            # This modal appears when user is not logged in - 2025-11-11
+            await nodriver_kktix_check_guest_modal(tab, config_dict)
+
             kktix_dict["start_time"] = time.time()
 
             is_dom_ready = False
@@ -2369,20 +2651,70 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # Check if tickets are already selected (prevent repeated execution)
                 is_ticket_already_selected = False
                 try:
-                    is_ticket_already_selected = await tab.evaluate('''
+                    # 改進的檢查：返回簡單布林值，更可靠 - 2025-11-11
+                    result = await tab.evaluate('''
                         () => {
-                            const inputs = document.querySelectorAll('input[type="text"][inputmode="numeric"]');
-                            for (let input of inputs) {
-                                if (parseInt(input.value) > 0) return true;
+                            // 1. 檢查票券數量
+                            const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                            let hasTicket = false;
+                            for (let input of ticketInputs) {
+                                const val = parseInt(input.value);
+                                if (!isNaN(val) && val > 0) {
+                                    hasTicket = true;
+                                    break;
+                                }
                             }
-                            return false;
+
+                            // 2. 檢查會員序號（如果設定檔有配置的話）
+                            const memberCodeInputs = document.querySelectorAll('input.member-code');
+                            let hasMemberCode = memberCodeInputs.length === 0;  // 如果沒有序號欄位，視為已完成
+                            for (let input of memberCodeInputs) {
+                                if (input.value && input.value.trim() !== '') {
+                                    hasMemberCode = true;
+                                    break;
+                                }
+                            }
+
+                            // 3. 檢查同意條款
+                            const agreeCheckbox = document.querySelector('#person_agree_terms');
+                            const isAgreed = agreeCheckbox ? agreeCheckbox.checked : true;
+
+                            // 只有當票券已填且序號已填（或無需序號）且已同意時，才認為已選取
+                            const result = hasTicket && hasMemberCode && isAgreed;
+
+                            // 返回布林值，確保相容性
+                            return result;
                         }
                     ''')
-                except:
-                    pass
+
+                    # 直接使用結果，不依賴 parse_nodriver_result
+                    if isinstance(result, bool):
+                        is_ticket_already_selected = result
+                    else:
+                        # 嘗試解析，但更寬容
+                        parsed_result = util.parse_nodriver_result(result) if result is not None else None
+                        if isinstance(parsed_result, bool):
+                            is_ticket_already_selected = parsed_result
+                        elif isinstance(parsed_result, dict):
+                            is_ticket_already_selected = parsed_result.get('hasTicket', False)
+                        else:
+                            if show_debug_message:
+                                print(f"[KKTIX CHECK WARNING] parse_nodriver_result returned {type(parsed_result).__name__}: {parsed_result}, raw result: {result}")
+                            is_ticket_already_selected = False
+
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[KKTIX CHECK ERROR] {exc}")
+                    is_ticket_already_selected = False
+
+                # Debug: show ticket selection status
+                if show_debug_message:
+                    print(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
 
                 # check is able to buy (only if tickets not already selected)
                 if config_dict["kktix"]["auto_fill_ticket_number"] and not is_ticket_already_selected:
+                    if show_debug_message:
+                        print("[KKTIX] Executing ticket selection logic...")
                     kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
                     kktix_dict["done_time"] = time.time()
         else:
@@ -2621,6 +2953,159 @@ async def nodriver_tixcraft_redirect(tab, url):
             except Exception as exec1:
                 pass
     return ret
+
+async def nodriver_kktix_order_member_code(tab, config_dict):
+    """
+    KKTIX 會員序號自動填寫功能
+    對應 TicketPlus 的 nodriver_ticketplus_order_exclusive_code()
+
+    使用場景：
+    - KKTIX 部分活動需要輸入會員序號才能購票
+    - 會員序號欄位在選擇票券數量後動態展開
+    - 使用 AngularJS 框架（需要特殊事件觸發處理）
+
+    插入位置：nodriver_kktix_reg_new_main() Line 2188 (播放音效之前)
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+
+    Returns:
+        bool: 是否成功填寫會員序號
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    # 檢查暫停狀態
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    # 讀取會員序號設定（複用 discount_code）
+    member_code = config_dict["advanced"].get("discount_code", "").strip()
+
+    # 如果沒有設定會員序號，直接跳過
+    if not member_code:
+        if show_debug_message:
+            print("[KKTIX MEMBER CODE] No member code configured, skipping")
+        return False
+
+    if show_debug_message:
+        print(f"[KKTIX MEMBER CODE] Attempting to fill member code: {member_code}")
+
+    try:
+        # 轉義 JavaScript 字串，避免注入攻擊
+        escaped_member_code = member_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+
+        # 人類化延遲（隨機 100-300ms）
+        await tab.sleep(random.uniform(0.1, 0.3))
+
+        # 使用 JavaScript 注入填入會員序號
+        result = await tab.evaluate(f'''
+            (function() {{
+                const memberCode = '{escaped_member_code}';
+                let filledCount = 0;
+
+                // 策略 1: 使用 class 選擇器（最直接）
+                const memberCodeInputs = document.querySelectorAll('input.member-code');
+
+                for (let input of memberCodeInputs) {{
+                    // 檢查輸入框是否為空且未禁用
+                    if (!input.value && !input.disabled) {{
+                        input.value = memberCode;
+
+                        // 觸發完整事件序列（AngularJS 需要）
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                        // 確保 Angular 模型更新
+                        if (window.angular) {{
+                            const scope = window.angular.element(input).scope();
+                            if (scope) {{
+                                scope.$apply();
+                            }}
+                        }}
+
+                        filledCount++;
+                    }}
+                }}
+
+                // 策略 2: 如果策略 1 失敗，使用 ng-model 選擇器
+                if (filledCount === 0) {{
+                    const ngModelInputs = document.querySelectorAll('input[ng-model*="member_codes"]');
+                    for (let input of ngModelInputs) {{
+                        if (!input.value && !input.disabled) {{
+                            input.value = memberCode;
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                            if (window.angular) {{
+                                const scope = window.angular.element(input).scope();
+                                if (scope) {{
+                                    scope.$apply();
+                                }}
+                            }}
+
+                            filledCount++;
+                        }}
+                    }}
+                }}
+
+                return {{
+                    success: filledCount > 0,
+                    filledCount: filledCount
+                }};
+            }})()
+        ''')
+
+        # 使用統一解析函數處理返回值
+        result = util.parse_nodriver_result(result)
+
+        if result and result.get('success'):
+            filled_count = result.get('filledCount', 0)
+            if show_debug_message:
+                print(f"[KKTIX MEMBER CODE] Successfully filled {filled_count} member code field(s)")
+
+            # 填寫完成後短暫延遲，確保 Angular 更新完成
+            await tab.sleep(0.2)
+
+            # 檢查是否需要點擊下一步按鈕 - 2025-11-11
+            # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
+            auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
+            if show_debug_message:
+                print(f"[KKTIX MEMBER CODE] auto_press_next_step_button: {auto_press}")
+
+            if auto_press:
+                # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
+                # 直接嘗試點擊下一步按鈕 - 2025-11-11
+                try:
+                    if show_debug_message:
+                        print("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
+
+                    # 點擊下一步按鈕
+                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
+                    if show_debug_message:
+                        print(f"[KKTIX MEMBER CODE] Click button result: {click_ret}")
+                    if click_ret:
+                        if show_debug_message:
+                            print("[KKTIX MEMBER CODE] Successfully clicked next button after filling member code")
+                    else:
+                        if show_debug_message:
+                            print("[KKTIX MEMBER CODE] Button click returned False (button may not be enabled yet)")
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[KKTIX MEMBER CODE] Failed to click next button: {exc}")
+
+            return True
+        else:
+            if show_debug_message:
+                print("[KKTIX MEMBER CODE] No member code fields found on page")
+            return False
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
+        return False
 
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
@@ -6800,7 +7285,7 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
         return False, fail_list, False
 
     # 讀取折價券代碼設定
-    discount_code = config_dict["advanced"].get("ticketplus_discount_code", "").strip()
+    discount_code = config_dict["advanced"].get("discount_code", "").strip()
 
     # 如果沒有設定折價券代碼，直接跳過
     if not discount_code:
@@ -17816,15 +18301,9 @@ async def main(args):
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
                 print("KKTIX ticket purchase completed")
-                # Create pause file to pause the program instead of exiting
-                try:
-                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                        text_file.write("")
-                    print("Bot Paused. Purchase Completed!")
-                    # Reset is_quit_bot to avoid program exit
-                    is_quit_bot = False
-                except Exception as e:
-                    print(f"Failed to create pause file: {e}")
+                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                is_quit_bot = False
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -17840,15 +18319,9 @@ async def main(args):
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
             if is_quit_bot:
                 print("TixCraft ticket purchase completed")
-                # Create pause file to pause the program instead of exiting
-                try:
-                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                        text_file.write("")
-                    print("Bot Paused. Purchase Completed!")
-                    # Reset is_quit_bot to avoid program exit
-                    is_quit_bot = False
-                except Exception as e:
-                    print(f"Failed to create pause file: {e}")
+                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                is_quit_bot = False
 
         if 'famiticket.com' in url:
             #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
@@ -17878,33 +18351,17 @@ async def main(args):
             if 'ticketplus_dict' in globals():
                 if ticketplus_dict.get("purchase_completed", False):
                     if config_dict["advanced"].get("verbose", False):
-                        print("[SUCCESS] TicketPlus 購票完成，進入暫停模式")
-                    # 建立暫停檔案，讓程式進入暫停狀態而不是結束
-                    try:
-                        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                            text_file.write("")
-                        if config_dict["advanced"].get("verbose", False):
-                            print("已自動暫停，可透過 Web 介面繼續執行")
-                        # 重置 is_quit_bot 避免程式結束
-                        is_quit_bot = False
-                    except Exception as e:
-                        if config_dict["advanced"].get("verbose", False):
-                            print(f"建立暫停檔案失敗: {e}")
+                        print("[SUCCESS] TicketPlus 購票完成")
+                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                    is_quit_bot = False
                 elif ticketplus_dict.get("is_ticket_assigned", False) and '/confirm/' in url.lower():
                     # 如果在確認頁面且已指派票券，也可以結束
                     if config_dict["advanced"].get("verbose", False):
-                        print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功，進入暫停模式")
-                    # 建立暫停檔案，讓程式進入暫停狀態而不是結束
-                    try:
-                        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                            text_file.write("")
-                        if config_dict["advanced"].get("verbose", False):
-                            print("已自動暫停，可透過 Web 介面繼續執行")
-                        # 重置 is_quit_bot 避免程式結束
-                        is_quit_bot = False
-                    except Exception as e:
-                        if config_dict["advanced"].get("verbose", False):
-                            print(f"建立暫停檔案失敗: {e}")
+                        print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功")
+                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                    is_quit_bot = False
 
         if 'urbtix.hk' in url:
             #urbtix_main(driver, url, config_dict)

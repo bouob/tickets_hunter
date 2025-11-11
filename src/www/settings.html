@@ -741,13 +741,13 @@
           </div>
         </div>
 
-        <!-- TicketPlus 折價券 -->
+        <!-- 優惠代碼 -->
         <div class="row mb-3">
-          <label for="ticketplus_discount_code" class="col-sm-2 col-form-label">TicketPlus 折價券</label>
+          <label for="discount_code" class="col-sm-2 col-form-label">優惠代碼</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input type="text" id="ticketplus_discount_code" value="" class="form-control" placeholder="優惠序號 / 加購序號">
+            <input type="text" id="discount_code" value="" class="form-control" placeholder="優惠序號 / 加購序號 / 會員序號">
             <small class="form-text text-muted">
-              適用於所有類型的折價券代碼（優惠序號、加購序號等），程式會自動偵測並填入所有符合的輸入欄位
+              適用於所有平台的優惠代碼（優惠序號、加購序號、會員序號等），程式會自動偵測並填入所有符合的輸入欄位。目前支援：TicketPlus、KKTIX
             </small>
           </div>
         </div>
@@ -885,7 +885,7 @@
           </div>
         </div>
 
-        <div class="row mb-3 bd-callout bd-callout-warning">
+        <div class="row mb-3 bd-callout bd-callout-warning" id="cityline-login-hint" style="display: none;">
           <div class="col">
             <strong>⚠️ Cityline 登入說明（半自動模式）：</strong>
             <ol class="mb-0 mt-2">

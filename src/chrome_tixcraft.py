@@ -65,7 +65,8 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.googlesyndication.com/*",
 "*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
-"*adx.c.appier.net/*",
+"*.appier.net/*",
+"*.c.appier.net/*",
 "*cdn.cookielaw.org/*",
 "*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
 "*clarity.ms/*",
@@ -731,7 +732,7 @@ def get_driver_by_config(config_dict):
                 '*.twitter.com/i/*',
                 '*/adblock.js',
                 '*/google_ad_block.js',
-                '*cityline.com/js/others.min.js',
+                # '*cityline.com/js/others.min.js',  # DISABLED: Required for buy button rendering
                 '*anymind360.com/*',
                 '*cdn.cookielaw.org/*',
                 '*e2elog.fetnet.net*',
@@ -746,6 +747,12 @@ def get_driver_by_config(config_dict):
                 '*player.youku.*',
                 '*syndication.twitter.com/*',
                 '*youtube.com/*',
+                # Ticketmaster ad and tracking scripts
+                '*ticketmaster.sg/js/adblock*',
+                '*ticketmaster.sg/js/ads.js*',
+                '*ticketmaster.sg/epsf/asset/eps.js*',
+                '*ticketmaster.com/js/ads.js*',
+                '*ticketmaster.com/epsf/asset/eps.js*',
             ]
 
             if config_dict["advanced"]["hide_some_image"]:
