@@ -29,8 +29,6 @@ const play_sound_filename = document.querySelector('#play_sound_filename');
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
 
-const cityline_queue_retry = document.querySelector('#cityline_queue_retry');
-
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
 const proxy_server_port = document.querySelector('#proxy_server_port');
@@ -76,7 +74,7 @@ const kham_password = document.querySelector('#kham_password');
 const ticket_password = document.querySelector('#ticket_password');
 const udn_password = document.querySelector('#udn_password');
 const ticketplus_password = document.querySelector('#ticketplus_password');
-const ticketplus_discount_code = document.querySelector('#ticketplus_discount_code');
+const discount_code = document.querySelector('#discount_code');
 const urbtix_password = document.querySelector('#urbtix_password');
 const hkticketing_password = document.querySelector('#hkticketing_password');
 
@@ -132,6 +130,14 @@ function format_config_keyword_for_json(user_input) {
     }
 }
 
+// Toggle Cityline login hint visibility based on account input
+function updateCitylineHintVisibility() {
+    const citylineHint = document.querySelector('#cityline-login-hint');
+    if (citylineHint && cityline_account) {
+        citylineHint.style.display = cityline_account.value.trim() !== '' ? '' : 'none';
+    }
+}
+
 function load_settins_to_form(settings)
 {
     if (settings)
@@ -161,8 +167,6 @@ function load_settins_to_form(settings)
 
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
         max_dwell_time.value = settings.kktix.max_dwell_time;
-
-        cityline_queue_retry.checked = settings.cityline.cityline_queue_retry;
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
@@ -217,7 +221,7 @@ function load_settins_to_form(settings)
         ticket_password.value = settings.advanced.ticket_password;
         udn_password.value = settings.advanced.udn_password;
         ticketplus_password.value = settings.advanced.ticketplus_password;
-        ticketplus_discount_code.value = settings.advanced.ticketplus_discount_code || '';
+        discount_code.value = settings.advanced.discount_code || '';
         urbtix_password.value = settings.advanced.urbtix_password;
         hkticketing_password.value = settings.advanced.hkticketing_password;
 
@@ -244,6 +248,9 @@ function load_settins_to_form(settings)
             // 新增：簡化顯示格式
             resume_keyword_second.value = resume_keyword_second.value.replace(/"/g, '');
         }
+
+        // Update Cityline hint visibility after loading settings
+        updateCitylineHintVisibility();
     } else {
         console.log('no settings found');
     }
@@ -399,8 +406,6 @@ function save_changes_to_dict(silent_flag)
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
 
-            settings.cityline.cityline_queue_retry = cityline_queue_retry.checked;
-
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
             settings.advanced.proxy_server_port = proxy_server_port.value;
@@ -453,7 +458,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.ticket_password = ticket_password.value;
             settings.advanced.udn_password = udn_password.value;
             settings.advanced.ticketplus_password = ticketplus_password.value;
-            settings.advanced.ticketplus_discount_code = ticketplus_discount_code.value;
+            settings.advanced.discount_code = discount_code.value;
             settings.advanced.urbtix_password = urbtix_password.value;
             settings.advanced.hkticketing_password = hkticketing_password.value;
 
@@ -571,7 +576,7 @@ function check_unsaved_fields()
             "ticket_password",
             "udn_password",
             "ticketplus_password",
-            "ticketplus_discount_code",
+            "discount_code",
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
@@ -867,6 +872,11 @@ function stopQuestionPolling() {
 
 // Start polling when page loads
 startQuestionPolling();
+
+// Cityline login hint visibility control
+if (cityline_account) {
+    cityline_account.addEventListener('input', updateCitylineHintVisibility);
+}
 
 // Also check when verification tab is clicked
 const verificationTab = document.getElementById('verification-tab');
