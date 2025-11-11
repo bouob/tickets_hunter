@@ -1,9 +1,22 @@
 # Changelog
 
+## 2025.11.12
+
+- 改善廣告阻擋機制：增強 Appier 追蹤服務過濾規則
+- 新增 KKTIX 自動處理驗證問題或序號輸入
+- 新增 Ticketmaster 廣告與追蹤指令碼阻擋規則（UC Driver）
+
+## 2025.11.11
+
+- Cityline 平台新增 NoDriver 引擎支援（包含完整購票流程）
+- 修復設定頁面在舊版瀏覽器的快取與相容性問題
+- 改善 GitHub Issue 範本說明與範例
+
+
 ## 2025.11.09
 
 - TixCraft SID 輸入驗證：偵測錯誤格式並顯示警告
-- TicketPlus 折價券自動填表及 API 驗證檢查改善
+- TicketPlus 自動處理驗證問題或序號輸入及 API 驗證檢查改善
 - TixCraft 票券類型關鍵字匹配支援（IndieVox）
 - 修復關鍵字解析：正確處理逗號分隔的關鍵字值
 - iBon 逗號分隔關鍵字解析修復

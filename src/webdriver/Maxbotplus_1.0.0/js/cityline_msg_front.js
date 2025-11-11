@@ -9,19 +9,7 @@ function begin()
     $("#settings").remove();
     $("#status").remove();
 
-    let cityline_queue_retry = true;
-    if(settings) {
-        cityline_queue_retry = settings.cityline.cityline_queue_retry;
-    }
-
-    if(status=='ON' && cityline_queue_retry) {
-        setInterval(() => {
-            if (typeof remainTime !== "undefined") {
-                remainTime = 0;
-            }
-        }, 3000);
-    }
-
+    // cityline_queue_retry feature removed (no longer functional)
 }
 
 function dom_ready()

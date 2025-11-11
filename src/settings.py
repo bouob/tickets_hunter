@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -133,7 +133,6 @@ def get_default_config():
     config_dict["kktix"]["max_dwell_time"] = 90
 
     config_dict['cityline']={}
-    config_dict["cityline"]["cityline_queue_retry"] = True
 
     config_dict['tixcraft']={}
     config_dict["tixcraft"]["pass_date_is_sold_out"] = True
@@ -402,6 +401,15 @@ def clean_tmp_file():
         if item.endswith(".tmp"):
             os.remove(os.path.join(Root_Dir, item))
 
+class NoCacheStaticFileHandler(StaticFileHandler):
+    """Custom StaticFileHandler that prevents caching of settings.html"""
+    def set_extra_headers(self, path):
+        # Disable caching only for settings.html to prevent stale UI issues
+        if path == 'settings.html':
+            self.set_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.set_header('Pragma', 'no-cache')
+            self.set_header('Expires', '0')
+
 class QuestionHandler(tornado.web.RequestHandler):
     def get(self):
         """Read MAXBOT_QUESTION.txt and return its content"""
@@ -649,7 +657,7 @@ async def main_server():
         ("/ocr", OcrHandler),
         ("/query", QueryHandler),
         ("/question", QuestionHandler),
-        ('/(.*)', StaticFileHandler, {"path": os.path.join(SCRIPT_DIR, 'www')}),
+        ('/(.*)', NoCacheStaticFileHandler, {"path": os.path.join(SCRIPT_DIR, 'www')}),
     ])
     app.ocr = ocr;
     app.version = CONST_APP_VERSION;

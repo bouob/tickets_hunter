@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.12)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -57,7 +57,8 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
 "*anymind360.com/*",
-"*adx.c.appier.net/*",
+"*.appier.net/*",
+"*.c.appier.net/*",
 "*cdn.cookielaw.org/*",
 "*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
 "*clarity.ms/*",
@@ -1791,6 +1792,74 @@ async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
         print(f"Error clicking events next button: {exc}")
         return False
 
+async def nodriver_kktix_check_guest_modal(tab, config_dict):
+    """
+    Check and handle KKTIX guest modal (立刻成為 KKTIX 會員)
+    Reference: .temp/kktix/kktix-qa-code.html Line 157-172
+    Modal appears when user is not logged in on /registrations/new page
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_modal_handled = False
+
+    try:
+        # Wait for modal to possibly appear
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+
+        # Check if guest modal exists and is visible
+        modal_visible = await tab.evaluate('''
+            (function() {
+                const modal = document.querySelector('#guestModal');
+                if (modal) {
+                    // Check if modal is actually visible
+                    const style = window.getComputedStyle(modal);
+                    const isVisible = style.display !== 'none' &&
+                                    style.visibility !== 'hidden' &&
+                                    parseFloat(style.opacity) > 0;
+                    return isVisible;
+                }
+                return false;
+            })()
+        ''')
+
+        if modal_visible:
+            if show_debug_message:
+                print("[KKTIX GUEST MODAL] Guest modal detected, clicking dismiss button...")
+
+            # Click the dismiss button (暫時不要)
+            click_result = await tab.evaluate('''
+                (function() {
+                    const dismissBtn = document.querySelector('#guestModal button[data-dismiss="modal"]');
+                    if (dismissBtn) {
+                        dismissBtn.click();
+                        return { success: true, clicked: true };
+                    }
+                    return { success: false, error: 'Dismiss button not found' };
+                })()
+            ''')
+
+            # Parse result using utility function
+            click_result = util.parse_nodriver_result(click_result)
+
+            if click_result and click_result.get('clicked'):
+                if show_debug_message:
+                    print("[KKTIX GUEST MODAL] Successfully dismissed guest modal")
+                # Wait for modal to close
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+                is_modal_handled = True
+        else:
+            if show_debug_message:
+                print("[KKTIX GUEST MODAL] No guest modal detected")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[ERROR] Guest modal check failed: {exc}")
+
+    return is_modal_handled
+
 async def nodriver_kktix_press_next_button(tab, config_dict=None):
     """使用 JavaScript 點擊下一步按鈕，包含重試和等待機制"""
     # 函數開始時檢查暫停
@@ -2078,6 +2147,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
+    # 增加執行計數器，防止無限迴圈 - 2025-11-11
+    global kktix_dict
+    if 'kktix_dict' in globals():
+        kktix_dict["reg_execution_count"] = kktix_dict.get("reg_execution_count", 0) + 1
+        if show_debug_message:
+            print(f"[KKTIX REG] Execution count: {kktix_dict['reg_execution_count']}")
+
     # T010: Check main switch (defensive programming)
     if not config_dict["area_auto_select"]["enable"]:
         if show_debug_message:
@@ -2185,6 +2261,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
+                # 填寫會員序號（如果有設定）
+                await nodriver_kktix_order_member_code(tab, config_dict)
+
+                # 會員序號填寫後檢查暫停
+                if await check_and_handle_pause(config_dict):
+                    return fail_list, played_sound_ticket
+
                 if config_dict["advanced"]["play_sound"]["ticket"]:
                     if not played_sound_ticket:
                         play_sound_while_ordering(config_dict)
@@ -2203,10 +2286,54 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
                 # single option question
                 if not is_question_popup:
+                    # Check and dismiss guest modal again (in case it appears after captcha)
+                    # This ensures modal doesn't block the next button - 2025-11-11
+                    await nodriver_kktix_check_guest_modal(tab, config_dict)
+
                     # no captcha text popup, goto next page.
                     control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
                     if show_debug_message:
                         print("control_text:", control_text)
+
+                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text - 2025-11-11
+                    if 'kktix_dict' in globals() and kktix_dict.get("reg_execution_count", 0) > 2:
+                        if len(control_text) > 0:
+                            # 檢查票券數量和序號是否已填寫
+                            try:
+                                all_fields_filled = await tab.evaluate('''
+                                    () => {
+                                        // 檢查票券數量
+                                        const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                        let hasTicket = false;
+                                        for (let input of ticketInputs) {
+                                            const val = parseInt(input.value);
+                                            if (!isNaN(val) && val > 0) {
+                                                hasTicket = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!hasTicket) return false;
+
+                                        // 檢查優惠序號（如果有的話）
+                                        const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                        if (memberCodeInputs.length > 0) {
+                                            for (let input of memberCodeInputs) {
+                                                if (!input.value || input.value.trim() === '') {
+                                                    return false;
+                                                }
+                                            }
+                                        }
+
+                                        return true;
+                                    }
+                                ''')
+                                if all_fields_filled:
+                                    if show_debug_message:
+                                        print(f"[KKTIX FORCE CLEAR] Execution count {kktix_dict['reg_execution_count']}, all fields filled, clearing control_text to break loop")
+                                    control_text = ""
+                            except Exception as exc:
+                                if show_debug_message:
+                                    print(f"[KKTIX FORCE CLEAR] Check failed: {exc}")
 
                     if len(control_text) > 0:
                         input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
@@ -2217,9 +2344,25 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #print(exc)
                             pass
                         if input_text_element is None:
-                            radio_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'
+                            # 嘗試多種選擇器來找到資格 radio - 2025-11-11
+                            radio_selectors = [
+                                'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',  # 最精確
+                                'div.code-input input[type="radio"]',  # 次要選擇
+                                'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="radio"]'  # 原始選擇器
+                            ]
+                            radio_element = None
+                            for radio_css in radio_selectors:
+                                try:
+                                    radio_element = await tab.query_selector(radio_css)
+                                    if radio_element:
+                                        if show_debug_message:
+                                            print(f"[KKTIX RADIO] Found radio with selector: {radio_css}")
+                                        break
+                                except Exception:
+                                    pass
+
                             try:
-                                radio_element = await tab.query_selector(radio_css)
+                                pass  # 保持原有的 try block 結構
                                 if radio_element:
                                     print("found radio")
                                     joined_button_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > span[ng-if] > a[ng-href="#"]'
@@ -2227,9 +2370,88 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                     if joined_element:
                                         control_text = ""
                                         print("member joined")
+                                    else:
+                                        # 沒有 "已加入" 標記，需要勾選 radio - 2025-11-11
+                                        try:
+                                            # 檢查 radio 是否被禁用
+                                            is_disabled = await radio_element.get_attribute('disabled')
+                                            if not is_disabled:
+                                                if show_debug_message:
+                                                    print("[KKTIX RADIO] Clicking radio qualification option")
+                                                await radio_element.click()
+                                                await tab.sleep(0.3)  # 短暫等待 AngularJS 更新
+                                        except Exception as click_exc:
+                                            if show_debug_message:
+                                                print(f"[KKTIX RADIO ERROR] {click_exc}")
                             except Exception as exc:
                                 print(exc)
                                 pass
+
+                            # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
+                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位 - 2025-11-11
+                            if radio_element is None:
+                                if show_debug_message:
+                                    print(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
+                                control_text = ""
+                            else:
+                                # 有 radio 元素：檢查所有必填欄位是否已填寫 - 2025-11-11
+                                try:
+                                    all_inputs_filled_result = await tab.evaluate('''
+                                        () => {
+                                            // 策略 1: 使用 ng-model 檢查票券數量（KKTIX 使用 AngularJS）
+                                            const ngModelInputs = document.querySelectorAll('input[ng-model="ticketModel.quantity"]');
+                                            let hasTicketSelected = false;
+                                            for (let input of ngModelInputs) {
+                                                if (parseInt(input.value) > 0) {
+                                                    hasTicketSelected = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            // 策略 2: 檢查 name 屬性開頭為 tickets 的輸入框
+                                            if (!hasTicketSelected) {
+                                                const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                                for (let input of ticketInputs) {
+                                                    const value = input.value.trim();
+                                                    if (!input.disabled && value !== '' && value !== '0') {
+                                                        hasTicketSelected = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            // 如果沒有選擇票券，返回 false
+                                            if (!hasTicketSelected) return false;
+
+                                            // 檢查會員序號欄位
+                                            const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                            if (memberCodeInputs.length === 0) return true;  // 沒有會員序號欄位 = 已完成
+
+                                            for (let input of memberCodeInputs) {
+                                                if (!input.disabled && (!input.value || input.value.trim() === '')) {
+                                                    return false;  // 有未填寫的會員序號欄位
+                                                }
+                                            }
+
+                                            // 不檢查 Radio 勾選狀態 - 2025-11-11
+                                            // 因為「本票券需要符合以下任一資格才可以購買」只是說明文字
+                                            // 不是必填欄位，票券和序號完成後就應該點擊下一步
+
+                                            return true;  // 所有欄位都已填寫
+                                        }
+                                    ''')
+                                    all_inputs_filled = util.parse_nodriver_result(all_inputs_filled_result)
+
+                                    if all_inputs_filled:
+                                        if show_debug_message:
+                                            print(f"[KKTIX] All required fields filled (tickets + member code), clearing control_text to proceed")
+                                        control_text = ""
+                                    else:
+                                        if show_debug_message:
+                                            print(f"[KKTIX] Some required fields not filled yet, keeping control_text")
+                                except Exception as exc:
+                                    if show_debug_message:
+                                        print(f"[KKTIX] Input fields check failed: {exc}")
 
                     if len(control_text) == 0:
                         # 檢查是否在驗證碼處理時已經點擊過按鈕
@@ -2265,6 +2487,61 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #set_kktix_control_label_text(driver, config_dict)
                             pass
             else:
+                # is_ticket_number_assigned is False
+                # 檢查票券是否已經在上一次填寫完成 - 2025-11-11
+                if not is_need_refresh:
+                    # 沒有需要重新載入，可能是票券已選擇但 matched_blocks 為空
+                    # 檢查是否所有必填欄位都已填寫
+                    try:
+                        all_fields_filled_result = await tab.evaluate('''
+                            () => {
+                                // 檢查票券數量輸入框
+                                const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                                let hasTicketSelected = false;
+                                for (let input of ticketInputs) {
+                                    const value = input.value.trim();
+                                    if (!input.disabled && value !== '' && value !== '0') {
+                                        hasTicketSelected = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!hasTicketSelected) return false;
+
+                                // 檢查會員序號欄位（如果有的話）
+                                const memberCodeInputs = document.querySelectorAll('input.member-code');
+                                for (let input of memberCodeInputs) {
+                                    if (!input.disabled && (!input.value || input.value.trim() === '')) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        ''')
+                        all_fields_filled = util.parse_nodriver_result(all_fields_filled_result)
+
+                        if all_fields_filled:
+                            if show_debug_message:
+                                print("[KKTIX] Tickets already filled but not assigned this round, attempting to click next button")
+
+                            # 檢查是否已經跳轉到成功頁面
+                            try:
+                                current_url = await tab.evaluate('window.location.href')
+                                if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
+                                    if show_debug_message:
+                                        print("[KKTIX] Already on order page, skipping button click")
+                                else:
+                                    # 嘗試點擊下一步按鈕
+                                    if config_dict["kktix"]["auto_press_next_step_button"]:
+                                        await nodriver_kktix_press_next_button(tab, config_dict)
+                            except Exception as exc:
+                                if show_debug_message:
+                                    print(f"[KKTIX] Button click attempt failed: {exc}")
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[KKTIX] Filled fields check failed: {exc}")
+
                 if is_need_refresh:
                     # reset to play sound when ticket avaiable.
                     played_sound_ticket = False
@@ -2328,6 +2605,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["played_sound_order"] = False
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
+        kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -2344,6 +2622,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
+            # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
+            # This modal appears when user is not logged in - 2025-11-11
+            await nodriver_kktix_check_guest_modal(tab, config_dict)
+
             kktix_dict["start_time"] = time.time()
 
             is_dom_ready = False
@@ -2369,20 +2651,70 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # Check if tickets are already selected (prevent repeated execution)
                 is_ticket_already_selected = False
                 try:
-                    is_ticket_already_selected = await tab.evaluate('''
+                    # 改進的檢查：返回簡單布林值，更可靠 - 2025-11-11
+                    result = await tab.evaluate('''
                         () => {
-                            const inputs = document.querySelectorAll('input[type="text"][inputmode="numeric"]');
-                            for (let input of inputs) {
-                                if (parseInt(input.value) > 0) return true;
+                            // 1. 檢查票券數量
+                            const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                            let hasTicket = false;
+                            for (let input of ticketInputs) {
+                                const val = parseInt(input.value);
+                                if (!isNaN(val) && val > 0) {
+                                    hasTicket = true;
+                                    break;
+                                }
                             }
-                            return false;
+
+                            // 2. 檢查會員序號（如果設定檔有配置的話）
+                            const memberCodeInputs = document.querySelectorAll('input.member-code');
+                            let hasMemberCode = memberCodeInputs.length === 0;  // 如果沒有序號欄位，視為已完成
+                            for (let input of memberCodeInputs) {
+                                if (input.value && input.value.trim() !== '') {
+                                    hasMemberCode = true;
+                                    break;
+                                }
+                            }
+
+                            // 3. 檢查同意條款
+                            const agreeCheckbox = document.querySelector('#person_agree_terms');
+                            const isAgreed = agreeCheckbox ? agreeCheckbox.checked : true;
+
+                            // 只有當票券已填且序號已填（或無需序號）且已同意時，才認為已選取
+                            const result = hasTicket && hasMemberCode && isAgreed;
+
+                            // 返回布林值，確保相容性
+                            return result;
                         }
                     ''')
-                except:
-                    pass
+
+                    # 直接使用結果，不依賴 parse_nodriver_result
+                    if isinstance(result, bool):
+                        is_ticket_already_selected = result
+                    else:
+                        # 嘗試解析，但更寬容
+                        parsed_result = util.parse_nodriver_result(result) if result is not None else None
+                        if isinstance(parsed_result, bool):
+                            is_ticket_already_selected = parsed_result
+                        elif isinstance(parsed_result, dict):
+                            is_ticket_already_selected = parsed_result.get('hasTicket', False)
+                        else:
+                            if show_debug_message:
+                                print(f"[KKTIX CHECK WARNING] parse_nodriver_result returned {type(parsed_result).__name__}: {parsed_result}, raw result: {result}")
+                            is_ticket_already_selected = False
+
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[KKTIX CHECK ERROR] {exc}")
+                    is_ticket_already_selected = False
+
+                # Debug: show ticket selection status
+                if show_debug_message:
+                    print(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
 
                 # check is able to buy (only if tickets not already selected)
                 if config_dict["kktix"]["auto_fill_ticket_number"] and not is_ticket_already_selected:
+                    if show_debug_message:
+                        print("[KKTIX] Executing ticket selection logic...")
                     kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
                     kktix_dict["done_time"] = time.time()
         else:
@@ -2621,6 +2953,159 @@ async def nodriver_tixcraft_redirect(tab, url):
             except Exception as exec1:
                 pass
     return ret
+
+async def nodriver_kktix_order_member_code(tab, config_dict):
+    """
+    KKTIX 會員序號自動填寫功能
+    對應 TicketPlus 的 nodriver_ticketplus_order_exclusive_code()
+
+    使用場景：
+    - KKTIX 部分活動需要輸入會員序號才能購票
+    - 會員序號欄位在選擇票券數量後動態展開
+    - 使用 AngularJS 框架（需要特殊事件觸發處理）
+
+    插入位置：nodriver_kktix_reg_new_main() Line 2188 (播放音效之前)
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+
+    Returns:
+        bool: 是否成功填寫會員序號
+    """
+    show_debug_message = config_dict["advanced"]["verbose"]
+
+    # 檢查暫停狀態
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    # 讀取會員序號設定（複用 discount_code）
+    member_code = config_dict["advanced"].get("discount_code", "").strip()
+
+    # 如果沒有設定會員序號，直接跳過
+    if not member_code:
+        if show_debug_message:
+            print("[KKTIX MEMBER CODE] No member code configured, skipping")
+        return False
+
+    if show_debug_message:
+        print(f"[KKTIX MEMBER CODE] Attempting to fill member code: {member_code}")
+
+    try:
+        # 轉義 JavaScript 字串，避免注入攻擊
+        escaped_member_code = member_code.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r")
+
+        # 人類化延遲（隨機 100-300ms）
+        await tab.sleep(random.uniform(0.1, 0.3))
+
+        # 使用 JavaScript 注入填入會員序號
+        result = await tab.evaluate(f'''
+            (function() {{
+                const memberCode = '{escaped_member_code}';
+                let filledCount = 0;
+
+                // 策略 1: 使用 class 選擇器（最直接）
+                const memberCodeInputs = document.querySelectorAll('input.member-code');
+
+                for (let input of memberCodeInputs) {{
+                    // 檢查輸入框是否為空且未禁用
+                    if (!input.value && !input.disabled) {{
+                        input.value = memberCode;
+
+                        // 觸發完整事件序列（AngularJS 需要）
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                        // 確保 Angular 模型更新
+                        if (window.angular) {{
+                            const scope = window.angular.element(input).scope();
+                            if (scope) {{
+                                scope.$apply();
+                            }}
+                        }}
+
+                        filledCount++;
+                    }}
+                }}
+
+                // 策略 2: 如果策略 1 失敗，使用 ng-model 選擇器
+                if (filledCount === 0) {{
+                    const ngModelInputs = document.querySelectorAll('input[ng-model*="member_codes"]');
+                    for (let input of ngModelInputs) {{
+                        if (!input.value && !input.disabled) {{
+                            input.value = memberCode;
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                            if (window.angular) {{
+                                const scope = window.angular.element(input).scope();
+                                if (scope) {{
+                                    scope.$apply();
+                                }}
+                            }}
+
+                            filledCount++;
+                        }}
+                    }}
+                }}
+
+                return {{
+                    success: filledCount > 0,
+                    filledCount: filledCount
+                }};
+            }})()
+        ''')
+
+        # 使用統一解析函數處理返回值
+        result = util.parse_nodriver_result(result)
+
+        if result and result.get('success'):
+            filled_count = result.get('filledCount', 0)
+            if show_debug_message:
+                print(f"[KKTIX MEMBER CODE] Successfully filled {filled_count} member code field(s)")
+
+            # 填寫完成後短暫延遲，確保 Angular 更新完成
+            await tab.sleep(0.2)
+
+            # 檢查是否需要點擊下一步按鈕 - 2025-11-11
+            # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
+            auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
+            if show_debug_message:
+                print(f"[KKTIX MEMBER CODE] auto_press_next_step_button: {auto_press}")
+
+            if auto_press:
+                # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
+                # 直接嘗試點擊下一步按鈕 - 2025-11-11
+                try:
+                    if show_debug_message:
+                        print("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
+
+                    # 點擊下一步按鈕
+                    click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
+                    if show_debug_message:
+                        print(f"[KKTIX MEMBER CODE] Click button result: {click_ret}")
+                    if click_ret:
+                        if show_debug_message:
+                            print("[KKTIX MEMBER CODE] Successfully clicked next button after filling member code")
+                    else:
+                        if show_debug_message:
+                            print("[KKTIX MEMBER CODE] Button click returned False (button may not be enabled yet)")
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[KKTIX MEMBER CODE] Failed to click next button: {exc}")
+
+            return True
+        else:
+            if show_debug_message:
+                print("[KKTIX MEMBER CODE] No member code fields found on page")
+            return False
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
+        return False
 
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
@@ -6800,7 +7285,7 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
         return False, fail_list, False
 
     # 讀取折價券代碼設定
-    discount_code = config_dict["advanced"].get("ticketplus_discount_code", "").strip()
+    discount_code = config_dict["advanced"].get("discount_code", "").strip()
 
     # 如果沒有設定折價券代碼，直接跳過
     if not discount_code:
@@ -11805,171 +12290,688 @@ async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
         await asyncio.sleep(auto_reload_page_interval)
 
 async def nodriver_cityline_login(tab, cityline_account):
+    """
+    Cityline login with auto-click when button becomes enabled
+    Strategy: Input email → Monitor login button → Auto-click when enabled
+    Reference: button.login-btn.submit-btn (becomes enabled after password + verification)
+    """
     global is_cityline_account_assigned
     if not 'is_cityline_account_assigned' in globals():
         is_cityline_account_assigned = False
 
-    #print("is_cityline_account_assigned", is_cityline_account_assigned)
     if not is_cityline_account_assigned:
         try:
-            #await tab.verify_cf()
+            # Step 1: Input email/account
             el_account = await tab.query_selector('input[type="text"]')
             if el_account:
                 await el_account.click()
-                await el_account.apply('function (element) {element.value = ""; } ')
-                await el_account.send_keys(cityline_account);
+                await el_account.apply('function (element) {element.value = ""; }')
+                await el_account.send_keys(cityline_account)
                 await asyncio.sleep(random.uniform(0.4, 0.7))
                 is_cityline_account_assigned = True
+                print(f"[CITYLINE LOGIN] Email entered: {cityline_account[:3]}***")
+                print("[CITYLINE LOGIN] Please manually enter password and verification code")
+                print("[CITYLINE LOGIN] Monitoring login button... will auto-click when enabled")
         except Exception as exc:
-            print(exc)
+            print(f"[ERROR] Failed to input email: {exc}")
             pass
     else:
-        # after account inputed.
+        # Step 2: Monitor login button and auto-click when enabled
         try:
-            # 使用 JavaScript 更安全地處理 checkbox，避免誤勾記得密碼
-            checkbox_result = await tab.evaluate('''
+            # Check if login button is enabled (no disabled attribute)
+            button_enabled = await tab.evaluate('''
                 (function() {
-                    const results = [];
-                    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked)');
-
-                    for (let i = 0; i < checkboxes.length; i++) {
-                        const checkbox = checkboxes[i];
-                        const id = checkbox.id || '';
-                        const name = checkbox.name || '';
-                        const className = checkbox.className || '';
-                        const labelText = checkbox.labels && checkbox.labels[0] ? checkbox.labels[0].textContent : '';
-
-                        // 檢查是否為記得密碼相關的 checkbox
-                        const isRememberCheckbox =
-                            id.toLowerCase().includes('remember') ||
-                            name.toLowerCase().includes('remember') ||
-                            className.toLowerCase().includes('remember') ||
-                            labelText.includes('記得') ||
-                            labelText.includes('記住') ||
-                            labelText.includes('Remember');
-
-                        results.push({
-                            index: i,
-                            id: id,
-                            name: name,
-                            className: className,
-                            labelText: labelText,
-                            isRemember: isRememberCheckbox
-                        });
+                    const loginBtn = document.querySelector('button.login-btn.submit-btn');
+                    if (loginBtn) {
+                        return !loginBtn.hasAttribute('disabled') && !loginBtn.disabled;
                     }
-
-                    return results;
-                })();
+                    return false;
+                })()
             ''')
 
-            # 檢查結果並只勾選非記得密碼的 checkbox
-            if checkbox_result:
-                for item in checkbox_result:
-                    if not item.get('isRemember', False):
-                        click_result = await tab.evaluate(f'''
-                            (function() {{
-                                const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(:checked)');
-                                const checkbox = checkboxes[{item['index']}];
-                                if (checkbox) {{
-                                    checkbox.click();
-                                    return true;
-                                }}
-                                return false;
-                            }})();
-                        ''')
-                        if click_result:
-                            print(f"clicked on agreement checkbox: {item.get('labelText', 'unknown')}")
-                            break  # 只勾選第一個非記得密碼的 checkbox
-                    else:
-                        print(f"skipped remember checkbox: {item.get('labelText', 'unknown')}")
-        except Exception as e:
-            print(f"checkbox handling error: {e}")
+            if button_enabled:
+                # Auto-click the login button
+                click_result = await tab.evaluate('''
+                    (function() {
+                        const loginBtn = document.querySelector('button.login-btn.submit-btn');
+                        if (loginBtn) {
+                            loginBtn.click();
+                            return true;
+                        }
+                        return false;
+                    })()
+                ''')
 
-            # 人性化延遲
-            await asyncio.sleep(random.uniform(0.3, 0.8))
+                if click_result:
+                    print("[CITYLINE LOGIN] Login button auto-clicked!")
+                    await asyncio.sleep(random.uniform(1.0, 2.0))
         except Exception as exc:
-            print(exc)
-            pass
+            pass  # Silent fail, will retry on next loop
 
-async def nodriver_cityline_date_auto_select(tab, auto_select_mode, date_keyword):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+async def nodriver_cityline_handle_login_redirect(tab, url, config_dict):
+    """
+    Handle Cityline login completion and redirect to target event page
+    Reference: KKTIX signin implementation (nodriver_kktix_signin:497-597)
+    Strategy: Wait for user to manually complete login, then detect URL change and redirect
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Step 1: Determine target URL (prioritize homepage config)
+    import urllib.parse
+    target_url = config_dict["homepage"]  # Always use homepage from config as target
+
+    if show_debug_message:
+        print(f"[CITYLINE LOGIN] Target URL from config: {target_url}")
+
+    # Step 2: Wait for manual login completion (smart polling with extended timeout)
+    max_wait = 300  # 5 minutes timeout (enough time for manual login)
+    check_interval = 1.0  # Check every 1 second
+    max_attempts = int(max_wait / check_interval)
+    login_completed = False
+
+    print("=" * 80)
+    print("[CITYLINE LOGIN] Waiting for manual login completion...")
+    print("=" * 80)
+    print("Please complete the following steps manually:")
+    print("  1. Enter your password in the browser window")
+    print("  2. Click the 'Login' button")
+    print("  3. Wait for page to redirect")
+    print(f"\nProgram will wait up to {max_wait} seconds ({max_wait//60} minutes)")
+    print("=" * 80)
+
+    for attempt in range(max_attempts):
+        try:
+            # Method 1: Check URL change (primary method)
+            current_url = await tab.evaluate('window.location.href')
+            url_changed = '/Login.html' not in current_url
+
+            # Method 2: Check DOM element (secondary verification)
+            member_element_exists = await tab.evaluate('''
+                (function() {
+                    const memberName = document.querySelector('.memberName');
+                    const userBox = document.querySelector('.user-box');
+                    return (memberName !== null || userBox !== null);
+                })()
+            ''')
+
+            # Login completed if either condition is met
+            if url_changed or member_element_exists:
+                login_completed = True
+                detection_method = "DOM element" if member_element_exists else "URL change"
+                print(f"\n[CITYLINE LOGIN] Login completed after {attempt * check_interval:.0f}s (detected by: {detection_method})")
+                print(f"[CITYLINE LOGIN] Current URL: {current_url}")
+                if show_debug_message:
+                    print(f"[CITYLINE LOGIN] Member element exists: {member_element_exists}")
+                break
+
+            # Progress indicator every 10 seconds
+            if attempt > 0 and attempt % 10 == 0 and show_debug_message:
+                print(f"[CITYLINE LOGIN] Still waiting... ({attempt}s elapsed)")
+
+        except Exception as exc:
+            if show_debug_message and attempt == max_attempts - 1:
+                print(f"[ERROR] Check login status failed: {exc}")
+
+        if attempt < max_attempts - 1:
+            await asyncio.sleep(check_interval)
+
+    if not login_completed:
+        print(f"[WARNING] Login timeout after {max_wait}s")
+        print("[WARNING] Please check if login was successful manually")
+        return False
+
+    # Step 3: Redirect to target URL (homepage from config)
+    try:
+        current_url = await tab.evaluate('window.location.href')
+
+        # Check if current URL matches target URL
+        if current_url == target_url:
+            if show_debug_message:
+                print(f"[CITYLINE LOGIN] Already on target page: {target_url}")
+            return True
+
+        # Need to redirect to target URL
+        if show_debug_message:
+            print(f"[CITYLINE LOGIN] Current URL: {current_url}")
+            print(f"[CITYLINE LOGIN] Target URL: {target_url}")
+
+        print("[CITYLINE LOGIN] Redirecting to target page...")
+        await tab.get(target_url)
+        await asyncio.sleep(random.uniform(1.5, 3.0))
+
+        print("[CITYLINE LOGIN] Redirect completed")
+        return True
+
+    except Exception as exc:
+        print(f"[ERROR] Redirect failed: {exc}")
+        return False
+
+async def nodriver_cityline_date_auto_select(tab, config_dict):
+    """
+    Cityline date selection with conditional fallback mechanism
+    Reference: spec.md FR-003, FR-003a, FR-003b, fallback-mechanism.md
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["date_auto_select"]["mode"]
+    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)  # Read from top level
+    auto_reload_coming_soon_page = config_dict.get("auto_reload_coming_soon_page", False)
 
     ret = False
 
+    # Stage 1: Query all date buttons
     area_list = None
     try:
         my_css_selector = "button.date-time-position"
         area_list = await tab.query_selector_all(my_css_selector)
     except Exception as exc:
-        #print(exc)
-        pass
+        if show_debug_message:
+            print(f"[ERROR] find date list fail: {exc}")
 
-    matched_blocks = None
+    # Stage 2: Format and filter enabled dates
+    formated_area_list = []
     if area_list:
-        formated_area_list = None
         area_list_count = len(area_list)
         if show_debug_message:
-            print("date_list_count:", area_list_count)
+            print(f"[CITYLINE DATE] Found {area_list_count} date buttons")
 
         if area_list_count > 0:
-            formated_area_list = area_list
-            if show_debug_message:
-                print("formated_area_list count:", len(formated_area_list))
+            formated_area_list = area_list  # NoDriver elements are already enabled
 
-            if len(date_keyword) == 0:
-                matched_blocks = formated_area_list
-            else:
-                # match keyword.
+    # Stage 3: Keyword matching
+    matched_blocks = []
+    if len(date_keyword) == 0:
+        # Empty keyword matches all available dates
+        matched_blocks = formated_area_list
+    else:
+        # Match keyword
+        if show_debug_message:
+            print(f"[DATE KEYWORD] Matching keyword: {date_keyword}")
+
+        for row in formated_area_list:
+            row_text = ""
+            try:
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+            except Exception as exc:
                 if show_debug_message:
-                    print("start to match keyword:", date_keyword)
-                matched_blocks = []
+                    print(f"[DEBUG] get row html error: {exc}")
+                break
 
-                for row in formated_area_list:
-                    row_text = ""
-                    row_html = ""
-                    try:
-                        row_html = await row.get_html()
-                        row_text = util.remove_html_tags(row_html)
-                        # PS: get_js_attributes on cityline due to: the JSON object must be str, bytes or bytearray, not NoneType
-                        #js_attr = await row.get_js_attributes()
-                        #row_html = js_attr["innerHTML"]
-                        #row_text = js_attr["innerText"]
-                    except Exception as exc:
-                        if show_debug_message:
-                            print(exc)
-                        # error, exit loop
+            if len(row_text) > 0:
+                if show_debug_message:
+                    print(f"[DEBUG] row_text: {row_text}")
+                is_match_area = util.is_row_match_keyword(date_keyword, row_text)
+                if is_match_area:
+                    matched_blocks.append(row)
+                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
 
-                    if len(row_text) > 0:
-                        if show_debug_message:
-                            print("row_text:", row_text)
-                        is_match_area = util.is_row_match_keyword(date_keyword, row_text)
-                        if is_match_area:
-                            matched_blocks.append(row)
-                            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                                break
+    if show_debug_message:
+        print(f"[DATE KEYWORD] Matched {len(matched_blocks)} dates")
 
-                if show_debug_message:
-                    if not matched_blocks is None:
-                        print("after match keyword, found count:", len(matched_blocks))
+    # Stage 4: Conditional fallback mechanism
+    if len(matched_blocks) == 0:
+        if date_auto_fallback:
+            # Fallback mode: select from all available dates
+            matched_blocks = formated_area_list
+            print(f"[DATE FALLBACK] date_auto_fallback=true, selecting from all available dates (total: {len(formated_area_list)})")
         else:
-            print("not found date-time-position")
-            pass
-    else:
-        #print("date date-time-position is None")
-        pass
+            # Strict mode
+            print("[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            if auto_reload_coming_soon_page and len(formated_area_list) == 0:
+                # Auto reload if no dates available
+                print("[DATE FALLBACK] Auto-reloading page...")
+                try:
+                    await tab.reload()
+                    await asyncio.sleep(config_dict.get("auto_reload_page_interval", 1.5))
+                except:
+                    pass
+            else:
+                print("[DATE FALLBACK] Waiting for manual intervention...")
+            return False
 
+    # Stage 5: Select target date
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-    if not target_area is None:
+    if target_area:
         try:
             await target_area.scroll_into_view()
             await target_area.click()
+            if show_debug_message:
+                print("[CITYLINE DATE] Purchase button clicked")
+
+            # Wait for Cloudflare Turnstile (FR-012)
+            print("[CITYLINE DATE] Waiting 3 seconds for Cloudflare Turnstile...")
+            await asyncio.sleep(3)
+
             ret = True
         except Exception as exc:
-            print(exc)
+            print(f"[ERROR] click date button fail: {exc}")
 
     return ret
+
+async def nodriver_cityline_check_login_modal(tab, config_dict):
+    """
+    Check and handle login modal on eventDetail page
+    Reference: .temp/cityline/54510/1.html - div.modal-content with login form
+    Uses global flag to prevent duplicate clicks on same modal
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_modal_handled = False
+
+    # Global flag to track if modal has been handled
+    global cityline_modal_handled
+    if not 'cityline_modal_handled' in globals():
+        cityline_modal_handled = False
+
+    try:
+        # Wait for modal to appear (if it will)
+        await asyncio.sleep(random.uniform(1.0, 1.5))
+
+        # Check if login modal exists and is visible
+        modal_visible = await tab.evaluate('''
+            (function() {
+                const modal = document.querySelector('div.modal-content');
+                const loginBtn = document.querySelector('button.btn-login');
+                if (modal && loginBtn) {
+                    // Check if modal is actually visible (display != none, opacity > 0)
+                    const style = window.getComputedStyle(modal);
+                    return style.display !== 'none' && style.opacity !== '0';
+                }
+                return false;
+            })()
+        ''')
+
+        if modal_visible and not cityline_modal_handled:
+            print("[CITYLINE LOGIN MODAL] Login modal detected, waiting for button to be enabled...")
+
+            # Wait for login button to be enabled (opacity: 1 after Turnstile)
+            button_enabled = False
+            max_wait = 10  # Maximum 10 seconds
+            for i in range(max_wait):
+                button_enabled = await tab.evaluate('''
+                    (function() {
+                        const loginBtn = document.querySelector('button.btn-login');
+                        if (loginBtn) {
+                            const style = window.getComputedStyle(loginBtn);
+                            return parseFloat(style.opacity) === 1;
+                        }
+                        return false;
+                    })()
+                ''')
+
+                if button_enabled:
+                    if show_debug_message:
+                        print(f"[CITYLINE LOGIN MODAL] Button enabled after {i}s")
+                    break
+
+                await asyncio.sleep(1)
+
+            if button_enabled:
+                # Use CDP to click the login button (to properly trigger onclick event)
+                try:
+                    login_btn = await tab.find('button.btn-login', timeout=3)
+                    if login_btn:
+                        await login_btn.click()
+                        print("[CITYLINE LOGIN MODAL] Login button clicked successfully (CDP)")
+                        is_modal_handled = True
+                        cityline_modal_handled = True  # Mark as handled to prevent duplicate clicks
+
+                        # Wait longer for modal to fully close and process
+                        await asyncio.sleep(random.uniform(4.0, 5.0))
+                    else:
+                        print("[CITYLINE LOGIN MODAL] Login button not found")
+                except Exception as e:
+                    print(f"[CITYLINE LOGIN MODAL] Failed to click login button: {e}")
+            else:
+                print("[CITYLINE LOGIN MODAL] Button not enabled after timeout")
+        elif cityline_modal_handled:
+            # Modal already handled, skip silently
+            pass
+        else:
+            if show_debug_message:
+                print("[CITYLINE LOGIN MODAL] No login modal detected")
+
+    except Exception as exc:
+        print(f"[ERROR] Login modal check failed: {exc}")
+
+    return is_modal_handled
+
+async def nodriver_cityline_continue_button_press(tab, config_dict):
+    """
+    Click the 'Continue' button on eventDetail page to proceed to performance page
+    Reference: .temp/cityline/54510/1.html - button.btn-outline-primary.purchase-btn
+    Note: Login modal is already handled in parent function, no need to check again
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_button_clicked = False
+
+    try:
+        # Wait a moment for page to stabilize
+        await asyncio.sleep(random.uniform(0.5, 1.0))
+
+        # Check if continue button exists
+        button_exists = await tab.evaluate('''
+            (function() {
+                const btn = document.querySelector('button.btn-outline-primary.purchase-btn');
+                return btn !== null && btn.offsetParent !== null;
+            })()
+        ''')
+
+        if button_exists:
+            if show_debug_message:
+                print("[CITYLINE CONTINUE] Continue button found, attempting to click...")
+
+            # Click the continue button
+            click_result = await tab.evaluate('''
+                (function() {
+                    const btn = document.querySelector('button.btn-outline-primary.purchase-btn');
+                    if (btn) {
+                        btn.click();
+                        return true;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if click_result:
+                print("[CITYLINE CONTINUE] Continue button clicked successfully")
+                is_button_clicked = True
+
+                # Wait for navigation to performance page
+                await asyncio.sleep(random.uniform(2.0, 3.0))
+            else:
+                print("[CITYLINE CONTINUE] Failed to click continue button via JS")
+        else:
+            if show_debug_message:
+                print("[CITYLINE CONTINUE] Continue button not found")
+
+    except Exception as exc:
+        print(f"[ERROR] Continue button press failed: {exc}")
+
+    return is_button_clicked
+
+async def nodriver_cityline_area_auto_select(tab, config_dict):
+    """
+    Cityline area selection with conditional fallback mechanism
+    Reference: spec.md FR-004, FR-004a, FR-004b, fallback-mechanism.md
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    auto_select_mode = config_dict["area_auto_select"]["mode"]
+    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+    area_auto_fallback = config_dict.get("area_auto_fallback", False)  # Read from top level
+
+    is_price_assigned = False
+
+    # Stage 1: Query all area options
+    area_list = None
+    try:
+        my_css_selector = "div.form-check"
+        area_list = await tab.query_selector_all(my_css_selector)
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[ERROR] find area list fail: {exc}")
+
+    # Stage 2: Filter soldout areas
+    available_areas = []
+    if area_list:
+        area_list_count = len(area_list)
+        if show_debug_message:
+            print(f"[CITYLINE AREA] Found {area_list_count} area options")
+
+        for row in area_list:
+            is_available = True
+            try:
+                # Check soldout status
+                soldout_span = await row.query_selector('span.price-limited > span[data-i18n*="soldout"]')
+                if soldout_span:
+                    is_available = False
+            except:
+                pass
+
+            if is_available:
+                available_areas.append(row)
+
+        if show_debug_message:
+            soldout_count = area_list_count - len(available_areas)
+            print(f"[CITYLINE AREA] Filtered {soldout_count} soldout areas, {len(available_areas)} available")
+
+    # Stage 3: Keyword matching
+    matched_areas = []
+    if len(area_keyword) == 0:
+        # Empty keyword matches all available areas
+        matched_areas = available_areas
+    else:
+        # Match keyword
+        for row in available_areas:
+            row_text = ""
+            try:
+                row_html = await row.get_html()
+                row_text = util.remove_html_tags(row_html)
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[DEBUG] get row html error: {exc}")
+                break
+
+            if len(row_text) > 0:
+                # Check keyword exclude
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+                    row_text = ""
+
+            if len(row_text) > 0:
+                row_text = util.format_keyword_string(row_text)
+                if show_debug_message:
+                    print(f"[DEBUG] row_text: {row_text}")
+
+                # AND logic keyword matching
+                is_match_area = True
+                area_keyword_array = area_keyword.split(' ')
+                for keyword in area_keyword_array:
+                    keyword = util.format_keyword_string(keyword)
+                    if keyword not in row_text:
+                        is_match_area = False
+                        break
+
+                if is_match_area:
+                    matched_areas.append(row)
+                    if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
+                        break
+
+    if show_debug_message:
+        print(f"[AREA KEYWORD] Matched {len(matched_areas)} areas")
+
+    # Stage 4: Conditional fallback mechanism
+    if len(matched_areas) == 0:
+        if area_auto_fallback:
+            # Fallback mode: select from all available areas
+            matched_areas = available_areas
+            print(f"[AREA FALLBACK] area_auto_fallback=true, selecting from all available areas (total: {len(available_areas)})")
+        else:
+            # Strict mode: wait for manual intervention
+            print("[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+            print("[AREA FALLBACK] Waiting for manual intervention to avoid selecting unwanted area...")
+            return False
+
+    # Stage 5: Select target area
+    target_area = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
+    if target_area:
+        try:
+            # Find radio button within target area
+            radio_btn = await target_area.query_selector('input[type=radio]')
+            if radio_btn:
+                await radio_btn.scroll_into_view()
+                await radio_btn.click()
+                is_price_assigned = True
+                if show_debug_message:
+                    print("[CITYLINE AREA] Radio button checked")
+        except Exception as exc:
+            print(f"[ERROR] click radio button fail: {exc}")
+
+    return is_price_assigned
+
+async def nodriver_cityline_ticket_number_auto_select(tab, config_dict):
+    """
+    Cityline ticket number selection
+    Reference: spec.md FR-005, cityline-interface.md
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 1)
+
+    is_ticket_number_assigned = False
+
+    try:
+        my_css_selector = "select.select-num"
+        select_obj = await tab.query_selector(my_css_selector)
+
+        if select_obj:
+            if show_debug_message:
+                print(f"[CITYLINE TICKET] Ticket number selector found")
+
+            # Use JavaScript to set the select value
+            is_ticket_number_assigned = await tab.evaluate(f'''
+                (function() {{
+                    const select = document.querySelector('{my_css_selector}');
+                    if (select) {{
+                        const options = select.options;
+                        for (let i = 0; i < options.length; i++) {{
+                            if (options[i].value == {ticket_number}) {{
+                                select.selectedIndex = i;
+                                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                return true;
+                            }}
+                        }}
+                    }}
+                    return false;
+                }})();
+            ''')
+
+            if is_ticket_number_assigned and show_debug_message:
+                print(f"[CITYLINE TICKET] Ticket number set to {ticket_number}")
+    except Exception as exc:
+        print(f"[ERROR] Ticket number selection fail: {exc}")
+
+    return is_ticket_number_assigned
+
+async def nodriver_cityline_next_button_press(tab):
+    """
+    Cityline next button press
+    Reference: spec.md FR-006, cityline-interface.md
+    """
+    is_button_clicked = False
+
+    try:
+        # Cityline express purchase button selectors (based on HTML analysis)
+        # Reference: .temp/cityline/54510/2.html - button#expressPurchaseBtn
+        selectors = [
+            'button#expressPurchaseBtn',                      # ID selector (primary)
+            'button.btn-express-purchase',                    # Class selector
+            'button.purchase-btn.btn-express-purchase',      # Compound selector
+            'button[onclick*="expressPurchaseCallBack"]',    # onclick attribute
+            'button[type="submit"]',                          # Generic fallback
+            'button.btn-next',                                # Legacy fallback
+            'input[type="submit"]'                            # Last resort fallback
+        ]
+
+        for selector in selectors:
+            try:
+                next_btn = await tab.query_selector(selector)
+                if next_btn:
+                    await next_btn.scroll_into_view()
+                    await next_btn.click()
+                    is_button_clicked = True
+                    print(f"[CITYLINE] Next button clicked: {selector}")
+                    break
+            except:
+                continue
+    except Exception as exc:
+        print(f"[ERROR] Next button press fail: {exc}")
+
+    return is_button_clicked
+
+async def nodriver_cityline_performance(tab, config_dict):
+    """
+    Cityline performance page (date + area + ticket number + next button)
+    Reference: .temp/cityline/54510/2.html - 選擇日期與票價的頁面
+    Returns True only if the entire flow completes (including next button click)
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    is_date_assigned = False
+    is_price_assigned = False
+    is_button_clicked = False
+
+    # Step 1: Date selection (if date buttons exist on this page)
+    is_date_assigned = await nodriver_cityline_date_auto_select(tab, config_dict)
+
+    if is_date_assigned:
+        # Step 2: Area selection
+        is_price_assigned = await nodriver_cityline_area_auto_select(tab, config_dict)
+
+        if is_price_assigned:
+            # Step 3: Ticket number selection
+            is_ticket_number_assigned = await nodriver_cityline_ticket_number_auto_select(tab, config_dict)
+
+            if is_ticket_number_assigned:
+                # Step 4: Press next button
+                await asyncio.sleep(random.uniform(0.3, 0.7))
+                is_button_clicked = await nodriver_cityline_next_button_press(tab)
+
+    # Return True only if next button was successfully clicked
+    return is_button_clicked
+
+async def nodriver_cityline_check_shopping_basket(tab, config_dict):
+    """
+    Check if ticket successfully added to shopping basket and play notification sound (once only)
+    Reference: .temp/cityline/54510/3.html - shoppingBasket page
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    global cityline_dict
+
+    try:
+        current_url = await tab.evaluate('window.location.href')
+
+        if '/shoppingBasket' in current_url:
+            # Only play sound once
+            if not cityline_dict.get("played_sound_order", False):
+                print("[CITYLINE SUCCESS] Ticket added to shopping basket!")
+
+                # Play success sound
+                if config_dict["advanced"]["play_sound"]["order"]:
+                    try:
+                        play_sound_while_ordering(config_dict)
+                        cityline_dict["played_sound_order"] = True
+                    except Exception as sound_exc:
+                        if show_debug_message:
+                            print(f"[WARNING] Failed to play sound: {sound_exc}")
+
+            return True
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[ERROR] Check shopping basket failed: {exc}")
+
+    return False
 
 async def nodriver_check_modal_dialog_popup(tab):
     ret = False
@@ -11983,17 +12985,29 @@ async def nodriver_check_modal_dialog_popup(tab):
     return ret
 
 async def nodriver_cityline_purchase_button_press(tab, config_dict):
-    date_auto_select_mode = config_dict["date_auto_select"]["mode"]
-    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
-    is_date_assign_by_bot = await nodriver_cityline_date_auto_select(tab, date_auto_select_mode, date_keyword)
+    """
+    Cityline eventDetail page processing (NO DATE SELECTION HERE)
+
+    eventDetail page flow:
+    1. Click 'Continue' button to proceed to performance page
+
+    Note:
+    - Login modal is checked in main loop (outside this function)
+    - Date/Area selection happens on performance page, NOT here
+    Reference: .temp/cityline/54510/1.html
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
 
     is_button_clicked = False
-    if is_date_assign_by_bot:
-        print("press purchase button")
-        await nodriver_press_button(tab, 'button.purchase-btn')
-        is_button_clicked = True
-        # wait reCAPTCHA popup.
-        await asyncio.sleep(6)
+
+    # Click 'Continue' button to go to performance page
+    if show_debug_message:
+        print("[CITYLINE EVENTDETAIL] Clicking continue button...")
+    is_button_clicked = await nodriver_cityline_continue_button_press(tab, config_dict)
 
     return is_button_clicked
 
@@ -12015,11 +13029,180 @@ async def nodriver_cityline_close_second_tab(tab, url):
                         break
     return new_tab
 
+async def nodriver_cityline_cookie_accept(tab):
+    """
+    Cityline cookie consent acceptance
+    Reference: spec.md FR-010
+    """
+    is_accepted = False
+
+    try:
+        # Try to find and click cookie accept button
+        cookie_selectors = [
+            'button.cookie-accept',
+            'button[id*="cookie"]',
+            'button[class*="cookie"]',
+            '.cookie-consent button',
+            '#cookie-consent button'
+        ]
+
+        for selector in cookie_selectors:
+            try:
+                cookie_btn = await tab.query_selector(selector)
+                if cookie_btn:
+                    await cookie_btn.click()
+                    is_accepted = True
+                    print(f"[CITYLINE] Cookie consent accepted: {selector}")
+                    break
+            except:
+                continue
+    except Exception as exc:
+        pass
+
+    return is_accepted
+
+async def nodriver_cityline_press_buy_button(tab, config_dict):
+    """
+    Wait for and click the "Buy Ticket" button on shows.cityline.com event detail page
+    Handles JavaScript loading issues and waits for button to appear
+    Reference: shows.cityline.com event pages
+    """
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    if show_debug_message:
+        print("[CITYLINE] Waiting for buy ticket button to appear...")
+
+    # Polling parameters
+    max_wait = 10  # Maximum 10 seconds wait
+    check_interval = 0.5  # Check every 0.5 seconds
+    max_attempts = int(max_wait / check_interval)
+    button_found = False
+
+    for attempt in range(max_attempts):
+        try:
+            # Check if button exists using JavaScript
+            button_exists = await tab.evaluate('''
+                (function() {
+                    const btn = document.querySelector('button#buyTicketBtn');
+                    return btn !== null && btn.offsetParent !== null;
+                })()
+            ''')
+
+            if button_exists:
+                button_found = True
+                if show_debug_message:
+                    print(f"[CITYLINE] Buy ticket button found after {attempt * check_interval:.1f}s")
+                break
+
+            # Progress indicator
+            if show_debug_message and attempt > 0 and attempt % 4 == 0:
+                print(f"[CITYLINE] Still waiting for button... ({attempt * check_interval:.1f}s elapsed)")
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[CITYLINE] Error checking button: {exc}")
+
+        if attempt < max_attempts - 1:
+            await asyncio.sleep(check_interval)
+
+    if not button_found:
+        print("[CITYLINE] Warning: Buy ticket button not found after timeout")
+        print("[CITYLINE] This may be caused by:")
+        print("  1. Ad blocker blocking JavaScript files (others.min.js)")
+        print("  2. DevTools request blocking rules")
+        print("  3. Page not fully loaded")
+        print("[CITYLINE] Please manually click the buy ticket button")
+        return False
+
+    # Button found, try to click it
+    try:
+        # Use JavaScript click to avoid issues with visibility
+        click_result = await tab.evaluate('''
+            (function() {
+                const btn = document.querySelector('button#buyTicketBtn');
+                if (btn) {
+                    btn.click();
+                    return true;
+                }
+                return false;
+            })()
+        ''')
+
+        if click_result:
+            print("[CITYLINE] Buy ticket button clicked successfully")
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+            return True
+        else:
+            print("[CITYLINE] Failed to click buy ticket button")
+            return False
+
+    except Exception as exc:
+        print(f"[CITYLINE] Error clicking button: {exc}")
+        return False
+
+async def nodriver_cityline_clean_ads(tab):
+    """
+    Cityline advertisement removal (refined selectors to prevent removing purchase button)
+    Reference: spec.md FR-008
+    IMPORTANT: Use precise selectors to avoid removing .buyTicketBox or button#buyTicketBtn
+    """
+    is_ads_removed = False
+
+    try:
+        # Use JavaScript to remove ad elements with precise selectors
+        is_ads_removed = await tab.evaluate('''
+            (function() {
+                let removed_count = 0;
+                // Use precise selectors to avoid removing purchase-related elements
+                const ad_selectors = [
+                    'div.advertisement',           // Explicit div.advertisement
+                    'div.ad-banner',               // Explicit div.ad-banner
+                    'iframe[id*="google_ads"]',    // Google Ads iframes only
+                    'div[id^="ATS_"]',             // ATS ad system (Cityline specific)
+                    'div.popup-ad',
+                    'div.modal-ad'
+                    // Removed generic '[id*="ad-"]' and '[class*="ad-"]' to prevent removing button elements
+                ];
+
+                ad_selectors.forEach(selector => {
+                    const ads = document.querySelectorAll(selector);
+                    ads.forEach(ad => {
+                        // Verify not removing purchase button or its container
+                        const hasButton = ad.querySelector('button#buyTicketBtn');
+                        const isBuyBox = ad.classList.contains('buyTicketBox');
+
+                        if (!hasButton && !isBuyBox) {
+                            ad.remove();
+                            removed_count++;
+                        }
+                    });
+                });
+
+                if (removed_count > 0) {
+                    console.log("Removed " + removed_count + " ad elements");
+                }
+
+                return removed_count > 0;
+            })();
+        ''')
+
+        if is_ads_removed:
+            print("[CITYLINE] Advertisements removed")
+    except Exception as exc:
+        pass
+
+    return is_ads_removed
+
 async def nodriver_cityline_main(tab, url, config_dict):
     global cityline_dict
     if not 'cityline_dict' in globals():
         cityline_dict = {}
         cityline_dict["played_sound_ticket"] = False
+        cityline_dict["played_sound_order"] = False
 
     if 'msg.cityline.com' in url or 'event.cityline.com' in url:
         is_dom_ready = False
@@ -12034,41 +13217,124 @@ async def nodriver_cityline_main(tab, url, config_dict):
             #await nodriver_cityline_auto_retry_access(tab, url, config_dict)
             pass
 
+    # Cookie acceptance (FR-010)
+    if '.cityline.com/Events.html' in url:
+        await nodriver_cityline_cookie_accept(tab)
+
+    # Advertisement removal (FR-008)
+    # Note: Only clean ads on Events.html (homepage), not on event detail pages
+    # to prevent removing purchase button
+    if '/Events.html' in url:
+        await nodriver_cityline_clean_ads(tab)
+
+        # Auto-redirect to target event page after successful login
+        target_url = config_dict["homepage"]
+        if target_url and 'shows.cityline.com' in target_url:
+            show_debug_message = config_dict["advanced"].get("verbose", False)
+            if show_debug_message:
+                print(f"[CITYLINE LOGIN] Redirecting to target page: {target_url}")
+            try:
+                await tab.get(target_url)
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+                # Update URL after redirect
+                url = await tab.evaluate('window.location.href')
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[ERROR] Redirect failed: {exc}")
+
+    # Login page
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["advanced"]["cityline_account"]
         if len(cityline_account) > 4:
+            # Auto-fill email and monitor login button (will auto-click when enabled)
             await nodriver_cityline_login(tab, cityline_account)
 
+    # Multi-tab handling (FR-009)
     tab = await nodriver_cityline_close_second_tab(tab, url)
+
+    # Event detail page on shows.cityline.com
+    # https://shows.cityline.com/tc/2026/jordanchan.html
+    global cityline_buy_button_pressed
+    if not 'cityline_buy_button_pressed' in globals():
+        cityline_buy_button_pressed = False
+
+    if 'shows.cityline.com' in url:
+        if not cityline_buy_button_pressed:
+            # Wait for and click buy ticket button
+            button_clicked = await nodriver_cityline_press_buy_button(tab, config_dict)
+            if button_clicked:
+                cityline_buy_button_pressed = True
+                # Wait for navigation to eventDetail page
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                # Update URL after button click
+                try:
+                    url = await tab.evaluate('window.location.href')
+                except:
+                    pass
+    else:
+        # Reset flag when leaving shows.cityline.com domain
+        cityline_buy_button_pressed = False
 
     # date page.
     #https://venue.cityline.com/utsvInternet/EVENT_NAME/eventDetail?event=EVENT_CODE
     global cityline_purchase_button_pressed
     if not 'cityline_purchase_button_pressed' in globals():
         cityline_purchase_button_pressed = False
-    if '/eventDetail?' in url:
-        # detect fail.
-        #is_modal_dialog_popup = await nodriver_check_modal_dialog_popup(tab)
 
+    if 'venue.cityline.com' in url and '/eventDetail?' in url:
+        # Always check for login modal (independent of flag, for cookie capture)
+        await nodriver_cityline_check_login_modal(tab, config_dict)
+
+        # Then proceed with purchase button if not already processed
         if not cityline_purchase_button_pressed:
             if config_dict["date_auto_select"]["enable"]:
                 is_button_clicked = await nodriver_cityline_purchase_button_press(tab, config_dict)
                 if is_button_clicked:
                     cityline_purchase_button_pressed = True
-    else:
+    elif 'venue.cityline.com' not in url:
+        # Only reset when completely leaving venue.cityline.com domain
         cityline_purchase_button_pressed = False
 
 
     # area page:
-    # TODO:
-    #https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
-    if 'venue.cityline.com' in url and '/performance?':
+    # https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
+    global cityline_performance_processed
+    if not 'cityline_performance_processed' in globals():
+        cityline_performance_processed = False
+
+    global cityline_modal_handled
+    if not 'cityline_modal_handled' in globals():
+        cityline_modal_handled = False
+
+    if 'venue.cityline.com' in url and '/performance?' in url:
+        # Reset modal flag when successfully navigated to performance page
+        cityline_modal_handled = False
+        # Play sound when entering performance page
         if config_dict["advanced"]["play_sound"]["ticket"]:
             if not cityline_dict["played_sound_ticket"]:
                 play_sound_while_ordering(config_dict)
             cityline_dict["played_sound_ticket"] = True
+
+        # Integrated performance page processing (area + ticket number + next button)
+        if not cityline_performance_processed:
+            if config_dict["area_auto_select"]["enable"]:
+                is_area_processed = await nodriver_cityline_performance(tab, config_dict)
+                if is_area_processed:
+                    cityline_performance_processed = True
+    elif 'venue.cityline.com' not in url:
+        # Reset flag when leaving venue.cityline.com domain
+        cityline_performance_processed = False
+        cityline_dict["played_sound_ticket"] = False
     else:
         cityline_dict["played_sound_ticket"] = False
+
+    # Shopping basket page (success detection)
+    # https://venue.cityline.com/utsvInternet/internet/shoppingBasket
+    if 'venue.cityline.com' in url and '/shoppingBasket' in url:
+        await nodriver_cityline_check_shopping_basket(tab, config_dict)
+    else:
+        # Reset order sound flag when not on shopping basket page (allow replay for next purchase)
+        cityline_dict["played_sound_order"] = False
 
     return tab
 
@@ -16721,32 +17987,49 @@ def get_extension_config(config_dict):
     return conf
 
 async def nodrver_block_urls(tab, config_dict):
+    """
+    Block unnecessary network requests for performance and privacy
+
+    Strategy for Cityline:
+    - Allow: others.min.js (required for buy button and _global_citylineWebBase)
+    - Block: Analytics/tracking requests initiated by others.min.js
+    """
     NETWORK_BLOCKED_URLS = [
+        # General tracking and analytics
         '*.clarity.ms/*',
         '*.cloudfront.com/*',
-        '*.doubleclick.net/*',
+        '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
         '*.lndata.com/*',
         '*.rollbar.com/*',
-        '*.twitter.com/i/*',
-        '*/adblock.js',
-        '*/google_ad_block.js',
-        '*cityline.com/js/others.min.js',
-        '*anymind360.com/*',
+        '*anymind360.com/*',  # Block Anymind360 tracking (loaded by cityline others.min.js)
         '*cdn.cookielaw.org/*',
         '*e2elog.fetnet.net*',
         '*fundingchoicesmessages.google.com/*',
-        '*google-analytics.*',
-        '*googlesyndication.*',
-        '*googletagmanager.*',
+
+        # Google tracking (broad patterns cover specific URLs)
+        '*google-analytics.*',  # Covers www.google-analytics.com/analytics.js & collect
+        '*googlesyndication.*',  # Covers pagead2.googlesyndication.com
+        '*googletagmanager.*',  # Covers www.googletagmanager.com/gtag/js
         '*googletagservices.*',
-        '*img.uniicreative.com/*',
+
+        # Social media and video
+        '*.twitter.com/i/*',
         '*platform.twitter.com/*',
-        '*play.google.com/*',
-        '*player.youku.*',
         '*syndication.twitter.com/*',
         '*youtube.com/*',
+        '*player.youku.*',
+        '*play.google.com/*',
+
+        # Ad scripts
+        '*/adblock.js',
+        '*/google_ad_block.js',
+        '*img.uniicreative.com/*',
+
+        # Cityline: Allow others.min.js (required for buy button), block tracking only
+        # '*cityline.com/js/others.min.js',  # DISABLED: Required for buy button rendering
+
+        # Ticketmaster ad scripts
         '*ticketmaster.sg/js/adblock*',
-        '*ticketmaster.sg/js/adblock.js*',
         '*ticketmaster.sg/js/ads.js*',
         '*ticketmaster.sg/epsf/asset/eps.js*',
         '*ticketmaster.com/js/ads.js*',
@@ -17018,15 +18301,9 @@ async def main(args):
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
                 print("KKTIX ticket purchase completed")
-                # Create pause file to pause the program instead of exiting
-                try:
-                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                        text_file.write("")
-                    print("Bot Paused. Purchase Completed!")
-                    # Reset is_quit_bot to avoid program exit
-                    is_quit_bot = False
-                except Exception as e:
-                    print(f"Failed to create pause file: {e}")
+                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                is_quit_bot = False
 
         tixcraft_family = False
         if 'tixcraft.com' in url:
@@ -17042,15 +18319,9 @@ async def main(args):
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
             if is_quit_bot:
                 print("TixCraft ticket purchase completed")
-                # Create pause file to pause the program instead of exiting
-                try:
-                    with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                        text_file.write("")
-                    print("Bot Paused. Purchase Completed!")
-                    # Reset is_quit_bot to avoid program exit
-                    is_quit_bot = False
-                except Exception as e:
-                    print(f"Failed to create pause file: {e}")
+                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                is_quit_bot = False
 
         if 'famiticket.com' in url:
             #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
@@ -17080,33 +18351,17 @@ async def main(args):
             if 'ticketplus_dict' in globals():
                 if ticketplus_dict.get("purchase_completed", False):
                     if config_dict["advanced"].get("verbose", False):
-                        print("[SUCCESS] TicketPlus 購票完成，進入暫停模式")
-                    # 建立暫停檔案，讓程式進入暫停狀態而不是結束
-                    try:
-                        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                            text_file.write("")
-                        if config_dict["advanced"].get("verbose", False):
-                            print("已自動暫停，可透過 Web 介面繼續執行")
-                        # 重置 is_quit_bot 避免程式結束
-                        is_quit_bot = False
-                    except Exception as e:
-                        if config_dict["advanced"].get("verbose", False):
-                            print(f"建立暫停檔案失敗: {e}")
+                        print("[SUCCESS] TicketPlus 購票完成")
+                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                    is_quit_bot = False
                 elif ticketplus_dict.get("is_ticket_assigned", False) and '/confirm/' in url.lower():
                     # 如果在確認頁面且已指派票券，也可以結束
                     if config_dict["advanced"].get("verbose", False):
-                        print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功，進入暫停模式")
-                    # 建立暫停檔案，讓程式進入暫停狀態而不是結束
-                    try:
-                        with open(CONST_MAXBOT_INT28_FILE, "w") as text_file:
-                            text_file.write("")
-                        if config_dict["advanced"].get("verbose", False):
-                            print("已自動暫停，可透過 Web 介面繼續執行")
-                        # 重置 is_quit_bot 避免程式結束
-                        is_quit_bot = False
-                    except Exception as e:
-                        if config_dict["advanced"].get("verbose", False):
-                            print(f"建立暫停檔案失敗: {e}")
+                        print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功")
+                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
+                    is_quit_bot = False
 
         if 'urbtix.hk' in url:
             #urbtix_main(driver, url, config_dict)

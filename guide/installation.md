@@ -101,6 +101,7 @@ tickets_hunter/
   - **nodriver**：推薦，反偵測能力最強（預設）
   - **undetected_chrome**：傳統方案，穩定性高
 - **驗證碼設定**：OCR 自動辨識選項
+- **優惠代碼**：特定活動需要的會員序號或優惠代碼（KKTIX、TicketPlus）⭐ 新增功能
 - **音效設定**：成功時播放提示音
 - **瀏覽器選項**：無頭模式、擴充套件等
 
@@ -530,4 +531,4 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 
 **安裝完成！祝您搶票成功！** 🎉
 
-*最後更新：2025-11-04*
+*最後更新：2025-11-12*
