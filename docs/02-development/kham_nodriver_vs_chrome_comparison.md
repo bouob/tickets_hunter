@@ -1,5 +1,10 @@
 # KHAM 平台：NoDriver vs Chrome Driver 功能比較報告
 
+**文件說明**：分析 KHAM 平台 NoDriver 與 Chrome Driver 版本的功能差異、座位選擇切換與 Cloudflare 處理
+**最後更新**：2025-11-12
+
+---
+
 **文件版本**: 1.0
 **建立日期**: 2025-10-23
 **分析目的**: 比較 KHAM 及其家族平台在 NoDriver 和 Chrome 版本的功能完整性與實作差異

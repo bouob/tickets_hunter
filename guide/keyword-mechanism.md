@@ -1,10 +1,10 @@
----
-category: "Mechanism Guides"
-level: 2
-audience: "General Users"
-version: "1.2"
-last_updated: "2025-11-01"
----
+<!--
+文件說明：詳細說明 Tickets Hunter 的智慧選擇機制、關鍵字匹配與自動回退策略
+分類：Mechanism Guides (level: 2)
+目標受眾：一般使用者
+版本：1.2
+最後更新：2025-11-12
+-->
 
 # 關鍵字與回退機制詳解
 

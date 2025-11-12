@@ -1,3 +1,9 @@
+**文件說明**：各售票平台的實作參考指南，包含 TixCraft、KKTIX、iBon、TicketPlus 等平台的具體實作方法、特性分析與完成度評估。
+
+**最後更新**：2025-11-12
+
+---
+
 # 平台實作參考 (Implementation Reference)
 
 ## 概述
@@ -182,8 +188,6 @@ A：見 `ticketplus-reference.md` 的表單填寫部分。
 ---
 
 ## 版本與更新
-
-**最後更新**：2025-11
 
 **當前支持的平台數**：4 個（TixCraft、KKTIX、iBon、TicketPlus）
 

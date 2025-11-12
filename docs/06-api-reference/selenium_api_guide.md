@@ -1,3 +1,9 @@
+**文件說明**：Selenium WebDriver 的完整 API 使用手冊，涵蓋生態系統、核心概念、元素定位、互動操作與搶票系統專用最佳實踐。
+
+**最後更新**：2025-11-12
+
+---
+
 # Selenium WebDriver API 使用指南
 
 > **目標**：搶票系統的 Selenium WebDriver 完整使用手册，涵蓋所有核心功能和最佳實踐

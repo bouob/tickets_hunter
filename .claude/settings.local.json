@@ -31,7 +31,8 @@
       "WebFetch(domain:chromedevtools.github.io)",
       "SlashCommand(/speckit.analyze)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:pypi.org)"
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:code.claude.com)"
     ],
     "deny": [],
     "ask": []

@@ -1,3 +1,9 @@
+**文件說明**：NoDriver 的完整 API 使用指南，涵蓋 CDP 原生方法、JavaScript 輔助、Shadow DOM 處理等核心概念與最佳實踐。
+
+**最後更新**：2025-11-12
+
+---
+
 # NoDriver API 使用指南
 
 > **重要**：優先使用 CDP 原生方法，避免過度依賴 JavaScript

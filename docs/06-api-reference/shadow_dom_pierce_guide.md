@@ -1,3 +1,9 @@
+**文件說明**：Shadow DOM 穿透的完整技術指南，涵蓋 CDP DOMSnapshot 與 perform_search() 方法、性能優化策略與實作案例。
+
+**最後更新**：2025-11-12
+
+---
+
 # Shadow DOM Pierce Method - 完整技術指南
 
 > **重大突破**：從優化 DOMSnapshot 速度的目標，發現了更優的 Shadow DOM 穿透方法

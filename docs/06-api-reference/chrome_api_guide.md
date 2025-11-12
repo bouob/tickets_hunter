@@ -1,3 +1,9 @@
+**文件說明**：Undetected-ChromeDriver 反偵測 API 的完整使用指南，涵蓋反偵測原理、Selenium 相容性、初始化設定與搶票系統專用最佳實踐。
+
+**最後更新**：2025-11-12
+
+---
+
 # Undetected-ChromeDriver API 使用指南
 
 > **目標**：專為搶票系統設計的 ChromeDriver 反偵測指南，提供完整的 API 使用方法和最佳實踐

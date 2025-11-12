@@ -1,5 +1,10 @@
 # TixCraft 家族平台：NoDriver vs Chrome Driver 功能比較報告
 
+**文件說明**：分析 TixCraft 家族平台（FamiTicket、Ticketmaster、年代售票）的 NoDriver 支援完整性
+**最後更新**：2025-11-12
+
+---
+
 **文件版本**: 1.0
 **建立日期**: 2025-10-23
 **分析目的**: 比較 TixCraft 及其家族平台在 NoDriver 和 Chrome 版本的支援完整性

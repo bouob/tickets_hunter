@@ -203,6 +203,7 @@ docs/02-development/development_guide.md  ← 開發規範
 - ❌ **嚴禁使用 `git commit` 手動提交**
 - ✅ **只推送到私人庫**（`private`）
 - ❌ **嚴禁直接推送到公開庫**（`origin`）
+- ⚠️ **不從公開庫拉回變更**（單向流程，避免破壞 private history）
 
 **Repo 位址**：
 - 私人庫：`https://github.com/bouob/private-tickets-hunter.git` (remote: `private`)
@@ -215,15 +216,18 @@ docs/02-development/development_guide.md  ← 開發規範
 /gpush          # 2. 推送公開代碼到私人庫
 /privatepush    # 3. 推送機敏檔案到私人庫
 /publicpr       # 4. 建立 PR 到公開庫（僅發布時）
+                #    - commits > 10 自動建議 Squash Merge
+                #    - 節省 95% 時間，避免 cherry-pick 衝突
+                # ⚠️ 發布後不拉回（單向流程）
 ```
 
 ### 指令說明
 
-| 指令 | 目標 | 用途 | 過濾規則 |
-|------|------|------|----------|
-| `/gpush` | `private/main` | 推送公開代碼 | 自動過濾 PRIVATE commits |
-| `/privatepush` | `private/main` | 推送機敏檔案 | 只推送 🔒 PRIVATE 標記 |
-| `/publicpr` | `origin` (via PR) | 正式發布 | 自動過濾機敏檔案 |
+| 指令 | 目標 | 用途 | 過濾規則 | 注意事項 |
+|------|------|------|----------|----------|
+| `/gpush` | `private/main` | 推送公開代碼 | 自動過濾 PRIVATE commits | - |
+| `/privatepush` | `private/main` | 推送機敏檔案 | 只推送 🔒 PRIVATE 標記 | - |
+| `/publicpr` | `origin` (via PR) | 正式發布 | 自動過濾機敏檔案 | commits > 10 建議 Squash |
 
 ### 錯誤與正確範例
 
@@ -232,12 +236,14 @@ docs/02-development/development_guide.md  ← 開發規範
 - ❌ `git push origin main` - 可能洩露機敏資料
 - ❌ `git push` - 預設 remote 可能錯誤
 - ❌ 直接推送到 origin - 必須使用 `/publicpr`
+- ❌ `git pull origin main` - 會破壞 private history（單向流程）
 
 **正確範例**：
 - ✅ `/gsave` - 建立 commit（唯一合法方式）
 - ✅ `/gpush` - 推送一般 commits
 - ✅ `/privatepush` - 推送機敏 commits
-- ✅ `/publicpr` - 建立 PR 發布
+- ✅ `/publicpr` - 建立 PR 發布（自動選擇 Squash/Cherry-pick）
+- ✅ `git cherry-pick <commit>` - 緊急情況從 origin 挑選修復
 
 **詳細說明**：`docs/12-git-workflow/dual-repo-workflow.md` ⭐
 

@@ -1,3 +1,9 @@
+**文件說明**：iBon 平台的完整實作參考，重點覆蓋 Shadow DOM 處理、Angular SPA 架構、DOMSnapshot API 應用等高難度技術挑戰。
+
+**最後更新**：2025-11-12
+
+---
+
 # iBon 平台參考實作
 
 ## 概述

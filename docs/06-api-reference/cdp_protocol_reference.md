@@ -1,3 +1,9 @@
+**文件說明**：Chrome DevTools Protocol（CDP）的完整參考指南，涵蓋 NoDriver 與 CDP 的關係、核心 Domain 詳解、DOMSnapshot API 與實戰案例。
+
+**最後更新**：2025-11-12
+
+---
+
 # Chrome DevTools Protocol (CDP) 參考指南
 
 ## 目錄

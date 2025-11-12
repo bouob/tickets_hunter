@@ -33,7 +33,7 @@ $ARGUMENTS
 
 ### 機敏檔案清單
 
-以下檔案/目錄會被自動過濾，**不會**出現在公開 PR 中：
+以下檔案/目錄會被自動過濾，**不能**出現在公開 PR 中：
 
 ```
 .claude/          - Claude 自動化設定
@@ -56,10 +56,11 @@ FAQ/              - 常見問題解答
 
 ## 🔧 進階選項
 
+- `--strategy=squash`: 強制使用 Squash Merge（預設：自動檢測，commits > 10 時）
+- `--strategy=cherry-pick`: 強制使用 Cherry-pick（預設：自動檢測，commits ≤ 10 時）
 - `--dry-run`: 預覽模式，僅顯示分析結果不執行實際推送
 - `--base-branch=<branch>`: 指定基礎分支（預設：main）
 - `--auto-merge`: 建立 PR 後自動設定 auto-merge（需通過 CI）
-- `--squash`: 使用 squash merge 模式
 - `--force`: 跳過所有確認（⚠️ 危險操作，不建議使用）
 
 ---
@@ -98,7 +99,75 @@ FAQ/              - 常見問題解答
 - 執行 `git fetch private` 取得私人 repo 最新狀態
 - 比較兩個 repo 的差異
 
-### 步驟 2 - 掃描並過濾 Commits
+### 步驟 1.5 - 策略選擇（自動檢測）⭐ 新增
+
+#### A. 檢測 Commits 數量
+
+- 執行 `git log origin/main..HEAD --oneline | wc -l` 統計未推送的 commits
+- 根據數量自動決定推送策略
+
+#### B. 策略決策邏輯
+
+```
+如果 commits > 50:
+  └─ 強制使用 Squash Merge（無需詢問）
+  └─ 顯示提示：「發現 {count} 個 commits，自動使用 Squash Merge 策略」
+  └─ 跳到步驟 3-Squash
+
+如果 10 < commits ≤ 50:
+  └─ 建議使用 Squash Merge
+  └─ 詢問：「發現 {count} 個 commits。建議使用 Squash Merge 合併為單一 commit。是否採用？(Y/n)」
+     ├─ Y → 使用 Squash Merge（跳到步驟 3-Squash）
+     └─ n → 使用 Cherry-pick（繼續步驟 2）
+
+如果 commits ≤ 10:
+  └─ 預設使用 Cherry-pick
+  └─ 繼續步驟 2（掃描並過濾 Commits）
+```
+
+#### C. 顯示策略選擇結果
+
+**Squash Merge 模式**：
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 策略選擇
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+未推送 Commits: {count} 個
+選擇策略: Squash Merge
+
+原因：
+- Commits 數量過多（> 50）
+- 避免長時間掃描與 cherry-pick
+- PR 更易審查（1 個 squash commit）
+
+注意：
+- Public repo 將只包含 1 個 squash commit
+- Private repo 保留完整 {count} 個 commits
+- 兩個 repo 的 history 完全獨立（這是正常的）
+- ⚠️ 發布後不要從 public 拉回變更到 private（單向流程）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Cherry-pick 模式**：
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 策略選擇
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+未推送 Commits: {count} 個
+選擇策略: Cherry-pick
+
+原因：
+- Commits 數量適中（≤ 10）
+- 保留完整 commit history
+
+繼續掃描機敏檔案...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### 步驟 2 - 掃描並過濾 Commits（Cherry-pick 模式）
 
 #### A. 列出所有未推送的 Commits
 
@@ -164,7 +233,146 @@ FAQ/              - 常見問題解答
   ```
   - 結束執行
 
-### 步驟 3 - 顯示檔案變更預覽
+### 步驟 3-Squash - Squash Merge 執行流程 ⭐ 新增
+
+**適用條件**: 當步驟 1.5 選擇 Squash Merge 策略時
+
+#### A. 分析檔案變更（不掃描 commits）
+
+**重要**: Squash 模式不需要逐一掃描 commits，直接分析整體檔案變更
+
+- 執行 `git diff origin/main..HEAD --name-status` 取得所有檔案變更
+- 過濾機敏檔案：
+  ```bash
+  # 排除機敏檔案清單
+  SENSITIVE_PATTERNS=".claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^FAQ/|^.temp/"
+
+  # 過濾檔案變更
+  git diff origin/main..HEAD --name-status | \
+    grep -Ev "$SENSITIVE_PATTERNS"
+  ```
+
+#### B. 顯示檔案變更統計
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 Squash Merge - 檔案變更預覽
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+原始 Commits: {total_commits} 個
+機敏 Commits: {private_commits} 個（已自動排除）
+Squash 策略: 合併為 1 個 commit
+
+將推送以下乾淨檔案變更：
+
+新增檔案 (2):
+  + src/nodriver_ticketplus.py
+  + tests/test_ticketplus.py
+
+修改檔案 (11):
+  ~ src/chrome_tixcraft.py
+  ~ src/nodriver_tixcraft.py
+  ~ README.md
+  ~ CHANGELOG.md
+  ~ package.json
+
+刪除檔案 (1):
+  - src/deprecated_module.py
+
+總計：14 個檔案變更
+
+⚠️ 已自動排除機敏檔案：
+  - .claude/ (設定檔)
+  - docs/ (內部文件)
+  - CLAUDE.md (開發規範)
+  - .specify/ (規格模板)
+  - specs/ (功能規格)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+#### C. 確認推送
+
+- **明確詢問**：「確認使用 Squash Merge 推送這些變更到公開 repo？(y/n)」
+- **僅當使用者回覆 "y" 時**：繼續執行
+
+#### D. 建立臨時分支並複製檔案
+
+- 生成分支名稱：`public-sync-YYYY-MM-DD-HHmm`
+- 建立分支：`git checkout -b [branch-name] origin/main`
+- Stash 本地變更（如果有）：`git stash push -m "Temp stash for publicpr"`
+
+#### E. 使用 git diff 複製變更
+
+**方法**: 直接複製檔案差異，避免 cherry-pick 衝突
+
+```bash
+# 1. 切換回原始分支
+git checkout main
+
+# 2. 取得乾淨檔案清單（排除機敏檔案）
+CLEAN_FILES=$(git diff origin/main..HEAD --name-only | \
+  grep -Ev "(.claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^FAQ/|^.temp/)")
+
+# 3. 切換到臨時分支
+git checkout public-sync-YYYY-MM-DD-HHmm
+
+# 4. 逐個檔案複製變更
+echo "$CLEAN_FILES" | while read file; do
+  # 檢查檔案狀態
+  STATUS=$(git diff origin/main..main --name-status | grep "$file" | awk '{print $1}')
+
+  if [ "$STATUS" = "D" ]; then
+    # 刪除檔案
+    git rm "$file"
+  else
+    # 新增或修改檔案
+    git checkout main -- "$file"
+    git add "$file"
+  fi
+done
+```
+
+#### F. 建立 Squash Commit
+
+- 生成 commit 訊息（英文，Conventional Commits 格式）：
+  ```bash
+  COMMIT_MSG="chore(release): sync public repo with $(date +%Y-%m-%d) updates
+
+  - Original commits: {total_commits}
+  - Squashed into single commit for cleaner history
+  - Automatically filtered sensitive files
+
+  Files changed: {files_changed}
+  "
+  ```
+
+- 執行 commit：
+  ```bash
+  git commit -m "$COMMIT_MSG"
+  ```
+
+#### G. 推送到 Origin
+
+- 執行 `git push origin [branch-name]`
+- 顯示推送結果
+
+```
+✅ Squash commit 推送成功！
+
+分支: public-sync-2025-11-12-0322
+Commit: 0face0e chore(release): sync public repo with 2025-11-12 updates
+Remote: origin
+URL: https://github.com/bouob/tickets_hunter.git
+```
+
+#### H. Stash 還原（如果有）
+
+- 執行 `git stash pop` 還原暫存的本地變更
+
+---
+
+### 步驟 3 - 顯示檔案變更預覽（Cherry-pick 模式）
 
 #### A. 收集所有有效 Commits 的檔案變更
 
@@ -284,6 +492,65 @@ chore(release): sync public repo with [date] updates
 - `chore(release): sync public repo with Nov 8, 2025 updates`
 
 **PR 描述格式**（繁體中文，標題可用 emoji，內容不用）：
+
+**格式 1 - Squash Merge 模式**（commits > 10 時使用）：
+```markdown
+## 📋 變更摘要
+
+本次發布使用 Squash Merge 合併了 {time_range} 的所有更新。
+
+### 主要變更
+[從最近 20 個 commits 自動提取類別摘要]
+
+- 新功能: {count} 項
+  - 新增 TicketPlus 平台支援
+  - 新增自動座位選擇
+- 錯誤修復: {count} 項
+  - 修正 OCR 超時問題
+  - 修正日期關鍵字匹配
+- 重構: {count} 項
+  - 改善錯誤處理機制
+
+---
+
+## 📊 統計資訊
+
+- **原始 Commits**: {total_commits} 個
+- **機敏 Commits**: {private_commits} 個（已排除）
+- **Squash 策略**: 合併為 1 個 commit
+- **檔案變更**: {files_changed} 個
+  - 新增: {added} 個
+  - 修改: {modified} 個
+  - 刪除: {deleted} 個
+
+---
+
+## ✅ 檢查清單
+
+- [x] 已排除機敏檔案（.claude/, docs/, CLAUDE.md 等）
+- [x] 使用 Squash Merge 簡化 history
+- [x] Private repo 保留完整 commit 記錄
+- [ ] 待 CI 檢查通過
+- [ ] 待 Code Review
+
+---
+
+## ⚠️ 重要提醒
+
+- Public repo 只包含 1 個 squash commit
+- Private repo 保留完整 {total_commits} 個 commits
+- 兩個 repo 的 history 完全獨立（這是正常的）
+- **發布後不要從 public 拉回變更到 private**（單向流程）
+
+---
+
+## 🔗 相關連結
+
+- 完整變更記錄：查看 private repo 的 CHANGELOG.md
+- 技術文件：（僅私人 repo 可見）
+```
+
+**格式 2 - Cherry-pick 模式**（commits ≤ 10 時使用）：
 ```markdown
 ## 📋 變更摘要
 
@@ -398,11 +665,11 @@ PR URL: https://github.com/bouob/tickets_hunter/pull/123
 
 ## 📚 使用場景
 
-### 場景 1：標準發布流程
+### 場景 1：Squash Merge 模式（推薦，commits > 10）⭐ 新增
 
 ```bash
-# 在 private repo 完成開發
-gsave -> 提交多個 commits（包含程式碼和機敏檔案）
+# 在 private repo 累積多次開發
+gsave -> 提交多個 commits（25 個 commits，包含程式碼和機敏檔案）
 gpush -> 推送到 private repo
 
 # 準備發布到公開 repo
@@ -410,17 +677,55 @@ publicpr
 
 執行流程：
 1. 確認目標 repo: origin (https://github.com/bouob/tickets_hunter.git)
-2. 掃描 commits: 找到 8 個，排除 3 個機敏檔案相關
-3. 預覽檔案變更: 8 個檔案變更
-4. 確認推送？y
-5. 建立臨時分支: public-sync-2025-11-07-1430
-6. Cherry-pick 5 個有效 commits
-7. 推送到 origin
-8. 建立 PR: https://github.com/bouob/tickets_hunter/pull/123
-9. 清理臨時分支
+2. 取得最新狀態
+3. 策略選擇：
+   - 檢測到 25 個 commits
+   - 建議使用 Squash Merge
+   - 確認？Y
+4. Squash Merge 執行：
+   - 分析檔案變更（不掃描 commits）
+   - 過濾機敏檔案
+   - 顯示 14 個乾淨檔案變更
+5. 確認推送？y
+6. 建立臨時分支: public-sync-2025-11-12-0322
+7. 複製檔案變更（避免 cherry-pick）
+8. 建立 squash commit
+9. 推送到 origin
+10. 建立 PR: https://github.com/bouob/tickets_hunter/pull/93
+11. 清理臨時分支
+
+結果：
+- Public repo: 1 個 squash commit
+- Private repo: 保留完整 25 個 commits
+- 節省時間：95%（數分鐘 vs 數小時）
 ```
 
-### 場景 2：預覽模式
+### 場景 2：Cherry-pick 模式（commits ≤ 10）
+
+```bash
+# 在 private repo 完成小型開發
+gsave -> 提交少數 commits（8 個 commits）
+gpush -> 推送到 private repo
+
+# 準備發布到公開 repo
+publicpr
+
+執行流程：
+1. 確認目標 repo: origin (https://github.com/bouob/tickets_hunter.git)
+2. 策略選擇：
+   - 檢測到 8 個 commits
+   - 使用 Cherry-pick 模式
+3. 掃描 commits: 找到 8 個，排除 3 個機敏檔案相關
+4. 預覽檔案變更: 8 個檔案變更
+5. 確認推送？y
+6. 建立臨時分支: public-sync-2025-11-07-1430
+7. Cherry-pick 5 個有效 commits
+8. 推送到 origin
+9. 建立 PR: https://github.com/bouob/tickets_hunter/pull/123
+10. 清理臨時分支
+```
+
+### 場景 3：預覽模式
 
 ```bash
 # 先預覽不實際推送
@@ -428,22 +733,21 @@ publicpr --dry-run
 
 執行流程：
 1. 確認目標 repo: origin
-2. 掃描 commits: 找到 8 個，排除 3 個
-3. 預覽檔案變更: 8 個檔案變更
-4. 顯示完整分析報告
-5. 🔍 Dry-run 模式，不執行實際推送
+2. 策略選擇：自動檢測並建議策略
+3. 顯示完整分析報告
+4. 🔍 Dry-run 模式，不執行實際推送
 ```
 
-### 場景 3：自動 Merge 模式
+### 場景 4：強制 Squash 模式
 
 ```bash
-# 建立 PR 並設定自動合併
-publicpr --auto-merge
+# 強制使用 Squash（即使 commits < 10）
+publicpr --strategy=squash
 
 執行流程：
-1-7. （同場景 1）
-8. 建立 PR 並設定 auto-merge
-9. 提示：「待 CI 通過後將自動 merge」
+1. 確認目標 repo: origin
+2. 跳過策略檢測，直接使用 Squash Merge
+3-11. （同場景 1 的 Squash 流程）
 ```
 
 ---
