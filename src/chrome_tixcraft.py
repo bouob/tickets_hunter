@@ -51,7 +51,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.12)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.12.1)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -65,6 +65,7 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*.googlesyndication.com/*",
 "*.ssp.hinet.net/*",
 "*a.amnet.tw/*",
+"*anymind360.com/*",
 "*.appier.net/*",
 "*.c.appier.net/*",
 "*cdn.cookielaw.org/*",
@@ -87,8 +88,11 @@ CONST_MAXBLOCK_EXTENSION_FILTER =[
 "*rollbar.com/*",
 "*sb.scorecardresearch.com/*",
 "*tagtoo.co/*",
-"*ticketmaster.sg/js/adblock*",
+"*ticketmaster.com/js/ads.js*",
+"*ticketmaster.com/epsf/asset/eps.js*",
 "*ticketmaster.sg/js/adblock.js*",
+"*ticketmaster.sg/js/ads.js*",
+"*ticketmaster.sg/epsf/asset/eps.js*",
 "*tixcraft.com/js/analytics.js*",
 "*tixcraft.com/js/common.js*",
 "*tixcraft.com/js/custom.js*",

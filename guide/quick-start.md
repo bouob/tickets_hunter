@@ -1,10 +1,10 @@
----
-category: "Getting Started"
-level: 1
-audience: "Beginners"
-version: "1.2"
-last_updated: "2025-11-01"
----
+<!--
+文件說明：協助使用者在 5 分鐘內完成第一次搶票設定
+分類：Getting Started (level: 1)
+目標受眾：初學者
+版本：1.2
+最後更新：2025-11-12
+-->
 
 # 快速入門指南
 
