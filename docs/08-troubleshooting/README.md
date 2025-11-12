@@ -86,6 +86,16 @@
   - 移除雙重分割問題
   - area_auto_fallback=false 現在正確運作
 
+- **TixCraft 全域 Alert 自動處理 (2025-11-12)** ⭐ 新增
+  - 修復區域選擇送出後，頁面跳轉時 alert 彈窗無法自動關閉問題
+  - 實作位置：`nodriver_tixcraft_main()` (Line 4584-4605)
+  - 使用全域 alert handler（整個 session 有效，包含頁面跳轉）
+  - 使用 CDP `JavascriptDialogOpening` 事件監聽 + `handle_java_script_dialog(accept=True)`
+  - 參考 KHAM 平台已驗證實作（Line 10681-10697）
+  - 輸出除錯訊息：`[GLOBAL ALERT] Alert detected/dismissed`
+  - 符合規格 FR-050（處理送出後確認對話框）
+  - 優點：自動處理所有 alert（售完、錯誤、確認等），無需每個位置單獨實作
+
 ---
 
 ## 🔧 其他常見問題
