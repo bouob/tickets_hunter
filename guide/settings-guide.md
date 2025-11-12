@@ -1,9 +1,10 @@
----
-category: "Configuration Reference"
-level: 2
-version: "1.2"
-last_updated: "2025-11-01"
----
+<!--
+文件說明：詳細說明 settings.json 在圖形介面中顯示的各項設定欄位
+分類：Configuration Reference (level: 2)
+目標受眾：一般使用者
+版本：1.2
+最後更新：2025-11-12
+-->
 
 # settings.json 詳細設定說明
 
