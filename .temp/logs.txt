@@ -1,203 +1,892 @@
----
-name: Git Commit Helper
-description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help writing commit messages or reviewing staged changes.
----
+To exit web server press Ctrl + C.
+server running on port: 16888
+goto url: http://127.0.0.1:16888/settings.html
+run button pressed.
+execute in shell mode.
+try python
+Setting tixcraft SID cookie, length: 26
+CDP setCookie result: True
+tixcraft SID cookie set successfully
+Verified SID cookie: domain=.tixcraft.com, value length=26
+https://tixcraft.com/activity/detail/25_twice
+[GLOBAL ALERT] Global alert handler registered
+redirec to new url: https://tixcraft.com/activity/game/25_twice
+https://tixcraft.com/activity/game/25_twice
+[GLOBAL ALERT] Global alert handler registered
+[DATE KEYWORD] No keyword specified, using all 2 dates
+[DATE KEYWORD] ========================================
+[DATE KEYWORD] Match Summary:
+[DATE KEYWORD]   Total dates available: 2
+[DATE KEYWORD]   Total dates matched: 2
+[DATE KEYWORD]   Match rate: 100.0%
+[DATE KEYWORD] ========================================
+[DATE SELECT] Auto-select mode: from bottom to top
+[DATE SELECT] Selected target: #2/2
+[DATE SELECT] Trying button[data-href] method within target_area...
+[DATE SELECT] button[data-href] found in target_area: https://tixcraft.com/ticket/area/25_twice/20208
+[DATE SELECT] Navigating via button[data-href]...
+[DATE SELECT] Successfully navigated via button[data-href]
+[DATE SELECT] ========================================
+[DATE SELECT] Date selection completed successfully
+[DATE SELECT] Method used: button[data-href]
+[DATE SELECT] ========================================
+https://tixcraft.com/ticket/area/25_twice/20208
+[GLOBAL ALERT] Global alert handler registered
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] No keyword specified, matching all areas
+[AREA KEYWORD] Auto-select mode: from top to bottom
+[AREA KEYWORD] No areas found
+[AREA FALLBACK] No available options after exclusion
+[AREA SELECT] Will reload page and retry
+[AREA SELECT] Timeout waiting for area links after reload
+[GLOBAL ALERT] Global alert handler registered
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] No keyword specified, matching all areas
+[AREA KEYWORD] Auto-select mode: from top to bottom
+[AREA KEYWORD] No areas found
+[AREA FALLBACK] No available options after exclusion
+[AREA SELECT] Will reload page and retry
+[AREA SELECT] Page loaded, area links found
+[GLOBAL ALERT] Global alert handler registered
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] No keyword specified, matching all areas
+[AREA KEYWORD] Auto-select mode: from top to bottom
+[AREA KEYWORD] Found 6 area(s) to check
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] [1/6] Checking: &nbsp;D2區8800 剩餘 1...
+[AREA KEYWORD]   No keyword filter, accepting this area
+[AREA KEYWORD]   → Area added to matched list (total: 1)
+[AREA KEYWORD]   Mode is 'from top to bottom', stopping at first match
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] Match Summary:
+[AREA KEYWORD]   Total areas checked: 6
+[AREA KEYWORD]   Total areas matched: 1
+[AREA KEYWORD]   Match rate: 16.7%
+[AREA KEYWORD]   Selected target index: 0
+[AREA KEYWORD] ========================================
+[GLOBAL ALERT] Alert detected: '此場次/區域已售完'
+[GLOBAL ALERT] Alert detected: '此場次/區域已售完'
+[GLOBAL ALERT] Alert detected: '此場次/區域已售完'
+[GLOBAL ALERT] Alert detected: '此場次/區域已售完'
+[GLOBAL ALERT] Alert detected: '此場次/區域已售完'
+[GLOBAL ALERT] Alert dismissed
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+https://tixcraft.com/activity/game/25_twice
+[GLOBAL ALERT] Global alert handler registered
+[DATE KEYWORD] No keyword specified, using all 2 dates
+[DATE KEYWORD] ========================================
+[DATE KEYWORD] Match Summary:
+[DATE KEYWORD]   Total dates available: 2
+[DATE KEYWORD]   Total dates matched: 2
+[DATE KEYWORD]   Match rate: 100.0%
+[DATE KEYWORD] ========================================
+[DATE SELECT] Auto-select mode: from bottom to top
+[DATE SELECT] Selected target: #2/2
+[DATE SELECT] Trying button[data-href] method within target_area...
+[DATE SELECT] button[data-href] found in target_area: https://tixcraft.com/ticket/area/25_twice/20208
+[DATE SELECT] Navigating via button[data-href]...
+[DATE SELECT] Successfully navigated via button[data-href]
+[DATE SELECT] ========================================
+[DATE SELECT] Date selection completed successfully
+[DATE SELECT] Method used: button[data-href]
+[DATE SELECT] ========================================
+https://tixcraft.com/ticket/area/25_twice/20208
+[GLOBAL ALERT] Global alert handler registered
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] No keyword specified, matching all areas
+[AREA KEYWORD] Auto-select mode: from top to bottom
+[AREA KEYWORD] Found 4 area(s) to check
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] [1/4] Checking: &nbsp;1樓V10區5800 剩餘 1...
+[AREA KEYWORD]   No keyword filter, accepting this area
+[AREA KEYWORD]   → Area added to matched list (total: 1)
+[AREA KEYWORD]   Mode is 'from top to bottom', stopping at first match
+[AREA KEYWORD] ========================================
+[AREA KEYWORD] Match Summary:
+[AREA KEYWORD]   Total areas checked: 4
+[AREA KEYWORD]   Total areas matched: 1
+[AREA KEYWORD]   Match rate: 25.0%
+[AREA KEYWORD]   Selected target index: 0
+[AREA KEYWORD] ========================================
+https://tixcraft.com/ticket/ticket/25_twice/20208/194/86
+[GLOBAL ALERT] Global alert handler registered
+Starting to check agreement checkbox
+Checking checkbox: #TicketForm_agree
+Checkbox result: True
+Agreement checkbox checked successfully
+[TICKET SELECT] Found 1 select element(s)
+[TICKET SELECT] Valid ticket type: TicketForm_ticketPrice_03 - '全票 5,800'
+[TICKET SELECT] Valid ticket types: 1/1
+[TICKET SELECT] Selected ticket type (mode-based): '全票 5,800'
+Setting ticket number: 2
+Ticket number set successfully, starting OCR captcha processing
+[TIXCRAFT OCR] away_from_keyboard_enable: True
+[TIXCRAFT OCR] previous_answer: None
+[TIXCRAFT OCR] ocr_captcha_image_source: canvas
+[TIXCRAFT OCR] Processing time: 0.089
+[TIXCRAFT OCR] Result: wsqu
+Starting to fill in captcha...
+[TIXCRAFT OCR] Form submitted
+https://tixcraft.com/ticket/order
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+https://tixcraft.com/ticket/checkout
+[GLOBAL ALERT] Global alert handler registered
+bot elapsed time: 11.725
+TixCraft ticket purchase completed
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+[GLOBAL ALERT] Global alert handler registered
+BOT Paused.
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Git Commit Helper
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Quick start
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Analyze staged changes and generate commit message:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```bash
-# View staged changes
-git diff --staged
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Generate commit message based on changes
-# (Claude will analyze the diff and suggest a message)
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Commit message format
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Follow conventional commits format:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```
-<type>(<scope>): <description>
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-[optional body]
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-[optional footer]
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-### Types
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, missing semicolons)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-### Examples
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Feature commit:**
-```
-feat(auth): add JWT authentication
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Implement JWT-based authentication system with:
-- Login endpoint with token generation
-- Token validation middleware
-- Refresh token support
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Bug fix:**
-```
-fix(api): handle null values in user profile
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Prevent crashes when user profile fields are null.
-Add null checks before accessing nested properties.
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Refactor:**
-```
-refactor(database): simplify query builder
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Extract common query patterns into reusable functions.
-Reduce code duplication in database layer.
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Analyzing changes
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Review what's being committed:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```bash
-# Show files changed
-git status
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Show detailed changes
-git diff --staged
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Show statistics
-git diff --staged --stat
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Show changes for specific file
-git diff --staged path/to/file
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Commit message guidelines
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**DO:**
-- Use imperative mood ("add feature" not "added feature")
-- Keep first line under 50 characters
-- Capitalize first letter
-- No period at end of summary
-- Explain WHY not just WHAT in body
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**DON'T:**
-- Use vague messages like "update" or "fix stuff"
-- Include technical implementation details in summary
-- Write paragraphs in summary line
-- Use past tense
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Multi-file commits
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-When committing multiple related changes:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```
-refactor(core): restructure authentication module
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-- Move auth logic from controllers to service layer
-- Extract validation into separate validators
-- Update tests to use new structure
-- Add integration tests for auth flow
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Breaking change: Auth service now requires config object
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Scope examples
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Frontend:**
-- `feat(ui): add loading spinner to dashboard`
-- `fix(form): validate email format`
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Backend:**
-- `feat(api): add user profile endpoint`
-- `fix(db): resolve connection pool leak`
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-**Infrastructure:**
-- `chore(ci): update Node version to 20`
-- `feat(docker): add multi-stage build`
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Breaking changes
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Indicate breaking changes clearly:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```
-feat(api)!: restructure API response format
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-BREAKING CHANGE: All API responses now follow JSON:API spec
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Previous format:
-{ "data": {...}, "status": "ok" }
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-New format:
-{ "data": {...}, "meta": {...} }
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Migration guide: Update client code to handle new response structure
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Template workflow
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-1. **Review changes**: `git diff --staged`
-2. **Identify type**: Is it feat, fix, refactor, etc.?
-3. **Determine scope**: What part of the codebase?
-4. **Write summary**: Brief, imperative description
-5. **Add body**: Explain why and what impact
-6. **Note breaking changes**: If applicable
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Interactive commit helper
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Use `git add -p` for selective staging:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```bash
-# Stage changes interactively
-git add -p
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Review what's staged
-git diff --staged
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Commit with message
-git commit -m "type(scope): description"
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Amending commits
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-Fix the last commit message:
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-```bash
-# Amend commit message only
-git commit --amend
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-# Amend and add more changes
-git add forgotten-file.js
-git commit --amend --no-edit
-```
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Best practices
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-1. **Atomic commits** - One logical change per commit
-2. **Test before commit** - Ensure code works
-3. **Reference issues** - Include issue numbers if applicable
-4. **Keep it focused** - Don't mix unrelated changes
-5. **Write for humans** - Future you will read this
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-## Commit message checklist
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
 
-- [ ] Type is appropriate (feat/fix/docs/etc.)
-- [ ] Scope is specific and clear
-- [ ] Summary is under 50 characters
-- [ ] Summary uses imperative mood
-- [ ] Body explains WHY not just WHAT
-- [ ] Breaking changes are clearly marked
-- [ ] Related issue numbers are included
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert detected: '此動作將會刪除票券
+
+確定要刪除此筆票券嗎？'
+[GLOBAL ALERT] Alert dismissed
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+[GLOBAL ALERT] Failed to dismiss alert: No dialog is showing [code: -32602]
+https://tixcraft.com/order
+[WinError 1225] 遠端電腦拒絕網路連線。
+successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_ndsdnx8n
