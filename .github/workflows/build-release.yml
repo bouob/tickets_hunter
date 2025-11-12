@@ -110,20 +110,24 @@ jobs:
           if (Test-Path "CHANGELOG.md") {
             $content = Get-Content "CHANGELOG.md" -Raw
 
-            # Try to extract current version's changes
-            $pattern = "## \[$version\].*?(?=## \[|\z)"
+            # Escape special regex characters in version number (dots)
+            $escapedVersion = [regex]::Escape($version)
+
+            # Try to extract current version's changes (without square brackets)
+            # Pattern: ## 2025.11.12.1 followed by content until next ## or end
+            $pattern = "(?s)## $escapedVersion\s*?\n(.*?)(?=\n## |\z)"
             if ($content -match $pattern) {
-              $notes = $Matches[0]
+              $notes = $Matches[1]
             } else {
-              # Fallback: extract from v prefix
-              $pattern = "## \[v?$version\].*?(?=## \[|\z)"
+              # Fallback: try with v prefix
+              $pattern = "(?s)## v?$escapedVersion\s*?\n(.*?)(?=\n## |\z)"
               if ($content -match $pattern) {
-                $notes = $Matches[0]
+                $notes = $Matches[1]
               } else {
-                # Fallback: use latest entry
-                $pattern = "## \[.*?\].*?(?=## \[|\z)"
+                # Fallback: use latest entry (first ## heading)
+                $pattern = "(?s)## .*?\n(.*?)(?=\n## |\z)"
                 if ($content -match $pattern) {
-                  $notes = $Matches[0]
+                  $notes = $Matches[1]
                 } else {
                   $notes = "Version $version release"
                 }
@@ -131,7 +135,6 @@ jobs:
             }
 
             # Clean up and format
-            $notes = $notes -replace '## \[.*?\]', ''
             $notes = $notes.Trim()
 
             # Write to output (escape multiline)
