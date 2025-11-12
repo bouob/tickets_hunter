@@ -102,7 +102,7 @@ Step 5: Pre-release 發布完成 🎉 ⭐ 新增
 4. **CHANGELOG.md 已更新**：
    ```bash
    # 檢查是否有對應版本的區塊
-   grep "## \[2025.11.07\]" CHANGELOG.md
+   grep "## 2025.11.07" CHANGELOG.md
    ```
 
 ---
@@ -279,7 +279,7 @@ fi
 - 搜尋模式：
   ```bash
   # 搜尋版本號區塊
-  sed -n '/## \[2025.11.07\]/,/## \[/p' CHANGELOG.md | \
+  sed -n '/## 2025.11.07/,/## /p' CHANGELOG.md | \
     sed '$ d' | tail -n +2
   ```
 
@@ -312,17 +312,12 @@ Target: origin/main (abc1234)
 
 Tag Message:
 ───────────────────────────────────────
-## [2025.11.07] - 2025-11-07
+## 2025.11.07
 
-### Added
 - TicketPlus platform support with full automation
 - Auto seat selection for ibon platform
-
-### Fixed
 - OCR timeout issues in high-load scenarios
 - Date keyword matching edge cases
-
-### Improved
 - Error handling for network failures
 - Logging clarity for debugging
 
@@ -343,14 +338,52 @@ https://github.com/bouob/tickets_hunter.git
 
 ### 步驟 7 - 建立 Annotated Tag
 
-#### A. 建立 Tag
+#### A. 準備 Tag Message（英文版本）
+
+**重要**：Git tag message 必須使用英文，以確保跨環境相容性。
+
+**常見 Tag Message 規範**：
+
+**格式 1：簡短版本聲明（推薦用於自動化發布）**
+```bash
+TAG_MESSAGE="Release ${VERSION}"
+```
+範例：`Release 2025.11.12`
+
+**格式 2：Semantic Versioning 風格**
+```bash
+TAG_MESSAGE="chore(release): ${VERSION}"
+```
+範例：`chore(release): 2025.11.12`
+
+**格式 3：詳細描述（需從 CHANGELOG 提取英文摘要）**
+```bash
+TAG_MESSAGE="Release ${VERSION}
+
+- Enhanced ad blocking mechanism
+- Add KKTIX auto-handling for verification
+- Add Ticketmaster ad blocking rules"
+```
+
+**本專案建議**：
+- 使用格式 1（簡短）或格式 2（Conventional Commits 風格）
+- 預設使用：`Release ${VERSION}`
+- CHANGELOG 中文內容稍後用於 GitHub Release description（給使用者閱讀）
+
+#### B. 建立 Tag
 
 - 執行 `git tag -a v${VERSION} -m "${TAG_MESSAGE}"`
 - 使用 `-a` 建立 annotated tag（包含完整 metadata）
 
-#### B. 驗證 Tag 建立
+**範例**：
+```bash
+git tag -a v2025.11.12 -m "Release 2025.11.12"
+```
+
+#### C. 驗證 Tag 建立
 
 - 執行 `git tag -l -n9 v${VERSION}` 顯示 tag 資訊
+- 確認 tag message 為英文格式
 
 ### 步驟 8 - 推送 Tag 到 Origin
 
@@ -463,8 +496,14 @@ https://github.com/bouob/tickets_hunter/actions/runs/1234567890
 
 執行發布指令：
 ```bash
-gh release edit v${VERSION} --prerelease --latest=false
+# 重要：必須將 draft 改為 false，否則 Release 會保持草稿狀態
+gh release edit v${VERSION} --draft=false --prerelease --latest=false
 ```
+
+**關鍵說明**：
+- GitHub Actions 建立的 Release 預設為 `draft: true`（草稿狀態）
+- 必須執行 `--draft=false` 才能正式發布
+- 草稿狀態的 Release 不會顯示在公開頁面，使用者無法下載
 
 顯示完成訊息：
 ```
@@ -476,6 +515,7 @@ Release 連結：
 https://github.com/bouob/tickets_hunter/releases/tag/v2025.11.07
 
 狀態: Pre-release（測試版本）
+Draft: false（已發布）
 使用者可自行下載測試使用
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -814,8 +854,8 @@ gh release view v2025.11.12
 1. **手動編輯 CHANGELOG.md**
    ```bash
    # 新增版本區塊
-   ## [2025.11.07] - 2025-11-07
-   ### Added
+   ## 2025.11.07
+
    - New features...
    ```
 

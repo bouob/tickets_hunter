@@ -1,13 +1,9 @@
+https://test7777777.kktix.cc/events/e48360a9
 代碼驗證關鍵區域:
-<label class="radio ng-binding ng-scope" ng-if="oq.type != 'invitation_code'" ng-repeat="oq in orderStageQualifications track by $index">
-              <input type="radio" ng-model="ticketModel.use_qualification_id" ng-disabled="oq.disabled" name="condition-972524" value="44817" class="ng-pristine ng-untouched ng-valid ng-not-empty">
-              請輸入開頭為「TH」的代碼
-              <!-- ngIf: oq.hasAction -->
-              <!-- ngIf: oq.type == 'member_code' --><input class="member-code ng-pristine ng-valid ng-scope ng-isolate-scope ng-empty ng-touched" ng-if="oq.type == 'member_code'" type="text" ng-model="ticketModel.member_codes[oq.id]" ng-disabled="checkSelectedQ(oq.id)" auto-focus="!checkSelectedQ(oq.id)"><!-- end ngIf: oq.type == 'member_code' -->
-            </label>
+<input class="member-code ng-pristine ng-valid ng-scope ng-isolate-scope ng-empty ng-touched" ng-if="oq.type == 'member_code'" type="text" ng-model="ticketModel.member_codes[oq.id]" ng-disabled="checkSelectedQ(oq.id)" auto-focus="!checkSelectedQ(oq.id)">
 
 頁面元素body:
-<body class=" registration-vertical pace-done"><div class="pace  pace-inactive"><div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
+<body class="registration-vertical pace-done" style=""><div class="pace  pace-inactive"><div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
   <div class="pace-progress-inner"></div>
 </div>
 <div class="pace-activity"></div></div>
@@ -32,7 +28,7 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav hidden show-nav-menu">
-                <li class="user-signed-in">
+                <li class="user-signed-in hidden">
                     <a href="/account/tickets">我的票券</a>
                 </li>
                 <li><a href="/events">探索活動</a></li>
@@ -40,18 +36,18 @@
                     <form url="https://kktix.cc/events" class="navbar-form navbar-left" action="/events" accept-charset="UTF-8" method="get"><input name="utf8" type="hidden" value="✓">
                         <div class="form-group">
                             <input type="text" name="search" id="search" placeholder="搜尋活動" class="form-control">
-                            <input type="hidden" name="start_at" id="start_at" value="2025/11/04">
+                            <input type="hidden" name="start_at" id="start_at" value="2025/11/11">
                             <i class="fa fa-search"></i>
                         </div>
 </form>                </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li class="not-signed-in hidden"><a href="https://kktix.com/users/sign_up?back_to=https://kktix.com/events/e48360a9/registrations/new">註冊</a></li>
-                <li class="not-signed-in hidden"><a href="https://kktix.com/users/sign_in?back_to=https://kktix.com/events/e48360a9/registrations/new">登入</a></li>
-                <li class="new-event user-signed-in show-nav-menu hidden">
+                <li class="not-signed-in"><a href="https://kktix.com/users/sign_up?back_to=https://kktix.com/events/e48360a9/registrations/new">註冊</a></li>
+                <li class="not-signed-in"><a href="https://kktix.com/users/sign_in?back_to=https://kktix.com/events/e48360a9/registrations/new">登入</a></li>
+                <li class="new-event user-signed-in hidden show-nav-menu">
                     <a href="https://kktix.com/dashboard/events/new">建立活動<i aria-hidden="true" class="fa fa-plus-circle"></i></a>
                 </li>
-                <li class="dropdown user-signed-in show-nav-menu hidden" id="nav-org-dropdown-id">
+                <li class="dropdown user-signed-in hidden show-nav-menu" id="nav-org-dropdown-id">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">選擇組織 <i class="caret"></i></a>
                     <ul class="dropdown-menu" role="menu">
                         <li class="dropdown-header">組織列表</li>
@@ -60,12 +56,12 @@
                         <li><a href="/dashboard/organizations/new"><i class="fa fa-plus-circle"></i> 建立新組織</a></li>
                     </ul>
                 </li>
-                <li class="dropdown user-block user-signed-in"> <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="nav-user-display-id" class="user-display-name">VictorZ</span><i class="fa fa-user"></i><div style="display: none;" class="user-account-hint dot"></div><span class="caret"></span></a>
+                <li class="dropdown user-block user-signed-in hidden"> <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="nav-user-display-id" class="user-display-name"></span><i class="fa fa-user"></i><div style="display: none;" class="user-account-hint dot"></div><span class="caret"></span></a>
                     <ul class="dropdown-menu" role="menu">
                         <li>
-                            <a id="nav-user-path" href="/user/20263">
-                                <img id="nav-user-avatar" alt="avatar" src="https://assets.kktix.io/upload_images/36158/1349917535zvimAU_small.jpg" class="img-circle user-icon">
-                                <span id="nav-user-link-id" class="user-text">VictorZ</span>
+                            <a id="nav-user-path">
+                                <img id="nav-user-avatar" alt="avatar" src="" class="img-circle user-icon">
+                                <span id="nav-user-link-id" class="user-text"></span>
                             </a>
                         </li>
                         <li class="divider"></li>
@@ -307,7 +303,7 @@
       <div class="display-table" id="ticket_972524">
         <div class="display-table-row">
           <span class="ticket-name ng-binding">
-              e48360a9
+              e48360a9-1
               <!-- ngIf: unitNotice --><i ng-if="unitNotice" class="fa fa-info-circle fa-last ng-scope" rel="tooltip" title="需具備相關資格方可購買"></i><!-- end ngIf: unitNotice -->
               <!-- ngIf: !!ticket.labelsText -->
               <div class="ticket-extra-info">
@@ -354,6 +350,46 @@
           </div>
         </div>
       </div><!-- end ngIf: hasOrderStageQualifications && ticketModel.quantity > 0 -->
+
+      <!-- ngRepeat: code in ticketModel.invitationCodes track by $index -->
+  </div><!-- end ngRepeat: ticket in tickets | orderBy:'position' --><div class="ticket-unit ng-scope" ng-class="{active: ticketModel.quantity != 0}" ng-repeat="ticket in tickets | orderBy:'position'" ng-init="index = $index" ng-controller="TicketCtrl">
+      <div class="display-table" id="ticket_972565">
+        <div class="display-table-row">
+          <span class="ticket-name ng-binding">
+              e48360a9-2
+              <!-- ngIf: unitNotice --><i ng-if="unitNotice" class="fa fa-info-circle fa-last ng-scope" rel="tooltip" title="需具備相關資格方可購買"></i><!-- end ngIf: unitNotice -->
+              <!-- ngIf: !!ticket.labelsText -->
+              <div class="ticket-extra-info">
+                <!-- ngIf: ticket.for_online_event -->
+              </div>
+          </span>
+          <!-- ngIf: showSeatInfo() -->
+          <span class="ticket-price">
+            <!-- ngIf: ticket.price --><span ng-if="ticket.price" class="ng-scope">
+              <!-- ngIf: ticket.price.cents > 0 -->
+              <!-- ngIf: ticket.price.cents ==  0 --><span ng-if="ticket.price.cents ==  0" class="ng-binding ng-scope">
+                免費
+                <span class="mobile-fee ng-binding" ng-bind-html="ticket.booking_fee_cents | feeAnnotation : ticket.price.currency"></span>
+              </span><!-- end ngIf: ticket.price.cents ==  0 -->
+            </span><!-- end ngIf: ticket.price -->
+          </span>
+          <!-- ngIf: chargeBookingFee -->
+          <!-- ngIf: purchasableAndSelectable --><span class="ticket-quantity ng-scope" ng-if="purchasableAndSelectable">
+              <button class="btn-default minus" ng-click="quantityBtnClick(-1)" ng-disabled="ticketModel.quantity &lt;= 0 || busy" disabled="disabled">
+                <i class="fa fa-minus"></i>
+              </button>
+              <input type="text" value="0" ng-keydown="quantityInputKeyDown($event)" ng-model="ticketModel.quantity" ng-keyup="quantityInputKeyUp($event)" ng-disabled="busy" class="ng-pristine ng-untouched ng-valid ng-not-empty">
+              <button class="btn-default plus" ng-click="quantityBtnClick(1)" ng-disabled="cantBuyMore()">
+                <i class="fa fa-plus"></i>
+              </button>
+          </span><!-- end ngIf: purchasableAndSelectable -->
+          <!-- ngIf: !purchasableAndSelectable -->
+        </div>
+        <!-- ngRepeat: addOn in ticket.add_ons -->
+      </div>
+      <!-- <div class="message" ng-if="showKKTIXonly" ng-bind-html="showKKTIXonlyMsg"></div> -->
+
+      <!-- ngIf: hasOrderStageQualifications && ticketModel.quantity > 0 -->
 
       <!-- ngRepeat: code in ticketModel.invitationCodes track by $index -->
   </div><!-- end ngRepeat: ticket in tickets | orderBy:'position' -->
@@ -601,6 +637,7 @@
 
 
         <img style="display:none" src="//kktix.cc/change_locale?locale=zh-TW">
-    
+    <script defer="" src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;8431e8ceb47c46f88691eed4fe09a436&quot;,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}" crossorigin="anonymous"></script>
+
 
 </body>
