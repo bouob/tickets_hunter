@@ -3653,10 +3653,21 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         except:
             pass
 
+        # Wait for configured interval
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
             import time
             await asyncio.sleep(interval)
+
+        # Smart wait: Wait for area links (.zone a) to appear after reload (max 3 seconds)
+        # This ensures not just the container, but actual area links are loaded
+        try:
+            el = await tab.wait_for('.zone a', timeout=3)
+            if show_debug_message:
+                print("[AREA SELECT] Page loaded, area links found")
+        except Exception as wait_exc:
+            if show_debug_message:
+                print("[AREA SELECT] Timeout waiting for area links after reload")
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -4578,6 +4589,38 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Global alert handler - auto-dismiss all alerts (sold out, errors, etc.)
+    # Handles alerts that appear after page navigation (e.g., area selection redirects)
+    # Reference: KHAM platform implementation (Line 10681-10697)
+    async def handle_global_alert(event):
+        current_url, _ = await nodriver_current_url(tab)
+
+        if '/ticket/checkout' in current_url:
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Alert on checkout page, NOT auto-dismissing: '{event.message}'")
+            return
+
+        if show_debug_message:
+            print(f"[GLOBAL ALERT] Alert detected: '{event.message}'")
+        try:
+            await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Alert dismissed")
+        except Exception as dismiss_exc:
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
+
+    # Register global alert handler (remains active throughout session)
+    try:
+        tab.add_handler(cdp.page.JavascriptDialogOpening, handle_global_alert)
+        if show_debug_message:
+            print(f"[GLOBAL ALERT] Global alert handler registered")
+    except Exception as handler_exc:
+        if show_debug_message:
+            print(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
 
     global tixcraft_dict
     if not 'tixcraft_dict' in globals():
