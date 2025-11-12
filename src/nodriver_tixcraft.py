@@ -18039,6 +18039,8 @@ async def nodrver_block_urls(tab, config_dict):
     """
     NETWORK_BLOCKED_URLS = [
         # General tracking and analytics
+        '*.appier.net/*',
+        '*.c.appier.net/*',
         '*.clarity.ms/*',
         '*.cloudfront.com/*',
         '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
