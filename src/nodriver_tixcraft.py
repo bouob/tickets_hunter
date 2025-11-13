@@ -5504,16 +5504,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             if show_debug_message:
                 print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
 
-    # Register global alert handler (remains active throughout session)
-    try:
-        tab.add_handler(cdp.page.JavascriptDialogOpening, handle_global_alert)
-        if show_debug_message:
-            print(f"[GLOBAL ALERT] Global alert handler registered")
-    except Exception as handler_exc:
-        if show_debug_message:
-            print(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
-
     global tixcraft_dict
+
+    # Initialize tixcraft_dict if not exists
     if not 'tixcraft_dict' in globals():
         tixcraft_dict = {}
         tixcraft_dict["fail_list"]=[]
@@ -5525,6 +5518,19 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["area_retry_count"]=0
         tixcraft_dict["played_sound_ticket"] = False
         tixcraft_dict["played_sound_order"] = False
+        tixcraft_dict["alert_handler_registered"] = False
+
+    # Register global alert handler (remains active throughout session)
+    # Only register once to prevent infinite loop
+    if not tixcraft_dict.get("alert_handler_registered", False):
+        try:
+            tab.add_handler(cdp.page.JavascriptDialogOpening, handle_global_alert)
+            tixcraft_dict["alert_handler_registered"] = True
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Global alert handler registered")
+        except Exception as handler_exc:
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
 
     await nodriver_tixcraft_home_close_window(tab)
 
