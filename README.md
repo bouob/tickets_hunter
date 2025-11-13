@@ -29,7 +29,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 | 平台 | Chrome/Selenium | NoDriver | 實測狀況 | 備註 |
 |------|:---------------:|:--------:|:--------:|------|
-| **🎤 TicketMaster** | ✅ 完全支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本為主 (Tixcraft Family) |
+| **🎤 TicketMaster** | ❌ 不支援 | ⚠️ 部分支援 | 🟡 待測試 | Chrome版本會被偵測 |
 | **🏟️ Urbtix 城市** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 | **🏟️ HKTicketing 快達票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
 | **🎪 FamiTicket 全網** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
