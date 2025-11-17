@@ -111,7 +111,7 @@ CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 CONST_CHROME_FAMILY = ["chrome","edge","brave"]
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 
 # ===== Cloudflare 繞過模式設定 =====
 # 模式說明：
@@ -3107,6 +3107,897 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
             print(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
         return False
 
+# ============================================
+# Ticketmaster.com NoDriver Platform Migration
+# ============================================
+# Foundation Functions (T004-T007)
+#
+
+# Helper: Convert NoDriver RemoteObject to standard Python dict/list
+def convert_remote_object(obj, depth=0):
+    """
+    Convert NoDriver CDP RemoteObject format to standard Python types.
+
+    RemoteObject format:
+    {
+      "type": "object",
+      "value": [["key1", {"type": "string", "value": "val1"}], ...]
+    }
+
+    Standard format:
+    {"key1": "val1", "key2": 123, ...}
+    """
+    if not isinstance(obj, dict):
+        if depth == 0:
+            print(f"[CONVERT DEBUG] Root object is not dict: {type(obj)}")
+        return obj
+
+    # Check if this is a RemoteObject
+    if "type" in obj and "value" in obj:
+        obj_type = obj.get("type")
+        obj_value = obj.get("value")
+
+        if depth == 0:
+            print(f"[CONVERT DEBUG] Found RemoteObject with type: {obj_type}")
+
+        if obj_type == "object" and isinstance(obj_value, list):
+            # Convert [[key, {type, value}], ...] to {key: value, ...}
+            if depth == 0:
+                print(f"[CONVERT DEBUG] Converting object with {len(obj_value)} properties")
+            result = {}
+            for item in obj_value:
+                if isinstance(item, (list, tuple)) and len(item) >= 2:
+                    key = item[0]
+                    val_obj = item[1]
+                    # Recursively convert the value
+                    result[key] = convert_remote_object(val_obj, depth + 1)
+            if depth == 0:
+                print(f"[CONVERT DEBUG] Converted object has keys: {list(result.keys())[:5]}")
+            return result
+
+        elif obj_type == "number":
+            return obj_value
+        elif obj_type == "string":
+            return obj_value
+        elif obj_type == "boolean":
+            return obj_value
+        elif obj_type == "array" and isinstance(obj_value, list):
+            if depth == 0:
+                print(f"[CONVERT DEBUG] Converting array with {len(obj_value)} items")
+            return [convert_remote_object(item, depth + 1) for item in obj_value]
+        else:
+            return obj_value
+
+    # Not a RemoteObject, but might contain nested RemoteObjects
+    if isinstance(obj, dict):
+        return {k: convert_remote_object(v, depth + 1) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        if depth == 0:
+            print(f"[CONVERT DEBUG] Root object is list with {len(obj)} items")
+        return [convert_remote_object(item, depth + 1) for item in obj]
+    else:
+        return obj
+
+
+# T004: Parse zone_info JSON from #mapSelectArea
+async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
+    """
+    Parse zone_info JavaScript variable from #mapSelectArea element.
+    Returns: zone_info dict or None if parsing fails
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    zone_info = None
+
+    # Try method 1: String extraction from HTML (preferred - avoids RemoteObject issues)
+    try:
+        mapSelectArea = await tab.query_selector('#mapSelectArea')
+        if mapSelectArea:
+            mapSelectArea_html = await mapSelectArea.get_attribute('innerHTML')
+
+            tag_start = "var zone ="
+            tag_end = "fieldImageType"
+            if tag_start in mapSelectArea_html and tag_end in mapSelectArea_html:
+                zone_string = mapSelectArea_html.split(tag_start)[1]
+                zone_string = zone_string.split(tag_end)[0]
+                zone_string = zone_string.strip().rstrip('\n,')
+
+                import json
+                zone_info = json.loads(zone_string)
+                if show_debug_message:
+                    print(f"[TICKETMASTER ZONE] Parsed zone_info via string extraction ({len(zone_info)} zones)")
+                    if len(zone_info) > 0:
+                        sample_id = list(zone_info.keys())[0]
+                        sample = zone_info[sample_id]
+                        if isinstance(sample, dict) and "groupName" in sample:
+                            print(f"[TICKETMASTER ZONE] Sample zone '{sample_id}' groupName: {sample['groupName']}")
+                return zone_info
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[TICKETMASTER ZONE] String extraction failed: {exc}")
+
+    # Try method 2: Direct JavaScript evaluation (fallback)
+    try:
+        result = await tab.evaluate('''
+            (function() {
+                // Check if zone variable exists in global scope
+                if (typeof zone !== 'undefined') {
+                    // IMPORTANT: Use JSON.parse(JSON.stringify()) to serialize RemoteObject to plain JSON
+                    // Without this, NoDriver returns CDP RemoteObject format:
+                    // {"type": "object", "value": [["key", {"type": "string", "value": "..."}]]}
+                    // Instead of standard JSON: {"key": "value"}
+                    try {
+                        return JSON.parse(JSON.stringify(zone));
+                    } catch(e) {
+                        console.error('Zone serialization failed:', e);
+                        return zone;  // Fallback to RemoteObject if serialization fails
+                    }
+                }
+
+                // Fallback: Extract from #mapSelectArea innerHTML
+                const el = document.querySelector('#mapSelectArea');
+                if (!el) return null;
+
+                const html = el.innerHTML;
+                const match = html.match(/var zone = ({[\\s\\S]*?});/);
+                if (!match) return null;
+
+                try {
+                    return JSON.parse(match[1]);
+                } catch(e) {
+                    console.error('JSON parse failed:', e);
+                    return null;
+                }
+            })();
+        ''')
+
+        if result:
+            # Convert RemoteObject to standard Python types
+            zone_info = convert_remote_object(result)
+
+            if show_debug_message:
+                zone_type = "dict" if isinstance(zone_info, dict) else "list"
+                print(f"[TICKETMASTER ZONE] Successfully parsed zone_info ({len(zone_info)} zones, type: {zone_type})")
+                print(f"[TICKETMASTER ZONE] RemoteObject converted to standard format")
+
+                # Print detailed structure for debugging
+                if len(zone_info) > 0:
+                    try:
+                        # Print sample zone keys (BEFORE json.dumps to avoid serialization issues)
+                        if isinstance(zone_info, list):
+                            sample = zone_info[0]
+                            sample_id = "index_0"
+
+                            # Diagnostic for List format
+                            print(f"[TICKETMASTER ZONE] List first item type: {type(sample)}")
+
+                            if isinstance(sample, dict):
+                                sample_keys = list(sample.keys())[:10]  # First 10 keys
+                                print(f"[TICKETMASTER ZONE] List item keys (first 10): {sample_keys}")
+
+                                # Check for zone_id fields
+                                zone_id_field = None
+                                for field in ["sectionCode", "id", "zoneId", "areaNo"]:
+                                    if field in sample:
+                                        zone_id_field = field
+                                        print(f"[TICKETMASTER ZONE] Found zone_id field: '{field}' = '{sample.get(field)}'")
+                                        break
+
+                                if not zone_id_field:
+                                    print(f"[TICKETMASTER ZONE] WARNING: No zone_id field found (sectionCode, id, zoneId, areaNo)")
+
+                            elif isinstance(sample, (list, tuple)):
+                                print(f"[TICKETMASTER ZONE] List item is tuple/list with {len(sample)} elements")
+                                if len(sample) > 0:
+                                    print(f"[TICKETMASTER ZONE] First element type: {type(sample[0])}")
+                                    if isinstance(sample[0], str):
+                                        print(f"[TICKETMASTER ZONE] First element (zone_id): {sample[0]}")
+                                if len(sample) > 1:
+                                    print(f"[TICKETMASTER ZONE] Second element type: {type(sample[1])}")
+                                    zone_data = sample[1]
+                                    if isinstance(zone_data, dict):
+                                        # Check if conversion successful
+                                        if "groupName" in zone_data:
+                                            print(f"[TICKETMASTER ZONE] ✓ groupName found: {zone_data.get('groupName')}")
+                                        elif "type" in zone_data and "value" in zone_data:
+                                            print(f"[TICKETMASTER ZONE] ✗ Still RemoteObject format (has 'type' and 'value' keys)")
+                                            # Try to convert again
+                                            zone_data = convert_remote_object(zone_data)
+                                            # Update in the list
+                                            sample[1] = zone_data
+                                            zone_info[0] = sample
+                                            if "groupName" in zone_data:
+                                                print(f"[TICKETMASTER ZONE] ✓ After re-conversion, groupName found: {zone_data.get('groupName')}")
+                                        else:
+                                            print(f"[TICKETMASTER ZONE] zone_data keys: {list(zone_data.keys())[:10]}")
+                            else:
+                                print(f"[TICKETMASTER ZONE] WARNING: Unknown list item format")
+                        else:
+                            # Dict format
+                            sample_id = list(zone_info.keys())[0]
+                            sample = zone_info[sample_id]
+                            print(f"[TICKETMASTER ZONE] Sample zone_id: {sample_id}")
+
+                        sample_keys = list(sample.keys()) if isinstance(sample, dict) else []
+                        if sample_keys:
+                            print(f"[TICKETMASTER ZONE] Sample structure keys: {sample_keys[:10]}")  # First 10 keys
+                    except Exception as diag_exc:
+                        print(f"[TICKETMASTER ZONE] Diagnostic logging failed: {diag_exc}")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[TICKETMASTER ZONE] JavaScript evaluation failed: {exc}")
+
+    return zone_info
+
+
+# T005: Get target area from zone_info (Pure function - no DOM access)
+def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
+    """
+    Match areas from zone_info based on keyword.
+    Returns: (is_need_refresh, matched_blocks)
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    area_auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "from top to bottom")
+
+    is_need_refresh = False
+    matched_blocks = []
+
+    if not zone_info or len(zone_info) == 0:
+        return True, None
+
+    # Normalize zone_info to uniform iteration format
+    # Dict format: {"zone_id": {...}} → [("zone_id", {...}), ...]
+    # List format (3 types):
+    #   Type A: [{"sectionCode": "field_C1_B", ...}, {...}] → extract sectionCode as zone_id
+    #   Type B: [["field_C1_B", {...}], ...] → unpack tuple/list
+    #   Type C: [(zone_id, {...}), ...] → already in correct format
+
+    if isinstance(zone_info, dict):
+        # Dict format: standard case
+        zone_items = list(zone_info.items())
+    elif isinstance(zone_info, list):
+        # List format: need to detect which type
+        if len(zone_info) == 0:
+            zone_items = []
+        else:
+            first_item = zone_info[0]
+
+            if isinstance(first_item, dict):
+                # Type A: List of dicts - extract zone_id from dict
+                zone_items = []
+                for z in zone_info:
+                    if not isinstance(z, dict):
+                        continue
+                    zone_id = z.get("sectionCode") or z.get("id") or z.get("zoneId") or z.get("areaNo")
+                    zone_items.append((zone_id, z))
+
+            elif isinstance(first_item, (list, tuple)) and len(first_item) >= 2:
+                # Type B: List of [id, data] pairs
+                zone_items = []
+                for item in zone_info:
+                    if isinstance(item, (list, tuple)) and len(item) >= 2:
+                        zone_id = item[0]
+                        zone_data = item[1]
+                        # Convert RemoteObject if needed
+                        if isinstance(zone_data, dict) and "type" in zone_data and "value" in zone_data:
+                            zone_data = convert_remote_object(zone_data)
+                        zone_items.append((zone_id, zone_data))
+
+            else:
+                # Unknown format - fallback to old logic
+                if show_debug_message:
+                    print(f"[TICKETMASTER AREA] Unknown zone_info list format, first item type: {type(first_item)}")
+                zone_items = [(None, z) for z in zone_info]
+    else:
+        # Unexpected type
+        if show_debug_message:
+            print(f"[TICKETMASTER AREA] Unexpected zone_info type: {type(zone_info)}")
+        zone_items = []
+
+    for zone_id, zone_data in zone_items:
+        # Validate zone_data is dict-like (has .get() method)
+        if not hasattr(zone_data, 'get'):
+            if show_debug_message:
+                print(f"[TICKETMASTER AREA] zone_data is not dict-like: {type(zone_data)}, skipping")
+            continue
+
+        # Fallback: extract zone_id if still None
+        if zone_id is None:
+            zone_id = zone_data.get("sectionCode") or zone_data.get("id") or zone_data.get("zoneId") or zone_data.get("areaNo")
+
+        if show_debug_message:
+            print(f"[TICKETMASTER AREA] Processing zone: {zone_id}")
+
+        row_is_enabled = zone_data.get("areaStatus") != "UNAVAILABLE"
+
+        if not row_is_enabled:
+            continue
+
+        # Build row text from zone info
+        row_text = ""
+        try:
+            row_text = zone_data.get("groupName", "")
+            row_text += " " + zone_data.get("description", "")
+            if "price" in zone_data and len(zone_data["price"]) > 0:
+                row_text += " " + zone_data["price"][0].get("ticketPrice", "")
+        except:
+            pass
+
+        if not row_text.strip():
+            continue
+
+        # Check exclude keywords
+        import util
+        if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
+            continue
+
+        # Format and match keywords
+        row_text = util.format_keyword_string(row_text)
+
+        is_append_this_row = False
+        if area_keyword_item:
+            # Must match all keywords (AND logic)
+            area_keyword_array = area_keyword_item.split(' ')
+            is_append_this_row = all(
+                util.format_keyword_string(kw) in row_text
+                for kw in area_keyword_array
+            )
+        else:
+            # No keyword = match all
+            is_append_this_row = True
+
+        if is_append_this_row:
+            matched_blocks.append(zone_id)
+
+            if area_auto_select_mode == "from top to bottom":
+                # Only need first match
+                break
+
+    if len(matched_blocks) == 0:
+        matched_blocks = None
+        is_need_refresh = True
+
+    if show_debug_message and matched_blocks:
+        print(f"[TICKETMASTER AREA] Matched {len(matched_blocks)} areas: {matched_blocks}")
+
+    return is_need_refresh, matched_blocks
+
+
+# T006: Get ticket price list (wait for page load)
+async def nodriver_ticketmaster_get_ticketPriceList(tab, config_dict):
+    """
+    Wait for ticketPriceList to load and return the table element.
+    Uses official NoDriver API (stable, recommended approach).
+    Returns: table element or None
+
+    References:
+    - Fixed based on famiticket_nodriver_fixes.md (Phase 4: NoDriver Official API Migration)
+    - Issue: tab.evaluate() returns None due to JavaScript Context failure
+    - Solution: Use tab.wait_for() and tab.query_selector() instead
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    try:
+        # Phase 1: Wait for mapContainer (basic page load)
+        await tab.wait_for(selector='#mapContainer', timeout=5)
+
+        # Ensure DOM references are synchronized (official recommendation)
+        await tab
+
+        if show_debug_message:
+            print("[TICKETMASTER TICKET] mapContainer found")
+
+        # Phase 2: Wait for loading to finish (check if loadingmap disappears)
+        max_wait = 10  # 10 seconds max
+        for i in range(max_wait):
+            loading = await tab.query_selector('#loadingmap')
+            if not loading:
+                if show_debug_message and i > 0:
+                    print(f"[TICKETMASTER TICKET] Loading finished after {i}s")
+                break
+            await tab.sleep(1)
+        else:
+            # Timeout after 10 seconds
+            if show_debug_message:
+                print("[TICKETMASTER TICKET] Loading timeout after 10s")
+
+        # Phase 3: Try to find ticketPriceList
+        table_element = await tab.query_selector('#ticketPriceList')
+
+        if table_element:
+            if show_debug_message:
+                print("[TICKETMASTER TICKET] Found ticketPriceList table")
+            return table_element
+        else:
+            if show_debug_message:
+                print("[TICKETMASTER TICKET] ticketPriceList not found, will use zone_info")
+            return None
+
+    except asyncio.TimeoutError:
+        if show_debug_message:
+            print("[TICKETMASTER TICKET] Timeout waiting for mapContainer")
+        return None
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TICKETMASTER TICKET] Error: {e}")
+        return None
+
+
+# T007: Check checkbox with retry (reusable helper)
+async def nodriver_check_checkbox(tab, selector, max_retries=2):
+    """
+    Check a checkbox element with retry mechanism.
+    Returns: True if successfully checked, False otherwise
+    """
+    for attempt in range(max_retries):
+        try:
+            checkbox = await tab.query_selector(selector)
+            if not checkbox:
+                continue
+
+            # Check if already checked
+            is_checked = await tab.evaluate('el => el.checked', checkbox)
+            if is_checked:
+                return True
+
+            # Click to check
+            await checkbox.click()
+            await tab.sleep(0.1)
+
+            # Verify checked
+            is_checked = await tab.evaluate('el => el.checked', checkbox)
+            if is_checked:
+                return True
+
+        except Exception as exc:
+            if attempt == max_retries - 1:
+                print(f"[CHECKBOX] Failed to check {selector}: {exc}")
+
+    return False
+
+
+# ============================================
+# User Story 1: Date Auto Select (T009)
+# ============================================
+
+async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
+    """
+    Automatically select event date on Ticketmaster artist page.
+    Returns: True if date was clicked, False otherwise
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    # Read config
+    auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "from top to bottom")
+    date_keyword = config_dict.get("date_auto_select", {}).get("date_keyword", "").strip()
+    pass_date_is_sold_out_enable = config_dict.get("tixcraft", {}).get("pass_date_is_sold_out", False)
+    auto_reload_coming_soon_page_enable = config_dict.get("kktix", {}).get("auto_reload_coming_soon_page", False)
+
+    sold_out_text_list = ["Sold out", "No tickets available"]
+    find_ticket_text_list = ['Find tickets', 'See Tickets']
+
+    # Query date list
+    # Ticketmaster.sg uses a table structure: #gameList tbody tr
+    # Wait for dynamic content to load (max 5 seconds)
+    area_list = None
+    max_attempts = 10
+    for attempt in range(max_attempts):
+        try:
+            area_list = await tab.query_selector_all('#gameList tbody tr')
+            if area_list and len(area_list) > 0:
+                if show_debug_message:
+                    print(f"[TICKETMASTER DATE] Found date list after {attempt * 0.5}s")
+                break
+            await asyncio.sleep(0.5)
+        except Exception as exc:
+            if show_debug_message and attempt == 0:
+                print(f"[TICKETMASTER DATE] Waiting for date list to load... ({exc})")
+            await asyncio.sleep(0.5)
+
+    if not area_list:
+        if show_debug_message:
+            print(f"[TICKETMASTER DATE] Failed to find date list after {max_attempts * 0.5}s")
+        return False
+
+    matched_blocks = None
+    formated_area_list = []
+
+    if not area_list or len(area_list) == 0:
+        if show_debug_message:
+            print("[TICKETMASTER DATE] No dates found on page")
+        return False
+
+    if show_debug_message:
+        print(f"[TICKETMASTER DATE] Found {len(area_list)} date blocks")
+
+    # Filter date blocks
+    for row in area_list:
+        try:
+            row_html = await row.get_html()
+            import util
+            row_text = util.remove_html_tags(row_html)
+        except:
+            break
+
+        if not row_text:
+            continue
+
+        row_is_enabled = False
+
+        # Must contain "See Tickets"
+        for text_item in find_ticket_text_list:
+            if text_item in row_text:
+                row_is_enabled = True
+                break
+
+        # Check sold out
+        if row_is_enabled and pass_date_is_sold_out_enable:
+            for sold_out_item in sold_out_text_list:
+                if sold_out_item in row_text:
+                    row_is_enabled = False
+                    if show_debug_message:
+                        print(f"[TICKETMASTER DATE] Skipping sold out event: {row_text[:60]}...")
+                    break
+
+        if row_is_enabled:
+            formated_area_list.append(row)
+
+    if show_debug_message:
+        print(f"[TICKETMASTER DATE] {len(formated_area_list)} available dates after filtering")
+
+    # Match keyword
+    if not date_keyword:
+        matched_blocks = formated_area_list
+    else:
+        import util
+        date_keyword = util.format_keyword_string(date_keyword)
+        if show_debug_message:
+            print(f"[TICKETMASTER DATE] Matching keyword: {date_keyword}")
+
+        matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+
+        if show_debug_message and matched_blocks:
+            print(f"[TICKETMASTER DATE] Matched {len(matched_blocks)} dates")
+
+    # Select target
+    import util
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+
+    is_date_clicked = False
+    if target_area:
+        try:
+            # Click "See Tickets" link
+            link_element = await target_area.query_selector('a')
+            if link_element:
+                await link_element.click()
+                is_date_clicked = True
+                if show_debug_message:
+                    print("[TICKETMASTER DATE] Clicked 'See Tickets' link")
+
+                # Handle new tab (close if opened)
+                await tab.sleep(0.3)
+                if len(tab.browser.tabs) > 1:
+                    # Close extra tabs
+                    for extra_tab in tab.browser.tabs[1:]:
+                        await extra_tab.close()
+                    await tab.sleep(0.2)
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[TICKETMASTER DATE] Failed to click link: {exc}")
+
+    # Auto reload if no match
+    if auto_reload_coming_soon_page_enable and not is_date_clicked and len(formated_area_list) == 0:
+        if show_debug_message:
+            print("[TICKETMASTER DATE] No dates available, reloading page...")
+        try:
+            await tab.reload()
+            await tab.sleep(0.3)
+        except:
+            pass
+
+    return is_date_clicked
+
+
+# ============================================
+# User Story 2: Area Auto Select (T012)
+# ============================================
+
+async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
+    """
+    Automatically select seat area on Ticketmaster ticket page.
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
+
+    if show_debug_message:
+        print(f"[TICKETMASTER AREA] area_keyword: {area_keyword}")
+
+    is_need_refresh = False
+    matched_blocks = None
+
+    if area_keyword:
+        # Parse JSON array
+        import json
+        area_keyword_array = []
+        try:
+            area_keyword_array = json.loads("[" + area_keyword + "]")
+        except:
+            area_keyword_array = []
+
+        # Try each keyword group (fallback mechanism)
+        for idx, area_keyword_item in enumerate(area_keyword_array):
+            if show_debug_message:
+                print(f"[TICKETMASTER AREA] Trying keyword group {idx + 1}: {area_keyword_item}")
+
+            is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
+            if not is_need_refresh:
+                break
+            elif show_debug_message:
+                print(f"[TICKETMASTER AREA] Keyword group {idx + 1} had no matches, trying next...")
+    else:
+        # Empty keyword = match all
+        is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
+
+    # Select target
+    auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "from top to bottom")
+    import util
+    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+
+    if target_area:
+        try:
+            # Execute JavaScript to select area
+            click_area_javascript = f'areaTicket("{target_area}", "map");'
+            if show_debug_message:
+                print(f"[TICKETMASTER AREA] Executing: {click_area_javascript}")
+
+            await tab.evaluate(click_area_javascript)
+
+            # Wait for AJAX to load ticketPriceList (areaTicket executes AJAX request)
+            max_wait = 5  # 5 seconds max
+            for i in range(max_wait):
+                await tab.sleep(1)
+
+                # Check if ticketPriceList has loaded
+                price_list = await tab.query_selector('#ticketPriceList')
+                if price_list:
+                    if show_debug_message:
+                        print(f"[TICKETMASTER AREA] ticketPriceList loaded after {i+1}s")
+                    break
+            else:
+                if show_debug_message:
+                    print("[TICKETMASTER AREA] Timeout waiting for ticketPriceList (5s)")
+
+            if show_debug_message:
+                print(f"[TICKETMASTER AREA] Selected zone: {target_area}")
+
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[TICKETMASTER AREA] Failed to execute JavaScript: {exc}")
+
+    # Auto refresh if needed (only when keyword is specified but no match)
+    if is_need_refresh:
+        # Check if area_keyword is empty (empty = should match all areas)
+        area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
+
+        if area_keyword:
+            # Keyword specified but no match → might need to wait for availability
+            if show_debug_message:
+                print("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
+            try:
+                await tab.reload()
+                if config_dict.get("advanced", {}).get("auto_reload_page_interval", 0) > 0:
+                    await tab.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+            except:
+                pass
+        else:
+            # No keyword but no areas → likely a data parsing issue, don't reload
+            if show_debug_message:
+                print("[TICKETMASTER AREA] No areas available (possible zone_info parsing issue)")
+            # Let next function (assign_ticket_number) handle it
+
+
+# ============================================
+# User Story 3: Ticket Number Assignment (T015-T016)
+# ============================================
+
+async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
+    """
+    Automatically set ticket number on Ticketmaster ticket page.
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    # Get ticket price list
+    table_select = await nodriver_ticketmaster_get_ticketPriceList(tab, config_dict)
+
+    if not table_select:
+        # Fallback to zone_info parsing
+        zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
+        if zone_info:
+            await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
+        return
+
+    # Find select element
+    select_element = None
+    try:
+        select_element = await table_select.query_selector('select')
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[TICKETMASTER TICKET] Failed to find select: {exc}")
+        return
+
+    if not select_element:
+        if show_debug_message:
+            print("[TICKETMASTER TICKET] No select element found")
+        return
+
+    # Check if element is enabled (NoDriver uses .attrs dict)
+    try:
+        is_disabled = select_element.attrs.get('disabled')
+        is_enabled = is_disabled is None  # Element is enabled if disabled attribute doesn't exist
+        if not is_enabled:
+            if show_debug_message:
+                print("[TICKETMASTER TICKET] Select element is disabled")
+            return
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[TICKETMASTER TICKET] Failed to check disabled status: {exc}")
+        # Assume enabled if check fails
+        pass
+
+    # Check current value (using .attrs dict)
+    selector_id = select_element.attrs.get('id')
+    current_value = None
+    if selector_id:
+        try:
+            current_value = await tab.evaluate(f'''
+                (function() {{
+                    const selectEl = document.getElementById('{selector_id}');
+                    if (selectEl && selectEl.selectedIndex >= 0) {{
+                        return selectEl.options[selectEl.selectedIndex].text;
+                    }}
+                    return null;
+                }})();
+            ''')
+        except:
+            pass
+
+    if current_value and current_value != "0" and current_value.isnumeric():
+        if show_debug_message:
+            print(f"[TICKETMASTER TICKET] Ticket number already set to: {current_value}")
+        # Already set, click autoMode button
+        try:
+            auto_mode_button = await tab.query_selector('#autoMode')
+            if auto_mode_button:
+                await auto_mode_button.click()
+                if show_debug_message:
+                    print("[TICKETMASTER TICKET] Clicked #autoMode button")
+        except:
+            pass
+        return
+
+    # Set ticket number
+    ticket_number = str(config_dict.get("ticket_number", 1))
+
+    try:
+        # Get select element ID for JavaScript manipulation
+        selector_id = await select_element.get_attribute('id')
+        if not selector_id:
+            if show_debug_message:
+                print("[TICKETMASTER TICKET] Select element has no id attribute")
+            return
+
+        # Use JavaScript to set select value (using element ID instead of passing Element object)
+        result = await tab.evaluate(f'''
+            (function(elementId, targetText) {{
+                const selectEl = document.getElementById(elementId);
+                if (!selectEl) {{
+                    return {{ success: false, error: "Element not found" }};
+                }}
+                const options = selectEl.options;
+                for (let i = 0; i < options.length; i++) {{
+                    if (options[i].text === targetText) {{
+                        selectEl.selectedIndex = i;
+                        selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{ success: true, value: options[i].value }};
+                    }}
+                }}
+                return {{ success: false, error: "Option not found" }};
+            }})('{selector_id}', '{ticket_number}');
+        ''')
+
+        if result and result.get('success'):
+            if show_debug_message:
+                print(f"[TICKETMASTER TICKET] Set ticket number to: {ticket_number}")
+
+            # Click autoMode button
+            await tab.sleep(0.1)
+            try:
+                auto_mode_button = await tab.query_selector('#autoMode')
+                if auto_mode_button:
+                    await auto_mode_button.click()
+                    if show_debug_message:
+                        print("[TICKETMASTER TICKET] Clicked #autoMode button")
+            except:
+                pass
+        else:
+            if show_debug_message:
+                print(f"[TICKETMASTER TICKET] Failed to set ticket number: {result.get('error')}")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[TICKETMASTER TICKET] Exception setting ticket number: {exc}")
+
+
+# ============================================
+# User Story 4: Captcha Handling (T019)
+# ============================================
+
+async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
+    """
+    Handle captcha on Ticketmaster check-captcha page.
+    Returns: True if captcha was handled, False otherwise
+    """
+    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+
+    # Check agree checkbox
+    for _ in range(2):
+        is_checked = await nodriver_check_checkbox(tab, '#TicketForm_agree')
+        if is_checked:
+            if show_debug_message:
+                print("[TICKETMASTER CAPTCHA] Checked TicketForm_agree")
+            break
+
+    # Handle captcha
+    if not config_dict.get("ocr_captcha", {}).get("enable", False):
+        # OCR disabled - manual input
+        await nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False, config_dict=config_dict)
+        return False
+    else:
+        # OCR enabled - auto recognition
+        previous_answer = None
+        current_url = tab.target.url
+
+        for redo_ocr in range(99):
+            try:
+                # Reuse existing tixcraft auto_ocr function
+                away_from_keyboard_enable = config_dict.get("ocr_captcha", {}).get("force_submit", False)
+
+                # Call tixcraft_auto_ocr
+                is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
+                    tab, config_dict, ocr, away_from_keyboard_enable, previous_answer
+                )
+
+                if is_form_submitted:
+                    if show_debug_message:
+                        print("[TICKETMASTER CAPTCHA] Form submitted")
+                    break
+
+                if not away_from_keyboard_enable:
+                    break
+
+                if not is_need_redo_ocr:
+                    break
+
+                # Check if URL changed
+                new_url = tab.target.url
+                if new_url != current_url:
+                    if show_debug_message:
+                        print("[TICKETMASTER CAPTCHA] URL changed, stopping OCR loop")
+                    break
+
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[TICKETMASTER CAPTCHA] OCR error: {exc}")
+                break
+
+        return True
+
+
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
     return nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
@@ -4657,20 +5548,36 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         is_redirected = await nodriver_tixcraft_redirect(tab, url)
 
     is_date_selected = False
-    if "/activity/game/" in url:
+    # Check if this is a Ticketmaster page before using TixCraft logic
+    if "/activity/game/" in url and 'ticketmaster' not in url:
         tixcraft_dict["start_time"] = time.time()
         if config_dict["date_auto_select"]["enable"]:
             domain_name = url.split('/')[2]
             is_date_selected = await nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
-    if '/artist/' in url and 'ticketmaster.com' in url:
+    # T010: Ticketmaster date selection integration (User Story 1)
+    # Support both URL formats:
+    # - /artist/{artist_id} (artist listing page)
+    # - /activity/game/{event_id} (event date listing page from /activity/detail redirect)
+    is_ticketmaster_date_page = (
+        'ticketmaster' in url and
+        (('/artist/' in url and len(url.split('/'))==6) or
+         ('/activity/game/' in url))
+    )
+
+    if is_ticketmaster_date_page:
         tixcraft_dict["start_time"] = time.time()
-        if len(url.split('/'))==6:
-            if config_dict["date_auto_select"]["enable"]:
-                domain_name = url.split('/')[2]
-                # TODO:
-                #is_date_selected = ticketmaster_date_auto_select(driver, url, config_dict, domain_name)
-                pass
+        if config_dict["date_auto_select"]["enable"]:
+            if config_dict.get("advanced", {}).get("verbose", False):
+                print(f"[TICKETMASTER] Detected Ticketmaster date page, calling date auto select")
+            domain_name = url.split('/')[2]
+            # Call Ticketmaster date auto select
+            is_date_selected = await nodriver_ticketmaster_date_auto_select(tab, config_dict)
+            if show_debug_message:
+                if is_date_selected:
+                    print("[TICKETMASTER] Date selection completed")
+                else:
+                    print("[TICKETMASTER] Date selection failed or no match")
 
     # choose area
     if '/ticket/area/' in url:
@@ -4687,26 +5594,33 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     tixcraft_dict["area_retry_count"] = 0
                     await asyncio.sleep(5)
             else:
-                # area auto select is too difficult, skip in this version.
-                # TODO:
-                #tixcraft_dict["fail_promo_list"] = ticketmaster_promo(driver, config_dict, tixcraft_dict["fail_promo_list"])
-                #ticketmaster_assign_ticket_number(driver, config_dict)
-                pass
+                # T013: Ticketmaster area selection integration (User Story 2)
+                # Parse zone_info and auto-select area
+                zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
+                if zone_info:
+                    await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
+
+                # T017: Ticketmaster ticket number and promo integration (User Story 3)
+                # Set ticket number (will fallback to zone_info if ticketPriceList not found)
+                await nodriver_ticketmaster_assign_ticket_number(tab, config_dict)
+
+                # Handle promo code
+                tixcraft_dict["fail_promo_list"] = await nodriver_ticketmaster_promo(tab, config_dict, tixcraft_dict["fail_promo_list"])
     else:
         tixcraft_dict["fail_promo_list"] = []
         tixcraft_dict["area_retry_count"]=0
 
+    # T020: Ticketmaster captcha integration (User Story 4)
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75
     if '/ticket/check-captcha/' in url:
         domain_name = url.split('/')[2]
-        # TODO:
-        #ticketmaster_captcha(driver, config_dict, ocr, Captcha_Browser, domain_name)
-        pass
+        if 'ticketmaster' in domain_name:
+            # Call Ticketmaster captcha handler
+            await nodriver_ticketmaster_captcha(tab, config_dict, ocr, Captcha_Browser)
 
     if '/ticket/verify/' in url:
-        # TODO:
-        #tixcraft_dict["fail_list"] = tixcraft_verify(driver, config_dict, tixcraft_dict["fail_list"])
-        pass
+        # Tixcraft verify handler (already implemented)
+        tixcraft_dict["fail_list"] = await nodriver_tixcraft_verify(tab, config_dict, tixcraft_dict["fail_list"])
     else:
         tixcraft_dict["fail_list"] = []
 
@@ -18082,7 +18996,9 @@ async def nodrver_block_urls(tab, config_dict):
         # Ticketmaster ad scripts
         '*ticketmaster.sg/js/adblock*',
         '*ticketmaster.sg/js/ads.js*',
-        '*ticketmaster.sg/epsf/asset/eps.js*',
+        #'*ticketmaster.sg/epsf/asset/eps.js*',
+        #'*ticketmaster.sg/epsf/asset/eps-gec.js',
+        #'*ticketmaster.sg/epsf/asset/eps-mgr',
         '*ticketmaster.com/js/ads.js*',
         '*ticketmaster.com/epsf/asset/eps.js*',
     ]
