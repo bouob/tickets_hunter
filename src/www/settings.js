@@ -46,7 +46,7 @@ const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_image_source = document.querySelector('#ocr_captcha_image_source');
 const ocr_captcha_force_submit = document.querySelector('#ocr_captcha_force_submit');
 const remote_url = document.querySelector('#remote_url');
-const PUBLIC_SERVER_URL = "http://maxbot.dropboxlike.com:16888/";
+const ocr_model_path = document.querySelector('#ocr_model_path');
 
 // dictionary
 const user_guess_string = document.querySelector('#user_guess_string');
@@ -196,6 +196,13 @@ function load_settins_to_form(settings)
         }
         remote_url.value = remote_url_string;
 
+        // custom OCR model path
+        if(settings.advanced.ocr_model_path) {
+            ocr_model_path.value = settings.advanced.ocr_model_path;
+        } else {
+            ocr_model_path.value = "";
+        }
+
         // dictionary
         user_guess_string.value = format_keyword_for_display(settings.advanced.user_guess_string);
         auto_guess_options.checked = settings.advanced.auto_guess_options;
@@ -296,15 +303,6 @@ function maxbot_reset_api()
     .always(function() {
         //alert( "finished" );
     });
-}
-
-function checkUsePublicServer()
-{
-    if(ocr_captcha_enable.checked) {
-        remote_url.value = PUBLIC_SERVER_URL;
-    } else {
-
-    }
 }
 
 let messageClearTimer;
@@ -431,6 +429,9 @@ function save_changes_to_dict(silent_flag)
             remote_url_string = remote_url_string.substring(1);
             //console.log("final remote_url_string:"+remote_url_string);
             settings.advanced.remote_url = remote_url_string;
+
+            // custom OCR model path
+            settings.advanced.ocr_model_path = ocr_model_path.value;
 
             // dictionary
             settings.advanced.user_guess_string = format_config_keyword_for_json(user_guess_string.value);
@@ -579,6 +580,7 @@ function check_unsaved_fields()
             "discount_code",
             "user_guess_string",
             "remote_url",
+            "ocr_model_path",
             "auto_reload_page_interval",
             "reset_browser_interval",
             "proxy_server_port",

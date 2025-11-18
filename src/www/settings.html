@@ -141,7 +141,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.12.1) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.19) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -646,6 +646,15 @@
             <input class="form-control" id="remote_url" value="" />
           </div>
         </div>
+        <div class="row mb-3">
+          <label for="ocr_model_path" class="col-sm-2 col-form-label">自訂 OCR 模型</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="ocr_model_path" value="" placeholder="例如：C:\models\custom_ocr.onnx" />
+            <div class="form-text">
+              自訂 OCR 模型檔案路徑。若未填寫，將使用內建的 ddddocr 模型。
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- tab 4 -->
@@ -1076,6 +1085,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2025111220"></script>
+  <script src="settings.js?v=2025111900"></script>
 </body>
 </html>

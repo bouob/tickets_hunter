@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.12.1)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.19)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -193,6 +193,9 @@ def get_default_config():
     
     # remote_url not under ocr, due to not only support ocr features.
     config_dict["advanced"]["remote_url"] = "\"http://127.0.0.1:%d/\"" % (CONST_SERVER_PORT)
+
+    # custom OCR model path
+    config_dict["advanced"]["ocr_model_path"] = ""
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
     config_dict["advanced"]["auto_reload_overheat_count"] = 4
