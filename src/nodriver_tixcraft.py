@@ -3128,8 +3128,6 @@ def convert_remote_object(obj, depth=0):
     {"key1": "val1", "key2": 123, ...}
     """
     if not isinstance(obj, dict):
-        if depth == 0:
-            print(f"[CONVERT DEBUG] Root object is not dict: {type(obj)}")
         return obj
 
     # Check if this is a RemoteObject
@@ -3137,13 +3135,8 @@ def convert_remote_object(obj, depth=0):
         obj_type = obj.get("type")
         obj_value = obj.get("value")
 
-        if depth == 0:
-            print(f"[CONVERT DEBUG] Found RemoteObject with type: {obj_type}")
-
         if obj_type == "object" and isinstance(obj_value, list):
             # Convert [[key, {type, value}], ...] to {key: value, ...}
-            if depth == 0:
-                print(f"[CONVERT DEBUG] Converting object with {len(obj_value)} properties")
             result = {}
             for item in obj_value:
                 if isinstance(item, (list, tuple)) and len(item) >= 2:
@@ -3151,8 +3144,6 @@ def convert_remote_object(obj, depth=0):
                     val_obj = item[1]
                     # Recursively convert the value
                     result[key] = convert_remote_object(val_obj, depth + 1)
-            if depth == 0:
-                print(f"[CONVERT DEBUG] Converted object has keys: {list(result.keys())[:5]}")
             return result
 
         elif obj_type == "number":
@@ -3162,8 +3153,6 @@ def convert_remote_object(obj, depth=0):
         elif obj_type == "boolean":
             return obj_value
         elif obj_type == "array" and isinstance(obj_value, list):
-            if depth == 0:
-                print(f"[CONVERT DEBUG] Converting array with {len(obj_value)} items")
             return [convert_remote_object(item, depth + 1) for item in obj_value]
         else:
             return obj_value
@@ -3172,8 +3161,6 @@ def convert_remote_object(obj, depth=0):
     if isinstance(obj, dict):
         return {k: convert_remote_object(v, depth + 1) for k, v in obj.items()}
     elif isinstance(obj, list):
-        if depth == 0:
-            print(f"[CONVERT DEBUG] Root object is list with {len(obj)} items")
         return [convert_remote_object(item, depth + 1) for item in obj]
     else:
         return obj
@@ -3408,9 +3395,6 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
         if zone_id is None:
             zone_id = zone_data.get("sectionCode") or zone_data.get("id") or zone_data.get("zoneId") or zone_data.get("areaNo")
 
-        if show_debug_message:
-            print(f"[TICKETMASTER AREA] Processing zone: {zone_id}")
-
         row_is_enabled = zone_data.get("areaStatus") != "UNAVAILABLE"
 
         if not row_is_enabled:
@@ -3418,13 +3402,21 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
 
         # Build row text from zone info
         row_text = ""
+        group_name = ""
+        description = ""
         try:
-            row_text = zone_data.get("groupName", "")
-            row_text += " " + zone_data.get("description", "")
+            group_name = zone_data.get("groupName", "")
+            description = zone_data.get("description", "")
+            row_text = group_name + " " + description
             if "price" in zone_data and len(zone_data["price"]) > 0:
                 row_text += " " + zone_data["price"][0].get("ticketPrice", "")
         except:
             pass
+
+        if show_debug_message:
+            # Show human-readable zone info instead of just zone_id
+            display_name = f"{group_name} {description}".strip() if group_name or description else zone_id
+            print(f"[TICKETMASTER AREA] Processing zone: {zone_id} ({display_name})")
 
         if not row_text.strip():
             continue
@@ -3441,8 +3433,42 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
         if area_keyword_item:
             # Must match all keywords (AND logic)
             area_keyword_array = area_keyword_item.split(' ')
+
+            # Word boundary matching function
+            import re
+            def word_boundary_match(keyword, text):
+                """
+                Match keyword with word boundary awareness.
+                - Single char keywords (like 'I') require word boundaries
+                - Multi-char keywords use substring match for flexibility
+                """
+                formatted_kw = util.format_keyword_string(keyword)
+                if len(formatted_kw) <= 2:
+                    # Short keywords need word boundary to avoid false positives
+                    # e.g., 'I' should not match 'CIRCLE'
+                    pattern = r'\b' + re.escape(formatted_kw) + r'\b'
+                    return bool(re.search(pattern, text, re.IGNORECASE))
+                else:
+                    # Longer keywords use substring match
+                    return formatted_kw in text
+
+            # Detailed AND logic matching with PASS/FAIL logs
+            if show_debug_message:
+                keyword_results = []
+                for kw in area_keyword_array:
+                    match_result = word_boundary_match(kw, row_text)
+                    status = "PASS" if match_result else "FAIL"
+                    keyword_results.append(f"'{kw}':{status}")
+
+                all_matched = all(
+                    word_boundary_match(kw, row_text)
+                    for kw in area_keyword_array
+                )
+                overall_status = "MATCHED" if all_matched else "REJECTED"
+                print(f"[TICKETMASTER AREA] AND Match: {zone_id} [{', '.join(keyword_results)}] -> {overall_status}")
+
             is_append_this_row = all(
-                util.format_keyword_string(kw) in row_text
+                word_boundary_match(kw, row_text)
                 for kw in area_keyword_array
             )
         else:
@@ -3656,23 +3682,122 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
     if show_debug_message:
         print(f"[TICKETMASTER DATE] {len(formated_area_list)} available dates after filtering")
 
-    # Match keyword
+    # Get date_auto_fallback setting (default: False = strict mode)
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)
+
+    # Build text list for keyword matching
+    formated_area_list_text = []
+    for row in formated_area_list:
+        try:
+            row_html = await row.get_html()
+            import util
+            row_text = util.remove_html_tags(row_html)
+            formated_area_list_text.append(row_text)
+        except:
+            formated_area_list_text.append("")
+
+    # T004-T008: Early return pattern (Feature 003)
     if not date_keyword:
         matched_blocks = formated_area_list
-    else:
-        import util
-        date_keyword = util.format_keyword_string(date_keyword)
         if show_debug_message:
-            print(f"[TICKETMASTER DATE] Matching keyword: {date_keyword}")
+            print(f"[TICKETMASTER DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
+    else:
+        # Early return pattern - iterate keywords in priority order
+        matched_blocks = []
+        target_row_found = False
+        keyword_matched_index = -1
 
-        matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
+        try:
+            import json
+            import re
+            keyword_array = json.loads("[" + date_keyword + "]")
 
-        if show_debug_message and matched_blocks:
-            print(f"[TICKETMASTER DATE] Matched {len(matched_blocks)} dates")
+            # T005: Start checking keywords log
+            if show_debug_message:
+                print(f"[TICKETMASTER DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[TICKETMASTER DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+                print(f"[TICKETMASTER DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
+
+            # Iterate keywords in priority order (early return)
+            for keyword_index, keyword_item_set in enumerate(keyword_array):
+                if show_debug_message:
+                    print(f"[TICKETMASTER DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+
+                # Check all rows for this keyword
+                for i, row_text in enumerate(formated_area_list_text):
+                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
+                    is_match = False
+
+                    if isinstance(keyword_item_set, str):
+                        # OR logic: single keyword
+                        normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
+                        is_match = normalized_keyword in normalized_row_text
+                    elif isinstance(keyword_item_set, list):
+                        # AND logic: all keywords must match
+                        normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
+                        match_results = [kw in normalized_row_text for kw in normalized_keywords]
+                        is_match = all(match_results)
+
+                        # Detailed AND logic log
+                        if show_debug_message:
+                            result_strs = [f"'{kw}':{('PASS' if r else 'FAIL')}" for kw, r in zip(keyword_item_set, match_results)]
+                            overall = "MATCHED" if is_match else "REJECTED"
+                            print(f"[TICKETMASTER DATE KEYWORD] AND Match: [{', '.join(result_strs)}] -> {overall}")
+
+                    if is_match:
+                        # T006: Keyword matched - IMMEDIATELY select and stop
+                        matched_blocks = [formated_area_list[i]]
+                        target_row_found = True
+                        keyword_matched_index = keyword_index
+                        if show_debug_message:
+                            print(f"[TICKETMASTER DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                            print(f"[TICKETMASTER DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
+                        break  # Early Return - stop checking other rows
+
+                if target_row_found:
+                    # EARLY RETURN: Stop checking further keywords
+                    break
+
+            # T007: All keywords failed log
+            if not target_row_found:
+                if show_debug_message:
+                    print(f"[TICKETMASTER DATE KEYWORD] All keywords failed to match")
+
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TICKETMASTER DATE KEYWORD] Parsing error: {e}")
+            matched_blocks = []
+
+    # Match result summary
+    if show_debug_message:
+        print(f"[TICKETMASTER DATE KEYWORD] ========================================")
+        print(f"[TICKETMASTER DATE KEYWORD] Match Summary:")
+        print(f"[TICKETMASTER DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
+        print(f"[TICKETMASTER DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
+        print(f"[TICKETMASTER DATE KEYWORD] ========================================")
+
+    # T018-T020: Conditional fallback based on date_auto_fallback switch
+    if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
+        if date_auto_fallback:
+            # T018: Fallback enabled - use auto_select_mode
+            if show_debug_message:
+                print(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                print(f"[TICKETMASTER DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            matched_blocks = formated_area_list
+        else:
+            # T019: Fallback disabled - strict mode
+            if show_debug_message:
+                print(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                print(f"[TICKETMASTER DATE SELECT] No date selected, will reload page and retry")
 
     # Select target
     import util
-    target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+    if formated_area_list is None or len(formated_area_list) == 0:
+        target_area = None
+    elif matched_blocks is None or len(matched_blocks) == 0:
+        target_area = None
+    else:
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     is_date_clicked = False
     if target_area:
@@ -3728,25 +3853,57 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
     is_need_refresh = False
     matched_blocks = None
 
+    # Get area_auto_fallback setting (default: False = strict mode)
+    area_auto_fallback = config_dict.get("area_auto_fallback", False)
+
     if area_keyword:
-        # Parse JSON array
+        # Parse JSON array with enhanced comma detection
         import json
         area_keyword_array = []
         try:
             area_keyword_array = json.loads("[" + area_keyword + "]")
+
+            # Enhanced parsing: if single element contains comma, split into multiple groups
+            # e.g., "CAT I,CAT F" → ["CAT I", "CAT F"] (OR logic between groups)
+            if len(area_keyword_array) == 1 and isinstance(area_keyword_array[0], str):
+                single_keyword = area_keyword_array[0]
+                if ',' in single_keyword:
+                    # Split by comma and strip whitespace
+                    area_keyword_array = [kw.strip() for kw in single_keyword.split(',') if kw.strip()]
+                    if show_debug_message:
+                        print(f"[TICKETMASTER AREA] Enhanced parsing: split '{single_keyword}' into {len(area_keyword_array)} groups")
+
         except:
             area_keyword_array = []
 
-        # Try each keyword group (fallback mechanism)
+        if show_debug_message:
+            print(f"[TICKETMASTER AREA] Parsed keyword groups: {area_keyword_array}")
+
+        # Early Return Pattern: Try each keyword group with priority
         for idx, area_keyword_item in enumerate(area_keyword_array):
             if show_debug_message:
-                print(f"[TICKETMASTER AREA] Trying keyword group {idx + 1}: {area_keyword_item}")
+                print(f"[TICKETMASTER AREA] Trying keyword group {idx + 1}/{len(area_keyword_array)}: '{area_keyword_item}'")
 
             is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
-            if not is_need_refresh:
+
+            if not is_need_refresh and matched_blocks:
+                # Found match - Early Return
+                if show_debug_message:
+                    print(f"[TICKETMASTER AREA] Early Return: keyword group {idx + 1} matched {len(matched_blocks)} area(s)")
                 break
             elif show_debug_message:
                 print(f"[TICKETMASTER AREA] Keyword group {idx + 1} had no matches, trying next...")
+
+        # Conditional fallback: only match all if area_auto_fallback is enabled
+        if is_need_refresh:
+            if area_auto_fallback:
+                if show_debug_message:
+                    print("[TICKETMASTER AREA] Fallback enabled: selecting from all available areas")
+                is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
+            else:
+                if show_debug_message:
+                    print("[TICKETMASTER AREA] Strict mode: no keyword match, will refresh page")
+                # Keep is_need_refresh = True, matched_blocks = None
     else:
         # Empty keyword = match all
         is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
@@ -4008,7 +4165,101 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 if is_form_submitted:
                     if show_debug_message:
                         print("[TICKETMASTER CAPTCHA] Form submitted")
-                    break
+
+                    # Wait for potential error modal to appear
+                    await asyncio.sleep(0.8)
+
+                    # Check for Ticketmaster custom error modal (not native alert)
+                    # The modal shows "The verification code that you entered is incorrect"
+                    error_detected = False
+                    try:
+                        # Check for modal overlay or dialog
+                        modal_content = await tab.evaluate('''
+                            (function() {
+                                // Check for visible modal or alert dialog
+                                const modals = document.querySelectorAll('.modal, .alert, [role="dialog"], [role="alertdialog"]');
+                                for (const modal of modals) {
+                                    if (modal.offsetParent !== null || getComputedStyle(modal).display !== 'none') {
+                                        return {
+                                            found: true,
+                                            text: modal.innerText || modal.textContent
+                                        };
+                                    }
+                                }
+                                // Also check for any visible buttons that might be confirm/OK
+                                const buttons = document.querySelectorAll('button');
+                                for (const btn of buttons) {
+                                    const text = btn.innerText || btn.textContent;
+                                    if ((text.includes('確定') || text.includes('OK') || text.includes('Try again')) &&
+                                        btn.offsetParent !== null) {
+                                        return {
+                                            found: true,
+                                            buttonSelector: 'button'
+                                        };
+                                    }
+                                }
+                                return { found: false };
+                            })();
+                        ''')
+
+                        if modal_content and modal_content.get('found'):
+                            error_detected = True
+                            if show_debug_message:
+                                print(f"[TICKETMASTER CAPTCHA] Error modal detected")
+
+                            # Try to click confirm/OK button to dismiss modal
+                            dismiss_success = await tab.evaluate('''
+                                (function() {
+                                    // Find and click confirm button
+                                    const buttons = document.querySelectorAll('button');
+                                    for (const btn of buttons) {
+                                        const text = btn.innerText || btn.textContent;
+                                        if (text.includes('確定') || text.includes('OK') || text.includes('Try again')) {
+                                            btn.click();
+                                            return true;
+                                        }
+                                    }
+                                    // Try to find any primary button
+                                    const primaryBtn = document.querySelector('.btn-primary, [type="button"]');
+                                    if (primaryBtn) {
+                                        primaryBtn.click();
+                                        return true;
+                                    }
+                                    return false;
+                                })();
+                            ''')
+
+                            if show_debug_message:
+                                if dismiss_success:
+                                    print("[TICKETMASTER CAPTCHA] Error modal dismissed, will retry OCR")
+                                else:
+                                    print("[TICKETMASTER CAPTCHA] Could not dismiss modal")
+
+                            # Reset state for retry
+                            await asyncio.sleep(0.3)
+
+                            # Reload captcha for new image
+                            await nodriver_tixcraft_reload_captcha(tab, domain_name)
+                            previous_answer = None
+                            fail_count = 0
+                            total_fail_count += 1
+
+                            # Check retry limit
+                            if total_fail_count >= 5:
+                                print("[TICKETMASTER CAPTCHA] OCR failed 5 times after error modal. Please enter captcha manually.")
+                                await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
+                                break
+
+                            await asyncio.sleep(random.uniform(0.5, 1.0))
+                            continue  # Retry OCR
+
+                    except Exception as modal_exc:
+                        if show_debug_message:
+                            print(f"[TICKETMASTER CAPTCHA] Error checking modal: {modal_exc}")
+
+                    # No error modal detected, form submitted successfully
+                    if not error_detected:
+                        break
 
                 if not away_from_keyboard_enable:
                     break
@@ -4036,7 +4287,10 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                     await nodriver_tixcraft_reload_captcha(tab, domain_name)
                     fail_count = 0
                     previous_answer = None  # Reset to allow fresh OCR
-                    await asyncio.sleep(random.uniform(0.5, 1.0))  # Wait for new captcha to load
+                    await asyncio.sleep(random.uniform(0.8, 1.2))  # Wait for new captcha to load
+                else:
+                    # Wait between retries to allow canvas to fully load
+                    await asyncio.sleep(random.uniform(0.3, 0.5))
 
                 # Check if URL changed
                 new_url = tab.target.url
