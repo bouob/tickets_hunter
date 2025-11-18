@@ -347,9 +347,25 @@ done
 
 #### F. 建立 Squash Commit
 
+- **從 CHANGELOG 提取功能摘要**（新增）：
+  ```bash
+  # 提取當前版本的 CHANGELOG 內容
+  VERSION=$(grep "CONST_APP_VERSION" src/nodriver_tixcraft.py | grep -oP '"\K[^"]+' | grep -oP '\d{4}\.\d{2}\.\d{2}')
+
+  # 從 CHANGELOG.md 提取該版本的第一個功能項目
+  FEATURE_SUMMARY=$(sed -n "/^## $VERSION/,/^## /p" CHANGELOG.md | \
+    grep "^- " | head -1 | sed 's/^- //' | \
+    sed 's/：.*//; s/:.*//; s/（.*//; s/(.*//') # 取冒號前的主要功能名稱
+
+  # 如果 CHANGELOG 為空，使用預設描述
+  if [ -z "$FEATURE_SUMMARY" ]; then
+    FEATURE_SUMMARY="various updates"
+  fi
+  ```
+
 - 生成 commit 訊息（英文，Conventional Commits 格式）：
   ```bash
-  COMMIT_MSG="chore(release): sync public repo with $(date +%Y-%m-%d) updates
+  COMMIT_MSG="chore(release): $VERSION updates - $FEATURE_SUMMARY
 
   - Original commits: {total_commits}
   - Squashed into single commit for cleaner history
@@ -372,8 +388,8 @@ done
 ```
 ✅ Squash commit 推送成功！
 
-分支: public-sync-2025-11-12-0322
-Commit: 0face0e chore(release): sync public repo with 2025-11-12 updates
+分支: public-sync-2025-11-19-0100
+Commit: 1f8df0e chore(release): 2025-11-19 updates - Ticketmaster NoDriver implementation
 Remote: origin
 URL: https://github.com/bouob/tickets_hunter.git
 ```
@@ -494,14 +510,20 @@ URL: https://github.com/bouob/tickets_hunter.git
 
 #### A. 生成 PR 標題和描述
 
-**PR 標題格式**（英文）：
+**PR 標題格式**（英文，從 CHANGELOG 提取功能摘要）：
 ```
-chore(release): sync public repo with [date] updates
+chore(release): [version] updates - [feature summary]
 ```
 
+**功能摘要提取規則**：
+1. 從 CHANGELOG.md 提取當前版本的第一個功能項目
+2. 取冒號前的主要功能名稱（移除詳細說明）
+3. 如果 CHANGELOG 為空，使用 "various updates"
+
 **範例**：
-- `chore(release): sync public repo with 2025-11-08 updates`
-- `chore(release): sync public repo with Nov 8, 2025 updates`
+- `chore(release): 2025-11-19 updates - Ticketmaster NoDriver implementation`
+- `chore(release): 2025-11-12 updates - TicketPlus platform support`
+- `chore(release): 2025-11-08 updates - OCR timeout optimization`
 
 **PR 描述格式**（繁體中文，標題可用 emoji，內容不用）：
 
