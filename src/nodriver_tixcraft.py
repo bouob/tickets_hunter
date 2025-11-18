@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.12.1)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.19)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
