@@ -3534,23 +3534,31 @@ async def nodriver_check_checkbox(tab, selector, max_retries=2):
     """
     for attempt in range(max_retries):
         try:
-            checkbox = await tab.query_selector(selector)
-            if not checkbox:
-                continue
+            # Use pure JavaScript to avoid Element serialization issues
+            is_checked = await tab.evaluate(f'''
+                (function() {{
+                    const checkbox = document.querySelector('{selector}');
+                    if (!checkbox) return false;
 
-            # Check if already checked
-            is_checked = await tab.evaluate('el => el.checked', checkbox)
+                    // If already checked, return true
+                    if (checkbox.checked) return true;
+
+                    // Try to click
+                    try {{
+                        checkbox.click();
+                        return checkbox.checked;
+                    }} catch(e) {{
+                        // Fallback: directly set checked property
+                        checkbox.checked = true;
+                        return checkbox.checked;
+                    }}
+                }})();
+            ''')
+
             if is_checked:
                 return True
 
-            # Click to check
-            await checkbox.click()
             await tab.sleep(0.1)
-
-            # Verify checked
-            is_checked = await tab.evaluate('el => el.checked', checkbox)
-            if is_checked:
-                return True
 
         except Exception as exc:
             if attempt == max_retries - 1:
@@ -3835,11 +3843,17 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
             print("[TICKETMASTER TICKET] No select element found")
         return
 
+    # Update element to sync attributes
+    try:
+        await select_element.update()
+    except:
+        pass
+
     # Check if element is enabled (NoDriver uses .attrs dict)
     try:
-        is_disabled = select_element.attrs.get('disabled')
-        is_enabled = is_disabled is None  # Element is enabled if disabled attribute doesn't exist
-        if not is_enabled:
+        select_attrs = select_element.attrs or {}
+        is_disabled = 'disabled' in select_attrs
+        if is_disabled:
             if show_debug_message:
                 print("[TICKETMASTER TICKET] Select element is disabled")
             return
@@ -3850,7 +3864,8 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         pass
 
     # Check current value (using .attrs dict)
-    selector_id = select_element.attrs.get('id')
+    select_attrs = select_element.attrs or {}
+    selector_id = select_attrs.get('id')
     current_value = None
     if selector_id:
         try:
@@ -3863,6 +3878,10 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                     return null;
                 }})();
             ''')
+            # Parse NoDriver RemoteObject format if needed
+            if isinstance(current_value, list):
+                import util
+                current_value = util.parse_nodriver_result(current_value)
         except:
             pass
 
@@ -3885,7 +3904,8 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
 
     try:
         # Get select element ID for JavaScript manipulation
-        selector_id = await select_element.get_attribute('id')
+        select_attrs = select_element.attrs or {}
+        selector_id = select_attrs.get('id')
         if not selector_id:
             if show_debug_message:
                 print("[TICKETMASTER TICKET] Select element has no id attribute")
@@ -3909,6 +3929,10 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                 return {{ success: false, error: "Option not found" }};
             }})('{selector_id}', '{ticket_number}');
         ''')
+
+        # Parse NoDriver RemoteObject format
+        import util
+        result = util.parse_nodriver_result(result)
 
         if result and result.get('success'):
             if show_debug_message:
@@ -3961,15 +3985,24 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
         # OCR enabled - auto recognition
         previous_answer = None
         current_url = tab.target.url
+        fail_count = 0  # Track consecutive failures
+        total_fail_count = 0  # Track total failures
+
+        # Wait for captcha image to load before starting OCR
+        import random
+        await asyncio.sleep(random.uniform(0.5, 1.0))
 
         for redo_ocr in range(99):
             try:
                 # Reuse existing tixcraft auto_ocr function
                 away_from_keyboard_enable = config_dict.get("ocr_captcha", {}).get("force_submit", False)
+                ocr_captcha_image_source = config_dict.get("ocr_captcha", {}).get("image_source", "canvas")
+                domain_name = tab.target.url.split('/')[2]
 
                 # Call tixcraft_auto_ocr
                 is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
-                    tab, config_dict, ocr, away_from_keyboard_enable, previous_answer
+                    tab, config_dict, ocr, away_from_keyboard_enable, previous_answer,
+                    captcha_browser, ocr_captcha_image_source, domain_name
                 )
 
                 if is_form_submitted:
@@ -3982,6 +4015,28 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
 
                 if not is_need_redo_ocr:
                     break
+
+                # Track failures and handle retry limits
+                fail_count += 1
+                total_fail_count += 1
+
+                if show_debug_message:
+                    print(f"[TICKETMASTER CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
+
+                # Check if total failures reached 5, switch to manual input mode
+                if total_fail_count >= 5:
+                    print("[TICKETMASTER CAPTCHA] OCR failed 5 times. Please enter captcha manually.")
+                    await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
+                    break
+
+                # Refresh captcha after 3 consecutive failures with same answer
+                if fail_count >= 3:
+                    if show_debug_message:
+                        print("[TICKETMASTER CAPTCHA] 3 consecutive failures, reloading captcha...")
+                    await nodriver_tixcraft_reload_captcha(tab, domain_name)
+                    fail_count = 0
+                    previous_answer = None  # Reset to allow fresh OCR
+                    await asyncio.sleep(random.uniform(0.5, 1.0))  # Wait for new captcha to load
 
                 # Check if URL changed
                 new_url = tab.target.url
@@ -5204,11 +5259,16 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                                 const verify = document.querySelector('#TicketForm_verifyCode');
                                 const agree = document.querySelector('#TicketForm_agree');
 
+                                // Ticketmaster check-captcha page has no ticket selector
+                                // Ticket number is already set on previous page
+                                const isTicketmaster = window.location.href.includes('ticketmaster');
+                                const ticketOk = isTicketmaster ? true : (select && select.value !== "0" && select.value !== "");
+
                                 return {
-                                    ticket: select && select.value !== "0" && select.value !== "",
+                                    ticket: ticketOk,
                                     verify: verify && verify.value.length === 4,
                                     agree: agree && agree.checked,
-                                    ready: (select && select.value !== "0") &&
+                                    ready: ticketOk &&
                                            (verify && verify.value.length === 4) &&
                                            (agree && agree.checked)
                                 };
@@ -5595,17 +5655,33 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     await asyncio.sleep(5)
             else:
                 # T013: Ticketmaster area selection integration (User Story 2)
-                # Parse zone_info and auto-select area
-                zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
-                if zone_info:
-                    await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
+                # Check if we already processed this page (avoid repeated execution)
+                ticketmaster_area_processed = tixcraft_dict.get("ticketmaster_area_processed_url", "")
+                if ticketmaster_area_processed == url:
+                    # Already processed this URL, wait for page change
+                    tixcraft_dict["area_retry_count"] += 1
+                    if tixcraft_dict["area_retry_count"] >= 10:
+                        # Reset after 10 retries to allow re-processing
+                        tixcraft_dict["ticketmaster_area_processed_url"] = ""
+                        tixcraft_dict["area_retry_count"] = 0
+                        if show_debug_message:
+                            print("[TICKETMASTER] Area page retry limit reached, resetting state")
+                else:
+                    # Parse zone_info and auto-select area
+                    zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
+                    if zone_info:
+                        await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
 
-                # T017: Ticketmaster ticket number and promo integration (User Story 3)
-                # Set ticket number (will fallback to zone_info if ticketPriceList not found)
-                await nodriver_ticketmaster_assign_ticket_number(tab, config_dict)
+                    # T017: Ticketmaster ticket number and promo integration (User Story 3)
+                    # Set ticket number (will fallback to zone_info if ticketPriceList not found)
+                    await nodriver_ticketmaster_assign_ticket_number(tab, config_dict)
 
-                # Handle promo code
-                tixcraft_dict["fail_promo_list"] = await nodriver_ticketmaster_promo(tab, config_dict, tixcraft_dict["fail_promo_list"])
+                    # Handle promo code
+                    tixcraft_dict["fail_promo_list"] = await nodriver_ticketmaster_promo(tab, config_dict, tixcraft_dict["fail_promo_list"])
+
+                    # Mark this URL as processed
+                    tixcraft_dict["ticketmaster_area_processed_url"] = url
+                    tixcraft_dict["area_retry_count"] = 0
     else:
         tixcraft_dict["fail_promo_list"] = []
         tixcraft_dict["area_retry_count"]=0
@@ -5615,8 +5691,16 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     if '/ticket/check-captcha/' in url:
         domain_name = url.split('/')[2]
         if 'ticketmaster' in domain_name:
-            # Call Ticketmaster captcha handler
-            await nodriver_ticketmaster_captcha(tab, config_dict, ocr, Captcha_Browser)
+            # Check if we already processed this captcha page (avoid repeated execution)
+            ticketmaster_captcha_processed = tixcraft_dict.get("ticketmaster_captcha_processed_url", "")
+            if ticketmaster_captcha_processed != url:
+                # Call Ticketmaster captcha handler
+                await nodriver_ticketmaster_captcha(tab, config_dict, ocr, Captcha_Browser)
+                # Mark this URL as processed
+                tixcraft_dict["ticketmaster_captcha_processed_url"] = url
+    else:
+        # Reset captcha processed state when leaving captcha page
+        tixcraft_dict["ticketmaster_captcha_processed_url"] = ""
 
     if '/ticket/verify/' in url:
         # Tixcraft verify handler (already implemented)
