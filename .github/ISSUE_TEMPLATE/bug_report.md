@@ -1,14 +1,6 @@
----
-name: 🐛 Bug Report
-about: Report a bug to help us improve
-title: '[BUG] 用一句話描述問題'
-labels: 'bug'
-assignees: 'bouob'
----
-
 <!--
 📝 填寫說明：
-- 請將標題修改為具體描述問題，例如：「拓元自動刷新失效」、「ibon 座位區無法點擊」
+- 請將標題修改為具體描述問題，例如：拓元自動刷新失效、ibon 座位區無法點擊
 - 標示 ⭐ 的欄位為必填項目
 - 請盡量提供完整資訊，有助於快速定位問題
 -->
@@ -25,7 +17,7 @@ assignees: 'bouob'
 3. **預期應該要**：例如「應該依照設定的秒數自動刷新頁面」
 
 ## 💻 基本資訊 ⭐
-- **Release 版本**：
+- **Release 版本**⭐：[v2025.00.00]
 - **作業系統**：[Windows/macOS/Linux]
 - **執行方式**：[exe執行檔/Python原始碼]
 - **Python版本**：[如果使用原始碼，請執行 `python --version` 查看，例如：3.10.11]
@@ -35,6 +27,3 @@ assignees: 'bouob'
 
 ## 📋 錯誤訊息
 如果有錯誤訊息或 log 檔案，請貼在這裡：
-```
-錯誤訊息
-```

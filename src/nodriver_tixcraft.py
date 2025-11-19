@@ -14864,11 +14864,40 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
                 if show_debug_message:
                     print("Found realname dialog, clicking OK button...")
 
-                # Click OK button
-                el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
-                if el_btn:
-                    await el_btn.click()
+                # Click OK button using JavaScript for reliable jQuery UI event triggering
+                click_result = await tab.evaluate('''
+                    (function() {
+                        const btn = document.querySelector('div.ui-dialog-buttonset > button.ui-button');
+                        if (btn) {
+                            btn.click();
+                            return true;
+                        }
+                        return false;
+                    })();
+                ''')
+
+                if click_result:
                     is_realname_dialog_found = True
+
+                    # Wait for dialog to close (jQuery UI dialog animation)
+                    await tab.sleep(0.5)
+
+                    # Verify dialog is closed to prevent infinite loop
+                    try:
+                        for _ in range(10):
+                            dialog_visible = await tab.evaluate('''
+                                (function() {
+                                    const dialog = document.querySelector('div.ui-dialog');
+                                    if (!dialog) return false;
+                                    const style = window.getComputedStyle(dialog);
+                                    return style.display !== 'none';
+                                })();
+                            ''')
+                            if not dialog_visible:
+                                break
+                            await tab.sleep(0.1)
+                    except:
+                        pass
     except Exception as exc:
         if show_debug_message:
             print("Check realname dialog exception:", exc)
@@ -16056,20 +16085,18 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 pass
 
             # Redirect to target page after login
-            # Only redirect if homepage is a product page (avoid infinite loop)
             config_homepage = config_dict["homepage"]
-            is_homepage_product_page = 'utk0201_.aspx?product_id=' in config_homepage.lower()
 
-            # Only redirect when homepage is a product page and current URL is different
-            if is_homepage_product_page and config_homepage != url:
+            # Redirect if homepage is different from current URL
+            if config_homepage and config_homepage.lower() != url.lower():
                 if show_debug_message:
-                    print(f"Login completed, redirecting to: {config_homepage}")
+                    print(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
                 try:
                     await tab.get(config_homepage)
                     return tab
                 except Exception as e:
                     if show_debug_message:
-                        print(f"Redirect failed: {e}")
+                        print(f"[KHAM LOGIN] Redirect failed: {e}")
             break
 
     # Check realname dialog
@@ -16088,6 +16115,47 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
         # Return to avoid double processing by UTK0202/UTK0205 logic below
         return tab
+
+    # Activity Group page (UTK0201_040.aspx?AGID=)
+    # This is a special page format for activity groups with realname requirements
+    if 'utk0201_040.aspx?agid=' in url.lower():
+        if show_debug_message:
+            print("Detected KHAM Activity Group page (UTK0201_040)")
+
+        # Check realname dialog
+        await nodriver_kham_check_realname_dialog(tab, config_dict)
+
+        # Click buy button
+        await nodriver_kham_go_buy_redirect(tab, domain_name)
+
+    # Activity Group Item page (UTK0201_041.aspx?AGID=)
+    # This page has "立即訂購" buttons that redirect to UTK0202
+    if 'utk0201_041.aspx?agid=' in url.lower():
+        if show_debug_message:
+            print("Detected KHAM Activity Group Item page (UTK0201_041)")
+
+        # Check realname dialog first
+        await nodriver_kham_check_realname_dialog(tab, config_dict)
+
+        # Click "立即訂購" button (redirects to UTK0202)
+        try:
+            click_result = await tab.evaluate('''
+                (function() {
+                    // Find all "立即訂購" buttons that redirect to UTK0202
+                    const buttons = document.querySelectorAll('button.red[onclick*="UTK0202"]');
+                    if (buttons.length > 0) {
+                        // Click the first available button
+                        buttons[0].click();
+                        return buttons.length;
+                    }
+                    return null;
+                })();
+            ''')
+            if show_debug_message and click_result:
+                print(f"Clicked buy button, total buttons: {click_result}")
+        except Exception as exc:
+            if show_debug_message:
+                print(f"Click buy button exception: {exc}")
 
     # Product page (UTK0201_.aspx?product_id=)
     if 'utk0201_.aspx?product_id=' in url.lower():
@@ -16195,7 +16263,8 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     else:
         # Kham / Ticket.com.tw handling
         # Performance page (.aspx?performance_id= & product_id=)
-        if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
+        # Exclude Activity Group pages (handled separately above)
+        if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower() and 'activity_group_id=' not in url.lower():
             model_name = url.split('/')[5] if len(url.split('/')) > 5 else "UTK0204"
             if len(model_name) > 7:
                 model_name = model_name[:7]
@@ -16392,6 +16461,93 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
             if show_debug_message:
                 print(f"Seat selection result: {is_seat_selection_success}")
+
+        # UTK0202 page - Activity Group ticket selection (new format)
+        # URL: UTK0202_.aspx?PERFORMANCE_ID=xxx&PRODUCT_ID=xxx&ACTIVITY_GROUP_ID=xxx&ACTIVITY_GROUP_ITEM_ID=xxx
+        if '.aspx?performance_id=' in url.lower() and 'activity_group_id=' in url.lower():
+            model_name = url.split('/')[5] if len(url.split('/')) > 5 else "UTK0202"
+            if len(model_name) > 7:
+                model_name = model_name[:7]
+
+            if show_debug_message:
+                print(f"Detected UTK0202 Activity Group ticket page, model: {model_name}")
+
+            # Check realname dialog
+            await nodriver_kham_check_realname_dialog(tab, config_dict)
+
+            # Handle captcha if enabled
+            is_captcha_sent = False
+            if config_dict["ocr_captcha"]["enable"]:
+                is_captcha_sent = await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
+
+            if is_captcha_sent:
+                # Set ticket number by clicking + button
+                ticket_number = int(config_dict["ticket_number"])
+                try:
+                    # Click + button N times to set ticket number
+                    set_result = await tab.evaluate(f'''
+                        (function() {{
+                            // Try multiple selectors for + button
+                            let plusBtn = document.querySelector('button.plus');
+                            if (!plusBtn) {{
+                                plusBtn = document.querySelector('button[onclick*="opera1"][onclick*="true"]');
+                            }}
+                            if (!plusBtn) {{
+                                // Try by text content
+                                const buttons = document.querySelectorAll('button');
+                                for (let btn of buttons) {{
+                                    if (btn.textContent.trim() === '+') {{
+                                        plusBtn = btn;
+                                        break;
+                                    }}
+                                }}
+                            }}
+
+                            if (plusBtn) {{
+                                for (let i = 0; i < {ticket_number}; i++) {{
+                                    plusBtn.click();
+                                }}
+                                const amountInput = document.querySelector('#AMOUNT');
+                                return amountInput ? amountInput.value : '{ticket_number}';
+                            }}
+
+                            // Fallback: directly set input value
+                            const amountInput = document.querySelector('#AMOUNT');
+                            if (amountInput) {{
+                                amountInput.value = '{ticket_number}';
+                                amountInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                amountInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                if (typeof checkNum === 'function') {{
+                                    checkNum(amountInput);
+                                }}
+                                return amountInput.value + ' (fallback)';
+                            }}
+                            return null;
+                        }})();
+                    ''')
+                    if show_debug_message:
+                        print(f"Ticket number set to: {set_result}")
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"Set ticket number error: {exc}")
+
+                # Click add to cart
+                try:
+                    btn_selector = 'button[onclick="addShoppingCart();return false;"]'
+                    el_btn = await tab.query_selector(btn_selector)
+                    if el_btn:
+                        await el_btn.click()
+                        if show_debug_message:
+                            print("Clicked add to cart button")
+                    else:
+                        # Try alternative selector
+                        el_btn = await tab.query_selector('#addcart button.red')
+                        if el_btn:
+                            await el_btn.click()
+                            if show_debug_message:
+                                print("Clicked add to cart button (alt)")
+                except:
+                    pass
 
         # UTK0202/UTK0205 page - Ticket number selection page
         # URL: UTK0202_.aspx?PERFORMANCE_ID=xxx&PERFORMANCE_PRICE_AREA_ID=xxx
