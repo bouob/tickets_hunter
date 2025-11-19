@@ -25,7 +25,7 @@ assignees: 'bouob'
 3. **預期應該要**：例如「應該依照設定的秒數自動刷新頁面」
 
 ## 💻 基本資訊 ⭐
-- **Release 版本**：
+- **Release 版本**⭐：[v2025.00.00]
 - **作業系統**：[Windows/macOS/Linux]
 - **執行方式**：[exe執行檔/Python原始碼]
 - **Python版本**：[如果使用原始碼，請執行 `python --version` 查看，例如：3.10.11]
