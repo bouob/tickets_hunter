@@ -13562,13 +13562,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 print("搶票成功, 請前往該帳號訂單查看: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
                 ibon_dict["is_popup_checkout"] = True
-
-        # Trigger idle mode (only once)
-        if not ibon_dict.get("triggered_idle", False):
-            settings.maxbot_idle()
-            if config_dict["advanced"].get("verbose", False):
-                print("[INFO] Triggered maxbot_idle() - entering idle mode")
-            ibon_dict["triggered_idle"] = True
     else:
         # Reset status when leaving checkout page
         ibon_dict["is_popup_checkout"] = False
@@ -16962,13 +16955,6 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 print(f"搶票成功，請前往該帳號訂單查看: {checkout_url}")
                 webbrowser.open_new(checkout_url)
                 kham_dict["is_popup_checkout"] = True
-
-        # Trigger idle mode (only once)
-        if not kham_dict.get("triggered_idle", False):
-            settings.maxbot_idle()
-            if show_debug_message:
-                print("[INFO] Triggered maxbot_idle() - entering idle mode")
-            kham_dict["triggered_idle"] = True
 
     return tab
 
