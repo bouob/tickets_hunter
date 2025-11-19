@@ -1,241 +1,130 @@
-To exit web server press Ctrl + C.
-server running on port: 16888
-goto url: http://127.0.0.1:16888/settings.html
-run button pressed.
-execute in shell mode.
-try python
-https://ticketmaster.sg/activity/detail/25sg_nflying
-[GLOBAL ALERT] Global alert handler registered
-redirec to new url: https://ticketmaster.sg/activity/game/25sg_nflying
-https://ticketmaster.sg/activity/game/25sg_nflying
-[TICKETMASTER] Detected Ticketmaster date page, calling date auto select
-[TICKETMASTER DATE] Found date list after 0.0s
-[TICKETMASTER DATE] Found 1 date blocks
-[TICKETMASTER DATE] 1 available dates after filtering
-[TICKETMASTER DATE KEYWORD] Start checking keywords in order: ['AAA']
-[TICKETMASTER DATE KEYWORD] Total keyword groups: 1
-[TICKETMASTER DATE KEYWORD] Checking against 1 available dates...
-[TICKETMASTER DATE KEYWORD] Checking keyword #1: AAA
-[TICKETMASTER DATE KEYWORD] All keywords failed to match
-[TICKETMASTER DATE KEYWORD] ========================================
-[TICKETMASTER DATE KEYWORD] Match Summary:
-[TICKETMASTER DATE KEYWORD]   Total dates available: 1
-[TICKETMASTER DATE KEYWORD]   Total dates matched: 0
-[TICKETMASTER DATE KEYWORD] ========================================
-[TICKETMASTER DATE FALLBACK] date_auto_fallback=true, triggering auto fallback
-[TICKETMASTER DATE FALLBACK] Selecting available date based on date_select_order='random'
-[TICKETMASTER DATE] Clicked 'See Tickets' link
-[TICKETMASTER] Date selection completed
-https://ticketmaster.sg/ticket/area/25sg_nflying/2636
-[TICKETMASTER TICKET] Error: Could not find node with given id [code: -32000]
-[TICKETMASTER ZONE] String extraction failed: 'NoneType' object is not callable
-[TICKETMASTER] Area page retry limit reached, resetting state
-[TICKETMASTER ZONE] String extraction failed: 'NoneType' object is not callable
-[TICKETMASTER ZONE] Successfully parsed zone_info (19 zones, type: list)
-[TICKETMASTER ZONE] RemoteObject converted to standard format
-[TICKETMASTER ZONE] List first item type: <class 'list'>
-[TICKETMASTER ZONE] List item is tuple/list with 2 elements
-[TICKETMASTER ZONE] First element type: <class 'str'>
-[TICKETMASTER ZONE] First element (zone_id): field_LS_A
-[TICKETMASTER ZONE] Second element type: <class 'dict'>
-[TICKETMASTER ZONE] ✗ Still RemoteObject format (has 'type' and 'value' keys)
-[TICKETMASTER ZONE] ✓ After re-conversion, groupName found: CAT UTOPIA
-[TICKETMASTER AREA] area_keyword: "CAT IZ,CAT FZ"
-[TICKETMASTER AREA] Enhanced parsing: split 'CAT IZ,CAT FZ' into 2 groups
-[TICKETMASTER AREA] Parsed keyword groups: ['CAT IZ', 'CAT FZ']
-[TICKETMASTER AREA] Trying keyword group 1/2: 'CAT IZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 1 had no matches, trying next...
-[TICKETMASTER AREA] Trying keyword group 2/2: 'CAT FZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 2 had no matches, trying next...
-[TICKETMASTER AREA] Fallback enabled: selecting from all available areas
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] Matched 1 areas: ['field_US_A']
-[TICKETMASTER AREA] Executing: areaTicket("field_US_A", "map");
-[TICKETMASTER AREA] Timeout waiting for ticketPriceList (5s)
-[TICKETMASTER AREA] Selected zone: field_US_A
-[TICKETMASTER TICKET] mapContainer found
-[TICKETMASTER TICKET] Loading timeout after 10s
-[TICKETMASTER TICKET] ticketPriceList not found, will use zone_info
-[TICKETMASTER ZONE] String extraction failed: 'NoneType' object is not callable
-[TICKETMASTER ZONE] Successfully parsed zone_info (19 zones, type: list)
-[TICKETMASTER ZONE] RemoteObject converted to standard format
-[TICKETMASTER ZONE] List first item type: <class 'list'>
-[TICKETMASTER ZONE] List item is tuple/list with 2 elements
-[TICKETMASTER ZONE] First element type: <class 'str'>
-[TICKETMASTER ZONE] First element (zone_id): field_LS_A
-[TICKETMASTER ZONE] Second element type: <class 'dict'>
-[TICKETMASTER ZONE] ✗ Still RemoteObject format (has 'type' and 'value' keys)
-[TICKETMASTER ZONE] ✓ After re-conversion, groupName found: CAT UTOPIA
-[TICKETMASTER AREA] area_keyword: "CAT IZ,CAT FZ"
-[TICKETMASTER AREA] Enhanced parsing: split 'CAT IZ,CAT FZ' into 2 groups
-[TICKETMASTER AREA] Parsed keyword groups: ['CAT IZ', 'CAT FZ']
-[TICKETMASTER AREA] Trying keyword group 1/2: 'CAT IZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 1 had no matches, trying next...
-[TICKETMASTER AREA] Trying keyword group 2/2: 'CAT FZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 2 had no matches, trying next...
-[TICKETMASTER AREA] Fallback enabled: selecting from all available areas
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] Matched 1 areas: ['field_US_A']
-[TICKETMASTER AREA] Executing: areaTicket("field_US_A", "map");
-[TICKETMASTER AREA] Timeout waiting for ticketPriceList (5s)
-[TICKETMASTER AREA] Selected zone: field_US_A
-[TICKETMASTER] Area page retry limit reached, resetting state
-[TICKETMASTER ZONE] String extraction failed: 'NoneType' object is not callable
-[TICKETMASTER ZONE] Successfully parsed zone_info (19 zones, type: list)
-[TICKETMASTER ZONE] RemoteObject converted to standard format
-[TICKETMASTER ZONE] List first item type: <class 'list'>
-[TICKETMASTER ZONE] List item is tuple/list with 2 elements
-[TICKETMASTER ZONE] First element type: <class 'str'>
-[TICKETMASTER ZONE] First element (zone_id): field_LS_A
-[TICKETMASTER ZONE] Second element type: <class 'dict'>
-[TICKETMASTER ZONE] ✗ Still RemoteObject format (has 'type' and 'value' keys)
-[TICKETMASTER ZONE] ✓ After re-conversion, groupName found: CAT UTOPIA
-[TICKETMASTER AREA] area_keyword: "CAT IZ,CAT FZ"
-[TICKETMASTER AREA] Enhanced parsing: split 'CAT IZ,CAT FZ' into 2 groups
-[TICKETMASTER AREA] Parsed keyword groups: ['CAT IZ', 'CAT FZ']
-[TICKETMASTER AREA] Trying keyword group 1/2: 'CAT IZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'IZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 1 had no matches, trying next...
-[TICKETMASTER AREA] Trying keyword group 2/2: 'CAT FZ'
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_A ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_US_C (CAT N UPPER STALLS)
-[TICKETMASTER AREA] AND Match: field_US_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_B (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C1_D (CAT F CIRCLE 1)
-[TICKETMASTER AREA] AND Match: field_C1_D ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_B (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_B ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_F (CAT I CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_F ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_C (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_C ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Processing zone: field_C2_G (CAT A CIRCLE 2)
-[TICKETMASTER AREA] AND Match: field_C2_G ['CAT':PASS, 'FZ':FAIL] -> REJECTED
-[TICKETMASTER AREA] Keyword group 2 had no matches, trying next...
-[TICKETMASTER AREA] Fallback enabled: selecting from all available areas
-[TICKETMASTER AREA] Processing zone: field_US_A (CAT N UPPER STALLS)
-[TICKETMASTER AREA] Matched 1 areas: ['field_US_A']
-[TICKETMASTER AREA] Executing: areaTicket("field_US_A", "map");
-[TICKETMASTER AREA] ticketPriceList loaded after 1s
-[TICKETMASTER AREA] Selected zone: field_US_A
-[TICKETMASTER TICKET] mapContainer found
-[TICKETMASTER TICKET] Found ticketPriceList table
-[TICKETMASTER TICKET] Set ticket number to: 2
-[TICKETMASTER TICKET] Clicked #autoMode button
-https://ticketmaster.sg/ticket/check-captcha/25sg_nflying/2636/9/29
-[TICKETMASTER CAPTCHA] Checked TicketForm_agree
-[TIXCRAFT OCR] away_from_keyboard_enable: True
-[TIXCRAFT OCR] previous_answer: None
-[TIXCRAFT OCR] ocr_captcha_image_source: canvas
-[TIXCRAFT OCR] Processing time: 0.049
-[TIXCRAFT OCR] Result: mhx
-[TIXCRAFT OCR] Reloading captcha
-[TICKETMASTER CAPTCHA] Fail count: 1, Total fails: 1
-[TIXCRAFT OCR] away_from_keyboard_enable: True
-[TIXCRAFT OCR] previous_answer: mhx
-[TIXCRAFT OCR] ocr_captcha_image_source: canvas
-[TIXCRAFT OCR] Processing time: 0.009
-[TIXCRAFT OCR] Result: mhx
-[TICKETMASTER CAPTCHA] Fail count: 2, Total fails: 2
-[TIXCRAFT OCR] away_from_keyboard_enable: True
-[TIXCRAFT OCR] previous_answer: mhx
-[TIXCRAFT OCR] ocr_captcha_image_source: canvas
-[TIXCRAFT OCR] Processing time: 0.042
-[TICKETMASTER CAPTCHA] Fail count: 3, Total fails: 3
-[TICKETMASTER CAPTCHA] 3 consecutive failures, reloading captcha...
-[TIXCRAFT OCR] away_from_keyboard_enable: True
-[TIXCRAFT OCR] previous_answer: None
-[TIXCRAFT OCR] ocr_captcha_image_source: canvas
-[TIXCRAFT OCR] Processing time: 0.001
-[TICKETMASTER CAPTCHA] Fail count: 1, Total fails: 4
-[TIXCRAFT OCR] away_from_keyboard_enable: True
-[TIXCRAFT OCR] previous_answer: None
-[TIXCRAFT OCR] ocr_captcha_image_source: canvas
-[TIXCRAFT OCR] Processing time: 0.012
-[TIXCRAFT OCR] Result: zahr
-Starting to fill in captcha...
-Warning: Ticket number not set, resetting...
-[TICKETMASTER CAPTCHA] Form submitted
-[TICKETMASTER CAPTCHA] Error checking modal: 'list' object has no attribute 'get'
-https://auth.ticketmaster.com/as/authorization.oauth2?client_id=1a554b2c04dc.web.ticketmaster.sg&response_type=code&scope=openid%20profile%20phone%20email%20tm&redirect_uri=https://identity.ticketmaster.sg/exchange&visualPresets=tmsg&lang=en-sg&placementId=d2d3abb2-c494-11f0-8645-06529db4d581&hideLeftPanel=false&integratorId=internet&intSiteToken=tm-sg&TMUO=east_pzekJfhBlKlWt5rGJjyiIAAcHo4Y9KC5XNy+6204JbI=&deviceId=GoXAA7pmRL23tru4xLy7xbu7u710cd4dGPV%2BBQ&disableAutoOptIn=false
+Found realname dialog, clicking OK button...
+Detected KHAM Activity Group page (UTK0201_040)
+Dialog message: 本節目採「個人實名制入場」，請於購票前至【會員專區】再次確認會員本人及實名制名單中入場人資料正確無誤並詳閱相關購退票規定，以免影響自身權益。
+
+
+Found realname dialog, clicking OK button...
+https://kham.com.tw/application/UTK02/UTK0201_041.aspx?AGID=P13EQDJL
+Detected KHAM Activity Group Item page (UTK0201_041)
+Clicked buy button, total buttons: 1
+https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
+area_keyword:
+Error finding PRICE select: Could not find node with given id [code: -32000]
+Valid area rows count: 0
+No target area row selected from 0 matched blocks
+is_need_refresh: True
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
+[CAPTCHA] Backend node ID: BackendNodeId(9168)
+[CAPTCHA] Converted to node_id: NodeId(73)
+[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
+[CAPTCHA] Full screenshot: (733, 1164)
+[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
+[CAPTCHA] Screenshot: 2970 bytes
+OCR elapsed time: 0.812s
+OCR answer: wpng
+[SUBMIT] Searching for Kham submit button...
+[SUBMIT] Submit button found, scrolling into view...
+[SUBMIT] Clicking using CDP native click...
+[SUBMIT] Add shopping cart button clicked successfully!
+[SUBMIT] Success dialog found, closing...
+[SUBMIT] Dialog closed successfully
+[SUBMIT] Waiting for page transition after dialog close...
+[SUBMIT] Current URL before transition check: https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
+[SUBMIT] WARNING: URL did not change after 30 seconds, waiting additional 5 seconds...
+[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s
+[SUBMIT] This may indicate a submission error - will retry
+Detected UTK0202 Activity Group ticket page, model: UTK0202
+Dialog message: 必須輸入至少一個商品的數量！
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
+[CAPTCHA] Backend node ID: BackendNodeId(9168)
+[CAPTCHA] Converted to node_id: NodeId(5685)
+[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
+[CAPTCHA] Full screenshot: (733, 1164)
+[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
+[CAPTCHA] Screenshot: 2970 bytes
+OCR elapsed time: 0.866s
+OCR answer: wpng
+Captcha text already inputed: wpng target answer: wpng
+Ticket number set to: None
+Clicked add to cart button
+Dialog message: 必須輸入至少一個商品的數量！
+Dialog message: 必須輸入至少一個商品的數量！
+Dialog message: 必須輸入至少一個商品的數量！
+area_keyword:
+Valid area rows count: 0
+No target area row selected from 0 matched blocks
+is_need_refresh: True
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
+[CAPTCHA] Backend node ID: BackendNodeId(10415)
+[CAPTCHA] Converted to node_id: NodeId(73)
+[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
+[CAPTCHA] Full screenshot: (733, 1164)
+[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
+[CAPTCHA] Screenshot: 2933 bytes
+OCR elapsed time: 0.938s
+OCR answer: YBWM
+[SUBMIT] Searching for Kham submit button...
+[SUBMIT] Submit button found, scrolling into view...
+[SUBMIT] Clicking using CDP native click...
+[SUBMIT] Add shopping cart button clicked successfully!
+[SUBMIT] Success dialog found, closing...
+[SUBMIT] Dialog closed successfully
+[SUBMIT] Waiting for page transition after dialog close...
+[SUBMIT] Current URL before transition check: https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
+[SUBMIT] WARNING: URL did not change after 30 seconds, waiting additional 5 seconds...
+[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s
+[SUBMIT] This may indicate a submission error - will retry
+Detected UTK0202 Activity Group ticket page, model: UTK0202
+Dialog message: 必須輸入至少一個商品的數量！
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
+[CAPTCHA] Backend node ID: BackendNodeId(10415)
+[CAPTCHA] Converted to node_id: NodeId(5239)
+[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
+[CAPTCHA] Full screenshot: (733, 1164)
+[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
+[CAPTCHA] Screenshot: 2933 bytes
+OCR elapsed time: 0.807s
+OCR answer: YBWM
+Captcha text already inputed: YBWM target answer: YBWM
+Ticket number set to: None
+Clicked add to cart button
+area_keyword:
+Valid area rows count: 0
+No target area row selected from 0 matched blocks
+is_need_refresh: True
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] IMG not found, searching for CANVAS element...
+[CAPTCHA] Neither IMG nor CANVAS found
+OCR elapsed time: 0.544s
+OCR answer is None
+previous_answer: None
+Detected UTK0202 Activity Group ticket page, model: UTK0202
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] IMG not found, searching for CANVAS element...
+[CAPTCHA] Neither IMG nor CANVAS found
+OCR elapsed time: 0.651s
+OCR answer is None
+previous_answer: None
+https://kham.com.tw/application/UTK02/UTK0206_.aspx
+[SUCCESS] Reached checkout page - ticket purchase successful!
+[INFO] Triggered maxbot_idle() - entering idle mode
+BOT Paused.
+https://kham.com.tw/application/utk01/UTK0101_03.aspx
+server rejected WebSocket connection: HTTP 500
+successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_q0g5m76w
