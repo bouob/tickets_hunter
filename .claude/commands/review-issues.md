@@ -91,9 +91,10 @@ gh issue list --state open --limit 100 --json number,title,labels,comments
 1. **空白 issue**：body 為空或僅包含模板文字 → 標註「建議關閉」
 2. **標題不明確**：標題包含 `<請描述問題>`、`<請描述功能需求>` 等 → **自動修正標題**
 3. **資訊不足**：Bug report 缺少必要欄位 → 標註「資訊不足」
-4. **重複問題**：相同平台、相同錯誤或高度相似 → **自動關閉並引用原 issue**
-5. **已解決問題**：評論中有使用者確認已解決 → 標註「已回報解決」
-6. **已修復問題**：CHANGELOG.md 或評論中已記錄修正 → 標註「已修復」
+4. **版本未提供**：Bug report 未提及 Release 版本 → **自動留言提醒**，超過 3 天未回覆則**自動關閉**
+5. **重複問題**：相同平台、相同錯誤或高度相似 → **自動關閉並引用原 issue**
+6. **已解決問題**：評論中有使用者確認已解決 → 標註「已回報解決」
+7. **已修復問題**：CHANGELOG.md 或評論中已記錄修正 → 標註「已修復」
 
 ---
 
@@ -139,6 +140,58 @@ gh issue list --state open --limit 100 --json number,title,labels,comments
 4. **記錄到報告**
    - 在「已自動處理」區塊列出修改的標題
    - 格式：`#123: "[舊標題]" → "[新標題]"`
+
+---
+
+### 階段 4.5：版本檢查與提醒（新增）
+
+**觸發條件**：
+- Issue 標籤為 `bug`（Bug report）
+- Body 中未提及 Release 版本（搜尋關鍵字：`v20`, `2025.`, `版本`, `version`）
+- 或版本欄位為空/預設值
+
+**執行步驟**：
+
+1. **檢測版本資訊**
+
+   搜尋 body 中的版本相關內容：
+   ```bash
+   # 檢查是否有版本號
+   # 格式：v2025.11.19, 2025.11.19, tickets_hunter_v2025.11.12.1 等
+   ```
+
+   判斷邏輯：
+   - 有明確版本號（如 `2025.11.19`）→ 通過
+   - 版本欄位為空或僅有預設值 → 需提醒
+
+2. **首次提醒（自動留言）**
+
+   對於未提供版本的 issue：
+   ```bash
+   gh issue comment <issue_number> --body "留言內容"
+   ```
+
+3. **追蹤提醒狀態**
+
+   記錄已提醒的 issue：
+   - 提醒日期
+   - 是否已超過 3 天
+
+4. **自動關閉（超過 3 天未回覆）**
+
+   判斷邏輯：
+   - 已留言提醒版本資訊
+   - 距離提醒已超過 3 天
+   - 使用者未回覆補充版本
+
+   執行關閉：
+   ```bash
+   gh issue close <issue_number> --comment "留言內容"
+   ```
+
+5. **記錄到報告**
+   - 在「已自動處理 > 版本提醒」區塊列出
+   - 格式：`#123 - 已提醒補充版本（X 天前）` 或 `#456 - 已關閉（超過 3 天未補充版本）`
 
 ---
 
@@ -523,6 +576,76 @@ Please track progress at the original issue:
 
 ---
 
+### 範本 5：版本未提供（首次提醒）**← 新增**
+
+**繁體中文**：
+```
+**請補充 Release 版本資訊**
+
+為了更有效地診斷問題，請提供您使用的版本號，例如：
+- `v2025.11.19`
+- `2025.11.12.1`
+
+您可以在程式啟動時的 console 輸出中找到版本號，或查看 Settings 視窗標題。
+
+**請在 3 天內回覆補充版本資訊**，否則此 issue 將被自動關閉。
+
+---
+*Claude Code*
+```
+
+**English**：
+```
+**Please provide Release version information**
+
+To diagnose the issue more effectively, please provide your version number, e.g.:
+- `v2025.11.19`
+- `2025.11.12.1`
+
+You can find the version number in the console output when starting the program, or check the Settings window title.
+
+**Please reply with version information within 3 days**, otherwise this issue will be automatically closed.
+
+---
+*Claude Code*
+```
+
+---
+
+### 範本 6：版本未補充（超時關閉）**← 新增**
+
+**繁體中文**：
+```
+**此 issue 因未補充版本資訊已自動關閉**
+
+已等待超過 3 天未收到版本資訊回覆。
+
+若問題仍存在，請開啟新 issue 並提供：
+1. Release 版本號（如 v2025.11.19）
+2. 完整錯誤訊息
+3. 重現步驟
+
+---
+*Claude Code*
+```
+
+**English**：
+```
+**This issue has been automatically closed due to missing version information**
+
+No version information was provided after waiting more than 3 days.
+
+If the issue persists, please open a new issue with:
+1. Release version number (e.g., v2025.11.19)
+2. Complete error message
+3. Steps to reproduce
+
+---
+*Claude Code*
+```
+
+---
+
 ## 自動處理規則
 
 執行 `/review-issues` 時自動檢查並執行：
@@ -545,6 +668,17 @@ Please track progress at the original issue:
 - **條件**：Bug report 缺少錯誤訊息、平台、重現步驟
 - **動作**：在分析報告中標註「資訊不足，建議請使用者補充」
 - **不主動回應**
+
+### 4.5. 版本未提供（新增）
+- **條件**：Bug report 未提及 Release 版本（body 中無 `v20`, `2025.`, 版本號格式）
+- **動作**：
+  - **首次發現**：**自動留言提醒**（使用範本 5）
+  - **超過 3 天未回覆**：**自動關閉**（使用範本 6）
+- 記錄到「已自動處理 > 版本提醒」區塊
+- 檢查邏輯：
+  1. 搜尋 body 中是否有版本號格式（如 `2025.11.19`, `v2025.11.12.1`）
+  2. 若無版本號，檢查評論中是否已有版本提醒留言
+  3. 若已提醒但超過 3 天，執行自動關閉
 
 ### 5. 重複問題（改良）
 - **條件**：相同平台、相同錯誤或高度相似描述（透過平台關鍵字搜尋 + agent 語義判斷）
