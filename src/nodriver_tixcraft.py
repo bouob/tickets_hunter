@@ -8255,8 +8255,10 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     try:
-        # 檢查 1: API pending 狀態 (原有邏輯)
-        js_check_api = '''
+        # 檢查 1: API pending 狀態 (暫時註解，NoDriver 不支援 async 函數返回值)
+        # TODO: 未來如果 NoDriver 支援 Promise/async，可以重新啟用此檢查
+        '''
+        js_check_api = \'\'\'
         (async function() {
             try {
                 // 查找 API URL
@@ -8320,23 +8322,29 @@ async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
                 return { isPending: false, reason: 'API check error: ' + err.message };
             }
         })();
-        '''
+        \'\'\'
 
         # 執行檢查
         api_result = await tab.evaluate(js_check_api)
         is_api_pending = isinstance(api_result, dict) and api_result.get('isPending', False)
+        '''
+
+        # API 檢查已註解，直接設為 False
+        is_api_pending = False
 
         # 檢查 2: 下一步按鈕狀態（使用現有的按鈕檢查函數）
         is_button_enabled = await nodriver_ticketplus_check_next_button(tab)
         is_button_disabled = not is_button_enabled
 
         if show_debug_message:
-            print(f"[AUTO RELOAD CHECK] API pending: {is_api_pending}, Button disabled: {is_button_disabled}")
-            if isinstance(api_result, dict):
-                print(f"  API reason: {api_result.get('reason', 'unknown')}")
+            print(f"[AUTO RELOAD CHECK] Button disabled: {is_button_disabled}")
+            # print(f"[AUTO RELOAD CHECK] API pending: {is_api_pending}, Button disabled: {is_button_disabled}")
+            # if isinstance(api_result, dict):
+            #     print(f"  API reason: {api_result.get('reason', 'unknown')}")
 
-        # 任一條件成立 -> 刷新頁面
-        if is_api_pending or is_button_disabled:
+        # 只依據按鈕狀態判斷是否需要刷新
+        # if is_api_pending or is_button_disabled:
+        if is_button_disabled:
             if show_debug_message:
                 print("[AUTO RELOAD] Reloading page...")
 
@@ -8781,6 +8789,9 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
 
+            # 註解自動重載檢查（API 和按鈕檢查）
+            # 改為完全依靠程式在抓取網頁元素時的選擇器自然判斷
+            '''
             is_reloading = False
             show_debug_message = config_dict["advanced"].get("verbose", False)
 
@@ -8803,6 +8814,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print("[ORDER PAGE] Page reloaded, waiting for page ready...")
                 # 刷新後可能需要額外時間讓頁面準備好（隨機延遲 0.8-1.2 秒避免偵測）
                 await asyncio.sleep(random.uniform(0.8, 1.2))
+            '''
 
             # 無論是否刷新，都執行訂單處理（展開票區、選票數）
             ticketplus_dict = await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict)
