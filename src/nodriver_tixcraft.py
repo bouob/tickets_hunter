@@ -8546,16 +8546,11 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
                     try:
                         current_url = tab.url
 
-                        # 檢查是否進入確認頁面，如果是則自動暫停
+                        # 檢查是否進入確認頁面，如果是則跳出排隊監控
                         if '/confirm/' in current_url.lower() or '/confirmseat/' in current_url.lower():
                             if show_debug_message:
-                                print("Detected entry to confirmation page, automatically pausing program")
-                            # 寫入暫停檔案
-                            try:
-                                with open(CONST_MAXBOT_INT28_FILE, 'w') as pause_file:
-                                    pause_file.write("auto_paused_at_confirm_page")
-                            except Exception:
-                                pass
+                                print("Detected entry to confirmation page, exiting queue monitoring")
+                            # 不自動建立暫停檔案，讓程式繼續處理確認頁面
                             break
 
                         # 僅在 URL 變化時顯示狀態（移除重複的排隊檢查訊息）
@@ -8571,12 +8566,7 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
                             if '/confirm/' in current_url.lower() or '/confirmseat/' in current_url.lower():
                                 if show_debug_message:
                                     print("Queue ended, entered confirmation page")
-                                # 寫入暫停檔案
-                                try:
-                                    with open(CONST_MAXBOT_INT28_FILE, 'w') as pause_file:
-                                        pause_file.write("auto_paused_at_confirm_page")
-                                except Exception:
-                                    pass
+                                # 不自動建立暫停檔案，讓程式繼續處理確認頁面
                                 break
                             else:
                                 if show_debug_message:
