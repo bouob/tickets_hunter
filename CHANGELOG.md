@@ -1,5 +1,11 @@
 # Changelog
 
+## 2025.11.20
+
+- 改善 TicketPlus 關鍵字匹配與頁面處理邏輯
+- 修復 KHAM Activity Group 頁面自動化與實名對話框問題
+- 移除成功購買後自動待機模式
+
 ## 2025.11.19
 
 - 新增 Ticketmaster NoDriver 完整實作：日期/區域自動選擇、驗證碼 OCR、票數設定
