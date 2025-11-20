@@ -584,7 +584,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                         if show_debug_message:
                             print(f"[KKTIX SIGNIN] Currently on homepage/user page, redirecting to: {target_url}")
                         await tab.get(target_url)
-                        await asyncio.sleep(random.uniform(1.5, 3.0))
+                        await asyncio.sleep(random.uniform(1.2, 2.3))
                         has_redirected = True
                     elif show_debug_message:
                         print(f"[KKTIX SIGNIN] Already on target page: {current_url}")
@@ -616,7 +616,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         try:
             tab = await driver.get(homepage)
             await tab.get_content()
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
         except Exception as e:
             pass
         
@@ -672,6 +672,16 @@ async def nodriver_goto_homepage(driver, config_dict):
         tixcraft_family = True
 
     if tixcraft_family:
+        # Determine correct cookie domain based on homepage
+        if 'ticketmaster.sg' in homepage:
+            cookie_domain = ".ticketmaster.sg"
+        elif 'ticketmaster.com' in homepage:
+            cookie_domain = ".ticketmaster.com"
+        elif 'indievox.com' in homepage:
+            cookie_domain = ".indievox.com"
+        else:
+            cookie_domain = ".tixcraft.com"
+
         tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
             if config_dict["advanced"]["verbose"]:
@@ -684,7 +694,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                 cookie_result = await tab.send(cdp.network.set_cookie(
                     name="SID",
                     value=tixcraft_sid,
-                    domain=".tixcraft.com",
+                    domain=cookie_domain,
                     path="/",
                     secure=True,
                     http_only=False  # TixCraft SID cookie is not httpOnly
@@ -717,7 +727,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                         is_cookie_exist = True
                         break
                 if not is_cookie_exist:
-                    new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=".tixcraft.com", path="/", http_only=False, secure=True)
+                    new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=cookie_domain, path="/", http_only=False, secure=True)
                     cookies.append(new_cookie)
                 await driver.cookies.set_all(cookies)
 
@@ -4245,8 +4255,8 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                             total_fail_count += 1
 
                             # Check retry limit
-                            if total_fail_count >= 5:
-                                print("[TICKETMASTER CAPTCHA] OCR failed 5 times after error modal. Please enter captcha manually.")
+                            if total_fail_count >= 15:
+                                print("[TICKETMASTER CAPTCHA] OCR failed 15 times after error modal. Please enter captcha manually.")
                                 await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
                                 break
 
@@ -4274,9 +4284,9 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 if show_debug_message:
                     print(f"[TICKETMASTER CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
 
-                # Check if total failures reached 5, switch to manual input mode
-                if total_fail_count >= 5:
-                    print("[TICKETMASTER CAPTCHA] OCR failed 5 times. Please enter captcha manually.")
+                # Check if total failures reached 15, switch to manual input mode
+                if total_fail_count >= 15:
+                    print("[TICKETMASTER CAPTCHA] OCR failed 15 times. Please enter captcha manually.")
                     await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
                     break
 
@@ -6735,12 +6745,217 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 }}
 
                 // 結構化判斷頁面類型
-                const hasCountButton = document.querySelector('.count-button .mdi-plus');
                 const hasExpansionPanel = document.querySelector('.v-expansion-panel');
+                const hasCountButton = document.querySelector('.count-button .mdi-plus');
 
-                if (hasCountButton) {{
+                // 增加診斷日誌
+                console.log('=== Page Type Detection Debug ===');
+                console.log('hasExpansionPanel:', hasExpansionPanel ? 'YES' : 'NO');
+                console.log('hasCountButton:', hasCountButton ? 'YES' : 'NO');
+
+                // 優先檢查展開面板（更特定的結構）
+                if (hasExpansionPanel) {{
+                    // 類型B: 票區選擇頁面（有展開面板）
+                    console.log('[DETECTED] Expansion Panel Layout (Page4) - Area Selection');
+                    console.log('[SELECTOR] Using: .v-expansion-panel');
+                    const panels = document.querySelectorAll('.v-expansion-panel');
+
+                    // 過濾掉售罄和排除關鍵字的選項
+                    const validPanels = [];
+                    console.log('共找到 ' + panels.length + ' 個展開面板');
+
+                    for (let i = 0; i < panels.length; i++) {{
+                        const panel = panels[i];
+
+                        // 嘗試多種 selector 來獲取展開面板的名稱/價格
+                        let nameElement = panel.querySelector('h4');  // 價格群組標題（如"4800 區"）
+                        if (!nameElement) {{
+                            nameElement = panel.querySelector('.d-flex.align-center:not(:has(.area-color))');  // 具體票區
+                        }}
+                        if (!nameElement) {{
+                            nameElement = panel.querySelector('.v-expansion-panel-header');  // 回退：直接取 header
+                        }}
+
+                        if (nameElement) {{
+                            const areaName = nameElement.textContent.trim();
+                            console.log('檢查票區 ' + (i + 1) + ': "' + areaName + '"');
+
+                            // 檢查是否售罄
+                            if (isSoldOut(panel)) {{
+                                console.log('跳過售罄票區:', areaName);
+                                continue;
+                            }}
+
+                            // 檢查是否包含排除關鍵字
+                            if (containsExcludeKeywords(areaName)) {{
+                                console.log('跳過排除關鍵字票區:', areaName);
+                                continue;
+                            }}
+
+                            validPanels.push({{ panel: panel, name: areaName, index: i }});
+                            console.log('可選票區:', areaName);
+                        }} else {{
+                            console.log('票區 ' + (i + 1) + ' 找不到名稱元素');
+                        }}
+                    }}
+
+                    console.log('有效票區數量: ' + validPanels.length + '/' + panels.length);
+                    if (validPanels.length > 0) {{
+                        console.log('有效票區清單:', validPanels.map(p => p.name));
+                    }}
+
+                    let targetPanel = null;
+                    let targetAreaName = '';
+
+                    // 先嘗試關鍵字比對（僅在有效選項中）
+                    if (keyword1) {{
+                        for (let item of validPanels) {{
+                            if (item.name.includes(keyword1)) {{
+                                if (!keyword2 || item.name.includes(keyword2)) {{
+                                    console.log('找到符合關鍵字的票區:', item.name);
+                                    targetPanel = item.panel;
+                                    targetAreaName = item.name;
+                                    break;
+                                }}
+                            }}
+                        }}
+                    }}
+
+                    // T022-T024: Conditional fallback based on area_auto_fallback switch
+                    if (!targetPanel && keyword1 && keyword1.trim() !== '') {{
+                        if (areaAutoFallback) {{
+                            // T022: Fallback enabled
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
+                            const targetIndex = getTargetIndex(validPanels, autoSelectMode);
+                            if (targetIndex >= 0 && targetIndex < validPanels.length) {{
+                                const targetItem = validPanels[targetIndex];
+                                targetPanel = targetItem.panel;
+                                targetAreaName = targetItem.name;
+                                console.log('自動選擇票區:', targetAreaName);
+                            }}
+                        }} else {{
+                            // T023: Fallback disabled - strict mode
+                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
+                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
+                            return {{
+                                success: false,
+                                error: 'No keyword matches and fallback is disabled',
+                                strict_mode: true
+                            }};
+                        }}
+                    }} else if (!targetPanel && validPanels.length > 0) {{
+                        // No keyword specified, select based on mode
+                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
+                        const targetIndex = getTargetIndex(validPanels, autoSelectMode);
+                        if (targetIndex >= 0 && targetIndex < validPanels.length) {{
+                            const targetItem = validPanels[targetIndex];
+                            targetPanel = targetItem.panel;
+                            targetAreaName = targetItem.name;
+                            console.log('自動選擇票區:', targetAreaName);
+                        }}
+                    }}
+
+                    if (validPanels.length === 0) {{
+                        console.log('沒有可選的票區（全部售完或被排除）');
+                        return {{ success: false, message: '沒有可選的票區（全部售完或被排除）' }};
+                    }}
+
+                    if (targetPanel) {{
+                        const header = targetPanel.querySelector('.v-expansion-panel-header');
+                        if (header) {{
+                            console.log('點擊展開面板:', targetAreaName);
+                            header.click();
+
+                            // 等待面板展開並找到操作按鈕的異步函數
+                            const waitAndFindAction = async () => {{
+                                return new Promise((resolve) => {{
+                                    let attempts = 0;
+                                    const maxAttempts = 10; // 最多嘗試1秒 (100ms * 10)
+
+                                    const findAction = () => {{
+                                        attempts++;
+                                        console.log('第 ' + attempts + ' 次尋找操作按鈕...');
+
+                                        // 先嘗試找加號按鈕
+                                        let plusButton = targetPanel.querySelector('.mdi-plus');
+                                        if (plusButton) {{
+                                            console.log('找到加號按鈕，開始設定票數');
+                                            for (let j = 0; j < ticketNumber; j++) {{
+                                                plusButton.click();
+                                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
+                                            }}
+                                            resolve({{ success: true, action: 'plus_button' }});
+                                            return;
+                                        }}
+
+                                        // 再嘗試找 count-button 結構
+                                        const countButtons = targetPanel.querySelectorAll('.count-button .mdi-plus');
+                                        if (countButtons.length > 0) {{
+                                            console.log('找到count-button加號');
+                                            const plusBtn = countButtons[0];
+                                            for (let j = 0; j < ticketNumber; j++) {{
+                                                plusBtn.click();
+                                                console.log('點擊count-button加號 ' + (j + 1) + '/' + ticketNumber);
+                                            }}
+                                            resolve({{ success: true, action: 'count_button' }});
+                                            return;
+                                        }}
+
+                                        // 尋找其他選擇按鈕
+                                        const allButtons = targetPanel.querySelectorAll('button:not(.v-expansion-panel-header)');
+                                        console.log('找到 ' + allButtons.length + ' 個按鈕');
+
+                                        for (let btn of allButtons) {{
+                                            const btnText = btn.textContent.toLowerCase().trim();
+                                            console.log('[CHECK] 檢查按鈕:', btnText);
+
+                                            if (btnText.includes('選擇') || btnText.includes('select') ||
+                                                btn.classList.contains('select-btn') ||
+                                                btn.classList.contains('v-btn--has-bg')) {{
+                                                console.log('[TARGET] 找到選擇按鈕，點擊:', btnText);
+                                                btn.click();
+                                                resolve({{ success: true, action: 'select_button', text: btnText }});
+                                                return;
+                                            }}
+                                        }}
+
+                                        // 如果還沒找到且未超過最大嘗試次數，繼續尋找
+                                        if (attempts < maxAttempts) {{
+                                            setTimeout(findAction, 100);
+                                        }} else {{
+                                            console.log('[WARNING] 達到最大嘗試次數，未找到操作按鈕');
+                                            resolve({{ success: false, action: 'none' }});
+                                        }}
+                                    }};
+
+                                    // 立即開始第一次嘗試
+                                    findAction();
+                                }});
+                            }};
+
+                            // 使用 await 等待操作完成
+                            const result = await waitAndFindAction();
+                            console.log('[RESULT] 面板操作結果:', result);
+                            return {{
+                                success: true,
+                                type: 'area_select',
+                                selected: targetAreaName,
+                                action_found: result.success,
+                                action_type: result.action
+                            }};
+                        }} else {{
+                            console.log('[ERROR] 找不到展開面板 header');
+                            return {{ success: false, message: '找不到展開面板 header' }};
+                        }}
+                    }} else {{
+                        console.log('[ERROR] 沒有找到目標展開面板');
+                        return {{ success: false, message: '沒有找到目標展開面板' }};
+                    }}
+
+                }} else if (hasCountButton) {{
                     // 類型A: 票種選擇頁面（有加減按鈕）
-                    console.log('偵測到票種選擇頁面');
+                    console.log('[DETECTED] Count Button Layout (Page2/3) - Ticket Type Selection');
+                    console.log('[SELECTOR] Using: .row.py-1.py-md-4:has(.count-button)');
                     const rows = document.querySelectorAll('.row.py-1.py-md-4:has(.count-button)');
 
                     // 過濾掉售罄和排除關鍵字的選項
@@ -6838,189 +7053,6 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                             console.log('找不到加號按鈕');
                         }}
                     }}
-
-                }} else if (hasExpansionPanel) {{
-                    // 類型B: 票區選擇頁面（有展開面板）
-                    console.log('🎭 偵測到票區選擇頁面');
-                    const panels = document.querySelectorAll('.v-expansion-panel');
-
-                    // 過濾掉售罄和排除關鍵字的選項
-                    const validPanels = [];
-                    console.log('🎭 共找到' + panels.length + '個展開面板');
-
-                    for (let i = 0; i < panels.length; i++) {{
-                        const panel = panels[i];
-                        const nameElement = panel.querySelector('.d-flex.align-center:not(:has(.area-color))');
-
-                        if (nameElement) {{
-                            const areaName = nameElement.textContent.trim();
-                            console.log('檢查票區' + (i + 1) + ': "' + areaName + '"');
-
-                            // 檢查是否售罄
-                            if (isSoldOut(panel)) {{
-                                console.log('跳過售罄票區:', areaName);
-                                continue;
-                            }}
-
-                            // 檢查是否包含排除關鍵字
-                            if (containsExcludeKeywords(areaName)) {{
-                                console.log('跳過排除關鍵字票區:', areaName);
-                                continue;
-                            }}
-
-                            validPanels.push({{ panel: panel, name: areaName, index: i }});
-                            console.log('可選票區:', areaName);
-                        }} else {{
-                            console.log('票區' + (i + 1) + '找不到名稱元素');
-                        }}
-                    }}
-
-                    console.log('有效票區數量: ' + validPanels.length + '/' + panels.length);
-                    if (validPanels.length > 0) {{
-                        console.log('有效票區清單:', validPanels.map(p => p.name));
-                    }}
-
-                    let targetPanel = null;
-                    let targetAreaName = '';
-
-                    // 先嘗試關鍵字比對（僅在有效選項中）
-                    if (keyword1) {{
-                        for (let item of validPanels) {{
-                            if (item.name.includes(keyword1)) {{
-                                if (!keyword2 || item.name.includes(keyword2)) {{
-                                    console.log('找到符合關鍵字的票區:', item.name);
-                                    targetPanel = item.panel;
-                                    targetAreaName = item.name;
-                                    break;
-                                }}
-                            }}
-                        }}
-                    }}
-
-                    // T022-T024: Conditional fallback based on area_auto_fallback switch
-                    if (!targetPanel && keyword1 && keyword1.trim() !== '') {{
-                        if (areaAutoFallback) {{
-                            // T022: Fallback enabled
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                            const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                            if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                                const targetItem = validPanels[targetIndex];
-                                targetPanel = targetItem.panel;
-                                targetAreaName = targetItem.name;
-                                console.log('自動選擇票區:', targetAreaName);
-                            }}
-                        }} else {{
-                            // T023: Fallback disabled - strict mode
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                            return {{
-                                success: false,
-                                error: 'No keyword matches and fallback is disabled',
-                                strict_mode: true
-                            }};
-                        }}
-                    }} else if (!targetPanel && validPanels.length > 0) {{
-                        // No keyword specified, select based on mode
-                        console.log('📍 無關鍵字，使用自動選擇模式:', autoSelectMode);
-                        const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                        if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                            const targetItem = validPanels[targetIndex];
-                            targetPanel = targetItem.panel;
-                            targetAreaName = targetItem.name;
-                            console.log('自動選擇票區:', targetAreaName);
-                        }}
-                    }}
-
-                    if (validPanels.length === 0) {{
-                        console.log('沒有可選的票區（全部售完或被排除）');
-                        return {{ success: false, message: '沒有可選的票區（全部售完或被排除）' }};
-                    }}
-
-                    if (targetPanel) {{
-                        const header = targetPanel.querySelector('.v-expansion-panel-header');
-                        if (header) {{
-                            console.log('點擊展開面板:', targetAreaName);
-                            header.click();
-
-                            // 等待面板展開並找到操作按鈕的異步函數
-                            const waitAndFindAction = async () => {{
-                                return new Promise((resolve) => {{
-                                    let attempts = 0;
-                                    const maxAttempts = 10; // 最多嘗試1秒 (100ms * 10)
-
-                                    const findAction = () => {{
-                                        attempts++;
-                                        console.log('第' + attempts + '次尋找操作按鈕...');
-
-                                        // 先嘗試找加號按鈕
-                                        let plusButton = targetPanel.querySelector('.mdi-plus');
-                                        if (plusButton) {{
-                                            console.log('找到加號按鈕，開始設定票數');
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusButton.click();
-                                                console.log('➕ 點擊加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'plus_button' }});
-                                            return;
-                                        }}
-
-                                        // 再嘗試找 count-button 結構
-                                        const countButtons = targetPanel.querySelectorAll('.count-button .mdi-plus');
-                                        if (countButtons.length > 0) {{
-                                            console.log('找到count-button加號');
-                                            const plusBtn = countButtons[0];
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusBtn.click();
-                                                console.log('➕ 點擊count-button加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'count_button' }});
-                                            return;
-                                        }}
-
-                                        // 尋找其他選擇按鈕
-                                        const allButtons = targetPanel.querySelectorAll('button:not(.v-expansion-panel-header)');
-                                        console.log('找到' + allButtons.length + '個按鈕');
-
-                                        for (let btn of allButtons) {{
-                                            const btnText = btn.textContent.toLowerCase().trim();
-                                            console.log('[CHECK] 檢查按鈕:', btnText);
-
-                                            if (btnText.includes('選擇') || btnText.includes('select') ||
-                                                btn.classList.contains('select-btn') ||
-                                                btn.classList.contains('v-btn--has-bg')) {{
-                                                console.log('[TARGET] 找到選擇按鈕，點擊:', btnText);
-                                                btn.click();
-                                                resolve({{ success: true, action: 'select_button', text: btnText }});
-                                                return;
-                                            }}
-                                        }}
-
-                                        // 如果還沒找到且未超過最大嘗試次數，繼續尋找
-                                        if (attempts < maxAttempts) {{
-                                            setTimeout(findAction, 100);
-                                        }} else {{
-                                            console.log('[WARNING] 達到最大嘗試次數，未找到操作按鈕');
-                                            resolve({{ success: false, action: 'none' }});
-                                        }}
-                                    }};
-
-                                    // 立即開始第一次嘗試
-                                    findAction();
-                                }});
-                            }};
-
-                            // 使用 await 等待操作完成
-                            const result = await waitAndFindAction();
-                            console.log('[RESULT] 面板操作結果:', result);
-                            return {{
-                                success: true,
-                                type: 'area_select',
-                                selected: targetAreaName,
-                                action_found: result.success,
-                                action_type: result.action
-                            }};
-                        }}
-                    }}
                 }}
 
                 console.log('[ERROR] 未找到任何可選的選項');
@@ -7028,7 +7060,17 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
             }})();
         ''')
 
+        # 增加詳細除錯日誌
+        if show_debug_message:
+            print(f"[DEBUG] Raw JS result type: {type(js_result)}")
+            print(f"[DEBUG] Raw JS result value: {js_result}")
+
         result = util.parse_nodriver_result(js_result)
+
+        if show_debug_message:
+            print(f"[DEBUG] Parsed result type: {type(result)}")
+            print(f"[DEBUG] Parsed result value: {result}")
+
         if isinstance(result, dict):
             is_selected = result.get('success', False)
             if show_debug_message:
@@ -7045,7 +7087,10 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
     except Exception as exc:
         if show_debug_message:
+            import traceback
             print(f"Unified selector exception error: {exc}")
+            print(f"Exception type: {type(exc).__name__}")
+            print(f"Traceback: {traceback.format_exc()}")
         is_selected = False
 
     # Fallback logic: if selector fails, check page status to decide whether to continue
@@ -8400,30 +8445,20 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
 
     # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
     # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
-    # NOTE: JavaScript only supports max 2 keywords with AND logic (keyword1 && keyword2)
+    # Multiple keywords use OR logic (try each one sequentially - Early Return Pattern)
+    keyword_array = []
     if area_keyword_raw:
         try:
             # Use JSON parsing instead of simple comma split to handle keywords with commas
             keyword_array = json.loads("[" + area_keyword_raw + "]")
 
-            # Join with space for JavaScript parsing (JS splits by space into keyword1 and keyword2)
-            area_keyword = ' '.join(keyword_array) if len(keyword_array) > 0 else ''
-
             if show_debug_message:
                 print(f"[TicketPlus] Parsed keywords: {keyword_array}")
-                print(f"[TicketPlus] Keyword string for JS: '{area_keyword}'")
+                print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
         except Exception as e:
             if show_debug_message:
-                print(f"[TicketPlus] Keyword parse error: {e}")
-            area_keyword = area_keyword_raw
-    else:
-        area_keyword = ''
-
-    has_keyword = len(area_keyword) > 0
-
-    if show_debug_message:
-        print(f"Configured keyword: '{area_keyword}'")
-        print(f"Has keyword configured: {has_keyword}")
+                print(f"[TicketPlus] Keyword parse error: {e}, using raw keyword")
+            keyword_array = [area_keyword_raw] if area_keyword_raw else []
 
     # 總是執行票數選擇（TicketPlus 按鈕可以在票數為 0 時啟用）
     need_select_ticket = True
@@ -8431,11 +8466,39 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     if show_debug_message:
         print(f"Ticket selection is always required (TicketPlus quirk)")
 
-    # 使用統一選擇器處理所有頁面類型（不依賴 layout_style）
-    if show_debug_message:
-        print(f"Using unified selector - keyword: {area_keyword}")
+    # Early Return Pattern: Try each keyword in order until one succeeds
+    is_price_assign_by_bot = False
+    keyword_matched = False
 
-    is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, area_keyword)
+    if len(keyword_array) > 0:
+        # Try each keyword sequentially (OR logic)
+        for keyword_index, area_keyword_item in enumerate(keyword_array):
+            if show_debug_message:
+                print(f"[TicketPlus AREA KEYWORD] Trying keyword #{keyword_index + 1}/{len(keyword_array)}: '{area_keyword_item}'")
+
+            # Try this keyword
+            is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, area_keyword_item)
+
+            if is_price_assign_by_bot:
+                # Success! Stop trying other keywords (Early Return)
+                keyword_matched = True
+                if show_debug_message:
+                    print(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}' ✓")
+                break  # Early return - stop trying subsequent keywords
+
+            # This keyword failed, try next one
+            if show_debug_message:
+                print(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} failed, trying next...")
+
+        # All keywords failed
+        if not keyword_matched and show_debug_message:
+            print(f"[TicketPlus AREA KEYWORD] All {len(keyword_array)} keywords failed to match")
+    else:
+        # No keyword specified, use auto select mode
+        if show_debug_message:
+            print(f"[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode")
+        is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, "")
+
     is_need_refresh = not is_price_assign_by_bot  # 如果選擇失敗則需要刷新
 
     # 如果票種選擇成功，處理後續步驟
