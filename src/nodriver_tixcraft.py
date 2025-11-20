@@ -7025,7 +7025,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         }}
                     }} else if (!targetRow && validRows.length > 0) {{
                         // No keyword specified, select based on mode
-                        console.log('📍 無關鍵字，使用自動選擇模式:', autoSelectMode);
+                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
                         const targetIndex = getTargetIndex(validRows, autoSelectMode);
                         if (targetIndex >= 0 && targetIndex < validRows.length) {{
                             const targetItem = validRows[targetIndex];
@@ -7046,7 +7046,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                             console.log('開始點擊加號按鈕');
                             for (let j = 0; j < ticketNumber; j++) {{
                                 plusButton.click();
-                                console.log('➕ 點擊加號 ' + (j + 1) + '/' + ticketNumber);
+                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
                             }}
                             return {{ success: true, type: 'ticket_type', selected: targetTicketName }};
                         }} else {{
@@ -7310,18 +7310,18 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
 
                     // 策略1: Page1/Page3 標準 row 選擇器
                     ticketRows = document.querySelectorAll('.row.py-1.py-md-4.rwd-margin.no-gutters.text-title');
-                    console.log('🔎 策略1 (標準row) 找到數量:', ticketRows.length);
+                    console.log('[STRATEGY 1] Standard row selector found:', ticketRows.length);
 
                     // 策略2: 更寬鬆的 row 選擇器
                     if (ticketRows.length === 0) {{
                         ticketRows = document.querySelectorAll('.rwd-margin .row.py-1.py-md-4');
-                        console.log('🔎 策略2 (寬鬆row) 找到數量:', ticketRows.length);
+                        console.log('[STRATEGY 2] Relaxed row selector found:', ticketRows.length);
                     }}
 
                     // 策略3: 通過 count-button 反向查找父級 row
                     if (ticketRows.length === 0) {{
                         const countButtons = document.querySelectorAll('.count-button');
-                        console.log('🔎 策略3 找到 count-button 數量:', countButtons.length);
+                        console.log('[STRATEGY 3] Count buttons found:', countButtons.length);
                         if (countButtons.length > 0) {{
                             const rows = new Set();
                             countButtons.forEach(cb => {{
@@ -7329,20 +7329,20 @@ async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area
                                 if (row) rows.add(row);
                             }});
                             ticketRows = Array.from(rows);
-                            console.log('🔎 策略3 通過 count-button 找到 row 數量:', ticketRows.length);
+                            console.log('[STRATEGY 3] Rows found via count-button:', ticketRows.length);
                         }}
                     }}
 
                     // 策略4: 通用 row 類別選擇器
                     if (ticketRows.length === 0) {{
                         ticketRows = document.querySelectorAll('.row[class*="py-"]');
-                        console.log('🔎 策略4 (通用row) 找到數量:', ticketRows.length);
+                        console.log('[STRATEGY 4] Generic row selector found:', ticketRows.length);
                     }}
 
                     // 策略5: 包含價格的容器
                     if (ticketRows.length === 0) {{
                         ticketRows = document.querySelectorAll('[class*="row"]:has(.font-weight-bold)');
-                        console.log('🔎 策略5 (有價格) 找到數量:', ticketRows.length);
+                        console.log('[STRATEGY 5] Price container selector found:', ticketRows.length);
                     }}
 
                     elements = Array.from(ticketRows);
