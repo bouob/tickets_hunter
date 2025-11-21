@@ -1,130 +1,72 @@
-Found realname dialog, clicking OK button...
-Detected KHAM Activity Group page (UTK0201_040)
-Dialog message: 本節目採「個人實名制入場」，請於購票前至【會員專區】再次確認會員本人及實名制名單中入場人資料正確無誤並詳閱相關購退票規定，以免影響自身權益。
-
-
-Found realname dialog, clicking OK button...
-https://kham.com.tw/application/UTK02/UTK0201_041.aspx?AGID=P13EQDJL
-Detected KHAM Activity Group Item page (UTK0201_041)
-Clicked buy button, total buttons: 1
-https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
-area_keyword:
-Error finding PRICE select: Could not find node with given id [code: -32000]
-Valid area rows count: 0
-No target area row selected from 0 matched blocks
-is_need_refresh: True
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
-[CAPTCHA] Backend node ID: BackendNodeId(9168)
-[CAPTCHA] Converted to node_id: NodeId(73)
-[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
-[CAPTCHA] Full screenshot: (733, 1164)
-[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
-[CAPTCHA] Screenshot: 2970 bytes
-OCR elapsed time: 0.812s
-OCR answer: wpng
-[SUBMIT] Searching for Kham submit button...
-[SUBMIT] Submit button found, scrolling into view...
-[SUBMIT] Clicking using CDP native click...
-[SUBMIT] Add shopping cart button clicked successfully!
-[SUBMIT] Success dialog found, closing...
-[SUBMIT] Dialog closed successfully
-[SUBMIT] Waiting for page transition after dialog close...
-[SUBMIT] Current URL before transition check: https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
-[SUBMIT] WARNING: URL did not change after 30 seconds, waiting additional 5 seconds...
-[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s
-[SUBMIT] This may indicate a submission error - will retry
-Detected UTK0202 Activity Group ticket page, model: UTK0202
-Dialog message: 必須輸入至少一個商品的數量！
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
-[CAPTCHA] Backend node ID: BackendNodeId(9168)
-[CAPTCHA] Converted to node_id: NodeId(5685)
-[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
-[CAPTCHA] Full screenshot: (733, 1164)
-[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
-[CAPTCHA] Screenshot: 2970 bytes
-OCR elapsed time: 0.866s
-OCR answer: wpng
-Captcha text already inputed: wpng target answer: wpng
-Ticket number set to: None
-Clicked add to cart button
-Dialog message: 必須輸入至少一個商品的數量！
-Dialog message: 必須輸入至少一個商品的數量！
-Dialog message: 必須輸入至少一個商品的數量！
-area_keyword:
-Valid area rows count: 0
-No target area row selected from 0 matched blocks
-is_need_refresh: True
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
-[CAPTCHA] Backend node ID: BackendNodeId(10415)
-[CAPTCHA] Converted to node_id: NodeId(73)
-[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
-[CAPTCHA] Full screenshot: (733, 1164)
-[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
-[CAPTCHA] Screenshot: 2933 bytes
-OCR elapsed time: 0.938s
-OCR answer: YBWM
-[SUBMIT] Searching for Kham submit button...
-[SUBMIT] Submit button found, scrolling into view...
-[SUBMIT] Clicking using CDP native click...
-[SUBMIT] Add shopping cart button clicked successfully!
-[SUBMIT] Success dialog found, closing...
-[SUBMIT] Dialog closed successfully
-[SUBMIT] Waiting for page transition after dialog close...
-[SUBMIT] Current URL before transition check: https://kham.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=P13DHLLH&PRODUCT_ID=P13DDSI2&ACTIVITY_GROUP_ID=P13EQDJL&ACTIVITY_GROUP_ITEM_ID=P13ERPQA
-[SUBMIT] WARNING: URL did not change after 30 seconds, waiting additional 5 seconds...
-[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s
-[SUBMIT] This may indicate a submission error - will retry
-Detected UTK0202 Activity Group ticket page, model: UTK0202
-Dialog message: 必須輸入至少一個商品的數量！
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found captcha IMG: /pic.aspx?TYPE=UTK0202
-[CAPTCHA] Backend node ID: BackendNodeId(10415)
-[CAPTCHA] Converted to node_id: NodeId(5239)
-[CAPTCHA] IMG box: x=130.28750610351562, y=609.0250244140625, w=85.0, h=25.0
-[CAPTCHA] Full screenshot: (733, 1164)
-[CAPTCHA] Cropped: (107, 31), crop box: (162, 761, 269, 792)
-[CAPTCHA] Screenshot: 2933 bytes
-OCR elapsed time: 0.807s
-OCR answer: YBWM
-Captcha text already inputed: YBWM target answer: YBWM
-Ticket number set to: None
-Clicked add to cart button
-area_keyword:
-Valid area rows count: 0
-No target area row selected from 0 matched blocks
-is_need_refresh: True
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] IMG not found, searching for CANVAS element...
-[CAPTCHA] Neither IMG nor CANVAS found
-OCR elapsed time: 0.544s
-OCR answer is None
-previous_answer: None
-Detected UTK0202 Activity Group ticket page, model: UTK0202
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] IMG not found, searching for CANVAS element...
-[CAPTCHA] Neither IMG nor CANVAS found
-OCR elapsed time: 0.651s
-OCR answer is None
-previous_answer: None
-https://kham.com.tw/application/UTK02/UTK0206_.aspx
-[SUCCESS] Reached checkout page - ticket purchase successful!
-[INFO] Triggered maxbot_idle() - entering idle mode
-BOT Paused.
-https://kham.com.tw/application/utk01/UTK0101_03.aspx
-server rejected WebSocket connection: HTTP 500
-successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_q0g5m76w
+try python
+https://www.famiticket.com.tw/Home/User/SignIn
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Home/User/SignIn...
+[FAMI LOGIN] Attempting login with account: vic***
+[FAMI LOGIN] Account filled
+[FAMI LOGIN] Password filled
+[FAMI LOGIN] Login button clicked
+https://www.famiticket.com.tw/Home/
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Home/...
+[FAMITICKET MAIN] Redirecting to activity: https://www.famiticket.com.tw/Home/Activity/Info/awB3AFAAawB...
+https://www.famiticket.com.tw/Home/Activity/Info/awB3AFAAawBGAGgARwBtAEwAWQByAFAAbwBZAEkAYwB3AHcAawBXAHcANgA1ADcAWgBsAHQAYwBYADEAcwBtAGgAbgBHAFQARABvAFMAcABQAGYAZwA9AA2
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Home/Activity/Info/awB3AFAAawBGAGgARwBtAEwAWQByAFA...
+[FAMI ACTIVITY] Looking for buy button (#buyWaiting)
+[FAMI ACTIVITY] Buy button clicked via JS
+[FAMI ACTIVITY] Redirected to Sales page
+https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab626c1
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'
+[FAMITICKET MAIN] Processing URL: https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab62...
+[FAMI HOME] Processing home/sales page
+[FAMI DATE] date_keyword: "2025.12.15","2025.12.20"
+[FAMI DATE] auto_select_mode: from top to bottom
+[FAMI DATE] date_auto_fallback: True
+[FAMI DATE] Found 2 date rows with buy button
+[FAMI DATE] Error: 'text'

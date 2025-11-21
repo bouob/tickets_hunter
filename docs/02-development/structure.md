@@ -406,7 +406,15 @@ FamiTicket 主流程
 
 #### NoDriver
 ```
-❌ 完全未實作
+FamiTicket 主流程
+├── nodriver_famiticket_main                 # 行 9660 ✅ (主控制器)
+├── nodriver_fami_login                      # 行 8979 ✅ (登入處理)
+├── nodriver_fami_activity                   # 行 9019 ✅ (活動頁面)
+├── nodriver_fami_verify                     # 行 9084 ✅ (驗證問題)
+├── nodriver_fami_date_auto_select           # 行 9154 ✅ (日期選擇+條件回退)
+├── nodriver_fami_area_auto_select           # 行 9293 ✅ (區域選擇+條件回退)
+├── nodriver_fami_date_to_area               # 行 9421 ✅ (日期→區域協調)
+└── nodriver_fami_home_auto_select           # 行 9549 ✅ (首頁自動選擇)
 ```
 
 ### 🌐 **其他平台**

@@ -1,6 +1,6 @@
 **文件說明**：Accept Edits On 模式下自動化工作的記錄文件，包含修改履歷、測試結果與自動化任務的執行紀錄。
 
-**最後更新**：2025-11-12
+**最後更新**：2025-11-21
 
 ---
 
@@ -9,6 +9,51 @@
 此檔案記錄在 "accept edits on" 模式下自動完成的修改與測試結果。
 
 **規則：只新增不刪除**
+
+---
+
+## 2025.11.21
+
+### feat(famiticket): 完成 FamiTicket NoDriver 遷移
+
+**分支**：005-famiticket-nodriver-migration
+
+**變更摘要**：
+將 FamiTicket 平台從 Chrome/Selenium 遷移至 NoDriver，實作完整的搶票自動化流程。
+
+**實作內容**：
+
+1. **核心函數實作** (8 個函數)
+   - `nodriver_fami_login()` - 登入處理 (Cookie 驗證、表單填寫)
+   - `nodriver_fami_activity()` - 活動頁面處理 (購票按鈕偵測與點擊)
+   - `nodriver_fami_verify()` - 驗證問題處理 (調用 `fill_common_verify_form()`)
+   - `nodriver_fami_date_auto_select()` - 日期選擇 (AND/OR 邏輯 + 條件回退)
+   - `nodriver_fami_area_auto_select()` - 區域選擇 (AND/OR 邏輯 + 條件回退)
+   - `nodriver_fami_date_to_area()` - 日期到區域協調器
+   - `nodriver_fami_home_auto_select()` - 首頁自動選擇
+   - `nodriver_famiticket_main()` - 主控制器 (URL 路由)
+
+2. **Feature 003 條件回退機制**
+   - 日期選擇：`date_auto_fallback` 設定 (預設 False/嚴格模式)
+   - 區域選擇：`area_auto_fallback` 設定 (預設 False/嚴格模式)
+   - 日誌前綴：`[DATE FALLBACK]`、`[AREA FALLBACK]`
+
+3. **日誌前綴標準化**
+   - `[FAMI LOGIN]` - 登入相關
+   - `[FAMI ACTIVITY]` - 活動頁面相關
+   - `[DATE KEYWORD]`、`[DATE SELECT]` - 日期選擇相關
+   - `[AREA KEYWORD]`、`[AREA SELECT]` - 區域選擇相關
+   - `[FAMI VERIFY]` - 驗證問題相關
+
+4. **文件更新**
+   - `docs/02-development/structure.md` - 新增 FamiTicket NoDriver 函數索引
+
+**遵循規範**：
+- 憲法第 I 條 (NoDriver First)
+- 憲法第 IV 條 (單一職責)
+- 憲法第 V 條 (設定驅動)
+
+**程式碼位置**：`src/nodriver_tixcraft.py` (行 8979-9687)
 
 ---
 
