@@ -9000,18 +9000,11 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
     if config_dict["advanced"].get("verbose", False):
         show_debug_message = True
 
-    # 讀取帳號密碼
+    # 讀取帳號密碼（優先使用明碼，若為空則解密）
     fami_account = config_dict["advanced"].get("fami_account", "").strip()
     fami_password = config_dict["advanced"].get("fami_password_plaintext", "").strip()
-
-    # 若明文密碼為空，嘗試解密
     if fami_password == "":
-        encrypted_password = config_dict["advanced"].get("fami_password", "")
-        if encrypted_password:
-            try:
-                fami_password = util.decryptMe(encrypted_password)
-            except:
-                pass
+        fami_password = util.decryptMe(config_dict["advanced"].get("fami_password", ""))
 
     if len(fami_account) < 4:
         if show_debug_message:
@@ -9029,28 +9022,73 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
     is_login_success = False
 
     try:
-        # 使用 CDP query_selector 填寫帳號密碼
-        account_elem = await tab.query_selector('#usr_act')
-        if account_elem:
-            await account_elem.clear_input()
-            await account_elem.send_keys(fami_account)
-            if show_debug_message:
-                print("[FAMI LOGIN] Account filled")
+        import random
 
-        password_elem = await tab.query_selector('#usr_pwd')
-        if password_elem:
-            await password_elem.clear_input()
-            await password_elem.send_keys(fami_password)
+        # 進入登入頁面後隨機等待 0.8-1.2 秒
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+
+        # 記錄當前 URL
+        original_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+
+        # 檢查帳號欄位是否已有值
+        inputed_text = await tab.evaluate('document.querySelector("#usr_act").value')
+        if not inputed_text or len(inputed_text) == 0:
+            # 使用 NoDriver 原生 send_keys
+            account_elem = await tab.query_selector('#usr_act')
+            if account_elem:
+                await account_elem.click()
+                await asyncio.sleep(random.uniform(0.1, 0.2))
+                await account_elem.send_keys(fami_account)
+                if show_debug_message:
+                    print("[FAMI LOGIN] Account filled")
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+        elif inputed_text == fami_account:
             if show_debug_message:
-                print("[FAMI LOGIN] Password filled")
+                print("[FAMI LOGIN] Account already correct")
+        else:
+            if show_debug_message:
+                print(f"[FAMI LOGIN] Account has different value: {inputed_text[:10]}...")
+
+        # 檢查密碼欄位是否已有值
+        inputed_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
+        if not inputed_pwd or len(inputed_pwd) == 0:
+            # 使用 NoDriver 原生 send_keys
+            password_elem = await tab.query_selector('#usr_pwd')
+            if password_elem:
+                await password_elem.click()
+                await asyncio.sleep(random.uniform(0.1, 0.2))
+                await password_elem.send_keys(fami_password)
+                if show_debug_message:
+                    print(f"[FAMI LOGIN] Password filled (length: {len(fami_password)})")
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+
+                # Debug: 檢查實際輸入的值
+                actual_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
+                if show_debug_message:
+                    print(f"[FAMI LOGIN] Actual password length in field: {len(actual_pwd) if actual_pwd else 0}")
+        else:
+            if show_debug_message:
+                print("[FAMI LOGIN] Password already filled")
 
         # 點擊登入按鈕
-        login_btn = await tab.query_selector('#btnLogin')
+        login_btn = await tab.query_selector('button#btnLogin')
         if login_btn:
             await login_btn.click()
-            is_login_success = True
             if show_debug_message:
-                print("[FAMI LOGIN] Login button clicked")
+                print("[FAMI LOGIN] Login button clicked, waiting for URL change...")
+
+            # 等待 URL 變化（最多 10 秒）
+            for _ in range(20):
+                await asyncio.sleep(0.5)
+                current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+                if current_url != original_url:
+                    is_login_success = True
+                    if show_debug_message:
+                        print(f"[FAMI LOGIN] URL changed to: {current_url[:50]}...")
+                    break
+            else:
+                if show_debug_message:
+                    print("[FAMI LOGIN] URL did not change after 10 seconds")
 
     except Exception as exc:
         if show_debug_message:
@@ -9883,8 +9921,8 @@ async def nodriver_famiticket_main(tab, url, config_dict):
                 fami_dict["payment_logged"] = True
             return True
 
-        if '/Home/User/SignIn' in url:
-            # 登入頁面
+        if '/Home/User/SignIn' in url and '/SignInCheck' not in url:
+            # 登入頁面（排除 SignInCheck 驗證頁面）
             fami_account = config_dict["advanced"].get("fami_account", "")
             if len(fami_account) > 4:
                 result = await nodriver_fami_login(tab, config_dict, show_debug_message)
