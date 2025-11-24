@@ -137,9 +137,11 @@ jobs:
             # Clean up and format
             $notes = $notes.Trim()
 
-            # Write to output (escape multiline)
-            $notes = $notes -replace "`r`n", "%0A"
-            echo "NOTES=$notes" >> $env:GITHUB_OUTPUT
+            # Write to output using multiline format
+            # Use EOF delimiter for proper multiline handling
+            "NOTES<<EOF" >> $env:GITHUB_OUTPUT
+            $notes >> $env:GITHUB_OUTPUT
+            "EOF" >> $env:GITHUB_OUTPUT
           } else {
             echo "NOTES=Version $version release" >> $env:GITHUB_OUTPUT
           }
