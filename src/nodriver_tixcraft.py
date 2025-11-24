@@ -9491,6 +9491,11 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
     is_need_refresh = False
     matched_areas = []
 
+    # 隨機等待 0.4-0.8 秒,讓 Vue.js/動態內容完全載入
+    import random
+    wait_time = random.uniform(0.4, 0.8)
+    await tab.sleep(wait_time)
+
     try:
         formated_area_list_result = await tab.evaluate('''
             (function() {
@@ -9643,6 +9648,9 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
     area_keyword = config_dict["area_auto_select"].get("area_keyword", "").strip()
     area_keyword_and = config_dict["area_auto_select"].get("area_keyword_and", [])
 
+    # 使用 util.format_keyword_for_display 清理引號 (處理 "\"藍區\"" → "藍區")
+    area_keyword = util.format_keyword_for_display(area_keyword)
+
     # 處理多組 AND 關鍵字
     keyword_groups = []
 
@@ -9655,8 +9663,10 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
 
     # 若 AND 邏輯無設定，使用 OR 邏輯（area_keyword）
     if len(keyword_groups) == 0 and len(area_keyword) > 0:
-        # area_keyword 是逗號分隔（OR 邏輯），每個作為獨立組
-        for kw in area_keyword.split(','):
+        # area_keyword 使用分號分隔（OR 邏輯），每個作為獨立組
+        # 支援舊格式逗號分隔 (向後相容)
+        delimiter = util.CONST_KEYWORD_DELIMITER if util.CONST_KEYWORD_DELIMITER in area_keyword else ','
+        for kw in area_keyword.split(delimiter):
             if kw.strip():
                 keyword_groups.append(kw.strip())
 
@@ -9665,7 +9675,12 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
         keyword_groups.append("")
 
     if show_debug_message:
-        print(f"[FAMI DATE TO AREA] Keyword groups: {keyword_groups}")
+        print(f"[FAMI DATE TO AREA] ========================================")
+        print(f"[FAMI DATE TO AREA] Raw area_keyword: '{area_keyword}'")
+        print(f"[FAMI DATE TO AREA] Raw area_keyword_and: {area_keyword_and}")
+        print(f"[FAMI DATE TO AREA] Parsed keyword_groups: {keyword_groups}")
+        print(f"[FAMI DATE TO AREA] Total groups to try: {len(keyword_groups)}")
+        print(f"[FAMI DATE TO AREA] ========================================")
 
     is_area_selected = False
 
@@ -9838,9 +9853,27 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
         (function() {
             if (document.querySelector('.purchase-detail')) return 'cart';
             if (document.querySelector('.ticket__title')) return 'ticket';
+            if (document.querySelector('.area-list') ||
+                document.querySelector('.area-selector__title')) return 'area';
             return 'date';
         })()
     ''')
+
+    # Debug: 輸出頁面類型判斷結果
+    if show_debug_message:
+        print(f"[FAMI HOME DEBUG] Page type detected: '{page_type}'")
+        debug_selectors = await tab.evaluate('''
+            (function() {
+                return {
+                    cart: !!document.querySelector('.purchase-detail'),
+                    ticket: !!document.querySelector('.ticket__title'),
+                    area_list: !!document.querySelector('.area-list'),
+                    area_selector: !!document.querySelector('.area-selector__title')
+                };
+            })()
+        ''')
+        print(f"[FAMI HOME DEBUG] Selector check: {debug_selectors}")
+        print(f"[FAMI HOME DEBUG] area_auto_select.enable: {config_dict['area_auto_select'].get('enable', True)}")
 
     # 1. 購物車頁面
     if page_type == 'cart':
@@ -9872,7 +9905,15 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
             print("[FAMI HOME] Detected ticket selection page")
         return await nodriver_fami_ticket_select(tab, config_dict, show_debug_message)
 
-    # 3. 否則執行日期自動選擇
+    # 3. 區域選擇頁面
+    if page_type == 'area':
+        if show_debug_message:
+            print("[FAMI HOME] Detected area selection page")
+        if config_dict["area_auto_select"].get("enable", True):
+            return await nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message)
+        return False
+
+    # 4. 日期選擇頁面（預設）
     if config_dict["date_auto_select"].get("enable", True):
         is_date_selected = await nodriver_fami_date_auto_select(
             tab, config_dict, last_activity_url, show_debug_message
