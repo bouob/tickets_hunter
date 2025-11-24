@@ -55,13 +55,11 @@ grep "CONST_APP_VERSION" src/config_launcher.py | head -1
 grep "CONST_APP_VERSION" src/settings.py | head -1
 grep "版本.*Tickets Hunter" src/www/settings.html | head -1
 grep "settings.js?v=" src/www/settings.html | head -1
-grep "^版本：" build_scripts/README_Release.txt
-grep "^最後更新：" build_scripts/README_Release.txt
 ```
 
 ### 3. 更新所有檔案
 
-使用當前日期更新所有 7 個位置：
+使用當前日期更新所有 6 個位置：
 
 **目標檔案清單**：
 1. `src/chrome_tixcraft.py` - CONST_APP_VERSION
@@ -70,7 +68,6 @@ grep "^最後更新：" build_scripts/README_Release.txt
 4. `src/settings.py` - CONST_APP_VERSION
 5. `src/www/settings.html` (行 141) - 版本顯示
 6. `src/www/settings.html` (行 1075) - JavaScript 版本號時間戳記 ⭐
-7. `build_scripts/README_Release.txt` (行 250-251) - 版本與日期
 
 **格式**：
 - Python 檔案：`CONST_APP_VERSION = "TicketsHunter (YYYY.MM.DD)"`
@@ -109,16 +106,6 @@ grep "^最後更新：" build_scripts/README_Release.txt
    sed -i "s/settings.js?v=[0-9]\+/settings.js?v=$TIMESTAMP/" src/www/settings.html
    ```
 
-4. **更新 README_Release.txt**（2 行）：
-   ```bash
-   # 版本號（點號分隔）
-   sed -i "s/^版本：[0-9.]\+$/版本：$TODAY/" build_scripts/README_Release.txt
-   
-   # 更新日期（連字號分隔，ISO 8601 格式）
-   TODAY_ISO=$(echo $TODAY | tr '.' '-')
-   sed -i "s/^最後更新：[0-9-]\+$/最後更新：$TODAY_ISO/" build_scripts/README_Release.txt
-   ```
-
 ### 5. 確認更新結果
 
 更新完成後，再次檢查所有檔案：
@@ -132,8 +119,6 @@ grep "CONST_APP_VERSION" src/config_launcher.py | head -1
 grep "CONST_APP_VERSION" src/settings.py | head -1
 grep "版本.*Tickets Hunter" src/www/settings.html | head -1
 grep "settings.js?v=" src/www/settings.html | head -1
-grep "^版本：" build_scripts/README_Release.txt
-grep "^最後更新：" build_scripts/README_Release.txt
 ```
 
 ### 6. Git 狀態檢查
@@ -158,7 +143,6 @@ git status --short
 - 所有 4 個 Python 檔案的版本號更新為今天日期
 - settings.html 的版本顯示更新為今天日期
 - settings.html 的 JavaScript 時間戳記更新為當前時間（YYYYMMDDHH）
-- README_Release.txt 更新版本與日期
 - 顯示更新前後的版本號對比
 - 顯示 Git 狀態
 
@@ -213,21 +197,6 @@ CONST_APP_VERSION = "TicketsHunter (當前日期)"
 - 2025年11月11日 下午15:00 → `settings.js?v=2025111115`
 - 2025年11月11日 晚上23:45 → `settings.js?v=2025111123`
 
-### README_Release.txt
-
-**行 250** - 版本號：
-```
-版本：YYYY.MM.DD
-```
-
-**行 251** - 更新日期：
-```
-最後更新：YYYY-MM-DD
-```
-
-**注意**：此檔案的日期格式與其他檔案不同
-- 版本號 (line 250): `2025.11.11` (點號分隔)
-- 更新日期 (line 251): `2025-11-11` (連字號分隔，ISO 8601 格式)
 
 ## ⚠️ 注意事項
 
@@ -254,8 +223,7 @@ CONST_APP_VERSION = "TicketsHunter (當前日期)"
    - [ ] 確認所有 4 個 Python 檔案都已更新
    - [ ] 確認 settings.html 版本顯示已更新
    - [ ] 確認 settings.html JavaScript 時間戳記已更新
-   - [ ] 確認 README_Release.txt 已更新
-   - [ ] 驗證日期格式正確（注意 README_Release.txt 使用連字號）
+   - [ ] 驗證日期格式正確（YYYY.MM.DD）
    - [ ] 驗證時間戳記格式正確（YYYYMMDDHH）
    - [ ] 檢查 Git 狀態無誤
    - [ ] 建立版本更新 commit
@@ -270,8 +238,6 @@ CONST_APP_VERSION = "TicketsHunter (2025.11.10)"
 CONST_APP_VERSION = "TicketsHunter (2025.11.10)"
 <strong>版本</strong>：Tickets Hunter (2025.11.10)
   <script src="settings.js?v=2025111023"></script>
-版本：2025.11.10
-最後更新：2025-11-10
 
 Version: 2025.11.11
 JS Timestamp: 2025111102
@@ -283,11 +249,8 @@ CONST_APP_VERSION = "TicketsHunter (2025.11.11)"
 CONST_APP_VERSION = "TicketsHunter (2025.11.11)"
 <strong>版本</strong>：Tickets Hunter (2025.11.11)
   <script src="settings.js?v=2025111102"></script>
-版本：2025.11.11
-最後更新：2025-11-11
 
 === Git 狀態 ===
- M build_scripts/README_Release.txt
  M src/chrome_tixcraft.py
  M src/config_launcher.py
  M src/nodriver_tixcraft.py
