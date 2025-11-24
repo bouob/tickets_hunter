@@ -143,14 +143,6 @@ python settings.py
 # 4. 完成設定並開始搶票
 ```
 
-**或使用 Git clone（開發者）**：
-```bash
-# 僅建議參與開發或需要最新 commit 的開發者使用
-git clone https://github.com/bouob/tickets_hunter.git
-cd tickets_hunter
-pip install -r requirement.txt
-```
-
 > 📖 **完整教學請參閱** → [Python 原始碼快速入門](guide/quick-start.md)（5分鐘完整設定流程）
 
 ---
