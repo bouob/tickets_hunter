@@ -9910,7 +9910,18 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
         if show_debug_message:
             print("[FAMI HOME] Detected area selection page")
         if config_dict["area_auto_select"].get("enable", True):
-            return await nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message)
+            is_area_selected = await nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message)
+
+            # 參考 TixCraft 和 FamiTicket Chrome 版本的處理方式
+            # 當未選中區域時,等待 auto_reload_page_interval 後重試
+            if not is_area_selected:
+                auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
+                if auto_reload_interval > 0:
+                    if show_debug_message:
+                        print(f"[FAMI HOME] No area selected, waiting {auto_reload_interval}s before retry...")
+                    await tab.sleep(auto_reload_interval)
+
+            return is_area_selected
         return False
 
     # 4. 日期選擇頁面（預設）
