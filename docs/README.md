@@ -151,7 +151,23 @@ ticket_automation_standard.md → structure.md → development_guide.md → API 
 
 ### 場景 5：我要打包部署
 
-參考 [pyinstaller_packaging_guide.md](09-deployment/pyinstaller_packaging_guide.md) 了解打包流程與注意事項。
+**快速開始**：
+- 📖 [本地測試打包](../build_scripts/QUICK_START.md) - 5 分鐘快速開始
+- 🤖 [完整打包指南](09-deployment/pyinstaller_packaging_guide.md) - GitHub Actions 自動化 + 技術細節
+
+**選擇適合的方式**：
+
+| 目標 | 使用方法 | 時間 | 說明 |
+|------|---------|------|------|
+| **本地測試打包** | `build_scripts\build_and_test.bat` | 10-20 分鐘 | 開發階段驗證打包結果 |
+| **正式發布版本** | 推送 Git tag (`v2025.11.24`) | 15-25 分鐘 | GitHub Actions 自動打包並發布 |
+
+**詳細流程**：
+1. 📦 [打包流程概覽](09-deployment/pyinstaller_packaging_guide.md#打包流程概覽) - 理解雙軌打包策略
+2. 🤖 [GitHub Actions 自動化](09-deployment/pyinstaller_packaging_guide.md#github-actions-自動化打包) - 推送 tag 自動打包
+3. 🧪 [本地測試打包](09-deployment/pyinstaller_packaging_guide.md#本地測試打包) - 開發階段驗證
+4. 🔧 [PyInstaller 配置](09-deployment/pyinstaller_packaging_guide.md#pyinstaller-配置說明) - .spec 檔案詳解
+5. 🐛 [疑難排解](09-deployment/pyinstaller_packaging_guide.md#疑難排解) - 常見錯誤與解決方案
 
 ---
 
