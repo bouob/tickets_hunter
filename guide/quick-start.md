@@ -31,11 +31,13 @@
 
 ### 2. 下載程式
 
-**原始碼版本（推薦，跨平台）**
-```bash
-git clone https://github.com/bouob/tickets_hunter.git
-cd tickets_hunter
-```
+1. 前往 [GitHub Releases](https://github.com/bouob/tickets_hunter/releases)
+2. 下載最新版本的 ZIP 檔案（例如：`tickets_hunter_v2025.11.03.zip`）
+3. 解壓縮到任意目錄
+4. 開啟終端機，進入解壓縮後的目錄：
+   ```bash
+   cd tickets_hunter
+   ```
 
 ### 3. 安裝相依套件
 ```bash

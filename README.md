@@ -2,10 +2,9 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/bouob/tickets_hunter?style=flat-square)](https://github.com/bouob/tickets_hunter/releases)
 
-**📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品  
-**🤖 技術支援**：本專案由 [Claude Code](https://claude.ai/code) 提供 AI 輔助開發與技術支援  
-**🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！  
-**🚨 嚴正警告**：使用本程式當黃牛或有任何加價轉售牟利行為，本人代表各粉絲祝福您，**早生貴子胎胎都三胞胎**！本程式僅供個人合法使用，嚴禁商業牟利。  
+**📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品
+**🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋！
+**🚨 嚴正警告**：使用本程式當黃牛或有任何加價轉售牟利行為，本人代表各粉絲祝福您，**早生貴子胎胎都三胞胎**！本程式僅供個人合法使用，嚴禁商業牟利。
 
 > **💬 需要協助或回報問題？**
 > - 💬 [加入 Discussions 社群](https://github.com/bouob/tickets_hunter/discussions) - 提問討論、分享經驗、功能建議
@@ -21,20 +20,20 @@
 
 Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。
 
+**🤖 技術特色**：本專案為學術性質研究，透過純自然語言與 [Claude Code](https://claude.ai/code) AI 進行開發與維護，展示 AI 輔助軟體工程的實踐成果。
+
 ### 🎪 平台支援狀態
 
-✅ **主流平台 NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛
+✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、KHAM、FamiTicket
 
-**NoDriver 特殊狀態平台**：
+**尚未支援 NoDriver 的平台**：
 
-| 平台 | Chrome/Selenium | NoDriver | 實測狀況 | 備註 |
-|------|:---------------:|:--------:|:--------:|------|
-| **🏟️ Urbtix 城市** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
-| **🏟️ HKTicketing 快達票** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
-| **🎪 FamiTicket 全網** | ✅ 完全支援 | ❌ 不支援 | 🟡 待測試 | 僅支援Chrome |
+| 平台 | Chrome/Selenium | NoDriver | 說明 |
+|------|:---------------:|:--------:|------|
+| **🏟️ Urbtix 城市** | ✅ 支援 | ❌ 未支援 | 僅提供 Chrome/Selenium 版本 |
+| **🏟️ HKTicketing 快達票** | ✅ 支援 | ❌ 未支援 | 僅提供 Chrome/Selenium 版本 |
 
-
-> **📢 策略**：建議使用 NoDriver，UC/Selenium 已進入維護模式（僅修復嚴重錯誤）
+> **📢 策略**：建議優先使用 NoDriver 版本，Chrome/Selenium 已進入維護模式（僅修復嚴重錯誤）
 
 ---
 
@@ -119,7 +118,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ### 🔴 方式二：使用 Python 原始碼（進階使用者）
 
-**適用對象**：具備 Python 環境，想自訂功能或參與開發
+**適用對象**：開發者、想自訂功能或參與開發
 
 **系統需求**：
 - Python 3.9-3.11（建議 3.10）
@@ -128,17 +127,20 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 **步驟**：
 ```bash
-# 1. 下載並安裝
-git clone https://github.com/bouob/tickets_hunter.git
+# 1. 下載 Release ZIP（推薦）
+# 前往 https://github.com/bouob/tickets_hunter/releases
+# 下載 tickets_hunter_vXXXX.XX.XX.zip 並解壓縮
+
+# 2. 安裝依賴
 cd tickets_hunter
 pip install -r requirement.txt
 
-# 2. 開啟設定介面
+# 3. 開啟設定介面
 cd src
 python settings.py
 # 瀏覽器會自動開啟 http://127.0.0.1:16888/
 
-# 3. 完成設定並開始搶票
+# 4. 完成設定並開始搶票
 ```
 
 > 📖 **完整教學請參閱** → [Python 原始碼快速入門](guide/quick-start.md)（5分鐘完整設定流程）

@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.20)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.24)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -8975,6 +8975,1053 @@ async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_m
         print(f"[MODE SELECT] Selected button {button_index}/{len(enabled_buttons)} by mode '{auto_select_mode}': '{button_text}'")
 
     return target_button
+
+
+# ============================================================
+# FamiTicket NoDriver Functions (Feature 005)
+# 遷移自 chrome_tixcraft.py，遵循 NoDriver First 原則
+# ============================================================
+
+async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
+    """
+    FamiTicket 帳號密碼登入
+
+    參考：chrome_tixcraft.py line 6308 (fami_login)
+    對應規格：FR-001, FR-002, FR-003, FR-004
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 登入成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    # 讀取帳號密碼（優先使用明碼，若為空則解密）
+    fami_account = config_dict["advanced"].get("fami_account", "").strip()
+    fami_password = config_dict["advanced"].get("fami_password_plaintext", "").strip()
+    if fami_password == "":
+        fami_password = util.decryptMe(config_dict["advanced"].get("fami_password", ""))
+
+    if len(fami_account) < 4:
+        if show_debug_message:
+            print("[FAMI LOGIN] Account is empty or too short")
+        return False
+
+    if len(fami_password) == 0:
+        if show_debug_message:
+            print("[FAMI LOGIN] Password is empty")
+        return False
+
+    if show_debug_message:
+        print(f"[FAMI LOGIN] Attempting login with account: {fami_account[:3]}***")
+
+    is_login_success = False
+
+    try:
+        import random
+
+        # 進入登入頁面後隨機等待 0.8-1.2 秒
+        await asyncio.sleep(random.uniform(0.8, 1.2))
+
+        # 記錄當前 URL
+        original_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+
+        # 檢查帳號欄位是否已有值
+        inputed_text = await tab.evaluate('document.querySelector("#usr_act").value')
+        if not inputed_text or len(inputed_text) == 0:
+            # 使用 NoDriver 原生 send_keys
+            account_elem = await tab.query_selector('#usr_act')
+            if account_elem:
+                await account_elem.click()
+                await asyncio.sleep(random.uniform(0.1, 0.2))
+                await account_elem.send_keys(fami_account)
+                if show_debug_message:
+                    print("[FAMI LOGIN] Account filled")
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+        elif inputed_text == fami_account:
+            if show_debug_message:
+                print("[FAMI LOGIN] Account already correct")
+        else:
+            if show_debug_message:
+                print(f"[FAMI LOGIN] Account has different value: {inputed_text[:10]}...")
+
+        # 檢查密碼欄位是否已有值
+        inputed_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
+        if not inputed_pwd or len(inputed_pwd) == 0:
+            # 使用 NoDriver 原生 send_keys
+            password_elem = await tab.query_selector('#usr_pwd')
+            if password_elem:
+                await password_elem.click()
+                await asyncio.sleep(random.uniform(0.1, 0.2))
+                await password_elem.send_keys(fami_password)
+                if show_debug_message:
+                    print(f"[FAMI LOGIN] Password filled (length: {len(fami_password)})")
+                await asyncio.sleep(random.uniform(0.3, 0.5))
+
+                # Debug: 檢查實際輸入的值
+                actual_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
+                if show_debug_message:
+                    print(f"[FAMI LOGIN] Actual password length in field: {len(actual_pwd) if actual_pwd else 0}")
+        else:
+            if show_debug_message:
+                print("[FAMI LOGIN] Password already filled")
+
+        # 點擊登入按鈕
+        login_btn = await tab.query_selector('button#btnLogin')
+        if login_btn:
+            await login_btn.click()
+            if show_debug_message:
+                print("[FAMI LOGIN] Login button clicked, waiting for URL change...")
+
+            # 等待 URL 變化（最多 10 秒）
+            for _ in range(20):
+                await asyncio.sleep(0.5)
+                current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+                if current_url != original_url:
+                    is_login_success = True
+                    if show_debug_message:
+                        print(f"[FAMI LOGIN] URL changed to: {current_url[:50]}...")
+                    break
+            else:
+                if show_debug_message:
+                    print("[FAMI LOGIN] URL did not change after 10 seconds")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI LOGIN] Error: {str(exc)}")
+
+    return is_login_success
+
+
+async def nodriver_fami_activity(tab, config_dict, show_debug_message=True):
+    """
+    FamiTicket 活動頁面處理 - 點擊「購買」按鈕
+
+    參考：chrome_tixcraft.py line 3342 (fami_activity)
+    對應規格：FR-005, FR-006, FR-007, FR-008
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 點擊成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    if show_debug_message:
+        print("[FAMI ACTIVITY] Looking for buy button (#buyWaiting)")
+
+    is_button_clicked = False
+
+    try:
+        # 使用 evaluate 直接執行 JavaScript，避免大型 DOM 的 CBOR 序列化問題
+        click_result = await tab.evaluate('''
+            (function() {
+                var btn = document.querySelector('#buyWaiting');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return true;
+                }
+                return false;
+            })()
+        ''')
+
+        if click_result:
+            is_button_clicked = True
+            if show_debug_message:
+                print("[FAMI ACTIVITY] Buy button clicked via JS")
+            # 等待頁面轉跳到 Sales 頁面
+            for _ in range(10):
+                await asyncio.sleep(0.5)
+                current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+                if '/Sales/' in current_url:
+                    if show_debug_message:
+                        print("[FAMI ACTIVITY] Redirected to Sales page")
+                    break
+        else:
+            if show_debug_message:
+                print("[FAMI ACTIVITY] Buy button not found or disabled")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI ACTIVITY] Error: {str(exc)}")
+
+    return is_button_clicked
+
+
+async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_message=True):
+    """
+    FamiTicket 驗證問題處理
+
+    對應規格：FR-021, FR-022, FR-023, FR-024, FR-025
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        fail_list: 錯誤答案清單
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        tuple[bool, list]: (成功與否, 更新後的 fail_list)
+    """
+    if fail_list is None:
+        fail_list = []
+
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    is_verify_success = False
+
+    try:
+        # 使用 evaluate 檢查是否存在驗證輸入框，避免大型 DOM 的 CBOR 序列化問題
+        has_verify_input = await tab.evaluate('''
+            (function() {
+                return document.querySelector('#verifyPrefAnswer') !== null;
+            })()
+        ''')
+
+        if has_verify_input:
+            if show_debug_message:
+                print("[FAMI VERIFY] Verification input found (#verifyPrefAnswer)")
+
+            # 取得答案
+            answer_string = config_dict["area_auto_select"].get("area_answer", "").strip()
+            auto_guess_enable = config_dict["advanced"].get("auto_guess_options", False)
+
+            answer_list = []
+            if answer_string:
+                answer_list = [ans.strip() for ans in answer_string.split(',') if ans.strip()]
+
+            # 自動猜測
+            if auto_guess_enable and len(answer_list) == 0:
+                if show_debug_message:
+                    print("[FAMI VERIFY] Auto guess enabled but no implementation yet")
+                # TODO: 實作 guess_tixcraft_question() 整合
+
+            # 選擇未失敗的答案
+            inferred_answer = ""
+            for answer in answer_list:
+                if answer not in fail_list:
+                    inferred_answer = answer
+                    break
+
+            if inferred_answer:
+                if show_debug_message:
+                    print(f"[FAMI VERIFY] Trying answer: {inferred_answer}")
+
+                # 使用 evaluate 填寫答案並提交
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector('#verifyPrefAnswer');
+                        if (input) {{
+                            input.value = "{inferred_answer}";
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            // 模擬按 Enter
+                            var event = new KeyboardEvent('keypress', {{ key: 'Enter', keyCode: 13 }});
+                            input.dispatchEvent(event);
+                            // 或者直接提交表單
+                            var form = input.closest('form');
+                            if (form) form.submit();
+                        }}
+                    }})()
+                ''')
+
+                # 等待驗證結果
+                await asyncio.sleep(0.5)
+
+                # 檢查是否仍在驗證頁面（表示答案錯誤）
+                still_on_verify = await tab.evaluate('''
+                    (function() {
+                        return document.querySelector('#verifyPrefAnswer') !== null;
+                    })()
+                ''')
+                if still_on_verify:
+                    fail_list.append(inferred_answer)
+                    if show_debug_message:
+                        print(f"[FAMI VERIFY] Answer failed, added to fail_list: {fail_list}")
+                else:
+                    is_verify_success = True
+                    if show_debug_message:
+                        print("[FAMI VERIFY] Verification successful")
+            else:
+                if show_debug_message:
+                    print("[FAMI VERIFY] No valid answer available")
+        else:
+            # 無驗證輸入框，視為成功（不需要驗證）
+            is_verify_success = True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI VERIFY] Error: {str(exc)}")
+
+    return is_verify_success, fail_list
+
+
+async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, show_debug_message=True):
+    """
+    FamiTicket 日期自動選擇
+
+    參考：chrome_tixcraft.py line 3386 (fami_date_auto_select)
+    對應規格：FR-009 ~ FR-015, FR-014a, FR-014b
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        last_activity_url: 活動頁面 URL（用於自動補票）
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 選擇成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    # 讀取設定
+    auto_select_mode = config_dict["date_auto_select"].get("mode", "from_top_to_bottom")
+    date_keyword = config_dict["date_auto_select"].get("date_keyword", "").strip()
+    date_auto_fallback = config_dict.get('date_auto_fallback', False)  # Feature 003: 條件回退
+    auto_reload_coming_soon_page_enable = config_dict["tixcraft"].get("auto_reload_coming_soon_page", False)
+    auto_reload_page_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+
+    if show_debug_message:
+        print(f"[FAMI DATE] date_keyword: {date_keyword}")
+        print(f"[FAMI DATE] auto_select_mode: {auto_select_mode}")
+        print(f"[FAMI DATE] date_auto_fallback: {date_auto_fallback}")
+
+    is_date_selected = False
+    matched_rows = []
+
+    try:
+        # 使用 evaluate 掃描日期列表，返回 JSON 字串避免物件轉換問題
+        formated_area_list_result = await tab.evaluate('''
+            (function() {
+                var rows = document.querySelectorAll('.session__list > tbody > tr');
+                var result = [];
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var html = row.innerHTML || "";
+                    var text = row.innerText || "";
+                    if (html.indexOf('<button') !== -1 && html.indexOf('立即購買') !== -1) {
+                        result.push({
+                            idx: i,
+                            txt: text
+                        });
+                    }
+                }
+                return JSON.stringify(result);
+            })()
+        ''')
+
+        import json
+        formated_area_list = []
+        if formated_area_list_result:
+            if isinstance(formated_area_list_result, str):
+                formated_area_list = json.loads(formated_area_list_result)
+            elif isinstance(formated_area_list_result, list):
+                formated_area_list = formated_area_list_result
+
+        if show_debug_message:
+            print(f"[FAMI DATE] Found {len(formated_area_list)} date rows with buy button")
+
+        # 關鍵字匹配
+        if len(formated_area_list) > 0:
+            if len(date_keyword) == 0:
+                # 無關鍵字，全部匹配
+                matched_rows = formated_area_list
+            else:
+                # 有關鍵字，進行 OR 匹配
+                keywords = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
+                for item in formated_area_list:
+                    item_text = item.get('txt', item.get('text', ''))
+                    row_text = util.format_keyword_string(item_text)
+                    for keyword in keywords:
+                        formatted_keyword = util.format_keyword_string(keyword)
+                        if formatted_keyword in row_text:
+                            matched_rows.append(item)
+                            if show_debug_message:
+                                print(f"[FAMI DATE KEYWORD] Matched keyword '{keyword}' in: {item_text[:50]}...")
+                            break
+
+                if show_debug_message:
+                    print(f"[FAMI DATE] Matched dates: {len(matched_rows)}")
+
+        # Feature 003: 條件回退機制
+        if len(matched_rows) == 0 and len(formated_area_list) > 0:
+            if date_auto_fallback:
+                # 回退模式：使用所有可用日期
+                print("[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                matched_rows = formated_area_list
+            else:
+                # 嚴格模式：不選擇任何日期
+                print("[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                return False
+
+        # 選擇目標日期
+        target_item = None
+        if len(matched_rows) > 0:
+            if auto_select_mode == "from_bottom_to_top":
+                target_item = matched_rows[-1]
+            elif auto_select_mode == "random":
+                import random
+                target_item = random.choice(matched_rows)
+            else:  # from_top_to_bottom (default)
+                target_item = matched_rows[0]
+
+        # 點擊目標日期的按鈕
+        if target_item:
+            try:
+                target_index = target_item.get('idx', target_item.get('index', 0))
+                target_text = target_item.get('txt', target_item.get('text', ''))
+                click_result = await tab.evaluate(f'''
+                    (function() {{
+                        var rows = document.querySelectorAll('.session__list > tbody > tr');
+                        if (rows[{target_index}]) {{
+                            var btn = rows[{target_index}].querySelector('button');
+                            if (btn) {{
+                                btn.click();
+                                return true;
+                            }}
+                        }}
+                        return false;
+                    }})()
+                ''')
+
+                if click_result:
+                    is_date_selected = True
+                    if show_debug_message:
+                        print(f"[FAMI DATE SELECT] Selected date: {target_text[:50]}...")
+                else:
+                    if show_debug_message:
+                        print("[FAMI DATE] Button not found in target row")
+            except Exception as click_exc:
+                if show_debug_message:
+                    print(f"[FAMI DATE] Click error: {str(click_exc)}")
+
+        # 自動補票邏輯（日期列表為空時）
+        if len(formated_area_list) == 0:
+            # 可能是 SPA 頁面延遲渲染，再次檢查是否為其他頁面類型
+            await asyncio.sleep(0.5)
+
+            # 使用 evaluate 檢查頁面類型，避免 CBOR 問題
+            page_type = await tab.evaluate('''
+                (function() {
+                    if (document.querySelector('.ticket__title')) return 'ticket';
+                    if (document.querySelector('.purchase-detail')) return 'cart';
+                    return 'date';
+                })()
+            ''')
+
+            # 檢查是否為票種選擇頁面
+            if page_type == 'ticket':
+                if show_debug_message:
+                    print("[FAMI DATE] No date rows, but found ticket selection page - delegating")
+                return await nodriver_fami_ticket_select(tab, config_dict, show_debug_message)
+
+            # 檢查是否為購物車頁面
+            if page_type == 'cart':
+                if show_debug_message:
+                    print("[FAMI DATE] No date rows, but found cart page - clicking next")
+                next_result = await tab.evaluate('''
+                    (function() {
+                        var btn = document.querySelector('.purchase-detail__next');
+                        if (btn && !btn.disabled) {
+                            btn.click();
+                            return true;
+                        }
+                        return false;
+                    })()
+                ''')
+                return next_result
+
+            # 確認是日期選擇頁面但無可用日期，才觸發 auto-reload
+            if auto_reload_coming_soon_page_enable:
+                if show_debug_message:
+                    print("[FAMI DATE] Date list is empty, triggering auto-reload")
+
+                if auto_reload_page_interval > 0:
+                    await asyncio.sleep(auto_reload_page_interval)
+
+                # FamiTicket 特定邏輯：返回活動頁面
+                if last_activity_url:
+                    await tab.get(last_activity_url)
+                    await asyncio.sleep(0.3)
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI DATE] Error: {str(exc)}")
+
+    return is_date_selected
+
+
+async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, show_debug_message=True):
+    """
+    FamiTicket 區域自動選擇
+
+    參考：chrome_tixcraft.py line 3520 (fami_area_auto_select)
+    對應規格：FR-016 ~ FR-020b
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        area_keyword_item: 區域關鍵字（空格分隔 = AND 邏輯）
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        tuple[bool, bool]: (is_need_refresh, is_area_selected)
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    auto_select_mode = config_dict["area_auto_select"].get("mode", "from_top_to_bottom")
+    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # Feature 003: 條件回退
+
+    if show_debug_message:
+        print(f"[FAMI AREA] area_keyword_item: {area_keyword_item}")
+        print(f"[FAMI AREA] auto_select_mode: {auto_select_mode}")
+        print(f"[FAMI AREA] area_auto_fallback: {area_auto_fallback}")
+
+    is_area_selected = False
+    is_need_refresh = False
+    matched_areas = []
+
+    # 隨機等待 0.4-0.8 秒,讓 Vue.js/動態內容完全載入
+    import random
+    wait_time = random.uniform(0.4, 0.8)
+    await tab.sleep(wait_time)
+
+    try:
+        formated_area_list_result = await tab.evaluate('''
+            (function() {
+                var areas = document.querySelectorAll('div > a.area');
+                var result = [];
+                for (var i = 0; i < areas.length; i++) {
+                    var area = areas[i];
+                    var html = area.outerHTML || "";
+                    var text = area.innerText || "";
+                    if (text.indexOf('售完') !== -1) continue;
+                    if (html.indexOf('"area disabled"') !== -1) continue;
+                    if (area.classList.contains('disabled')) continue;
+                    if (text.length > 0) {
+                        result.push({
+                            idx: i,
+                            txt: text
+                        });
+                    }
+                }
+                return JSON.stringify(result);
+            })()
+        ''')
+
+        import json
+        formated_area_list = []
+        if formated_area_list_result:
+            if isinstance(formated_area_list_result, str):
+                formated_area_list = json.loads(formated_area_list_result)
+            elif isinstance(formated_area_list_result, list):
+                formated_area_list = formated_area_list_result
+
+        if show_debug_message:
+            print(f"[FAMI AREA] Found {len(formated_area_list)} available areas")
+
+        # 關鍵字匹配（AND 邏輯）
+        if len(formated_area_list) > 0:
+            if len(area_keyword_item) == 0:
+                # 無關鍵字，全部匹配
+                matched_areas = formated_area_list
+            else:
+                # 有關鍵字，進行 AND 匹配（空格分隔）
+                keywords = [kw.strip() for kw in area_keyword_item.split(' ') if kw.strip()]
+
+                for item in formated_area_list:
+                    item_text = item.get('txt', item.get('text', ''))
+                    row_text = util.format_keyword_string(item_text)
+                    is_match = True
+
+                    for keyword in keywords:
+                        formatted_keyword = util.format_keyword_string(keyword)
+                        if formatted_keyword not in row_text:
+                            is_match = False
+                            break
+
+                    if is_match:
+                        matched_areas.append(item)
+                        if show_debug_message:
+                            print(f"[FAMI AREA KEYWORD] AND logic matched: {keywords} in: {item_text[:50]}...")
+
+                        if auto_select_mode == "from_top_to_bottom":
+                            break  # 找到第一個匹配就停止
+
+                if show_debug_message:
+                    print(f"[FAMI AREA] Matched areas: {len(matched_areas)}")
+
+        # Feature 003: 條件回退機制
+        if len(matched_areas) == 0 and len(formated_area_list) > 0:
+            if area_auto_fallback:
+                # 回退模式：使用所有可用區域
+                print("[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                matched_areas = formated_area_list
+            else:
+                # 嚴格模式：不選擇任何區域
+                print("[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                return True, False  # is_need_refresh=True, is_area_selected=False
+
+        # 選擇目標區域
+        target_item = None
+        if len(matched_areas) > 0:
+            if auto_select_mode == "from_bottom_to_top":
+                target_item = matched_areas[-1]
+            elif auto_select_mode == "random":
+                import random
+                target_item = random.choice(matched_areas)
+            else:  # from_top_to_bottom (default)
+                target_item = matched_areas[0]
+
+        # 點擊目標區域
+        if target_item:
+            try:
+                target_index = target_item.get('idx', target_item.get('index', 0))
+                target_text = target_item.get('txt', target_item.get('text', ''))
+                click_result = await tab.evaluate(f'''
+                    (function() {{
+                        var areas = document.querySelectorAll('div > a.area');
+                        if (areas[{target_index}]) {{
+                            areas[{target_index}].click();
+                            return true;
+                        }}
+                        return false;
+                    }})()
+                ''')
+
+                if click_result:
+                    is_area_selected = True
+                    if show_debug_message:
+                        print(f"[FAMI AREA SELECT] Selected area: {target_text[:50]}...")
+                else:
+                    if show_debug_message:
+                        print("[FAMI AREA] Area element not found")
+            except Exception as click_exc:
+                if show_debug_message:
+                    print(f"[FAMI AREA] Click error: {str(click_exc)}")
+
+        if len(matched_areas) == 0:
+            is_need_refresh = True
+            if show_debug_message:
+                print("[FAMI AREA] No matched areas, need refresh")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI AREA] Error: {str(exc)}")
+
+    return is_need_refresh, is_area_selected
+
+
+async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message=True):
+    """
+    FamiTicket 日期/區域選擇協調器
+
+    參考：chrome_tixcraft.py line 3665 (fami_date_to_area)
+    對應規格：FR-034
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        last_activity_url: 活動頁面 URL
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 操作成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    if show_debug_message:
+        print("[FAMI DATE TO AREA] Starting date to area flow")
+
+    # 讀取區域關鍵字
+    area_keyword = config_dict["area_auto_select"].get("area_keyword", "").strip()
+    area_keyword_and = config_dict["area_auto_select"].get("area_keyword_and", [])
+
+    # 使用 util.format_keyword_for_display 清理引號 (處理 "\"藍區\"" → "藍區")
+    area_keyword = util.format_keyword_for_display(area_keyword)
+
+    # 處理多組 AND 關鍵字
+    keyword_groups = []
+
+    # 優先使用 area_keyword_and（二維陣列）
+    if isinstance(area_keyword_and, list) and len(area_keyword_and) > 0:
+        for group in area_keyword_and:
+            if isinstance(group, list) and len(group) > 0:
+                # 將列表轉為空格分隔字串（AND 邏輯）
+                keyword_groups.append(' '.join(group))
+
+    # 若 AND 邏輯無設定，使用 OR 邏輯（area_keyword）
+    if len(keyword_groups) == 0 and len(area_keyword) > 0:
+        # area_keyword 使用分號分隔（OR 邏輯），每個作為獨立組
+        # 支援舊格式逗號分隔 (向後相容)
+        delimiter = util.CONST_KEYWORD_DELIMITER if util.CONST_KEYWORD_DELIMITER in area_keyword else ','
+        for kw in area_keyword.split(delimiter):
+            if kw.strip():
+                keyword_groups.append(kw.strip())
+
+    # 若完全無設定，使用空字串（選擇任意可用區域）
+    if len(keyword_groups) == 0:
+        keyword_groups.append("")
+
+    if show_debug_message:
+        print(f"[FAMI DATE TO AREA] ========================================")
+        print(f"[FAMI DATE TO AREA] Raw area_keyword: '{area_keyword}'")
+        print(f"[FAMI DATE TO AREA] Raw area_keyword_and: {area_keyword_and}")
+        print(f"[FAMI DATE TO AREA] Parsed keyword_groups: {keyword_groups}")
+        print(f"[FAMI DATE TO AREA] Total groups to try: {len(keyword_groups)}")
+        print(f"[FAMI DATE TO AREA] ========================================")
+
+    is_area_selected = False
+
+    # 嘗試每組關鍵字
+    for keyword_item in keyword_groups:
+        if show_debug_message:
+            print(f"[FAMI DATE TO AREA] Trying keyword group: '{keyword_item}'")
+
+        is_need_refresh, is_area_selected = await nodriver_fami_area_auto_select(
+            tab, config_dict, keyword_item, show_debug_message
+        )
+
+        if is_area_selected:
+            break
+
+    return is_area_selected
+
+
+async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True):
+    """
+    FamiTicket 票種選擇頁面處理
+
+    處理 Sales 頁面的票種選擇流程：
+    1. 根據區域關鍵字匹配票種（ticket__title）
+    2. 選擇票券數量
+    3. 勾選同意 checkbox
+    4. 點擊確認選購按鈕
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 操作成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    if show_debug_message:
+        print("[FAMI TICKET] Processing ticket selection page")
+
+    result = False
+
+    try:
+        # 1. 檢查是否有票種選擇頁面的特徵元素（使用 evaluate 避免 CBOR 問題）
+        title_text = await tab.evaluate('document.querySelector(".ticket__title")?.innerText || ""')
+        if not title_text:
+            if show_debug_message:
+                print("[FAMI TICKET] Not a ticket selection page (no .ticket__title)")
+            return False
+        if show_debug_message:
+            print(f"[FAMI TICKET] Found ticket: {title_text}")
+
+        # 2. 選擇票券數量
+        ticket_number = config_dict.get("ticket_number", 2)
+        if show_debug_message:
+            print(f"[FAMI TICKET] Selecting ticket number: {ticket_number}")
+
+        # 選擇下拉選單的值
+        select_result = await tab.evaluate(f'''
+            (function() {{
+                var select = document.querySelector('.ticket select, .ticket-selector select');
+                if (select) {{
+                    var targetValue = "{ticket_number}";
+                    for (var i = 0; i < select.options.length; i++) {{
+                        if (select.options[i].value == targetValue) {{
+                            select.selectedIndex = i;
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            return true;
+                        }}
+                    }}
+                    // 若找不到指定數量，選擇最後一個非空選項
+                    for (var i = select.options.length - 1; i >= 0; i--) {{
+                        if (select.options[i].value && select.options[i].value !== "") {{
+                            select.selectedIndex = i;
+                            select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            return true;
+                        }}
+                    }}
+                }}
+                return false;
+            }})()
+        ''')
+
+        if select_result and show_debug_message:
+            print("[FAMI TICKET] Ticket number selected")
+
+        await asyncio.sleep(0.3)
+
+        # 3. 勾選同意 checkbox（兩個）
+        checkbox_result = await tab.evaluate('''
+            (function() {
+                var checkboxes = document.querySelectorAll('.ts-note__check');
+                var checked = 0;
+                checkboxes.forEach(function(cb) {
+                    if (!cb.checked) {
+                        cb.click();
+                        checked++;
+                    }
+                });
+                return checked;
+            })()
+        ''')
+
+        if show_debug_message:
+            print(f"[FAMI TICKET] Checked {checkbox_result} checkboxes")
+
+        await asyncio.sleep(0.3)
+
+        # 4. 點擊確認選購按鈕
+        submit_result = await tab.evaluate('''
+            (function() {
+                var btn = document.querySelector('.ts-opts__auto');
+                if (btn && !btn.classList.contains('disabled')) {
+                    btn.click();
+                    return true;
+                }
+                return false;
+            })()
+        ''')
+
+        if submit_result:
+            if show_debug_message:
+                print("[FAMI TICKET] Submit button clicked")
+            result = True
+
+            # 等待頁面轉跳
+            for _ in range(10):
+                await asyncio.sleep(0.5)
+                current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+                if '/Order/' in current_url or '/Checkout/' in current_url:
+                    if show_debug_message:
+                        print("[FAMI TICKET] Redirected to order page")
+                    break
+        else:
+            if show_debug_message:
+                print("[FAMI TICKET] Submit button not available or disabled")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMI TICKET] Error: {str(exc)}")
+
+    return result
+
+
+async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, show_debug_message=True):
+    """
+    FamiTicket 首頁入口處理
+
+    對應規格：FR-037（URL 路由）
+
+    Args:
+        tab: NoDriver tab 物件
+        config_dict: 設定字典
+        last_activity_url: 活動頁面 URL
+        show_debug_message: 是否顯示除錯訊息
+
+    Returns:
+        bool: 操作成功返回 True，失敗返回 False
+    """
+    if config_dict["advanced"].get("verbose", False):
+        show_debug_message = True
+
+    if show_debug_message:
+        print("[FAMI HOME] Processing home/sales page")
+
+    # 使用 evaluate 檢查頁面類型，避免大型 DOM 的 CBOR 序列化問題
+    page_type = await tab.evaluate('''
+        (function() {
+            if (document.querySelector('.purchase-detail')) return 'cart';
+            if (document.querySelector('.ticket__title')) return 'ticket';
+            if (document.querySelector('.area-list') ||
+                document.querySelector('.area-selector__title')) return 'area';
+            return 'date';
+        })()
+    ''')
+
+    # Debug: 輸出頁面類型判斷結果
+    if show_debug_message:
+        print(f"[FAMI HOME DEBUG] Page type detected: '{page_type}'")
+        debug_selectors = await tab.evaluate('''
+            (function() {
+                return {
+                    cart: !!document.querySelector('.purchase-detail'),
+                    ticket: !!document.querySelector('.ticket__title'),
+                    area_list: !!document.querySelector('.area-list'),
+                    area_selector: !!document.querySelector('.area-selector__title')
+                };
+            })()
+        ''')
+        print(f"[FAMI HOME DEBUG] Selector check: {debug_selectors}")
+        print(f"[FAMI HOME DEBUG] area_auto_select.enable: {config_dict['area_auto_select'].get('enable', True)}")
+
+    # 1. 購物車頁面
+    if page_type == 'cart':
+        if show_debug_message:
+            print("[FAMI HOME] Detected cart/order page")
+        # 點擊下一步按鈕
+        next_result = await tab.evaluate('''
+            (function() {
+                var btn = document.querySelector('.purchase-detail__next');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return true;
+                }
+                return false;
+            })()
+        ''')
+        if next_result:
+            if show_debug_message:
+                print("[FAMI HOME] Next button clicked on cart page")
+            return True
+        else:
+            if show_debug_message:
+                print("[FAMI HOME] Next button not found or disabled")
+            return False
+
+    # 2. 票種選擇頁面
+    if page_type == 'ticket':
+        if show_debug_message:
+            print("[FAMI HOME] Detected ticket selection page")
+        return await nodriver_fami_ticket_select(tab, config_dict, show_debug_message)
+
+    # 3. 區域選擇頁面
+    if page_type == 'area':
+        if show_debug_message:
+            print("[FAMI HOME] Detected area selection page")
+        if config_dict["area_auto_select"].get("enable", True):
+            is_area_selected = await nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message)
+
+            # 參考 TixCraft 和 FamiTicket Chrome 版本的處理方式
+            # 當未選中區域時,等待 auto_reload_page_interval 後重試
+            if not is_area_selected:
+                auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
+                if auto_reload_interval > 0:
+                    if show_debug_message:
+                        print(f"[FAMI HOME] No area selected, waiting {auto_reload_interval}s before retry...")
+                    await tab.sleep(auto_reload_interval)
+
+            return is_area_selected
+        return False
+
+    # 4. 日期選擇頁面（預設）
+    if config_dict["date_auto_select"].get("enable", True):
+        is_date_selected = await nodriver_fami_date_auto_select(
+            tab, config_dict, last_activity_url, show_debug_message
+        )
+        return is_date_selected
+
+    return False
+
+
+async def nodriver_famiticket_main(tab, url, config_dict):
+    """
+    FamiTicket 主函數 - URL 路由器
+
+    參考：chrome_tixcraft.py line 6315 (famiticket_main)
+    對應規格：FR-036, FR-037, FR-038, FR-039
+
+    Args:
+        tab: NoDriver tab 物件
+        url: 當前頁面 URL
+        config_dict: 設定字典
+
+    Returns:
+        bool: 操作成功返回 True，失敗返回 False
+    """
+    global fami_dict
+    if not 'fami_dict' in globals():
+        fami_dict = {}
+        fami_dict["fail_list"] = []
+        fami_dict["last_activity"] = ""
+        fami_dict["payment_logged"] = False
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    if show_debug_message:
+        print(f"[FAMITICKET MAIN] Processing URL: {url[:80]}...")
+
+    result = False
+
+    try:
+        # URL 路由分派
+        if '/Payment/' in url:
+            # 結帳頁面 - 不做任何操作，讓用戶自行完成付款
+            # 只顯示一次訊息，避免重複輸出
+            if not fami_dict.get("payment_logged", False):
+                print("[FAMITICKET MAIN] Payment page detected - waiting for user to complete payment")
+                fami_dict["payment_logged"] = True
+            return True
+
+        if '/Home/User/SignIn' in url and '/SignInCheck' not in url:
+            # 登入頁面（排除 SignInCheck 驗證頁面）
+            fami_account = config_dict["advanced"].get("fami_account", "")
+            if len(fami_account) > 4:
+                result = await nodriver_fami_login(tab, config_dict, show_debug_message)
+
+        elif '/Home/Activity/Info/' in url:
+            # 活動頁面
+            fami_dict["last_activity"] = url
+            result = await nodriver_fami_activity(tab, config_dict, show_debug_message)
+
+            # 處理驗證問題
+            is_verify_success, fami_dict["fail_list"] = await nodriver_fami_verify(
+                tab, config_dict, fami_dict["fail_list"], show_debug_message
+            )
+
+        elif '/Sales/Home/Index/' in url:
+            # 銷售首頁（日期/區域選擇）
+            if config_dict["date_auto_select"].get("enable", True):
+                result = await nodriver_fami_home_auto_select(
+                    tab, config_dict, fami_dict["last_activity"], show_debug_message
+                )
+
+        elif url.endswith('/Home/') or url.endswith('/Home'):
+            # 登入成功後的首頁，判斷是否需要轉跳
+            homepage = config_dict.get("homepage", "")
+            if homepage and '/Home/Activity/Info/' in homepage:
+                # 設定的是活動頁面，需要轉跳
+                if show_debug_message:
+                    print(f"[FAMITICKET MAIN] Redirecting to activity: {homepage[:60]}...")
+                await tab.get(homepage)
+                result = True
+            else:
+                # 設定的就是首頁，不轉跳
+                if show_debug_message:
+                    print("[FAMITICKET MAIN] On homepage, no redirect needed")
+
+        else:
+            # 其他頁面：清空 fail_list
+            if show_debug_message:
+                print(f"[FAMITICKET MAIN] Unknown URL pattern, clearing fail_list")
+            fami_dict["fail_list"] = []
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FAMITICKET MAIN] Error: {str(exc)}")
+
+    return result
+
 
 async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     """
@@ -19836,8 +20883,7 @@ async def main(args):
                 is_quit_bot = False
 
         if 'famiticket.com' in url:
-            #fami_dict = famiticket_main(driver, url, config_dict, fami_dict)
-            pass
+            await nodriver_famiticket_main(tab, url, config_dict)
 
         if 'ibon.com' in url:
             await nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser)

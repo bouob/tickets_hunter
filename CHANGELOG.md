@@ -1,5 +1,10 @@
 # Changelog
 
+## 2025.11.24
+
+- 新增 FamiTicket 平台 NoDriver 引擎支援
+- 改善使用者手冊：統一使用 GitHub Releases 下載方式
+
 ## 2025.11.20
 
 - 改善 TicketPlus 關鍵字匹配與頁面處理邏輯
