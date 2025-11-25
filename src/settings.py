@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.24)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.25)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -114,6 +114,7 @@ def get_default_config():
     config_dict["ocr_captcha"]["beta"] = True
     config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
+    config_dict["ocr_captcha"]["path"] = ""
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_NODRIVER
 
     config_dict["date_auto_select"] = {}
@@ -194,8 +195,6 @@ def get_default_config():
     # remote_url not under ocr, due to not only support ocr features.
     config_dict["advanced"]["remote_url"] = "\"http://127.0.0.1:%d/\"" % (CONST_SERVER_PORT)
 
-    # custom OCR model path
-    config_dict["advanced"]["ocr_model_path"] = ""
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
     config_dict["advanced"]["auto_reload_overheat_count"] = 4
@@ -227,6 +226,25 @@ def read_last_url_from_file():
             print(f"[ERROR] Failed to read last_url from {last_url_filepath}: {e}")
     return text
 
+def migrate_config(config_dict):
+    """Migrate old config structure to new structure."""
+    if config_dict is None:
+        return config_dict
+
+    # Migrate ocr_model_path from advanced to ocr_captcha.path
+    if "advanced" in config_dict and "ocr_model_path" in config_dict["advanced"]:
+        if "ocr_captcha" not in config_dict:
+            config_dict["ocr_captcha"] = {}
+        if "path" not in config_dict["ocr_captcha"]:
+            config_dict["ocr_captcha"]["path"] = config_dict["advanced"]["ocr_model_path"]
+        del config_dict["advanced"]["ocr_model_path"]
+
+    # Ensure ocr_captcha.path exists
+    if "ocr_captcha" in config_dict and "path" not in config_dict["ocr_captcha"]:
+        config_dict["ocr_captcha"]["path"] = ""
+
+    return config_dict
+
 def load_json():
     app_root = util.get_app_root()
 
@@ -242,6 +260,10 @@ def load_json():
             pass
     else:
         config_dict = get_default_config()
+
+    # Apply migrations for backward compatibility
+    config_dict = migrate_config(config_dict)
+
     return config_filepath, config_dict
 
 def reset_json():

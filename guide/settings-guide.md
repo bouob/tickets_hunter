@@ -90,9 +90,11 @@ python settings.py
 
 **平台支援狀態**：
 - **TixCraft / KKTIX / TicketPlus / KHAM / 年代**：NoDriver ✅ 完全支援
+- **FamiTicket 全家**：NoDriver ✅ 完全支援（v2025.11.24 新增）
 - **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
 - **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
-- **Urbtix**：建議使用 Chrome 版本，等待重構
+- **Ticketmaster**：NoDriver ✅ 完全支援
+- **Urbtix / HKTicketing**：建議使用 Chrome 版本，等待重構
 
 ---
 
@@ -463,6 +465,28 @@ python settings.py
 **可選值**：
 - canvas - 從 Canvas 元素擷取
 - img - 從 img 標籤擷取
+
+---
+
+#### 自訂 OCR 模型 ⭐ v2025.11.25 新增
+類型：字串 | 預設：空白
+
+指定自訂 OCR 模型的目錄路徑，目前**僅支援 Ticketmaster 平台**。
+
+在圖形介面中顯示為：**自訂 OCR 模型**（文字框）
+
+**使用方式**：
+1. 在 `assets/` 資料夾內建立模型目錄（例如：`assets/ocr_model/`）
+2. 將以下兩個檔案放入該目錄：
+   - `custom.onnx` - ONNX 格式的模型檔案
+   - `charsets.json` - 字符集定義檔案
+3. 在圖形介面填入路徑：`assets/ocr_model`
+
+**錯誤處理**：
+- 路徑未設定 → 使用預設 ddddocr 模型
+- 檔案不存在 → 顯示警告，自動使用預設模型
+
+**注意**：此功能目前僅支援 Ticketmaster 平台。
 
 ---
 
