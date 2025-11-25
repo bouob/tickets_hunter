@@ -1,6 +1,6 @@
 ---
 description: 根據自然語言的功能描述，建立或更新功能規格說明。
-model: sonnet
+model: Opus
 scripts:
   sh: scripts/bash/create-new-feature.sh --json "{ARGS}"
   ps: scripts/powershell/create-new-feature.ps1 -Json "{ARGS}"

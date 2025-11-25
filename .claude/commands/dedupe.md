@@ -1,7 +1,7 @@
 ---
 allowed-tools: Bash(gh issue view:*), Bash(gh search:*), Bash(gh issue list:*), Bash(gh api:*), Bash(gh issue comment:*)
 description: 尋找重複的 GitHub issues
-model: haiku
+model: sonnet
 ---
 
 # 尋找重複 Issues

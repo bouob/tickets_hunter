@@ -1,6 +1,6 @@
 ---
 description: 根據可用的設計產物，為該功能產生一份可執行、依相依性（dependency）排序的 tasks.md。
-model: sonnet
+model: Opus
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json
   ps: scripts/powershell/check-prerequisites.ps1 -Json

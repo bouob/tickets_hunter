@@ -1,6 +1,6 @@
 ---
 description: 透過處理並執行 tasks.md 中定義的所有任務，來執行實作計畫
-model: sonnet
+model: Opus
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
   ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks

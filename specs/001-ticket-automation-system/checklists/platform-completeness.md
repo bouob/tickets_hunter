@@ -249,10 +249,29 @@
 - [ ] CHK100 - Are real-name dialog acceptance requirements specified? [Completeness, Spec §Platform-Specific KHAM]
 - [ ] CHK101 - Are final submission CAPTCHA requirements documented? [Completeness, Spec §Platform-Specific KHAM]
 
-### FamiTicket (NoDriver Not Started)
+### FamiTicket (100% Complete - v2025.11.24)
 
-- [ ] CHK102 - Are FamiTicket platform requirements defined for future NoDriver implementation? [Gap, Platform Migration]
-- [ ] CHK103 - Are FamiTicket-specific technical constraints documented (if any)? [Gap, Platform Migration]
+- [x] CHK102 - Are FamiTicket platform requirements defined for NoDriver implementation? [Completeness, Spec §Platform-Specific FamiTicket]
+- [x] CHK103 - Are FamiTicket-specific technical constraints documented? [Completeness, Spec §Platform-Specific FamiTicket]
+- [x] CHK104-F - Are FamiTicket login requirements (account + password) documented? [Completeness]
+- [x] CHK105-F - Are FamiTicket date selection requirements defined with fallback strategy? [Completeness]
+- [x] CHK106-F - Are FamiTicket area selection requirements defined with AND logic support? [Completeness]
+- [x] CHK107-F - Are FamiTicket verification question handling requirements specified? [Completeness]
+- [x] CHK108-F - Are FamiTicket ticket selection and checkout requirements defined? [Completeness]
+
+### Cityline (60% Complete)
+
+- [x] CHK109-C - Are Cityline login requirements documented? [Completeness, Spec §Platform-Specific Cityline]
+- [x] CHK110-C - Are Cityline queue/waiting room handling requirements specified? [Completeness]
+- [ ] CHK111-C - Are Cityline area selection requirements fully defined? [Gap, Platform Migration]
+- [ ] CHK112-C - Are Cityline ticket number selection requirements defined? [Gap, Platform Migration]
+
+### Ticketmaster (89% Complete)
+
+- [x] CHK113-T - Are Ticketmaster date/area selection requirements documented? [Completeness, Spec §Platform-Specific Ticketmaster]
+- [x] CHK114-T - Are Ticketmaster captcha OCR requirements specified? [Completeness]
+- [x] CHK115-T - Are Ticketmaster ticket number assignment requirements defined? [Completeness]
+- [ ] CHK116-T - Are Ticketmaster modal error handling requirements fully defined? [Gap, Minor]
 
 ---
 
