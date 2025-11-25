@@ -1,5 +1,10 @@
 # Changelog
 
+## 2025.11.25
+
+- 新增 Ticketmaster 自訂 OCR 模型支援
+- 修復 TixCraft SID Cookie 設定與 Ticketmaster 驗證碼重試機制
+
 ## 2025.11.24
 
 - 新增 FamiTicket 平台 NoDriver 引擎支援

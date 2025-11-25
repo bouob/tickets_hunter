@@ -430,8 +430,12 @@ function save_changes_to_dict(silent_flag)
             //console.log("final remote_url_string:"+remote_url_string);
             settings.advanced.remote_url = remote_url_string;
 
-            // custom OCR model path
+            // custom OCR model path (migrated from advanced.ocr_model_path)
             settings.ocr_captcha.path = ocr_model_path.value;
+            // Remove deprecated field if exists
+            if (settings.advanced && settings.advanced.ocr_model_path !== undefined) {
+                delete settings.advanced.ocr_model_path;
+            }
 
             // dictionary
             settings.advanced.user_guess_string = format_config_keyword_for_json(user_guess_string.value);
