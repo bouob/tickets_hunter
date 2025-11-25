@@ -86,7 +86,7 @@ tickets_hunter/
 ### 3.1 開啟設定介面
 
 1. 雙擊執行 `settings.exe`
-2. 瀏覽器會自動開啟設定頁面（預設為 `http://127.0.0.1:8082`）
+2. 瀏覽器會自動開啟設定頁面（預設為 `http://127.0.0.1:16888`）
 
 **如果遇到 Windows Defender 提示**，請參閱 [Windows Defender 處理方式](#windows-defender-處理)。
 
@@ -131,7 +131,7 @@ https://kktix.com/events/example-event
 https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 ```
 
-**支援平台**：TixCraft 拓元、KKTIX、TicketPlus 遠大、iBon、KHAM 寬宏、年代售票等
+**支援平台**：TixCraft 拓元、KKTIX、TicketPlus 遠大、iBon、KHAM 寬宏、年代售票、FamiTicket 全家、Cityline、Ticketmaster 等
 
 **提示**：直接複製活動頁面網址即可
 
@@ -388,7 +388,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 首次執行 `settings.exe` 時，Windows 防火牆可能會詢問是否允許網路存取。
 
 **請點擊「允許存取」**，因為：
-- `settings.exe` 需要啟動網頁伺服器（預設 Port 8082）
+- `settings.exe` 需要啟動網頁伺服器（預設 Port 16888）
 - 搶票引擎需要連線到票務網站
 
 **⚠️ 注意**：網頁伺服器僅監聽本機（127.0.0.1），不會對外開放，安全無虞。
@@ -490,11 +490,11 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 ### Q5: 設定介面無法開啟（瀏覽器沒有自動開啟）？
 
 **可能原因**：
-- Port 8082 被其他程式佔用
+- Port 16888 被其他程式佔用
 - 防火牆阻擋
 
 **解決方案**：
-1. 手動開啟瀏覽器，輸入 `http://127.0.0.1:8082`
+1. 手動開啟瀏覽器，輸入 `http://127.0.0.1:16888`
 2. 檢查防火牆設定
 3. 重新執行 `settings.exe`
 

@@ -690,14 +690,28 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 from nodriver import cdp
 
-                # Set tixcraft SID cookie using CDP (same as ibon implementation)
+                # Step 1: Delete existing SID cookies (aligned with Chrome Driver implementation)
+                # Reference: chrome_tixcraft.py line 848 - driver.delete_cookie("SID")
+                try:
+                    await tab.send(cdp.network.delete_cookies(
+                        name="SID",
+                        domain=cookie_domain
+                    ))
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Deleted existing SID cookies for domain: {cookie_domain}")
+                except Exception as del_e:
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Note: Could not delete existing cookies: {del_e}")
+
+                # Step 2: Set new SID cookie using CDP
+                # Fix: http_only=True (Issue #137 - TixCraft SID requires HttpOnly attribute)
                 cookie_result = await tab.send(cdp.network.set_cookie(
                     name="SID",
                     value=tixcraft_sid,
                     domain=cookie_domain,
                     path="/",
                     secure=True,
-                    http_only=False  # TixCraft SID cookie is not httpOnly
+                    http_only=True
                 ))
 
                 if config_dict["advanced"]["verbose"]:
@@ -716,20 +730,25 @@ async def nodriver_goto_homepage(driver, config_dict):
             except Exception as e:
                 if config_dict["advanced"]["verbose"]:
                     print(f"Error setting TixCraft SID cookie: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     print("Falling back to old method...")
 
                 # Fallback to old method if CDP fails
-                cookies  = await driver.cookies.get_all()
-                is_cookie_exist = False
-                for cookie in cookies:
-                    if cookie.name=='SID':
-                        cookie.value=tixcraft_sid
-                        is_cookie_exist = True
-                        break
-                if not is_cookie_exist:
-                    new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=cookie_domain, path="/", http_only=False, secure=True)
-                    cookies.append(new_cookie)
-                await driver.cookies.set_all(cookies)
+                cookies = await driver.cookies.get_all()
+                # Filter out all existing SID cookies to avoid conflicts
+                cookies_filtered = [c for c in cookies if c.name != 'SID']
+                # Create new SID cookie with correct attributes
+                new_cookie = cdp.network.CookieParam(
+                    "SID",
+                    tixcraft_sid,
+                    domain=cookie_domain,
+                    path="/",
+                    http_only=True,
+                    secure=True
+                )
+                cookies_filtered.append(new_cookie)
+                await driver.cookies.set_all(cookies_filtered)
 
                 if config_dict["advanced"]["verbose"]:
                     print("tixcraft SID cookie set successfully (fallback method)")
@@ -4176,12 +4195,40 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                     if show_debug_message:
                         print("[TICKETMASTER CAPTCHA] Form submitted")
 
-                    # Wait for potential error modal to appear
+                    # Wait for potential error modal or alert to appear
                     await asyncio.sleep(0.8)
+
+                    # Check for captcha error detected by global alert handler
+                    global tixcraft_dict
+                    error_detected = False
+
+                    # Check if global alert handler detected captcha error
+                    if tixcraft_dict.get("captcha_alert_detected", False):
+                        error_detected = True
+                        tixcraft_dict["captcha_alert_detected"] = False  # Reset flag
+                        if show_debug_message:
+                            print("[TICKETMASTER CAPTCHA] Captcha error detected via global alert, will retry OCR")
+
+                        # Reset state for retry
+                        await asyncio.sleep(0.3)
+
+                        # Reload captcha for new image
+                        await nodriver_tixcraft_reload_captcha(tab, domain_name)
+                        previous_answer = None
+                        fail_count = 0
+                        total_fail_count += 1
+
+                        # Check retry limit
+                        if total_fail_count >= 15:
+                            print("[TICKETMASTER CAPTCHA] OCR failed 15 times after error alert. Please enter captcha manually.")
+                            await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
+                            break
+
+                        await asyncio.sleep(random.uniform(0.5, 1.0))
+                        continue  # Retry OCR
 
                     # Check for Ticketmaster custom error modal (not native alert)
                     # The modal shows "The verification code that you entered is incorrect"
-                    error_detected = False
                     try:
                         # Check for modal overlay or dialog
                         modal_content = await tab.evaluate('''
@@ -5811,6 +5858,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Handles alerts that appear after page navigation (e.g., area selection redirects)
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
+        global tixcraft_dict
         current_url, _ = await nodriver_current_url(tab)
 
         if '/ticket/checkout' in current_url:
@@ -5820,6 +5868,27 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if show_debug_message:
             print(f"[GLOBAL ALERT] Alert detected: '{event.message}'")
+
+        # Track captcha error alerts for retry logic
+        is_captcha_error = False
+        captcha_error_keywords = [
+            'verification code',
+            'incorrect',
+            'try again',
+            'captcha',
+            'wrong code'
+        ]
+        alert_message_lower = event.message.lower()
+        for keyword in captcha_error_keywords:
+            if keyword in alert_message_lower:
+                is_captcha_error = True
+                break
+
+        if is_captcha_error:
+            tixcraft_dict["captcha_alert_detected"] = True
+            if show_debug_message:
+                print(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
+
         try:
             await tab.send(cdp.page.handle_java_script_dialog(accept=True))
             if show_debug_message:
@@ -5843,6 +5912,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_ticket"] = False
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
+        tixcraft_dict["captcha_alert_detected"] = False
 
     # Register global alert handler (remains active throughout session)
     # Only register once to prevent infinite loop

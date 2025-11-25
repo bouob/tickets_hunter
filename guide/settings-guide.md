@@ -90,9 +90,11 @@ python settings.py
 
 **平台支援狀態**：
 - **TixCraft / KKTIX / TicketPlus / KHAM / 年代**：NoDriver ✅ 完全支援
+- **FamiTicket 全家**：NoDriver ✅ 完全支援（v2025.11.24 新增）
 - **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
 - **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
-- **Urbtix**：建議使用 Chrome 版本，等待重構
+- **Ticketmaster**：NoDriver ✅ 完全支援
+- **Urbtix / HKTicketing**：建議使用 Chrome 版本，等待重構
 
 ---
 
