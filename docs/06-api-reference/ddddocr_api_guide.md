@@ -192,6 +192,51 @@ ocr = ddddocr.DdddOcr(
 )
 ```
 
+### 3. Ticketmaster 自訂 OCR 模型（v2025.11.25 新增）
+
+專案支援在 Ticketmaster 平台使用自訂 OCR 模型，透過 `ocr_captcha.path` 設定。
+
+**目錄結構**：
+```
+ocr_captcha.path/
+  ├── custom.onnx      # 自訂 ONNX 模型檔案
+  └── charsets.json    # 字符集定義檔案
+```
+
+**實作位置**：`src/nodriver_tixcraft.py` - `nodriver_ticketmaster_captcha()` 函數
+
+**載入邏輯**：
+```python
+# 檢查是否有自訂模型路徑
+ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
+if ocr_path:
+    custom_onnx = os.path.join(ocr_path, "custom.onnx")
+    custom_charsets = os.path.join(ocr_path, "charsets.json")
+
+    if os.path.exists(custom_onnx) and os.path.exists(custom_charsets):
+        # 載入自訂模型
+        ocr = ddddocr.DdddOcr(
+            det=False,
+            ocr=False,
+            import_onnx_path=custom_onnx,
+            charsets_path=custom_charsets,
+            show_ad=False
+        )
+        print(f"[TICKETMASTER CAPTCHA] Using custom OCR model from: {ocr_path}")
+    else:
+        # 警告：路徑設定但檔案不存在
+        print(f"[TICKETMASTER CAPTCHA] Warning: Custom model files not found in: {ocr_path}")
+```
+
+**錯誤處理策略**：
+- 自訂模型載入失敗 → Fallback 到預設 ddddocr 模型
+- 路徑設定但檔案不存在 → 輸出警告訊息，使用預設模型
+- 未設定路徑 → 使用預設 ddddocr 模型
+
+**路徑支援**：
+- 絕對路徑：`C:/models/ticketmaster`
+- 相對路徑：`.temp/model`（相對於程式執行目錄）
+
 ## 性能優化建議
 
 ### 1. 全局初始化
