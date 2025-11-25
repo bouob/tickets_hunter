@@ -1834,9 +1834,16 @@ async def nodriver_kktix_check_guest_modal(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_modal_handled = False
 
+    # Track if we've already checked for guest modal (skip wait on subsequent checks)
+    global kktix_dict
+    is_first_check = not kktix_dict.get("guest_modal_checked", False) if 'kktix_dict' in globals() else True
+
     try:
-        # Wait for modal to possibly appear
-        await asyncio.sleep(random.uniform(0.8, 1.2))
+        # Only wait on first check (modal typically appears on initial page load)
+        if is_first_check:
+            await asyncio.sleep(random.uniform(0.3, 0.5))
+            if 'kktix_dict' in globals():
+                kktix_dict["guest_modal_checked"] = True
 
         # Check if guest modal exists and is visible
         modal_visible = await tab.evaluate('''
@@ -2635,6 +2642,39 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
         kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
+        kktix_dict["alert_handler_registered"] = False  # 全域 alert handler 註冊狀態 - 2025-11-25
+        kktix_dict["guest_modal_checked"] = False  # Guest modal 檢查狀態，避免重複等待 - 2025-11-25
+
+    # Global alert handler - auto-dismiss KKTIX sold-out alerts
+    # Handles alerts like "糟糕，目前 xxx 的票券都被選走了" - 2025-11-25
+    async def handle_kktix_alert(event):
+        if show_debug_message:
+            print(f"[KKTIX ALERT] Alert detected: '{event.message}'")
+
+        # Dismiss the alert - try multiple times with small delays
+        for attempt in range(3):
+            try:
+                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                if show_debug_message:
+                    print(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
+                break
+            except Exception as dismiss_exc:
+                if attempt < 2:
+                    await asyncio.sleep(0.1)
+                else:
+                    if show_debug_message:
+                        print(f"[KKTIX ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+
+    # Register global alert handler (only once per session)
+    if not kktix_dict.get("alert_handler_registered", False):
+        try:
+            tab.add_handler(cdp.page.JavascriptDialogOpening, handle_kktix_alert)
+            kktix_dict["alert_handler_registered"] = True
+            if show_debug_message:
+                print("[KKTIX ALERT] Global alert handler registered")
+        except Exception as handler_exc:
+            if show_debug_message:
+                print(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -4162,6 +4202,25 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 print("[TICKETMASTER CAPTCHA] Checked TicketForm_agree")
             break
 
+    # Alert state tracked by event handler
+    alert_state = {"detected": False, "message": ""}
+
+    async def on_captcha_alert(event: cdp.page.JavascriptDialogOpening):
+        alert_state["detected"] = True
+        alert_state["message"] = event.message
+        if show_debug_message:
+            print(f"[TICKETMASTER CAPTCHA] Alert event: '{event.message[:60]}'")
+        # Dismiss the alert immediately to prevent blocking
+        try:
+            await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+            if show_debug_message:
+                print("[TICKETMASTER CAPTCHA] Alert auto-dismissed by handler")
+        except:
+            pass
+
+    # Register handler for this captcha session
+    tab.add_handler(cdp.page.JavascriptDialogOpening, on_captcha_alert)
+
     # Handle captcha
     if not config_dict.get("ocr_captcha", {}).get("enable", False):
         # OCR disabled - manual input
@@ -4171,21 +4230,20 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
         # OCR enabled - auto recognition
         previous_answer = None
         current_url = tab.target.url
-        fail_count = 0  # Track consecutive failures
-        total_fail_count = 0  # Track total failures
+        fail_count = 0
+        total_fail_count = 0
 
-        # Wait for captcha image to load before starting OCR
-        import random
         await asyncio.sleep(random.uniform(0.5, 1.0))
 
         for redo_ocr in range(99):
             try:
-                # Reuse existing tixcraft auto_ocr function
+                alert_state["detected"] = False  # Reset before each attempt
+
                 away_from_keyboard_enable = config_dict.get("ocr_captcha", {}).get("force_submit", False)
                 ocr_captcha_image_source = config_dict.get("ocr_captcha", {}).get("image_source", "canvas")
                 domain_name = tab.target.url.split('/')[2]
 
-                # Call tixcraft_auto_ocr
+                # Call tixcraft_auto_ocr for captcha recognition
                 is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
                     tab, config_dict, ocr, away_from_keyboard_enable, previous_answer,
                     captcha_browser, ocr_captcha_image_source, domain_name
@@ -4195,43 +4253,42 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                     if show_debug_message:
                         print("[TICKETMASTER CAPTCHA] Form submitted")
 
-                    # Wait for potential error modal or alert to appear
-                    await asyncio.sleep(0.8)
-
-                    # Check for captcha error detected by global alert handler
+                    # Poll for alert event (max 2 seconds)
                     global tixcraft_dict
-                    error_detected = False
+                    for wait_i in range(10):
+                        await asyncio.sleep(0.2)
+                        if alert_state["detected"]:
+                            break
 
-                    # Check if global alert handler detected captcha error
-                    if tixcraft_dict.get("captcha_alert_detected", False):
-                        error_detected = True
-                        tixcraft_dict["captcha_alert_detected"] = False  # Reset flag
+                    if show_debug_message:
+                        print(f"[TICKETMASTER CAPTCHA] alert_state={alert_state}")
+
+                    error_detected = alert_state["detected"]
+
+                    # If alert was detected (already dismissed by handler), retry OCR
+                    if error_detected:
                         if show_debug_message:
-                            print("[TICKETMASTER CAPTCHA] Captcha error detected via global alert, will retry OCR")
+                            print("[TICKETMASTER CAPTCHA] Captcha error detected, retrying...")
 
-                        # Reset state for retry
                         await asyncio.sleep(0.3)
-
-                        # Reload captcha for new image
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
                         previous_answer = None
                         fail_count = 0
                         total_fail_count += 1
 
-                        # Check retry limit
                         if total_fail_count >= 15:
-                            print("[TICKETMASTER CAPTCHA] OCR failed 15 times after error alert. Please enter captcha manually.")
+                            print("[TICKETMASTER CAPTCHA] Failed 15 times. Manual input required.")
                             await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
                             break
 
                         await asyncio.sleep(random.uniform(0.5, 1.0))
-                        continue  # Retry OCR
+                        continue
 
                     # Check for Ticketmaster custom error modal (not native alert)
                     # The modal shows "The verification code that you entered is incorrect"
                     try:
                         # Check for modal overlay or dialog
-                        modal_content = await tab.evaluate('''
+                        modal_result = await tab.evaluate('''
                             (function() {
                                 // Check for visible modal or alert dialog
                                 const modals = document.querySelectorAll('.modal, .alert, [role="dialog"], [role="alertdialog"]');
@@ -4259,13 +4316,27 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                             })();
                         ''')
 
-                        if modal_content and modal_content.get('found'):
+                        # Handle CDP RemoteObject format (may return as list or dict)
+                        modal_content = None
+                        if modal_result:
+                            if isinstance(modal_result, dict):
+                                modal_content = modal_result
+                            elif isinstance(modal_result, list) and len(modal_result) > 0:
+                                # CDP sometimes returns [{'type': 'object', 'value': {...}}]
+                                first_item = modal_result[0]
+                                if isinstance(first_item, dict):
+                                    if 'value' in first_item:
+                                        modal_content = first_item.get('value', {})
+                                    else:
+                                        modal_content = first_item
+
+                        if modal_content and isinstance(modal_content, dict) and modal_content.get('found'):
                             error_detected = True
                             if show_debug_message:
                                 print(f"[TICKETMASTER CAPTCHA] Error modal detected")
 
                             # Try to click confirm/OK button to dismiss modal
-                            dismiss_success = await tab.evaluate('''
+                            dismiss_result = await tab.evaluate('''
                                 (function() {
                                     // Find and click confirm button
                                     const buttons = document.querySelectorAll('button');
@@ -4285,6 +4356,13 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                                     return false;
                                 })();
                             ''')
+
+                            # Handle CDP RemoteObject format
+                            dismiss_success = False
+                            if dismiss_result is True:
+                                dismiss_success = True
+                            elif isinstance(dismiss_result, list) and len(dismiss_result) > 0:
+                                dismiss_success = dismiss_result[0] is True or dismiss_result[0] == True
 
                             if show_debug_message:
                                 if dismiss_success:
@@ -5889,13 +5967,21 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             if show_debug_message:
                 print(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
 
-        try:
-            await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Alert dismissed")
-        except Exception as dismiss_exc:
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
+        # Dismiss the alert - try multiple times with small delays
+        dismiss_success = False
+        for attempt in range(3):
+            try:
+                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                dismiss_success = True
+                if show_debug_message:
+                    print(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
+                break
+            except Exception as dismiss_exc:
+                if attempt < 2:
+                    await asyncio.sleep(0.1)  # Small delay before retry
+                else:
+                    if show_debug_message:
+                        print(f"[GLOBAL ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
 
     global tixcraft_dict
 

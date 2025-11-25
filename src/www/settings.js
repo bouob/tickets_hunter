@@ -197,8 +197,8 @@ function load_settins_to_form(settings)
         remote_url.value = remote_url_string;
 
         // custom OCR model path
-        if(settings.advanced.ocr_model_path) {
-            ocr_model_path.value = settings.advanced.ocr_model_path;
+        if(settings.ocr_captcha.path) {
+            ocr_model_path.value = settings.ocr_captcha.path;
         } else {
             ocr_model_path.value = "";
         }
@@ -431,7 +431,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.remote_url = remote_url_string;
 
             // custom OCR model path
-            settings.advanced.ocr_model_path = ocr_model_path.value;
+            settings.ocr_captcha.path = ocr_model_path.value;
 
             // dictionary
             settings.advanced.user_guess_string = format_config_keyword_for_json(user_guess_string.value);
@@ -580,7 +580,6 @@ function check_unsaved_fields()
             "discount_code",
             "user_guess_string",
             "remote_url",
-            "ocr_model_path",
             "auto_reload_page_interval",
             "reset_browser_interval",
             "proxy_server_port",
