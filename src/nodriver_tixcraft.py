@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.24)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.25)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -690,14 +690,28 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 from nodriver import cdp
 
-                # Set tixcraft SID cookie using CDP (same as ibon implementation)
+                # Step 1: Delete existing SID cookies (aligned with Chrome Driver implementation)
+                # Reference: chrome_tixcraft.py line 848 - driver.delete_cookie("SID")
+                try:
+                    await tab.send(cdp.network.delete_cookies(
+                        name="SID",
+                        domain=cookie_domain
+                    ))
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Deleted existing SID cookies for domain: {cookie_domain}")
+                except Exception as del_e:
+                    if config_dict["advanced"]["verbose"]:
+                        print(f"Note: Could not delete existing cookies: {del_e}")
+
+                # Step 2: Set new SID cookie using CDP
+                # Fix: http_only=True (Issue #137 - TixCraft SID requires HttpOnly attribute)
                 cookie_result = await tab.send(cdp.network.set_cookie(
                     name="SID",
                     value=tixcraft_sid,
                     domain=cookie_domain,
                     path="/",
                     secure=True,
-                    http_only=False  # TixCraft SID cookie is not httpOnly
+                    http_only=True
                 ))
 
                 if config_dict["advanced"]["verbose"]:
@@ -716,20 +730,25 @@ async def nodriver_goto_homepage(driver, config_dict):
             except Exception as e:
                 if config_dict["advanced"]["verbose"]:
                     print(f"Error setting TixCraft SID cookie: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     print("Falling back to old method...")
 
                 # Fallback to old method if CDP fails
-                cookies  = await driver.cookies.get_all()
-                is_cookie_exist = False
-                for cookie in cookies:
-                    if cookie.name=='SID':
-                        cookie.value=tixcraft_sid
-                        is_cookie_exist = True
-                        break
-                if not is_cookie_exist:
-                    new_cookie = cdp.network.CookieParam("SID",tixcraft_sid, domain=cookie_domain, path="/", http_only=False, secure=True)
-                    cookies.append(new_cookie)
-                await driver.cookies.set_all(cookies)
+                cookies = await driver.cookies.get_all()
+                # Filter out all existing SID cookies to avoid conflicts
+                cookies_filtered = [c for c in cookies if c.name != 'SID']
+                # Create new SID cookie with correct attributes
+                new_cookie = cdp.network.CookieParam(
+                    "SID",
+                    tixcraft_sid,
+                    domain=cookie_domain,
+                    path="/",
+                    http_only=True,
+                    secure=True
+                )
+                cookies_filtered.append(new_cookie)
+                await driver.cookies.set_all(cookies_filtered)
 
                 if config_dict["advanced"]["verbose"]:
                     print("tixcraft SID cookie set successfully (fallback method)")
@@ -1815,9 +1834,16 @@ async def nodriver_kktix_check_guest_modal(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
     is_modal_handled = False
 
+    # Track if we've already checked for guest modal (skip wait on subsequent checks)
+    global kktix_dict
+    is_first_check = not kktix_dict.get("guest_modal_checked", False) if 'kktix_dict' in globals() else True
+
     try:
-        # Wait for modal to possibly appear
-        await asyncio.sleep(random.uniform(0.8, 1.2))
+        # Only wait on first check (modal typically appears on initial page load)
+        if is_first_check:
+            await asyncio.sleep(random.uniform(0.3, 0.5))
+            if 'kktix_dict' in globals():
+                kktix_dict["guest_modal_checked"] = True
 
         # Check if guest modal exists and is visible
         modal_visible = await tab.evaluate('''
@@ -2616,6 +2642,39 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
         kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
+        kktix_dict["alert_handler_registered"] = False  # 全域 alert handler 註冊狀態 - 2025-11-25
+        kktix_dict["guest_modal_checked"] = False  # Guest modal 檢查狀態，避免重複等待 - 2025-11-25
+
+    # Global alert handler - auto-dismiss KKTIX sold-out alerts
+    # Handles alerts like "糟糕，目前 xxx 的票券都被選走了" - 2025-11-25
+    async def handle_kktix_alert(event):
+        if show_debug_message:
+            print(f"[KKTIX ALERT] Alert detected: '{event.message}'")
+
+        # Dismiss the alert - try multiple times with small delays
+        for attempt in range(3):
+            try:
+                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                if show_debug_message:
+                    print(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
+                break
+            except Exception as dismiss_exc:
+                if attempt < 2:
+                    await asyncio.sleep(0.1)
+                else:
+                    if show_debug_message:
+                        print(f"[KKTIX ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+
+    # Register global alert handler (only once per session)
+    if not kktix_dict.get("alert_handler_registered", False):
+        try:
+            tab.add_handler(cdp.page.JavascriptDialogOpening, handle_kktix_alert)
+            kktix_dict["alert_handler_registered"] = True
+            if show_debug_message:
+                print("[KKTIX ALERT] Global alert handler registered")
+        except Exception as handler_exc:
+            if show_debug_message:
+                print(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -4135,6 +4194,30 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     """
     show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
 
+    # Check for custom OCR model path
+    ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
+    if ocr_path:
+        custom_onnx = os.path.join(ocr_path, "custom.onnx")
+        custom_charsets = os.path.join(ocr_path, "charsets.json")
+
+        if os.path.exists(custom_onnx) and os.path.exists(custom_charsets):
+            # Load custom OCR model
+            try:
+                ocr = ddddocr.DdddOcr(
+                    det=False,
+                    ocr=False,
+                    import_onnx_path=custom_onnx,
+                    charsets_path=custom_charsets,
+                    show_ad=False
+                )
+                print(f"[TICKETMASTER CAPTCHA] Using custom OCR model from: {ocr_path}")
+            except Exception as e:
+                print(f"[TICKETMASTER CAPTCHA] Failed to load custom model: {e}, using default")
+        else:
+            # Always warn if custom model path is set but files not found
+            print(f"[TICKETMASTER CAPTCHA] Warning: Custom model files not found in: {ocr_path}")
+            print(f"[TICKETMASTER CAPTCHA] Expected: {custom_onnx} and {custom_charsets}")
+
     # Check agree checkbox
     for _ in range(2):
         is_checked = await nodriver_check_checkbox(tab, '#TicketForm_agree')
@@ -4142,6 +4225,25 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
             if show_debug_message:
                 print("[TICKETMASTER CAPTCHA] Checked TicketForm_agree")
             break
+
+    # Alert state tracked by event handler
+    alert_state = {"detected": False, "message": ""}
+
+    async def on_captcha_alert(event: cdp.page.JavascriptDialogOpening):
+        alert_state["detected"] = True
+        alert_state["message"] = event.message
+        if show_debug_message:
+            print(f"[TICKETMASTER CAPTCHA] Alert event: '{event.message[:60]}'")
+        # Dismiss the alert immediately to prevent blocking
+        try:
+            await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+            if show_debug_message:
+                print("[TICKETMASTER CAPTCHA] Alert auto-dismissed by handler")
+        except:
+            pass
+
+    # Register handler for this captcha session
+    tab.add_handler(cdp.page.JavascriptDialogOpening, on_captcha_alert)
 
     # Handle captcha
     if not config_dict.get("ocr_captcha", {}).get("enable", False):
@@ -4152,21 +4254,20 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
         # OCR enabled - auto recognition
         previous_answer = None
         current_url = tab.target.url
-        fail_count = 0  # Track consecutive failures
-        total_fail_count = 0  # Track total failures
+        fail_count = 0
+        total_fail_count = 0
 
-        # Wait for captcha image to load before starting OCR
-        import random
         await asyncio.sleep(random.uniform(0.5, 1.0))
 
         for redo_ocr in range(99):
             try:
-                # Reuse existing tixcraft auto_ocr function
+                alert_state["detected"] = False  # Reset before each attempt
+
                 away_from_keyboard_enable = config_dict.get("ocr_captcha", {}).get("force_submit", False)
                 ocr_captcha_image_source = config_dict.get("ocr_captcha", {}).get("image_source", "canvas")
                 domain_name = tab.target.url.split('/')[2]
 
-                # Call tixcraft_auto_ocr
+                # Call tixcraft_auto_ocr for captcha recognition
                 is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
                     tab, config_dict, ocr, away_from_keyboard_enable, previous_answer,
                     captcha_browser, ocr_captcha_image_source, domain_name
@@ -4176,15 +4277,42 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                     if show_debug_message:
                         print("[TICKETMASTER CAPTCHA] Form submitted")
 
-                    # Wait for potential error modal to appear
-                    await asyncio.sleep(0.8)
+                    # Poll for alert event (max 2 seconds)
+                    global tixcraft_dict
+                    for wait_i in range(10):
+                        await asyncio.sleep(0.2)
+                        if alert_state["detected"]:
+                            break
+
+                    if show_debug_message:
+                        print(f"[TICKETMASTER CAPTCHA] alert_state={alert_state}")
+
+                    error_detected = alert_state["detected"]
+
+                    # If alert was detected (already dismissed by handler), retry OCR
+                    if error_detected:
+                        if show_debug_message:
+                            print("[TICKETMASTER CAPTCHA] Captcha error detected, retrying...")
+
+                        await asyncio.sleep(0.3)
+                        await nodriver_tixcraft_reload_captcha(tab, domain_name)
+                        previous_answer = None
+                        fail_count = 0
+                        total_fail_count += 1
+
+                        if total_fail_count >= 15:
+                            print("[TICKETMASTER CAPTCHA] Failed 15 times. Manual input required.")
+                            await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
+                            break
+
+                        await asyncio.sleep(random.uniform(0.5, 1.0))
+                        continue
 
                     # Check for Ticketmaster custom error modal (not native alert)
                     # The modal shows "The verification code that you entered is incorrect"
-                    error_detected = False
                     try:
                         # Check for modal overlay or dialog
-                        modal_content = await tab.evaluate('''
+                        modal_result = await tab.evaluate('''
                             (function() {
                                 // Check for visible modal or alert dialog
                                 const modals = document.querySelectorAll('.modal, .alert, [role="dialog"], [role="alertdialog"]');
@@ -4212,13 +4340,27 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                             })();
                         ''')
 
-                        if modal_content and modal_content.get('found'):
+                        # Handle CDP RemoteObject format (may return as list or dict)
+                        modal_content = None
+                        if modal_result:
+                            if isinstance(modal_result, dict):
+                                modal_content = modal_result
+                            elif isinstance(modal_result, list) and len(modal_result) > 0:
+                                # CDP sometimes returns [{'type': 'object', 'value': {...}}]
+                                first_item = modal_result[0]
+                                if isinstance(first_item, dict):
+                                    if 'value' in first_item:
+                                        modal_content = first_item.get('value', {})
+                                    else:
+                                        modal_content = first_item
+
+                        if modal_content and isinstance(modal_content, dict) and modal_content.get('found'):
                             error_detected = True
                             if show_debug_message:
                                 print(f"[TICKETMASTER CAPTCHA] Error modal detected")
 
                             # Try to click confirm/OK button to dismiss modal
-                            dismiss_success = await tab.evaluate('''
+                            dismiss_result = await tab.evaluate('''
                                 (function() {
                                     // Find and click confirm button
                                     const buttons = document.querySelectorAll('button');
@@ -4238,6 +4380,13 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                                     return false;
                                 })();
                             ''')
+
+                            # Handle CDP RemoteObject format
+                            dismiss_success = False
+                            if dismiss_result is True:
+                                dismiss_success = True
+                            elif isinstance(dismiss_result, list) and len(dismiss_result) > 0:
+                                dismiss_success = dismiss_result[0] is True or dismiss_result[0] == True
 
                             if show_debug_message:
                                 if dismiss_success:
@@ -5811,6 +5960,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Handles alerts that appear after page navigation (e.g., area selection redirects)
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
+        global tixcraft_dict
         current_url, _ = await nodriver_current_url(tab)
 
         if '/ticket/checkout' in current_url:
@@ -5820,13 +5970,42 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if show_debug_message:
             print(f"[GLOBAL ALERT] Alert detected: '{event.message}'")
-        try:
-            await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+
+        # Track captcha error alerts for retry logic
+        is_captcha_error = False
+        captcha_error_keywords = [
+            'verification code',
+            'incorrect',
+            'try again',
+            'captcha',
+            'wrong code'
+        ]
+        alert_message_lower = event.message.lower()
+        for keyword in captcha_error_keywords:
+            if keyword in alert_message_lower:
+                is_captcha_error = True
+                break
+
+        if is_captcha_error:
+            tixcraft_dict["captcha_alert_detected"] = True
             if show_debug_message:
-                print(f"[GLOBAL ALERT] Alert dismissed")
-        except Exception as dismiss_exc:
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
+                print(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
+
+        # Dismiss the alert - try multiple times with small delays
+        dismiss_success = False
+        for attempt in range(3):
+            try:
+                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                dismiss_success = True
+                if show_debug_message:
+                    print(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
+                break
+            except Exception as dismiss_exc:
+                if attempt < 2:
+                    await asyncio.sleep(0.1)  # Small delay before retry
+                else:
+                    if show_debug_message:
+                        print(f"[GLOBAL ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
 
     global tixcraft_dict
 
@@ -5843,6 +6022,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_ticket"] = False
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
+        tixcraft_dict["captcha_alert_detected"] = False
 
     # Register global alert handler (remains active throughout session)
     # Only register once to prevent infinite loop
