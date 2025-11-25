@@ -4194,6 +4194,30 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     """
     show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
 
+    # Check for custom OCR model path
+    ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
+    if ocr_path:
+        custom_onnx = os.path.join(ocr_path, "custom.onnx")
+        custom_charsets = os.path.join(ocr_path, "charsets.json")
+
+        if os.path.exists(custom_onnx) and os.path.exists(custom_charsets):
+            # Load custom OCR model
+            try:
+                ocr = ddddocr.DdddOcr(
+                    det=False,
+                    ocr=False,
+                    import_onnx_path=custom_onnx,
+                    charsets_path=custom_charsets,
+                    show_ad=False
+                )
+                print(f"[TICKETMASTER CAPTCHA] Using custom OCR model from: {ocr_path}")
+            except Exception as e:
+                print(f"[TICKETMASTER CAPTCHA] Failed to load custom model: {e}, using default")
+        else:
+            # Always warn if custom model path is set but files not found
+            print(f"[TICKETMASTER CAPTCHA] Warning: Custom model files not found in: {ocr_path}")
+            print(f"[TICKETMASTER CAPTCHA] Expected: {custom_onnx} and {custom_charsets}")
+
     # Check agree checkbox
     for _ in range(2):
         is_checked = await nodriver_check_checkbox(tab, '#TicketForm_agree')
