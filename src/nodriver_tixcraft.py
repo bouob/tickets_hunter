@@ -1988,6 +1988,14 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                     # 等待較長時間給 KKTIX 處理
                     await asyncio.sleep(1.5)
 
+                    # 主動檢查並關閉 alert（備援機制）
+                    try:
+                        await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                        if show_debug_message:
+                            print("[KKTIX] Alert dismissed after processing")
+                    except:
+                        pass  # 沒有 alert 就忽略
+
                     try:
                         # 檢查是否已跳轉到訂單頁面
                         current_url = await tab.evaluate('window.location.href')
@@ -2006,7 +2014,15 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         print(f"KKTIX button click successful: [{button_text}]")
 
                     # 等待頁面處理並檢查是否跳轉
-                    await asyncio.sleep(0.8)  # 給 KKTIX 伺服器時間處理
+                    await asyncio.sleep(0.3)  # 給 KKTIX 伺服器時間處理
+
+                    # 主動檢查並關閉 alert（備援機制，避免 CDP event handler 未觸發）
+                    try:
+                        await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                        if show_debug_message:
+                            print("[KKTIX] Alert dismissed after button click")
+                    except:
+                        pass  # 沒有 alert 就忽略
 
                     try:
                         # 檢查是否已跳轉到訂單頁面
