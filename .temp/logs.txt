@@ -1,0 +1,123 @@
+https://kktix.com/users/sign_in?back_to=https://kklivetw.kktix.cc/events/88e1f680
+[KKTIX ALERT] Global alert handler registered
+nodriver_kktix_signin: https://kktix.com/users/sign_in?back_to=https://kklivetw.kktix.cc/events/88e1f680
+[KKTIX SIGNIN] Login completed after 3.3s, redirected to: https://kktix.com/
+[KKTIX SIGNIN] Currently on homepage/user page, redirecting to: https://kklivetw.kktix.cc/events/88e1f680
+[KKTIX DATE] Timeout after 5s waiting for session list
+https://kktix.com/events/88e1f680/registrations/new
+[KKTIX GUEST MODAL] No guest modal detected
+[KKTIX CHECK WARNING] parse_nodriver_result returned NoneType: None, raw result: None
+[KKTIX CHECK] is_ticket_already_selected: False
+[KKTIX] Executing ticket selection logic...
+[KKTIX REG] Execution count: 1
+found price count: 8
+[KKTIX AREA] Keywords (AND logic): ['2,280']
+  -> Filtered: no input field and not 'not yet open'
+[KKTIX] Ticket index 1: 全票 1樓特A, 1樓特B, 1樓特C 電腦配位 0 --> TWD$3,680 0 -->
+  -> Keyword match: False
+[KKTIX] Ticket index 2: 全票 2樓2B, 2樓2E, 2樓2F, 2樓2C, 2樓2G, 2樓2D, 2樓2A 電腦配位 0 --> TWD$3
+  -> Keyword match: False
+[KKTIX] Ticket index 3: 全票 2樓2B, 2樓2E, 2樓2F, 3樓3F, 2樓2C, 3樓3A, 3樓3B, 3樓3E, 2樓2D, 3樓3
+  -> Keyword match: False
+  -> Filtered: sold out
+  -> Filtered: sold out
+  -> Filtered: sold out
+[KKTIX AREA] ========================================
+[KKTIX AREA] Match Summary:
+[KKTIX AREA]   Total ticket types checked: 8
+[KKTIX AREA]   Tickets matched (with input): 0
+[KKTIX AREA]   Tickets matched (waiting for open): 0
+[KKTIX AREA]   No ticket types matched
+[KKTIX AREA] ========================================
+matched_blocks is empty, is_need_refresh
+is_need_refresh for keyword: 2,280
+[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled
+[KKTIX AREA SELECT] No area selected, will reload page and retry
+no match any price, start to refresh page...
+[KKTIX GUEST MODAL] No guest modal detected
+[KKTIX CHECK WARNING] parse_nodriver_result returned NoneType: None, raw result: None
+[KKTIX CHECK] is_ticket_already_selected: False
+[KKTIX] Executing ticket selection logic...
+[KKTIX REG] Execution count: 2
+found price count: 8
+[KKTIX AREA] Keywords (AND logic): ['2,280']
+  -> Filtered: no input field and not 'not yet open'
+[KKTIX] Ticket index 1: 全票 1樓特A, 1樓特B, 1樓特C 電腦配位 0 --> TWD$3,680 0 -->
+  -> Keyword match: False
+[KKTIX] Ticket index 2: 全票 2樓2B, 2樓2E, 2樓2F, 2樓2C, 2樓2G, 2樓2D, 2樓2A 電腦配位 0 --> TWD$3
+  -> Keyword match: False
+[KKTIX] Ticket index 3: 全票 2樓2B, 2樓2E, 2樓2F, 3樓3F, 2樓2C, 3樓3A, 3樓3B, 3樓3E, 2樓2D, 3樓3
+  -> Keyword match: False
+  -> Filtered: sold out
+  -> Filtered: sold out
+  -> Filtered: sold out
+[KKTIX AREA] ========================================
+[KKTIX AREA] Match Summary:
+[KKTIX AREA]   Total ticket types checked: 8
+[KKTIX AREA]   Tickets matched (with input): 0
+[KKTIX AREA]   Tickets matched (waiting for open): 0
+[KKTIX AREA]   No ticket types matched
+[KKTIX AREA] ========================================
+matched_blocks is empty, is_need_refresh
+is_need_refresh for keyword: 2,280
+[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled
+[KKTIX AREA SELECT] No area selected, will reload page and retry
+no match any price, start to refresh page...
+[KKTIX GUEST MODAL] No guest modal detected
+[KKTIX CHECK WARNING] parse_nodriver_result returned NoneType: None, raw result: None
+[KKTIX CHECK] is_ticket_already_selected: False
+[KKTIX] Executing ticket selection logic...
+[KKTIX REG] Execution count: 3
+found price count: 8
+[KKTIX AREA] Keywords (AND logic): ['2,280']
+  -> Filtered: no input field and not 'not yet open'
+[KKTIX] Ticket index 1: 全票 1樓特A, 1樓特B, 1樓特C 電腦配位 0 --> TWD$3,680 0 -->
+  -> Keyword match: False
+[KKTIX] Ticket index 2: 全票 2樓2B, 2樓2E, 2樓2F, 2樓2C, 2樓2G, 2樓2D, 2樓2A 電腦配位 0 --> TWD$3
+  -> Keyword match: False
+[KKTIX] Ticket index 3: 全票 2樓2B, 2樓2E, 2樓2F, 3樓3F, 2樓2C, 3樓3A, 3樓3B, 3樓3E, 2樓2D, 3樓3
+  -> Keyword match: False
+  -> Filtered: sold out
+  -> Filtered: sold out
+  -> Filtered: sold out
+[KKTIX AREA] ========================================
+[KKTIX AREA] Match Summary:
+[KKTIX AREA]   Total ticket types checked: 8
+[KKTIX AREA]   Tickets matched (with input): 0
+[KKTIX AREA]   Tickets matched (waiting for open): 0
+[KKTIX AREA]   No ticket types matched
+[KKTIX AREA] ========================================
+matched_blocks is empty, is_need_refresh
+is_need_refresh for keyword: 2,280
+[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled
+[KKTIX AREA SELECT] No area selected, will reload page and retry
+no match any price, start to refresh page...
+[KKTIX GUEST MODAL] No guest modal detected
+[KKTIX CHECK WARNING] parse_nodriver_result returned NoneType: None, raw result: None
+[KKTIX CHECK] is_ticket_already_selected: False
+[KKTIX] Executing ticket selection logic...
+[KKTIX REG] Execution count: 4
+found price count: 8
+[KKTIX AREA] Keywords (AND logic): ['2,280']
+  -> Filtered: no input field and not 'not yet open'
+[KKTIX] Ticket index 1: 全票 1樓特A, 1樓特B, 1樓特C 電腦配位 0 --> TWD$3,680 0 -->
+  -> Keyword match: False
+[KKTIX] Ticket index 2: 全票 2樓2B, 2樓2E, 2樓2F, 2樓2C, 2樓2G, 2樓2D, 2樓2A 電腦配位 0 --> TWD$3
+  -> Keyword match: False
+[KKTIX] Ticket index 3: 全票 2樓2B, 2樓2E, 2樓2F, 3樓3F, 2樓2C, 3樓3A, 3樓3B, 3樓3E, 2樓2D, 3樓3
+  -> Keyword match: False
+  -> Filtered: sold out
+  -> Filtered: sold out
+  -> Filtered: sold out
+[KKTIX AREA] ========================================
+[KKTIX AREA] Match Summary:
+[KKTIX AREA]   Total ticket types checked: 8
+[KKTIX AREA]   Tickets matched (with input): 0
+[KKTIX AREA]   Tickets matched (waiting for open): 0
+[KKTIX AREA]   No ticket types matched
+[KKTIX AREA] ========================================
+matched_blocks is empty, is_need_refresh
+is_need_refresh for keyword: 2,280
+[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled
+[KKTIX AREA SELECT] No area selected, will reload page and retry
+no match any price, start to refresh page...

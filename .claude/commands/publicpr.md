@@ -1,6 +1,6 @@
 ---
 description: "從私人 repo 建立安全 PR 到公開 repo，自動過濾機敏檔案"
-model: sonnet
+model: Opus
 allowed-tools: ["Bash"]
 ---
 
