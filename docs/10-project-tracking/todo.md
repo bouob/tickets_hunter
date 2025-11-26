@@ -1,6 +1,6 @@
 **文件說明**：專案待實作功能清單，包含開發策略、版本優先度、平台進度與任務優先級。
 
-**最後更新**：2025-11-18
+**最後更新**：2025-11-26
 
 ---
 
@@ -84,15 +84,16 @@
   - ✅ 搶票成功後立即進入暫停狀態
   - ✅ 不再重複輸出訊息
 
-### 3. iBon 登入後區域選擇無動作 🔴
+### 3. iBon 登入後區域選擇無動作 🟡
 - **問題描述**: 登入後進入選取票區時沒有做動作
 - **影響範圍**: iBon 平台
 - **影響版本**: 待確認（Chrome/NoDriver）
 - **嚴重程度**: 🔥 高 - 影響核心購票流程
-- **狀態**: 🔴 待調查
+- **狀態**: 🟡 需進一步驗證（NoDriver 核心流程已完整 95%）
 - **相關檔案**:
   - Chrome: `chrome_tixcraft.py:4636-7132`
   - NoDriver: `nodriver_tixcraft.py:5806-11530`（金級實作 95%）
+- **備註**: NoDriver 版本核心搶票流程已 100% 完成，包含日期選擇、區域選擇、票數填寫、驗證碼識別，此問題可能為特定情況或已間接修復
 - **建議調查方向**:
   - 檢查日期選擇後的流程銜接
   - 確認區域選擇函數是否被觸發
@@ -293,9 +294,9 @@
 - **寬宏售票 (kham.com.tw)**: ✅ **NoDriver 已完成** - 14/14 函式全部實作 🏅 白金級
 - **Urbtix**: 完全未實作
 - **HK Ticketing**: 完全未實作
-- **FamiTicket**: 完全未實作
+- **FamiTicket**: ✅ **白金級實作 (2025-11-24)** - 9 個函式全部完成
 
-**使用建議**: **六大主流平台（TixCraft Family【拓元/添翼/獨立音樂】、KKTIX、TicketPlus、iBon、KHAM、年代售票）可直接使用 NoDriver 版本進行搶票**，特別適合需要反偵測的情況
+**使用建議**: **七大主流平台（TixCraft Family【拓元/添翼/獨立音樂】、KKTIX、TicketPlus、iBon、KHAM、年代售票、FamiTicket）可直接使用 NoDriver 版本進行搶票**，特別適合需要反偵測的情況
 
 > 📌 **Tixcraft Family 說明**：TixCraft (拓元)、Teamear (添翼)、Indievox (獨立音樂) 三個平台使用完全相同的程式碼，共用所有功能 (2025.10.22 確認)
 
@@ -378,33 +379,34 @@
 | KHAM 寬宏 | ✅ 完整穩定 | 🏅 **白金級** | 🟢 **98%** | 雙版本完整 |
 | iBon | ⚠️ 問題回報 | 🥇 **金級實作** | 🟢 **95%** | **NoDriver 核心完整 ⭐** |
 | 年代售票 | ✅ 完整穩定 | ✅ **雙版本完整** | 🟢 **100%** | 雙版本完整 |
-| Cityline 買飛 | ✅ 基本完整 | ⚠️ 部分實作 | 🟡 **40%** | Chrome 主要 |
+| Cityline 買飛 | ✅ 基本完整 | 🥈 銀級實作 | 🟡 **60%** | Chrome 主要 |
 | TicketMaster | ❌ 不支援 | ✅ **金級實作** | 🟢 **89%** | NoDriver 專用 🆕 |
 | Urbtix 城市 | ✅ 基本完整 | ❌ 未實作 | 🔴 **0%** | Chrome 單一 |
 | HK Ticketing 快達票 | ✅ 基本完整 | ❌ 未實作 | 🔴 **0%** | Chrome 單一 |
-| FamiTicket 全網 | ✅ 基本完整 | ❌ 未實作 | 🔴 **0%** | Chrome 單一 |
+| FamiTicket 全網 | ✅ 完整穩定 | 🏅 **白金級** | 🟢 **98%** | 雙版本完整 🆕 |
 
-> **策略調整**：NoDriver 版本實際可用度約 **60%**（117/197 函式），七大主流平台（**TixCraft Family【拓元/添翼/獨立音樂】**、KKTIX、TicketPlus、iBon、KHAM、年代售票、TicketMaster）**核心功能完整**
+> **策略調整**：NoDriver 版本實際可用度約 **70%**，八大主流平台（**TixCraft Family【拓元/添翼/獨立音樂】**、KKTIX、TicketPlus、iBon、KHAM、年代售票、TicketMaster、FamiTicket）**核心功能完整**
 >
-> ✅ **實測確認**：NoDriver 版本七大核心平台功能完整，**可直接用於搶票**，是反偵測的有效選擇
+> ✅ **實測確認**：NoDriver 版本八大核心平台功能完整，**可直接用於搶票**，是反偵測的有效選擇
 >
-> 🆕 **2025-11-18 更新**：TicketMaster NoDriver 完整實作（8 個函式，89% 完成度），成為 NoDriver 專用平台
+> 🆕 **2025-11-26 更新**：FamiTicket NoDriver 白金級實作完成（9 個函式，98% 完成度），成為第八個完整支援平台
 >
 > ℹ️ **TicketPlus OCR 說明**：目前 TicketPlus 活動不需要 OCR 驗證碼，相關功能暫時忽略（Chrome 版本有 4 個 OCR 函式，NoDriver 未實作但不影響使用）
 >
-> 🎯 **最新完成**：年代售票 (ticket.com.tw) NoDriver 完整實作 (2025-10-09) - 7/7 函式全部完成 ✅
+> 🎯 **最新完成**：FamiTicket NoDriver 白金級實作 (2025-11-24) - 9/9 函式全部完成 ✅
 
 ---
 
 ## 🎯 **開發建議**
 
-### 調整後實作順序 🚨 **更新至 2025.10.09**
+### 調整後實作順序 🚨 **更新至 2025-11-26**
 1. ✅ **核心修復**：OCR 驗證、日期邏輯（已完成）
 2. 🔥 **最高優先度 - NoDriver 平台移植**：
    - ✅ **Phase 1**: 寬宏售票移植 **已完成！白金級 (98/100 分)** 🏅
    - ✅ **Phase 2**: 年代售票移植 **已完成！(2025-10-09)** - 7/7 函式全部實作 ✅
-   - ✅ **Phase 2**: TicketMaster 移植 **已完成！金級 (89%)** 🥇 - 8/8 函式全部實作 (2025-11-18) 🆕
-   - **Phase 3**: 補完 Cityline (40% → 85%)
+   - ✅ **Phase 2**: TicketMaster 移植 **已完成！金級 (89%)** 🥇 - 8/8 函式全部實作 (2025-11-18)
+   - ✅ **Phase 3**: FamiTicket 移植 **已完成！白金級 (98%)** 🏅 - 9/9 函式全部實作 (2025-11-24) 🆕
+   - **Phase 4**: 補完 Cityline (60% → 85%)
 3. ⏸️ **暫時忽略 - TicketPlus OCR**：
    - **現況**: 目前 TicketPlus 活動不需要 OCR 驗證碼
    - **缺失函式** (4個): `auto_ocr()`, `order_ocr()`, `keyin_captcha_code()`, `check_and_renew_captcha()`
@@ -445,6 +447,19 @@
   - ✅ 票種選擇 disabled/option 檢查改用 NoDriver API
   - ✅ 消除 `'NoneType' object is not callable` 錯誤（element.get_attribute 問題）
   - ✅ 雙平台實測驗證通過（tixcraft.com + indievox.com）
+- ✅ **2025.11.11 更新**：
+  - ✅ Cityline NoDriver 引擎支援（包含完整購票流程）
+- ✅ **2025.11.19 更新**：
+  - ✅ TicketMaster NoDriver 完整實作（日期/區域自動選擇、驗證碼 OCR、票數設定）
+- ✅ **2025.11.24 更新**：
+  - ✅ FamiTicket NoDriver 白金級完整實作（9 個函數）
+  - ✅ FamiTicket 登入處理（Cookie 驗證、表單填寫）
+  - ✅ FamiTicket 日期/區域選擇（AND/OR 邏輯 + 條件回退）
+  - ✅ FamiTicket 驗證問題處理
+- ✅ **2025.11.25 更新**：
+  - ✅ Ticketmaster 自訂 OCR 模型支援
+  - ✅ TixCraft SID Cookie 設定修復
+  - ✅ KKTIX fallback alert handling 改善
 
 ### 當前技術債務
 #### 最高優先度 🔥 **基於 2025.10.06 分析**
@@ -492,17 +507,17 @@
   - iBon: Lines 11310-11665 - 註解提示（實際功能已完成）
   - Cityline: Line 12038 - 待確認內容
 
-- 🚨 **未實作平台移植** (共 41 個缺失函式)：
+- 🚨 **未實作平台移植** (共 31 個缺失函式)：
   - **Urbtix 城市售票** (11 個函式) - 香港主要平台
   - **HKTicketing 快達票** (20 個函式) - 香港平台
-  - **FamiTicket 全網** (10 個函式) - 台灣平台
 
 - ✅ **TixCraft NoDriver**：核心功能已完成，無需緊急修復
 - ✅ **KKTIX NoDriver**：核心功能已完成，無需緊急修復
 - ✅ **iBon NoDriver**：核心功能已完成，包含完整 OCR 處理
 - ✅ **TicketPlus NoDriver**：核心功能已完成，實測通過（目前無 OCR 需求）
-- ✅ **KHAM NoDriver**：🆕 **完整實作，白金級 (98/100 分)**，14 個函式與 Chrome 版本完全對應
-- ✅ **年代售票 NoDriver**：🆕 **完整實作 (2025-10-09)**，7 個函式與 Chrome 版本完全對應，雙版本完整
+- ✅ **KHAM NoDriver**：**完整實作，白金級 (98/100 分)**，14 個函式與 Chrome 版本完全對應
+- ✅ **年代售票 NoDriver**：**完整實作 (2025-10-09)**，7 個函式與 Chrome 版本完全對應，雙版本完整
+- ✅ **FamiTicket NoDriver**：🆕 **完整實作，白金級 (98%)** (2025-11-24)，9 個函式全部實作
 
 - ⏸️ **TicketPlus OCR 暫時忽略** - **現況無需求**
   - **說明**: 目前 TicketPlus 活動不使用 OCR 驗證碼，NoDriver 版本缺少的 4 個 OCR 函式暫不影響使用

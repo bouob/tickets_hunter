@@ -1,79 +1,83 @@
 ---
-description: 透過互動模式 (Interactive mode) 或提供的原則輸入，建立或更新專案憲章，並確保所有相依的模板保持同步。
-model: Opus
+description: "透過互動模式 (Interactive mode) 或提供的原則輸入，建立或更新專案憲章，並確保所有相依的模板保持同步。"
+model: opus
+handoffs:
+  - label: Build Specification
+    agent: speckit.specify
+    prompt: Implement the feature specification based on the updated constitution. I want to build...
 ---
 
-## 用戶輸入
+## 使用者輸入
 
 ```text
 $ARGUMENTS
 ```
 
-你在繼續操作前，**必須**考慮用戶輸入（如非空）。
+您 **必須** 在繼續之前考量使用者輸入（如非空白）。
 
 ## 大綱
 
-你正在更新位於 `/memory/constitution.md` 的專案憲章（project constitution）。此檔案為一份模板（TEMPLATE），內含以方括號標示的占位符（placeholder token），例如 `[PROJECT_NAME]`、`[PRINCIPLE_1_NAME]`。你的工作是：(a) 收集或推導具體值，(b) 精確填入模板，(c) 將任何修訂同步至相依的產物。
+您正在更新位於 `.specify/memory/constitution.md` 的專案憲法。此檔案是一個**模板**，包含方括號中的佔位符標記（例如 `[PROJECT_NAME]`、`[PRINCIPLE_1_NAME]`）。您的工作是 (a) 收集/導出具體值，(b) 精確填寫模板，以及 (c) 將任何修訂傳播到相依的產物。
 
-請依照以下執行流程（Execution Flow）操作：
+依循此執行流程：
 
-1. 載入現有的專案憲章模板（constitution template），路徑為 `/memory/constitution.md`。
-   - 辨識所有形式為 `[ALL_CAPS_IDENTIFIER]` 的占位符（placeholder token）。
-   **重要**：用戶可能要求的原則（principle）數量與模板不同，若有指定數量，請尊重該需求，並依據通用模板進行。你將相應地更新文件。
+1. 載入位於 `.specify/memory/constitution.md` 的現有憲法模板。
+   - 識別形式為 `[ALL_CAPS_IDENTIFIER]` 的每個佔位符標記。
+   **重要**：使用者可能需要比模板中使用的更少或更多的原則。如果指定了數量，請尊重——依循通用模板。您將相應地更新文件。
 
-2. 收集／推導占位符的具體值：
-   - 若用戶輸入（對話）已提供值，請直接採用。
-   - 否則，從現有 repository 上下文（如 README、文件、嵌入的先前憲章版本）推導。
-   - 關於治理日期（governance dates）：`RATIFICATION_DATE` 為最初通過日期（original adoption date），如未知請詢問或標記 TODO；`LAST_AMENDED_DATE` 若有變更則為今日，否則維持原值。
-   - `CONSTITUTION_VERSION` 必須依語意化版本控制（Semantic Versioning）規則遞增：
-     * MAJOR：治理或原則有不相容的移除或重新定義。
-     * MINOR：新增原則／章節，或大幅擴充指引。
-     * PATCH：釐清、措辭、錯字修正、非語意性微調。
-   - 若版本遞增類型有歧義，請先提出推論理由再定案。
+2. 收集/導出佔位符的值：
+   - 如果使用者輸入（對話）提供了值，使用它。
+   - 否則從現有的儲存庫環境推斷（README、docs、先前的憲法版本如有嵌入）。
+   - 對於治理日期：`RATIFICATION_DATE` 是最初採用日期（如果未知則詢問或標記 TODO），`LAST_AMENDED_DATE` 是今天（如果有變更），否則保持先前的。
+   - `CONSTITUTION_VERSION` 必須根據語意化版本規則遞增：
+     - MAJOR：不向後相容的治理/原則移除或重新定義。
+     - MINOR：新增原則/區塊或實質擴展的指導。
+     - PATCH：釐清、措辭、錯字修正、非語意性細化。
+   - 如果版本升級類型不明確，在最終確定前提出理由。
 
-3. 草擬更新後的專案憲章內容：
-   - 用具體文字取代所有占位符（不應剩下任何方括號 token，除非專案明確選擇保留的模板欄位—請明確說明保留原因）。
-   - 保留標題階層，註解在被取代後可移除，除非仍具釐清作用。
-   - 確保每個原則（Principle）章節：有簡明名稱、段落（或條列）描述不可協商的規則，如理由不明顯需明確說明。
-   - 確保治理章節（Governance）：列出修訂程序、版本政策、合規審查預期。
+3. 草擬更新的憲法內容：
+   - 用具體文字取代每個佔位符（不留下括號標記，除非是專案選擇尚未定義的故意保留模板槽——明確說明任何保留的理由）。
+   - 保留標題層級，一旦取代後可移除註解，除非它們仍提供釐清指導。
+   - 確保每個原則區塊：簡潔的名稱行、擷取不可協商規則的段落（或條目清單）、如不明顯則有明確的理由。
+   - 確保治理區塊列出修訂程序、版本控制政策和合規審查預期。
 
-4. 一致性同步檢查清單（將先前檢查清單轉為主動驗證）：
-   - 閱讀 `/templates/plan-template.md`，確保所有「專案憲章檢查（Constitution Check）」或規則與更新後原則一致。
-   - 閱讀 `/templates/spec-template.md`，檢查範疇／需求一致性—若憲章增減強制章節或限制，請同步更新。
-   - 閱讀 `/templates/tasks-template.md`，確保任務分類反映新增或移除的原則驅動任務類型（如 observability、versioning、testing discipline）。
-   - 閱讀 `/templates/commands/*.md` 下每個指令檔（包括本檔案），確認無過時引用（如僅限 agent 專屬名稱 CLAUDE，需改為通用指引）。
-   - 閱讀所有執行時指引文件（如 `README.md`、`docs/quickstart.md`，或 agent 專屬指引檔），同步更新原則相關引用。
+4. 一致性傳播檢查清單（將先前的檢查清單轉換為主動驗證）：
+   - 讀取 `.specify/templates/plan-template.md`，確保任何「憲法檢查」或規則與更新的原則對齊。
+   - 讀取 `.specify/templates/spec-template.md` 以確保範圍/需求對齊——如果憲法新增/移除強制區塊或限制則更新。
+   - 讀取 `.specify/templates/tasks-template.md`，確保任務分類反映新增或移除的原則驅動任務類型（例如，可觀察性、版本控制、測試紀律）。
+   - 讀取 `.specify/templates/commands/*.md` 中的每個指令檔案（包括此檔案），驗證當需要通用指導時沒有過時的參考（如僅限 CLAUDE 的代理特定名稱）。
+   - 讀取任何執行階段指導文件（例如，`README.md`、`docs/quickstart.md`，或代理特定指導檔案如存在）。更新已變更原則的參考。
 
-5. 產出同步影響報告（Sync Impact Report）：（更新後於憲章檔案頂部以 HTML 註解形式加入）
-   - 版本變更：舊版 → 新版
-   - 修改的原則清單（如有更名：舊標題 → 新標題）
-   - 新增章節
-   - 移除章節
-   - 需同步更新的模板（✅ 已更新 / ⚠ 待處理），附檔案路徑
-   - 若有占位符刻意延後處理，列入後續 TODO
+5. 產生同步影響報告（在更新後作為 HTML 註解前置於憲法檔案頂部）：
+   - 版本變更：舊 → 新
+   - 修改的原則清單（如重新命名：舊標題 → 新標題）
+   - 新增的區塊
+   - 移除的區塊
+   - 需要更新的模板（✅ 已更新 / ⚠ 待處理）及檔案路徑
+   - 後續 TODO（如有任何佔位符故意延後）。
 
-6. 輸出前驗證：
-   - 不得有未解釋的方括號 token。
-   - 版本行需與報告一致。
-   - 日期皆採用 ISO 格式 YYYY-MM-DD。
-   - 原則必須具宣告性、可測試，且避免模糊語言（如 "should" → 視情況改為 MUST/SHOULD 並附理由）。
+6. 最終輸出前的驗證：
+   - 沒有剩餘的未解釋括號標記。
+   - 版本行與報告相符。
+   - 日期為 ISO 格式 YYYY-MM-DD。
+   - 原則是聲明式、可測試的，且沒有模糊語言（「should」→ 在適當處用 MUST/SHOULD 理由取代）。
 
-7. 將完成的憲章覆寫寫回 `/memory/constitution.md`。
+7. 將完成的憲法寫回 `.specify/memory/constitution.md`（覆寫）。
 
-8. 向用戶輸出最終摘要，內容包含：
-   - 新版本號與遞增理由
-   - 任何需人工後續處理的檔案
-   - 建議的 commit message（如 `docs: amend constitution to vX.Y.Z (principle additions + governance update)`）
+8. 輸出最終摘要給使用者：
+   - 新版本和升級理由。
+   - 任何標記為需手動後續處理的檔案。
+   - 建議的提交訊息（例如，`docs: amend constitution to vX.Y.Z (principle additions + governance update)`）。
 
-格式與風格要求：
-- Markdown 標題需與模板完全一致（不得升降階）。
-- 長理由行請適度換行以保可讀性（理想 <100 字），但勿為換行而破壞語意。
-- 各章節間僅保留一個空白行。
-- 不得有行尾多餘空白。
+格式與風格需求：
 
-若用戶僅提供部分更新（如僅修訂一條原則），仍需執行驗證與版本決策步驟。
+- 使用與模板完全相同的 Markdown 標題（不要降級/升級層級）。
+- 包裝長理由行以保持可讀性（理想 <100 字元），但不要用尷尬的斷行強制執行。
+- 區塊之間保持單一空白行。
+- 避免結尾空白。
 
-如有關鍵資訊缺失（如通過日期確實未知），請插入 `TODO(<FIELD_NAME>): explanation`，並於同步影響報告的延後項目中列出。
+如果使用者提供部分更新（例如，僅一個原則修訂），仍然執行驗證和版本決策步驟。
 
-請勿建立新模板；僅操作現有 `/memory/constitution.md` 檔案。
+如果缺少關鍵資訊（例如，批准日期確實未知），插入 `TODO(<FIELD_NAME>): explanation` 並在同步影響報告的延後項目下包含。
 
+不要建立新模板；始終操作現有的 `.specify/memory/constitution.md` 檔案。

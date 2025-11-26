@@ -1,81 +1,82 @@
 ---
-description: 透過處理並執行 tasks.md 中定義的所有任務，來執行實作計畫
-model: Opus
-scripts:
-  sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
-  ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
+description: "透過處理並執行 tasks.md 中定義的所有任務，來執行實作計畫"
+model: opus
 ---
 
-## 用戶輸入
+## 使用者輸入
 
 ```text
 $ARGUMENTS
 ```
 
-在繼續操作前，**必須**考慮用戶輸入（若非空）。
+您 **必須** 在繼續之前考量使用者輸入（如非空白）。
 
 ## 大綱
 
-1. 從 repo 根目錄執行 `{SCRIPT}`，並解析 FEATURE_DIR 與 AVAILABLE_DOCS 清單。所有路徑必須為絕對路徑。對於參數中含有單引號（如 "I'm Groot"），請使用跳脫語法：例如 'I'\''m Groot'（或若可行，使用雙引號："I'm Groot"）。
+1. 從儲存庫根目錄執行 `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks`，並解析 FEATURE_DIR 和 AVAILABLE_DOCS 清單。所有路徑必須為絕對路徑。對於參數中的單引號（如 "I'm Groot"），使用跳脫語法：例如 'I'\''m Groot'（或盡可能使用雙引號："I'm Groot"）。
 
-2. **檢查 checklists 狀態**（若 FEATURE_DIR/checklists/ 存在）：
-   - 掃描 checklists/ 目錄下所有檢查清單檔案
-   - 對每個檢查清單，統計：
-     * 總項目數：所有符合 `- [ ]`、`- [X]` 或 `- [x]` 的行
-     * 已完成項目數：符合 `- [X]` 或 `- [x]` 的行
-     * 未完成項目數：符合 `- [ ]` 的行
-   - 建立一個狀態表格：
+2. **檢查檢查清單狀態**（如果 FEATURE_DIR/checklists/ 存在）：
+   - 掃描 checklists/ 目錄中的所有檢查清單檔案
+   - 對於每個檢查清單，計算：
+     - 總項目數：所有符合 `- [ ]` 或 `- [X]` 或 `- [x]` 的行
+     - 已完成項目：符合 `- [X]` 或 `- [x]` 的行
+     - 未完成項目：符合 `- [ ]` 的行
+   - 建立狀態表：
+
+     ```text
+     | 檢查清單 | 總計 | 已完成 | 未完成 | 狀態 |
+     |----------|------|--------|--------|------|
+     | ux.md    | 12   | 12     | 0      | ✓ 通過 |
+     | test.md  | 8    | 5      | 3      | ✗ 失敗 |
+     | security.md | 6 | 6      | 0      | ✓ 通過 |
      ```
-     | Checklist | Total | Completed | Incomplete | Status |
-     |-----------|-------|-----------|------------|--------|
-     | ux.md     | 12    | 12        | 0          | ✓ PASS |
-     | test.md   | 8     | 5         | 3          | ✗ FAIL |
-     | security.md | 6   | 6         | 0          | ✓ PASS |
-     ```
+
    - 計算整體狀態：
-     * **PASS**：所有檢查清單（checklists）皆無未完成項目
-     * **FAIL**：有一個或多個檢查清單有未完成項目
-   
-   - **若有任何檢查清單未完成**：
-     * 顯示未完成項目數量的表格
-     * **停止**並詢問：「有些檢查清單尚未完成。你仍要繼續進行實作嗎？（yes/no）」
-     * 等待用戶回應後再繼續
-     * 若用戶回覆「no」、「wait」或「stop」，則停止執行
-     * 若用戶回覆「yes」、「proceed」或「continue」，則繼續執行步驟 3
-   
-   - **若所有檢查清單皆已完成**：
-     * 顯示所有檢查清單通過的表格
-     * 自動進入步驟 3
+     - **通過**：所有檢查清單的未完成項目為 0
+     - **失敗**：一或多個檢查清單有未完成項目
 
-3. 載入並分析實作上下文（implementation context）：
-   - **必須**：讀取 tasks.md 以取得完整任務清單與執行計畫
-   - **必須**：讀取 plan.md 以取得技術堆疊（tech stack）、架構（architecture）及檔案結構
-   - **如有**：讀取 data-model.md 以取得實體（entities）及其關係
-   - **如有**：讀取 contracts/ 以取得 API 契約及測試需求
-   - **如有**：讀取 research.md 以取得技術決策與限制條件
-   - **如有**：讀取 quickstart.md 以取得整合（integration）場景
+   - **如果有任何檢查清單未完成**：
+     - 顯示包含未完成項目數量的表格
+     - **停止** 並詢問：「部分檢查清單未完成。您是否要繼續實作？(yes/no)」
+     - 等待使用者回應後再繼續
+     - 如果使用者說「no」或「wait」或「stop」，中止執行
+     - 如果使用者說「yes」或「proceed」或「continue」，繼續到步驟 3
 
-4. **專案設置驗證**（Project Setup Verification）：
-   - **必須**：根據實際專案設置建立／驗證 ignore 檔案：
-   
+   - **如果所有檢查清單都已完成**：
+     - 顯示表格，顯示所有檢查清單已通過
+     - 自動繼續到步驟 3
+
+3. 載入並分析實作環境：
+   - **必要**：讀取 tasks.md 以取得完整任務清單和執行計畫
+   - **必要**：讀取 plan.md 以取得技術堆疊、架構和檔案結構
+   - **如存在**：讀取 data-model.md 以取得實體和關係
+   - **如存在**：讀取 contracts/ 以取得 API 規格和測試需求
+   - **如存在**：讀取 research.md 以取得技術決策和限制
+   - **如存在**：讀取 quickstart.md 以取得整合情境
+
+4. **專案設定驗證**：
+   - **必要**：根據實際專案設定建立/驗證忽略檔案：
+
    **偵測與建立邏輯**：
-   - 檢查下列指令是否成功，以判斷 repository 是否為 git repository（若是則建立／驗證 .gitignore）：
+   - 檢查以下指令是否成功以判斷儲存庫是否為 git repo（如是則建立/驗證 .gitignore）：
 
      ```sh
      git rev-parse --git-dir 2>/dev/null
      ```
-   - 檢查是否存在 Dockerfile* 或 plan.md 中有 Docker → 建立/驗證 .dockerignore
-   - 檢查是否存在 .eslintrc* 或 eslint.config.* → 建立/驗證 .eslintignore
-   - 檢查是否存在 .prettierrc* → 建立/驗證 .prettierignore
-   - 檢查是否存在 .npmrc 或 package.json → 建立/驗證 .npmignore（若需發佈時）
-   - 檢查是否存在 terraform 檔案（*.tf）→ 建立/驗證 .terraformignore
-   - 檢查是否需要 .helmignore（若有 helm charts）→ 建立/驗證 .helmignore
 
-   **若忽略檔已存在**：請驗證其內容是否包含必要的模式，僅補充缺少的關鍵模式
-   **若忽略檔不存在**：根據偵測到的技術建立完整模式集
+   - 檢查 Dockerfile* 是否存在或 plan.md 中有 Docker → 建立/驗證 .dockerignore
+   - 檢查 .eslintrc* 是否存在 → 建立/驗證 .eslintignore
+   - 檢查 eslint.config.* 是否存在 → 確保設定的 `ignores` 條目涵蓋必要模式
+   - 檢查 .prettierrc* 是否存在 → 建立/驗證 .prettierignore
+   - 檢查 .npmrc 或 package.json 是否存在 → 建立/驗證 .npmignore（如有發布）
+   - 檢查 terraform 檔案 (*.tf) 是否存在 → 建立/驗證 .terraformignore
+   - 檢查是否需要 .helmignore（helm charts 存在）→ 建立/驗證 .helmignore
 
-   **依技術分類的常用忽略模式**（來自 plan.md 技術堆疊）：
-   - **Node.js/JavaScript**：`node_modules/`、`dist/`、`build/`、`*.log`、`.env*`
+   **如果忽略檔案已存在**：驗證其包含必要模式，僅附加缺失的關鍵模式
+   **如果忽略檔案缺失**：使用偵測到的技術的完整模式集建立
+
+   **按技術分類的常見模式**（從 plan.md 技術堆疊）：
+   - **Node.js/JavaScript/TypeScript**：`node_modules/`、`dist/`、`build/`、`*.log`、`.env*`
    - **Python**：`__pycache__/`、`*.pyc`、`.venv/`、`venv/`、`dist/`、`*.egg-info/`
    - **Java**：`target/`、`*.class`、`*.jar`、`.gradle/`、`build/`
    - **C#/.NET**：`bin/`、`obj/`、`*.user`、`*.suo`、`packages/`
@@ -86,48 +87,50 @@ $ARGUMENTS
    - **Kotlin**：`build/`、`out/`、`.gradle/`、`.idea/`、`*.class`、`*.jar`、`*.iml`、`*.log`、`.env*`
    - **C++**：`build/`、`bin/`、`obj/`、`out/`、`*.o`、`*.so`、`*.a`、`*.exe`、`*.dll`、`.idea/`、`*.log`、`.env*`
    - **C**：`build/`、`bin/`、`obj/`、`out/`、`*.o`、`*.a`、`*.so`、`*.exe`、`Makefile`、`config.log`、`.idea/`、`*.log`、`.env*`
+   - **Swift**：`.build/`、`DerivedData/`、`*.swiftpm/`、`Packages/`
+   - **R**：`.Rproj.user/`、`.Rhistory`、`.RData`、`.Ruserdata`、`*.Rproj`、`packrat/`、`renv/`
    - **通用**：`.DS_Store`、`Thumbs.db`、`*.tmp`、`*.swp`、`.vscode/`、`.idea/`
 
-   **工具專用忽略模式**：
+   **工具特定模式**：
    - **Docker**：`node_modules/`、`.git/`、`Dockerfile*`、`.dockerignore`、`*.log*`、`.env*`、`coverage/`
    - **ESLint**：`node_modules/`、`dist/`、`build/`、`coverage/`、`*.min.js`
    - **Prettier**：`node_modules/`、`dist/`、`build/`、`coverage/`、`package-lock.json`、`yarn.lock`、`pnpm-lock.yaml`
    - **Terraform**：`.terraform/`、`*.tfstate*`、`*.tfvars`、`.terraform.lock.hcl`
+   - **Kubernetes/k8s**：`*.secret.yaml`、`secrets/`、`.kube/`、`kubeconfig*`、`*.key`、`*.crt`
 
 5. 解析 tasks.md 結構並擷取：
-   - **任務階段**：Setup、Tests、Core、Integration、Polish
-   - **任務相依性**：依序執行與平行執行規則
+   - **任務階段**：設定、測試、核心、整合、收尾
+   - **任務相依性**：循序與平行執行規則
    - **任務細節**：ID、描述、檔案路徑、平行標記 [P]
-   - **執行流程**：順序與相依性需求
+   - **執行流程**：順序和相依性需求
 
-6. 依照任務計畫執行實作：
-   - **逐階段執行**：每個階段完成後再進入下一階段
-   - **遵守相依性**：依序執行需串接的任務，標記為 [P] 的平行任務可同時執行  
-   - **採用 TDD 方法**：在對應的實作任務前先執行測試任務
-   - **檔案為單位協調**：影響同一檔案的任務必須依序執行
-   - **驗證檢查點**：每個階段完成後需驗證再繼續
+6. 依循任務計畫執行實作：
+   - **逐階段執行**：在移至下一階段前完成每個階段
+   - **尊重相依性**：按順序執行循序任務，平行任務 [P] 可同時執行
+   - **依循 TDD 方法**：在對應的實作任務之前執行測試任務
+   - **檔案協調**：影響相同檔案的任務必須循序執行
+   - **驗證檢查點**：在繼續前驗證每個階段完成
 
 7. 實作執行規則：
-   - **先進行 Setup**：初始化專案結構、相依性、設定檔
-   - **先寫測試再寫程式碼**：若需為 contracts、entities 及整合情境撰寫測試
-   - **核心開發**：實作 models、services、CLI 指令、endpoints
-   - **整合作業**：資料庫連線、中介軟體、日誌、外部服務
-   - **優化與驗證**：單元測試、效能優化、文件撰寫
+   - **設定優先**：初始化專案結構、相依性、設定
+   - **測試先於程式碼**：如果您需要為契約、實體和整合情境撰寫測試
+   - **核心開發**：實作模型、服務、CLI 指令、端點
+   - **整合工作**：資料庫連線、中介軟體、日誌、外部服務
+   - **收尾與驗證**：單元測試、效能最佳化、文件
 
 8. 進度追蹤與錯誤處理：
-   - 每完成一個任務後回報進度
-   - 若任何非平行任務失敗，立即停止執行
-   - 對於平行任務 [P]，僅繼續執行成功的任務，並回報失敗任務
-   - 提供具體錯誤訊息與除錯相關背景
-   - 若無法繼續實作，建議後續步驟
-   - **重要**：已完成的任務，務必在 tasks 檔案中標記為 [X]
+   - 每個完成的任務後報告進度
+   - 如果任何非平行任務失敗則中止執行
+   - 對於平行任務 [P]，繼續執行成功的任務，報告失敗的任務
+   - 提供清楚的錯誤訊息和除錯環境
+   - 如果實作無法繼續，建議後續步驟
+   - **重要** 對於已完成的任務，確保在任務檔案中將任務標記為 [X]。
 
 9. 完成驗證：
-   - 驗證所有必要任務皆已完成
-   - 檢查已實作功能是否符合原始規格
-   - 驗證測試通過且覆蓋率達標
-   - 確認實作符合技術計畫
-   - 回報最終狀態並總結已完成的工作
+   - 驗證所有必要任務已完成
+   - 檢查實作的功能是否符合原始規格
+   - 驗證測試通過且覆蓋率符合需求
+   - 確認實作依循技術計畫
+   - 報告最終狀態和已完成工作摘要
 
-注意：本指令假設 tasks.md 已有完整任務拆解。若任務不完整或缺漏，請建議先執行 `/tasks` 以重新產生任務清單。
-
+注意：此指令假設 tasks.md 中存在完整的任務分解。如果任務不完整或缺失，建議先執行 `/speckit.tasks` 以重新產生任務清單。
