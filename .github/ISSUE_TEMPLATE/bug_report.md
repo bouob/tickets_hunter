@@ -1,3 +1,11 @@
+---
+name: 🐛 Bug Report
+about: Report a bug or unexpected behavior
+title: '[BUG] <請修改標題>'
+labels: 'bug'
+assignees: 'bouob'
+---
+
 <!--
 📝 填寫說明：
 - 請將標題修改為具體描述問題，例如：拓元自動刷新失效、ibon 座位區無法點擊
