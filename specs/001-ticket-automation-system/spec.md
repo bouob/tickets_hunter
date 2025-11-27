@@ -169,7 +169,7 @@
 - **FR-015**：系統必須取得所有可用日期選項及其狀態（可用、售罄）
 - **FR-016**：系統必須在配置時過濾掉售罄的日期（pass_date_is_sold_out）
 - **FR-017**：系統必須在 date_auto_select.enable = true 時才執行自動日期選擇
-- **FR-017-1**：當自動選擇啟用且有配置關鍵字時，系統必須優先使用關鍵字匹配日期（支援多個逗號分隔的關鍵字）
+- **FR-017-1**：當自動選擇啟用且有配置關鍵字時，系統必須優先使用關鍵字匹配日期（支援分號分隔多組關鍵字，每組內空格分隔表示 AND 邏輯，逗號為舊版相容分隔符）
 - **FR-017-2**：當關鍵字不匹配且有設定 auto_select_mode 時，系統必須回退到基於模式的選擇（從上/下/中間/隨機）
 - **FR-017-3**：當關鍵字不匹配且未設定 auto_select_mode 時，系統必須停止選擇並等待手動介入
 - **FR-018**：當 date_auto_select.enable = false 時，系統必須完全忽略所有自動選擇設定（包括關鍵字和模式），讓使用者手動選擇日期
@@ -180,7 +180,7 @@
 - **FR-021**：系統必須取得所有可用區域選項及定價和可用性資訊
 - **FR-022**：系統必須使用排除關鍵字過濾區域（例如排除「輪椅」、「視線受阻」）
 - **FR-023**：系統必須在 area_auto_select.enable = true 時才執行自動區域選擇
-- **FR-023-1**：當自動選擇啟用且有配置關鍵字時，系統必須優先使用關鍵字匹配區域（支援多個逗號分隔的關鍵字）
+- **FR-023-1**：當自動選擇啟用且有配置關鍵字時，系統必須優先使用關鍵字匹配區域（支援分號分隔多組關鍵字，每組內空格分隔表示 AND 邏輯，逗號為舊版相容分隔符）
 - **FR-023-2**：當關鍵字不匹配且有設定 auto_select_mode 時，系統必須回退到基於模式的選擇（從上/下/中間/隨機）
 - **FR-023-3**：當關鍵字不匹配且未設定 auto_select_mode 時，系統必須停止選擇並等待手動介入
 - **FR-024**：當 area_auto_select.enable = false 時，系統必須完全忽略所有自動選擇設定（包括關鍵字和模式），讓使用者手動選擇區域
@@ -198,6 +198,7 @@
 - **FR-032**：系統必須從配置的來源提取驗證碼圖片（canvas 元素、img 標籤）
 - **FR-033**：系統必須在啟用時使用 OCR（ddddocr）辨識驗證碼文字
 - **FR-034**：系統必須支援 beta OCR 模型選項以提高準確性
+- **FR-034-1**：系統必須支援自訂 OCR 模型路徑，允許使用者指定本地模型檔案（ocr_captcha.path）
 - **FR-035**：系統必須自動輸入辨識的驗證碼
 - **FR-036**：系統必須根據配置支援強制送出或等待手動確認
 - **FR-037**：系統必須在 OCR 停用或失敗時支援手動驗證碼輸入作為回退
@@ -372,18 +373,21 @@
 
 ### 日期選擇設定
 - `date_auto_select.enable`（布林）：啟用自動日期選擇
-- `date_auto_select.date_keyword`（字串）：逗號分隔的日期關鍵字（例如「10/03,10/04」）
+- `date_auto_select.date_keyword`（字串）：分號分隔多組日期關鍵字，每組內空格表示 AND 邏輯（例如「10/03 週六;10/04」，逗號為舊版相容）
 - `date_auto_select.mode`（字串）：回退模式 - "from top to bottom"、"from bottom to top"、"center"、"random"
+- `date_auto_select.date_auto_fallback`（布林）：條件回退 - 關鍵字不匹配時是否自動使用 mode 回退（預設 true）
 
 ### 區域選擇設定
 - `area_auto_select.enable`（布林）：啟用自動區域選擇
-- `area_auto_select.area_keyword`（字串）：逗號分隔的區域關鍵字（例如「VIP,A Zone」）
+- `area_auto_select.area_keyword`（字串）：分號分隔多組區域關鍵字，每組內空格表示 AND 邏輯（例如「VIP 包廂;1280 一般」，逗號為舊版相容）
 - `area_auto_select.mode`（字串）：回退模式（與日期選擇相同選項）
-- `keyword_exclude`（字串）：逗號分隔的排除關鍵字（例如「wheelchair,obstructed」）
+- `area_auto_select.area_auto_fallback`（布林）：條件回退 - 關鍵字不匹配時是否自動使用 mode 回退（預設 true）
+- `keyword_exclude`（字串）：分號分隔的排除關鍵字（例如「輪椅;視線受阻」，逗號為舊版相容）
 
 ### 驗證碼設定
 - `ocr_captcha.enable`（布林）：啟用自動 OCR 辨識
 - `ocr_captcha.beta`（布林）：使用 beta OCR 模型以提高準確性
+- `ocr_captcha.path`（字串）：自訂 OCR 模型路徑，允許使用本地訓練的模型檔案（空字串表示使用預設模型）
 - `ocr_captcha.force_submit`（布林）：OCR 後自動送出 vs. 等待手動確認
 - `ocr_captcha.image_source`（字串）：圖片提取來源 - "canvas" 或 "img"
 
@@ -481,10 +485,13 @@
 - 支援自動重試存取機制
 
 ### Ticketmaster（國際）
-- ✅ NoDriver 版本：使用 TixCraft 家族共用邏輯（整合在 `nodriver_tixcraft_main`）
-- 支援 Singapore、Australia 等多個區域
-- 日期/區域自動選擇使用 TixCraft 共用函數
-- 驗證碼 OCR 自動辨識
+- ✅ NoDriver 版本：完整專屬實作（`nodriver_ticketmaster_*` 函數群）
+- 支援 Singapore、Australia、Thailand 等多個區域
+- 日期選擇：`nodriver_ticketmaster_select_date_auto()` - 完整關鍵字匹配 + 條件回退
+- 區域選擇：`nodriver_ticketmaster_select_area_auto()` - 支援 AND 邏輯 + 條件回退
+- 票券數量：`nodriver_ticketmaster_set_ticket_number()` - 下拉選單處理
+- 驗證碼處理：`nodriver_ticketmaster_check_captcha()` - OCR 自動辨識
+- 頁面路由：透過 `nodriver_tixcraft_main` 統一入口分派
 
 ## 假設 *(為清楚起見記錄)*
 
