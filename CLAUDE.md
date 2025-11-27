@@ -2,7 +2,7 @@
 
 **專案**：Tickets Hunter - 多平台搶票自動化系統
 **版本**：v2.0
-**最後更新**：2025-11-09
+**最後更新**：2025-11-27
 
 ---
 
@@ -11,13 +11,13 @@
 ### 最常見任務快速路徑
 
 #### 🐛 Bug 修復（3 步驟）
-1. **檢查規格**：`specs/001-ticket-automation-system/spec.md`（查找 FR-xxx, SC-xxx）
+1. **檢查規格**：`docs/05-validation/README.md`（索引）→ `specs/.../spec.md`（FR-xxx, SC-xxx）
 2. **定位函數**：`docs/02-development/structure.md`
 3. **執行測試**：`timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json`
 
 #### ✨ 新增功能（3 步驟）
-1. **查閱標準**：`docs/02-development/ticket_automation_standard.md`（12 階段）
-2. **參考機制**：`docs/03-mechanisms/`（日期/區域/驗證碼）
+1. **查閱標準**：`docs/02-development/ticket_automation_standard.md`（12 階段定義）
+2. **查找機制**：`docs/03-mechanisms/README.md`（12 階段詳細索引）
 3. **編寫代碼**：`docs/02-development/coding_templates.md`
 
 #### 📝 文件更新（3 步驟）
@@ -29,18 +29,23 @@
 
 | 任務 | 指令 | 說明 |
 |------|------|------|
+| 清除敏感設定 | `/gdefault` | 清除本地敏感設定檔案 |
+| 更新版本號 | `/gupdate` | 更新專案版本日期 |
+| 生成 CHANGELOG | `/gchange` | 根據未推送 commits 生成變更日誌 |
 | 提交變更 | `/gsave` | 自動分離公開/機敏檔案 |
-| 推送代碼 | `/gpush` | 推送公開代碼到私人庫 |
-| 推送機敏 | `/privatepush` | 推送文檔/設定到私人庫 |
-| 發布 | `/publicpr` | 建立 PR 到公開庫（僅發布時） |
+| 推送代碼 | `/gpush` | 推送所有 commits 到私人庫 |
+| 發布 PR | `/publicpr` | 建立 PR 到公開庫（僅發布時） |
+| 建立 Release | `/publicrelease` | 建立 Release Tag 並觸發 Actions |
 | 快速測試 | `timeout 30 python -u src/...` | 30 秒快速測試 |
 | 規格分析 | `/speckit.analyze` | 跨產物一致性檢查 |
 | 除錯診斷 | `/debug` | 專業除錯工具（Spec + 憲法） |
+| 尋找重複 issues | `/dedupe` | 尋找相似的 GitHub issues |
+| 分析 issues | `/review-issues` | 分析開啟的 issues 並提供建議 |
 
 ### 緊急除錯 5 步驟
 
 1. **讀取錯誤**：`.temp/test_output.txt`
-2. **檢查規格**：`specs/001-ticket-automation-system/spec.md`（FR-xxx, SC-xxx）
+2. **檢查規格**：`docs/05-validation/README.md`（索引）→ FR-xxx, SC-xxx
 3. **查找 API**：`docs/06-api-reference/nodriver_api_guide.md`
 4. **搜尋案例**：`docs/08-troubleshooting/README.md`
 5. **啟用日誌**：`config_dict["advanced"]["verbose"] = True`
@@ -213,9 +218,8 @@ docs/02-development/development_guide.md  ← 開發規範
 
 ```bash
 /gsave          # 1. 提交變更（自動分離公開/機敏檔案）
-/gpush          # 2. 推送公開代碼到私人庫
-/privatepush    # 3. 推送機敏檔案到私人庫
-/publicpr       # 4. 建立 PR 到公開庫（僅發布時）
+/gpush          # 2. 推送所有 commits 到私人庫
+/publicpr       # 3. 建立 PR 到公開庫（僅發布時）
                 #    - commits > 10 自動建議 Squash Merge
                 #    - 節省 95% 時間，避免 cherry-pick 衝突
                 # ⚠️ 發布後不拉回（單向流程）
@@ -225,8 +229,7 @@ docs/02-development/development_guide.md  ← 開發規範
 
 | 指令 | 目標 | 用途 | 過濾規則 | 注意事項 |
 |------|------|------|----------|----------|
-| `/gpush` | `private/main` | 推送公開代碼 | 自動過濾 PRIVATE commits | - |
-| `/privatepush` | `private/main` | 推送機敏檔案 | 只推送 🔒 PRIVATE 標記 | - |
+| `/gpush` | `private/main` | 推送所有 commits | 不過濾，完整備份 | - |
 | `/publicpr` | `origin` (via PR) | 正式發布 | 自動過濾機敏檔案 | commits > 10 建議 Squash |
 
 ### 錯誤與正確範例
@@ -240,8 +243,7 @@ docs/02-development/development_guide.md  ← 開發規範
 
 **正確範例**：
 - ✅ `/gsave` - 建立 commit（唯一合法方式）
-- ✅ `/gpush` - 推送一般 commits
-- ✅ `/privatepush` - 推送機敏 commits
+- ✅ `/gpush` - 推送所有 commits 到私人庫
 - ✅ `/publicpr` - 建立 PR 發布（自動選擇 Squash/Cherry-pick）
 - ✅ `git cherry-pick <commit>` - 緊急情況從 origin 挑選修復
 
@@ -252,7 +254,7 @@ docs/02-development/development_guide.md  ← 開發規範
 ## 🚨 快速除錯指南
 
 ### 除錯檢查清單
-1. ✅ **檢查規格**：`specs/001-ticket-automation-system/spec.md`
+1. ✅ **檢查規格**：`docs/05-validation/README.md`（索引入口）
    - FR-xxx（功能需求）
    - SC-xxx（成功標準）
 2. ✅ **確認 WebDriver**：讀取 `settings.json` 確認 `webdriver_type`
@@ -262,7 +264,7 @@ docs/02-development/development_guide.md  ← 開發規範
 
 ### Spec 檢查項目（除錯時必讀）
 
-**檢查路徑**：`specs/001-ticket-automation-system/`
+**檢查路徑**：`docs/05-validation/README.md` → `specs/001-ticket-automation-system/`
 
 #### 1. 功能需求（FR-xxx）
 - 確保修復符合原始功能需求

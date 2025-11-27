@@ -1,7 +1,31 @@
 # 12-Stage 搶票機制文件索引
 
 **文件說明**：提供 12 階段搶票自動化機制的完整索引與導覽，便於查找相關文件
-**最後更新**：2025-11-12
+**最後更新**：2025-11-27
+
+---
+
+## 文件結構
+
+```
+docs/03-mechanisms/
+├── README.md                    ← 本文件（索引與導覽）
+│
+├── 01-environment-init.md       Stage 1:  環境初始化
+├── 02-authentication.md         Stage 2:  身份認證
+├── 03-page-monitoring.md        Stage 3:  頁面監控 + 版面偵測 (v2.0+)
+├── 04-date-selection.md         Stage 4:  日期選擇
+├── 05-area-selection.md         Stage 5:  區域選擇
+├── 06-ticket-count.md           Stage 6:  票數設定
+├── 07-captcha-handling.md       Stage 7:  驗證碼處理 + 自動答題 (v2.0+)
+├── 08-form-filling.md           Stage 8:  表單填寫 + 實名認證 (v2.0+)
+├── 09-terms-agreement.md        Stage 9:  同意條款
+├── 10-order-submit.md           Stage 10: 訂單送出
+├── 11-queue-payment.md          Stage 11: 排隊付款
+└── 12-error-handling.md         Stage 12: 錯誤處理
+
+✅ = 已完成詳細文件化
+```
 
 ---
 
@@ -100,14 +124,16 @@
 **核心技術**：
 - ddddocr OCR 引擎（圖形驗證碼辨識）
 - 問答匹配引擎（KKTIX 問答式驗證碼）
+- 自動答題機制（KKTIX, v2.0+）
 - fail_list 機制（避免重複錯誤答案）
 - 人類化延遲（隨機延遲模擬真人）
 
-**主要範例平台**：KKTIX（問答式）+ TixCraft（OCR）
+**主要範例平台**：KKTIX（問答式 + 自動答題）+ TixCraft（OCR）
 
 **適用場景**：
 - 實作圖形驗證碼 OCR 辨識
 - 實作問答式驗證碼處理
+- 實作自動答題功能（v2.0+）
 - 了解 Shadow DOM 驗證碼圖片擷取
 
 **關鍵程式碼片段**：
@@ -135,6 +161,7 @@
 - 即將開賣頁面自動重載（TixCraft）
 - 售罄檢測
 - 頁面狀態監控
+- 版面自動偵測（TicketPlus, v2.0+）
 
 ### Stage 6: 票數設定
 - 票數輸入欄位填寫
@@ -145,6 +172,7 @@
 - 個人資料自動填寫
 - 自訂問題答案匹配
 - 必填欄位驗證
+- 實名認證處理（FamiTicket, iBon, v2.0+）
 
 ### Stage 9: 同意條款處理
 - 自動勾選同意條款
@@ -344,6 +372,10 @@
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v2.0 | 2025-11-27 | 新增 v2.0 子功能說明 |
+| | | 🆕 Stage 3: 版面自動偵測（TicketPlus）|
+| | | 🆕 Stage 7: 自動答題機制（KKTIX）|
+| | | 🆕 Stage 8: 實名認證處理（FamiTicket, iBon）|
 
 **未來計畫**：
 - Stage 1-3: 前置階段機制文件
@@ -390,5 +422,5 @@
 
 ---
 
-**最後更新**：2025-11（v1.0）
+**最後更新**：2025-11-27（v2.0）
 **維護者**：Tickets Hunter 開發團隊
