@@ -94,7 +94,8 @@ python settings.py
 - **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
 - **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
 - **Ticketmaster**：NoDriver ✅ 完全支援
-- **Urbtix / HKTicketing**：建議使用 Chrome 版本，等待重構
+- **HKTicketing**：NoDriver ✅ 完全支援（半自動登入模式）
+- **Urbtix**：建議使用 Chrome 版本，等待重構
 
 ---
 
@@ -628,6 +629,55 @@ FANCLUB2024
 **設定位置**：
 - 在圖形介面中找到「進階設定」→「帳號密碼設定」→「cityline」
 - 只需填寫**帳號（Email）**，密碼欄位可留空
+
+---
+
+### HKTicketing（香港快達票）
+
+#### ⚠️ 半自動登入模式
+
+**重要說明**：HKTicketing 採用**半自動登入策略**，需要使用者配合手動操作。
+
+**支援網站**：
+- `hkt.hkticketing.com`（Type02 SPA 版本）✅ 完全支援
+- `premier.hkticketing.com`（Type01 傳統版本）建議使用 Chrome 版本
+
+**登入流程**（Type02）：
+
+1. **自動填入帳號密碼**
+   - 程式會自動填入您在設定中輸入的 Email 帳號和密碼
+   - 顯示訊息：`[HKTICKETING TYPE02] Account filled`
+   - 顯示訊息：`[HKTICKETING TYPE02] Password filled`
+
+2. **自動點擊登入按鈕**
+   - 程式會自動點擊登入按鈕
+   - 顯示訊息：`[HKTICKETING TYPE02] Login button clicked`
+
+3. **手動完成驗證碼**
+   - 如果出現驗證碼（圖形驗證或滑動驗證）
+   - 請在瀏覽器視窗中手動完成驗證
+   - 顯示提示：`[HKTICKETING TYPE02] Please complete captcha verification if prompted...`
+
+4. **自動偵測登入完成**
+   - 程式會自動偵測 URL 變化確認登入成功
+   - 顯示：`[HKTICKETING TYPE02] Login successful (URL changed)`
+
+5. **自動繼續搶票**
+   - 登入成功後，程式會：
+     - 自動重定向到目標活動頁面
+     - 繼續執行搶票流程（日期選擇 → 區域選擇 → 購票）
+
+**時間限制**：
+- ⏱️ 程式會等待最長 **3 分鐘**（180 秒）供您完成驗證碼
+
+**為什麼不能全自動登入？**
+- HKTicketing 使用**圖形驗證碼**或**滑動驗證**
+- 這些驗證機制需要真實使用者互動
+- 半自動模式在安全性與自動化之間取得平衡
+
+**設定位置**：
+- 在圖形介面中找到「進階設定」→「帳號密碼設定」→「hkticketing」
+- 填寫**帳號（Email）**和**密碼**
 
 ---
 
