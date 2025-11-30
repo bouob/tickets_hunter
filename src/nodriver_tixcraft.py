@@ -22445,6 +22445,8 @@ async def nodriver_hkticketing_type02_dismiss_modal(tab, config_dict=None):
                 for (var i = 0; i < selectors.length; i++) {
                     var btn = document.querySelector(selectors[i]);
                     if (btn && btn.offsetParent !== null) {
+                        // Scroll button into view first (needed for English version)
+                        btn.scrollIntoView({ behavior: 'instant', block: 'center' });
                         btn.click();
                         return { success: true, selector: selectors[i] };
                     }
