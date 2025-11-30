@@ -178,9 +178,6 @@ def get_config_dict(args):
             if args.tixcraft_sid:
                 config_dict["advanced"]["tixcraft_sid"] = args.tixcraft_sid
 
-            if args.tixcraft_tixuisid:
-                config_dict["advanced"]["tixcraft_tixuisid"] = args.tixcraft_tixuisid
-
             if args.ibonqware:
                 config_dict["advanced"]["ibonqware"] = args.ibonqware
 
@@ -201,8 +198,6 @@ def get_config_dict(args):
                 # for tixcraft headless.
                 #print("If you are runnig headless mode on tixcraft, you need input your cookie SID.")
                 if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
-                    is_headless_enable_ocr = True
-                if len(config_dict["advanced"]["tixcraft_tixuisid"]) > 1:
                     is_headless_enable_ocr = True
 
             if is_headless_enable_ocr:
@@ -850,12 +845,8 @@ def get_driver_by_config(config_dict):
             if tixcraft_family:
                 tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
                 if len(tixcraft_sid) > 1:
-                    driver.delete_cookie("SID")
-                    driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
-                tixcraft_tixuisid = config_dict["advanced"]["tixcraft_tixuisid"]
-                if len(tixcraft_tixuisid) > 1:
                     driver.delete_cookie("TIXUISID")
-                    driver.add_cookie({"name":"TIXUISID", "value": tixcraft_tixuisid, "path" : "/", "secure":True})
+                    driver.add_cookie({"name":"TIXUISID", "value": tixcraft_sid, "path" : "/", "secure":True})
 
             if 'ibon.com' in homepage:
                 ibonqware = config_dict["advanced"]["ibonqware"]
@@ -11855,10 +11846,6 @@ def cli():
 
     parser.add_argument("--tixcraft_sid",
         help="overwrite tixcraft sid field",
-        type=str)
-
-    parser.add_argument("--tixcraft_tixuisid",
-        help="overwrite tixcraft_tixuisid sid field",
         type=str)
 
     parser.add_argument("--kktix_account",
