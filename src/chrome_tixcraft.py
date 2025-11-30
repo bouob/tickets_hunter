@@ -51,7 +51,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.25)"
+CONST_APP_VERSION = "TicketsHunter (2025.11.30)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -845,8 +845,8 @@ def get_driver_by_config(config_dict):
             if tixcraft_family:
                 tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
                 if len(tixcraft_sid) > 1:
-                    driver.delete_cookie("SID")
-                    driver.add_cookie({"name":"SID", "value": tixcraft_sid, "path" : "/", "secure":True})
+                    driver.delete_cookie("TIXUISID")
+                    driver.add_cookie({"name":"TIXUISID", "value": tixcraft_sid, "path" : "/", "secure":True})
 
             if 'ibon.com' in homepage:
                 ibonqware = config_dict["advanced"]["ibonqware"]

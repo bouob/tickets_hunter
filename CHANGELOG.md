@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025.11.30
+
+- 新增 HKTicketing 香港快達票 NoDriver 引擎支援（完整購票流程）
+- 新增 HKTicketing 半自動登入說明文件
+- 修復 HKTicketing 英文網站同意按鈕無法點擊問題
+- 修復 KKTIX 按鈕點擊後彈窗處理機制
+- 修復 GitHub Bug 回報範本格式問題
+- 更新拓元家族 Cookie 認證方式：SID → TIXUISID
+
 ## 2025.11.25
 
 - 新增 Ticketmaster 自訂 OCR 模型支援
