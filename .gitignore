@@ -43,6 +43,7 @@ CLAUDE.md
 /docs/
 .specify/
 specs/
+.mcp.json
 
 
 #Temp Disable

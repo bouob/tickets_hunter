@@ -205,7 +205,7 @@ def load_translate():
     en_us["config_launcher"] = 'Launcher'
     en_us["done"] = 'Done'
 
-    en_us["tixcraft_sid"] = 'Tixcraft family cookie SID'
+    en_us["tixcraft_sid"] = 'Tixcraft family cookie TIXUISID'
     en_us["ibon_ibonqware"] = 'ibon cookie ibonqware'
     en_us["facebook_account"] = 'Facebook account'
     en_us["kktix_account"] = 'KKTIX account'
@@ -328,7 +328,7 @@ def load_translate():
     zh_tw["config_launcher"] = '設定檔管理'
     zh_tw["done"] = '完成'
 
-    zh_tw["tixcraft_sid"] = '拓元家族 cookie SID'
+    zh_tw["tixcraft_sid"] = '拓元家族 cookie TIXUISID'
     zh_tw["ibon_ibonqware"] = 'ibon cookie ibonqware'
     zh_tw["facebook_account"] = 'Facebook 帳號'
     zh_tw["kktix_account"] = 'KKTIX 帳號'
@@ -453,7 +453,7 @@ def load_translate():
     ja_jp["config_launcher"] = 'ランチャー'
     ja_jp["done"] = '完了'
 
-    ja_jp["tixcraft_sid"] = 'Tixcraftファミリー cookie SID'
+    ja_jp["tixcraft_sid"] = 'Tixcraftファミリー cookie TIXUISID'
     ja_jp["ibon_ibonqware"] = 'ibon cookie ibonqware'
     ja_jp["facebook_account"] = 'Facebookアカウント'
     ja_jp["kktix_account"] = 'KKTIXアカウント'
