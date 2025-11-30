@@ -55,6 +55,7 @@ const auto_guess_options = document.querySelector('#auto_guess_options');
 
 // auto fill
 const tixcraft_sid = document.querySelector('#tixcraft_sid');
+const tixcraft_tixuisid = document.querySelector('#tixcraft_tixuisid');
 const ibonqware = document.querySelector('#ibonqware');
 const facebook_account = document.querySelector('#facebook_account');
 const kktix_account = document.querySelector('#kktix_account');
@@ -209,6 +210,7 @@ function load_settins_to_form(settings)
 
         // auto fill
         tixcraft_sid.value = settings.advanced.tixcraft_sid;
+        tixcraft_tixuisid.value = settings.advanced.tixcraft_tixuisid;
         ibonqware.value = settings.advanced.ibonqware;
         facebook_account.value = settings.advanced.facebook_account;
         kktix_account.value = settings.advanced.kktix_account;
@@ -444,6 +446,7 @@ function save_changes_to_dict(silent_flag)
 
             // auto fill
             settings.advanced.tixcraft_sid = tixcraft_sid.value;
+            settings.advanced.tixcraft_tixuisid = tixcraft_tixuisid.value;
             settings.advanced.ibonqware = ibonqware.value;
             settings.advanced.facebook_account = facebook_account.value;
             settings.advanced.kktix_account = kktix_account.value;
@@ -561,6 +564,7 @@ function check_unsaved_fields()
         });
         const field_list_advance = [
             "tixcraft_sid",
+            "tixcraft_tixuisid",
             "ibonqware",
             "facebook_account",
             "kktix_account",
