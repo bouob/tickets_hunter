@@ -94,33 +94,40 @@ Chrome DevTools MCP 讓 Claude Code 可以透過 Chrome DevTools Protocol (CDP) 
 
 ## 模式二：連接模式（NoDriver 工作階段除錯）
 
-此模式下，MCP 連接到現有的 NoDriver 瀏覽器工作階段。需要設定 NoDriver 使用固定的除錯端口。
+此模式下，MCP 連接到現有的 NoDriver 瀏覽器工作階段。使用 `--mcp_debug` 命令列參數即可啟用。
 
-### 步驟一：設定 NoDriver 使用固定除錯端口
+### 步驟零：關閉 MCP 獨立瀏覽器（重要）
 
-修改 `nodriver_tixcraft.py` 的 `get_extension_config()` 函數：
+如果 MCP 已經開啟獨立瀏覽器（佔用 port 9222），需要先關閉：
 
-```python
-def get_extension_config(config_dict):
-    default_lang = "zh-TW"
-    no_sandbox = True
-    browser_args = get_nodriver_browser_args()
+```bash
+# Windows
+taskkill /F /IM chrome.exe
 
-    # 如果有設定代理伺服器
-    if len(config_dict["advanced"]["proxy_server_port"]) > 2:
-        browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
+# 或重啟 Claude Code
+```
 
-    # 建立設定，使用固定除錯端口讓 MCP 連接
-    conf = Config(
-        browser_args=browser_args,
-        lang=default_lang,
-        no_sandbox=no_sandbox,
-        headless=config_dict["advanced"]["headless"],
-        host="127.0.0.1",  # 除錯主機
-        port=9222          # 固定除錯端口給 MCP 使用
-    )
+### 步驟一：使用 --mcp_debug 參數啟動 NoDriver
 
-    # ... 函數其餘部分
+NoDriver 現已內建 MCP 除錯支援，只需添加 `--mcp_debug` 參數：
+
+```bash
+# 使用預設端口 9222
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug
+
+# 使用自訂端口（避免端口衝突）
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug 9223
+
+# 結合其他參數（推薦）
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug \
+    --homepage "https://kktix.com" \
+    --date_keyword "12/25"
+```
+
+啟動時會顯示：
+```
+[MCP DEBUG] Enabled on port 9222
+[MCP DEBUG] Configure .mcp.json with: --browserUrl http://127.0.0.1:9222
 ```
 
 ### 步驟二：更新 MCP 設定
@@ -148,19 +155,23 @@ def get_extension_config(config_dict):
 
 ### 使用流程
 
-1. **啟動 NoDriver**（在終端機或背景執行）
+1. **啟動 NoDriver**（在終端機執行，加上 `--mcp_debug` 參數）
 ```bash
-python -u src/nodriver_tixcraft.py --input src/settings.json
+python -u src/nodriver_tixcraft.py --input src/settings.json --mcp_debug
 ```
 
 2. **等待瀏覽器開啟**
    - NoDriver 會啟動 Chrome 並使用除錯端口 9222
+   - 終端機會顯示 `[MCP DEBUG] Enabled on port 9222`
    - MCP 會自動連接到此實例
 
 3. **在 Claude Code 中使用 MCP 工具**
 ```
+使用 list_pages 確認連接成功
 使用 take_snapshot 查看目前頁面狀態
+使用 take_screenshot 截取頁面截圖
 使用 list_network_requests 監控 API 呼叫
+使用 evaluate_script 執行 JavaScript
 ```
 
 ### 限制
@@ -209,6 +220,7 @@ python nodriver_tixcraft.py --input settings.json \
 | `--browser` | 覆蓋瀏覽器類型 | `--browser chrome` |
 | `--window_size` | 視窗大小 | `--window_size 1920x1080` |
 | `--proxy_server` | 代理伺服器 | `--proxy_server 127.0.0.1:8080` |
+| `--mcp_debug` | MCP 除錯模式（預設端口 9222） | `--mcp_debug` 或 `--mcp_debug 9223` |
 
 ### 各平台測試網址
 

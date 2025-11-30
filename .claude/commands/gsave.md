@@ -1,6 +1,6 @@
 ---
 description: "產生英文 emoji 版 Git commit 訊息並提交變更"
-model: sonnet
+model: Opus
 allowed-tools: ["Bash"]
 ---
 
@@ -275,16 +275,9 @@ Closes #123
    - 完整顯示：Emoji + Type(scope): Subject + Body + 影響檔案
    - 機敏檔案 commit 會明確標示 🔒 PRIVATE 標記
 
-   **8.3 詢問使用者**：
-   「📝 檢視上述 commits，是否需要調整？(y/n/skip)」
-
-   **8.4 編輯模式（若選擇 y）**：
-   1. 選擇要編輯的 Commits（例如：1,3,5 或 all）
-   2. 逐一編輯：Type, Scope, Subject, Body
-   3. 完成後總預覽並最終確認
-
-   **8.5 直接提交（若選擇 n 或 skip）**：
-   - 使用自動產生的訊息，直接進入 Step 9
+   **8.3 自動提交模式**：
+   - 不詢問確認，直接使用自動產生的訊息進入 Step 9
+   - 預覽資訊僅供參考，不中斷流程
 
 9. **執行分離提交**：
 

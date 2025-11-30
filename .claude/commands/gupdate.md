@@ -1,7 +1,7 @@
 ---
 description: "更新專案版本日期"
 allowed-tools: ["Bash"]
-model: haiku
+model: sonnet
 ---
 
 自動更新所有檔案中的 `CONST_APP_VERSION` 為當前日期，並更新 JavaScript 版本號時間戳記。

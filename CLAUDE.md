@@ -37,6 +37,7 @@
 | 發布 PR | `/publicpr` | 建立 PR 到公開庫（僅發布時） |
 | 建立 Release | `/publicrelease` | 建立 Release Tag 並觸發 Actions |
 | 快速測試 | `timeout 30 python -u src/...` | 30 秒快速測試 |
+| MCP 即時除錯 | `python src/nodriver_tixcraft.py --mcp_debug` | 啟用 MCP 連接模式 |
 | 規格分析 | `/speckit.analyze` | 跨產物一致性檢查 |
 | 除錯診斷 | `/debug` | 專業除錯工具（Spec + 憲法） |
 | 尋找重複 issues | `/dedupe` | 尋找相似的 GitHub issues |
@@ -261,6 +262,9 @@ docs/02-development/development_guide.md  ← 開發規範
 3. ✅ **查閱 API**：`docs/06-api-reference/nodriver_api_guide.md`（優先）
 4. ✅ **搜尋案例**：`docs/08-troubleshooting/README.md`
 5. ✅ **啟用詳細日誌**：`config_dict["advanced"]["verbose"] = True`
+6. ✅ **MCP 即時除錯**：`docs/07-testing-debugging/mcp_integration_guide.md` ⭐
+   - 使用 `--mcp_debug` 參數啟動 NoDriver
+   - 透過 MCP 工具即時觀察頁面狀態
 
 ### Spec 檢查項目（除錯時必讀）
 

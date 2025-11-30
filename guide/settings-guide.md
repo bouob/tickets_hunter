@@ -724,16 +724,16 @@ FANCLUB2024
 
 ### Cookie 設定（快速登入）
 
-#### 拓元家族 cookie SID（tixcraft_sid）
+#### 拓元家族 cookie TIXUISID（tixcraft_sid）
 類型：字串 | 預設：空白
 
-拓元售票的 Cookie SID，用於快速登入。
+拓元售票的 Cookie TIXUISID，用於快速登入。
 
 
 **取得方式**：
 1. 在拓元網站登入
 2. 開啟瀏覽器開發者工具（F12）
-3. Application → Cookies → 找到 `SID`
+3. Application → Cookies → 找到 `TIXUISID`
 4. 複製值並填入
 
 ---
