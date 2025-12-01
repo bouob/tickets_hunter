@@ -7,8 +7,7 @@
 **🚨 嚴正警告**：使用本程式當黃牛或有任何加價轉售牟利行為，本人代表各粉絲祝福您，**早生貴子胎胎都三胞胎**！本程式僅供個人合法使用，嚴禁商業牟利。
 
 > **💬 需要協助或回報問題？**
-> - 💬 [加入 Discussions 社群](https://github.com/bouob/tickets_hunter/discussions) - 提問討論、分享經驗、功能建議
-> - 🙋 [Q&A 問題解答](https://github.com/bouob/tickets_hunter/discussions/categories/q-a) - 使用疑問先來這裡問
+> - 💬 [加入 Discord 社群](https://discord.gg/GCE5s6W6dV) - 即時討論、問答交流、經驗分享
 > - 🐛 [回報 Bug](https://github.com/bouob/tickets_hunter/issues/new?template=bug_report.md) - 確定是程式錯誤請開 Issue
 > - 🚀 [提出新功能建議](https://github.com/bouob/tickets_hunter/issues/new?template=feature_request.md) - 想要新功能請點這裡
 > - 💬 [查看已知問題](https://github.com/bouob/tickets_hunter/issues?q=is%3Aissue) - 搜尋是否有人遇到相同問題
@@ -24,14 +23,13 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ### 🎪 平台支援狀態
 
-✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、KHAM、FamiTicket
+✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、HKTicketing 快達票、KHAM、FamiTicket
 
 **尚未支援 NoDriver 的平台**：
 
 | 平台 | Chrome/Selenium | NoDriver | 說明 |
 |------|:---------------:|:--------:|------|
 | **🏟️ Urbtix 城市** | ✅ 支援 | ❌ 未支援 | 僅提供 Chrome/Selenium 版本 |
-| **🏟️ HKTicketing 快達票** | ✅ 支援 | ❌ 未支援 | 僅提供 Chrome/Selenium 版本 |
 
 > **📢 策略**：建議優先使用 NoDriver 版本，Chrome/Selenium 已進入維護模式（僅修復嚴重錯誤）
 
