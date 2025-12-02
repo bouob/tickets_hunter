@@ -1,6 +1,6 @@
 **文件說明**：KKTIX 平台的完整實作參考，涵蓋問答式驗證碼、價格列表選擇、排隊機制等核心特性的技術實作與案例說明。
 
-**最後更新**：2025-11-12
+**最後更新**：2025-12-02
 
 ---
 
@@ -24,11 +24,21 @@
 
 | 階段 | 函數名稱 | 行數 | 說明 |
 |------|---------|------|------|
-| Stage 3 | `nodriver_kktix_presale_home()` | ~700-900 | 日期選擇（Presale Home 頁面）|
-| Stage 5 | `nodriver_kktix_assign_ticket_number()` | 1000-1168 | 區域選擇 + 票數輸入 |
-| Stage 7 | `nodriver_kktix_reg_captcha()` | 1171-1330 | 問答式驗證碼處理 |
-| Stage 9 | - | - | 同意條款（自動處理）|
-| Stage 10 | `nodriver_kktix_presale()` | ~600-700 | 下一步按鈕點擊 |
+| Main | `nodriver_kktix_main()` | 2652 | 主控制流程（URL 路由）|
+| Stage 2 | `nodriver_kktix_signin()` | 499 | 登入處理 |
+| Stage 3 | `nodriver_kktix_paused_main()` | 601 | 暫停/排隊頁面處理 |
+| Stage 4 | `nodriver_kktix_date_auto_select()` | 1528 | 日期自動選擇 |
+| Stage 5 | `nodriver_kktix_travel_price_list()` | 781 | 價格列表遍歷 |
+| Stage 5 | `nodriver_kktix_assign_ticket_number()` | 1058 | 區域選擇 + 票數輸入 |
+| Stage 7 | `nodriver_kktix_reg_captcha()` | 1211 | 問答式驗證碼處理 |
+| Stage 8 | `nodriver_kktix_reg_new_main()` | 2198 | 註冊頁面主處理 |
+| Stage 9 | `nodriver_kktix_check_guest_modal()` | 1831 | 訪客模式對話框 |
+| Stage 10 | `nodriver_kktix_press_next_button()` | 1906 | 下一步按鈕點擊 |
+| Stage 10 | `nodriver_kktix_events_press_next_button()` | 1799 | Events 頁面下一步 |
+| Stage 10 | `nodriver_kktix_confirm_order_button()` | 2917 | 確認訂單按鈕 |
+| Util | `nodriver_kktix_check_ticket_page_status()` | 2081 | 票券頁面狀態檢查 |
+| Util | `nodriver_kktix_double_check_all_text_value()` | 2952 | 表單值驗證 |
+| Util | `nodriver_kktix_order_member_code()` | 3049 | 會員代碼處理 |
 
 **程式碼位置**：`src/nodriver_tixcraft.py`
 

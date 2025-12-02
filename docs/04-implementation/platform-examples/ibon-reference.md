@@ -1,6 +1,6 @@
 **文件說明**：iBon 平台的完整實作參考，重點覆蓋 Shadow DOM 處理、Angular SPA 架構、DOMSnapshot API 應用等高難度技術挑戰。
 
-**最後更新**：2025-11-12
+**最後更新**：2025-12-02
 
 ---
 
@@ -24,11 +24,20 @@
 
 | 階段 | 函數名稱 | 行數 | 說明 |
 |------|---------|------|------|
-| Stage 4 | `nodriver_ibon_date_auto_select()` | 5860-6142 | 日期選擇（Shadow DOM）|
-| Stage 5 | `nodriver_ibon_area_auto_select()` | 9083-10378 | 區域選擇（DOMSnapshot 1295行）|
-| Stage 5 | `nodriver_ibon_event_area_auto_select()` | 9528-9920 | 區域選擇（Event 頁面 393行）|
-| Stage 7 | `nodriver_ibon_get_captcha_image_from_shadow_dom()` | 9643-9730 | 驗證碼圖片擷取|
-| Stage 7 | `nodriver_ibon_captcha()` | 10300-10450 | OCR 驗證碼處理 |
+| Main | `nodriver_ibon_main()` | 13985 | 主控制流程（URL 路由）|
+| Stage 2 | `nodriver_ibon_login()` | 9068 | Cookie 登入處理 |
+| Stage 4 | `nodriver_ibon_date_auto_select()` | 10625 | 日期選擇（DOMSnapshot）|
+| Stage 4 | `nodriver_ibon_date_auto_select_pierce()` | 10234 | 日期選擇（CDP pierce）|
+| Stage 5 | `nodriver_ibon_area_auto_select()` | 12233 | 區域選擇（DOMSnapshot）|
+| Stage 5 | `nodriver_ibon_event_area_auto_select()` | 11728 | 區域選擇（Event 頁面）|
+| Stage 6 | `nodriver_ibon_ticket_number_auto_select()` | 12813 | 票數自動設定 |
+| Stage 7 | `nodriver_ibon_get_captcha_image_from_shadow_dom()` | 12970 | 驗證碼圖片擷取 |
+| Stage 7 | `nodriver_ibon_captcha()` | 13627 | OCR 驗證碼處理 |
+| Stage 7 | `nodriver_ibon_auto_ocr()` | 13455 | 自動 OCR 重試 |
+| Stage 9 | `nodriver_ibon_ticket_agree()` | 11691 | 同意條款勾選 |
+| Stage 10 | `nodriver_ibon_purchase_button_press()` | 13724 | 送出購票按鈕 |
+| Util | `nodriver_ibon_check_sold_out()` | 13781 | 售完檢測 |
+| Util | `nodriver_ibon_allow_not_adjacent_seat()` | 11697 | 允許非相鄰座位 |
 
 **程式碼位置**：`src/nodriver_tixcraft.py`
 
