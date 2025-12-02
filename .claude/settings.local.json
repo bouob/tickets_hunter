@@ -37,7 +37,14 @@
       "mcp__discord__discord_manage",
       "mcp__discord__get_server_info",
       "mcp__discord__get_roles",
-      "mcp__discord__list_channels"
+      "mcp__discord__list_channels",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__get_network_request",
+      "mcp__chrome-devtools__list_console_messages"
     ],
     "deny": [],
     "ask": []
