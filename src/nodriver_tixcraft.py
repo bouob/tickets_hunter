@@ -5473,6 +5473,21 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         if not matched_ticket and show_debug_message:
             print(f"[TICKET SELECT] All keywords failed to match")
 
+    # Single option auto-select: when only one valid ticket type exists, select it directly
+    # (unless excluded by keyword_exclude)
+    if not matched_ticket and len(valid_ticket_types) == 1:
+        single_ticket = valid_ticket_types[0]
+        ticket_name = single_ticket['name']
+
+        # Check if excluded by keyword_exclude
+        if not util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
+            matched_ticket = single_ticket
+            if show_debug_message:
+                print(f"[TICKET SELECT] Single option auto-select: '{ticket_name}'")
+        else:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
+
     # Fallback logic (similar to area selection)
     if not matched_ticket:
         if area_keyword_array and not area_auto_fallback:
