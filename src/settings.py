@@ -191,10 +191,11 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
-    
-    # remote_url not under ocr, due to not only support ocr features.
-    config_dict["advanced"]["remote_url"] = "\"http://127.0.0.1:%d/\"" % (CONST_SERVER_PORT)
 
+    # Server port for settings web interface (Issue #156)
+    config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
+    # remote_url will be dynamically generated based on server_port
+    config_dict["advanced"]["remote_url"] = ""
 
     config_dict["advanced"]["auto_reload_page_interval"] = 5
     config_dict["advanced"]["auto_reload_overheat_count"] = 4
@@ -242,6 +243,11 @@ def migrate_config(config_dict):
     # Ensure ocr_captcha.path exists
     if "ocr_captcha" in config_dict and "path" not in config_dict["ocr_captcha"]:
         config_dict["ocr_captcha"]["path"] = ""
+
+    # Migrate server_port: ensure old config has this field (Issue #156)
+    if "advanced" in config_dict:
+        if "server_port" not in config_dict["advanced"]:
+            config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
 
     return config_dict
 
@@ -495,6 +501,13 @@ class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = load_json()
         config_dict = decrypt_password(config_dict)
+
+        # Dynamically generate remote_url based on server_port (Issue #156)
+        server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
+        if not isinstance(server_port, int) or server_port < 1024 or server_port > 65535:
+            server_port = CONST_SERVER_PORT
+        config_dict["advanced"]["remote_url"] = f'"http://127.0.0.1:{server_port}/"'
+
         self.write(config_dict)
 
 class ResetJsonHandler(tornado.web.RequestHandler):
@@ -687,21 +700,39 @@ async def main_server():
     app.ocr = ocr;
     app.version = CONST_APP_VERSION;
 
-    app.listen(CONST_SERVER_PORT)
-    print("server running on port:", CONST_SERVER_PORT)
+    # Get server_port from config, fallback to default (Issue #156)
+    _, config_dict = load_json()
+    server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
 
-    url="http://127.0.0.1:" + str(CONST_SERVER_PORT) + "/settings.html"
+    # Validate port range
+    if not isinstance(server_port, int) or server_port < 1024 or server_port > 65535:
+        print(f"[WARNING] Invalid server_port: {server_port}, using default: {CONST_SERVER_PORT}")
+        server_port = CONST_SERVER_PORT
+
+    app.listen(server_port)
+    print("server running on port:", server_port)
+
+    url = "http://127.0.0.1:" + str(server_port) + "/settings.html"
     print("goto url:", url)
     webbrowser.open_new(url)
     await asyncio.Event().wait()
 
+def get_server_port():
+    """Get server port from config file, fallback to default."""
+    _, config_dict = load_json()
+    server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
+    if not isinstance(server_port, int) or server_port < 1024 or server_port > 65535:
+        server_port = CONST_SERVER_PORT
+    return server_port
+
 def web_server():
-    is_port_binded = util.is_connectable(CONST_SERVER_PORT)
+    server_port = get_server_port()
+    is_port_binded = util.is_connectable(server_port)
     #print("is_port_binded:", is_port_binded)
     if not is_port_binded:
         asyncio.run(main_server())
     else:
-        print("port:", CONST_SERVER_PORT, " is in used.")
+        print("port:", server_port, " is in used.")
 
 def settgins_gui_timer():
     while True:
