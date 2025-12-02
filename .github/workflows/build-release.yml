@@ -172,31 +172,38 @@ jobs:
           retention-days: 7
 
       - name: Notify Discord
-        if: success()
+        if: success() && env.DISCORD_WEBHOOK_URL != ''
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           VERSION: ${{ steps.get_version.outputs.VERSION }}
           CHANGELOG_NOTES: ${{ steps.changelog.outputs.NOTES }}
         shell: bash
         run: |
-          # Escape special characters for JSON
-          ESCAPED_NOTES=$(echo "$CHANGELOG_NOTES" | head -10 | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          # Escape special characters for JSON (preserve newlines as \n)
+          ESCAPED_NOTES=$(echo "$CHANGELOG_NOTES" | head -10 | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
 
-          curl -H "Content-Type: application/json" \
-               -d "{
-                 \"embeds\": [{
-                   \"title\": \"🎉 Tickets Hunter v${VERSION} Released!\",
-                   \"description\": \"New version is now available for download.\",
-                   \"color\": 5814783,
-                   \"fields\": [
-                     {\"name\": \"📦 Version\", \"value\": \"v${VERSION}\", \"inline\": true},
-                     {\"name\": \"📥 Download\", \"value\": \"[GitHub Releases](https://github.com/bouob/tickets_hunter/releases/tag/v${VERSION})\", \"inline\": true},
-                     {\"name\": \"📝 Changes\", \"value\": \"${ESCAPED_NOTES}\", \"inline\": false}
-                   ],
-                   \"footer\": {\"text\": \"Tickets Hunter - Auto Release\"},
-                   \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-                 }]
-               }" \
+          # Write JSON payload to UTF-8 file to preserve Chinese characters
+          cat > discord_payload.json << JSONEOF
+          {
+            "embeds": [{
+              "title": "Tickets Hunter v${VERSION} Released!",
+              "description": "New version is now available for download.",
+              "color": 5814783,
+              "fields": [
+                {"name": "Version", "value": "v${VERSION}", "inline": true},
+                {"name": "Download", "value": "[GitHub Releases](https://github.com/bouob/tickets_hunter/releases/tag/v${VERSION})", "inline": true},
+                {"name": "Changes", "value": "${ESCAPED_NOTES}", "inline": false}
+              ],
+              "footer": {"text": "Tickets Hunter - Auto Release"},
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          JSONEOF
+
+          # Send with UTF-8 encoding
+          curl -H "Content-Type: application/json; charset=utf-8" \
+               --data-binary @discord_payload.json \
                "$DISCORD_WEBHOOK_URL"
 
+          rm -f discord_payload.json
           echo "Discord notification sent!"
