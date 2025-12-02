@@ -14072,8 +14072,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             break
 
     # Auto-redirect if kicked back to homepage (防止被踢回首頁)
-    # Pattern: Homepage → ActivityInfo page redirection
-    # - If homepage config is set to ActivityInfo page, redirect back when kicked to homepage
+    # Pattern: Homepage → Target page redirection
+    # - If homepage config is set to a specific page (ActivityInfo/orders/Event), redirect back when kicked to homepage
     # - If homepage config is homepage itself, skip redirect (normal behavior)
     is_kicked_to_homepage = False
     normalized_url = url.lower().rstrip('/')
@@ -14082,8 +14082,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
     if is_kicked_to_homepage:
         config_homepage = config_dict["homepage"]
-        # Only redirect if user wants to be on ActivityInfo page
-        should_redirect = '/activityinfo/' in config_homepage.lower()
+        # Only redirect if user wants to be on a specific page (not homepage itself)
+        # Support all ibon page types: ActivityInfo, orders.ibon.com.tw, Event, EventBuy, etc.
+        normalized_homepage = config_homepage.lower().rstrip('/')
+        is_homepage_same_as_current = (
+            normalized_homepage == 'https://ticket.ibon.com.tw' or
+            normalized_homepage == 'https://ticket.ibon.com.tw/index/entertainment'
+        )
+        should_redirect = not is_homepage_same_as_current
 
         if should_redirect:
             show_debug_message = config_dict["advanced"].get("verbose", False)
