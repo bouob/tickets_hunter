@@ -31,6 +31,7 @@ const max_dwell_time = document.querySelector('#max_dwell_time');
 
 const auto_reload_page_interval = document.querySelector('#auto_reload_page_interval');
 const reset_browser_interval = document.querySelector('#reset_browser_interval');
+const server_port = document.querySelector('#server_port');
 const proxy_server_port = document.querySelector('#proxy_server_port');
 const window_size = document.querySelector('#window_size');
 const chrome_extension = document.querySelector('#chrome_extension');
@@ -170,6 +171,7 @@ function load_settins_to_form(settings)
 
         auto_reload_page_interval.value = settings.advanced.auto_reload_page_interval;
         reset_browser_interval.value = settings.advanced.reset_browser_interval;
+        server_port.value = settings.advanced.server_port || 16888;
         proxy_server_port.value  = settings.advanced.proxy_server_port;
         window_size.value  = settings.advanced.window_size;
 
@@ -265,7 +267,7 @@ function load_settins_to_form(settings)
 
 function maxbot_load_api()
 {
-    let api_url = "http://127.0.0.1:16888/load";
+    let api_url = "/load";
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -285,7 +287,7 @@ function maxbot_load_api()
 
 function maxbot_reset_api()
 {
-    let api_url = "http://127.0.0.1:16888/reset";
+    let api_url = "/reset";
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -333,7 +335,7 @@ function maxbot_launch()
 
 function maxbot_run_api()
 {
-    let api_url = "http://127.0.0.1:16888/run";
+    let api_url = "/run";
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -353,7 +355,7 @@ function maxbot_run_api()
 
 function maxbot_shutdown_api()
 {
-    let api_url = "http://127.0.0.1:16888/shutdown";
+    let api_url = "/shutdown";
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -406,6 +408,7 @@ function save_changes_to_dict(silent_flag)
 
             settings.advanced.auto_reload_page_interval = Number(auto_reload_page_interval.value);
             settings.advanced.reset_browser_interval = parseInt(reset_browser_interval.value);
+            settings.advanced.server_port = parseInt(server_port.value) || 16888;
             settings.advanced.proxy_server_port = proxy_server_port.value;
             settings.advanced.window_size = window_size.value;
 
@@ -483,7 +486,7 @@ function save_changes_to_dict(silent_flag)
 
 function maxbot_save_api(callback)
 {
-    let api_url = "http://127.0.0.1:16888/save";
+    let api_url = "/save";
     if(settings) {
         $.post( api_url, JSON.stringify(settings), function() {
             //alert( "success" );
@@ -506,7 +509,7 @@ function maxbot_save_api(callback)
 
 function maxbot_pause_api()
 {
-    let api_url = "http://127.0.0.1:16888/pause";
+    let api_url = "/pause";
     if(settings) {
         $.get( api_url, function() {
             //alert( "success" );
@@ -525,7 +528,7 @@ function maxbot_pause_api()
 
 function maxbot_resume_api()
 {
-    let api_url = "http://127.0.0.1:16888/resume";
+    let api_url = "/resume";
     if(settings) {
         $.get( api_url, function() {
             //alert( "success" );
@@ -651,7 +654,7 @@ function check_unsaved_fields()
 
 function maxbot_status_api()
 {
-    let api_url = "http://127.0.0.1:16888/status";
+    let api_url = "/status";
     $.get( api_url, function() {
         //alert( "success" );
     })
@@ -681,7 +684,7 @@ function maxbot_status_api()
 
 function maxbot_version_api()
 {
-    let api_url = "http://127.0.0.1:16888/version";
+    let api_url = "/version";
     $.get( api_url, function() {
         //alert( "success" );
     })

@@ -21,7 +21,8 @@
     ],
     "host_permissions": [
         "http://maxbot.dropboxlike.com:16888/*",
-        "http://127.0.0.1:16888/*"
+        "http://127.0.0.1:16888/*",
+        "http://127.0.0.1:17000/*"
     ],
     "web_accessible_resources": [
         {
@@ -465,7 +466,6 @@
                 "js/fantopia_fill.js"
             ]
         }
-
     ],
     "version": "1.0.29"
 }

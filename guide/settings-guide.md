@@ -2,8 +2,8 @@
 文件說明：詳細說明 settings.json 在圖形介面中顯示的各項設定欄位
 分類：Configuration Reference (level: 2)
 目標受眾：一般使用者
-版本：1.2
-最後更新：2025-11-12
+版本：1.4
+最後更新：2025-12-02
 -->
 
 # settings.json 詳細設定說明
@@ -33,10 +33,11 @@
 cd tickets_hunter/src
 python settings.py
 ```
-瀏覽器會自動開啟：`http://127.0.0.1:16888/`
-
+瀏覽器會自動開啟：`http://127.0.0.1:16888/`（預設 Port，可在進階設定中修改）
 
 在圖形介面中，您可以直接透過中文欄位名稱進行設定，無需手動編輯 JSON 檔案。
+
+> 💡 **Port 被佔用？** 若啟動失敗顯示「port is in used」，請參考[設定介面 Port](#設定介面-portserver_port-v202512-新增) 修改 Port 號碼。
 
 ---
 
@@ -685,6 +686,35 @@ FANCLUB2024
 
 **在圖形介面中，這些設定位於「進階設定」頁籤**
 
+### 設定介面 Port（server_port）⭐ v2025.12 新增
+類型：整數 | 預設：16888
+
+設定介面 Web Server 的連接埠號碼。
+
+在圖形介面中顯示為：**設定介面 Port**（數字輸入框）
+
+**說明**：
+- 預設 Port 為 16888
+- 若遇到 Port 被系統阻擋或佔用，可修改為其他可用 Port
+- 建議範圍：16000-17000
+- **修改後需重新啟動設定介面才會生效**
+
+**使用情境**：
+- Windows 系統可能會保留某些 Port（受 Hyper-V、WSL、Docker 等影響）
+- 若啟動 `settings.py` 時出現「port is in used」錯誤，可嘗試更換 Port
+
+**檢查 Port 是否被佔用**（Windows CMD）：
+```cmd
+netsh interface ipv4 show excludedportrange protocol=tcp
+```
+
+**範例**：
+- 16888（預設）
+- 16889
+- 17000
+
+---
+
 ### 輸出詳細除錯訊息（verbose）
 類型：布林值 | 預設：停用
 
@@ -958,4 +988,4 @@ FANCLUB999
 
 **祝您搶票成功！** 🎉
 
-*最後更新：2025-11-12 | 版本：1.3*
+*最後更新：2025-12-02 | 版本：1.4*

@@ -490,13 +490,22 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 ### Q5: 設定介面無法開啟（瀏覽器沒有自動開啟）？
 
 **可能原因**：
-- Port 16888 被其他程式佔用
+- Port 16888 被其他程式佔用或被系統阻擋（Hyper-V、WSL、Docker 等）
 - 防火牆阻擋
 
 **解決方案**：
 1. 手動開啟瀏覽器，輸入 `http://127.0.0.1:16888`
-2. 檢查防火牆設定
-3. 重新執行 `settings.exe`
+2. 如果仍無法開啟，**修改 Port 號碼**：
+   - 先手動編輯 `settings.json`，在 `advanced` 區塊加入 `"server_port": 16889`
+   - 重新啟動設定介面
+   - 或參考[設定介面 Port 說明](settings-guide.md#設定介面-portserver_port-v202512-新增)
+3. 檢查防火牆設定
+4. 重新執行 `settings.exe`
+
+**檢查 Port 是否被系統保留**（Windows CMD）：
+```cmd
+netsh interface ipv4 show excludedportrange protocol=tcp
+```
 
 ### Q6: 可以在不同電腦上使用嗎？
 
