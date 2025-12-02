@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.11.30) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.02) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -546,6 +546,15 @@
           <label for="reset_browser_interval" class="col-sm-2 col-form-label">重新啟動瀏覽器間隔(秒)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="reset_browser_interval" value="" />
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="server_port" class="col-sm-2 col-form-label">設定介面 Port
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="設定介面的 Web Server 連接埠。預設為 16888。若遇到 Port 被系統阻擋或佔用，可修改為其他可用 Port（建議範圍：16000-17000）。修改後需重新啟動設定介面才會生效。">?</span>
+          </label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="server_port" type="number" min="1024" max="65535" value="" placeholder="16888" />
           </div>
         </div>
         <div class="row mb-3">
@@ -1088,6 +1097,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2025113000"></script>
+  <script src="settings.js?v=2025120223"></script>
 </body>
 </html>

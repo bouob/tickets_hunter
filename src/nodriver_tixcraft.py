@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.11.30)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.02)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -5472,6 +5472,21 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
 
         if not matched_ticket and show_debug_message:
             print(f"[TICKET SELECT] All keywords failed to match")
+
+    # Single option auto-select: when only one valid ticket type exists, select it directly
+    # (unless excluded by keyword_exclude)
+    if not matched_ticket and len(valid_ticket_types) == 1:
+        single_ticket = valid_ticket_types[0]
+        ticket_name = single_ticket['name']
+
+        # Check if excluded by keyword_exclude
+        if not util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
+            matched_ticket = single_ticket
+            if show_debug_message:
+                print(f"[TICKET SELECT] Single option auto-select: '{ticket_name}'")
+        else:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
 
     # Fallback logic (similar to area selection)
     if not matched_ticket:
@@ -14072,8 +14087,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             break
 
     # Auto-redirect if kicked back to homepage (防止被踢回首頁)
-    # Pattern: Homepage → ActivityInfo page redirection
-    # - If homepage config is set to ActivityInfo page, redirect back when kicked to homepage
+    # Pattern: Homepage → Target page redirection
+    # - If homepage config is set to a specific page (ActivityInfo/orders/Event), redirect back when kicked to homepage
     # - If homepage config is homepage itself, skip redirect (normal behavior)
     is_kicked_to_homepage = False
     normalized_url = url.lower().rstrip('/')
@@ -14082,8 +14097,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
     if is_kicked_to_homepage:
         config_homepage = config_dict["homepage"]
-        # Only redirect if user wants to be on ActivityInfo page
-        should_redirect = '/activityinfo/' in config_homepage.lower()
+        # Only redirect if user wants to be on a specific page (not homepage itself)
+        # Support all ibon page types: ActivityInfo, orders.ibon.com.tw, Event, EventBuy, etc.
+        normalized_homepage = config_homepage.lower().rstrip('/')
+        is_homepage_same_as_current = (
+            normalized_homepage == 'https://ticket.ibon.com.tw' or
+            normalized_homepage == 'https://ticket.ibon.com.tw/index/entertainment'
+        )
+        should_redirect = not is_homepage_same_as_current
 
         if should_redirect:
             show_debug_message = config_dict["advanced"].get("verbose", False)
