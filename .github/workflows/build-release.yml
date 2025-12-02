@@ -170,3 +170,33 @@ jobs:
             build/
             dist/*/warn-*.txt
           retention-days: 7
+
+      - name: Notify Discord
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          CHANGELOG_NOTES: ${{ steps.changelog.outputs.NOTES }}
+        shell: bash
+        run: |
+          # Escape special characters for JSON
+          ESCAPED_NOTES=$(echo "$CHANGELOG_NOTES" | head -10 | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+
+          curl -H "Content-Type: application/json" \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"🎉 Tickets Hunter v${VERSION} Released!\",
+                   \"description\": \"New version is now available for download.\",
+                   \"color\": 5814783,
+                   \"fields\": [
+                     {\"name\": \"📦 Version\", \"value\": \"v${VERSION}\", \"inline\": true},
+                     {\"name\": \"📥 Download\", \"value\": \"[GitHub Releases](https://github.com/bouob/tickets_hunter/releases/tag/v${VERSION})\", \"inline\": true},
+                     {\"name\": \"📝 Changes\", \"value\": \"${ESCAPED_NOTES}\", \"inline\": false}
+                   ],
+                   \"footer\": {\"text\": \"Tickets Hunter - Auto Release\"},
+                   \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+                 }]
+               }" \
+               "$DISCORD_WEBHOOK_URL"
+
+          echo "Discord notification sent!"
