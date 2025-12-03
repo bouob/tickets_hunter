@@ -4879,19 +4879,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 matched_blocks = formated_area_list
         """
 
-    # Match result summary
-    if show_debug_message:
-        print(f"[DATE KEYWORD] ========================================")
-        print(f"[DATE KEYWORD] Match Summary:")
-        print(f"[DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
-        print(f"[DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
-        if matched_blocks and len(matched_blocks) > 0 and formated_area_list and len(formated_area_list) > 0:
-            print(f"[DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_area_list)*100:.1f}%")
-            print(f"[DATE KEYWORD] ========================================")
-        elif not matched_blocks or len(matched_blocks) == 0:
-            print(f"[DATE KEYWORD]   No dates matched any keywords")
-            print(f"[DATE KEYWORD] ========================================")
-
     # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
         if date_auto_fallback:
@@ -5327,32 +5314,6 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
             if show_debug_message:
                 print(f"[AREA KEYWORD]   Mode is '{area_auto_select_mode}', stopping at first match")
             break
-
-    # Match result summary
-    if show_debug_message:
-        print(f"[AREA KEYWORD] ========================================")
-        print(f"[AREA KEYWORD] Match Summary:")
-        print(f"[AREA KEYWORD]   Total areas checked: {len(area_list)}")
-        print(f"[AREA KEYWORD]   Total areas matched: {len(matched_blocks)}")
-        if len(matched_blocks) > 0:
-            print(f"[AREA KEYWORD]   Match rate: {len(matched_blocks)/len(area_list)*100:.1f}%")
-
-            # Display selected target index
-            target_index = 0
-            if area_auto_select_mode == "random":
-                target_index = "random"
-            elif area_auto_select_mode == "from bottom to top":
-                target_index = len(matched_blocks) - 1
-            elif area_auto_select_mode == "center":
-                target_index = len(matched_blocks) // 2
-            elif area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                target_index = 0
-
-            print(f"[AREA KEYWORD]   Selected target index: {target_index}")
-            print(f"[AREA KEYWORD] ========================================")
-        else:
-            print(f"[AREA KEYWORD]   No areas matched")
-            print(f"[AREA KEYWORD] ========================================")
 
     if not matched_blocks:
         is_need_refresh = True
@@ -6147,7 +6108,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
         global tixcraft_dict
-        current_url, _ = await nodriver_current_url(tab)
+        # IMPORTANT: Use tab.target.url (cached) instead of nodriver_current_url (js_dumps)
+        # When alert dialog is open, JavaScript execution is blocked, causing js_dumps to hang
+        current_url = tab.target.url if hasattr(tab, 'target') and tab.target else ""
 
         if '/ticket/checkout' in current_url:
             if show_debug_message:
@@ -6216,6 +6179,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
         tixcraft_dict["captcha_alert_detected"] = False
+        tixcraft_dict["last_homepage_redirect_time"] = 0
 
     # Register global alert handler (remains active throughout session)
     # Only register once to prevent infinite loop
@@ -6232,13 +6196,25 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     await nodriver_tixcraft_home_close_window(tab)
 
     # special case for same event re-open, redirect to user's homepage.
-    if 'https://tixcraft.com/' == url or 'https://tixcraft.com/activity' == url:
+    # Add cooldown to prevent infinite redirect loop when area page is unavailable
+    # Match homepage URLs: tixcraft.com, tixcraft.com/, tixcraft.com/activity
+    is_tixcraft_home = url in ['https://tixcraft.com', 'https://tixcraft.com/', 'https://tixcraft.com/activity']
+    if is_tixcraft_home:
         if "/ticket/area/" in config_dict["homepage"]:
             if len(config_dict["homepage"].split('/'))==7:
-                try:
-                    await tab.get(config_dict["homepage"])
-                except Exception as e:
-                    pass
+                current_time = time.time()
+                last_redirect_time = tixcraft_dict.get("last_homepage_redirect_time", 0)
+                # Use auto_reload_page_interval from settings, default to 3 seconds
+                redirect_interval = config_dict["advanced"].get("auto_reload_page_interval", 3)
+                if redirect_interval <= 0:
+                    redirect_interval = 3  # Minimum 3 seconds to prevent rapid loop
+
+                if current_time - last_redirect_time > redirect_interval:
+                    try:
+                        tixcraft_dict["last_homepage_redirect_time"] = current_time
+                        await tab.get(config_dict["homepage"])
+                    except Exception as e:
+                        pass
 
     if "/activity/detail/" in url:
         tixcraft_dict["start_time"] = time.time()
@@ -23980,7 +23956,7 @@ async def main(args):
     try:
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
-            ocr.set_ranges(0)  # Restrict to digits only (0-9) for ibon captchas
+            ocr.set_ranges(1)  # Restrict to lowercase letters only (a-z) for TixCraft captchas
             Captcha_Browser = NonBrowser()
             if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
                 #set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
