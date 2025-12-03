@@ -44,11 +44,20 @@
       "mcp__chrome-devtools__list_network_requests",
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__get_network_request",
-      "mcp__chrome-devtools__list_console_messages"
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__discord__discord_query",
+      "Skill(discord-skill)",
+      "mcp__discord__discord_help",
+      "mcp__discord__discord_execute",
+      "mcp__discord__read_messages"
     ],
     "deny": [],
     "ask": []
   },
   "enableAllProjectMcpServers": false,
+  "enabledMcpjsonServers": [
+    "chrome-devtools",
+    "discord"
+  ],
   "outputStyle": "default"
 }
