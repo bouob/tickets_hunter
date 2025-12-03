@@ -2682,11 +2682,17 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     print(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
+                error_msg = str(dismiss_exc)
+                # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
+                if "No dialog is showing" in error_msg or "-32602" in error_msg:
+                    if show_debug_message:
+                        print("[KKTIX ALERT] Dialog already dismissed")
+                    break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)
                 else:
                     if show_debug_message:
-                        print(f"[KKTIX ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+                        print(f"[KKTIX ALERT] Failed to dismiss alert: {dismiss_exc}")
 
     # Register global alert handler (only once per session)
     if not kktix_dict.get("alert_handler_registered", False):
@@ -4491,11 +4497,152 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
 
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
-    return nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+    return await nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
 
 async def nodriver_tixcraft_verify(tab, config_dict, fail_list):
     question_selector = '.zone-verify'
-    return nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+    return await nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+
+
+async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
+    """
+    NoDriver version of fill_common_verify_form for TixCraft verification.
+
+    Fills verification form input and submits the answer.
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        inferred_answer_string: Answer to fill in
+        fail_list: List of failed answers
+        input_text_css: CSS selector for input field
+        next_step_button_css: CSS selector for submit button (optional)
+        submit_by_enter: Whether to submit by pressing Enter
+        check_input_interval: Interval to wait when no answer
+
+    Returns:
+        tuple[bool, list]: (is_answer_sent, updated fail_list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    is_answer_sent = False
+
+    try:
+        # Check if input field exists and get current value
+        input_info = await tab.evaluate(f'''
+            (function() {{
+                var input = document.querySelector("{input_text_css}");
+                if (input) {{
+                    return {{
+                        exists: true,
+                        value: input.value || ""
+                    }};
+                }}
+                return {{ exists: false, value: "" }};
+            }})()
+        ''')
+
+        if not input_info or not input_info.get('exists', False):
+            if show_debug_message:
+                print("[VERIFY FORM] Input field not found:", input_text_css)
+            return is_answer_sent, fail_list
+
+        inputed_value = input_info.get('value', '')
+
+        if show_debug_message:
+            print(f"[VERIFY FORM] Current input value: '{inputed_value}'")
+            print(f"[VERIFY FORM] Answer to fill: '{inferred_answer_string}'")
+
+        if len(inferred_answer_string) > 0:
+            # Fill the answer if different from current value
+            if inputed_value != inferred_answer_string:
+                # Clear and fill using JavaScript
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            input.value = "";
+                            input.value = "{inferred_answer_string}";
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+                    }})()
+                ''')
+
+                if show_debug_message:
+                    print(f"[VERIFY FORM] Filled answer: {inferred_answer_string}")
+
+            # Submit the form
+            is_button_clicked = False
+
+            if submit_by_enter:
+                # Submit by pressing Enter
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            var event = new KeyboardEvent('keydown', {{
+                                key: 'Enter',
+                                code: 'Enter',
+                                keyCode: 13,
+                                which: 13,
+                                bubbles: true
+                            }});
+                            input.dispatchEvent(event);
+
+                            // Also try form submit
+                            var form = input.closest('form');
+                            if (form) {{
+                                form.submit();
+                            }}
+                        }}
+                    }})()
+                ''')
+                is_button_clicked = True
+                if show_debug_message:
+                    print("[VERIFY FORM] Submitted by Enter key")
+            elif len(next_step_button_css) > 0:
+                # Click the submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_button_clicked = True
+                        if show_debug_message:
+                            print(f"[VERIFY FORM] Clicked submit button: {next_step_button_css}")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[VERIFY FORM] Failed to click button: {btn_exc}")
+
+            if is_button_clicked:
+                is_answer_sent = True
+                fail_list.append(inferred_answer_string)
+                if show_debug_message:
+                    print(f"[VERIFY FORM] Answer sent, attempt #{len(fail_list)}")
+
+                # Wait and check for alert
+                await asyncio.sleep(0.3)
+        else:
+            # No answer to fill, just focus the input
+            if len(inputed_value) == 0:
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
+                await asyncio.sleep(check_input_interval)
+                if show_debug_message:
+                    print("[VERIFY FORM] No answer, focused input field")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[VERIFY FORM] Error: {exc}")
+
+    return is_answer_sent, fail_list
+
 
 async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector):
     show_debug_message = True       # debug.
@@ -4513,7 +4660,8 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = util.guess_tixcraft_question(driver, question_text)
+                # Note: guess_tixcraft_question() doesn't use the driver parameter
+                answer_list = util.guess_tixcraft_question(None, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -4530,7 +4678,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         next_step_button_css = ""
         submit_by_enter = True
         check_input_interval = 0.2
-        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+        is_answer_sent, fail_list = await nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
     return fail_list
 
@@ -6039,11 +6187,18 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
+                error_msg = str(dismiss_exc)
+                # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
+                if "No dialog is showing" in error_msg or "-32602" in error_msg:
+                    dismiss_success = True  # Consider it handled
+                    if show_debug_message:
+                        print("[GLOBAL ALERT] Dialog already dismissed")
+                    break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)  # Small delay before retry
                 else:
                     if show_debug_message:
-                        print(f"[GLOBAL ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+                        print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
 
     global tixcraft_dict
 
