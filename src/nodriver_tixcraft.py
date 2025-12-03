@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.02)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.04)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -2682,11 +2682,17 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     print(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
+                error_msg = str(dismiss_exc)
+                # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
+                if "No dialog is showing" in error_msg or "-32602" in error_msg:
+                    if show_debug_message:
+                        print("[KKTIX ALERT] Dialog already dismissed")
+                    break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)
                 else:
                     if show_debug_message:
-                        print(f"[KKTIX ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+                        print(f"[KKTIX ALERT] Failed to dismiss alert: {dismiss_exc}")
 
     # Register global alert handler (only once per session)
     if not kktix_dict.get("alert_handler_registered", False):
@@ -4491,11 +4497,152 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
 
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
-    return nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+    return await nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
 
 async def nodriver_tixcraft_verify(tab, config_dict, fail_list):
     question_selector = '.zone-verify'
-    return nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+    return await nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
+
+
+async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
+    """
+    NoDriver version of fill_common_verify_form for TixCraft verification.
+
+    Fills verification form input and submits the answer.
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        inferred_answer_string: Answer to fill in
+        fail_list: List of failed answers
+        input_text_css: CSS selector for input field
+        next_step_button_css: CSS selector for submit button (optional)
+        submit_by_enter: Whether to submit by pressing Enter
+        check_input_interval: Interval to wait when no answer
+
+    Returns:
+        tuple[bool, list]: (is_answer_sent, updated fail_list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    is_answer_sent = False
+
+    try:
+        # Check if input field exists and get current value
+        input_info = await tab.evaluate(f'''
+            (function() {{
+                var input = document.querySelector("{input_text_css}");
+                if (input) {{
+                    return {{
+                        exists: true,
+                        value: input.value || ""
+                    }};
+                }}
+                return {{ exists: false, value: "" }};
+            }})()
+        ''')
+
+        if not input_info or not input_info.get('exists', False):
+            if show_debug_message:
+                print("[VERIFY FORM] Input field not found:", input_text_css)
+            return is_answer_sent, fail_list
+
+        inputed_value = input_info.get('value', '')
+
+        if show_debug_message:
+            print(f"[VERIFY FORM] Current input value: '{inputed_value}'")
+            print(f"[VERIFY FORM] Answer to fill: '{inferred_answer_string}'")
+
+        if len(inferred_answer_string) > 0:
+            # Fill the answer if different from current value
+            if inputed_value != inferred_answer_string:
+                # Clear and fill using JavaScript
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            input.value = "";
+                            input.value = "{inferred_answer_string}";
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+                    }})()
+                ''')
+
+                if show_debug_message:
+                    print(f"[VERIFY FORM] Filled answer: {inferred_answer_string}")
+
+            # Submit the form
+            is_button_clicked = False
+
+            if submit_by_enter:
+                # Submit by pressing Enter
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            var event = new KeyboardEvent('keydown', {{
+                                key: 'Enter',
+                                code: 'Enter',
+                                keyCode: 13,
+                                which: 13,
+                                bubbles: true
+                            }});
+                            input.dispatchEvent(event);
+
+                            // Also try form submit
+                            var form = input.closest('form');
+                            if (form) {{
+                                form.submit();
+                            }}
+                        }}
+                    }})()
+                ''')
+                is_button_clicked = True
+                if show_debug_message:
+                    print("[VERIFY FORM] Submitted by Enter key")
+            elif len(next_step_button_css) > 0:
+                # Click the submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_button_clicked = True
+                        if show_debug_message:
+                            print(f"[VERIFY FORM] Clicked submit button: {next_step_button_css}")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[VERIFY FORM] Failed to click button: {btn_exc}")
+
+            if is_button_clicked:
+                is_answer_sent = True
+                fail_list.append(inferred_answer_string)
+                if show_debug_message:
+                    print(f"[VERIFY FORM] Answer sent, attempt #{len(fail_list)}")
+
+                # Wait and check for alert
+                await asyncio.sleep(0.3)
+        else:
+            # No answer to fill, just focus the input
+            if len(inputed_value) == 0:
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
+                await asyncio.sleep(check_input_interval)
+                if show_debug_message:
+                    print("[VERIFY FORM] No answer, focused input field")
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[VERIFY FORM] Error: {exc}")
+
+    return is_answer_sent, fail_list
+
 
 async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector):
     show_debug_message = True       # debug.
@@ -4513,7 +4660,8 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
-                answer_list = util.guess_tixcraft_question(driver, question_text)
+                # Note: guess_tixcraft_question() doesn't use the driver parameter
+                answer_list = util.guess_tixcraft_question(None, question_text)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -4530,7 +4678,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         next_step_button_css = ""
         submit_by_enter = True
         check_input_interval = 0.2
-        is_answer_sent, fail_list = fill_common_verify_form(driver, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
+        is_answer_sent, fail_list = await nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
     return fail_list
 
@@ -4730,19 +4878,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
             except Exception as e:
                 matched_blocks = formated_area_list
         """
-
-    # Match result summary
-    if show_debug_message:
-        print(f"[DATE KEYWORD] ========================================")
-        print(f"[DATE KEYWORD] Match Summary:")
-        print(f"[DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
-        print(f"[DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
-        if matched_blocks and len(matched_blocks) > 0 and formated_area_list and len(formated_area_list) > 0:
-            print(f"[DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_area_list)*100:.1f}%")
-            print(f"[DATE KEYWORD] ========================================")
-        elif not matched_blocks or len(matched_blocks) == 0:
-            print(f"[DATE KEYWORD]   No dates matched any keywords")
-            print(f"[DATE KEYWORD] ========================================")
 
     # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
@@ -5179,32 +5314,6 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
             if show_debug_message:
                 print(f"[AREA KEYWORD]   Mode is '{area_auto_select_mode}', stopping at first match")
             break
-
-    # Match result summary
-    if show_debug_message:
-        print(f"[AREA KEYWORD] ========================================")
-        print(f"[AREA KEYWORD] Match Summary:")
-        print(f"[AREA KEYWORD]   Total areas checked: {len(area_list)}")
-        print(f"[AREA KEYWORD]   Total areas matched: {len(matched_blocks)}")
-        if len(matched_blocks) > 0:
-            print(f"[AREA KEYWORD]   Match rate: {len(matched_blocks)/len(area_list)*100:.1f}%")
-
-            # Display selected target index
-            target_index = 0
-            if area_auto_select_mode == "random":
-                target_index = "random"
-            elif area_auto_select_mode == "from bottom to top":
-                target_index = len(matched_blocks) - 1
-            elif area_auto_select_mode == "center":
-                target_index = len(matched_blocks) // 2
-            elif area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                target_index = 0
-
-            print(f"[AREA KEYWORD]   Selected target index: {target_index}")
-            print(f"[AREA KEYWORD] ========================================")
-        else:
-            print(f"[AREA KEYWORD]   No areas matched")
-            print(f"[AREA KEYWORD] ========================================")
 
     if not matched_blocks:
         is_need_refresh = True
@@ -5999,7 +6108,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
         global tixcraft_dict
-        current_url, _ = await nodriver_current_url(tab)
+        # IMPORTANT: Use tab.target.url (cached) instead of nodriver_current_url (js_dumps)
+        # When alert dialog is open, JavaScript execution is blocked, causing js_dumps to hang
+        current_url = tab.target.url if hasattr(tab, 'target') and tab.target else ""
 
         if '/ticket/checkout' in current_url:
             if show_debug_message:
@@ -6039,11 +6150,18 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
+                error_msg = str(dismiss_exc)
+                # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
+                if "No dialog is showing" in error_msg or "-32602" in error_msg:
+                    dismiss_success = True  # Consider it handled
+                    if show_debug_message:
+                        print("[GLOBAL ALERT] Dialog already dismissed")
+                    break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)  # Small delay before retry
                 else:
                     if show_debug_message:
-                        print(f"[GLOBAL ALERT] Failed to dismiss alert after 3 attempts: {dismiss_exc}")
+                        print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
 
     global tixcraft_dict
 
@@ -6061,6 +6179,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
         tixcraft_dict["captcha_alert_detected"] = False
+        tixcraft_dict["last_homepage_redirect_time"] = 0
 
     # Register global alert handler (remains active throughout session)
     # Only register once to prevent infinite loop
@@ -6077,13 +6196,25 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     await nodriver_tixcraft_home_close_window(tab)
 
     # special case for same event re-open, redirect to user's homepage.
-    if 'https://tixcraft.com/' == url or 'https://tixcraft.com/activity' == url:
+    # Add cooldown to prevent infinite redirect loop when area page is unavailable
+    # Match homepage URLs: tixcraft.com, tixcraft.com/, tixcraft.com/activity
+    is_tixcraft_home = url in ['https://tixcraft.com', 'https://tixcraft.com/', 'https://tixcraft.com/activity']
+    if is_tixcraft_home:
         if "/ticket/area/" in config_dict["homepage"]:
             if len(config_dict["homepage"].split('/'))==7:
-                try:
-                    await tab.get(config_dict["homepage"])
-                except Exception as e:
-                    pass
+                current_time = time.time()
+                last_redirect_time = tixcraft_dict.get("last_homepage_redirect_time", 0)
+                # Use auto_reload_page_interval from settings, default to 3 seconds
+                redirect_interval = config_dict["advanced"].get("auto_reload_page_interval", 3)
+                if redirect_interval <= 0:
+                    redirect_interval = 3  # Minimum 3 seconds to prevent rapid loop
+
+                if current_time - last_redirect_time > redirect_interval:
+                    try:
+                        tixcraft_dict["last_homepage_redirect_time"] = current_time
+                        await tab.get(config_dict["homepage"])
+                    except Exception as e:
+                        pass
 
     if "/activity/detail/" in url:
         tixcraft_dict["start_time"] = time.time()
@@ -23825,7 +23956,7 @@ async def main(args):
     try:
         if config_dict["ocr_captcha"]["enable"]:
             ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
-            ocr.set_ranges(0)  # Restrict to digits only (0-9) for ibon captchas
+            ocr.set_ranges(1)  # Restrict to lowercase letters only (a-z) for TixCraft captchas
             Captcha_Browser = NonBrowser()
             if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
                 #set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
