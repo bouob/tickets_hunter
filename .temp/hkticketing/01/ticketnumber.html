@@ -1,0 +1,727 @@
+網址: https://premier.hkticketing.com/events/CALUM0226/venues/AWR/performances/EAWR2026637/tickets#
+
+在前一個步驟點選區域成功之後 需要選擇票券數量 : <select class="shortSelect borInput ng-pristine ng-valid" id="quantity--35320" aria-label="Quantity" data-ng-model="priceType.quantity" data-ng-options="item for item in ticketQtyOptions(priceType.admits, $parent.priceTypeGroup.admitLimit)" data-ng-change="ticketInputOnChange()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+還要選擇 取票方式 : <select id="selectDeliveryType" class="borInput longSelect ng-pristine ng-valid" aria-label="How would you like to receive your tickets?" data-width="25em" data-ng-model="tickets.selectedDeliveryType" data-ng-options="delType.displayName for delType in tickets.deliveryTypes" data-options-disabled="delType.isDisabled for delType in tickets.deliveryTypes" data-ng-change="ticketInputOnChange()"><option value="0" selected="selected">Select a delivery option</option><option value="1">eTicket</option></select>
+選擇為 eTicket
+然後才送出 : <button type="submit" class="blueButton" data-ng-disabled="!(tickets.nextButtonVisible &amp;&amp; tickets.enablePurchase &amp;&amp; !tickets.isBusy)" data-ng-class="{ disabled:!(tickets.nextButtonVisible &amp;&amp; tickets.enablePurchase &amp;&amp; !tickets.isBusy)}">
+                    Next<i class="fa fa-spinner fa-spin ng-hide" ng-show="tickets.isBusy"></i>
+                </button>
+
+完整頁面
+<body id="bodyheight">
+    <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WTKWGMB"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+        <div id="mastHeadNew" class="clearfix">
+
+            <!-- Blue Bar -->
+            <div id="headerBlue">
+                <!-- Blue Content -->
+                <div id="headerBlueCentre">
+                    <!-- LOGO -->
+                    <div id="mainLogoAndLangDiv">
+                        <div id="mainLogo">
+                            <a tabindex="-1" href="/default.aspx"><img alt="HK TICKETING" src="//d2jp7hosdnx5my.cloudfront.net/d/images/logo.png" width="196" height="94"></a>
+                        </div>
+                        <div id="languageDiv">
+                            <tix:language runat="server" id="uiLanguageControl" useflags="true">
+                        </tix:language></div>
+                    </div>
+                    
+                </div>
+                <!-- END blue content -->
+            </div>
+        </div>
+        
+        
+
+        <div id="darkGradientBG">
+            <div id="bodyBackgroundWrap">
+                
+                <div id="wrapBody" class="clearfix">
+                    
+                    <div id="ContentShellSmall">
+                        <div>
+                            
+                            <div id="pipeLineContent" class="tickets-page">
+                                
+
+
+
+
+<ol id="purchaseProgress" class="clearfix">
+        <li class="passed">1. Venue / Date</li>
+        <li class="selected">2. Choose Tickets</li>
+        <li>3. Join / Login</li>
+        <li>4. Payment</li>
+        <li>5. Confirmed</li>
+</ol>
+
+
+
+
+<form method="post" data-ng-submit="submit($event)" data-ng-app="ticketsApp" data-ng-controller="TicketsCtrl" data-ng-init="init()" class="ng-scope ng-valid ng-dirty">
+    <input name="__RequestVerificationToken" type="hidden" value="WPf9cZxFhrEjd3zM1aFWAlFIV2nh2vLYym5Oz-odyMQa0FCulX8_oCB2t4R3ucI5OBB5RIxJtPDpyx0oFaSsJYedZMnEdAjPDricmOLI_YYeGYXx3mlU9sLE0p0VpNQ1LAfZDDTLz2jGbo96Z09ccbtxYGFvRLT5_Sf_KCyJYi4odm1c0">
+
+    <div class="tickets-app-overlay"></div>
+
+    <div class="detailModule show-header">
+        <div class="detailModuleCopy clearfix" id="showSummary">
+            
+        <h3>CHOOSE TICKETS</h3>
+
+<div class="clearfix">
+    <img class="floatImg" width="189" src="//d4v9eozo9jvt2.cloudfront.net/dbimages/sfx8544.jpg" alt="Calum Scott The Avenoir Tour 2026 in Hong Kong">
+    <div class="infoBlock">
+        <h5>Calum Scott The Avenoir Tour 2026 in Hong Kong</h5>
+            <p>
+                <strong>Runway 11, AsiaWorld-Expo</strong><br>
+                Hong Kong International Airport, Lantau
+            </p>
+
+        <p>
+                <strong>Thu 05 Feb 2026 8:00PM</strong>
+
+
+        </p>
+                
+        <div class="see-more-summary ng-hide" id="templated-alert-message" data-ng-show="tickets.templatedAttributes.alertMessageTicketsPage">
+            <p><span><a href="#" class="see-more-popup-open">Read Important Information</a></span></p>
+        </div>
+                    
+        <div id="templated-alert-message-content" style="display: none" data-ng-bind-html="htmlSafe(tickets.templatedAttributes.alertMessageTicketsPage)" class="ng-binding"></div>
+    </div>
+</div>
+
+
+
+            
+<div class="entitlement-password-form">
+    <div id="entitlementPassword">
+        <div data-ng-show="!tickets.entitlementPassword.linkedCustomerModels &amp;&amp; !tickets.entitlementPassword.linkedCustomerModels.length" class="">
+            <div id="uiMultipleTitleContainer" class="titleBar ng-binding">
+                
+            </div>
+            <div>
+                <div class="content">
+                    <label for="password-area" data-ng-show="tickets.entitlementPassword.allowMultiplePasswords" class="ng-binding ng-hide"></label>
+                    <label for="password-input" data-ng-hide="tickets.entitlementPassword.allowMultiplePasswords" class="ng-binding"></label>
+                    <textarea id="password-area" data-ng-show="tickets.entitlementPassword.allowMultiplePasswords" data-ng-model="tickets.entitlementPassword.passwords" class="borInput ng-pristine ng-valid ng-hide"></textarea>
+                    <input type="password" id="password-input" data-ng-hide="tickets.entitlementPassword.allowMultiplePasswords" data-ng-model="tickets.entitlementPassword.passwords" class="borInput ng-pristine ng-valid">
+                </div>
+            </div>
+        </div>
+                
+        <div data-ng-show="tickets.entitlementPassword.linkedCustomers &amp;&amp; tickets.entitlementPassword.linkedCustomers.length" class="ng-hide">            
+            <!-- ngRepeat: linkedCustomer in tickets.entitlementPassword.linkedCustomers -->
+        </div>
+
+        <p data-ng-show="!tickets.entitlementPassword.valid &amp;&amp; !tickets.entitlementPassword.allowMultiplePasswords" class=""><span class="ng-binding"></span></p>
+
+        <div class="perfPasswordValidity ng-hide" data-ng-show="!hasInvalidPassword() &amp;&amp; tickets.entitlementPassword.allowMultiplePasswords &amp;&amp; !tickets.entitlementPassword.valid"> 
+            <div class="title">
+                <h4 class="ng-binding"></h4>
+            </div>
+            <div class="validities">
+                <!-- ngRepeat: validity in tickets.entitlementPassword.passwordValidities -->
+            </div>
+            <div class="footer ng-binding" data-ng-bind-html="htmlSafe(tickets.entitlementPassword.invalidPasswordFooter)"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <input type="button" value="Get Tickets" class="yellowButton" data-ng-click="submitPasswords()">
+        <a data-ng-click="cancelPasswordCapturing()">Cancel</a>
+    </div>
+    
+</div>
+        </div>
+    </div>
+
+
+    <div class="detailModule ng-hide" data-ng-show="tickets.specialAccessInformation">
+        <div class="detailModuleCopy">
+            <div>
+                <img src="//d2jp7hosdnx5my.cloudfront.net/d/images/horizontal_Hairline.png" alt="" style="width: 275px; height: 2px">
+                <br>
+            </div>
+            <div id="uiSpecialAccessHeader" class="specialAccessHeader" onclick="javascript:toggleSpecialAccess();">
+                <div class="specialAccessTitle">
+                    Need Special Access<br> Booking Information?
+                </div>
+            </div>
+            <div id="uiSpecialAccessBody" class="specialAccessBody ng-binding" data-ng-bind-html="htmlSafe(tickets.specialAccessInformation)"></div>
+        </div>
+    </div>
+
+        
+    <div class="detailModule inviteModuleBlock ng-hide" data-ng-show="tickets.inviteAFriendRedemption">
+        <div class="blockContent">
+            <p data-ng-show="tickets.inviteAFriendRedemption.isValid" class="ng-hide">
+                <strong>Your friend has reserved 0 ticket(s) next to them.</strong> <br>
+			To purchase different tickets for this event you can 
+            </p>
+            <p data-ng-show="tickets.inviteAFriendRedemption.holdRemptionErrorMessage" class="errorMessage ng-binding ng-hide" data-ng-bind-html="htmlSafe(tickets.inviteAFriendRedemption.holdRemptionErrorMessage)"></p>
+        </div>
+        <div data-ng-show="tickets.inviteAFriendRedemption.isValid" class="ng-hide">
+            <div class="ignoreButtonContainer">
+                <a href="#" data-ng-click="cancelHoldOffer()" class="blackButton">
+                    Ignore this seat offer
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="detailModule clearfix" id="ticketSelectionModule">
+        <ul class="errors ng-hide" data-ng-show="tickets.hasErrorMessage">
+            <!-- ngRepeat: error in tickets.errorMessages -->
+        </ul>
+
+        <div class="ticketSelectionVenueMap detailModule" data-ng-hide="tickets.isConnectionError">
+            <h2 class="toplevel" data-ng-show="tickets.canProceed">Venue Map</h2>
+            <div id="sourcePriceTypesContainer" data-ng-show="tickets.sourcePriceTypes.length &gt; 1" class="ng-hide">
+                <!-- Set the model to be a holding value as the data in the source price type model needs to be updated from server
+                    before showing to user-->
+                <select id="selectSourcePriceType" class="borInput ng-pristine ng-valid" data-ng-model="tickets.preSelectedSourcePriceType" data-ng-change="sourcePriceTypeChange()" data-ng-options="pt.name for pt in tickets.sourcePriceTypes"><option value="0" selected="selected">General seating</option></select>
+            </div>
+            <div data-ng-show="tickets.selectedSourcePriceType.bestAvailableAreas.length" style="padding-bottom:12px" class="ng-hide">
+                <select class="borInput ng-pristine ng-valid" data-ng-model="tickets.selectedSourcePriceType.selectedBestAvailableArea" data-ng-options="area.displayName for area in tickets.selectedSourcePriceType.bestAvailableAreas"><option value="?" selected="selected"></option></select>
+            </div>
+
+            <div class="seatAreaWarning dynamic-seatmap-content" data-ng-show="showMapStatusMessage()" style="visibility: visible;">
+                <div>
+                    <img class="icon" src="//d2jp7hosdnx5my.cloudfront.net/d/images/valid.png" alt="info" data-ng-show="availableTickets != 0">
+                    <img class="icon unavailable ng-hide" src="//d2jp7hosdnx5my.cloudfront.net/d/images/removeIcon.gif" alt="info" data-ng-show="availableTickets == 0">
+                    <p data-ng-bind-html="htmlSafe(mapStatusMessage())" class="ng-binding">
+      You can buy up to 4 tickets in <strong>this category</strong><br>
+      (If you don’t select a specific section, "Get tickets" will find the best available tickets in this category)
+      </p>
+                </div>
+            </div>
+            <div class="detailModuleCopy">
+                <div>
+                    <div id="seatAreaMapImages" class="map-render-complete" style="visibility: visible;">
+                        <div id="seatView"></div>
+                        <div id="mapWrapper"><svg height="365.842968322255" version="1.1" width="424.99999999999994" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="overflow: hidden; position: relative; left: 0px; top: -0.399994px;"><desc style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Created with Raphaël 2.2.0</desc><defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></defs><path fill="#222222" stroke="#999999" d="M438.00884,578.37978L344.17566,578.37978L344.17566,614.51193L438.00884,614.51193Z" stroke-width="1.710062305882353" fill-opacity="1" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" tkt-custom-qtip="FOH" data-hasqtip="0"></path><path fill="#222222" stroke="#999999" d="M276.87403,161.42808L504.31074,161.42808L504.31074,11.10234L276.87403,11.10234Z" stroke-width="1.710062305882353" fill-opacity="1" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" tkt-custom-qtip="STAGE" data-hasqtip="1"></path><path fill="none" stroke="#999999" d="M379.9622,216.00645L302.08705,216.00645L302.08705,322.81875L379.9622,322.81875Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" tkt-custom-qtip="A*4" data-hasqtip="2"></path><path fill="#dfdfdf" stroke="#000000" d="M324.33704,248.05045L324.33704,216.00645L379.96204,216.00645L379.96204,248.05045Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*4" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="3"></path><path fill="#dfdfdf" stroke="#000000" d="M302.08704,248.05045L302.08704,216.00645L324.33704,216.00645L324.33704,248.05045Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*4-A" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="4"></path><path fill="#dfdfdf" stroke="#000000" d="M302.08704,322.81845L302.08704,248.05045L379.96204,248.05045L379.96204,322.81845Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*4-B" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="5"></path><path fill="none" stroke="#999999" d="M481.79211,215.90945L401.04645,215.90945L401.04645,326.04422L481.79211,326.04422Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" tkt-custom-qtip="A*3" data-hasqtip="6"></path><path fill="#dfdfdf" stroke="#000000" d="M401.04645,248.94945L401.04645,215.90945L458.72144,215.90945L458.72144,248.94945Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*3" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="7"></path><path fill="#dfdfdf" stroke="#000000" d="M458.72144,248.94945L458.72144,215.90945L481.79144,215.90945L481.79144,248.94945Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*3-A" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="8"></path><path fill="#dfdfdf" stroke="#000000" d="M401.04645,326.04346L401.04645,248.94945L481.79144,248.94945L481.79144,326.04346Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*3-B" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="9"></path><path fill="#dfdfdf" stroke="#000000" d="M300.6268,540.98853L300.6268,503.97754L381.05179,503.97754L381.05179,540.98853Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*4-A" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="10"></path><path fill="#dfdfdf" stroke="#000000" d="M397.83878,539.90186L397.83878,503.47089L478.26376,503.47089L478.26376,539.90186Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*3-A" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0;" data-hasqtip="11"></path><path fill="#9ecc3c" stroke="#999999" d="M83.29911,229.69089L46.85838,218.91749L47.3932,219.29805L47.18859,311.28581L83.69433,324.4991Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="A*7" data-active="1" data-hasqtip="12" stroke-opacity="1"></path><path fill="#9ecc3c" stroke="#999999" d="M678.87128,216.27302L599.10036,216.27302L599.10036,323.33919L678.87128,323.33919Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="A*1" data-active="1" data-hasqtip="13" stroke-opacity="1"></path><path fill="#9ecc3c" stroke="#999999" d="M181.21621,216.27014L100.95714,216.27014L100.95714,324.16628L181.21621,324.16628Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="A*6" data-active="1" data-hasqtip="14" stroke-opacity="1"></path><path fill="none" stroke="#999999" d="M280.10116,216.56075L199.62013,216.56075L199.62013,323.62693L280.10116,323.62693Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="A*5" data-active="1" data-hasqtip="15" stroke-opacity="1"></path><path fill="#30bdbb" stroke="#000000" d="M222.61513,248.68074L222.61513,237.97374L199.62013,237.97374L199.62013,216.56075L280.10114,216.56075L280.10114,248.68074Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*5" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="16"></path><path fill="#9ecc3c" stroke="#000000" d="M199.62013,323.62674L199.62013,237.97374L222.61513,237.97374L222.61513,248.68074L280.10114,248.68074L280.10114,323.62674Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*5-A" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="17"></path><path fill="none" stroke="#999999" d="M578.66057,216.27302L499.71876,216.27302L499.71876,323.33919L578.66057,323.33919Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="A*2" data-active="1" data-hasqtip="18" stroke-opacity="1"></path><path fill="#30bdbb" stroke="#000000" d="M499.71875,248.39302L499.71875,216.27303L578.65973,216.27303L578.65973,237.68602L556.10571,237.68602L556.10571,248.39302Z" stroke-width="0" stroke-opacity="0" fill-opacity="0.4980392156862745" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*2" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="19"></path><path fill="#9ecc3c" stroke="#000000" d="M499.71875,323.33902L499.71875,248.39302L556.10571,248.39302L556.10571,237.68602L578.65973,237.68602L578.65973,323.33902Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="A*2-A" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="20"></path><path fill="#719f41" stroke="#999999" d="M578.64408,340.91677L499.79815,340.91677L499.79815,452.21869L578.64408,452.21869Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*2" data-active="1" data-hasqtip="21" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M480.77928,341.52199L400.03361,341.52199L400.03361,451.65676L480.77928,451.65676Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*3" data-active="1" data-hasqtip="22" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M378.94936,341.61898L301.07422,341.61898L301.07422,448.43129L378.94936,448.43129Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*4" data-active="1" data-hasqtip="23" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M281.53352,341.02092L200.16809,341.02092L200.16809,450.19445L281.53352,450.19445Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*5" data-active="1" data-hasqtip="24" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M180.22407,341.90232L100.9507,341.90232L100.9507,448.16795L180.22407,448.16795Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*6" data-active="1" data-hasqtip="25" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M678.87128,341.90288L599.10036,341.90288L599.10036,448.16851L678.87128,448.16851Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*1" data-active="1" data-hasqtip="26" stroke-opacity="1"></path><path fill="#719f41" stroke="#999999" d="M83.90895,346.27475L47.46822,334.2371L48.00304,334.66232L47.79843,437.44474L84.30417,452.2086Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="B*7" data-active="1" data-hasqtip="27" stroke-opacity="1"></path><path fill="#ffcd35" stroke="#999999" d="M83.89468,470.26692L47.45396,458.22927L47.98877,458.65449L47.78416,561.43691L84.28991,576.20077Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*7" data-active="1" data-hasqtip="28" stroke-opacity="1"></path><path fill="#ffcd35" stroke="#999999" d="M679.9181,466.17013L600.14719,466.17013L600.14719,573.88683L679.9181,573.88683Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*1" data-active="1" data-hasqtip="29" stroke-opacity="1"></path><path fill="#ffcd35" stroke="#999999" d="M181.21619,466.16913L100.95404,466.16913L100.95404,573.84158L181.21619,573.84158Z" stroke-width="1.710062305882353" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*6" data-active="1" data-hasqtip="30" stroke-opacity="1"></path><path fill="none" stroke="#999999" d="M381.05276,466.96556L300.62679,466.96556L300.62679,540.98913L381.05276,540.98913Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*4" data-active="1" data-hasqtip="31" stroke-opacity="1"></path><path fill="#719f41" stroke="#000000" d="M300.6268,503.97754L300.6268,466.96555L381.05179,466.96555L381.05179,503.97754Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*4" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="32"></path><path fill="none" stroke="#999999" d="M478.26476,467.0389L397.83878,467.0389L397.83878,539.90256L478.26476,539.90256Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*3" data-active="1" data-hasqtip="33" stroke-opacity="1"></path><path fill="#719f41" stroke="#000000" d="M397.83878,503.47089L397.83878,467.03891L478.26376,467.03891L478.26376,503.47089Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*3" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="34"></path><path fill="none" stroke="#999999" d="M281.54779,466.32051L200.18236,466.32051L200.18236,576.85496L281.54779,576.85496Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*5" data-active="1" data-hasqtip="35" stroke-opacity="1"></path><path fill="#719f41" stroke="#000000" d="M200.18236,521.58746L200.18236,466.3205L281.54733,466.3205L281.54733,521.58746Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*5" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="36"></path><path fill="#ffcd35" stroke="#000000" d="M200.18236,576.85449L200.18236,521.58746L281.54733,521.58746L281.54733,576.85449Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*5-A" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="37"></path><path fill="none" stroke="#999999" d="M578.65986,467.01268L499.79825,467.01268L499.79825,575.88003L578.65986,575.88003Z" stroke-width="1.710062305882353" transform="matrix(0.5848,0,0,0.5848,0,0)" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); cursor: pointer;" tkt-custom-qtip="C*2" data-active="1" data-hasqtip="38" stroke-opacity="1"></path><path fill="#719f41" stroke="#000000" d="M499.79825,521.44666L499.79825,467.01266L578.65924,467.01266L578.65924,521.44666Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*2" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="39"></path><path fill="#ffcd35" stroke="#000000" d="M499.79825,575.87964L499.79825,521.44666L578.65924,521.44666L578.65924,575.87964Z" stroke-width="0" stroke-opacity="0" fill-opacity="0" transform="matrix(0.5848,0,0,0.5848,0,0)" tkt-custom-qtip="C*2-A" data-active="1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); stroke-opacity: 0; cursor: pointer;" data-hasqtip="40"></path><text x="228.70058515102193" y="348.78603718023453" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999989721585848" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">FOH</tspan></text><text x="228.40827708816332" y="50.445653180741346" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#ffffff" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="4.000001172684705" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">STAGE</tspan></text><text x="199.4223390732182" y="157.54548771308615" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#888888" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999995064007777" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*4</tspan></text><text x="258.13052453210923" y="158.46021169397227" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#888888" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="4.0000004169642125" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*3</tspan></text><text x="38.22901435402932" y="158.93392618227446" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.99999054003203" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*7</tspan></text><text x="373.6623032985327" y="157.7755992117411" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999988764811178" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*1</tspan></text><text x="82.50382136059218" y="158.01658750706954" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999995004475551" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*6</tspan></text><text x="140.2642723454672" y="157.9438591628612" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999900489390825" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*5</tspan></text><text x="315.30410508744035" y="157.7755992117411" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999988764811178" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">A*2</tspan></text><text x="315.3224962302027" y="231.90250357303802" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="4.000016295053399" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*2</tspan></text><text x="257.53824494292934" y="231.91516100658623" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999993674890675" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*3</tspan></text><text x="198.83005948403834" y="231.00043410183002" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999853980641547" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*4</tspan></text><text x="140.84329218386372" y="231.3410942040942" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="4.000008293297071" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*5</tspan></text><text x="82.21184954279202" y="231.00628184197703" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999973763211159" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*6</tspan></text><text x="373.6623032985327" y="231.00660931542527" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999960608781464" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*1</tspan></text><text x="38.528534763535546" y="229.9465046667443" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999957823143575" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">B*7</tspan></text><text x="38.520195886085915" y="302.45390370915686" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999979053242555" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*7</tspan></text><text x="374.2744593564723" y="304.0991420085581" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999984198346908" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*1</tspan></text><text x="82.50290911312925" y="304.0856191094681" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999805863662914" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*6</tspan></text><text x="199.3142435966007" y="294.7128553540973" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999890477923827" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*4</tspan></text><text x="256.1612921898628" y="294.41660006663943" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999998408772001" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*3</tspan></text><text x="140.85163690905352" y="305.010953814851" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.9999918054210752" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*5</tspan></text><text x="315.3271393358794" y="304.9282784646525" text-anchor="middle" font-family="Verdana" font-size="10px" stroke="none" fill="#000000" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: Verdana; font-size: 10px;" pointer-events="none"><tspan dy="3.999988574363215" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">C*2</tspan></text></svg></div>
+                    </div>
+                    <div class="reset-map dynamic-seatmap-content" style="visibility: visible;">
+                        <a href="#" data-ng-show="(tickets.selectedSourcePriceType.selectedBestAvailableArea.id || tickets.selectedSourcePriceType.selectedSeatArea.id) &amp;&amp; !tickets.selectedSourcePriceType.isMapStaticImage &amp;&amp; !seatsAllExhausted()" data-ng-click="resetMap($event)" class="">
+                            Reset map
+                        </a>
+                    </div>
+                    <div class="seatMapFooter actionBlock dynamic-seatmap-content" style="visibility: visible;">
+                        <div class="blockTitle">
+                            <h4>About this map</h4>
+                            <a href="javascript:ShowContentPopupOverlayFrame('SeatMap.Disclaimer.Heading','SeatMap.Disclaimer.Content',200,500);">
+                                <img src="//d2jp7hosdnx5my.cloudfront.net/d/images/attention.gif" alt="attention">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="viewMapContainer clearfix">
+                    <div class="seatMapSVG">
+                        <div id="container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticketSelection detailModule" id="ticketSelection">
+            <div data-ng-show="tickets.canProceed" class="">
+                <h2 class="toplevel">
+                    <span data-ng-show="tickets.enablePurchase &amp;&amp; !(tickets.enablePurchase &amp;&amp; tickets.selectedSourcePriceType.visibleSeatAreas.length &gt; 1 &amp;&amp; !seatsAllExhausted())" class="">
+                        Choose your Tickets
+                    </span>
+                    <span data-ng-show="!tickets.enablePurchase || (tickets.enablePurchase &amp;&amp; tickets.selectedSourcePriceType.visibleSeatAreas.length &gt; 1 &amp;&amp; !seatsAllExhausted())" class="ng-hide">
+                        Browse by price category
+                    </span>
+                </h2>
+                <div id="ticketSelectorContainer">
+                    <p class="nextlevel selectcategory ng-hide" data-ng-show="tickets.selectedSourcePriceType.visibleSeatAreas.length &gt; 1 &amp;&amp; !seatsAllExhausted() &amp;&amp; !tickets.hasNoCommonPriceTypes">Price Per Ticket/Item<sup>†</sup></p>
+                    <p class="nextlevel resetcategory" data-ng-show="tickets.selectedSourcePriceType.canResetCategories"><a href="#" data-ng-click="resetSeatAreas($event)"><span></span> <span class="downarrow">&nbsp;</span></a></p>
+                    <ul class="seatarea" data-ng-show="tickets.selectedSourcePriceType != null &amp;&amp; tickets.selectedSourcePriceType.visibleSeatAreas != null &amp;&amp; tickets.selectedSourcePriceType.visibleSeatAreas.length &gt; 0 &amp;&amp; !tickets.hasNoCommonPriceTypes">
+                        <!-- ngRepeat: seatArea in tickets.selectedSourcePriceType.visibleSeatAreas --><li data-ng-repeat="seatArea in tickets.selectedSourcePriceType.visibleSeatAreas" data-ng-mouseenter="hilightSeatArea(seatArea)" data-ng-mouseleave="unhilightSeatArea(seatArea)" data-ng-class="seatArea.className" class="ng-scope selected">
+                            <a href="#" data-ng-click="selectSeatArea(seatArea)">
+                                <div class="marker" data-ng-style="getMarkerStyle(seatArea.id)" style="background-color: rgb(152, 222, 221); border-color: rgb(152, 222, 221); border-width: 2px;">&nbsp;</div>
+                                <div data-ng-bind="getPriceCategoryName(seatArea)" class="name ng-binding">HK$1388 VIP 2</div>
+                                <div data-ng-bind="getDisplayPrice(seatArea)" class="price ng-binding ng-hide" data-ng-show="tickets.selectedSourcePriceType.visibleSeatAreas.length &gt; 1">HK$1,388.00</div>
+                            </a>
+                        </li><!-- end ngRepeat: seatArea in tickets.selectedSourcePriceType.visibleSeatAreas -->
+                    </ul>
+
+                    <div data-ng-show="tickets.selectedSourcePriceType.id != null &amp;&amp; (tickets.selectedSourcePriceType.visibleSeatAreas == null || tickets.selectedSourcePriceType.visibleSeatAreas.length == 0 || tickets.hasNoCommonPriceTypes)" class="ng-hide">
+                        <span data-ng-show="tickets.isUsingEntitlements" class="ng-hide">There are no tickets available that match the entitlements of this password or group code.</span>
+                        <span data-ng-show="!tickets.isUsingEntitlements" class="">There are no tickets available.</span>
+                    </div>
+
+                    <div data-ng-show="tickets.selectedSourcePriceType.visibleSeatAreas.length === 1" class="">
+                        <div class="actionBlock chooseTickets">
+                            <div class="blockTitle">
+                                <h4>
+                                    <span data-ng-show="tickets.enablePurchase" class="">Select a Price Type</span>
+                                    <span data-ng-show="!tickets.enablePurchase" class="ng-hide">Price type(s)</span>
+                                </h4>
+                            </div>
+                            <div class="blockContent" id="priceTypesContainer">
+                                <!-- ngRepeat: customerEntitlement in tickets.selectedSourcePriceType.selectedSeatArea.customerEntitlements --><section data-ng-repeat="customerEntitlement in tickets.selectedSourcePriceType.selectedSeatArea.customerEntitlements" class="ng-scope">
+                                    <h5 data-ng-show="customerEntitlement.id &amp;&amp; hasMultiEntitlements()" class="ng-binding ng-hide">
+                                        
+                                    </h5>
+                                    <p data-ng-hide="customerEntitlement.priceTypeGroups.length" class="ng-hide">
+                                        <strong>
+                                            <!--TODO: see TicketSelector.ascx.cx NoTickets message-->
+                                            No tickets
+                                        </strong>
+                                    </p>
+                                    <table cellpadding="0" cellspacing="0" border="0" data-ng-show="customerEntitlement.priceTypeGroups.length" class="">
+                                        <thead>
+                                            <tr>
+                                                <th class="whiteTH th70">
+                                                    Ticket
+                                                </th>
+                                                <th class="whiteTH th15" data-ng-class="(!tickets.enablePurchase ? 'alignRight' : '')">
+                                                    Price Per Ticket/Item<sup>†</sup>
+                                                </th>
+                                                <th class="whiteTH th15 chooseTicketsPriceTypeQuantity" data-ng-show="tickets.enablePurchase">
+                                                    Quantity
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <!-- ngRepeat: priceTypeGroup in customerEntitlement.priceTypeGroups --><tbody data-ng-repeat="priceTypeGroup in customerEntitlement.priceTypeGroups" class="ng-scope">
+                                            <!-- ngRepeat: priceType in priceTypeGroup.priceTypes --><tr data-ng-repeat="priceType in priceTypeGroup.priceTypes" data-ng-class="{ unavailable:isStateExhausted(priceType.state,priceType.id,tickets.selectedSourcePriceType.selectedSeatArea.id) }" class="ng-scope">
+                                                <td class="td70">
+                                                    <label for="quantity--35320" class="ng-binding">
+                                                        VIP 2
+                                                        <span data-ng-show="priceType.admits &gt; 1" class="ng-binding ng-hide">
+                                                             (with 1 tickets/items)
+                                                        </span>
+                                                    </label>
+                                                </td>
+                                                <td colspan="2" data-ng-show="false" class="ng-hide">
+                                                    <span class="priceTypeExhausted">Allocation Exhausted</span>
+                                                </td>
+                                                <td class="td15 ng-binding" data-ng-class="(!tickets.enablePurchase ? 'alignRight' : '')" data-ng-show="!isStateExhausted(priceType.state,priceType.id,tickets.selectedSourcePriceType.selectedSeatArea.id)">
+                                                    
+                                                    HK$1,388.00
+                                                    <span data-ng-show="priceType.priceFrom != priceType.priceTo" class="ng-binding ng-hide">
+                                                        to HK$1,388.00
+                                                    </span>
+                                                </td>
+                                                <td class="td15 chooseTicketsPriceTypeQuantity" data-ng-show="tickets.enablePurchase &amp;&amp; !isStateExhausted(priceType.state,priceType.id,tickets.selectedSourcePriceType.selectedSeatArea.id)">
+                                                    <select class="shortSelect borInput ng-pristine ng-valid" id="quantity--35320" aria-label="Quantity" data-ng-model="priceType.quantity" data-ng-options="item for item in ticketQtyOptions(priceType.admits, $parent.priceTypeGroup.admitLimit)" data-ng-change="ticketInputOnChange()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+                                                </td>
+                                            </tr><!-- end ngRepeat: priceType in priceTypeGroup.priceTypes -->
+                                        </tbody><!-- end ngRepeat: priceTypeGroup in customerEntitlement.priceTypeGroups -->
+                                    </table>
+                                </section><!-- end ngRepeat: customerEntitlement in tickets.selectedSourcePriceType.selectedSeatArea.customerEntitlements -->
+                                <p class="note"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-ng-show="tickets.selectedSourcePriceType.visibleSeatAreas.length === 1 &amp;&amp; tickets.enablePurchase" class="">
+                    <div id="seatingSpecialRequirements" data-ng-show="tickets.seatingSpecialRequirements &amp;&amp; tickets.seatingSpecialRequirements.length" class="ng-hide">
+                        <fieldset>
+                            <!-- ngRepeat: seatRequirement in tickets.seatingSpecialRequirements -->
+                        </fieldset>
+                        <p>
+                            
+                        </p>
+                    </div>
+
+                    <div id="inviteAFriendContainer" class="actionBlock ng-hide" data-ng-hide="(tickets.inviteAFriendRedemption &amp;&amp; tickets.inviteAFriendRedemption.isValid) || !tickets.inviteAFriendInvite || tickets.isUsingEntitlements">
+                        <div class="blockTitle">
+                            <h4>
+                                Invite Friends
+                                <a id="showBlurbLink" href="javascript:$('#inviteAFriendBlurb').slideToggle(500);void(0)" class="help"></a>
+                            </h4>
+                            <div id="holdDuration" data-ng-bind-html="htmlSafe(tickets.inviteAFriendInvite.holdDurationText)" class="ng-binding"></div>
+                        </div>
+                        <div class="blockContent">
+                            <p class="ticketSelectionDDLElement">
+                                <label for="uiHoldNumber">
+                                    Select the number of seats you'd like to reserve for friends next to you
+                                </label>
+                                <select id="uiHoldNumber" data-width="5em" class="borInput shortSelect ng-pristine ng-valid" data-ng-init="tickets.selectedSourcePriceType.selectedSeatArea.inviteAFriendCount = (tickets.selectedSourcePriceType.selectedSeatArea.inviteAFriendCount || 0)" data-ng-model="tickets.selectedSourcePriceType.selectedSeatArea.inviteAFriendCount" data-ng-options="n for n in (tickets.inviteAFriendInvite ? getNumericRange(tickets.inviteAFriendInvite.getLimit(tickets.selectedSourcePriceType.selectedSeatArea)) : [0])" data-ng-disabled="!(tickets.inviteAFriendInvite &amp;&amp; tickets.inviteAFriendInvite.getLimit(tickets.selectedSourcePriceType.selectedSeatArea) &gt; 0)" disabled="disabled"><option value="0" selected="selected">0</option></select>
+                            </p>
+                            <div id="inviteAFriendBlurb" class="note blurb" style="display: none">
+                                
+				<p>To hold adjacent seats for your friends, simply choose the number of seats for your friends and purchase your own tickets.
+				Afterward you will be able to share the event details and invite through email or Facebook.
+				Your friends can then buy their own tickets!</p>
+				<p>*please note, held seats are sold on a first-in basis.  
+				For example, if you you hold one seat for two friends, the friend who purchases first will acquire the held seat.</p>
+			
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="deliveryMethodContainer" class="actionBlock">
+                        <div class="blockTitle">
+                            <h4>How would you like to receive your tickets?</h4>
+                        </div>
+                        <div class="blockContent">
+                            <p class="ticketSelectionDDLElement">
+                                <label for="selectDeliveryType">
+                                    
+                                </label>
+                                <select id="selectDeliveryType" class="borInput longSelect ng-valid ng-dirty" aria-label="How would you like to receive your tickets?" data-width="25em" data-ng-model="tickets.selectedDeliveryType" data-ng-options="delType.displayName for delType in tickets.deliveryTypes" data-options-disabled="delType.isDisabled for delType in tickets.deliveryTypes" data-ng-change="ticketInputOnChange()"><option value="0" selected="selected">Select a delivery option</option><option value="1">eTicket</option></select>
+                            </p>
+                            <p class="note ng-binding" id="deliveryTypeDescription" data-ng-bind-html="htmlSafe(tickets.selectedDeliveryType.description)"></p>
+                            <p class="note ng-binding" id="deliveryTypeBandsDescription" data-ng-bind-html="htmlSafe(tickets.selectedDeliveryType.bandsDescription)"></p>
+                            <p class="note">**Click <a href="javascript:ShowOverlayFrame('/Content/buyers/delivery_popup.aspx',450,640);">here</a> for important collection / delivery info</p>
+                            <div id="deliveryBandDialog" class="deliveryBands ng-hide" style="display:none" ng-show="tickets.selectedDeliveryType.bands">
+                                <div ng-show="tickets.selectedDeliveryType.conditions" class="ng-hide">
+                                    <label for="conditionSelect">Delivery To:</label>
+                                    <select id="conditionSelect" ng-show="tickets.selectedDeliveryType.conditions &amp;&amp; tickets.selectedDeliveryType.conditions.length &gt; 1" data-ng-model="tickets.selectedCondition" data-ng-options="condition.displayName for condition in tickets.selectedDeliveryType.conditions" data-ng-change="conditionCodeOnChange()" class="ng-pristine ng-valid ng-hide"><option value="?" selected="selected"></option></select>
+                                    <span id="conditionLabel" ng-show="!tickets.selectedDeliveryType.conditions || tickets.selectedDeliveryType.conditions.length === 1" class="ng-binding">
+                                        
+                                    </span>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody><!-- ngRepeat: band in tickets.selectedDeliveryType.filteredBands -->
+                                </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+
+<div id="captchaContainer" class="actionBlock ng-hide" data-ng-show="tickets.isCaptchaEnabled">
+    <p>Please enter the CAPTCHA security words below.</p>
+    <img src="/Captcha.ashx" alt="Please enter the CAPTCHA security words below.">
+    <button id="captchaRefresh" type="button"><span class="fa fa-refresh"></span></button>
+    <br>
+    <input data-ng-model="user.captchaResponse" class="captchaText borInput ng-pristine ng-valid" type="text">
+</div>                </div>
+                    <div class="actionBlock note copy">
+                        <h5>
+                            <sup>*</sup>
+                            Price changes
+                        </h5>
+                        <div>
+                            <p>Prices are subject to change until such a time that they have been confirmed and added to your basket.</p>
+                        </div>
+                    </div>
+                <div class="actionBlock note copy">
+                    <h5>
+                        <sup>†</sup>
+                        Fees &amp; Charges
+                    </h5>
+                    <p data-ng-show="tickets.deliveryFeesMessage" class="ng-binding">
+			For this event, a one-off service/delivery fee per transaction applies on all purchases.
+			The actual service/delivery fee may vary depending on the venue and method of delivery selected, or where you add other items to your basket.
+		</p>
+                    <div data-ng-show="tickets.feesAndChargesMessages" class="">
+                        <!-- ngRepeat: feesAndChargesMessage in tickets.feesAndChargesMessages --><p data-ng-repeat="feesAndChargesMessage in tickets.feesAndChargesMessages" class="ng-scope ng-binding"></p><!-- end ngRepeat: feesAndChargesMessage in tickets.feesAndChargesMessages -->
+                        
+                    </div>
+                    <p>
+                        All ticket/item prices are quoted in HK$.
+                    </p>
+                    <div>
+                        <p>Ticket orders purchased by credit card are subject to credit card approval and customer account verification.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="continueBar">
+            <div class="chooseTicketsOfferDiv">
+                <button type="submit" class="blueButton disabled" data-ng-disabled="!(tickets.nextButtonVisible &amp;&amp; tickets.enablePurchase &amp;&amp; !tickets.isBusy)" data-ng-class="{ disabled:!(tickets.nextButtonVisible &amp;&amp; tickets.enablePurchase &amp;&amp; !tickets.isBusy)}" disabled="disabled">
+                    Next<i class="fa fa-spinner fa-spin ng-hide" ng-show="tickets.isBusy"></i>
+                </button>
+            </div>
+
+            <div class="chooseTicketsBackDiv">
+                    <button type="reset" class="blueButton chooseTicketsBackButton" data-ng-click="goBack('CALUM0226')">Back</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+                            </div>
+                        </div>
+                        
+                        <div class="smallFooterWrapper">
+                            <div id="wrapFooter" class="footersmall">
+								<div class="footerBannerSpaceNew">
+									
+								</div>
+								<div class="footerPartners">
+											
+								</div>
+								<div class="footerAbout">
+									
+	  
+								</div>
+                                <div class="footerInsurance" style="display:none;">
+                                    
+                                </div>
+                                <div class="footerCompany" style="display:none;">
+                                    <h3>COMPANY</h3>
+                                    
+		<ul>
+			<li><a tabindex="-1" href="/Content/aboutus/aboutus.aspx">About HK TICKETING</a></li>
+			<!--<li><a tabindex="-1" href="/Content/aboutus/careers.aspx">Careers at HK TICKETING</a></li>-->
+			<li><a tabindex="-1" href="/Content/buyers/security.aspx">Security</a></li>
+			<!--<li><a tabindex="-1" href="/Content/Corporate.aspx">Corporate</a></li>-->
+			<li><a tabindex="-1" href="/Content/buyers/termsofuse.aspx">Website Terms of Use</a></li>
+			<li><a tabindex="-1" href="/Content/buyers/termsofsale.aspx">Terms and Conditions of Sales</a></li>
+			<li><a tabindex="-1" href="/Content/buyers/privacy.aspx">Privacy Policy</a></li>
+			<li><a tabindex="-1" href="/shows/show.aspx?sh=COOKIE">Cookie Policy</a></li>
+			<li><a tabindex="-1" href="/Content/SellTickets.aspx">Sell Event Tickets Through Us</a></li>
+		</ul>
+		
+                                </div>
+                                <div class="footerSecurity">
+                                    		
+                                </div>
+                                <div class="footerSoftix">
+                                </div>
+                                <div class="footerVersion">
+                                    © 1999 - 2020&nbsp;Hong Kong Ticketing, All rights reserved.
+                                    Version 5.21 B44 R0
+                                </div>
+                                 
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+        <div id="floatingbar-container">
+            <div class="floatingbar">
+                <div class="floatingbarInner">
+                        <div class="accountdetails" onmouseover="$('#floatingbar-container').addClass('floatingbar-accountdetailsup')" onmouseout="$('#floatingbar-container').removeClass('floatingbar-accountdetailsup')">
+                            <div class="accountdetailsInner">
+                                <div class="myticketek">My HK TICKETING</div>
+                                <div class="visitorname">
+Hi&nbsp;VICTOR
+                                </div>
+                            </div>
+                        </div>
+                    <div class="myBasket">
+                        
+		<div class="nobasket"><img alt="Basket" src="//d2jp7hosdnx5my.cloudfront.net/d/images/icon_basket_white.png"></div>
+	  
+                    </div>
+                    <div class="timeremaining">
+                            <div class="blurb">
+                                Time remaining to<br>make your purchase
+                            </div>
+                            <div class="clock">
+                                <img src="/images/sessionTimeIcon.png" alt="">
+                                <strong>
+                                    <span id="sessionTimerDefault" style="display: none;">Your session expires at: 12:17PM Hong Kong Time</span>
+                                    <span id="sessionTimerCountDown" style="display: inline;">
+                                        
+                                        <span id="sessionTimerClock"><span id="minutes"><span class="TimerDisplay">5</span></span> min <span id="seconds"><span class="TimerDisplay">43</span></span> sec </span>
+                                    </span>
+                                </strong>
+                            </div>
+                    </div>
+                    <div id="divRhsAd" class="rhsad">
+                        <div class="rhsadInner" runat="server" id="dvRhsAdInner">
+                            <img src="//d2jp7hosdnx5my.cloudfront.net/d/images/hotline_en.png" border="0">
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!--[if lt IE 9]><script src="/js/es5-shim.min.js"></script><![endif]-->
+        
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+		<script type="text/javascript">
+			$(window).on('load',function(){
+				var delayMs = 100; // delay in milliseconds
+    
+				setTimeout(function(){
+					if ($('#myModal')){
+						$('#myModal').modal('show');
+					}
+				}, delayMs);
+			});
+		</script>
+        <script type="text/javascript">
+		
+            /*<![CDATA[*/
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape("%3Cscript src='//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js' type='text/javascript'%3E%3C/script%3E"));
+            }
+
+            
+            RegExp.EmailPattern = '^[-a-zA-Z0-9_]([-a-zA-Z0-9_&#39;.]*[-a-zA-Z0-9_&#39;])?\\@[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9]\\.[a-zA-Z][a-zA-Z\\.]*[a-zA-Z]$';
+            
+            RegExp.ValidCharSetPattern = '^[\p{L}\p{M}\p{S}\p{N}\p{P}\u0020-\u00ff]*$';
+            RegExp.ForbiddenCharsPattern = '&lt;([!/?a-zA-Z]+)';
+            /*]]>*/
+        </script>
+       
+        <script type="text/javascript" src="/js/jquery.formatCurrency-1.3.0.pack.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/xregexp/2.0.0/xregexp-all-min.js" type="text/javascript"></script>
+	    <script src="/js/jquery.cookie.js"></script>
+	    <script src="/js/softix.crypto.js"></script>
+	    
+        <script type="text/javascript" src="/js/jsencrypt.min.js?140909"></script>
+        
+        
+            <script src="/js/sessionTimer.js" type="text/javascript"></script>
+            <script type="text/javascript">
+                /*<![CDATA[*/
+                var clsClock = new CCountDown("clsClock", false, true, 'http://busy.hkticketing.com/timeout',
+                    'hkticketing.com+cp.ex', 'hkticketing.com+cp.st');
+                $(document).ready(function()
+                {
+                    clsClock.AddMinuteLayer("minutes", "TimerDisplay", 'min');
+                    clsClock.AddSecondLayer("seconds", "TimerDisplay", 'sec');
+                    clsClock.StartCountdown();
+                });
+                /*]]>*/
+            </script>
+        
+    <script src="/js/jquery.json-2.2.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js"></script>
+
+            <script type="text/javascript">
+            var captchaSrcImg;
+            $(function () {
+                captchaSrcImg = $("img", "#captchaContainer").attr("src");
+                var refreshCaptcha = function () {
+                    $.ajax({
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        headers: { '__RequestVerificationToken': $('input[name=__RequestVerificationToken]').val() },
+                        url: "/events/CALUM0226/venues/AWR/performances/EAWR2026637/Tickets/RefreshCaptcha",
+                        dataType: "json",
+                        success: function (data) {
+                            $("img", "#captchaContainer").attr("src", captchaSrcImg + "?" + Math.random().toString(16).substring(2));
+                        },
+                        error: function (xhr, err) {
+                            console.log("readyState: " + xhr.readyState + "\nstatus: " + xhr.status);
+                            console.log("responseText: " + xhr.responseText);
+                        }
+                    });
+                };
+                $("#captchaRefresh").on('click', refreshCaptcha);
+                $("#selectPerformance").on('change', refreshCaptcha);
+            });
+        </script>
+
+        <script type="text/javascript">
+    /*<![CDATA[*/
+        var Softix = Softix || {};
+        Softix.Resources = Softix.Resources || {};
+Softix.Resources["ptype.Admits"] = " (with {0} tickets/items)";Softix.Resources["ShowTickets.BestAvailableArea.AllAreas"] = "All areas";Softix.Resources["ShowTickets.BestAvailableArea.BestAvailableAreaInThisArea"] = "Best available in this area";Softix.Resources["ShowTickets.VenueMap.DisplayPrice.AllocationExhausted"] = "Allocation Exhausted";Softix.Resources["ShowTickets.VenueMap.DisplayPrice.From"] = "From {0}";Softix.Resources["ShowTickets.Error.UnableConnectToService"] = "Unable to connect to service";Softix.Resources["SeatMap.ImageFallbackPath"] = "//d2jp7hosdnx5my.cloudfront.net/d/images/hkt_wmk.png";Softix.Resources["ShowTickets.ChooseCategoryText"] = "Select ticket category";Softix.Resources["ShowTickets.DeliveryType.DefaultOption"] = "Select a delivery option";Softix.Resources["ShowTickets.ChooseHoldTypeText"] = "-- Select a seating type --";Softix.Resources["ShowTickets.VenueMap.StatusMessage.SectionHoveredNoAvailableTickets"] = "\u003cspan style=\u0027color:red\u0027\u003eSection {0}: No available tickets\u003c/span\u003e";Softix.Resources["ShowTickets.VenueMap.StatusMessage.NoAvailableTicketsInThisPriceCategory"] = "\u003cspan style=\u0027color:red\u0027\u003eNo available tickets in this price category\u003c/span\u003e";Softix.Resources["ShowTickets.VenueMap.StatusMessage.NoAvailableTicketsInThisArea"] = "\u003cspan style=\u0027color:red\u0027\u003eNo available tickets in this area\u003c/span\u003e";Softix.Resources["ShowTickets.VenueMap.StatusMessage.SectionHoveredInSelectedPriceCategory"] = "\u003cstrong\u003eSection {0}\u003c/strong\u003e: you can buy up to {1} tickets";Softix.Resources["ShowTickets.VenueMap.StatusMessage.SectionHoveredInAnotherPriceCategory"] = "Section {0}: you can buy up to {1} tickets";Softix.Resources["ShowTickets.VenueMap.StatusMessage.SectionSelected"] = "\u003cstrong\u003eSection {0}\u003c/strong\u003e: you can buy up to {1} tickets";Softix.Resources["ShowTickets.VenueMap.StatusMessage.SectionHoveredInSelectedFriendCategory"] = "\u003cstrong\u003eSection {0}\u003c/strong\u003e: you can buy up to {1} tickets, next to your friend\u0027s";Softix.Resources["ShowTickets.VenueMap.StatusMessage.PriceCategorySelected"] = "\n      You can buy up to {1} tickets in \u003cstrong\u003ethis category\u003c/strong\u003e\u003cbr/\u003e\n      (If you don’t select a specific section, \"Get tickets\" will find the best available tickets in this category)\n      ";Softix.Resources["ShowTickets.VenueMap.StatusMessage.PriceCategory.NotOnMap"] = "\n      \"Get tickets\" will find the best available tickets in this category\n      ";Softix.Resources["ShowTickets.VenueMap.StatusMessage.BestAvailableAreaSelected"] = "\n        You can buy up to {1} tickets in \u003cstrong\u003ethis area\u003c/strong\u003e\u003cbr/\u003e\n        (If you don’t select a specific section, \"Get tickets\" will find the best available tickets in this area)\n      ";Softix.Resources["ShowTickets.VenueMap.StatusMessage.BestAvailableArea.NotOnMap"] = "\n      \"Get tickets\" will find the best available tickets in this area\n      ";Softix.Resources["ShowTickets.VenueMap.StatusMessage.PlayWithMap"] = "Play around with the map to see what\u0027s available.";Softix.Resources["ShowTickets.Availability.SINGLE"] = "{Single seats only}";Softix.Resources["ShowTickets.Availability.LIMITED"] = "{Limited availability}";    /*]]>*/
+    </script>
+
+    <script src="/js/Softix.Resources.js"></script>
+    <script type="text/javascript" src="//seatmap.hkticketing.com/content/handlebars.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/raphael.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.ObjectBag.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.Util.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.Settings.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.Services.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.Templates.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.PerformanceMap.Util.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.PerformanceMap.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.RenderRaphael.Geometry.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.RenderRaphael.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.StringTable.js"></script>
+<script type="text/javascript" src="//seatmap.hkticketing.com/content/v3/Seatmap.Ticketing3D.js"></script>
+<script type="text/javascript" src="/js/Tickets/SeatmapAvailabilty.js"></script>
+<script type="text/javascript" src="/js/Seatmap/SeatmapClientNotify.js"></script>
+<script type="text/javascript" src="/js/Seatmap/PerformanceMap.js"></script>
+
+    <script type="text/javascript">
+/*<![CDATA[*/
+ 
+/*]]>*/
+</script>
+    <script src="/js/Tickets/Services.js"></script>
+    <script src="/js/Tickets/Controller.js"></script>
+    <script src="/js/Tickets/App.js"></script>
+    <script src="/js/jquery.balloon.js"></script>
+
+    <script src="/js/qtip/jquery.qtip.min.js"></script>
+    <script src="/js/qtip/imagesloaded.pkg.min.js"></script>
+
+    
+    <script type="text/javascript">
+        /*<![CDATA[*/
+        
+        (function(Softix) {
+            // Merge the old js messages into the resource dictionary
+            var resources = $.extend(Softix.Resources || {}, _messages || {});
+
+            Softix.createTicketsApp("EAWR2026637", {"showPageUrl":"/shows/show.aspx?sh=CALUM0226&v=AWR&p=EAWR2026637","ticketsPageUrl":"https://premier.hkticketing.com/events/CALUM0226/venues/AWR/performances/EAWR2026637/tickets","specialAccessInformation":null,"sourcePriceTypes":[{"id":"-","name":"General seating","seatAreas":[{"id":"0","name":"Best available any price category","displayName":"Best available any price category","availability":null,"isSoldOut":false,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35313","name":"Standard Ticket","admits":1,"priceFrom":58800,"priceTo":78800,"quantity":0,"state":"Available"},{"id":"35320","name":"VIP 2","admits":1,"priceFrom":138800,"priceTo":138800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false},{"id":"1","name":"HK$1888 VIP 1 (M&G)","displayName":"HK$1888 VIP 1 (M&G)","availability":"SOLDOUT","isSoldOut":true,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35321","name":"VIP 1 (M&G)","admits":1,"priceFrom":188800,"priceTo":188800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false},{"id":"2","name":"HK$1388 VIP 2","displayName":"HK$1388 VIP 2","availability":"AVAILABLE","isSoldOut":false,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35320","name":"VIP 2","admits":1,"priceFrom":138800,"priceTo":138800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false},{"id":"3","name":"HK$788","displayName":"HK$788","availability":"AVAILABLE","isSoldOut":false,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35313","name":"Standard Ticket","admits":1,"priceFrom":78800,"priceTo":78800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false},{"id":"4","name":"HK$688","displayName":"HK$688","availability":"AVAILABLE","isSoldOut":false,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35313","name":"Standard Ticket","admits":1,"priceFrom":68800,"priceTo":68800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false},{"id":"5","name":"HK$588","displayName":"HK$588","availability":"AVAILABLE","isSoldOut":false,"admitLimit":4,"isSelected":false,"customerEntitlements":[{"id":"","firstName":"","lastName":"","priceTypeGroups":[{"entitlementId":0,"admitLimit":4,"mustPurchaseFromAnotherGroup":false,"priceTypes":[{"id":"35313","name":"Standard Ticket","admits":1,"priceFrom":58800,"priceTo":58800,"quantity":0,"state":"Available"}]}]}],"inviteAFriendCount":0,"priceCategoryIds":[],"isArea":false}],"hasValidData":true,"seatmapConfig":{"scale":5.0,"legendId":"","priceCategory":[{"id":1,"mapToPriceCategoryId":1,"name":"HK$1888 VIP 1 (M&G)","isSoldOut":true,"availability":"SOLDOUT"},{"id":2,"mapToPriceCategoryId":2,"name":"HK$1388 VIP 2","isSoldOut":false,"availability":"AVAILABLE"},{"id":3,"mapToPriceCategoryId":3,"name":"HK$788","isSoldOut":false,"availability":"AVAILABLE"},{"id":4,"mapToPriceCategoryId":4,"name":"HK$688","isSoldOut":false,"availability":"AVAILABLE"},{"id":5,"mapToPriceCategoryId":5,"name":"HK$588","isSoldOut":false,"availability":"AVAILABLE"}],"initialAreaId":null,"initialPriceCategoryId":null,"initialSection":null,"allowSectionSelection":true,"sourcePriceTypeId":null,"baseServicePath":"//seatmap.hkticketing.com/api/","baseTemplatePath":"/Content/template/","displayLevelOverride":"MoveSeats","eventCode":"EAWR2026637","isReadOnly":false,"languageId":"en","staticImagePath":"","isPrePurchase":true,"stringTableOverrides":[{"id":"close","text":"Hide Seat Map"}]}}],"deliveryTypes":[{"id":"E","name":"eTicket","displayName":"eTicket","description":"eTicket is a pdf ticket.","priceInCents":0,"unavailableWithPriceTypeIds":[],"bands":null,"bandsDescription":null,"conditions":null}],"priceTypeRules":null,"showCode":"CALUM0226","resources":{},"errorMessages":[],"hasErrorMessage":false,"canProceed":true,"onSaleDateFormattedMessage":null,"isConnectionError":false,"protectionStartDate":null,"protectionEndDate":null,"lastRequestDate":"2025-11-28T12:08:55.6607626+08:00","priceTypeLimit":4,"venueCode":"AWR","performanceCode":"EAWR2026637","entitlementGroupCode":"","inviteAFriendInvite":null,"inviteAFriendRedemption":null,"deliveryFeesMessage":"\n\t\t\tFor this event, a one-off service/delivery fee per transaction applies on all purchases.\n\t\t\tThe actual service/delivery fee may vary depending on the venue and method of delivery selected, or where you add other items to your basket.\n\t\t","feesAndChargesMessages":[""],"hasNoCommonPriceTypes":false,"isOnSale":true,"isSoldOut":false,"isProtectionDateRange":false,"isYetToBeProtected":false,"isExclusiveDateRange":false,"isAvailableToPublic":true,"isValidEntitlementPassword":false,"isCaptchaEnabled":false,"useAlternateCaptcha":true,"isUsingEntitlements":false,"isInitialTicketPageEntry":true,"entitlementPassword":null,"templatedAttributes":{"alertMessageTicketsPage":null},"slotPerformanceChoices":null,"seatingSpecialRequirements":null,"ticketPrices":[{"id":45493,"categoryCode":1,"typeID":"35321","faceValue":188800.0,"price":188800.0,"gst":0.0,"gstRate":0.0,"fees":[{"inside":"Offer","name":"Customer Service Fee","total":1500.0,"gst":0.0,"gstRate":0.0,"type":1}],"state":"Available"},{"id":45492,"categoryCode":2,"typeID":"35320","faceValue":138800.0,"price":138800.0,"gst":0.0,"gstRate":0.0,"fees":[{"inside":"Offer","name":"Customer Service Fee","total":1500.0,"gst":0.0,"gstRate":0.0,"type":1}],"state":"Available"},{"id":45487,"categoryCode":3,"typeID":"35313","faceValue":78800.0,"price":78800.0,"gst":0.0,"gstRate":0.0,"fees":[{"inside":"Offer","name":"Customer Service Fee","total":1500.0,"gst":0.0,"gstRate":0.0,"type":1}],"state":"Available"},{"id":45488,"categoryCode":4,"typeID":"35313","faceValue":68800.0,"price":68800.0,"gst":0.0,"gstRate":0.0,"fees":[{"inside":"Offer","name":"Customer Service Fee","total":1500.0,"gst":0.0,"gstRate":0.0,"type":1}],"state":"Available"},{"id":45494,"categoryCode":5,"typeID":"35313","faceValue":58800.0,"price":58800.0,"gst":0.0,"gstRate":0.0,"fees":[{"inside":"Offer","name":"Customer Service Fee","total":1500.0,"gst":0.0,"gstRate":0.0,"type":1}],"state":"Available"},{"id":45491,"categoryCode":1,"typeID":"35318","faceValue":0.0,"price":0.0,"gst":0.0,"gstRate":0.0,"fees":[],"state":"Available"},{"id":45490,"categoryCode":2,"typeID":"35318","faceValue":0.0,"price":0.0,"gst":0.0,"gstRate":0.0,"fees":[],"state":"Available"},{"id":45489,"categoryCode":3,"typeID":"35318","faceValue":0.0,"price":0.0,"gst":0.0,"gstRate":0.0,"fees":[],"state":"Available"},{"id":45495,"categoryCode":4,"typeID":"35318","faceValue":0.0,"price":0.0,"gst":0.0,"gstRate":0.0,"fees":[],"state":"Available"},{"id":45496,"categoryCode":5,"typeID":"35318","faceValue":0.0,"price":0.0,"gst":0.0,"gstRate":0.0,"fees":[],"state":"Available"}],"currencySymbol":"HK$","currencyDenominator":100,"currencyDecimalPlaces":2}, resources, '6LcIbCUUAAAAACMhyRSJgMb_JImgx6CuE9thenQg');
+
+            return Softix;
+        })(Softix || {});
+        function showDeliveryBandInfo() {
+            var deliveryDialog = $("#deliveryBandDialog");
+            if (deliveryDialog.data('dialog')) {
+                deliveryDialog.dialog("open");
+            }
+            else {
+                deliveryDialog.data('dialog', true).dialog({
+                    autoOpen: true,
+                    modal: true,
+                    closeText: 'Close',
+                    width: 350,
+                    classes: { "ui-dialog": "delivery-dialog" }
+                });
+            }
+        }
+        /*]]>*/
+    </script>
+
+
+
+        
+        
+        
+
+<script src="/js/json2.js"></script> 
+<script type="text/javascript">
+    function supportsLocalStorage() {
+        try {
+            return 'localStorage' in window && window['localStorage'] !== null;
+        }
+        catch (e) {
+            return false;
+        }
+    }
+
+    var SOFTIX = SOFTIX || {};
+    var supportsLocalStorage = supportsLocalStorage();
+
+    SOFTIX['GAData'] = JSON.parse('{"Customer":{"Id":"5074892"},"Basket":null,"Show":{"CategoryIds":[1,2,8,12,55,120],"IsAvailable":true,"Id":"4439","Code":"CALUM0226","VenueCode":"AWR","Genre":null,"SubGenre":null,"PerformanceCode":"EAWR2026637","Name":"Calum Scott The Avenoir Tour 2026 in Hong Kong","Type":"FullShow","Age":74,"OnSaleDate":"2025-09-16T12:00:00","PerformanceDate":"2026-02-05T20:00:00","parentID":"CALUM0226","isHotshow":"False","marketingType":null,"DeliveryMethod":null},"RemovedOffer":null,"UpsellShows":null}');
+    console.log('GA DATA READY');
+
+    if (supportsLocalStorage) {
+        if (SOFTIX['GAData'])
+            localStorage.setItem('GAData', JSON.stringify(SOFTIX['GAData']));
+        else
+            SOFTIX['GAData'] = JSON.parse(localStorage.getItem('GAData'));
+    }
+
+    if (!SOFTIX['GAData']) SOFTIX['GAData'] = {};
+
+</script>
+    
+
+</body>
