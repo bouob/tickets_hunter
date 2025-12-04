@@ -5034,67 +5034,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     return is_date_clicked
 
 
-async def _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, log_prefix):
-    """
-    Helper function to check area keywords once and click if matched.
-    Returns True if a match was found and clicked, False otherwise.
-    Used for immediate check after reload and delayed check after interval.
-    """
-    import json
-
-    is_need_refresh = False
-    matched_blocks = None
-
-    if area_keyword:
-        try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-        except:
-            area_keyword_array = []
-
-        if show_debug_message:
-            print(f"{log_prefix} Checking keywords: {area_keyword_array}")
-
-        for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-            if not is_need_refresh:
-                if show_debug_message:
-                    print(f"{log_prefix} Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
-                break
-
-        # Fallback logic
-        if is_need_refresh and matched_blocks is None and area_auto_fallback:
-            if show_debug_message:
-                print(f"{log_prefix} Triggering fallback selection")
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-    else:
-        is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-
-    # Select and click target area
-    if matched_blocks and len(matched_blocks) > 0:
-        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-        if target_area:
-            if show_debug_message:
-                try:
-                    area_text = await target_area.text
-                    if not area_text:
-                        area_text = await target_area.inner_text
-                    area_text = area_text.strip()[:80] if area_text else "Unknown"
-                    print(f"{log_prefix} Selected: {area_text}")
-                except:
-                    pass
-            try:
-                await target_area.click()
-                return True  # Successfully clicked
-            except:
-                try:
-                    await target_area.evaluate('el => el.click()')
-                    return True  # Successfully clicked
-                except:
-                    pass
-
-    return False  # No match found or click failed
-
-
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -5235,42 +5174,76 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         except:
             pass
 
-        # Smart wait: Wait for area links (.zone a) to appear after reload (max 3 seconds)
-        # This ensures not just the container, but actual area links are loaded
-        try:
-            el = await tab.wait_for('.zone a', timeout=3)
-            if show_debug_message:
-                print("[AREA SELECT] Page reloaded, area links found")
-        except Exception as wait_exc:
-            if show_debug_message:
-                print("[AREA SELECT] Timeout waiting for area links after reload")
-
-        # Check keywords immediately after reload (before interval delay)
-        if el:
-            immediate_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA IMMEDIATE]")
-            if immediate_match:
-                return  # Found and clicked, exit function
-
-        # Wait for configured interval
+        # Unified Retry Strategy: check immediately after reload, then after interval delay
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        retry_phases = [
+            {"name": "IMMEDIATE", "wait_timeout": 3, "delay_before": 0},
+        ]
         if interval > 0:
-            if show_debug_message:
-                print(f"[AREA SELECT] Waiting {interval}s before retry...")
-            await asyncio.sleep(interval)
+            retry_phases.append({"name": "DELAYED", "wait_timeout": 2, "delay_before": interval})
 
-            # Check keywords again after interval delay
-            # Wait for area links to ensure page content is fresh
-            try:
-                el = await tab.wait_for('.zone a', timeout=2)
+        for phase in retry_phases:
+            # Wait before this phase (0 for immediate, interval for delayed)
+            if phase["delay_before"] > 0:
                 if show_debug_message:
-                    print("[AREA DELAYED] Area links detected")
-                if el:
-                    delayed_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA DELAYED]")
-                    if delayed_match:
-                        return  # Found and clicked, exit function
+                    print(f"[AREA SELECT] Waiting {phase['delay_before']}s before retry...")
+                await asyncio.sleep(phase["delay_before"])
+
+            # Wait for area links to appear
+            try:
+                el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
+                if show_debug_message:
+                    print(f"[AREA {phase['name']}] Area links detected")
             except:
                 if show_debug_message:
-                    print("[AREA DELAYED] Timeout waiting for area links")
+                    print(f"[AREA {phase['name']}] Timeout waiting for area links")
+                continue
+
+            if not el:
+                continue
+
+            # Check keywords (reusing main function's logic)
+            retry_is_need_refresh = False
+            retry_matched_blocks = None
+
+            if area_keyword:
+                for keyword_index, area_keyword_item in enumerate(area_keyword_array):
+                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
+                    if not retry_is_need_refresh:
+                        if show_debug_message:
+                            print(f"[AREA {phase['name']}] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
+                        break
+
+                # Fallback logic
+                if retry_is_need_refresh and retry_matched_blocks is None and area_auto_fallback:
+                    if show_debug_message:
+                        print(f"[AREA {phase['name']}] Triggering fallback selection")
+                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+            else:
+                retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+
+            # Select and click target area
+            if retry_matched_blocks and len(retry_matched_blocks) > 0:
+                retry_target = util.get_target_item_from_matched_list(retry_matched_blocks, auto_select_mode)
+                if retry_target:
+                    if show_debug_message:
+                        try:
+                            area_text = await retry_target.text
+                            if not area_text:
+                                area_text = await retry_target.inner_text
+                            area_text = area_text.strip()[:80] if area_text else "Unknown"
+                            print(f"[AREA {phase['name']}] Selected: {area_text}")
+                        except:
+                            pass
+                    try:
+                        await retry_target.click()
+                        return  # Successfully clicked, exit function
+                    except:
+                        try:
+                            await retry_target.evaluate('el => el.click()')
+                            return  # Successfully clicked, exit function
+                        except:
+                            pass
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
