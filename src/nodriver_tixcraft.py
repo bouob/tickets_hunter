@@ -4711,8 +4711,11 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     area_list = None
     if check_game_detail:
-        # Add random delay (0.8-1 sec) to prevent bot detection
-        await asyncio.sleep(random.uniform(0.8, 1.0))
+        # 智慧等待：等待日期列表出現（取代固定 0.8-1 秒延遲）
+        try:
+            await tab.wait_for('#gameList > table > tbody > tr', timeout=3)
+        except:
+            pass
 
         try:
             area_list = await tab.query_selector_all('#gameList > table > tbody > tr')
@@ -5030,6 +5033,68 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     return is_date_clicked
 
+
+async def _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, log_prefix):
+    """
+    Helper function to check area keywords once and click if matched.
+    Returns True if a match was found and clicked, False otherwise.
+    Used for immediate check after reload and delayed check after interval.
+    """
+    import json
+
+    is_need_refresh = False
+    matched_blocks = None
+
+    if area_keyword:
+        try:
+            area_keyword_array = json.loads("[" + area_keyword + "]")
+        except:
+            area_keyword_array = []
+
+        if show_debug_message:
+            print(f"{log_prefix} Checking keywords: {area_keyword_array}")
+
+        for keyword_index, area_keyword_item in enumerate(area_keyword_array):
+            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
+            if not is_need_refresh:
+                if show_debug_message:
+                    print(f"{log_prefix} Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
+                break
+
+        # Fallback logic
+        if is_need_refresh and matched_blocks is None and area_auto_fallback:
+            if show_debug_message:
+                print(f"{log_prefix} Triggering fallback selection")
+            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+    else:
+        is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+
+    # Select and click target area
+    if matched_blocks and len(matched_blocks) > 0:
+        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
+        if target_area:
+            if show_debug_message:
+                try:
+                    area_text = await target_area.text
+                    if not area_text:
+                        area_text = await target_area.inner_text
+                    area_text = area_text.strip()[:80] if area_text else "Unknown"
+                    print(f"{log_prefix} Selected: {area_text}")
+                except:
+                    pass
+            try:
+                await target_area.click()
+                return True  # Successfully clicked
+            except:
+                try:
+                    await target_area.evaluate('el => el.click()')
+                    return True  # Successfully clicked
+                except:
+                    pass
+
+    return False  # No match found or click failed
+
+
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -5170,21 +5235,42 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         except:
             pass
 
-        # Wait for configured interval
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-        if interval > 0:
-            import time
-            await asyncio.sleep(interval)
-
         # Smart wait: Wait for area links (.zone a) to appear after reload (max 3 seconds)
         # This ensures not just the container, but actual area links are loaded
         try:
             el = await tab.wait_for('.zone a', timeout=3)
             if show_debug_message:
-                print("[AREA SELECT] Page loaded, area links found")
+                print("[AREA SELECT] Page reloaded, area links found")
         except Exception as wait_exc:
             if show_debug_message:
                 print("[AREA SELECT] Timeout waiting for area links after reload")
+
+        # Check keywords immediately after reload (before interval delay)
+        if el:
+            immediate_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA IMMEDIATE]")
+            if immediate_match:
+                return  # Found and clicked, exit function
+
+        # Wait for configured interval
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            if show_debug_message:
+                print(f"[AREA SELECT] Waiting {interval}s before retry...")
+            await asyncio.sleep(interval)
+
+            # Check keywords again after interval delay
+            # Wait for area links to ensure page content is fresh
+            try:
+                el = await tab.wait_for('.zone a', timeout=2)
+                if show_debug_message:
+                    print("[AREA DELAYED] Area links detected")
+                if el:
+                    delayed_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA DELAYED]")
+                    if delayed_match:
+                        return  # Found and clicked, exit function
+            except:
+                if show_debug_message:
+                    print("[AREA DELAYED] Timeout waiting for area links")
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -5393,8 +5479,11 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     show_debug_message = config_dict["advanced"]["verbose"]
     is_ticket_number_assigned = False
 
-    # 等待頁面載入
-    await tab.sleep(0.5)
+    # 等待票券選擇器出現（智慧等待，取代固定 0.5 秒延遲）
+    try:
+        await tab.wait_for('.mobile-select, select[id*="TicketForm_ticketPrice_"]', timeout=2)
+    except:
+        pass  # Continue even if timeout, will try to find selectors below
 
     # 查找票券選擇器
     form_select_list = []
