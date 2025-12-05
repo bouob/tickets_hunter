@@ -616,8 +616,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         # for like human.
         try:
             tab = await driver.get(homepage)
-            await tab.get_content()
-            await asyncio.sleep(3)
+            await asyncio.sleep(random.uniform(1.0, 2.5))
         except Exception as e:
             pass
         
@@ -662,8 +661,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     try:
         tab = await driver.get(homepage)
-        await tab.get_content()
-        await asyncio.sleep(3)
+        await asyncio.sleep(random.uniform(1.0, 2.5))
     except Exception as e:
         pass
 
@@ -696,8 +694,7 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 from nodriver import cdp
 
-                # Step 1: Delete existing TIXUISID cookies (aligned with Chrome Driver implementation)
-                # Reference: chrome_tixcraft.py line 848
+                # Step 1: Delete existing TIXUISID cookies
                 try:
                     await tab.send(cdp.network.delete_cookies(
                         name="TIXUISID",
@@ -710,8 +707,6 @@ async def nodriver_goto_homepage(driver, config_dict):
                         print(f"Note: Could not delete existing cookies: {del_e}")
 
                 # Step 2: Set new TIXUISID cookie using CDP
-                # Fix: http_only=True (Issue #137 - TixCraft cookie requires HttpOnly attribute)
-                # Fix: cookie name changed from SID to TIXUISID (Issue #144)
                 cookie_result = await tab.send(cdp.network.set_cookie(
                     name="TIXUISID",
                     value=tixcraft_sid,
@@ -760,9 +755,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                 if config_dict["advanced"]["verbose"]:
                     print("tixcraft TIXUISID cookie set successfully (fallback method)")
 
-    # 處理 ibon 登入
     if 'ibon.com' in homepage:
-        # 使用專門的 ibon 登入函數
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if config_dict["advanced"]["verbose"]:
@@ -1689,38 +1682,6 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             # On error, use mode selection
             matched_blocks = []
 
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-14)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-    if not date_keyword:
-        matched_blocks = formated_session_list
-    else:
-        matched_blocks = []
-        try:
-            keyword_array = json.loads("[" + date_keyword + "]")
-            for i, session_text in enumerate(formated_session_list_text):
-                normalized_session_text = re.sub(r'\s+', ' ', session_text)
-                session_matched = False
-                for keyword_item_set in keyword_array:
-                    is_match = False
-                    if isinstance(keyword_item_set, str):
-                        normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                        is_match = normalized_keyword in normalized_session_text
-                    elif isinstance(keyword_item_set, list):
-                        normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                        match_results = [kw in normalized_session_text for kw in normalized_keywords]
-                        is_match = all(match_results)
-                    if is_match:
-                        matched_blocks.append(formated_session_list[i])
-                        session_matched = True
-                        break
-        except Exception as e:
-            matched_blocks = formated_session_list
-    """
-
     # Match result summary
     if show_debug_message:
         print(f"[KKTIX DATE KEYWORD] ========================================")
@@ -1749,17 +1710,6 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
                 print(f"[KKTIX DATE SELECT] No date selected, will check if reload needed")
             # Don't return - let the function continue to check if selection succeeded
             # matched_blocks remains empty (no selection will be made)
-
-    # DEPRECATED: Old unconditional fallback logic
-    # Will be removed after 2 weeks (2025-11-14)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # Unconditional auto-fallback when keywords fail
-    if len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
-        if show_debug_message:
-            print(f"[KKTIX DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
-        matched_blocks = formated_session_list
-    """
 
     # Select target using auto_select_mode
     target_button = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
@@ -2206,7 +2156,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    # 增加執行計數器，防止無限迴圈 - 2025-11-11
+    # 增加執行計數器，防止無限迴圈
     global kktix_dict
     if 'kktix_dict' in globals():
         kktix_dict["reg_execution_count"] = kktix_dict.get("reg_execution_count", 0) + 1
@@ -2295,20 +2245,6 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 # If fallback still failed (or was attempted), then refresh
                 if not is_ticket_number_assigned:
                     is_need_refresh = True  # Always reload when no ticket assigned
-
-            # DEPRECATED: Old unconditional fallback logic
-            # Will be removed after 2 weeks (2025-11-14)
-            """
-            # OLD LOGIC - DEPRECATED - DO NOT USE
-            # Unconditional auto-fallback when all keywords fail
-            if not is_ticket_number_assigned:
-                if is_need_refresh_final:
-                    if show_debug_message:
-                        print(f"[KKTIX AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
-                    is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
-                if not is_ticket_number_assigned:
-                    is_need_refresh = is_need_refresh_final
-            """
         else:
             # empty keyword, match all.
             is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
@@ -2346,7 +2282,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 # single option question
                 if not is_question_popup:
                     # Check and dismiss guest modal again (in case it appears after captcha)
-                    # This ensures modal doesn't block the next button - 2025-11-11
+                    # This ensures modal doesn't block the next button
                     await nodriver_kktix_check_guest_modal(tab, config_dict)
 
                     # no captcha text popup, goto next page.
@@ -2354,7 +2290,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     if show_debug_message:
                         print("control_text:", control_text)
 
-                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text - 2025-11-11
+                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text
                     if 'kktix_dict' in globals() and kktix_dict.get("reg_execution_count", 0) > 2:
                         if len(control_text) > 0:
                             # 檢查票券數量和序號是否已填寫
@@ -2403,7 +2339,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #print(exc)
                             pass
                         if input_text_element is None:
-                            # 嘗試多種選擇器來找到資格 radio - 2025-11-11
+                            # 嘗試多種選擇器來找到資格 radio
                             radio_selectors = [
                                 'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',  # 最精確
                                 'div.code-input input[type="radio"]',  # 次要選擇
@@ -2430,7 +2366,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                         control_text = ""
                                         print("member joined")
                                     else:
-                                        # 沒有 "已加入" 標記，需要勾選 radio - 2025-11-11
+                                        # 沒有 "已加入" 標記，需要勾選 radio
                                         try:
                                             # 檢查 radio 是否被禁用
                                             is_disabled = await radio_element.get_attribute('disabled')
@@ -2447,13 +2383,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                 pass
 
                             # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
-                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位 - 2025-11-11
+                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位
                             if radio_element is None:
                                 if show_debug_message:
                                     print(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
                                 control_text = ""
                             else:
-                                # 有 radio 元素：檢查所有必填欄位是否已填寫 - 2025-11-11
+                                # 有 radio 元素：檢查所有必填欄位是否已填寫
                                 try:
                                     all_inputs_filled_result = await tab.evaluate('''
                                         () => {
@@ -2492,7 +2428,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                                 }
                                             }
 
-                                            // 不檢查 Radio 勾選狀態 - 2025-11-11
+                                            // 不檢查 Radio 勾選狀態
                                             // 因為「本票券需要符合以下任一資格才可以購買」只是說明文字
                                             // 不是必填欄位，票券和序號完成後就應該點擊下一步
 
@@ -2547,7 +2483,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             pass
             else:
                 # is_ticket_number_assigned is False
-                # 檢查票券是否已經在上一次填寫完成 - 2025-11-11
+                # 檢查票券是否已經在上一次填寫完成
                 if not is_need_refresh:
                     # 沒有需要重新載入，可能是票券已選擇但 matched_blocks 為空
                     # 檢查是否所有必填欄位都已填寫
@@ -2664,12 +2600,11 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["played_sound_order"] = False
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
-        kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
-        kktix_dict["alert_handler_registered"] = False  # 全域 alert handler 註冊狀態 - 2025-11-25
-        kktix_dict["guest_modal_checked"] = False  # Guest modal 檢查狀態，避免重複等待 - 2025-11-25
+        kktix_dict["reg_execution_count"] = 0
+        kktix_dict["alert_handler_registered"] = False
+        kktix_dict["guest_modal_checked"] = False
 
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
-    # Handles alerts like "糟糕，目前 xxx 的票券都被選走了" - 2025-11-25
     async def handle_kktix_alert(event):
         if show_debug_message:
             print(f"[KKTIX ALERT] Alert detected: '{event.message}'")
@@ -2721,7 +2656,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
             # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
-            # This modal appears when user is not logged in - 2025-11-11
+            # This modal appears when user is not logged in
             await nodriver_kktix_check_guest_modal(tab, config_dict)
 
             kktix_dict["start_time"] = time.time()
@@ -2749,7 +2684,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # Check if tickets are already selected (prevent repeated execution)
                 is_ticket_already_selected = False
                 try:
-                    # 改進的檢查：返回簡單布林值，更可靠 - 2025-11-11
+                    # 改進的檢查：返回簡單布林值，更可靠
                     result = await tab.evaluate('''
                         () => {
                             // 1. 檢查票券數量
@@ -3047,6 +2982,11 @@ async def nodriver_tixcraft_redirect(tab, url):
             print("redirec to new url:", entry_url)
             try:
                 await tab.get(entry_url)
+                # 等待日期列表出現，確保頁面載入完成
+                try:
+                    await tab.wait_for('#gameList > table > tbody > tr', timeout=5)
+                except:
+                    pass  # timeout 沒關係，讓後續邏輯處理
                 ret = True
             except Exception as exec1:
                 pass
@@ -3167,7 +3107,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
             # 填寫完成後短暫延遲，確保 Angular 更新完成
             await tab.sleep(0.2)
 
-            # 檢查是否需要點擊下一步按鈕 - 2025-11-11
+            # 檢查是否需要點擊下一步按鈕
             # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
             auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
             if show_debug_message:
@@ -3175,7 +3115,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
 
             if auto_press:
                 # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
-                # 直接嘗試點擊下一步按鈕 - 2025-11-11
+                # 直接嘗試點擊下一步按鈕
                 try:
                     if show_debug_message:
                         print("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
@@ -4711,11 +4651,13 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     area_list = None
     if check_game_detail:
-        # 智慧等待：等待日期列表出現（取代固定 0.8-1 秒延遲）
+        # 智慧等待：等待日期列表出現
+        # 注意：從 /activity/detail/ redirect 過來時，redirect 函數已經等待過了
+        # 這裡再等待一次是為了處理直接進入 /activity/game/ 頁面的情況
         try:
             await tab.wait_for('#gameList > table > tbody > tr', timeout=3)
         except:
-            pass
+            pass  # timeout 沒關係，繼續嘗試讀取
 
         try:
             area_list = await tab.query_selector_all('#gameList > table > tbody > tr')
@@ -4851,36 +4793,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                     print(f"[DATE KEYWORD] Parsing error: {e}")
                 # On error, use mode selection
                 matched_blocks = []
-
-        # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-        # Will be removed after 2 weeks (2025-11-14)
-        """
-        # OLD LOGIC - DEPRECATED - DO NOT USE
-        # This logic scanned ALL keywords and collected all matches, then selected one
-        # NEW logic (above) uses early return: first match wins immediately
-        if not date_keyword:
-            matched_blocks = formated_area_list
-        else:
-            matched_blocks = []
-            try:
-                keyword_array = json.loads("[" + date_keyword + "]")
-                for i, row_text in enumerate(formated_area_list_text):
-                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
-                    for keyword_item_set in keyword_array:
-                        is_match = False
-                        if isinstance(keyword_item_set, str):
-                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                            is_match = normalized_keyword in normalized_row_text
-                        elif isinstance(keyword_item_set, list):
-                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                            match_results = [kw in normalized_row_text for kw in normalized_keywords]
-                            is_match = all(match_results)
-                        if is_match:
-                            matched_blocks.append(formated_area_list[i])
-                            break
-            except Exception as e:
-                matched_blocks = formated_area_list
-        """
 
     # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
@@ -5099,18 +5011,6 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         # T014: All keywords failed log
         if not keyword_matched and show_debug_message:
             print(f"[AREA KEYWORD] All keywords failed to match")
-
-        # DEPRECATED (T015): Old logic - scan all keywords and collect matches
-        # Will be removed after 2 weeks (2025-11-15)
-        """
-        # OLD LOGIC - DEPRECATED - DO NOT USE
-        # This logic scanned ALL keywords and collected all matches, then selected one
-        # NEW logic (above) uses early return: first match wins immediately
-        for area_keyword_item in area_keyword_array:
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-            if not is_need_refresh:
-                break
-        """
 
         # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
         is_fallback_selection = False  # Track selection type for logging
@@ -10731,40 +10631,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     else:
         matched_buttons = enabled_buttons
 
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    matched_buttons = []
-    if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            keyword_array = json.loads("[" + date_keyword + "]")
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Keyword filter: {keyword_array}")
-
-            for button in enabled_buttons:
-                date_context = button.get('date_context', '').lower()
-
-                for keyword_item in keyword_array:
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
-
-                    if is_match:
-                        matched_buttons.append(button)
-                        if show_debug_message:
-                            print(f"[IBON DATE PIERCE] Matched '{keyword_item}' in '{date_context}'")
-                        break
-        except json.JSONDecodeError as e:
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Keyword parse error: {e}")
-            matched_buttons = enabled_buttons
-    else:
-        matched_buttons = enabled_buttons
-    """
-
     # Step 8: Conditional fallback based on date_auto_fallback switch (T018-T020)
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
         if date_auto_fallback:
@@ -11123,43 +10989,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             matched_buttons = []  # Let Feature 003 fallback logic handle this
     else:
         matched_buttons = enabled_buttons
-
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    matched_buttons = []
-    if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            import json
-            keyword_array = json.loads("[" + date_keyword + "]")
-            if show_debug_message:
-                print(f"[IBON DATE] Applying keyword filter: {keyword_array}")
-
-            for button in enabled_buttons:
-                button_text = button.get('text', '').lower()
-                date_context = button.get('date_context', '').lower()
-                search_text = f"{button_text} {date_context}"
-
-                for keyword_item in keyword_array:
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
-
-                    if is_match:
-                        matched_buttons.append(button)
-                        if show_debug_message:
-                            print(f"[IBON DATE] Keyword '{keyword_item}' matched button with date_context: '{date_context}'")
-                        break
-        except json.JSONDecodeError as e:
-            if show_debug_message:
-                print(f"[IBON DATE] Keyword parse error: {e}, using all enabled buttons")
-            matched_buttons = enabled_buttons
-    else:
-        matched_buttons = enabled_buttons
-    """
 
     # Step 7: Conditional fallback based on date_auto_fallback switch (T018-T020)
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
@@ -12275,39 +12104,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     if show_debug_message and not target_found:
         print(f"[IBON EVENT AREA] Total matched areas: {len(matched_areas)}")
 
-    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    if area_keyword_item and len(area_keyword_item) > 0:
-        area_keyword_array = area_keyword_item.split(' ')
-        area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
-
-        if show_debug_message:
-            print(f"[ibon] 關鍵字: {area_keyword_array}")
-
-        for area in valid_areas:
-            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-            row_text = util.format_keyword_string(row_text)
-            is_match = all(kw in row_text for kw in area_keyword_array)
-
-            if is_match:
-                matched_areas.append(area)
-                if show_debug_message:
-                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
-
-                if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                    break
-    else:
-        matched_areas = valid_areas
-
-    if show_debug_message:
-        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
-    """
-
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
         if area_auto_fallback:
@@ -12849,39 +12645,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     if show_debug_message and not target_found:
         print(f"[IBON AREA] Total matched areas: {len(matched_areas)}")
-
-    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    if area_keyword_item and len(area_keyword_item) > 0:
-        area_keyword_array = area_keyword_item.split(' ')
-        area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
-
-        if show_debug_message:
-            print(f"[ibon] 關鍵字: {area_keyword_array}")
-
-        for area in valid_areas:
-            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-            row_text = util.format_keyword_string(row_text)
-            is_match = all(kw in row_text for kw in area_keyword_array)
-
-            if is_match:
-                matched_areas.append(area)
-                if show_debug_message:
-                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
-
-                if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                    break
-    else:
-        matched_areas = valid_areas
-
-    if show_debug_message:
-        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
-    """
 
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
@@ -16705,32 +16468,6 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 if not target_row_found and show_debug_message:
                     print(f"[KHAM DATE KEYWORD] All keywords failed to match")
 
-                # DEPRECATED: Old logic - scan all keywords and collect matches
-                # Will be removed after 2 weeks (2025-11-17)
-                """
-                # OLD LOGIC - DEPRECATED - DO NOT USE
-                # This logic scanned ALL keywords and collected all matches, then selected one
-                # NEW logic (above) uses early return: first match wins immediately
-                for i, row_text in enumerate(formated_area_list_text):
-                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
-
-                    for keyword_item_set in keyword_array:
-                        is_match = False
-                        if isinstance(keyword_item_set, str):
-                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                            is_match = normalized_keyword in normalized_row_text
-                            if show_debug_message and is_match:
-                                print(f"matched keyword '{keyword_item_set}' in row: {row_text[:60]}...")
-                        elif isinstance(keyword_item_set, list):
-                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                            is_match = all(kw in normalized_row_text for kw in normalized_keywords)
-                            if show_debug_message and is_match:
-                                print(f"matched all keywords {keyword_item_set} in row: {row_text[:60]}...")
-
-                        if is_match:
-                            matched_blocks.append(formated_area_list[i])
-                            break
-                """
             except Exception as e:
                 if show_debug_message:
                     print(f"keyword parsing error: {e}")
@@ -24085,7 +23822,7 @@ async def main(args):
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
                 print("KKTIX ticket purchase completed")
-                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
 
@@ -24103,7 +23840,7 @@ async def main(args):
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
             if is_quit_bot:
                 print("TixCraft ticket purchase completed")
-                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
 
@@ -24135,14 +23872,14 @@ async def main(args):
                 if ticketplus_dict.get("purchase_completed", False):
                     if config_dict["advanced"].get("verbose", False):
                         print("[SUCCESS] TicketPlus 購票完成")
-                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 不自動暫停：讓多開實例可獨立運作
                     # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                     is_quit_bot = False
                 elif ticketplus_dict.get("is_ticket_assigned", False) and '/confirm/' in url.lower():
                     # 如果在確認頁面且已指派票券，也可以結束
                     if config_dict["advanced"].get("verbose", False):
                         print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功")
-                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 不自動暫停：讓多開實例可獨立運作
                     # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                     is_quit_bot = False
 
