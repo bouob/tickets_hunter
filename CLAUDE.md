@@ -180,6 +180,7 @@
 - **CDP 協議** → `docs/06-api-reference/cdp_protocol_reference.md` ⭐
 - **除錯方法** → `docs/07-testing-debugging/debugging_methodology.md` ⭐
 - **修復記錄** → `docs/08-troubleshooting/README.md` ⭐
+- **Issues FAQ** → `docs/10-project-tracking/issues-faq-tracking.md` ⭐ 新增
 
 #### 🏗️ 開發新功能（Feature Development）
 - **12 階段標準** → `docs/02-development/ticket_automation_standard.md` ⭐
@@ -226,6 +227,7 @@ docs/02-development/development_guide.md  ← 開發規範
 - `docs/07-testing-debugging/testing_execution_guide.md` - 測試指南 ⭐
 - `docs/08-troubleshooting/README.md` - 疑難排解索引 ⭐
 - `docs/10-project-tracking/changelog_guide.md` - CHANGELOG 指南 ⭐
+- `docs/10-project-tracking/issues-faq-tracking.md` - Issues FAQ 追蹤 ⭐ 新增
 - `docs/02-development/coding_templates.md` - 程式範本
 - `docs/02-development/documentation_workflow.md` - 文件維護流程
 
@@ -294,8 +296,11 @@ docs/02-development/development_guide.md  ← 開發規範
 2. ✅ **確認 WebDriver**：讀取 `settings.json` 確認 `webdriver_type`
 3. ✅ **查閱 API**：`docs/06-api-reference/nodriver_api_guide.md`（優先）
 4. ✅ **搜尋案例**：`docs/08-troubleshooting/README.md`
-5. ✅ **啟用詳細日誌**：`config_dict["advanced"]["verbose"] = True`
-6. ✅ **MCP 即時除錯**：`docs/07-testing-debugging/mcp_integration_guide.md` ⭐
+5. ✅ **查閱 Issues FAQ**：`docs/10-project-tracking/issues-faq-tracking.md` ⭐ 新增
+   - 按平台分類的常見問題
+   - 已解決 Issues 的解決方案彙整
+6. ✅ **啟用詳細日誌**：`config_dict["advanced"]["verbose"] = True`
+7. ✅ **MCP 即時除錯**：`docs/07-testing-debugging/mcp_integration_guide.md` ⭐
    - 使用 `--mcp_debug` 參數啟動 NoDriver
    - 透過 MCP 工具即時觀察頁面狀態
 
