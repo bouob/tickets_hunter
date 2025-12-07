@@ -1,7 +1,7 @@
 ---
 name: test-analyzer
 description: 測試執行與結果分析專家，專注於解析測試輸出、識別失敗原因、提供修復建議
-model: sonnet
+model: Opus
 tools:
   - Read
   - Grep

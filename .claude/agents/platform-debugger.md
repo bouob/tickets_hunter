@@ -1,7 +1,7 @@
 ---
 name: platform-debugger
 description: 專門處理多平台搶票系統的除錯問題，特別是 TixCraft、iBon、KKTIX、TicketPlus、KHAM、FamiTicket 等平台的特定問題
-model: sonnet
+model: Opus
 tools:
   - Read
   - Grep

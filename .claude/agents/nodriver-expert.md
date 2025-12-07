@@ -1,7 +1,7 @@
 ---
 name: nodriver-expert
 description: NoDriver 和 CDP 協議專家，專注於 NoDriver API 使用、CDP 協議呼叫、反偵測技術、元素互動最佳實踐
-model: sonnet
+model: Opus
 tools:
   - Read
   - Grep

@@ -1,7 +1,7 @@
 ---
 name: spec-checker
 description: 規格一致性檢查專家，確保程式碼、文件、實作都符合功能規格和憲法原則
-model: sonnet
+model: Opus
 tools:
   - Read
   - Grep

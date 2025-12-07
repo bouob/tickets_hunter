@@ -1,5 +1,5 @@
 **Chrome DevTools MCP 整合指南**
-**最後更新**: 2025-11-26
+**最後更新**: 2025-12-07
 
 ---
 
@@ -92,47 +92,40 @@ Chrome DevTools MCP 讓 Claude Code 可以透過 Chrome DevTools Protocol (CDP) 
 
 ---
 
-## 模式二：連接模式（NoDriver 工作階段除錯）
+## 模式二：分離啟動模式（推薦）
 
-此模式下，MCP 連接到現有的 NoDriver 瀏覽器工作階段。使用 `--mcp_debug` 命令列參數即可啟用。
+此模式下，先獨立啟動固定端口的 Chrome，再讓 NoDriver 連接到該瀏覽器。
 
-### 步驟零：關閉 MCP 獨立瀏覽器（重要）
+### 優點
 
-如果 MCP 已經開啟獨立瀏覽器（佔用 port 9222），需要先關閉：
+- **固定端口 9222**：`.mcp.json` 設定一次後永久有效
+- **無需重啟 Claude Code**：只需首次設定時重啟
+- **Chrome 可長時間運行**：NoDriver 可多次重連
+- **登入狀態保留**：使用獨立 profile
+
+### 快速啟動流程
+
+**步驟 1**：啟動固定端口的 Chrome
+```bash
+scripts/start_chrome_debug.bat
+```
+
+**步驟 2**：啟動 NoDriver 連接到該 Chrome
+```bash
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_connect 9222
+```
+
+### 重新連接（Chrome 關閉後）
 
 ```bash
-# Windows
-taskkill /F /IM chrome.exe
+# 1. 重新啟動 Chrome
+scripts/start_chrome_debug.bat
 
-# 或重啟 Claude Code
+# 2. 重新連接 MCP（無需重啟 Claude Code）
+/mcp reconnect chrome-devtools
 ```
 
-### 步驟一：使用 --mcp_debug 參數啟動 NoDriver
-
-NoDriver 現已內建 MCP 除錯支援，只需添加 `--mcp_debug` 參數：
-
-```bash
-# 使用預設端口 9222
-python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug
-
-# 使用自訂端口（避免端口衝突）
-python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug 9223
-
-# 結合其他參數（推薦）
-python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug \
-    --homepage "https://kktix.com" \
-    --date_keyword "12/25"
-```
-
-啟動時會顯示：
-```
-[MCP DEBUG] Enabled on port 9222
-[MCP DEBUG] Configure .mcp.json with: --browserUrl http://127.0.0.1:9222
-```
-
-### 步驟二：更新 MCP 設定
-
-建立 `.mcp.local.json` 或更新 `.mcp.json`：
+### `.mcp.json` 設定
 
 ```json
 {
@@ -149,6 +142,88 @@ python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug \
 }
 ```
 
+---
+
+## 模式三：動態端口模式（舊版）
+
+此模式下，NoDriver 啟動新瀏覽器並使用動態隨機端口。使用 `--mcp_debug` 命令列參數即可啟用。
+
+### 重要：NoDriver 的動態端口限制
+
+**NoDriver 設計限制**：NoDriver 使用動態 CDP 端口。
+
+這是因為 NoDriver 的 `browser.py:357-361` 將 `Config(host, port)` 設計為「連接到已存在瀏覽器」的模式，而非「使用指定端口啟動新瀏覽器」。
+
+### 快速啟動：使用 /mcpstart 指令
+
+執行 `/mcpstart` Claude command 可自動完成所有設定步驟：
+
+```bash
+# 在 Claude Code 中執行
+/mcpstart
+```
+
+**Claude 會自動執行以下步驟**：
+1. 清除閒置檔案
+2. 啟動 NoDriver（使用 `--mcp_debug` 參數）
+3. 從 `.temp/mcp_port.txt` 讀取實際端口
+4. 自動更新 `.mcp.json` 中的端口設定
+5. 提示使用者重啟 Claude Code
+
+**端口檔案位置**：`.temp/mcp_port.txt`（由 NoDriver 自動產生）
+
+---
+
+### 手動啟動流程（備用方式）
+
+如需手動操作，工作流程如下：
+1. 啟動 NoDriver 時加上 `--mcp_debug` 參數
+2. 從輸出中取得**實際端口號碼**（或讀取 `.temp/mcp_port.txt`）
+3. 更新 `.mcp.json` 中的端口設定
+4. 重啟 Claude Code 以套用新設定
+
+### 步驟一：使用 --mcp_debug 參數啟動 NoDriver
+
+```bash
+# 啟用 MCP 除錯模式
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug
+
+# 結合其他參數
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug \
+    --homepage "https://kktix.com" \
+    --date_keyword "12/25"
+```
+
+啟動時會顯示：
+```
+[MCP DEBUG] Mode enabled - actual port will be shown after browser starts
+[MCP DEBUG] Browser started on actual port: 58210
+[MCP DEBUG] Update .mcp.json with: --browserUrl http://127.0.0.1:58210
+```
+
+**注意**：上面的 `58210` 是範例，每次啟動的端口都不同。
+
+### 步驟二：更新 MCP 設定
+
+根據實際輸出的端口號碼，更新 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browserUrl",
+        "http://127.0.0.1:58210"
+      ]
+    }
+  }
+}
+```
+
+⚠️ **每次 NoDriver 重新啟動後都需要更新此端口！**
+
 ### 步驟三：重啟 Claude Code
 
 修改 MCP 設定後，需要重啟 Claude Code 以重新載入。
@@ -160,12 +235,16 @@ python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug \
 python -u src/nodriver_tixcraft.py --input src/settings.json --mcp_debug
 ```
 
-2. **等待瀏覽器開啟**
-   - NoDriver 會啟動 Chrome 並使用除錯端口 9222
-   - 終端機會顯示 `[MCP DEBUG] Enabled on port 9222`
-   - MCP 會自動連接到此實例
+2. **等待瀏覽器開啟並記錄端口**
+   - NoDriver 會啟動 Chrome 並使用動態端口
+   - 終端機會顯示實際端口號碼，例如：`[MCP DEBUG] Browser started on actual port: 58210`
+   - 複製此端口號碼
 
-3. **在 Claude Code 中使用 MCP 工具**
+3. **更新 `.mcp.json` 並重啟 Claude Code**
+   - 將端口號碼更新到 `.mcp.json` 的 `--browserUrl` 參數
+   - 重啟 Claude Code 以載入新設定
+
+4. **在 Claude Code 中使用 MCP 工具**
 ```
 使用 list_pages 確認連接成功
 使用 take_snapshot 查看目前頁面狀態
@@ -220,7 +299,28 @@ python nodriver_tixcraft.py --input settings.json \
 | `--browser` | 覆蓋瀏覽器類型 | `--browser chrome` |
 | `--window_size` | 視窗大小 | `--window_size 1920x1080` |
 | `--proxy_server` | 代理伺服器 | `--proxy_server 127.0.0.1:8080` |
-| `--mcp_debug` | MCP 除錯模式（預設端口 9222） | `--mcp_debug` 或 `--mcp_debug 9223` |
+| `--mcp_debug` | MCP 除錯模式（動態端口） | `--mcp_debug` |
+| `--mcp_connect` | 連接到已存在的 Chrome（固定端口） | `--mcp_connect 9222` |
+
+### 使用 settings.json 啟用 MCP 除錯
+
+除了命令列參數外，也可以在 `settings.json` 中啟用 MCP 除錯：
+
+```json
+{
+  "advanced": {
+    "mcp_debug_port": 1
+  }
+}
+```
+
+**設定值說明**：
+- `0` = 停用 MCP 除錯（預設）
+- 大於 `0` = 啟用 MCP 除錯模式
+
+⚠️ **注意**：由於 NoDriver 的設計限制，這個設定值只是「啟用標記」。實際端口會是動態的，需要在瀏覽器啟動後從輸出中取得。
+
+**優先順序**：命令列參數 `--mcp_debug` > `settings.json` 中的 `mcp_debug_port`
 
 ### 各平台測試網址
 
@@ -337,31 +437,54 @@ python nodriver_tixcraft.py --input settings.json \
 
 | 問題 | 原因 | 解決方案 |
 |------|------|----------|
+| "Failed to connect to browser" | 端口被佔用 | 清理端口（見下方說明） |
 | "Failed to connect" | 瀏覽器未執行 | 先啟動 NoDriver |
 | "Connection refused" | 端口錯誤 | 檢查 Config 中的 port 設定 |
 | "No pages found" | 瀏覽器崩潰 | 重啟 NoDriver |
 
-### 端口衝突
+### 端口衝突（最常見問題）
 
-如果端口 9222 已被使用：
+NoDriver 現在會自動檢測端口衝突並顯示警告：
+```
+[MCP DEBUG] WARNING: Port 9222 is already in use!
+[MCP DEBUG] Try: netstat -ano | findstr :9222
+[MCP DEBUG] Or use different port: --mcp_debug 9223
+```
+
+**解決方法 1：清理端口**
 ```bash
-# 檢查什麼程式正在使用端口 9222
+# Windows - 檢查什麼程式正在使用端口 9222
 netstat -ano | findstr :9222
 
 # 終止該程序
 taskkill /F /PID <pid>
+
+# 或關閉所有 Chrome 實例
+taskkill /F /IM chrome.exe
 ```
 
-或使用不同端口：
-```python
-# 在 nodriver_tixcraft.py 中
-conf = Config(..., port=9223)
+**解決方法 2：使用不同端口**
+```bash
+# 使用命令列參數
+python src/nodriver_tixcraft.py --input src/settings.json --mcp_debug 9223
 ```
 
-並更新 `.mcp.json`：
+或在 `settings.json` 中設定：
+```json
+{
+  "advanced": {
+    "mcp_debug_port": 9223
+  }
+}
+```
+
+然後更新 `.mcp.json`：
 ```json
 "args": ["chrome-devtools-mcp@latest", "--browserUrl", "http://127.0.0.1:9223"]
 ```
+
+**解決方法 3：重啟 Claude Code**
+MCP 設定變更後需要重啟 Claude Code 以重新載入 `.mcp.json`。
 
 ### 快照逾時
 
@@ -424,5 +547,5 @@ grep "[DATE KEYWORD]" .temp/test_output.txt
 
 ---
 
-**更新日期**: 2025-11-26
+**更新日期**: 2025-12-07
 **作者**: Claude Code Assistant

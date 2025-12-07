@@ -37,7 +37,7 @@
 | 發布 PR | `/publicpr` | 建立 PR 到公開庫（僅發布時） |
 | 建立 Release | `/publicrelease` | 建立 Release Tag 並觸發 Actions |
 | 快速測試 | `timeout 30 python -u src/...` | 30 秒快速測試 |
-| MCP 即時除錯 | `python src/nodriver_tixcraft.py --mcp_debug` | 啟用 MCP 連接模式 |
+| MCP 即時除錯 | `/mcpstart` | 啟動 Chrome 除錯模式（固定端口 9222） |
 | 規格分析 | `/speckit.analyze` | 跨產物一致性檢查 |
 | 除錯診斷 | `/debug` | 專業除錯工具（Spec + 憲法） |
 | 尋找重複 issues | `/dedupe` | 尋找相似的 GitHub issues |
@@ -50,6 +50,39 @@
 3. **查找 API**：`docs/06-api-reference/nodriver_api_guide.md`
 4. **搜尋案例**：`docs/08-troubleshooting/README.md`
 5. **啟用日誌**：`config_dict["advanced"]["verbose"] = True`
+
+### MCP 即時除錯（Chrome DevTools 連接）
+
+透過 MCP 連接 Chrome 瀏覽器，可即時操作頁面、檢查網路請求、執行 JavaScript。
+
+**相關檔案**：
+- 設定檔：`.mcp.json`（Chrome DevTools MCP 設定，固定端口 9222）
+- 詳細指南：`docs/07-testing-debugging/mcp_integration_guide.md`
+
+**啟動流程**：
+```bash
+# 執行 /mcpstart 指令
+/mcpstart
+
+# Claude 會詢問運行模式：
+# 1. 測試 NoDriver 設定 - 透過 NoDriver 執行 settings.json
+# 2. 直接開啟網頁 - 僅啟動 Chrome，手動瀏覽
+```
+
+**重新連接**：
+如果連接斷開，使用 `/mcp reconnect chrome-devtools` 即可重新連接（無需重啟 Claude Code）。
+
+**常用 MCP 工具**：
+| 工具 | 用途 |
+|------|------|
+| `mcp__chrome-devtools__take_snapshot` | 擷取 DOM 結構 |
+| `mcp__chrome-devtools__take_screenshot` | 截圖 |
+| `mcp__chrome-devtools__list_network_requests` | 檢查 API 呼叫 |
+| `mcp__chrome-devtools__evaluate_script` | 執行 JavaScript |
+| `mcp__chrome-devtools__click` | 點擊元素 |
+| `mcp__chrome-devtools__navigate_page` | 導航到指定 URL |
+
+**注意**：使用固定端口 9222，`.mcp.json` 無需每次更新。Chrome 使用獨立 profile，登入狀態會保留。
 
 ---
 
