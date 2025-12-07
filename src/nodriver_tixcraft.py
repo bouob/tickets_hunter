@@ -20650,7 +20650,7 @@ def get_nodriver_browser_args():
         "--no-pings",
         "--no-service-autorun",
         "--password-store=basic",
-        "--remote-debugging-host=127.0.0.1",
+        # Note: --remote-debugging-host is managed by Config(host=...) when MCP debug is enabled
         "--lang=zh-TW",
     ]
 
@@ -20682,6 +20682,13 @@ def get_maxbot_extension_path(extension_folder):
             #print("final path:", path)
     return config_filepath
 
+def is_port_in_use(port: int, host: str = '127.0.0.1') -> bool:
+    """Check if a TCP port is already in use."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1)
+        return s.connect_ex((host, port)) == 0
+
 def get_extension_config(config_dict, args=None):
     default_lang = "zh-TW"
     no_sandbox=True
@@ -20689,24 +20696,38 @@ def get_extension_config(config_dict, args=None):
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
-    # MCP debug mode: enable fixed CDP port for chrome-devtools-mcp connection
-    mcp_debug_port = None
-    if args and hasattr(args, 'mcp_debug') and args.mcp_debug:
-        mcp_debug_port = args.mcp_debug
-        print(f"[MCP DEBUG] Enabled on port {mcp_debug_port}")
-        print(f"[MCP DEBUG] Configure .mcp.json with: --browserUrl http://127.0.0.1:{mcp_debug_port}")
+    # MCP connect mode: Connect to existing Chrome instance (for MCP integration)
+    # This allows NoDriver to attach to a Chrome started with --remote-debugging-port
+    mcp_connect_port = None
+    if args and hasattr(args, 'mcp_connect') and args.mcp_connect:
+        mcp_connect_port = args.mcp_connect
 
-    if mcp_debug_port:
+    if mcp_connect_port:
+        # Connect to existing Chrome (NoDriver will NOT start a new browser)
+        print(f"[MCP CONNECT] Connecting to existing Chrome on port {mcp_connect_port}")
+        print(f"[MCP CONNECT] Make sure Chrome is running with: --remote-debugging-port={mcp_connect_port}")
         conf = Config(
-            browser_args=browser_args,
-            lang=default_lang,
-            no_sandbox=no_sandbox,
-            headless=config_dict["advanced"]["headless"],
             host="127.0.0.1",
-            port=mcp_debug_port
+            port=mcp_connect_port,
+            headless=config_dict["advanced"]["headless"]
         )
-    else:
-        conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
+        # Note: When connecting to existing browser, extensions cannot be loaded
+        return conf
+
+    # MCP debug mode: NoDriver uses dynamic CDP port, we output actual port after browser starts
+    # Note: NoDriver limitation - cannot use fixed port (browser.py:357-361 treats host+port as
+    # "connect to existing browser" mode). We just mark that MCP debug is requested here.
+    # The actual port will be printed in main() after browser starts.
+    mcp_debug_enabled = False
+    if args and hasattr(args, 'mcp_debug') and args.mcp_debug:
+        mcp_debug_enabled = True
+        print("[MCP DEBUG] Mode enabled - actual port will be shown after browser starts")
+    elif config_dict["advanced"].get("mcp_debug_port", 0) > 0:
+        mcp_debug_enabled = True
+        print("[MCP DEBUG] Mode enabled (via settings.json) - actual port will be shown after browser starts")
+
+    # Normal mode: auto-detect (host=None, port=None) to let NoDriver start the browser
+    conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
         ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
         if len(ext) > 0:
@@ -23728,6 +23749,22 @@ async def main(args):
         #driver = await uc.start(conf, sandbox=sandbox, headless=config_dict["advanced"]["headless"])
         driver = await uc.start(conf)
         if not driver is None:
+            # Output actual CDP port for MCP connection (when mcp_debug is requested)
+            mcp_debug_requested = (args and hasattr(args, 'mcp_debug') and args.mcp_debug) or \
+                                  config_dict["advanced"].get("mcp_debug_port", 0) > 0
+            if mcp_debug_requested:
+                actual_port = driver.config.port
+                print(f"[MCP DEBUG] Browser started on actual port: {actual_port}")
+                print(f"[MCP DEBUG] Update .mcp.json with: --browserUrl http://127.0.0.1:{actual_port}")
+                # Write port to file for /mcpstart command auto-update
+                try:
+                    port_file = os.path.join(os.path.dirname(__file__), '..', '.temp', 'mcp_port.txt')
+                    os.makedirs(os.path.dirname(port_file), exist_ok=True)
+                    with open(port_file, 'w') as f:
+                        f.write(str(actual_port))
+                    print(f"[MCP DEBUG] Port saved to .temp/mcp_port.txt")
+                except Exception as e:
+                    print(f"[MCP DEBUG] Warning: Could not save port to file: {e}")
             tab = await nodriver_goto_homepage(driver, config_dict)
             tab = await nodrver_block_urls(tab, config_dict)
             if not config_dict["advanced"]["headless"]:
@@ -23963,6 +24000,11 @@ def cli():
         nargs='?',
         const=9222,
         type=int)
+
+    parser.add_argument("--mcp_connect",
+        help="Connect to existing Chrome on specified port (e.g., --mcp_connect 9222)",
+        type=int,
+        metavar="PORT")
 
     args = parser.parse_args()
     uc.loop().run_until_complete(main(args))
