@@ -2,8 +2,8 @@
 文件說明：詳細說明 settings.json 在圖形介面中顯示的各項設定欄位
 分類：Configuration Reference (level: 2)
 目標受眾：一般使用者
-版本：1.4
-最後更新：2025-12-02
+版本：1.5
+最後更新：2025-12-08
 -->
 
 # settings.json 詳細設定說明
@@ -802,6 +802,59 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 ---
 
+### Discord Webhook 通知 ⭐ v2025.12 新增
+
+#### Discord Webhook URL（discord_webhook_url）
+類型：字串 | 預設：空白
+
+設定 Discord Webhook 網址，當找到票券或訂單成功時自動發送通知到您的 Discord 頻道。
+
+在圖形介面中顯示為：**Discord Webhook URL**（文字框）
+
+**功能說明**：
+- **找到票券時**：發送「[平台名稱] found ticket! Please check your computer」
+- **訂單成功時**：發送「[平台名稱] order success! Please checkout and pay ASAP」
+- 通知不會影響搶票流程（使用非同步發送，3 秒超時）
+
+**如何建立 Discord Webhook**：
+
+1. **建立或選擇 Discord 伺服器**
+   - 開啟 Discord 應用程式或網頁版
+   - 如果沒有自己的伺服器，點擊左側「+」建立新伺服器
+
+2. **進入伺服器設定**
+   - 點擊伺服器名稱旁的下拉箭頭 ▼
+   - 選擇「伺服器設定」(Server Settings)
+
+3. **建立 Webhook**
+   - 在左側選單找到「整合」(Integrations)
+   - 點擊「檢視 Webhooks」或「Webhooks」
+   - 點擊「新建 Webhook」(New Webhook)
+
+4. **設定 Webhook**
+   - 命名您的 Webhook（例如：Tickets Hunter）
+   - 選擇要接收通知的頻道
+   - 可選：上傳自訂頭像
+
+5. **複製 Webhook URL**
+   - 點擊「複製 Webhook URL」按鈕
+   - URL 格式類似：`https://discord.com/api/webhooks/1234567890/abcdefg...`
+
+6. **貼上到設定介面**
+   - 回到 Tickets Hunter 設定介面
+   - 在「進階設定」頁籤找到「Discord Webhook URL」
+   - 貼上剛才複製的 URL
+   - 儲存設定
+
+**注意事項**：
+- Webhook URL 是敏感資訊，請勿分享給他人
+- 留空則停用 Discord 通知功能
+- 通知失敗不會影響搶票流程
+
+**官方參考文件**：[Discord Webhooks 介紹](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
+
+---
+
 ### Cookie 設定（快速登入）
 
 #### 拓元家族 cookie TIXUISID（tixcraft_sid）
@@ -988,4 +1041,4 @@ FANCLUB999
 
 **祝您搶票成功！** 🎉
 
-*最後更新：2025-12-02 | 版本：1.4*
+*最後更新：2025-12-08 | 版本：1.5*

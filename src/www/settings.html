@@ -121,10 +121,10 @@
       </li>
 
       <li class="nav-item ms-auto d-flex align-items-center" role="presentation">
-        <a href="https://discord.gg/GCE5s6W6dV" target="_blank" class="btn btn-sm btn-outline-secondary me-2">
+        <a href="https://discord.gg/GCE5s6W6dV" target="_blank" class="btn btn-sm btn-outline-primary me-2">
           Discord 社群
         </a>
-        <a href="https://github.com/bouob/tickets_hunter/issues" target="_blank" class="btn btn-sm btn-outline-primary">
+        <a href="https://github.com/bouob/tickets_hunter/issues" target="_blank" class="btn btn-sm btn-outline-warning">
           回報問題
         </a>
       </li>
@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.04.1) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.09) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -197,14 +197,16 @@
 
 <p>本手冊專為<strong>第一次使用搶票機器人的一般使用者</strong>設計，不需要程式背景即可輕鬆上手。</p>
 
-<h4>推薦閱讀順序</h4>
+<p><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/README.md" target="_blank" class="btn btn-primary btn-sm mb-2">完整使用者手冊入口</a></p>
 
-<ol class="mb-3">
-  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/installation.md" target="_blank">安裝與首次執行</a> - 執行檔版本完整教學（第一次使用必讀）</li>
-  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/quick-start.md" target="_blank">Python 快速入門</a> - Python 原始碼使用者指南（進階使用者）</li>
+<h4>快速連結</h4>
+
+<ul class="mb-3">
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/installation.md" target="_blank">安裝與首次執行</a> - 執行檔版本完整教學</li>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/quick-start.md" target="_blank">Python 快速入門</a> - Python 原始碼使用者指南</li>
   <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/keyword-mechanism.md" target="_blank">關鍵字與回退機制</a> - 深入理解搶票邏輯</li>
-  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md" target="_blank">詳細設定說明</a> - settings.json 完整欄位參考（進階）</li>
-</ol>
+  <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md" target="_blank">詳細設定說明</a> - settings.json 完整欄位參考</li>
+</ul>
 
 <p><strong>重要更新 (2025.10.29)</strong>：關鍵字分隔符號已變更：逗號 (<code>,</code>) → 分號 (<code>;</code>)。範例：<code>11/16;11/17;11/18</code>（詳見「關鍵字與回退機制」）</p>
 
@@ -249,7 +251,7 @@
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://www.famiticket.com.tw')">FamiTicket 全網</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://kham.com.tw')">Kham 寬宏售票</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticket.com.tw')">Ticket.com.tw 年代</button>
-                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udn.com')">UDN售票網</button>
+                      <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://tickets.udnfunlife.com')">UDN售票網</button>
                       <button type="button" class="btn btn-outline-primary btn-sm me-2 mb-2" onclick="fillHomepage('https://ticketplus.com.tw')">TicketPlus 遠大</button>
                     </div>
 
@@ -535,6 +537,16 @@
         </div>
 
         <div class="row mb-3">
+          <label for="discord_webhook_url" class="col-sm-2 col-form-label">Discord Webhook URL
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="Discord Webhook 通知網址。留空則停用。設定後，當找到票券或訂單成功時，將會發送 Discord 通知。">?</span>
+          </label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="discord_webhook_url" type="url" value="" placeholder="https://discord.com/api/webhooks/..." />
+          </div>
+        </div>
+
+        <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_page_interval" value="" />
@@ -644,7 +656,7 @@
           </div>
         </div>
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label">掛機模式</label>
+          <label class="col-sm-2 col-form-label">自動送出</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" id="ocr_captcha_force_submit">
@@ -1097,6 +1109,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2025120411"></script>
+  <script src="settings.js?v=2025120902"></script>
 </body>
 </html>
