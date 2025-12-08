@@ -707,14 +707,18 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 from nodriver import cdp
 
-                # Step 1: Delete existing TIXUISID cookies
+                # Step 1: Delete existing cookies (both legacy SID and TIXUISID)
                 try:
+                    await tab.send(cdp.network.delete_cookies(
+                        name="SID",
+                        domain=cookie_domain
+                    ))
                     await tab.send(cdp.network.delete_cookies(
                         name="TIXUISID",
                         domain=cookie_domain
                     ))
                     if config_dict["advanced"]["verbose"]:
-                        print(f"Deleted existing TIXUISID cookies for domain: {cookie_domain}")
+                        print(f"Deleted existing SID and TIXUISID cookies for domain: {cookie_domain}")
                 except Exception as del_e:
                     if config_dict["advanced"]["verbose"]:
                         print(f"Note: Could not delete existing cookies: {del_e}")
@@ -751,8 +755,8 @@ async def nodriver_goto_homepage(driver, config_dict):
 
                 # Fallback to old method if CDP fails
                 cookies = await driver.cookies.get_all()
-                # Filter out all existing TIXUISID cookies to avoid conflicts
-                cookies_filtered = [c for c in cookies if c.name != 'TIXUISID']
+                # Filter out all existing SID and TIXUISID cookies to avoid conflicts
+                cookies_filtered = [c for c in cookies if c.name not in ('SID', 'TIXUISID')]
                 # Create new TIXUISID cookie with correct attributes (Issue #144)
                 new_cookie = cdp.network.CookieParam(
                     "TIXUISID",
