@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "chrome-devtools-mcp@latest",
+        "--browserUrl",
+        "http://127.0.0.1:9222"
+      ]
+    },
+    "discord": {
+      "command": "cmd",
+      "args": ["/c", "node", "D:/Desktop/bouob-TicketHunter(MaxBot)/discord-mcp/dist/index-hybrid.js"],
+      "env": {
+        "DISCORD_TOKEN": "${DISCORD_TOKEN}",
+        "DISCORD_GUILD_ID": "${DISCORD_GUILD_ID}"
+      }
+    }
+  }
+}
