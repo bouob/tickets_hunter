@@ -535,6 +535,16 @@
         </div>
 
         <div class="row mb-3">
+          <label for="discord_webhook_url" class="col-sm-2 col-form-label">Discord Webhook URL
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="Discord Webhook URL for notifications. Leave empty to disable. When set, you will receive Discord notifications when tickets are found or orders succeed.">?</span>
+          </label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="discord_webhook_url" type="url" value="" placeholder="https://discord.com/api/webhooks/..." />
+          </div>
+        </div>
+
+        <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_page_interval" value="" />

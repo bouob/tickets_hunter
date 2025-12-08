@@ -200,6 +200,19 @@ def play_sound_while_ordering(config_dict):
     captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
     util.play_mp3_async(captcha_sound_filename)
 
+def send_discord_notification(config_dict, stage, platform_name):
+    """Send Discord webhook notification if configured.
+
+    Args:
+        config_dict: Configuration dictionary
+        stage: "ticket" or "order"
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+    """
+    webhook_url = config_dict.get("advanced", {}).get("discord_webhook_url", "")
+    if webhook_url:
+        verbose = config_dict.get("advanced", {}).get("verbose", False)
+        util.send_discord_webhook_async(webhook_url, stage, platform_name, verbose=verbose)
+
 async def nodriver_press_button(tab, select_query):
     if tab:
         try:
@@ -2263,10 +2276,11 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
-                if config_dict["advanced"]["play_sound"]["ticket"]:
-                    if not played_sound_ticket:
+                if not played_sound_ticket:
+                    if config_dict["advanced"]["play_sound"]["ticket"]:
                         play_sound_while_ordering(config_dict)
-                    played_sound_ticket = True
+                    send_discord_notification(config_dict, "ticket", "KKTIX")
+                played_sound_ticket = True
 
                 # 收集除錯資訊（僅在 debug 模式下）
                 if show_debug_message:
@@ -2802,9 +2816,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
                         print("[KKTIX] Ticket purchase completed, elapsed time: {:.3f} seconds".format(bot_elapsed_time))
                     kktix_dict["elapsed_time"] = bot_elapsed_time
 
-            if config_dict["advanced"]["play_sound"]["order"]:
-                if not kktix_dict["played_sound_order"]:
+            if not kktix_dict["played_sound_order"]:
+                if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "order", "KKTIX")
 
             kktix_dict["played_sound_order"] = True
 
@@ -6289,10 +6304,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         await nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_dict["done_time"] = time.time()
 
-        if config_dict["advanced"]["play_sound"]["ticket"]:
-            if not tixcraft_dict["played_sound_ticket"]:
+        if not tixcraft_dict["played_sound_ticket"]:
+            if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            tixcraft_dict["played_sound_ticket"] = True
+            send_discord_notification(config_dict, "ticket", "TixCraft")
+        tixcraft_dict["played_sound_ticket"] = True
     else:
         tixcraft_dict["played_sound_ticket"] = False
 
@@ -6321,10 +6337,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                 print("Ticket purchase successful, please check order at: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
 
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not tixcraft_dict["played_sound_order"]:
+        if not tixcraft_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            tixcraft_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "TixCraft")
+        tixcraft_dict["played_sound_order"] = True
     else:
         tixcraft_dict["is_popup_checkout"] = False
         tixcraft_dict["played_sound_order"] = False
@@ -9158,6 +9175,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 ticketplus_dict["is_popup_confirm"] = True
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "order", "TicketPlus")
 
                 try:
                     await nodriver_ticketplus_confirm(tab, config_dict)
@@ -14349,10 +14367,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             show_debug_message = config_dict["advanced"].get("verbose", False)
                             if show_debug_message:
@@ -14473,10 +14492,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             if show_debug_message:
                                 print(f"[IBON] Submit button error: {exc}")
@@ -14640,10 +14660,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     # Play sound if button clicked successfully
                     if click_ret:
                         # Play "ticket" sound when attempting to enter checkout (found ticket)
-                        if config_dict["advanced"]["play_sound"]["ticket"]:
-                            if not ibon_dict.get("played_sound_ticket", False):
+                        if not ibon_dict.get("played_sound_ticket", False):
+                            if config_dict["advanced"]["play_sound"]["ticket"]:
                                 play_sound_while_ordering(config_dict)
-                                ibon_dict["played_sound_ticket"] = True
+                            send_discord_notification(config_dict, "ticket", "iBon")
+                            ibon_dict["played_sound_ticket"] = True
                         if show_debug_message:
                             print("[NEW EVENTBUY] Purchase button clicked successfully")
             else:
@@ -14787,10 +14808,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                     else:
                         is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
                         if is_sold_out:
@@ -14847,10 +14869,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             ibon_dict["shown_checkout_message"] = True
 
         # Play sound notification (only once)
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not ibon_dict["played_sound_order"]:
+        if not ibon_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            ibon_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "iBon")
+        ibon_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
         if config_dict["advanced"]["headless"]:
@@ -15548,19 +15571,22 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
             if not cityline_dict.get("played_sound_order", False):
                 print("[CITYLINE SUCCESS] Ticket added to shopping basket!")
 
-                # Play success sound
+                # Play success sound and send Discord notification
                 if config_dict["advanced"]["play_sound"]["order"]:
                     try:
                         play_sound_while_ordering(config_dict)
-                        cityline_dict["played_sound_order"] = True
                     except Exception as sound_exc:
                         if show_debug_message:
-                            print(f"[WARNING] Failed to play sound: {sound_exc}")
+                            print(f"[CITYLINE] Sound error: {sound_exc}")
+                send_discord_notification(config_dict, "order", "Cityline")
+                cityline_dict["played_sound_order"] = True
 
+            # Return True to indicate we're on checkout page
             return True
-    except Exception as exc:
+
+    except Exception as e:
         if show_debug_message:
-            print(f"[ERROR] Check shopping basket failed: {exc}")
+            print(f"[CITYLINE] Checkout check error: {e}")
 
     return False
 
@@ -15901,10 +15927,11 @@ async def nodriver_cityline_main(tab, url, config_dict):
         # Reset modal flag when successfully navigated to performance page
         cityline_modal_handled = False
         # Play sound when entering performance page
-        if config_dict["advanced"]["play_sound"]["ticket"]:
-            if not cityline_dict["played_sound_ticket"]:
+        if not cityline_dict["played_sound_ticket"]:
+            if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            cityline_dict["played_sound_ticket"] = True
+            send_discord_notification(config_dict, "ticket", "Cityline")
+        cityline_dict["played_sound_ticket"] = True
 
         # Integrated performance page processing (area + ticket number + next button)
         if not cityline_performance_processed:
@@ -18213,10 +18240,11 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             print("[SUCCESS] Reached checkout page - ticket purchase successful!")
 
         # Play sound notification (only once)
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not kham_dict["played_sound_order"]:
+        if not kham_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            kham_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "KHAM")
+        kham_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
         if config_dict["advanced"]["headless"]:
@@ -23598,7 +23626,8 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             # Play sound when entering ticket page
             if not hkticketing_dict.get("played_sound_ticket", False):
                 if config_dict["advanced"]["play_sound"]["ticket"]:
-                    play_sound(config_dict)
+                    play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "ticket", "HKTicketing")
                 hkticketing_dict["played_sound_ticket"] = True
 
             await nodriver_hkticketing_type02_performance(tab, config_dict)
@@ -23627,10 +23656,11 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         print("[HKTICKETING TYPE02] Checkout page detected - Ticket booking SUCCESS!")
 
         # Play success sound (order) once
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not hkticketing_dict.get("played_sound_order", False):
+        if not hkticketing_dict.get("played_sound_order", False):
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            hkticketing_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "HKTicketing")
+        hkticketing_dict["played_sound_order"] = True
 
         # Show message once
         if not hkticketing_dict.get("shown_checkout_message", False):
@@ -23719,7 +23749,8 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
                     # Play sound when entering ticket page
                     if not hkticketing_dict["played_sound_ticket"]:
                         if config_dict["advanced"]["play_sound"]["ticket"]:
-                            play_sound(config_dict)
+                            play_sound_while_ordering(config_dict)
+                        send_discord_notification(config_dict, "ticket", "HKTicketing")
                         hkticketing_dict["played_sound_ticket"] = True
 
                     await nodriver_hkticketing_performance(tab, config_dict, domain_name)
