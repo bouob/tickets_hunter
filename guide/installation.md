@@ -54,7 +54,6 @@ tickets_hunter/
 ├── nodriver_tixcraft.exe       # NoDriver 搶票引擎
 ├── chrome_tixcraft.exe          # Chrome 搶票引擎
 ├── settings.exe                 # 設定編輯器（主要入口）
-├── config_launcher.exe          # 多開管理器
 │
 ├── _internal/                   # 依賴函式庫（請勿刪除！）
 ├── webdriver/                   # WebDriver 與擴充套件
@@ -260,35 +259,6 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 - 首次執行請保持網路暢通
 - 下載完成前請勿關閉程式
 - 如果下載失敗，請重新執行，程式會自動重試
-
----
-
-## 🔢 多開管理器（進階功能）
-
-如果您需要**同時搶多個場次**（例如：同時搶台北場和高雄場），可以使用 **多開管理器（config_launcher.exe）**。
-
-### 使用方式
-
-1. 雙擊執行 `config_launcher.exe`
-2. 會顯示 Tkinter GUI 視窗
-3. 在視窗中可以：
-   - 建立多個 settings.json 設定檔（例如：`settings_taipei.json`、`settings_kaohsiung.json`）
-   - 同時啟動多個搶票程式實例
-   - 管理每個實例的執行狀態
-
-### 步驟
-
-1. 在多開管理器中，點擊 **「新增設定檔」**
-2. 輸入設定檔名稱（例如：`settings_taipei`）
-3. 編輯設定檔（網址、票數、關鍵字）
-4. 重複上述步驟，建立多個設定檔
-5. 勾選要同時執行的設定檔
-6. 點擊 **「啟動」** 按鈕
-
-**⚠️ 注意**：
-- 多開會消耗更多 CPU 和記憶體資源
-- 建議最多同時開啟 3-5 個實例
-- 確保您的電腦效能足夠
 
 ---
 
