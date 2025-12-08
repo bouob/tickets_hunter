@@ -485,6 +485,8 @@ OCR 相關
 
 輔助工具
 ├── play_mp3_async (在 util.py)        # 行 236
+├── send_discord_webhook (在 util.py)  # Discord Webhook 發送
+├── send_discord_webhook_async (在 util.py)  # Discord Webhook 非同步發送
 ├── nodriver_press_button                # 行 202
 ├── nodriver_check_checkbox              # 行 218
 ├── nodriver_check_checkbox_enhanced     # 行 305
@@ -1122,6 +1124,7 @@ with_pause_check(task_func, config_dict, *args, **kwargs)      # 行 8348 ✅
 - `assign_ticket_number_by_select()` - 透過選擇器設定票數 (共用)
 - `get_target_item_from_matched_list()` - 從匹配清單取得目標項目 (共用)
 - `play_sound_while_ordering()` - 訂票時播放聲音 (共用)
+- `send_discord_notification()` - 發送 Discord Webhook 通知 (共用)
 - `get_favoriate_extension_path()` - 取得偏好擴充功能路徑 (共用)
 
 ### NoDriver 版本 (20個函式)
