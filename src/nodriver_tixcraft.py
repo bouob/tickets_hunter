@@ -9081,7 +9081,10 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
         is_user_signin = await nodriver_ticketplus_account_auto_fill(tab, config_dict)
 
     if is_user_signin:
-        if url != config_dict["homepage"]:
+        # Only redirect if homepage is NOT the main page itself (prevent loop)
+        config_homepage = config_dict["homepage"].lower().rstrip('/')
+        is_homepage_target = config_homepage in ['https://ticketplus.com.tw', 'ticketplus.com.tw']
+        if not is_homepage_target and url.lower() != config_dict["homepage"].lower():
             try:
                 await tab.get(config_dict["homepage"])
             except Exception as e:
