@@ -1,5 +1,18 @@
 # Changelog
 
+## 2025.12.09
+
+- 新增 Discord Webhook 通知功能（搶票觸發時即時推播到 Discord）
+- 新增 MCP 連接模式支援固定埠號的 Chrome 除錯
+- 修復 TixCraft Cookie 登入衝突問題（舊版 SID 與新版 TIXUISID 共存）
+- 修復 TicketPlus 首頁重導向無限循環問題
+- 優化 TixCraft 頁面載入速度（智慧等待取代固定延遲）
+- 重構 TixCraft 區域選擇重試邏輯
+- 精簡日期與區域選擇程式碼
+- 更新設定介面 OCR 強制送出標籤說明
+- 更新 UDN 售票網網址
+- 重新組織使用者手冊結構，新增統一入口頁
+
 ## 2025.12.04.1
 
 - 優化 TixCraft 日期選擇頁面載入速度（智慧等待取代固定延遲）
