@@ -25,6 +25,7 @@ const webdriver_type = document.querySelector('#webdriver_type');
 const play_ticket_sound = document.querySelector('#play_ticket_sound');
 const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
+const discord_webhook_url = document.querySelector('#discord_webhook_url');
 
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
@@ -165,6 +166,7 @@ function load_settins_to_form(settings)
         play_ticket_sound.checked = settings.advanced.play_sound.ticket;
         play_order_sound.checked = settings.advanced.play_sound.order;
         play_sound_filename.value = settings.advanced.play_sound.filename;
+        discord_webhook_url.value = settings.advanced.discord_webhook_url || '';
 
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
         max_dwell_time.value = settings.kktix.max_dwell_time;
@@ -402,6 +404,7 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.play_sound.ticket = play_ticket_sound.checked;
             settings.advanced.play_sound.order = play_order_sound.checked;
             settings.advanced.play_sound.filename = play_sound_filename.value;
+            settings.advanced.discord_webhook_url = discord_webhook_url.value;
 
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);

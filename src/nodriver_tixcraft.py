@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.04.1)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.09)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -199,6 +199,19 @@ def play_sound_while_ordering(config_dict):
     app_root = util.get_app_root()
     captcha_sound_filename = os.path.join(app_root, config_dict["advanced"]["play_sound"]["filename"].strip())
     util.play_mp3_async(captcha_sound_filename)
+
+def send_discord_notification(config_dict, stage, platform_name):
+    """Send Discord webhook notification if configured.
+
+    Args:
+        config_dict: Configuration dictionary
+        stage: "ticket" or "order"
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+    """
+    webhook_url = config_dict.get("advanced", {}).get("discord_webhook_url", "")
+    if webhook_url:
+        verbose = config_dict.get("advanced", {}).get("verbose", False)
+        util.send_discord_webhook_async(webhook_url, stage, platform_name, verbose=verbose)
 
 async def nodriver_press_button(tab, select_query):
     if tab:
@@ -616,8 +629,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         # for like human.
         try:
             tab = await driver.get(homepage)
-            await tab.get_content()
-            await asyncio.sleep(3)
+            await asyncio.sleep(random.uniform(1.0, 2.5))
         except Exception as e:
             pass
         
@@ -662,8 +674,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     try:
         tab = await driver.get(homepage)
-        await tab.get_content()
-        await asyncio.sleep(3)
+        await asyncio.sleep(random.uniform(1.0, 2.5))
     except Exception as e:
         pass
 
@@ -696,22 +707,23 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 from nodriver import cdp
 
-                # Step 1: Delete existing TIXUISID cookies (aligned with Chrome Driver implementation)
-                # Reference: chrome_tixcraft.py line 848
+                # Step 1: Delete existing cookies (both legacy SID and TIXUISID)
                 try:
+                    await tab.send(cdp.network.delete_cookies(
+                        name="SID",
+                        domain=cookie_domain
+                    ))
                     await tab.send(cdp.network.delete_cookies(
                         name="TIXUISID",
                         domain=cookie_domain
                     ))
                     if config_dict["advanced"]["verbose"]:
-                        print(f"Deleted existing TIXUISID cookies for domain: {cookie_domain}")
+                        print(f"Deleted existing SID and TIXUISID cookies for domain: {cookie_domain}")
                 except Exception as del_e:
                     if config_dict["advanced"]["verbose"]:
                         print(f"Note: Could not delete existing cookies: {del_e}")
 
                 # Step 2: Set new TIXUISID cookie using CDP
-                # Fix: http_only=True (Issue #137 - TixCraft cookie requires HttpOnly attribute)
-                # Fix: cookie name changed from SID to TIXUISID (Issue #144)
                 cookie_result = await tab.send(cdp.network.set_cookie(
                     name="TIXUISID",
                     value=tixcraft_sid,
@@ -743,8 +755,8 @@ async def nodriver_goto_homepage(driver, config_dict):
 
                 # Fallback to old method if CDP fails
                 cookies = await driver.cookies.get_all()
-                # Filter out all existing TIXUISID cookies to avoid conflicts
-                cookies_filtered = [c for c in cookies if c.name != 'TIXUISID']
+                # Filter out all existing SID and TIXUISID cookies to avoid conflicts
+                cookies_filtered = [c for c in cookies if c.name not in ('SID', 'TIXUISID')]
                 # Create new TIXUISID cookie with correct attributes (Issue #144)
                 new_cookie = cdp.network.CookieParam(
                     "TIXUISID",
@@ -760,9 +772,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                 if config_dict["advanced"]["verbose"]:
                     print("tixcraft TIXUISID cookie set successfully (fallback method)")
 
-    # 處理 ibon 登入
     if 'ibon.com' in homepage:
-        # 使用專門的 ibon 登入函數
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if config_dict["advanced"]["verbose"]:
@@ -1689,38 +1699,6 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             # On error, use mode selection
             matched_blocks = []
 
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-14)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-    if not date_keyword:
-        matched_blocks = formated_session_list
-    else:
-        matched_blocks = []
-        try:
-            keyword_array = json.loads("[" + date_keyword + "]")
-            for i, session_text in enumerate(formated_session_list_text):
-                normalized_session_text = re.sub(r'\s+', ' ', session_text)
-                session_matched = False
-                for keyword_item_set in keyword_array:
-                    is_match = False
-                    if isinstance(keyword_item_set, str):
-                        normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                        is_match = normalized_keyword in normalized_session_text
-                    elif isinstance(keyword_item_set, list):
-                        normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                        match_results = [kw in normalized_session_text for kw in normalized_keywords]
-                        is_match = all(match_results)
-                    if is_match:
-                        matched_blocks.append(formated_session_list[i])
-                        session_matched = True
-                        break
-        except Exception as e:
-            matched_blocks = formated_session_list
-    """
-
     # Match result summary
     if show_debug_message:
         print(f"[KKTIX DATE KEYWORD] ========================================")
@@ -1749,17 +1727,6 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
                 print(f"[KKTIX DATE SELECT] No date selected, will check if reload needed")
             # Don't return - let the function continue to check if selection succeeded
             # matched_blocks remains empty (no selection will be made)
-
-    # DEPRECATED: Old unconditional fallback logic
-    # Will be removed after 2 weeks (2025-11-14)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # Unconditional auto-fallback when keywords fail
-    if len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
-        if show_debug_message:
-            print(f"[KKTIX DATE KEYWORD] Falling back to auto_select_mode: '{auto_select_mode}'")
-        matched_blocks = formated_session_list
-    """
 
     # Select target using auto_select_mode
     target_button = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
@@ -2206,7 +2173,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if config_dict["advanced"]["verbose"]:
         show_debug_message = True
 
-    # 增加執行計數器，防止無限迴圈 - 2025-11-11
+    # 增加執行計數器，防止無限迴圈
     global kktix_dict
     if 'kktix_dict' in globals():
         kktix_dict["reg_execution_count"] = kktix_dict.get("reg_execution_count", 0) + 1
@@ -2295,20 +2262,6 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 # If fallback still failed (or was attempted), then refresh
                 if not is_ticket_number_assigned:
                     is_need_refresh = True  # Always reload when no ticket assigned
-
-            # DEPRECATED: Old unconditional fallback logic
-            # Will be removed after 2 weeks (2025-11-14)
-            """
-            # OLD LOGIC - DEPRECATED - DO NOT USE
-            # Unconditional auto-fallback when all keywords fail
-            if not is_ticket_number_assigned:
-                if is_need_refresh_final:
-                    if show_debug_message:
-                        print(f"[KKTIX AREA] All keyword groups failed, falling back to auto_select_mode: {auto_select_mode}")
-                    is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
-                if not is_ticket_number_assigned:
-                    is_need_refresh = is_need_refresh_final
-            """
         else:
             # empty keyword, match all.
             is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
@@ -2327,10 +2280,11 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if await check_and_handle_pause(config_dict):
                     return fail_list, played_sound_ticket
 
-                if config_dict["advanced"]["play_sound"]["ticket"]:
-                    if not played_sound_ticket:
+                if not played_sound_ticket:
+                    if config_dict["advanced"]["play_sound"]["ticket"]:
                         play_sound_while_ordering(config_dict)
-                    played_sound_ticket = True
+                    send_discord_notification(config_dict, "ticket", "KKTIX")
+                played_sound_ticket = True
 
                 # 收集除錯資訊（僅在 debug 模式下）
                 if show_debug_message:
@@ -2346,7 +2300,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 # single option question
                 if not is_question_popup:
                     # Check and dismiss guest modal again (in case it appears after captcha)
-                    # This ensures modal doesn't block the next button - 2025-11-11
+                    # This ensures modal doesn't block the next button
                     await nodriver_kktix_check_guest_modal(tab, config_dict)
 
                     # no captcha text popup, goto next page.
@@ -2354,7 +2308,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     if show_debug_message:
                         print("control_text:", control_text)
 
-                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text - 2025-11-11
+                    # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text
                     if 'kktix_dict' in globals() and kktix_dict.get("reg_execution_count", 0) > 2:
                         if len(control_text) > 0:
                             # 檢查票券數量和序號是否已填寫
@@ -2403,7 +2357,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             #print(exc)
                             pass
                         if input_text_element is None:
-                            # 嘗試多種選擇器來找到資格 radio - 2025-11-11
+                            # 嘗試多種選擇器來找到資格 radio
                             radio_selectors = [
                                 'input[type="radio"][ng-model="ticketModel.use_qualification_id"]',  # 最精確
                                 'div.code-input input[type="radio"]',  # 次要選擇
@@ -2430,7 +2384,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                         control_text = ""
                                         print("member joined")
                                     else:
-                                        # 沒有 "已加入" 標記，需要勾選 radio - 2025-11-11
+                                        # 沒有 "已加入" 標記，需要勾選 radio
                                         try:
                                             # 檢查 radio 是否被禁用
                                             is_disabled = await radio_element.get_attribute('disabled')
@@ -2447,13 +2401,13 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                 pass
 
                             # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
-                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位 - 2025-11-11
+                            # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位
                             if radio_element is None:
                                 if show_debug_message:
                                     print(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
                                 control_text = ""
                             else:
-                                # 有 radio 元素：檢查所有必填欄位是否已填寫 - 2025-11-11
+                                # 有 radio 元素：檢查所有必填欄位是否已填寫
                                 try:
                                     all_inputs_filled_result = await tab.evaluate('''
                                         () => {
@@ -2492,7 +2446,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                                 }
                                             }
 
-                                            // 不檢查 Radio 勾選狀態 - 2025-11-11
+                                            // 不檢查 Radio 勾選狀態
                                             // 因為「本票券需要符合以下任一資格才可以購買」只是說明文字
                                             // 不是必填欄位，票券和序號完成後就應該點擊下一步
 
@@ -2547,7 +2501,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             pass
             else:
                 # is_ticket_number_assigned is False
-                # 檢查票券是否已經在上一次填寫完成 - 2025-11-11
+                # 檢查票券是否已經在上一次填寫完成
                 if not is_need_refresh:
                     # 沒有需要重新載入，可能是票券已選擇但 matched_blocks 為空
                     # 檢查是否所有必填欄位都已填寫
@@ -2664,12 +2618,11 @@ async def nodriver_kktix_main(tab, url, config_dict):
         kktix_dict["played_sound_order"] = False
         kktix_dict["got_ticket_detected"] = False
         kktix_dict["success_actions_done"] = False
-        kktix_dict["reg_execution_count"] = 0  # 防止無限迴圈 - 2025-11-11
-        kktix_dict["alert_handler_registered"] = False  # 全域 alert handler 註冊狀態 - 2025-11-25
-        kktix_dict["guest_modal_checked"] = False  # Guest modal 檢查狀態，避免重複等待 - 2025-11-25
+        kktix_dict["reg_execution_count"] = 0
+        kktix_dict["alert_handler_registered"] = False
+        kktix_dict["guest_modal_checked"] = False
 
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
-    # Handles alerts like "糟糕，目前 xxx 的票券都被選走了" - 2025-11-25
     async def handle_kktix_alert(event):
         if show_debug_message:
             print(f"[KKTIX ALERT] Alert detected: '{event.message}'")
@@ -2721,7 +2674,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
             # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
-            # This modal appears when user is not logged in - 2025-11-11
+            # This modal appears when user is not logged in
             await nodriver_kktix_check_guest_modal(tab, config_dict)
 
             kktix_dict["start_time"] = time.time()
@@ -2749,7 +2702,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # Check if tickets are already selected (prevent repeated execution)
                 is_ticket_already_selected = False
                 try:
-                    # 改進的檢查：返回簡單布林值，更可靠 - 2025-11-11
+                    # 改進的檢查：返回簡單布林值，更可靠
                     result = await tab.evaluate('''
                         () => {
                             // 1. 檢查票券數量
@@ -2867,9 +2820,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
                         print("[KKTIX] Ticket purchase completed, elapsed time: {:.3f} seconds".format(bot_elapsed_time))
                     kktix_dict["elapsed_time"] = bot_elapsed_time
 
-            if config_dict["advanced"]["play_sound"]["order"]:
-                if not kktix_dict["played_sound_order"]:
+            if not kktix_dict["played_sound_order"]:
+                if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "order", "KKTIX")
 
             kktix_dict["played_sound_order"] = True
 
@@ -3047,6 +3001,11 @@ async def nodriver_tixcraft_redirect(tab, url):
             print("redirec to new url:", entry_url)
             try:
                 await tab.get(entry_url)
+                # 等待日期列表出現，確保頁面載入完成
+                try:
+                    await tab.wait_for('#gameList > table > tbody > tr', timeout=5)
+                except:
+                    pass  # timeout 沒關係，讓後續邏輯處理
                 ret = True
             except Exception as exec1:
                 pass
@@ -3167,7 +3126,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
             # 填寫完成後短暫延遲，確保 Angular 更新完成
             await tab.sleep(0.2)
 
-            # 檢查是否需要點擊下一步按鈕 - 2025-11-11
+            # 檢查是否需要點擊下一步按鈕
             # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
             auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
             if show_debug_message:
@@ -3175,7 +3134,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
 
             if auto_press:
                 # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
-                # 直接嘗試點擊下一步按鈕 - 2025-11-11
+                # 直接嘗試點擊下一步按鈕
                 try:
                     if show_debug_message:
                         print("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
@@ -4711,11 +4670,13 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     area_list = None
     if check_game_detail:
-        # 智慧等待：等待日期列表出現（取代固定 0.8-1 秒延遲）
+        # 智慧等待：等待日期列表出現
+        # 注意：從 /activity/detail/ redirect 過來時，redirect 函數已經等待過了
+        # 這裡再等待一次是為了處理直接進入 /activity/game/ 頁面的情況
         try:
             await tab.wait_for('#gameList > table > tbody > tr', timeout=3)
         except:
-            pass
+            pass  # timeout 沒關係，繼續嘗試讀取
 
         try:
             area_list = await tab.query_selector_all('#gameList > table > tbody > tr')
@@ -4851,36 +4812,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                     print(f"[DATE KEYWORD] Parsing error: {e}")
                 # On error, use mode selection
                 matched_blocks = []
-
-        # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-        # Will be removed after 2 weeks (2025-11-14)
-        """
-        # OLD LOGIC - DEPRECATED - DO NOT USE
-        # This logic scanned ALL keywords and collected all matches, then selected one
-        # NEW logic (above) uses early return: first match wins immediately
-        if not date_keyword:
-            matched_blocks = formated_area_list
-        else:
-            matched_blocks = []
-            try:
-                keyword_array = json.loads("[" + date_keyword + "]")
-                for i, row_text in enumerate(formated_area_list_text):
-                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
-                    for keyword_item_set in keyword_array:
-                        is_match = False
-                        if isinstance(keyword_item_set, str):
-                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                            is_match = normalized_keyword in normalized_row_text
-                        elif isinstance(keyword_item_set, list):
-                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                            match_results = [kw in normalized_row_text for kw in normalized_keywords]
-                            is_match = all(match_results)
-                        if is_match:
-                            matched_blocks.append(formated_area_list[i])
-                            break
-            except Exception as e:
-                matched_blocks = formated_area_list
-        """
 
     # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
@@ -5034,67 +4965,6 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     return is_date_clicked
 
 
-async def _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, log_prefix):
-    """
-    Helper function to check area keywords once and click if matched.
-    Returns True if a match was found and clicked, False otherwise.
-    Used for immediate check after reload and delayed check after interval.
-    """
-    import json
-
-    is_need_refresh = False
-    matched_blocks = None
-
-    if area_keyword:
-        try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-        except:
-            area_keyword_array = []
-
-        if show_debug_message:
-            print(f"{log_prefix} Checking keywords: {area_keyword_array}")
-
-        for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-            if not is_need_refresh:
-                if show_debug_message:
-                    print(f"{log_prefix} Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
-                break
-
-        # Fallback logic
-        if is_need_refresh and matched_blocks is None and area_auto_fallback:
-            if show_debug_message:
-                print(f"{log_prefix} Triggering fallback selection")
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-    else:
-        is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-
-    # Select and click target area
-    if matched_blocks and len(matched_blocks) > 0:
-        target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
-        if target_area:
-            if show_debug_message:
-                try:
-                    area_text = await target_area.text
-                    if not area_text:
-                        area_text = await target_area.inner_text
-                    area_text = area_text.strip()[:80] if area_text else "Unknown"
-                    print(f"{log_prefix} Selected: {area_text}")
-                except:
-                    pass
-            try:
-                await target_area.click()
-                return True  # Successfully clicked
-            except:
-                try:
-                    await target_area.evaluate('el => el.click()')
-                    return True  # Successfully clicked
-                except:
-                    pass
-
-    return False  # No match found or click failed
-
-
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -5161,18 +5031,6 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         if not keyword_matched and show_debug_message:
             print(f"[AREA KEYWORD] All keywords failed to match")
 
-        # DEPRECATED (T015): Old logic - scan all keywords and collect matches
-        # Will be removed after 2 weeks (2025-11-15)
-        """
-        # OLD LOGIC - DEPRECATED - DO NOT USE
-        # This logic scanned ALL keywords and collected all matches, then selected one
-        # NEW logic (above) uses early return: first match wins immediately
-        for area_keyword_item in area_keyword_array:
-            is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-            if not is_need_refresh:
-                break
-        """
-
         # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
         is_fallback_selection = False  # Track selection type for logging
         if is_need_refresh and matched_blocks is None:
@@ -5235,42 +5093,76 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         except:
             pass
 
-        # Smart wait: Wait for area links (.zone a) to appear after reload (max 3 seconds)
-        # This ensures not just the container, but actual area links are loaded
-        try:
-            el = await tab.wait_for('.zone a', timeout=3)
-            if show_debug_message:
-                print("[AREA SELECT] Page reloaded, area links found")
-        except Exception as wait_exc:
-            if show_debug_message:
-                print("[AREA SELECT] Timeout waiting for area links after reload")
-
-        # Check keywords immediately after reload (before interval delay)
-        if el:
-            immediate_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA IMMEDIATE]")
-            if immediate_match:
-                return  # Found and clicked, exit function
-
-        # Wait for configured interval
+        # Unified Retry Strategy: check immediately after reload, then after interval delay
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        retry_phases = [
+            {"name": "IMMEDIATE", "wait_timeout": 3, "delay_before": 0},
+        ]
         if interval > 0:
-            if show_debug_message:
-                print(f"[AREA SELECT] Waiting {interval}s before retry...")
-            await asyncio.sleep(interval)
+            retry_phases.append({"name": "DELAYED", "wait_timeout": 2, "delay_before": interval})
 
-            # Check keywords again after interval delay
-            # Wait for area links to ensure page content is fresh
-            try:
-                el = await tab.wait_for('.zone a', timeout=2)
+        for phase in retry_phases:
+            # Wait before this phase (0 for immediate, interval for delayed)
+            if phase["delay_before"] > 0:
                 if show_debug_message:
-                    print("[AREA DELAYED] Area links detected")
-                if el:
-                    delayed_match = await _check_area_keywords_once(tab, el, config_dict, area_keyword, auto_select_mode, area_auto_fallback, show_debug_message, "[AREA DELAYED]")
-                    if delayed_match:
-                        return  # Found and clicked, exit function
+                    print(f"[AREA SELECT] Waiting {phase['delay_before']}s before retry...")
+                await asyncio.sleep(phase["delay_before"])
+
+            # Wait for area links to appear
+            try:
+                el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
+                if show_debug_message:
+                    print(f"[AREA {phase['name']}] Area links detected")
             except:
                 if show_debug_message:
-                    print("[AREA DELAYED] Timeout waiting for area links")
+                    print(f"[AREA {phase['name']}] Timeout waiting for area links")
+                continue
+
+            if not el:
+                continue
+
+            # Check keywords (reusing main function's logic)
+            retry_is_need_refresh = False
+            retry_matched_blocks = None
+
+            if area_keyword:
+                for keyword_index, area_keyword_item in enumerate(area_keyword_array):
+                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
+                    if not retry_is_need_refresh:
+                        if show_debug_message:
+                            print(f"[AREA {phase['name']}] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
+                        break
+
+                # Fallback logic
+                if retry_is_need_refresh and retry_matched_blocks is None and area_auto_fallback:
+                    if show_debug_message:
+                        print(f"[AREA {phase['name']}] Triggering fallback selection")
+                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+            else:
+                retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
+
+            # Select and click target area
+            if retry_matched_blocks and len(retry_matched_blocks) > 0:
+                retry_target = util.get_target_item_from_matched_list(retry_matched_blocks, auto_select_mode)
+                if retry_target:
+                    if show_debug_message:
+                        try:
+                            area_text = await retry_target.text
+                            if not area_text:
+                                area_text = await retry_target.inner_text
+                            area_text = area_text.strip()[:80] if area_text else "Unknown"
+                            print(f"[AREA {phase['name']}] Selected: {area_text}")
+                        except:
+                            pass
+                    try:
+                        await retry_target.click()
+                        return  # Successfully clicked, exit function
+                    except:
+                        try:
+                            await retry_target.evaluate('el => el.click()')
+                            return  # Successfully clicked, exit function
+                        except:
+                            pass
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -6416,10 +6308,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         await nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name)
         tixcraft_dict["done_time"] = time.time()
 
-        if config_dict["advanced"]["play_sound"]["ticket"]:
-            if not tixcraft_dict["played_sound_ticket"]:
+        if not tixcraft_dict["played_sound_ticket"]:
+            if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            tixcraft_dict["played_sound_ticket"] = True
+            send_discord_notification(config_dict, "ticket", "TixCraft")
+        tixcraft_dict["played_sound_ticket"] = True
     else:
         tixcraft_dict["played_sound_ticket"] = False
 
@@ -6448,10 +6341,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                 print("Ticket purchase successful, please check order at: %s" % (checkout_url))
                 webbrowser.open_new(checkout_url)
 
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not tixcraft_dict["played_sound_order"]:
+        if not tixcraft_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            tixcraft_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "TixCraft")
+        tixcraft_dict["played_sound_order"] = True
     else:
         tixcraft_dict["is_popup_checkout"] = False
         tixcraft_dict["played_sound_order"] = False
@@ -9187,7 +9081,10 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
         is_user_signin = await nodriver_ticketplus_account_auto_fill(tab, config_dict)
 
     if is_user_signin:
-        if url != config_dict["homepage"]:
+        # Only redirect if homepage is NOT the main page itself (prevent loop)
+        config_homepage = config_dict["homepage"].lower().rstrip('/')
+        is_homepage_target = config_homepage in ['https://ticketplus.com.tw', 'ticketplus.com.tw']
+        if not is_homepage_target and url.lower() != config_dict["homepage"].lower():
             try:
                 await tab.get(config_dict["homepage"])
             except Exception as e:
@@ -9285,6 +9182,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 ticketplus_dict["is_popup_confirm"] = True
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "order", "TicketPlus")
 
                 try:
                     await nodriver_ticketplus_confirm(tab, config_dict)
@@ -10758,40 +10656,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     else:
         matched_buttons = enabled_buttons
 
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    matched_buttons = []
-    if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            keyword_array = json.loads("[" + date_keyword + "]")
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Keyword filter: {keyword_array}")
-
-            for button in enabled_buttons:
-                date_context = button.get('date_context', '').lower()
-
-                for keyword_item in keyword_array:
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
-
-                    if is_match:
-                        matched_buttons.append(button)
-                        if show_debug_message:
-                            print(f"[IBON DATE PIERCE] Matched '{keyword_item}' in '{date_context}'")
-                        break
-        except json.JSONDecodeError as e:
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Keyword parse error: {e}")
-            matched_buttons = enabled_buttons
-    else:
-        matched_buttons = enabled_buttons
-    """
-
     # Step 8: Conditional fallback based on date_auto_fallback switch (T018-T020)
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
         if date_auto_fallback:
@@ -11150,43 +11014,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             matched_buttons = []  # Let Feature 003 fallback logic handle this
     else:
         matched_buttons = enabled_buttons
-
-    # DEPRECATED (T008): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    matched_buttons = []
-    if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            import json
-            keyword_array = json.loads("[" + date_keyword + "]")
-            if show_debug_message:
-                print(f"[IBON DATE] Applying keyword filter: {keyword_array}")
-
-            for button in enabled_buttons:
-                button_text = button.get('text', '').lower()
-                date_context = button.get('date_context', '').lower()
-                search_text = f"{button_text} {date_context}"
-
-                for keyword_item in keyword_array:
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
-
-                    if is_match:
-                        matched_buttons.append(button)
-                        if show_debug_message:
-                            print(f"[IBON DATE] Keyword '{keyword_item}' matched button with date_context: '{date_context}'")
-                        break
-        except json.JSONDecodeError as e:
-            if show_debug_message:
-                print(f"[IBON DATE] Keyword parse error: {e}, using all enabled buttons")
-            matched_buttons = enabled_buttons
-    else:
-        matched_buttons = enabled_buttons
-    """
 
     # Step 7: Conditional fallback based on date_auto_fallback switch (T018-T020)
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
@@ -12302,39 +12129,6 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     if show_debug_message and not target_found:
         print(f"[IBON EVENT AREA] Total matched areas: {len(matched_areas)}")
 
-    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    if area_keyword_item and len(area_keyword_item) > 0:
-        area_keyword_array = area_keyword_item.split(' ')
-        area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
-
-        if show_debug_message:
-            print(f"[ibon] 關鍵字: {area_keyword_array}")
-
-        for area in valid_areas:
-            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-            row_text = util.format_keyword_string(row_text)
-            is_match = all(kw in row_text for kw in area_keyword_array)
-
-            if is_match:
-                matched_areas.append(area)
-                if show_debug_message:
-                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
-
-                if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                    break
-    else:
-        matched_areas = valid_areas
-
-    if show_debug_message:
-        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
-    """
-
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
         if area_auto_fallback:
@@ -12876,39 +12670,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     if show_debug_message and not target_found:
         print(f"[IBON AREA] Total matched areas: {len(matched_areas)}")
-
-    # DEPRECATED (T016): Old logic - scan all keywords and collect matches
-    # Will be removed after 2 weeks (2025-11-15)
-    """
-    # OLD LOGIC - DEPRECATED - DO NOT USE
-    # This logic scanned ALL keywords and collected all matches, then selected one
-    # NEW logic (above) uses early return: first match wins immediately
-
-    if area_keyword_item and len(area_keyword_item) > 0:
-        area_keyword_array = area_keyword_item.split(' ')
-        area_keyword_array = [util.format_keyword_string(kw) for kw in area_keyword_array if kw.strip()]
-
-        if show_debug_message:
-            print(f"[ibon] 關鍵字: {area_keyword_array}")
-
-        for area in valid_areas:
-            row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
-            row_text = util.format_keyword_string(row_text)
-            is_match = all(kw in row_text for kw in area_keyword_array)
-
-            if is_match:
-                matched_areas.append(area)
-                if show_debug_message:
-                    print(f"[ibon] 符合: {area['areaName']} ({area['price']})")
-
-                if auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-                    break
-    else:
-        matched_areas = valid_areas
-
-    if show_debug_message:
-        print(f"[ibon] 符合關鍵字: {len(matched_areas)}")
-    """
 
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
@@ -14613,10 +14374,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             show_debug_message = config_dict["advanced"].get("verbose", False)
                             if show_debug_message:
@@ -14737,10 +14499,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             if show_debug_message:
                                 print(f"[IBON] Submit button error: {exc}")
@@ -14904,10 +14667,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     # Play sound if button clicked successfully
                     if click_ret:
                         # Play "ticket" sound when attempting to enter checkout (found ticket)
-                        if config_dict["advanced"]["play_sound"]["ticket"]:
-                            if not ibon_dict.get("played_sound_ticket", False):
+                        if not ibon_dict.get("played_sound_ticket", False):
+                            if config_dict["advanced"]["play_sound"]["ticket"]:
                                 play_sound_while_ordering(config_dict)
-                                ibon_dict["played_sound_ticket"] = True
+                            send_discord_notification(config_dict, "ticket", "iBon")
+                            ibon_dict["played_sound_ticket"] = True
                         if show_debug_message:
                             print("[NEW EVENTBUY] Purchase button clicked successfully")
             else:
@@ -15051,10 +14815,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             # only this case: "ticket number CHANGED by bot" and "cpatcha sent" to play sound!
                             if click_ret:
                                 # Play "ticket" sound when attempting to enter checkout (found ticket)
-                                if config_dict["advanced"]["play_sound"]["ticket"]:
-                                    if not ibon_dict.get("played_sound_ticket", False):
+                                if not ibon_dict.get("played_sound_ticket", False):
+                                    if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                        ibon_dict["played_sound_ticket"] = True
+                                    send_discord_notification(config_dict, "ticket", "iBon")
+                                    ibon_dict["played_sound_ticket"] = True
                     else:
                         is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
                         if is_sold_out:
@@ -15111,10 +14876,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             ibon_dict["shown_checkout_message"] = True
 
         # Play sound notification (only once)
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not ibon_dict["played_sound_order"]:
+        if not ibon_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            ibon_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "iBon")
+        ibon_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
         if config_dict["advanced"]["headless"]:
@@ -15812,19 +15578,22 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
             if not cityline_dict.get("played_sound_order", False):
                 print("[CITYLINE SUCCESS] Ticket added to shopping basket!")
 
-                # Play success sound
+                # Play success sound and send Discord notification
                 if config_dict["advanced"]["play_sound"]["order"]:
                     try:
                         play_sound_while_ordering(config_dict)
-                        cityline_dict["played_sound_order"] = True
                     except Exception as sound_exc:
                         if show_debug_message:
-                            print(f"[WARNING] Failed to play sound: {sound_exc}")
+                            print(f"[CITYLINE] Sound error: {sound_exc}")
+                send_discord_notification(config_dict, "order", "Cityline")
+                cityline_dict["played_sound_order"] = True
 
+            # Return True to indicate we're on checkout page
             return True
-    except Exception as exc:
+
+    except Exception as e:
         if show_debug_message:
-            print(f"[ERROR] Check shopping basket failed: {exc}")
+            print(f"[CITYLINE] Checkout check error: {e}")
 
     return False
 
@@ -16165,10 +15934,11 @@ async def nodriver_cityline_main(tab, url, config_dict):
         # Reset modal flag when successfully navigated to performance page
         cityline_modal_handled = False
         # Play sound when entering performance page
-        if config_dict["advanced"]["play_sound"]["ticket"]:
-            if not cityline_dict["played_sound_ticket"]:
+        if not cityline_dict["played_sound_ticket"]:
+            if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            cityline_dict["played_sound_ticket"] = True
+            send_discord_notification(config_dict, "ticket", "Cityline")
+        cityline_dict["played_sound_ticket"] = True
 
         # Integrated performance page processing (area + ticket number + next button)
         if not cityline_performance_processed:
@@ -16732,32 +16502,6 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 if not target_row_found and show_debug_message:
                     print(f"[KHAM DATE KEYWORD] All keywords failed to match")
 
-                # DEPRECATED: Old logic - scan all keywords and collect matches
-                # Will be removed after 2 weeks (2025-11-17)
-                """
-                # OLD LOGIC - DEPRECATED - DO NOT USE
-                # This logic scanned ALL keywords and collected all matches, then selected one
-                # NEW logic (above) uses early return: first match wins immediately
-                for i, row_text in enumerate(formated_area_list_text):
-                    normalized_row_text = re.sub(r'\s+', ' ', row_text)
-
-                    for keyword_item_set in keyword_array:
-                        is_match = False
-                        if isinstance(keyword_item_set, str):
-                            normalized_keyword = re.sub(r'\s+', ' ', keyword_item_set)
-                            is_match = normalized_keyword in normalized_row_text
-                            if show_debug_message and is_match:
-                                print(f"matched keyword '{keyword_item_set}' in row: {row_text[:60]}...")
-                        elif isinstance(keyword_item_set, list):
-                            normalized_keywords = [re.sub(r'\s+', ' ', kw) for kw in keyword_item_set]
-                            is_match = all(kw in normalized_row_text for kw in normalized_keywords)
-                            if show_debug_message and is_match:
-                                print(f"matched all keywords {keyword_item_set} in row: {row_text[:60]}...")
-
-                        if is_match:
-                            matched_blocks.append(formated_area_list[i])
-                            break
-                """
             except Exception as e:
                 if show_debug_message:
                     print(f"keyword parsing error: {e}")
@@ -18503,10 +18247,11 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             print("[SUCCESS] Reached checkout page - ticket purchase successful!")
 
         # Play sound notification (only once)
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not kham_dict["played_sound_order"]:
+        if not kham_dict["played_sound_order"]:
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            kham_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "KHAM")
+        kham_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
         if config_dict["advanced"]["headless"]:
@@ -20940,7 +20685,7 @@ def get_nodriver_browser_args():
         "--no-pings",
         "--no-service-autorun",
         "--password-store=basic",
-        "--remote-debugging-host=127.0.0.1",
+        # Note: --remote-debugging-host is managed by Config(host=...) when MCP debug is enabled
         "--lang=zh-TW",
     ]
 
@@ -20972,6 +20717,13 @@ def get_maxbot_extension_path(extension_folder):
             #print("final path:", path)
     return config_filepath
 
+def is_port_in_use(port: int, host: str = '127.0.0.1') -> bool:
+    """Check if a TCP port is already in use."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(1)
+        return s.connect_ex((host, port)) == 0
+
 def get_extension_config(config_dict, args=None):
     default_lang = "zh-TW"
     no_sandbox=True
@@ -20979,24 +20731,38 @@ def get_extension_config(config_dict, args=None):
     if len(config_dict["advanced"]["proxy_server_port"]) > 2:
         browser_args.append('--proxy-server=%s' % config_dict["advanced"]["proxy_server_port"])
 
-    # MCP debug mode: enable fixed CDP port for chrome-devtools-mcp connection
-    mcp_debug_port = None
-    if args and hasattr(args, 'mcp_debug') and args.mcp_debug:
-        mcp_debug_port = args.mcp_debug
-        print(f"[MCP DEBUG] Enabled on port {mcp_debug_port}")
-        print(f"[MCP DEBUG] Configure .mcp.json with: --browserUrl http://127.0.0.1:{mcp_debug_port}")
+    # MCP connect mode: Connect to existing Chrome instance (for MCP integration)
+    # This allows NoDriver to attach to a Chrome started with --remote-debugging-port
+    mcp_connect_port = None
+    if args and hasattr(args, 'mcp_connect') and args.mcp_connect:
+        mcp_connect_port = args.mcp_connect
 
-    if mcp_debug_port:
+    if mcp_connect_port:
+        # Connect to existing Chrome (NoDriver will NOT start a new browser)
+        print(f"[MCP CONNECT] Connecting to existing Chrome on port {mcp_connect_port}")
+        print(f"[MCP CONNECT] Make sure Chrome is running with: --remote-debugging-port={mcp_connect_port}")
         conf = Config(
-            browser_args=browser_args,
-            lang=default_lang,
-            no_sandbox=no_sandbox,
-            headless=config_dict["advanced"]["headless"],
             host="127.0.0.1",
-            port=mcp_debug_port
+            port=mcp_connect_port,
+            headless=config_dict["advanced"]["headless"]
         )
-    else:
-        conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
+        # Note: When connecting to existing browser, extensions cannot be loaded
+        return conf
+
+    # MCP debug mode: NoDriver uses dynamic CDP port, we output actual port after browser starts
+    # Note: NoDriver limitation - cannot use fixed port (browser.py:357-361 treats host+port as
+    # "connect to existing browser" mode). We just mark that MCP debug is requested here.
+    # The actual port will be printed in main() after browser starts.
+    mcp_debug_enabled = False
+    if args and hasattr(args, 'mcp_debug') and args.mcp_debug:
+        mcp_debug_enabled = True
+        print("[MCP DEBUG] Mode enabled - actual port will be shown after browser starts")
+    elif config_dict["advanced"].get("mcp_debug_port", 0) > 0:
+        mcp_debug_enabled = True
+        print("[MCP DEBUG] Mode enabled (via settings.json) - actual port will be shown after browser starts")
+
+    # Normal mode: auto-detect (host=None, port=None) to let NoDriver start the browser
+    conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
     if config_dict["advanced"]["chrome_extension"]:
         ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
         if len(ext) > 0:
@@ -23867,7 +23633,8 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             # Play sound when entering ticket page
             if not hkticketing_dict.get("played_sound_ticket", False):
                 if config_dict["advanced"]["play_sound"]["ticket"]:
-                    play_sound(config_dict)
+                    play_sound_while_ordering(config_dict)
+                send_discord_notification(config_dict, "ticket", "HKTicketing")
                 hkticketing_dict["played_sound_ticket"] = True
 
             await nodriver_hkticketing_type02_performance(tab, config_dict)
@@ -23896,10 +23663,11 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         print("[HKTICKETING TYPE02] Checkout page detected - Ticket booking SUCCESS!")
 
         # Play success sound (order) once
-        if config_dict["advanced"]["play_sound"]["order"]:
-            if not hkticketing_dict.get("played_sound_order", False):
+        if not hkticketing_dict.get("played_sound_order", False):
+            if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
-            hkticketing_dict["played_sound_order"] = True
+            send_discord_notification(config_dict, "order", "HKTicketing")
+        hkticketing_dict["played_sound_order"] = True
 
         # Show message once
         if not hkticketing_dict.get("shown_checkout_message", False):
@@ -23988,7 +23756,8 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
                     # Play sound when entering ticket page
                     if not hkticketing_dict["played_sound_ticket"]:
                         if config_dict["advanced"]["play_sound"]["ticket"]:
-                            play_sound(config_dict)
+                            play_sound_while_ordering(config_dict)
+                        send_discord_notification(config_dict, "ticket", "HKTicketing")
                         hkticketing_dict["played_sound_ticket"] = True
 
                     await nodriver_hkticketing_performance(tab, config_dict, domain_name)
@@ -24018,6 +23787,22 @@ async def main(args):
         #driver = await uc.start(conf, sandbox=sandbox, headless=config_dict["advanced"]["headless"])
         driver = await uc.start(conf)
         if not driver is None:
+            # Output actual CDP port for MCP connection (when mcp_debug is requested)
+            mcp_debug_requested = (args and hasattr(args, 'mcp_debug') and args.mcp_debug) or \
+                                  config_dict["advanced"].get("mcp_debug_port", 0) > 0
+            if mcp_debug_requested:
+                actual_port = driver.config.port
+                print(f"[MCP DEBUG] Browser started on actual port: {actual_port}")
+                print(f"[MCP DEBUG] Update .mcp.json with: --browserUrl http://127.0.0.1:{actual_port}")
+                # Write port to file for /mcpstart command auto-update
+                try:
+                    port_file = os.path.join(os.path.dirname(__file__), '..', '.temp', 'mcp_port.txt')
+                    os.makedirs(os.path.dirname(port_file), exist_ok=True)
+                    with open(port_file, 'w') as f:
+                        f.write(str(actual_port))
+                    print(f"[MCP DEBUG] Port saved to .temp/mcp_port.txt")
+                except Exception as e:
+                    print(f"[MCP DEBUG] Warning: Could not save port to file: {e}")
             tab = await nodriver_goto_homepage(driver, config_dict)
             tab = await nodrver_block_urls(tab, config_dict)
             if not config_dict["advanced"]["headless"]:
@@ -24112,7 +23897,7 @@ async def main(args):
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
                 print("KKTIX ticket purchase completed")
-                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
 
@@ -24130,7 +23915,7 @@ async def main(args):
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
             if is_quit_bot:
                 print("TixCraft ticket purchase completed")
-                # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
 
@@ -24162,14 +23947,14 @@ async def main(args):
                 if ticketplus_dict.get("purchase_completed", False):
                     if config_dict["advanced"].get("verbose", False):
                         print("[SUCCESS] TicketPlus 購票完成")
-                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 不自動暫停：讓多開實例可獨立運作
                     # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                     is_quit_bot = False
                 elif ticketplus_dict.get("is_ticket_assigned", False) and '/confirm/' in url.lower():
                     # 如果在確認頁面且已指派票券，也可以結束
                     if config_dict["advanced"].get("verbose", False):
                         print("[SUCCESS] TicketPlus 已在確認頁面，購票流程成功")
-                    # 移除自動暫停邏輯（2025-11-11）：讓多開實例可獨立運作
+                    # 不自動暫停：讓多開實例可獨立運作
                     # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                     is_quit_bot = False
 
@@ -24253,6 +24038,11 @@ def cli():
         nargs='?',
         const=9222,
         type=int)
+
+    parser.add_argument("--mcp_connect",
+        help="Connect to existing Chrome on specified port (e.g., --mcp_connect 9222)",
+        type=int,
+        metavar="PORT")
 
     args = parser.parse_args()
     uc.loop().run_until_complete(main(args))

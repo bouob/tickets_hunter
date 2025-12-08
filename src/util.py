@@ -2202,3 +2202,107 @@ def parse_nodriver_result(result):
 
 def get_token():
     return str(uuid.uuid4().hex)
+
+# =============================================================================
+# Discord Webhook Functions (specs/009-discord-webhook)
+# =============================================================================
+
+def build_discord_message(stage: str, platform_name: str) -> dict:
+    """
+    Build Discord webhook message payload based on stage and platform.
+
+    Args:
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+
+    Returns:
+        dict: Discord Webhook payload with content and username
+    """
+    if not platform_name:
+        platform_name = "Unknown"
+
+    if stage == "ticket":
+        message = f"[{platform_name}] found ticket! Please check your computer"
+    elif stage == "order":
+        message = f"[{platform_name}] order success! Please checkout and pay ASAP"
+    else:
+        message = f"[{platform_name}] notification"
+
+    return {
+        "content": message,
+        "username": "Tickets Hunter"
+    }
+
+
+def send_discord_webhook(
+    webhook_url: str,
+    stage: str,
+    platform_name: str,
+    timeout: float = 3.0,
+    verbose: bool = False
+) -> bool:
+    """
+    Send Discord Webhook notification (synchronous).
+
+    This function blocks until the request completes or times out.
+    Use send_discord_webhook_async() for non-blocking calls.
+
+    Args:
+        webhook_url: Discord Webhook URL
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+        timeout: Request timeout in seconds, default 3.0
+        verbose: Whether to print error messages
+
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    # Skip if URL is empty or None
+    if not webhook_url:
+        return False
+
+    try:
+        payload = build_discord_message(stage, platform_name)
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=timeout
+        )
+        # Discord returns 204 No Content on success
+        return response.status_code in (200, 204)
+    except Exception as exc:
+        if verbose:
+            print(f"[Discord Webhook] Send failed: {exc}")
+        return False
+
+
+def send_discord_webhook_async(
+    webhook_url: str,
+    stage: str,
+    platform_name: str,
+    timeout: float = 3.0,
+    verbose: bool = False
+) -> None:
+    """
+    Send Discord Webhook notification asynchronously.
+
+    Uses a daemon thread to send without blocking the main flow.
+    Failures are handled silently without raising exceptions.
+
+    Args:
+        webhook_url: Discord Webhook URL
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+        timeout: Request timeout in seconds, default 3.0
+        verbose: Whether to print error messages
+    """
+    # Skip if URL is empty or None
+    if not webhook_url:
+        return
+
+    thread = threading.Thread(
+        target=send_discord_webhook,
+        args=(webhook_url, stage, platform_name, timeout, verbose),
+        daemon=True
+    )
+    thread.start()
