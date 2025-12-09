@@ -17385,8 +17385,19 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # Redirect to target page after login
             config_homepage = config_dict["homepage"]
 
-            # Redirect if homepage is different from current URL
-            if config_homepage and config_homepage.lower() != url.lower():
+            # Check if config_homepage is also a home page URL (skip redirect to avoid loop)
+            config_homepage_normalized = config_homepage.lower().rstrip('/') if config_homepage else ""
+            is_config_homepage_also_home = any(
+                config_homepage_normalized == each.rstrip('/')
+                for each in home_url_list
+            ) or config_homepage_normalized in [
+                'https://kham.com.tw',
+                'https://ticket.com.tw',
+                'https://tickets.udnfunlife.com'
+            ]
+
+            # Redirect only if homepage is different AND not a home page URL
+            if config_homepage and not is_config_homepage_also_home and config_homepage.lower() != url.lower():
                 if show_debug_message:
                     print(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
                 try:
