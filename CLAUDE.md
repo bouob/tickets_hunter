@@ -437,3 +437,4 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 - ✅ CLAUDE.md 只保留索引、核心原則、快速指令
 
 ---
+- 當我說出檢查紀錄 代表要求你檢查logs.txt
