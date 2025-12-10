@@ -100,6 +100,25 @@
   - 驗證 `ibon_area_auto_select()` 或 `nodriver_ibon_area_auto_select()` 函數
   - 檢查 Shadow DOM 元素偵測邏輯
 
+### 4. KKTIX Radio 選項沒有自動送出 🟡 **等待頁面分析**
+- **Issue**: [#128](https://github.com/bouob/tickets_hunter/issues/128)
+- **問題描述**: 定位到票（含 Radio 購票資格選項）後沒有自動按下送出鈕
+- **影響範圍**: KKTIX 平台（NoDriver 版本）
+- **影響版本**: v2025.11.20
+- **嚴重程度**: 🔥 高 - 影響購票流程最後一步
+- **狀態**: 🟡 等待實際頁面分析
+- **初步分析**:
+  - 頁面顯示「本票券需要符合以下任一資格才可以購買」+ Radio 選項（如：國泰世華CUBE信用卡）
+  - 現有代碼有處理 Radio 的邏輯（Line 2361-2398），會嘗試點擊 Radio
+  - **可能問題**: JavaScript 檢查票券數量的選擇器（`input[ng-model="ticketModel.quantity"]` 或 `input[name^="tickets"]`）可能不匹配實際頁面結構
+  - 導致 `hasTicketSelected = false`，`control_text` 不清空，不會按下一步
+- **相關檔案**: `nodriver_tixcraft.py:2307-2485`
+- **待辦事項**:
+  - [ ] 取得實際 KKTIX 頁面進行 MCP 分析
+  - [ ] 確認票數輸入框的實際 HTML 結構與選擇器
+  - [ ] 驗證 `all_inputs_filled` JavaScript 邏輯是否正確執行
+  - [ ] 必要時修正選擇器或檢查邏輯
+
 ---
 
 ## 🔥 **第二階段：Chrome 版本平台完善（高優先度）**

@@ -49,7 +49,8 @@
       "Skill(discord-skill)",
       "mcp__discord__discord_help",
       "mcp__discord__discord_execute",
-      "mcp__discord__read_messages"
+      "mcp__discord__read_messages",
+      "mcp__chrome-devtools__evaluate_script"
     ],
     "deny": [],
     "ask": []
