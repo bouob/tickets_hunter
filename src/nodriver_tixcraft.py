@@ -11709,28 +11709,17 @@ async def check_ibon_login_status(tab, config_dict):
             # 等待頁面完全載入
             await tab.sleep(3.0)
 
-            # 再次檢查
+            # Re-check after reload
             final_status_raw = await tab.evaluate(login_check_js)
 
-            # 處理返回結果的格式轉換
-            final_status = {}
+            # Use unified parsing function to handle NoDriver format
             if isinstance(final_status_raw, dict):
                 final_status = final_status_raw
-            elif isinstance(final_status_raw, list):
-                # 處理 nodriver 特殊的嵌套陣列格式
-                for item in final_status_raw:
-                    if isinstance(item, list) and len(item) == 2:
-                        key = item[0]
-                        value_obj = item[1]
-                        if isinstance(value_obj, dict) and 'value' in value_obj:
-                            final_status[key] = value_obj['value']
-                        else:
-                            final_status[key] = value_obj
             else:
-                final_status = {
+                final_status = util.parse_nodriver_result(final_status_raw) if final_status_raw else {
                     'hasPurchaseButton': False,
                     'totalButtons': 0,
-                    'error': f'Unexpected final result type: {type(final_status_raw)}'
+                    'error': f'Parse failed for type: {type(final_status_raw)}'
                 }
 
             if show_debug_message:
