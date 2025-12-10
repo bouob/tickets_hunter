@@ -20802,6 +20802,8 @@ async def nodrver_block_urls(tab, config_dict):
         '*googlesyndication.*',  # Covers pagead2.googlesyndication.com
         '*googletagmanager.*',  # Covers www.googletagmanager.com/gtag/js
         '*googletagservices.*',
+        '*googleadservices.com/*',  # Ad conversion tracking
+        '*adtrafficquality.google/*',  # Ad quality detection
 
         # Social media and video
         '*.twitter.com/i/*',
