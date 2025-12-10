@@ -4500,6 +4500,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                 return {{ exists: false, value: "" }};
             }})()
         ''')
+        input_info = util.parse_nodriver_result(input_info)
 
         if not input_info or not input_info.get('exists', False):
             if show_debug_message:
@@ -4634,8 +4635,8 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
         input_text_css = "input[name='checkCode']"
-        next_step_button_css = ""
-        submit_by_enter = True
+        next_step_button_css = "button.btn.btn-primary"
+        submit_by_enter = False
         check_input_interval = 0.2
         is_answer_sent, fail_list = await nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
