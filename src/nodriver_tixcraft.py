@@ -5704,8 +5704,18 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
             print("Ticket number set successfully, starting OCR captcha processing")
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
     else:
-        if show_debug_message:
-            print("Warning: Failed to set ticket number")
+        # T026: Fix Issue #174 - reload page when ticket number cannot be set
+        # This prevents infinite loop when desired ticket count is unavailable
+        print("[TICKET SELECT] Ticket count unavailable, reloading page to retry...")
+        try:
+            await tab.reload()
+            # Wait based on auto_reload_page_interval setting
+            interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+            if interval > 0:
+                await asyncio.sleep(interval)
+        except Exception as reload_exc:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Reload failed: {reload_exc}")
 
 async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False, config_dict=None):
     """輸入驗證碼到表單"""
