@@ -453,22 +453,17 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                 # Increase retry interval
                 await tab.sleep(3 + retry_count)
 
-            # Method 1: Use nodriver's built-in Cloudflare bypass
-            try:
-                cf_result = await tab.cf_verify()
-                if show_debug_message:
-                    print(f"cf_verify result: {cf_result}")
-            except Exception as cf_exc:
-                if show_debug_message:
-                    print(f"cf_verify unavailable: {cf_exc}")
-                # Method 2: Try clicking verification box (if exists)
+            # Method 1: Use verify_cf with multiple templates
+            verify_success = await util.verify_cf_with_templates(tab, show_debug=show_debug_message)
+
+            # Method 2: Fallback - try clicking verification box directly
+            if not verify_success:
                 try:
-                    # Find Cloudflare verification box
                     verify_box = await tab.query_selector('input[type="checkbox"]')
                     if verify_box:
                         await verify_box.click()
                         if show_debug_message:
-                            print("[CLOUDFLARE] Attempting to click verification box")
+                            print("[CLOUDFLARE] Clicked verification checkbox directly")
                 except Exception:
                     pass
 
