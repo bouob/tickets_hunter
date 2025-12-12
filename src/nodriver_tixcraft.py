@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.09)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.11)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -453,22 +453,17 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                 # Increase retry interval
                 await tab.sleep(3 + retry_count)
 
-            # Method 1: Use nodriver's built-in Cloudflare bypass
-            try:
-                cf_result = await tab.cf_verify()
-                if show_debug_message:
-                    print(f"cf_verify result: {cf_result}")
-            except Exception as cf_exc:
-                if show_debug_message:
-                    print(f"cf_verify unavailable: {cf_exc}")
-                # Method 2: Try clicking verification box (if exists)
+            # Method 1: Use verify_cf with multiple templates
+            verify_success = await util.verify_cf_with_templates(tab, show_debug=show_debug_message)
+
+            # Method 2: Fallback - try clicking verification box directly
+            if not verify_success:
                 try:
-                    # Find Cloudflare verification box
                     verify_box = await tab.query_selector('input[type="checkbox"]')
                     if verify_box:
                         await verify_box.click()
                         if show_debug_message:
-                            print("[CLOUDFLARE] Attempting to click verification box")
+                            print("[CLOUDFLARE] Clicked verification checkbox directly")
                 except Exception:
                     pass
 
@@ -4500,6 +4495,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                 return {{ exists: false, value: "" }};
             }})()
         ''')
+        input_info = util.parse_nodriver_result(input_info)
 
         if not input_info or not input_info.get('exists', False):
             if show_debug_message:
@@ -4634,8 +4630,8 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
         input_text_css = "input[name='checkCode']"
-        next_step_button_css = ""
-        submit_by_enter = True
+        next_step_button_css = "button.btn.btn-primary"
+        submit_by_enter = False
         check_input_interval = 0.2
         is_answer_sent, fail_list = await nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval)
 
@@ -5703,8 +5699,18 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
             print("Ticket number set successfully, starting OCR captcha processing")
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
     else:
-        if show_debug_message:
-            print("Warning: Failed to set ticket number")
+        # T026: Fix Issue #174 - reload page when ticket number cannot be set
+        # This prevents infinite loop when desired ticket count is unavailable
+        print("[TICKET SELECT] Ticket count unavailable, reloading page to retry...")
+        try:
+            await tab.reload()
+            # Wait based on auto_reload_page_interval setting
+            interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+            if interval > 0:
+                await asyncio.sleep(interval)
+        except Exception as reload_exc:
+            if show_debug_message:
+                print(f"[TICKET SELECT] Reload failed: {reload_exc}")
 
 async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False, config_dict=None):
     """輸入驗證碼到表單"""
@@ -11708,28 +11714,17 @@ async def check_ibon_login_status(tab, config_dict):
             # 等待頁面完全載入
             await tab.sleep(3.0)
 
-            # 再次檢查
+            # Re-check after reload
             final_status_raw = await tab.evaluate(login_check_js)
 
-            # 處理返回結果的格式轉換
-            final_status = {}
+            # Use unified parsing function to handle NoDriver format
             if isinstance(final_status_raw, dict):
                 final_status = final_status_raw
-            elif isinstance(final_status_raw, list):
-                # 處理 nodriver 特殊的嵌套陣列格式
-                for item in final_status_raw:
-                    if isinstance(item, list) and len(item) == 2:
-                        key = item[0]
-                        value_obj = item[1]
-                        if isinstance(value_obj, dict) and 'value' in value_obj:
-                            final_status[key] = value_obj['value']
-                        else:
-                            final_status[key] = value_obj
             else:
-                final_status = {
+                final_status = util.parse_nodriver_result(final_status_raw) if final_status_raw else {
                     'hasPurchaseButton': False,
                     'totalButtons': 0,
-                    'error': f'Unexpected final result type: {type(final_status_raw)}'
+                    'error': f'Parse failed for type: {type(final_status_raw)}'
                 }
 
             if show_debug_message:
@@ -17385,8 +17380,19 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # Redirect to target page after login
             config_homepage = config_dict["homepage"]
 
-            # Redirect if homepage is different from current URL
-            if config_homepage and config_homepage.lower() != url.lower():
+            # Check if config_homepage is also a home page URL (skip redirect to avoid loop)
+            config_homepage_normalized = config_homepage.lower().rstrip('/') if config_homepage else ""
+            is_config_homepage_also_home = any(
+                config_homepage_normalized == each.rstrip('/')
+                for each in home_url_list
+            ) or config_homepage_normalized in [
+                'https://kham.com.tw',
+                'https://ticket.com.tw',
+                'https://tickets.udnfunlife.com'
+            ]
+
+            # Redirect only if homepage is different AND not a home page URL
+            if config_homepage and not is_config_homepage_also_home and config_homepage.lower() != url.lower():
                 if show_debug_message:
                     print(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
                 try:
@@ -20801,6 +20807,8 @@ async def nodrver_block_urls(tab, config_dict):
         '*googlesyndication.*',  # Covers pagead2.googlesyndication.com
         '*googletagmanager.*',  # Covers www.googletagmanager.com/gtag/js
         '*googletagservices.*',
+        '*googleadservices.com/*',  # Ad conversion tracking
+        '*adtrafficquality.google/*',  # Ad quality detection
 
         # Social media and video
         '*.twitter.com/i/*',
