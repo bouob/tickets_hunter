@@ -1,5 +1,15 @@
 # Changelog
 
+## 2025.12.11
+
+- 新增 Cloudflare Turnstile 多模板驗證機制
+- 升級 nodriver 至 0.48.1 版本
+- 修復 TixCraft 票數不足時無限循環問題 (Issue #174)
+- 修復 TixCraft 驗證表單提交問題
+- 修復 KHAM 首頁無限重定向問題
+- 改善廣告追蹤網址封鎖效能
+- 重構 iBon 使用統一的結果解析函式
+
 ## 2025.12.09
 
 - 新增 Discord Webhook 通知功能（搶票觸發時即時推播到 Discord）
