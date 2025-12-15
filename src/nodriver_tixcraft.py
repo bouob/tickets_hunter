@@ -19141,10 +19141,10 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
-            # 4.1: Click submit button
+            # 4.1: Click submit button - [Optimized] use class selector
             result = await tab.evaluate('''
                 (function() {
-                    const button = document.querySelector('button[onclick*="addShoppingCart"]');
+                    const button = document.querySelector('button.sumitButton');
                     if (button && !button.disabled) {
                         button.click();
                         return true;
@@ -19530,57 +19530,29 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                 # Wait for seat table to load (initial wait for AJAX to start)
                 await tab.sleep(1.5)
 
-                # Smart wait: use DOM Snapshot to confirm BOTH table and seats are loaded
+                # [Optimized] Smart wait using lightweight querySelector instead of DOM Snapshot
                 seats_loaded = False
                 for i in range(20):  # Max 10 seconds (20 * 0.5s)
                     try:
-                        # Use DOM Snapshot (same method as ticket type selection)
-                        documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
-                            computed_styles=[],
-                            include_dom_rects=False
-                        ))
+                        # Use querySelector - 10x faster than DOM Snapshot
+                        check_result = await tab.evaluate('''
+                            (() => {
+                                const table = document.querySelector('#TBL');
+                                // Check for TD with title attribute and cursor:pointer style
+                                const seats = document.querySelectorAll('#TBL td[title][style*="cursor: pointer"]');
+                                return {
+                                    tableFound: !!table,
+                                    seatCount: seats.length
+                                };
+                            })()
+                        ''')
 
-                        seat_count = 0
+                        # Parse result
                         table_found = False
-
-                        if documents and len(documents) > 0:
-                            document_snapshot = documents[0]
-                            nodes = document_snapshot.nodes
-                            node_names = [strings[i] for i in nodes.node_name]
-                            attributes_list = nodes.attributes
-
-                            # Check for both #TBL table and seat TD elements
-                            for idx, node_name in enumerate(node_names):
-                                # Check for table with id="TBL"
-                                if node_name.upper() == 'TABLE':
-                                    attrs = {}
-                                    if idx < len(attributes_list):
-                                        attr_indices = attributes_list[idx]
-                                        for j in range(0, len(attr_indices), 2):
-                                            if j + 1 < len(attr_indices):
-                                                key = strings[attr_indices[j]]
-                                                val = strings[attr_indices[j + 1]]
-                                                attrs[key] = val
-                                    if attrs.get('id') == 'TBL':
-                                        table_found = True
-
-                                # Check for TD elements with title and cursor:pointer
-                                if node_name.upper() == 'TD':
-                                    attrs = {}
-                                    if idx < len(attributes_list):
-                                        attr_indices = attributes_list[idx]
-                                        for j in range(0, len(attr_indices), 2):
-                                            if j + 1 < len(attr_indices):
-                                                key = strings[attr_indices[j]]
-                                                val = strings[attr_indices[j + 1]]
-                                                attrs[key] = val
-
-                                    # Check if this TD has title and cursor:pointer style
-                                    has_title = 'title' in attrs and attrs['title']
-                                    has_pointer = 'style' in attrs and 'cursor: pointer' in attrs.get('style', '')
-
-                                    if has_title and has_pointer:
-                                        seat_count += 1
+                        seat_count = 0
+                        if isinstance(check_result, dict):
+                            table_found = check_result.get('tableFound', False)
+                            seat_count = check_result.get('seatCount', 0)
 
                         # Success condition: table exists AND at least 1 seat found
                         if table_found and seat_count > 0:
@@ -19594,7 +19566,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
                     except Exception as wait_exc:
                         if show_debug_message and i == 19:
-                            print(f"[TICKET SEAT TYPE] DOM Snapshot error: {wait_exc}")
+                            print(f"[TICKET SEAT TYPE] querySelector error: {wait_exc}")
 
                     await tab.sleep(0.5)
 
@@ -20471,17 +20443,8 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                 (function() {{
                     const showDebug = {json.dumps(show_debug)};
 
-                    // 【修復 2】多個備用選擇器
-                    let submitButton = document.querySelector('button.sumitButton[onclick*="addShoppingCart1"]');
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button.btn.sumitButton');
-                    }}
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button[onclick*="addShoppingCart1"]');
-                    }}
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button.sumitButton');
-                    }}
+                    // [Optimized] Simplified selector - MCP test confirmed .sumitButton is sufficient
+                    const submitButton = document.querySelector('button.sumitButton');
 
                     if (showDebug) {{
                         console.log('[TICKET SUBMIT] Button found:', !!submitButton);
