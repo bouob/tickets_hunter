@@ -19110,17 +19110,45 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     UTK0205 頁面處理
     """
     show_debug = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict["ticket_number"]
 
-    # Step 1: Select seat type
-    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    is_seat_type_assigned = await nodriver_kham_seat_type_auto_select(
-        tab, config_dict, area_keyword
-    )
+    # Step 0: Check if seats are already selected (avoid duplicate selection)
+    already_selected_count = 0
+    try:
+        check_result = await tab.evaluate('''
+            (() => {
+                const selectedSeats = document.querySelectorAll('#TBL td[style*="icon_chair_select"]');
+                return selectedSeats.length;
+            })()
+        ''')
+        if isinstance(check_result, int):
+            already_selected_count = check_result
+        elif isinstance(check_result, dict):
+            already_selected_count = check_result.get('value', 0)
 
-    # Step 2: Select seats
-    is_seat_assigned = False
-    if is_seat_type_assigned:
-        is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
+        if show_debug:
+            print(f"[KHAM SEAT] Already selected seats: {already_selected_count}")
+    except Exception as exc:
+        if show_debug:
+            print(f"[KHAM SEAT] Error checking selected seats: {exc}")
+
+    # If already selected enough seats, skip seat selection and go to submit
+    if already_selected_count >= ticket_number:
+        if show_debug:
+            print(f"[KHAM SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        is_seat_type_assigned = True
+        is_seat_assigned = True
+    else:
+        # Step 1: Select seat type
+        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+        is_seat_type_assigned = await nodriver_kham_seat_type_auto_select(
+            tab, config_dict, area_keyword
+        )
+
+        # Step 2: Select seats
+        is_seat_assigned = False
+        if is_seat_type_assigned:
+            is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
 
     # Step 3: Handle captcha (reuse KHAM OCR)
     is_captcha_sent = False
@@ -20402,20 +20430,48 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
         return False, False, False
 
     show_debug = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict["ticket_number"]
 
-    # Step 1: Select seat type
-    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    is_seat_type_assigned = await nodriver_ticket_seat_type_auto_select(
-        tab, config_dict, area_keyword
-    )
+    # Step 0: Check if seats are already selected (avoid duplicate selection)
+    already_selected_count = 0
+    try:
+        check_result = await tab.evaluate('''
+            (() => {
+                const selectedSeats = document.querySelectorAll('#TBL td[style*="icon_chair_select"]');
+                return selectedSeats.length;
+            })()
+        ''')
+        if isinstance(check_result, int):
+            already_selected_count = check_result
+        elif isinstance(check_result, dict):
+            already_selected_count = check_result.get('value', 0)
 
-    # Step 2: Select seats
-    is_seat_assigned = False
-    if is_seat_type_assigned:
-        # Additional wait for DOM to fully stabilize after AJAX update
-        # Increased to 2s to ensure AJAX completes
-        await tab.sleep(2.0)
-        is_seat_assigned = await nodriver_ticket_seat_auto_select(tab, config_dict)
+        if show_debug:
+            print(f"[TICKET SEAT] Already selected seats: {already_selected_count}")
+    except Exception as exc:
+        if show_debug:
+            print(f"[TICKET SEAT] Error checking selected seats: {exc}")
+
+    # If already selected enough seats, skip seat selection and go to submit
+    if already_selected_count >= ticket_number:
+        if show_debug:
+            print(f"[TICKET SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        is_seat_type_assigned = True
+        is_seat_assigned = True
+    else:
+        # Step 1: Select seat type
+        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+        is_seat_type_assigned = await nodriver_ticket_seat_type_auto_select(
+            tab, config_dict, area_keyword
+        )
+
+        # Step 2: Select seats
+        is_seat_assigned = False
+        if is_seat_type_assigned:
+            # Additional wait for DOM to fully stabilize after AJAX update
+            # Increased to 2s to ensure AJAX completes
+            await tab.sleep(2.0)
+            is_seat_assigned = await nodriver_ticket_seat_auto_select(tab, config_dict)
 
     # Step 3: Handle captcha (reuse KHAM OCR)
     is_captcha_sent = False
