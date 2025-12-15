@@ -16,11 +16,13 @@
 
 ```bash
 # Chrome/Selenium 版本（30秒自動終止，Git Bash）
-cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt && echo "" > .temp/test_output.txt && timeout 30 python -u src/chrome_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
+cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && rm -rf src/__pycache__ && rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt && echo "" > .temp/test_output.txt && timeout 30 python -u src/chrome_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
 
 # NoDriver 版本（30秒自動終止，Git Bash）
-cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt && echo "" > .temp/test_output.txt && timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
+cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && rm -rf src/__pycache__ && rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt && echo "" > .temp/test_output.txt && timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
 ```
+
+> **重要**：每次執行測試前必須清除 `__pycache__`，確保 Python 載入最新修改的程式碼。
 
 **重要修正**：檔案路徑必須加上 `src/` 前綴
 - ✅ 正確：`python -u src/nodriver_tixcraft.py --input src/settings.json`
@@ -34,10 +36,10 @@ cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && rm -f MAXBOT_INT28_IDLE.tx
 
 ```bash
 # Chrome/Selenium 版本
-cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && start /B python -u src\chrome_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1 && timeout /t 30 /nobreak >nul && taskkill //F //IM python.exe //IM chrome.exe
+cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && rmdir /S /Q src\__pycache__ 2>nul && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && start /B python -u src\chrome_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1 && timeout /t 30 /nobreak >nul && taskkill //F //IM python.exe //IM chrome.exe
 
 # NoDriver 版本
-cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && start /B python -u src\nodriver_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1 && timeout /t 30 /nobreak >nul && taskkill //F //IM python.exe //IM chrome.exe
+cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && rmdir /S /Q src\__pycache__ 2>nul && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && start /B python -u src\nodriver_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1 && timeout /t 30 /nobreak >nul && taskkill //F //IM python.exe //IM chrome.exe
 ```
 
 ### 檢查測試結果（驗證程式邏輯）

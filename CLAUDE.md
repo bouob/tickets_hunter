@@ -353,6 +353,7 @@ docs/02-development/development_guide.md  ← 開發規範
 **Git Bash**：
 ```bash
 cd /d/Desktop/MaxBot搶票機器人/tickets_hunter && \
+rm -rf src/__pycache__ && \
 rm -f MAXBOT_INT28_IDLE.txt src/MAXBOT_INT28_IDLE.txt && \
 echo "" > .temp/test_output.txt && \
 timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/test_output.txt 2>&1
@@ -360,8 +361,10 @@ timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json > .temp/
 
 **Windows CMD**：
 ```cmd
-cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && timeout 30 python -u src\nodriver_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1
+cd "D:\Desktop\MaxBot搶票機器人\tickets_hunter" && rmdir /S /Q src\__pycache__ 2>nul && del /Q MAXBOT_INT28_IDLE.txt src\MAXBOT_INT28_IDLE.txt 2>nul && echo. > .temp\test_output.txt && timeout 30 python -u src\nodriver_tixcraft.py --input src\settings.json > .temp\test_output.txt 2>&1
 ```
+
+> **注意**：清除 `__pycache__` 確保 Python 載入最新修改的程式碼，避免使用舊的快取。
 
 ### 檢查測試輸出
 
