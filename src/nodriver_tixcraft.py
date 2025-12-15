@@ -16388,13 +16388,17 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 continue
 
             # Filter: exclude disabled buttons
+            # Issue #188: Allow "尚未開賣" (coming soon) buttons even with CSS disabled class
             if ' disabled">' in row_html:
-                continue
+                if '尚未開賣' not in row_html:
+                    continue
 
             # Filter: check if button exists (for kham/ticket)
             if 'udnfunlife' not in domain_name:
                 if '<button' in row_html:
-                    if '立即訂購' not in row_html and '點此購票' not in row_html:
+                    # Issue #188: Support "尚未開賣" (coming soon) button for ERA TICKET
+                    valid_button_texts = ['立即訂購', '點此購票', '尚未開賣']
+                    if not any(text in row_html for text in valid_button_texts):
                         continue
                 else:
                     continue  # No button, skip
@@ -16552,45 +16556,61 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
             print(f"No target row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
 
     is_date_assign_by_bot = False
-    if target_row:
-        # Click the button in target row (similar to TixCraft)
-        try:
-            button_selector = 'button'
-            if 'udnfunlife.com' in domain_name:
-                button_selector = 'div.goNext'
+    is_coming_soon = False
 
-            btn = await target_row.query_selector(button_selector)
-            if btn:
-                await btn.click()
-                is_date_assign_by_bot = True
+    if target_row:
+        # Issue #188: Check if target is "coming soon" button before clicking
+        try:
+            target_row_html = await target_row.get_html()
+            if '尚未開賣' in target_row_html:
+                is_coming_soon = True
                 if show_debug_message:
-                    print("Date buy button clicked successfully")
-        except Exception as exc:
-            if show_debug_message:
-                print(f"Click button error: {exc}")
-    else:
-        # No target found - auto reload if enabled
-        if auto_reload_coming_soon_page_enable:
-            if formated_area_list is None or len(formated_area_list) == 0:
-                try:
+                    print("[TICKET.COM] Coming soon button detected, skip clicking")
+        except:
+            pass
+
+        if not is_coming_soon:
+            # Click the button in target row (similar to TixCraft)
+            try:
+                button_selector = 'button'
+                if 'udnfunlife.com' in domain_name:
+                    button_selector = 'div.goNext'
+
+                btn = await target_row.query_selector(button_selector)
+                if btn:
+                    await btn.click()
+                    is_date_assign_by_bot = True
                     if show_debug_message:
+                        print("Date buy button clicked successfully")
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"Click button error: {exc}")
+
+    # Auto reload if: no target found OR target is coming soon button
+    if not is_date_assign_by_bot and auto_reload_coming_soon_page_enable:
+        if is_coming_soon or formated_area_list is None or len(formated_area_list) == 0:
+            try:
+                if show_debug_message:
+                    if is_coming_soon:
+                        print("[TICKET.COM] Waiting for sale time, will reload after delay...")
+                    else:
                         print("Date list empty, will auto reload after delay...")
 
-                    # Wait before reload (use config interval)
-                    reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
-                    if reload_interval > 0:
-                        await tab.sleep(reload_interval)
-                    else:
-                        await tab.sleep(1.0)  # Default 1 second delay
+                # Wait before reload (use config interval)
+                reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
+                if reload_interval > 0:
+                    await tab.sleep(reload_interval)
+                else:
+                    await tab.sleep(1.0)  # Default 1 second delay
 
-                    await tab.reload()
-                    await tab.sleep(0.5)  # Wait for page to start loading
+                await tab.reload()
+                await tab.sleep(0.5)  # Wait for page to start loading
 
-                    if show_debug_message:
-                        print("Page reloaded, waiting for content...")
-                except Exception as exc:
-                    if show_debug_message:
-                        print("Auto reload exception:", exc)
+                if show_debug_message:
+                    print("Page reloaded, waiting for content...")
+            except Exception as exc:
+                if show_debug_message:
+                    print("Auto reload exception:", exc)
 
     return is_date_assign_by_bot
 
