@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.11)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.15)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -16388,13 +16388,17 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 continue
 
             # Filter: exclude disabled buttons
+            # Issue #188: Allow "尚未開賣" (coming soon) buttons even with CSS disabled class
             if ' disabled">' in row_html:
-                continue
+                if '尚未開賣' not in row_html:
+                    continue
 
             # Filter: check if button exists (for kham/ticket)
             if 'udnfunlife' not in domain_name:
                 if '<button' in row_html:
-                    if '立即訂購' not in row_html and '點此購票' not in row_html:
+                    # Issue #188: Support "尚未開賣" (coming soon) button for ERA TICKET
+                    valid_button_texts = ['立即訂購', '點此購票', '尚未開賣']
+                    if not any(text in row_html for text in valid_button_texts):
                         continue
                 else:
                     continue  # No button, skip
@@ -16552,45 +16556,61 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
             print(f"No target row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
 
     is_date_assign_by_bot = False
-    if target_row:
-        # Click the button in target row (similar to TixCraft)
-        try:
-            button_selector = 'button'
-            if 'udnfunlife.com' in domain_name:
-                button_selector = 'div.goNext'
+    is_coming_soon = False
 
-            btn = await target_row.query_selector(button_selector)
-            if btn:
-                await btn.click()
-                is_date_assign_by_bot = True
+    if target_row:
+        # Issue #188: Check if target is "coming soon" button before clicking
+        try:
+            target_row_html = await target_row.get_html()
+            if '尚未開賣' in target_row_html:
+                is_coming_soon = True
                 if show_debug_message:
-                    print("Date buy button clicked successfully")
-        except Exception as exc:
-            if show_debug_message:
-                print(f"Click button error: {exc}")
-    else:
-        # No target found - auto reload if enabled
-        if auto_reload_coming_soon_page_enable:
-            if formated_area_list is None or len(formated_area_list) == 0:
-                try:
+                    print("[TICKET.COM] Coming soon button detected, skip clicking")
+        except:
+            pass
+
+        if not is_coming_soon:
+            # Click the button in target row (similar to TixCraft)
+            try:
+                button_selector = 'button'
+                if 'udnfunlife.com' in domain_name:
+                    button_selector = 'div.goNext'
+
+                btn = await target_row.query_selector(button_selector)
+                if btn:
+                    await btn.click()
+                    is_date_assign_by_bot = True
                     if show_debug_message:
+                        print("Date buy button clicked successfully")
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"Click button error: {exc}")
+
+    # Auto reload if: no target found OR target is coming soon button
+    if not is_date_assign_by_bot and auto_reload_coming_soon_page_enable:
+        if is_coming_soon or formated_area_list is None or len(formated_area_list) == 0:
+            try:
+                if show_debug_message:
+                    if is_coming_soon:
+                        print("[TICKET.COM] Waiting for sale time, will reload after delay...")
+                    else:
                         print("Date list empty, will auto reload after delay...")
 
-                    # Wait before reload (use config interval)
-                    reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
-                    if reload_interval > 0:
-                        await tab.sleep(reload_interval)
-                    else:
-                        await tab.sleep(1.0)  # Default 1 second delay
+                # Wait before reload (use config interval)
+                reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
+                if reload_interval > 0:
+                    await tab.sleep(reload_interval)
+                else:
+                    await tab.sleep(1.0)  # Default 1 second delay
 
-                    await tab.reload()
-                    await tab.sleep(0.5)  # Wait for page to start loading
+                await tab.reload()
+                await tab.sleep(0.5)  # Wait for page to start loading
 
-                    if show_debug_message:
-                        print("Page reloaded, waiting for content...")
-                except Exception as exc:
-                    if show_debug_message:
-                        print("Auto reload exception:", exc)
+                if show_debug_message:
+                    print("Page reloaded, waiting for content...")
+            except Exception as exc:
+                if show_debug_message:
+                    print("Auto reload exception:", exc)
 
     return is_date_assign_by_bot
 
@@ -19090,17 +19110,45 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     UTK0205 頁面處理
     """
     show_debug = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict["ticket_number"]
 
-    # Step 1: Select seat type
-    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    is_seat_type_assigned = await nodriver_kham_seat_type_auto_select(
-        tab, config_dict, area_keyword
-    )
+    # Step 0: Check if seats are already selected (avoid duplicate selection)
+    already_selected_count = 0
+    try:
+        check_result = await tab.evaluate('''
+            (() => {
+                const selectedSeats = document.querySelectorAll('#TBL td[style*="icon_chair_select"]');
+                return selectedSeats.length;
+            })()
+        ''')
+        if isinstance(check_result, int):
+            already_selected_count = check_result
+        elif isinstance(check_result, dict):
+            already_selected_count = check_result.get('value', 0)
 
-    # Step 2: Select seats
-    is_seat_assigned = False
-    if is_seat_type_assigned:
-        is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
+        if show_debug:
+            print(f"[KHAM SEAT] Already selected seats: {already_selected_count}")
+    except Exception as exc:
+        if show_debug:
+            print(f"[KHAM SEAT] Error checking selected seats: {exc}")
+
+    # If already selected enough seats, skip seat selection and go to submit
+    if already_selected_count >= ticket_number:
+        if show_debug:
+            print(f"[KHAM SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        is_seat_type_assigned = True
+        is_seat_assigned = True
+    else:
+        # Step 1: Select seat type
+        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+        is_seat_type_assigned = await nodriver_kham_seat_type_auto_select(
+            tab, config_dict, area_keyword
+        )
+
+        # Step 2: Select seats
+        is_seat_assigned = False
+        if is_seat_type_assigned:
+            is_seat_assigned = await nodriver_kham_seat_auto_select(tab, config_dict)
 
     # Step 3: Handle captcha (reuse KHAM OCR)
     is_captcha_sent = False
@@ -19121,10 +19169,10 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
-            # 4.1: Click submit button
+            # 4.1: Click submit button - [Optimized] use class selector
             result = await tab.evaluate('''
                 (function() {
-                    const button = document.querySelector('button[onclick*="addShoppingCart"]');
+                    const button = document.querySelector('button.sumitButton');
                     if (button && !button.disabled) {
                         button.click();
                         return true;
@@ -19510,57 +19558,29 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                 # Wait for seat table to load (initial wait for AJAX to start)
                 await tab.sleep(1.5)
 
-                # Smart wait: use DOM Snapshot to confirm BOTH table and seats are loaded
+                # [Optimized] Smart wait using lightweight querySelector instead of DOM Snapshot
                 seats_loaded = False
                 for i in range(20):  # Max 10 seconds (20 * 0.5s)
                     try:
-                        # Use DOM Snapshot (same method as ticket type selection)
-                        documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
-                            computed_styles=[],
-                            include_dom_rects=False
-                        ))
+                        # Use querySelector - 10x faster than DOM Snapshot
+                        check_result = await tab.evaluate('''
+                            (() => {
+                                const table = document.querySelector('#TBL');
+                                // Check for TD with title attribute and cursor:pointer style
+                                const seats = document.querySelectorAll('#TBL td[title][style*="cursor: pointer"]');
+                                return {
+                                    tableFound: !!table,
+                                    seatCount: seats.length
+                                };
+                            })()
+                        ''')
 
-                        seat_count = 0
+                        # Parse result
                         table_found = False
-
-                        if documents and len(documents) > 0:
-                            document_snapshot = documents[0]
-                            nodes = document_snapshot.nodes
-                            node_names = [strings[i] for i in nodes.node_name]
-                            attributes_list = nodes.attributes
-
-                            # Check for both #TBL table and seat TD elements
-                            for idx, node_name in enumerate(node_names):
-                                # Check for table with id="TBL"
-                                if node_name.upper() == 'TABLE':
-                                    attrs = {}
-                                    if idx < len(attributes_list):
-                                        attr_indices = attributes_list[idx]
-                                        for j in range(0, len(attr_indices), 2):
-                                            if j + 1 < len(attr_indices):
-                                                key = strings[attr_indices[j]]
-                                                val = strings[attr_indices[j + 1]]
-                                                attrs[key] = val
-                                    if attrs.get('id') == 'TBL':
-                                        table_found = True
-
-                                # Check for TD elements with title and cursor:pointer
-                                if node_name.upper() == 'TD':
-                                    attrs = {}
-                                    if idx < len(attributes_list):
-                                        attr_indices = attributes_list[idx]
-                                        for j in range(0, len(attr_indices), 2):
-                                            if j + 1 < len(attr_indices):
-                                                key = strings[attr_indices[j]]
-                                                val = strings[attr_indices[j + 1]]
-                                                attrs[key] = val
-
-                                    # Check if this TD has title and cursor:pointer style
-                                    has_title = 'title' in attrs and attrs['title']
-                                    has_pointer = 'style' in attrs and 'cursor: pointer' in attrs.get('style', '')
-
-                                    if has_title and has_pointer:
-                                        seat_count += 1
+                        seat_count = 0
+                        if isinstance(check_result, dict):
+                            table_found = check_result.get('tableFound', False)
+                            seat_count = check_result.get('seatCount', 0)
 
                         # Success condition: table exists AND at least 1 seat found
                         if table_found and seat_count > 0:
@@ -19574,7 +19594,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
                     except Exception as wait_exc:
                         if show_debug_message and i == 19:
-                            print(f"[TICKET SEAT TYPE] DOM Snapshot error: {wait_exc}")
+                            print(f"[TICKET SEAT TYPE] querySelector error: {wait_exc}")
 
                     await tab.sleep(0.5)
 
@@ -20142,7 +20162,7 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
 
             return {{
                 success: selectedSeats.length > 0,
-                selectedSeats: selectedSeats.map(s => ({{ elem: s.elem, title: s.title }})),
+                selectedSeats: selectedSeats.map(s => ({{ title: s.title }})),
                 count: selectedSeats.length
             }};
         }})();
@@ -20207,20 +20227,126 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
                     }}
                 }}
             }} else {{
-                // 【回退邏輯】演算法失敗或無結果時，簡單取前 N 個
+                // [FALLBACK] Algorithm failed - ensure only selecting consecutive seats
+                if (showDebug) {{
+                    console.log('[FALLBACK] Algorithm result empty, using fallback with direction-aware check');
+                }}
+
+                // Step 1: Detect stage direction
+                const stageIcon = document.querySelector('#ctl00_ContentPlaceHolder1_lbStageArrow i');
+                let stageDirection = 'up'; // default
+                if (stageIcon) {{
+                    if (stageIcon.classList.contains('fa-arrow-circle-up')) stageDirection = 'up';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-down')) stageDirection = 'down';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-left')) stageDirection = 'left';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-right')) stageDirection = 'right';
+                }}
+                if (showDebug) {{
+                    console.log('[FALLBACK] Stage direction: ' + stageDirection);
+                }}
+
                 const availableSeats = Array.from(
                     document.querySelectorAll('#locationChoice table td[title][style*="cursor: pointer"]')
-                );
-
-                for (const seat of availableSeats.slice(0, ticketNumber)) {{
+                ).filter(seat => {{
                     const style = seat.getAttribute('style');
-                    if (style && style.includes('cursor: pointer') && style.includes('icon_chair_empty')) {{
-                        seat.click();
-                        clickedCount++;
-                        clickedTitles.push(seat.getAttribute('title'));
-                        if (showDebug) {{
-                            console.log('[FALLBACK] Selected seat: ' + seat.getAttribute('title'));
+                    return style && style.includes('icon_chair_empty');
+                }});
+
+                let foundSeats = [];
+
+                if (stageDirection === 'up' || stageDirection === 'down') {{
+                    // Stage at top/bottom: group by ROW, consecutive = same row
+                    const rows = {{}};
+                    availableSeats.forEach(seat => {{
+                        const title = seat.getAttribute('title');
+                        if (title && title.includes('-') && title.includes('排')) {{
+                            const parts = title.split('-');
+                            if (parts.length >= 2) {{
+                                const rowNum = parseInt(parts[1].replace('排', ''));
+                                if (!rows[rowNum]) rows[rowNum] = [];
+                                const parent = seat.parentElement;
+                                const colIdx = parent ? Array.from(parent.children).indexOf(seat) : 0;
+                                rows[rowNum].push({{ elem: seat, title: title, colIdx: colIdx }});
+                            }}
                         }}
+                    }});
+
+                    // Sort rows: up=smaller first, down=larger first
+                    const sortedRowNums = Object.keys(rows).sort((a, b) => {{
+                        return stageDirection === 'up' ? parseInt(a) - parseInt(b) : parseInt(b) - parseInt(a);
+                    }});
+
+                    for (const rowNum of sortedRowNums) {{
+                        const rowSeats = rows[rowNum];
+                        rowSeats.sort((a, b) => a.colIdx - b.colIdx);
+
+                        for (let i = 0; i <= rowSeats.length - ticketNumber; i++) {{
+                            let continuous = true;
+                            for (let j = 0; j < ticketNumber - 1; j++) {{
+                                if (rowSeats[i + j + 1].colIdx - rowSeats[i + j].colIdx > 1) {{
+                                    continuous = false;
+                                    break;
+                                }}
+                            }}
+                            if (continuous) {{
+                                foundSeats = rowSeats.slice(i, i + ticketNumber);
+                                break;
+                            }}
+                        }}
+                        if (foundSeats.length >= ticketNumber) break;
+                    }}
+                }} else {{
+                    // Stage at left/right: group by SEAT NUMBER (column), consecutive = same column
+                    const columns = {{}};
+                    availableSeats.forEach(seat => {{
+                        const title = seat.getAttribute('title');
+                        if (title && title.includes('-') && title.includes('號')) {{
+                            const parts = title.split('-');
+                            if (parts.length >= 3) {{
+                                const seatNum = parseInt(parts[2].replace('號', ''));
+                                const rowNum = parseInt(parts[1].replace('排', ''));
+                                if (!columns[seatNum]) columns[seatNum] = [];
+                                const parent = seat.parentElement;
+                                const rowIdx = parent && parent.parentElement ?
+                                    Array.from(parent.parentElement.children).indexOf(parent) : 0;
+                                columns[seatNum].push({{ elem: seat, title: title, rowIdx: rowIdx, rowNum: rowNum }});
+                            }}
+                        }}
+                    }});
+
+                    // Sort columns: left=smaller first, right=larger first
+                    const sortedColNums = Object.keys(columns).sort((a, b) => {{
+                        return stageDirection === 'left' ? parseInt(a) - parseInt(b) : parseInt(b) - parseInt(a);
+                    }});
+
+                    for (const colNum of sortedColNums) {{
+                        const colSeats = columns[colNum];
+                        colSeats.sort((a, b) => a.rowIdx - b.rowIdx);
+
+                        for (let i = 0; i <= colSeats.length - ticketNumber; i++) {{
+                            let continuous = true;
+                            for (let j = 0; j < ticketNumber - 1; j++) {{
+                                if (colSeats[i + j + 1].rowIdx - colSeats[i + j].rowIdx > 1) {{
+                                    continuous = false;
+                                    break;
+                                }}
+                            }}
+                            if (continuous) {{
+                                foundSeats = colSeats.slice(i, i + ticketNumber);
+                                break;
+                            }}
+                        }}
+                        if (foundSeats.length >= ticketNumber) break;
+                    }}
+                }}
+
+                // Click the found seats
+                for (const seatObj of foundSeats) {{
+                    seatObj.elem.click();
+                    clickedCount++;
+                    clickedTitles.push(seatObj.title);
+                    if (showDebug) {{
+                        console.log('[FALLBACK] Selected seat: ' + seatObj.title);
                     }}
                 }}
             }}
@@ -20304,20 +20430,48 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
         return False, False, False
 
     show_debug = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict["ticket_number"]
 
-    # Step 1: Select seat type
-    area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
-    is_seat_type_assigned = await nodriver_ticket_seat_type_auto_select(
-        tab, config_dict, area_keyword
-    )
+    # Step 0: Check if seats are already selected (avoid duplicate selection)
+    already_selected_count = 0
+    try:
+        check_result = await tab.evaluate('''
+            (() => {
+                const selectedSeats = document.querySelectorAll('#TBL td[style*="icon_chair_select"]');
+                return selectedSeats.length;
+            })()
+        ''')
+        if isinstance(check_result, int):
+            already_selected_count = check_result
+        elif isinstance(check_result, dict):
+            already_selected_count = check_result.get('value', 0)
 
-    # Step 2: Select seats
-    is_seat_assigned = False
-    if is_seat_type_assigned:
-        # Additional wait for DOM to fully stabilize after AJAX update
-        # Increased to 2s to ensure AJAX completes
-        await tab.sleep(2.0)
-        is_seat_assigned = await nodriver_ticket_seat_auto_select(tab, config_dict)
+        if show_debug:
+            print(f"[TICKET SEAT] Already selected seats: {already_selected_count}")
+    except Exception as exc:
+        if show_debug:
+            print(f"[TICKET SEAT] Error checking selected seats: {exc}")
+
+    # If already selected enough seats, skip seat selection and go to submit
+    if already_selected_count >= ticket_number:
+        if show_debug:
+            print(f"[TICKET SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        is_seat_type_assigned = True
+        is_seat_assigned = True
+    else:
+        # Step 1: Select seat type
+        area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
+        is_seat_type_assigned = await nodriver_ticket_seat_type_auto_select(
+            tab, config_dict, area_keyword
+        )
+
+        # Step 2: Select seats
+        is_seat_assigned = False
+        if is_seat_type_assigned:
+            # Additional wait for DOM to fully stabilize after AJAX update
+            # Increased to 2s to ensure AJAX completes
+            await tab.sleep(2.0)
+            is_seat_assigned = await nodriver_ticket_seat_auto_select(tab, config_dict)
 
     # Step 3: Handle captcha (reuse KHAM OCR)
     is_captcha_sent = False
@@ -20345,17 +20499,8 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                 (function() {{
                     const showDebug = {json.dumps(show_debug)};
 
-                    // 【修復 2】多個備用選擇器
-                    let submitButton = document.querySelector('button.sumitButton[onclick*="addShoppingCart1"]');
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button.btn.sumitButton');
-                    }}
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button[onclick*="addShoppingCart1"]');
-                    }}
-                    if (!submitButton) {{
-                        submitButton = document.querySelector('button.sumitButton');
-                    }}
+                    // [Optimized] Simplified selector - MCP test confirmed .sumitButton is sufficient
+                    const submitButton = document.querySelector('button.sumitButton');
 
                     if (showDebug) {{
                         console.log('[TICKET SUBMIT] Button found:', !!submitButton);

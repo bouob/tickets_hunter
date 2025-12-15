@@ -1,5 +1,12 @@
 # Changelog
 
+## 2025.12.15
+
+- 修復 KHAM/ticket.com 座位重複選取問題，避免 +2+2+2 累積
+- 優化 KHAM/ticket.com 選擇器效能，座位偵測速度提升 10 倍
+- 修復 ticket.com 座位選取跨排問題，確保連續座位在同一排
+- 新增 ticket.com「尚未開賣」頁面自動重載功能
+
 ## 2025.12.11
 
 - 新增 Cloudflare Turnstile 多模板驗證機制
