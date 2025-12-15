@@ -20162,7 +20162,7 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
 
             return {{
                 success: selectedSeats.length > 0,
-                selectedSeats: selectedSeats.map(s => ({{ elem: s.elem, title: s.title }})),
+                selectedSeats: selectedSeats.map(s => ({{ title: s.title }})),
                 count: selectedSeats.length
             }};
         }})();
@@ -20227,20 +20227,126 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
                     }}
                 }}
             }} else {{
-                // 【回退邏輯】演算法失敗或無結果時，簡單取前 N 個
+                // [FALLBACK] Algorithm failed - ensure only selecting consecutive seats
+                if (showDebug) {{
+                    console.log('[FALLBACK] Algorithm result empty, using fallback with direction-aware check');
+                }}
+
+                // Step 1: Detect stage direction
+                const stageIcon = document.querySelector('#ctl00_ContentPlaceHolder1_lbStageArrow i');
+                let stageDirection = 'up'; // default
+                if (stageIcon) {{
+                    if (stageIcon.classList.contains('fa-arrow-circle-up')) stageDirection = 'up';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-down')) stageDirection = 'down';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-left')) stageDirection = 'left';
+                    else if (stageIcon.classList.contains('fa-arrow-circle-right')) stageDirection = 'right';
+                }}
+                if (showDebug) {{
+                    console.log('[FALLBACK] Stage direction: ' + stageDirection);
+                }}
+
                 const availableSeats = Array.from(
                     document.querySelectorAll('#locationChoice table td[title][style*="cursor: pointer"]')
-                );
-
-                for (const seat of availableSeats.slice(0, ticketNumber)) {{
+                ).filter(seat => {{
                     const style = seat.getAttribute('style');
-                    if (style && style.includes('cursor: pointer') && style.includes('icon_chair_empty')) {{
-                        seat.click();
-                        clickedCount++;
-                        clickedTitles.push(seat.getAttribute('title'));
-                        if (showDebug) {{
-                            console.log('[FALLBACK] Selected seat: ' + seat.getAttribute('title'));
+                    return style && style.includes('icon_chair_empty');
+                }});
+
+                let foundSeats = [];
+
+                if (stageDirection === 'up' || stageDirection === 'down') {{
+                    // Stage at top/bottom: group by ROW, consecutive = same row
+                    const rows = {{}};
+                    availableSeats.forEach(seat => {{
+                        const title = seat.getAttribute('title');
+                        if (title && title.includes('-') && title.includes('排')) {{
+                            const parts = title.split('-');
+                            if (parts.length >= 2) {{
+                                const rowNum = parseInt(parts[1].replace('排', ''));
+                                if (!rows[rowNum]) rows[rowNum] = [];
+                                const parent = seat.parentElement;
+                                const colIdx = parent ? Array.from(parent.children).indexOf(seat) : 0;
+                                rows[rowNum].push({{ elem: seat, title: title, colIdx: colIdx }});
+                            }}
                         }}
+                    }});
+
+                    // Sort rows: up=smaller first, down=larger first
+                    const sortedRowNums = Object.keys(rows).sort((a, b) => {{
+                        return stageDirection === 'up' ? parseInt(a) - parseInt(b) : parseInt(b) - parseInt(a);
+                    }});
+
+                    for (const rowNum of sortedRowNums) {{
+                        const rowSeats = rows[rowNum];
+                        rowSeats.sort((a, b) => a.colIdx - b.colIdx);
+
+                        for (let i = 0; i <= rowSeats.length - ticketNumber; i++) {{
+                            let continuous = true;
+                            for (let j = 0; j < ticketNumber - 1; j++) {{
+                                if (rowSeats[i + j + 1].colIdx - rowSeats[i + j].colIdx > 1) {{
+                                    continuous = false;
+                                    break;
+                                }}
+                            }}
+                            if (continuous) {{
+                                foundSeats = rowSeats.slice(i, i + ticketNumber);
+                                break;
+                            }}
+                        }}
+                        if (foundSeats.length >= ticketNumber) break;
+                    }}
+                }} else {{
+                    // Stage at left/right: group by SEAT NUMBER (column), consecutive = same column
+                    const columns = {{}};
+                    availableSeats.forEach(seat => {{
+                        const title = seat.getAttribute('title');
+                        if (title && title.includes('-') && title.includes('號')) {{
+                            const parts = title.split('-');
+                            if (parts.length >= 3) {{
+                                const seatNum = parseInt(parts[2].replace('號', ''));
+                                const rowNum = parseInt(parts[1].replace('排', ''));
+                                if (!columns[seatNum]) columns[seatNum] = [];
+                                const parent = seat.parentElement;
+                                const rowIdx = parent && parent.parentElement ?
+                                    Array.from(parent.parentElement.children).indexOf(parent) : 0;
+                                columns[seatNum].push({{ elem: seat, title: title, rowIdx: rowIdx, rowNum: rowNum }});
+                            }}
+                        }}
+                    }});
+
+                    // Sort columns: left=smaller first, right=larger first
+                    const sortedColNums = Object.keys(columns).sort((a, b) => {{
+                        return stageDirection === 'left' ? parseInt(a) - parseInt(b) : parseInt(b) - parseInt(a);
+                    }});
+
+                    for (const colNum of sortedColNums) {{
+                        const colSeats = columns[colNum];
+                        colSeats.sort((a, b) => a.rowIdx - b.rowIdx);
+
+                        for (let i = 0; i <= colSeats.length - ticketNumber; i++) {{
+                            let continuous = true;
+                            for (let j = 0; j < ticketNumber - 1; j++) {{
+                                if (colSeats[i + j + 1].rowIdx - colSeats[i + j].rowIdx > 1) {{
+                                    continuous = false;
+                                    break;
+                                }}
+                            }}
+                            if (continuous) {{
+                                foundSeats = colSeats.slice(i, i + ticketNumber);
+                                break;
+                            }}
+                        }}
+                        if (foundSeats.length >= ticketNumber) break;
+                    }}
+                }}
+
+                // Click the found seats
+                for (const seatObj of foundSeats) {{
+                    seatObj.elem.click();
+                    clickedCount++;
+                    clickedTitles.push(seatObj.title);
+                    if (showDebug) {{
+                        console.log('[FALLBACK] Selected seat: ' + seatObj.title);
                     }}
                 }}
             }}
