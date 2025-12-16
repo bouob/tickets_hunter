@@ -53,8 +53,8 @@ CLAUDE.md         - 專案開發規範
 docs/             - 技術文件和指南
 .specify/         - 規格模板和指令碼
 specs/            - 功能規格和設計文件
-FAQ/              - 常見問題解答
 .temp/            - 臨時測試資料（HTML/JS 網頁內容）
+src/assets/model/ - OCR 模型檔案（大型二進位檔案）
 ```
 
 ### 多層確認機制
@@ -196,7 +196,7 @@ fi
 **方法 2：檔案清單掃描（回退方法）**
 - 對於沒有 PRIVATE 標記的 commits：
   - 執行 `git show --name-only [commit-hash]` 取得檔案清單
-  - 比對機敏檔案清單（`.claude/`, `docs/`, `CLAUDE.md`, `.specify/`, `specs/`, `FAQ/`, `.temp/`）
+  - 比對機敏檔案清單（`.claude/`, `docs/`, `CLAUDE.md`, `.specify/`, `specs/`, `.temp/`, `src/assets/model/`）
   - 過濾掉包含機敏檔案的 commits
 
 **為什麼需要兩種方法？**
@@ -257,7 +257,7 @@ fi
 - 過濾機敏檔案：
   ```bash
   # 排除機敏檔案清單
-  SENSITIVE_PATTERNS=".claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^FAQ/|^.temp/"
+  SENSITIVE_PATTERNS=".claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^.temp/|^src/assets/model/"
 
   # 過濾檔案變更
   git diff origin/main..HEAD --name-status | \
@@ -324,7 +324,7 @@ git checkout main
 
 # 2. 取得乾淨檔案清單（排除機敏檔案）
 CLEAN_FILES=$(git diff origin/main..HEAD --name-only | \
-  grep -Ev "(.claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^FAQ/|^.temp/)")
+  grep -Ev "(.claude/|^docs/|^CLAUDE.md|^.specify/|^specs/|^.temp/|^src/assets/model/)")
 
 # 3. 切換到臨時分支
 git checkout public-sync-YYYY-MM-DD-HHmm
