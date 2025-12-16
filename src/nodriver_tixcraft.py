@@ -4640,6 +4640,15 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
 async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # Issue #188: Check sold out cooldown before proceeding
+    global tixcraft_dict
+    if 'tixcraft_dict' in globals() and tixcraft_dict.get("sold_out_cooldown_until", 0) > time.time():
+        remaining = tixcraft_dict["sold_out_cooldown_until"] - time.time()
+        if show_debug_message:
+            print(f"[DATE SELECT] Sold out cooldown active, waiting {remaining:.1f}s...")
+        await asyncio.sleep(remaining)
+        tixcraft_dict["sold_out_cooldown_until"] = 0  # Reset after waiting
+
     # T003: Check main switch (defensive programming)
     if not config_dict["date_auto_select"]["enable"]:
         if show_debug_message:
@@ -6127,6 +6136,10 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             if show_debug_message:
                 print(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
 
+        # Issue #188: Detect sold out alerts to add cooldown delay
+        sold_out_keywords = ['售完', '已售完', '選購一空', 'sold out', 'no tickets']
+        is_sold_out_alert = any(kw in alert_message_lower for kw in sold_out_keywords)
+
         # Dismiss the alert - try multiple times with small delays
         dismiss_success = False
         for attempt in range(3):
@@ -6150,6 +6163,15 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     if show_debug_message:
                         print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
 
+        # Issue #188: Set cooldown timestamp instead of async sleep (event handler doesn't block main loop)
+        if is_sold_out_alert and dismiss_success:
+            interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+            if interval > 0:
+                cooldown_until = time.time() + interval
+                tixcraft_dict["sold_out_cooldown_until"] = cooldown_until
+                if show_debug_message:
+                    print(f"[GLOBAL ALERT] Sold out detected, setting cooldown for {interval}s")
+
     global tixcraft_dict
 
     # Initialize tixcraft_dict if not exists
@@ -6167,6 +6189,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["alert_handler_registered"] = False
         tixcraft_dict["captcha_alert_detected"] = False
         tixcraft_dict["last_homepage_redirect_time"] = 0
+        tixcraft_dict["sold_out_cooldown_until"] = 0  # Issue #188: Cooldown timestamp
 
     # Register global alert handler (remains active throughout session)
     # Only register once to prevent infinite loop
