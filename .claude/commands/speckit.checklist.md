@@ -1,6 +1,9 @@
 ---
 description: "根據使用者需求，為當前功能產生一份自訂檢查清單。"
 model: opus
+scripts:
+  sh: scripts/bash/check-prerequisites.sh --json
+  ps: scripts/powershell/check-prerequisites.ps1 -Json
 ---
 
 ## 檢查清單目的：「英文的單元測試」

@@ -1,6 +1,9 @@
 ---
 description: "在任務產生後，對 spec.md、plan.md 及 tasks.md 進行非破壞性的跨產物一致性與品質分析。"
 model: opus
+scripts:
+  sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+  ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
 ## 使用者輸入

@@ -39,6 +39,7 @@
 | 快速測試 | `timeout 30 python -u src/...` | 30 秒快速測試 |
 | MCP 即時除錯 | `/mcpstart` | 啟動 Chrome 除錯模式（固定端口 9222） |
 | 規格分析 | `/speckit.analyze` | 跨產物一致性檢查 |
+| Speckit 同步 | `/speckit.sync` | 從 GitHub 同步 speckit 並中文化 |
 | 除錯診斷 | `/debug` | 專業除錯工具（Spec + 憲法） |
 | 尋找重複 issues | `/dedupe` | 尋找相似的 GitHub issues |
 | 分析 issues | `/review-issues` | 分析開啟的 issues 並提供建議 |

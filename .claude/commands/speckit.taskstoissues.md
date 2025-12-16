@@ -2,6 +2,9 @@
 description: "根據可用的設計產物，將現有任務轉換為可執行、依相依性排序的 GitHub issues。"
 model: opus
 tools: ['github/github-mcp-server/issue_write']
+scripts:
+  sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+  ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
 ## 使用者輸入
