@@ -1,7 +1,7 @@
 ---
 description: "在公開 repo PR merge 後建立 Release Tag 並觸發 GitHub Actions"
-model: sonnet
-allowed-tools: ["Bash"]
+model: opus
+allowed-tools: ["Bash", "Read", "Grep", "AskUserQuestion"]
 ---
 
 ## 使用者輸入

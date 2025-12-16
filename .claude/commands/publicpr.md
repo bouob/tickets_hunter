@@ -1,7 +1,7 @@
 ---
 description: "從私人 repo 建立安全 PR 到公開 repo，自動過濾機敏檔案"
-model: Opus
-allowed-tools: ["Bash"]
+model: opus
+allowed-tools: ["Bash", "Read", "Grep", "AskUserQuestion"]
 ---
 
 ## 使用者輸入

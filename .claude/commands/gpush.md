@@ -1,7 +1,7 @@
 ---
-description: "推送公開 commits 到私人 repo"
-allowed-tools: ["Bash"]
-model: sonnet
+description: "推送所有 commits 到私人 repo（完整備份）"
+allowed-tools: ["Bash", "Read", "Grep", "AskUserQuestion"]
+model: opus
 ---
 
 ## 使用者輸入
@@ -100,17 +100,6 @@ git push private main --dry-run
    - 需三次確認
    - 執行: `git push --force-with-lease private main`
 
-### 步驟 4 - Release Tag（可選）
-
-**詢問**: 「是否建立 Release Tag？(y/n/skip)」
-
-**流程**（若選擇 y）:
-1. 提取版本號: `CONST_APP_VERSION`
-2. 格式化 tag: `v2025.11.04`
-3. 提取 CHANGELOG 內容
-4. 建立 annotated tag: `git tag -a v2025.11.04 -m "[message]"`
-5. 推送 tag: `git push private main --tags`
-
 ---
 
 ## ⚠️ 執行約束
@@ -119,7 +108,6 @@ git push private main --dry-run
 
 1. **推送確認**: 必須使用者明確回覆 "y"
 2. **Force 推送**: 需三次確認
-3. **Tag 建立**: 需最終確認
 
 ### 自動中止條件
 
@@ -178,6 +166,7 @@ git push private main --dry-run
 
 - `/gsave` - 提交變更（自動分離公開/機敏）
 - `/publicpr` - 建立 PR 到公開 repo（會過濾機敏內容）
+- `/publicrelease` - 建立 Release Tag 到公開 repo（PR merge 後使用）
 - `/gupdate` - 更新版本號
 - `/gchange` - 更新 CHANGELOG
 
