@@ -4180,6 +4180,11 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     # Check for custom OCR model path
     ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
     if ocr_path:
+        # Support relative paths (relative to app root)
+        if not os.path.isabs(ocr_path):
+            app_root = util.get_app_root()
+            ocr_path = os.path.join(app_root, ocr_path)
+
         custom_onnx = os.path.join(ocr_path, "custom.onnx")
         custom_charsets = os.path.join(ocr_path, "charsets.json")
 

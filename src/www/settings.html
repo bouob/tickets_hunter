@@ -673,9 +673,9 @@
         <div class="row mb-3">
           <label for="ocr_model_path" class="col-sm-2 col-form-label">自訂 OCR 模型</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="ocr_model_path" value="" placeholder="例如：C:\models\custom_ocr.onnx" />
+            <input class="form-control" id="ocr_model_path" value="" placeholder="例如：assets/ocr_model 或 C:\models\my_ocr" />
             <div class="form-text">
-              自訂 OCR 模型檔案路徑。若未填寫，將使用內建的 ddddocr 模型。
+              自訂 OCR 模型<strong>資料夾</strong>路徑，資料夾內需包含 <code>custom.onnx</code> 和 <code>charsets.json</code>。支援相對路徑。若未填寫，將使用內建的 ddddocr 模型。
             </div>
           </div>
         </div>
