@@ -1,0 +1,2674 @@
+salecar.html 點下一步之後進入這裡 https://www.famiticket.com.tw/Payment/Home/Index2
+偵測到者裏就代表 已經購票完成等待結帳 程式應該一職保持在這個頁面 不進行任何動作
+<body>
+    <header class="header container no-print">
+        <div class="row">
+            <div class="header__col col-lg-12">
+                <div class="famitkt-logo">
+                    <a class="famitkt-logo__link" href="https://www.famiticket.com.tw/Home">
+                        <img class="famitkt-logo__img" src="/Payment/Images/logo.png">
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center ml-auto">
+                    <div class="header__search d-none d-lg-block">
+                        <button class="btn header__search-btn" type="button" data-target="#searchModal" data-toggle="modal">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                        <div class="user-serve">
+                            <div class="user-serve__inner">
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/User/Orders">
+                                    <i class="fa-userss"></i>
+                                    <span class="user-serve__name" id="membername">鍾*鈞</span>
+                                </a>
+                                <a id="cart_icon" class="user-serve__item user-serve__item--cart" href="#">
+                                    <i class="fa-basket"></i>
+                                    <span id="cartOrderNum">1</span>
+                                </a>
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/user/signout">
+                                    <i class="fa-logout"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <div class="d-lg-none">
+                        <button class="navbar-toggler" aria-expanded="false" aria-controls="navbarNav" aria-label="Toggle navigation" type="button" data-target="#navbarNav" data-toggle="collapse">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+    <nav class="header__navbar navbar navbar-expand-lg no-print">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="" data-toggle="dropdown"><span>活動分類</span></a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                                                                        <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242">
+                                                    戶外觀光
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/562">
+                                                    休閒農場
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/701">
+                                                    住宿
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/582">
+                                                    ESIM
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/2">
+                                                    農遊超市
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241">
+                                                    餐飲
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/561">
+                                                    餐券
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/82">
+                                                    其他
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164">
+                                                    主題樂園
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/461">
+                                                    樂園
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/741">
+                                                    日本樂園
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221">
+                                                    紓壓放鬆
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221/523">
+                                                    美容SPA
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01">
+                                                    展演票券
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/424">
+                                                    展覽
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/C11">
+                                                    演唱會
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/321">
+                                                    表演&amp;劇場
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/581">
+                                                    文化幣(限線上)
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/42">
+                                                    體驗
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01">
+                                                    運動賽事
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/001">
+                                                    中華職棒
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/002">
+                                                    TPBL
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/161">
+                                                    其他
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/721">
+                                                    PLG
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/62">
+                                                    TPVL
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61">
+                                                    交通
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/261">
+                                                    阿里山線
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/342">
+                                                    台灣好行
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01">
+                                                    電影
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/481">
+                                                    特價電影票
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+                                            <li class="dropdown-item">
+                                                <a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/301">
+                                                    交換票
+                                                    <span class="dropdown-menu__link-eng"></span>
+                                                </a>
+                                            </li>
+
+                                                </ul>
+                                            </li>
+
+
+                        </ul>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" data-toggle="modal" data-target="#searchModal" href="#searchModal">活動探索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/Faq">常見問題</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/User/Orders">會員專區</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link">購票須知</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Modal -->
+    <div class="modal fade search-modal" id="searchModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        活動探索
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body search-modal__body">
+                    <div class="search-modal__inner">
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchName">活動名稱：</label>
+                            <input id="searchName" type="text" class="search-modal__input" maxlength="27">
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchCatg">活動分類：</label>
+                            <select id="searchCatg" class="search-modal__select">
+                                                                    <option value="">全部</option>
+                                                <option value="242">
+                                                    戶外觀光
+                                                </option>
+                                                <option value="241">
+                                                    餐飲
+                                                </option>
+                                                <option value="164">
+                                                    主題樂園
+                                                </option>
+                                                <option value="221">
+                                                    紓壓放鬆
+                                                </option>
+                                                <option value="C01">
+                                                    展演票券
+                                                </option>
+                                                <option value="S01">
+                                                    運動賽事
+                                                </option>
+                                                <option value="61">
+                                                    交通
+                                                </option>
+                                                <option value="M01">
+                                                    電影
+                                                </option>
+
+                            </select>
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <button type="button" class="btn search-modal__submit" onclick="btnSearchHeaderClick();">
+                                <i class="fas fa-search"></i><span class="search-modal__submit-text">搜尋</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alertModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        貼心提醒
+                    </div>
+                    
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-1">
+                        <label id="alertText"></label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal" data-dismiss="modal">
+                            <span>確定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function calendar(t, e, n) { var i = this, o = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); return this.opened = !0, this.t = t, this.y = e, this.m = n, this.d = null, /Edge/i.test(navigator.userAgent) && t.setAttribute("type", "text"), this.render = function (t, e) { var n = Date, o = !isNaN(e), s = new n(t, e - 1, 1), r = s.getDay(), a = new n(t, e, 0).getDate(), h = Array.apply(0, Array(o ? 42 : 12)); o && h.unshift("日", "一", "二", "三", "四", "五", "六"), t = o ? s.getFullYear() : t, e = s.getMonth() + 1, this.$w || (this.$w = $('<div class="famiCal-wrapper"></div>').appendTo("body")), this.opened && (this.$w.html('<div class="famiCal' + (o ? "" : " famiCal--month") + '"><table border=1><tr><td>《</td><td colspan=' + (o ? 5 : 2) + ">" + t + "年" + (o ? e + "月" : "") + "</td><td>》</td></tr>" + h.map(function (i, s) { var a = new n(t, e - 1, s - r - 6), h = a.getMonth() + 1 == e; return (s % (o ? 7 : 4) ? "" : (s ? "</tr>" : "") + "<tr>") + "<td" + (o && s > 6 && !h ? ' class="not-current">' : ">") + (o ? s < 7 ? i : a.getDate() : s + 1 + "月") + "</td>" }).join("") + "</tr></table></div>"), this.reposition(), this.$w.find("td").map(function (t, e) { return e.num = t, e }).on("mousedown", function (n) { var s = n.target.num, h = n.target.innerText; s < 3 ? i.render(t + (o ? 0 : s - 1), o && s - 1 ? e + s - 1 : NaN) : (s > 9 || !o) && (o && s > r + 9 && s <= r + a + 9 ? (i.d = parseInt(h), i.t.value = t + "-" + (e < 10 ? "0" : "") + e + "-" + (h < 10 ? "0" : "") + h, i.onChange && "function" == typeof i.onChange && i.onChange(t, e, h), i.t.blur()) : i.render(t, o ? e + (s < r + 10 ? -1 : 1) : s - 2)) })), this.$w.on("mousedown", function (t) { t.preventDefault() }) }, this.open = function () { this.opened = !0, this.render(this.y, this.m) }, this.close = function () { this.opened = !1, this.$w.html("") }, this.reposition = function () { var t = this.$w, e = this.t; this.opened && (t.css("top", $(e).offset().top + e.clientHeight), t.css("left", $(e).offset().left)) }, this.onChange = null, o || ($(t).on("focus", function (t) { t.preventDefault(), i.open(), i.render(i.y, i.m) }), $(t).on("blur", function () { i.close() })), this }
+    </script>
+    <script>
+        var d = new Date();
+        //new calendar(searchDateS, d.getFullYear(), d.getMonth() + 1);
+        //new calendar(searchDateE, d.getFullYear(), d.getMonth() + 1);
+    </script>
+
+    <div>
+        
+<style>
+    .cc-inputs {
+        display: inline-block;
+    }
+
+        .cc-inputs input {
+            max-width: 50px;
+            text-align: center;
+            padding: 5px;
+        }
+
+            .cc-inputs input:not(:last-child) {
+                margin-right: 5px;
+            }
+
+    .tpfield {
+        height: 40px;
+        width: 250px;
+        border: 1px solid gray;
+        margin: 5px 0;
+        padding: 5px;
+    }
+
+    .tappay-mimic-input {
+        display: block;
+        width: 100%;
+        height: 38px;
+        padding: 6px 12px;
+        font-size: 16px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: none;
+        border-radius: 0;
+        background-color: #f5f5f5; /* ✅ 灰色背景 */
+        max-width: 250px;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    }
+
+        /* focus 樣式 */
+        .tappay-mimic-input:focus {
+            border-color: #999;
+            outline: none;
+            color: green; /* 文字綠色 */
+            caret-color: green; /*游標顏色 */
+        }
+
+        /* 驗證狀態也可以模仿 */
+        .tappay-mimic-input.valid {
+            color: green;
+            border-color: green;
+        }
+
+        .tappay-mimic-input.invalid {
+            color: red;
+            border-color: red;
+        }
+</style>
+<div id="header"></div>
+<div class="container thin" style="min-height: 1099px;">
+        <ul class="progressbar" data-li-count="4">
+            <li class="active">
+                <div class="progressbar__dot">
+                    <div class="progressbar__dot-graph">
+                        <i class="progressbar__count"></i>
+                    </div>
+                </div>票種
+            </li>
+            <li class="active">
+                <div class="progressbar__dot">
+                    <div class="progressbar__dot-graph">
+                        <i class="progressbar__count"></i>
+                    </div>
+                </div>訂單
+            </li>
+            <li class="active">
+                <div class="progressbar__dot">
+                    <div class="progressbar__dot-graph">
+                        <i class="progressbar__count"></i>
+                    </div>
+                </div>結帳
+            </li>
+            <li>
+                <div class="progressbar__dot">
+                    <div class="progressbar__dot-graph">
+                        <i class="progressbar__count"></i>
+                    </div>
+                </div>完成
+            </li>
+        </ul>
+
+    
+    <div class="orders">
+                    <div class="orders__item" id="div_T3962026">
+                    <table class="table order-table order-table--top order-table--opened">
+                        <tbody>
+                            <tr>
+                                <td class="order-table__title">訂單編號</td>
+                                <td>T3962026</td>
+                            </tr>
+                            <tr>
+                                <td class="order-table__title">訂購時間</td>
+                                <td>2025.11.21 (五) 15:23</td>
+                            </tr>
+                            <tr>
+                                <td class="order-table__title">活動</td>
+                                <td>100%哆啦A夢巡迴特展高雄站</td>
+                            </tr>
+                            <tr>
+                                <td class="order-table__title">活動電話</td>
+                                <td>02-2649-1689</td>
+                            </tr>
+                            <tr>
+                                <td class="order-table__title">活動期間</td>
+                                <td>2025.11.14(五)~2026.02.22(日)</td>
+                            </tr>
+                            <tr>
+                                <td class="order-table__title">活動地址</td>
+                                <td>高雄市國立科學工藝博物館2樓特展廳</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <table style="width:100%">
+                    <tbody><tr>
+                        <td class="order-table__title" style="width: 100px; padding: .75rem;">取票方式</td>
+                        <td class="order-table__total">
+                            <div class="payment__product-delivery product-delivery">
+                                            <div class="radio-group">
+                                                    <input class="radio-group__radio" name="ProdDelivery_T3962026" type="radio" id="prodDelivery_FT_T39620260" value="F" onchange="rbChange(0,'T39620260','T3962026');">
+
+
+                                                <div class="radio-group__inner">
+                                                    
+                                                    <label class="radio-group__title" for="prodDelivery_FT_T39620260">
+                                                        <span>全家FamiPort取票</span>
+                                                    </label>
+                                                    <div class="radio-group__desc">
+                                                        <ul>
+                                                            <li><p>若節目開賣時系統較為雍塞，建議購票成功後隔日，再至全家取票 訂單成立後，至全家FamiPort輸入「訂單編號」列印取票條碼單於同店櫃檯過刷取票條碼單完成取票</p></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+
+
+                                                    <p id="Charge_prodDelivery_FT_T39620260" style="display:none;">0</p>
+                                                
+                                            </div>
+
+                            </div>
+                        </td>
+                    </tr>
+                </tbody></table>
+                <table class="table order-table order-table--top order-table--opened">
+                    <tbody>
+                        <tr class="order-table__control">
+                            <td colspan="2" class="text-right">
+                                <button class="btn btn-gray" onclick="toDelete('T3962026','NOSEAT')" style="background-color:red;" id="doDelete">刪除整筆訂單</button>
+                                        <a class="btn btn-gray" id="btnEditOrder_T3962026" href="/Payment/Home/ToBuyCart?ActivityID=2025090010&amp;OrderNo=T3962026">修改訂單票券</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="order-table__detail order-table__detail--opened">
+                        <table class="order-table table order-table--center">
+                            <thead>
+                                <tr>
+                                    <th class="order-table__title">票種/票價</th>
+                                    <th class="order-table__title">票劵狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                    <tr>
+                                        <td>展期單人票 / 490</td>
+                                        <td>準備繳款</td>
+                                    </tr>
+                                    <tr>
+                                        <td>展期單人票 / 490</td>
+                                        <td>準備繳款</td>
+                                    </tr>
+                            </tbody>
+                        </table>
+
+                    <table class="order-table table order-table--bottom" style="border-collapse:collapse" frame="below">
+                        <tbody>
+
+                            <tr>
+                                <td>張數</td>
+                                <td>2 張</td>
+                            </tr>
+                            <tr>
+                                <td>總票價</td>
+                                <td>
+                                    <font id="PurchaseAmount_T3962026"> 980 </font>元
+                                </td>
+                            </tr>
+                            <tr>
+                                <td id="ChargeSum">取票手續費</td>
+                                <td>
+                                    <font id="AddedChargeAmount_T3962026"> 0 </font>元
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                        <table class="order-table table order-table--bottom" style="border-collapse:collapse;display:none">
+                            <tbody>
+
+                                <tr style="font-weight:bold;">
+                                    <td>
+                                        目前FT點數
+                                    </td>
+                                    <td>
+                                        <font id="PurchaseAmount_T3962026"> 0 </font>元
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        本訂單折抵上限<font id="FTPointLint_T3962026"> 0 </font>，本次使用FT點數
+                                    </td>
+                                    <td>
+                                        <input type="number" value="0" class="form-control" id="DISCOUNT_NUMBER_T3962026" placeholder="" oninput="if (value&gt;0)value=0;if(value&lt;0)value=0;" onchange="FtPointChange('T3962026')">
+                                    </td>
+                                    <td>
+                                        -<font id="FTPointDiscount_T3962026">0</font>元
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+
+                    <table class="order-table table order-table--bottom" style="border-collapse:collapse;">
+                        <tbody>
+                                <tr>
+                                    <td>
+                                        文化幣折抵
+                                    </td>
+                                    <td class="btnUseAP">
+                                        <input type="button" id="APbtn_T3962026" class="btn btn-green" value="使用成年禮金" onclick="getToken('T3962026')">
+                                        <div class="APbtnHide" id="APtext_T3962026" style="font-size: 10px; text-align: left;">
+                                            如欲修改折抵金額，
+                                            請刪除訂單再重新購買
+                                        </div>
+                                    </td>
+                                    <td class="btnUseAP">
+                                        -
+                                        <font id="APDiscount_T3962026">
+                                            0
+                                        </font>
+                                        元
+                                        <input id="APDiscountVal_T3962026" value="0" style="display:none">
+                                    </td>
+                                </tr>
+                            <tr style="font-size:25px;font-weight:bold;">
+                                <td>訂單金額</td>
+                                <td></td>
+                                <td>
+                                    <font id="PurchaseOrderAmount_T3962026">980</font>
+                                    <font id="Amounthidden_T3962026" style="display:none"> 980 </font>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td colspan="2">
+                                        <button class="btn btn-submit" type="button" id="btnSubmitForPrice0_T3962026" onclick="CheckPrice0('T3962026')" style="display:none;">完成0元訂單</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+    <div class="payment" style="display:'' ">
+        <div class="payment__title" style="font-size:30px ;text-align:right;">
+            <table class="order-table table order-table--bottom">
+                <tbody><tr>
+                    <td>
+                        本次消費總金額
+                    </td>
+                    <td>
+                        <font style="color:red; display:none" id="SumCoculate">
+                            980
+                        </font>
+                        <font style="color:red;" id="SumAmount">980</font>
+                        元
+                    </td>
+                </tr>
+            </tbody></table>
+        </div>
+        <div class="tab-content" id="cardDetail" style="display:''">
+                    
+                        <div class="tab-pane fade show active" id="intro_1">
+                            <div class="payment__method method">
+                                <label class="radio-group__title" for="payMethod_1">
+                                    <span>信用卡</span>
+                                </label>
+                                <div class="radio-group__desc">
+                                    <ul>
+	<li>為保障您的網路信用卡交易安全，本網站採用3D驗證系統。</li>
+	<li>如使用之信用卡未開啟3D驗證將導致刷卡失敗，請向所屬銀行確認是否開啟驗證服務。</li>
+</ul>
+                                </div>
+                                <div class="form-group">
+                                    <input type="checkbox" id="autofill-contact-1" class="autofill-checkbox" data-email="victorz.zhj@gmail.com" data-phone="0911633551">
+                                    <label for="autofill-contact-1">手機號碼及電子郵件同會員資料</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardholder-phone" class="control-label">手機號碼</label>
+                                    <input type="text" id="cardholder-phone" class="tappay-mimic-input sensitive-phone" placeholder="" 　autocomplete="off" maxlength="40">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardholder-email" class="control-label">電子郵件</label>
+                                    <input type="text" id="cardholder-email" class="tappay-mimic-input sensitive-email" placeholder="xxx@gamil.com" 　autocomplete="off" maxlength="40">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardholder-name" class="control-label">持卡人</label>
+                                    <input type="text" id="cardholder-name" class="tappay-mimic-input sensitive-name" placeholder="輸入卡面相同之英文姓名" style="margin-bottom: 3px;" 　autocomplete="off" maxlength="40">
+                                </div>
+                                <div class="form-group card-number-group">
+                                    <label for="card-number" class="control-label"><span id="cardtype"></span>卡號</label>
+                                    <div class="tpfield" id="card-number"><iframe frameborder="0" allowtransparency="true" scrolling="no" src="https://js.tappaysdk.com/sdk/tpdirect/tappay-field/html/v5.15.0?%7B%22origin%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%22%2C%22type%22%3A%22card-number%22%2C%22placeholder%22%3A%22****%20****%20****%20****%22%2C%22styles%22%3A%7B%22input%22%3A%7B%22color%22%3A%22gray%22%7D%2C%22input.ccv%22%3A%7B%7D%2C%22input.expiration-date%22%3A%7B%7D%2C%22input.card-number%22%3A%7B%7D%2C%22%3Afocus%22%3A%7B%7D%2C%22.valid%22%3A%7B%22color%22%3A%22green%22%7D%2C%22.invalid%22%3A%7B%22color%22%3A%22red%22%7D%2C%22%40media%20screen%20and%20(max-width%3A%20400px)%22%3A%7B%22input%22%3A%7B%22color%22%3A%22orange%22%7D%7D%7D%2C%22field_type%22%3A%22tappay-field%22%7D" style="border: none; width: 100%; height: 100%; float: left;"></iframe></div>
+                                </div>
+                                <div class="form-group expiration-date-group">
+                                    <label for="expiration-date" class="control-label">卡片到期日</label>
+                                    <div class="tpfield" id="card-expiration-date"><iframe frameborder="0" allowtransparency="true" scrolling="no" src="https://js.tappaysdk.com/sdk/tpdirect/tappay-field/html/v5.15.0?%7B%22origin%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%22%2C%22type%22%3A%22expiration-date%22%2C%22placeholder%22%3A%22MM%20%2F%20YY%22%2C%22styles%22%3A%7B%22input%22%3A%7B%22color%22%3A%22gray%22%7D%2C%22input.ccv%22%3A%7B%7D%2C%22input.expiration-date%22%3A%7B%7D%2C%22input.card-number%22%3A%7B%7D%2C%22%3Afocus%22%3A%7B%7D%2C%22.valid%22%3A%7B%22color%22%3A%22green%22%7D%2C%22.invalid%22%3A%7B%22color%22%3A%22red%22%7D%2C%22%40media%20screen%20and%20(max-width%3A%20400px)%22%3A%7B%22input%22%3A%7B%22color%22%3A%22orange%22%7D%7D%7D%2C%22field_type%22%3A%22tappay-field%22%7D" style="border: none; width: 100%; height: 100%; float: left;"></iframe></div>
+                                </div>
+                                <div class="form-group ccv-group">
+                                    <label for="ccv" class="control-label">卡片後三碼</label>
+                                    <div class="tpfield" id="card-ccv"><iframe frameborder="0" allowtransparency="true" scrolling="no" src="https://js.tappaysdk.com/sdk/tpdirect/tappay-field/html/v5.15.0?%7B%22origin%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%22%2C%22type%22%3A%22ccv%22%2C%22placeholder%22%3A%22%E5%BE%8C%E4%B8%89%E7%A2%BC%22%2C%22styles%22%3A%7B%22input%22%3A%7B%22color%22%3A%22gray%22%7D%2C%22input.ccv%22%3A%7B%7D%2C%22input.expiration-date%22%3A%7B%7D%2C%22input.card-number%22%3A%7B%7D%2C%22%3Afocus%22%3A%7B%7D%2C%22.valid%22%3A%7B%22color%22%3A%22green%22%7D%2C%22.invalid%22%3A%7B%22color%22%3A%22red%22%7D%2C%22%40media%20screen%20and%20(max-width%3A%20400px)%22%3A%7B%22input%22%3A%7B%22color%22%3A%22orange%22%7D%7D%7D%2C%22field_type%22%3A%22tappay-field%22%7D" style="border: none; width: 100%; height: 100%; float: left;"></iframe></div>
+                                </div>
+                            </div>
+                        </div>
+                    
+
+        </div>
+
+        
+
+    </div>
+    <div class="payment__invoice invoice" id="invoiceD">
+        <label class="invoice__title" id="invoiceB">
+            發票資訊
+        </label>
+        <p class="invoice__desc">
+            發票將以簡訊寄發，非立即開立，詳情請見<a href="#" onclick="showData('InvoiceNoticeModal')">發票開立須知</a>
+        </p>
+        <label class="invoice__label">發票載具：</label>
+        <div class="invoice__content">
+            <select class="form-control invoice__type" id="VehicleType" name="VehicleType"><option value="3J0002">手機條碼</option>
+<option value="COMPANYNO">統一編號</option>
+<option value="CQ0001">自然人憑證</option>
+<option value="DONATECODE">捐贈碼</option>
+<option value="EL0007">全網會員載具</option>
+</select>
+            <div class="tab-content d-inline-block" id="invoicetxt" style="display:''">
+                <input type="text" class="form-control" name="Vehicle" id="txtVehicle" onkeyup="vehicleNoKeyUp(this)" value="" maxlength="20">
+                <div id="invalidVehicle" class="invalid-feedback"></div>
+            </div>
+            <br>
+            <label id="invoiceUsed">
+                <input type="checkbox" class="invoice__usual" name="invoiceUsed" value="Y" checked="">紀錄為常用載具
+            </label>
+            <label id="donateSearch" style="display:none">
+                <a href="https://www.einvoice.nat.gov.tw/APCONSUMER/BTC603W/" target="_blank" title="查詢捐贈碼">查詢捐贈碼</a>
+            </label>
+        </div>
+    </div>
+    <div class="payment__controls">
+        <button class="btn btn-submit" type="button" id="btnSubmit" onclick="Check()">結帳</button>
+    </div>
+    <script>
+
+        var displayCreditCard = $("#SumAmount").html().trim() == "0" ? true : false;
+        if (displayCreditCard) {
+            // window.location = "https://www.famiticket.com.tw/Home";
+            //$(".payment").attr("style", "display: none");
+            //$(".btn-submit").html("確認");
+            $(".tab-content").attr("style", "display:none");
+            document.getElementById("btnSubmit").style.display = "none";
+            $('#invoicetxt').attr("style", "display:block");
+        } else {
+            $(".payment").attr("style", "display:'' ");
+        }
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.autofill-checkbox').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const email = this.getAttribute('data-email');
+                    const phone = this.getAttribute('data-phone');
+
+                    const container = this.closest('.tab-pane');
+
+                    if (this.checked) {
+                        const emailInput = container.querySelector('#cardholder-email');
+                        const phoneInput = container.querySelector('#cardholder-phone');
+
+                        emailInput.value = email;
+                        phoneInput.value = phone;
+
+                        // ✅ 同步填入 originalValues，避免沒觸發 blur 導致 undefined
+                        originalValues[emailInput.id] = email;
+                        originalValues[phoneInput.id] = phone;
+                    } else {
+                        const emailInput = container.querySelector('#cardholder-email');
+                        const phoneInput = container.querySelector('#cardholder-phone');
+
+                        emailInput.value = '';
+                        phoneInput.value = '';
+
+                        originalValues[emailInput.id] = '';
+                        originalValues[phoneInput.id] = '';
+                    }
+                });
+            });
+        });
+    </script>
+    <text>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                window.originalValues = {};
+
+                document.querySelectorAll('.sensitive-name, .sensitive-email, .sensitive-phone').forEach(function (input) {
+                    const id = input.id;
+
+                    input.addEventListener('focus', function () {
+                        if (originalValues[id]) {
+                            this.value = originalValues[id]; // 還原真實值
+                        }
+                        this.placeholder = ""; // 聚焦時清掉遮罩顯示
+                    });
+
+                    input.addEventListener('blur', function () {
+                        debugger;
+                        const value = this.value;
+                        originalValues[id] = value; // 儲存真實值
+
+                        let masked = value;
+                        if (id === 'cardholder-name') {
+                            masked = maskName(value);
+                        } else if (id === 'cardholder-email') {
+                            masked = maskEmail(value);
+                        } else if (id === 'cardholder-phone') {
+                            masked = maskPhone(value);
+                        }
+
+                        this.value = "";         // 保持原始值
+                        this.placeholder = masked;  // 顯示遮罩
+                    });
+                });
+
+                function maskName(name) {
+                    if (!name || name.length <= 2) return name;
+                    return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+                }
+
+                function maskEmail(email) {
+                    const parts = email.split('@');
+                    if (parts.length !== 2) return email;
+                    const local = parts[0];
+                    const domain = parts[1];
+                    return '*'.repeat(local.length) + '@' + domain;
+                }
+
+                function maskPhone(phone) {
+                    if (!phone || phone.length < 7) return phone;
+                    return phone.slice(0, 4) + '*'.repeat(phone.length - 7) + phone.slice(-3);
+                }
+            });
+        </script>
+    </text>
+</div>
+<div class="modal fade" id="confirmModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    貼心提醒
+                </div>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-1">
+                    <label id="resultText">確定刪除該訂單？</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-modal" data-dismiss="modal">
+                        <span>取消</span>
+                    </button>
+                    <button type="button" class="btn btn-modal" data-dismiss="modal" onclick="btnDelSubmit();">
+                        <span>確定</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="MyId">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="modalHeader">HEADER</div>
+                <div>
+                    提示
+                </div>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div style="font-size: 35px;" class="alert text-center"><i class="fas fa-exclamation-circle"></i></div>
+                <div id="modalDesc">BODY</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-submit" data-dismiss="modal" onclick="lockInput()">
+                    <span>重新輸入信用卡號</span>
+                </button>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="abc" style="display:none;">
+            <input type="text" id="T3962026" class="OrderNo adultPoint" value="T3962026" readonly="">
+        <input type="text" id="PurchaseAmount" class="PurchaseAmount" value="980" readonly="">
+        <input type="text" id="TransactionId_T3962026" value="" readonly="">
+        <input type="text" id="FtPoint" class="FtPoint" value="A" readonly="">
+            <input type="text" class="T3962026 PriceName" value="展期單人票" readonly="">
+            <input type="text" class="T3962026 TicketPrice" value="490" readonly="">
+            <input type="text" class="T3962026 ActivityName" value="100%哆啦A夢巡迴特展高雄站" readonly="">
+            <input type="text" class="T3962026 ATYPE" value="B" readonly="">
+            <input type="text" class="T3962026 TicketNo" value="FT2511218522074618" readonly="">
+            <input type="text" class="T3962026 OrgName" value="聯合數位文創" readonly="">
+            <input type="text" class="T3962026 FtPoint" value="A" readonly="">
+            <input type="text" class="T3962026 PlaceName" value="高雄市國立科學工藝博物館2樓特展廳" readonly="">
+            <input type="text" class="T3962026 AREA" value="高雄市" readonly="">
+            <input type="text" class="T3962026 PriceName" value="展期單人票" readonly="">
+            <input type="text" class="T3962026 TicketPrice" value="490" readonly="">
+            <input type="text" class="T3962026 ActivityName" value="100%哆啦A夢巡迴特展高雄站" readonly="">
+            <input type="text" class="T3962026 ATYPE" value="B" readonly="">
+            <input type="text" class="T3962026 TicketNo" value="FT2511218524072622" readonly="">
+            <input type="text" class="T3962026 OrgName" value="聯合數位文創" readonly="">
+            <input type="text" class="T3962026 FtPoint" value="A" readonly="">
+            <input type="text" class="T3962026 PlaceName" value="高雄市國立科學工藝博物館2樓特展廳" readonly="">
+            <input type="text" class="T3962026 AREA" value="高雄市" readonly="">
+
+</div>
+
+<script>
+    var ccCode = ['', '', '', ''],
+        $ccInputs = $('.cc-inputs input')
+    $ccInputs.on('input', function (e) {
+        var eleIndex = $ccInputs.index(e.target),
+            val = e.target.value;
+        if (!/^[0-9]*$/.test(val)) {
+            e.target.value = ccCode[eleIndex];
+            return;
+        }
+        if (e.target.value.length > 4) {
+            e.target.value = ccCode[eleIndex];
+        }
+        if (eleIndex < 3 && e.target.value.length == 4) {
+            $ccInputs[$ccInputs.index(e.target) + 1].focus();
+        }
+        ccCode[eleIndex] = e.target.value;
+    })
+    $ccInputs.on('keyup', function (e) {
+        if (e.target.value == '' && e.key == 'Backspace' && $ccInputs.index(e.target) != 0) {
+            $ccInputs[$ccInputs.index(e.target) - 1].focus();
+        }
+    })
+</script>
+
+<script>
+    // 倒數
+    var alreadyCount = 0;
+    var nowOrderQty = 0;
+    var totalOrderQty = 1;
+    var timer;
+    var payOrder = [];
+        payOrder.push('T3962026');
+
+    var TimeArray = [];//購物車倒數時間 string[]
+        TimeArray.push(435.8724179);
+
+    var orderArray = [];//訂單編號 string[]
+        orderArray.push('T3962026');
+</script>
+
+
+    <a href="#" class="cart-btn" id="cart-btn">
+        <div class="cart-btn__inner">
+            <i class="fas fa-cart-plus"></i>
+            <span class="cart-btn__text">購物車</span>
+            <span class="cart-btn__time">06:28</span>
+            <span class="cart-btn__count" id="IconCartOrderNum">1</span>
+        </div>
+    </a>
+        <script>
+            function setCountDown(time, afterCountDown, isSecond) {
+
+                    var $cartBtn = $('.cart-btn');
+                    if ($cartBtn.length) {
+                        if (!isSecond) {
+                            time = time / 1000;
+                        }
+                        var minute = Math.floor(time / 60),
+                            second = time % 60;
+                        if (minute < 10) {
+                            minute = '0' + minute;
+                        }
+                        if (second < 10) {
+                            second = '0' + second;
+                        }
+                        $cartBtn.find('.cart-btn__time').text(minute + ':' + second);
+                        time--;
+                        alreadyCount++;
+
+                        timer = setTimeout(function () {
+                            if (time >= 0) {
+                                {
+                                    setCountDown(time, afterCountDown, true)
+                                }
+                            } else {
+                                //目前倒數訂單數(index)
+                                nowOrderQty++;
+
+                                if (totalOrderQty >= nowOrderQty)
+                                {
+                                    var newTime = parseInt(TimeArray[nowOrderQty]);
+                                    time = newTime;
+
+                                    OrderChange(orderArray[nowOrderQty - 1],false);
+
+                                    setCountDown(time, afterCountDown, true);
+                                }
+                                else {
+                                    if (typeof afterCountDown == 'function') {
+                                        afterCountDown();
+                                    }
+                                    $('#cart-btn').remove();
+                                    //$cart_icon.remove();
+                                }
+                            }
+                        }, 1000);
+                    }
+            }
+            setCountDown(435000);
+        </script>
+<form action="/Payment/Home/CheckComplete" method="post" id="gotoComplete">
+    <input type="hidden" name="PaymentSeq" id="PaymentSeq">
+    
+</form>
+
+
+
+<div class="d-flex justify-content-center goTop__wrap no-print">
+    <a class="goTop" href="#">
+        <span class="goTop__text">TOP</span>
+    </a>
+</div>
+<footer class="footer-outer no-print">
+    <div class="container ">
+        <div class="row footer">
+            <div class="col-lg-4 col-sm-10 footer__desc">
+                <img class="footer__desc-img" src="/Payment/images/logofooter.png">
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; gap: 10px;">
+                    <li class="line-cs">
+                        <a href="https://www.facebook.com/famiticket">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13948" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://www.instagram.com/famiticket/?hl=zh-tw">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13949" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://lin.ee/q5kJ632">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13950" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <i class="fas fa-clock"></i>服務時間：
+                        <br>星期一～星期五 09:00~17:00
+                        <br>國定假日公休
+                    </li>
+                    
+                    <li class="line-cs"><span>LINE線上客服</span><a href="https://lin.ee/q5kJ632"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="36" border="0"></a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__service">
+                <ul>
+                    <li><a href="http://www.familynet.com.tw" target="_blank">關於全網</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Home/Cooperation">廠商合作</a></li>
+                    <li><a href="#" onclick="showData('ServiceTermModal');">會員服務條款</a></li>
+                    <li><a href="#" onclick="showData('SecurityStatementModal');">資安聲明</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__account">
+                <ul>
+                    <li><a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx" target="_blank">發票查詢</a></li>
+                    <li><a href="#" onclick="showData('InvoiceNoticeModal');">發票開立須知</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/GetPage" target="_blank">申請退票</a></li>
+                    <li><a href="/Payment/Template/%e9%80%80%e7%a5%a8%e7%94%b3%e8%ab%8b%e6%9b%b8.xlsx" download="">退票申請書下載</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/RefundProcess" target="_blank">退票進度查詢</a></li>
+                    <li><a href="https://www.family.com.tw/marketing/inquiry.aspx" target="_blank">取票店鋪查詢</a></li>
+                </ul>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        <div class="container">
+            <div class="copyright__inner row">
+                <div class="col-sm-12 color-w">
+                    Copyright © FamilyNet Co., Ltd. 全網行銷股份有限公司  統一編號：27560883
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="ServiceTermModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        會員服務條款
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="STText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="SecurityStatementModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        資安聲明
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="SSText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="InvoiceNoticeModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        發票開立須知
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="INText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script>
+    $('a.goTop').on('click', function (e) {
+        e.preventDefault();
+        $('html, body').stop().animate({ scrollTop: 0 }, 300);
+    });
+</script>
+<script>
+    var $catgBar = $('.catg-bar');
+    $catgBar.each(function (index, element) {
+        var $this = $(this),
+            $catgDropDown = $this.find('.catg-bar__dropdown'),
+            $catgBarCategory = $this.find('.catg-bar__category');
+        $catgBarCategory.on('mouseenter', function (e) {
+            var $this = $(this),
+                index = $(this).index();
+            $catgBarCategory.removeClass('catg-bar__category--active');
+            $this.addClass('catg-bar__category--active');
+            if ($catgDropDown.find('.category__list').eq(index).length) {
+                $this.addClass('catg-bar__category--haschild');
+            }
+            $catgDropDown.css('top', $this.position().top + $this.innerHeight());
+            $catgDropDown.addClass('catg-bar__dropdown--active');
+            $catgDropDown.find('.category__list').removeClass('category__list--active');
+            $catgDropDown.find('.category__list').eq(index).addClass('category__list--active');
+        });
+        $this.on('mouseleave', function () {
+            $catgDropDown.removeClass('catg-bar__dropdown--active');
+            $catgBarCategory.removeClass('catg-bar__category--active');
+        });
+    });
+    setContainerMinHht('.min-hight-container');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('.header').outerHeight(),
+            navHht = $('.header__navbar').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight(),
+            goTopHht = $('.goTop__wrap').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - navHht - footerHht - goTopHht);
+        }
+    }
+    function showData(type) {
+
+        $.ajax('/Payment/Home/FooterData', {
+            dataType: 'json',
+            data: JSON.stringify({ "type": type }),
+            contentType: "application/json; charset=utf-8",
+            type: "POST",
+        })
+            .done(function (res) {
+                if (res.STATUS == "OK") {
+
+                    if (res.TYPE == "ServiceTermModal") {                        
+                        $('#STText').append(res.CONTENT);
+                        $("#ServiceTermModal").modal('show');
+                    }
+                    if (res.TYPE == "SecurityStatementModal") {
+                        $('#SSText').append(res.CONTENT);
+                        $("#SecurityStatementModal").modal('show');
+                    }
+                    if (res.TYPE == "InvoiceNoticeModal") {
+                        $('#INText').append(res.CONTENT);
+                        $("#InvoiceNoticeModal").modal('show');
+                    }
+                }
+            });
+    }
+</script>
+
+<style>
+    .APbtnHide {
+        display: none;
+    }
+
+    .RefundHide {
+        display: none;
+    }
+
+    @media screen and (max-width:520px) {
+        .btnUseAP {
+            display: inline-flex;
+        }
+    }
+</style>
+
+<script>
+
+
+    function checkEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    }
+
+    document.getElementById('cardholder-name').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^A-Za-z ]/g, '');
+    });
+
+    document.getElementById('cardholder-phone').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    document.getElementById('cardholder-email').addEventListener('input', function (e) {
+    // 過濾掉中文（含全形字）
+    this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, '');
+    });
+
+    $(document).ready(function () {
+        //成年禮金訂單
+        var OrderNoArray = [];
+        $(".OrderNo.adultPoint").each(function () {
+            OrderNoArray.push($(this).val());
+        })
+        //ft點數折抵訂單
+        var ftOrderNoArray = [];
+        $(".OrderNo.ftPoint").each(function () {
+            ftOrderNoArray.push($(this).val());
+        })
+        //無折抵訂單
+        var npOrderNoArray = [];
+        $(".OrderNo.noPoint").each(function () {
+            npOrderNoArray.push($(this).val());
+        })
+
+        var totel = 0
+        var APDiscount = 0
+        var PurchaseOrderAmount = 0
+        var ChargeAmount = 0
+        var sumAmount = parseInt($("#SumAmount").html().replace(",", ""))
+        //成年禮金折抵
+        for (var i = 0; i < OrderNoArray.length; i++) {
+            var OrderNo = OrderNoArray[i]
+            //成年禮金折抵失敗
+            if (parseFloat($("#APDiscountVal_" + OrderNo).val()) == 0 && $("#TransactionId_" + OrderNo).val())
+            {
+                var orderTotel = 0
+                $("#btnEditOrder_" + OrderNo).addClass("APbtnHide")
+                $("#APbtn_" + OrderNo).addClass("APbtnHide")
+                $("#APtext_" + OrderNo).removeClass("APbtnHide")
+                ChargeAmount = parseFloat($("#AddedChargeAmount_" + OrderNo).html().replace(",", ""))
+                PurchaseOrderAmount = parseFloat($("#PurchaseOrderAmount_" + OrderNo).html().replace(",", "")) + ChargeAmount
+                orderTotel = PurchaseOrderAmount.numberFormat(0, ".", ",")
+                //訂單金額
+                $("#PurchaseOrderAmount_" + OrderNo).html(orderTotel);
+                totel += PurchaseOrderAmount
+            }
+            //成年禮金折抵成功
+            else if (parseFloat($("#APDiscountVal_" + OrderNo).val()) > 0 && $("#TransactionId_" + OrderNo).val())
+            {
+                var orderTotel = 0
+                $("#btnEditOrder_" + OrderNo).addClass("APbtnHide")
+                APDiscount = parseFloat($("#APDiscount_" + OrderNo).html().replace(",", ""));
+                ChargeAmount = parseFloat($("#AddedChargeAmount_" + OrderNo).html().replace(",", ""))
+                PurchaseOrderAmount = parseFloat($("#PurchaseOrderAmount_" + OrderNo).html().replace(",", "")) + ChargeAmount
+                if (APDiscount != "0")
+                {
+                    $("#APbtn_" + OrderNo).addClass("APbtnHide")
+                    $("#APtext_" + OrderNo).removeClass("APbtnHide")
+                }
+                orderTotel = (PurchaseOrderAmount - APDiscount).numberFormat(0, ".", ",")
+                //訂單金額
+                $("#PurchaseOrderAmount_" + OrderNo).html(orderTotel);
+                if ($("#PurchaseOrderAmount_" + OrderNo).html() == 0)
+                {
+                    $("#btnSubmitForPrice0_" + OrderNo).attr("style", "display:''");
+                }
+                totel += (PurchaseOrderAmount - APDiscount);
+            }
+            //尚未進行成年禮金折抵
+            else
+            {
+                var orderTotel = 0
+                ChargeAmount = parseFloat($("#AddedChargeAmount_" + OrderNo).html().replace(",", ""))
+                PurchaseOrderAmount = parseFloat($("#PurchaseOrderAmount_" + OrderNo).html().replace(",", "")) + ChargeAmount
+                orderTotel = PurchaseOrderAmount.numberFormat(0, ".", ",")
+                //訂單金額
+                $("#PurchaseOrderAmount_" + OrderNo).html(orderTotel);
+                totel += PurchaseOrderAmount
+            }
+        }
+        //ft點數折抵
+        for (var i = 0; i < ftOrderNoArray.length; i++) {
+            var OrderNo = ftOrderNoArray[i]
+            var orderTotel = 0
+            ChargeAmount = parseFloat($("#AddedChargeAmount_" + OrderNo).html().replace(",", ""))
+            PurchaseOrderAmount = parseFloat($("#PurchaseOrderAmount_" + OrderNo).html().replace(",", "")) + ChargeAmount
+            orderTotel = PurchaseOrderAmount.numberFormat(0, ".", ",")
+            $("#PurchaseOrderAmount_" + OrderNo).html(orderTotel);
+            totel += PurchaseOrderAmount
+        }
+        //無折抵
+        for (var i = 0; i < npOrderNoArray.length; i++) {
+            var OrderNo = npOrderNoArray[i]
+            var orderTotel = 0
+            ChargeAmount = parseFloat($("#AddedChargeAmount_" + OrderNo).html().replace(",", ""))
+            PurchaseOrderAmount = parseFloat($("#PurchaseOrderAmount_" + OrderNo).html().replace(",", "")) + ChargeAmount
+            orderTotel = PurchaseOrderAmount.numberFormat(0, ".", ",")
+            $("#PurchaseOrderAmount_" + OrderNo).html(orderTotel);
+            totel += PurchaseOrderAmount
+        }
+        //本次消費總金額
+        totel = totel.numberFormat(0, ".", ",")
+        $("#SumAmount").html(totel)
+
+        if (totel == "0") {
+            $(".tab-content").attr("style", "display: none");
+            document.getElementById("btnSubmit").style.display = "none";
+            $(".payment").attr("style", "display: none");
+            $('#invoicetxt').attr("style", "display:''");
+        }
+        else
+        {
+            $(".tab-content").attr("style", "display:''");
+            document.getElementById("btnSubmit").style.display = "";
+            $(".payment").attr("style", "display:'' ");
+        }
+
+        var inputElement = document.getElementById('txtVehicle');
+        var inputElementv = document.getElementById('txtVehicle').value;
+        if ('Y' != 'N') {
+            const reCellPhone = /^(09[0-9]{8}|[1-9][0-9]{7,14})$/;
+            const rePhone = /^\/[A-Z0-9+-.]{7}$/;
+            const reCQ = /^[A-Z]{2}[0-9]{14}$/;
+            const reDonate = /^[0-9]{3,7}$/;
+
+            //if (!reCellPhone.test(inputElementv)) {
+            //    $(inputElement).addClass("is-invalid");
+            //    $("#invalidVehicle").text("手機號碼不符合標準");
+            //}
+            $('#VehicleType').change(function () {
+                var VehicleType = $("#VehicleType").val();
+                debugger;
+                //if (VehicleType == 'EL0007') {
+                //    if (!reCellPhone.test(inputElementv)) {
+                //        $(inputElement).addClass("is-invalid");
+                //        $("#invalidVehicle").text("手機號碼不符合標準");
+                //    }
+                if (VehicleType == "3J0002") { //手機條碼
+                if (!rePhone.test(inputElementv)) {
+                        $(inputElement).addClass("is-invalid");
+                        $("#invalidVehicle").text("手機條碼須為8碼且開頭為/符號");
+                    }
+                } else if (VehicleType == "CQ0001") { //自然人憑證
+                    if (!reCQ.test(inputElementv)) {
+                        $(inputElement).addClass("is-invalid");
+                        $("#invalidVehicle").text("自然人憑證須為2碼英文+14碼數字");
+                    }
+                } else if (VehicleType == "DONATECODE") { //捐贈碼
+                    if (!reDonate.test(inputElementv)) {
+                        $(inputElement).addClass("is-invalid");
+                        $("#invalidVehicle").text("捐贈碼須為3至7碼數字");
+                    }
+                } else if (VehicleType == "COMPANYNO") { //公司統一編號
+                    var valid = CheckCompanyNo(inputElementv);
+                    if (!valid) {
+                        $(inputElement).addClass("is-invalid");
+                        $("#invalidVehicle").text("統一編號須為8碼數字");
+                    }
+                }
+            })
+        } else {
+            $("#VehicleType").val("");
+        }
+
+    });
+
+
+    
+    function lockInput() {
+        $('input').attr('disabled', true);//將input元素設定為disabled 　
+        //$('#ccid').attr('disabled', false);
+        $('.cc-inputs input').attr('disabled', false);
+        $('#checkCode').attr('disabled', false);
+    }
+
+        //TapPay - test，測試時用sandbox，正式環境需換成production
+        //param1:APP_ID, param2: APP_KEY
+        TPDirect.setupSDK(18823, "app_ugSJrX7bTMo0x6C6l9LsZqAh1SSUopFRfGW34sGzjaFlSqlzvysYhk6Kbduf", "production");
+        // Display ccv field
+        var fields = {
+            number: {
+                element: '#card-number',
+                placeholder: '**** **** **** ****'
+            },
+            expirationDate: {
+                element: document.getElementById('card-expiration-date'),
+                placeholder: 'MM / YY'
+            },
+            ccv: {
+                element: '#card-ccv',
+                placeholder: '後三碼'
+            }
+        }
+        TPDirect.card.setup({
+            fields: fields,
+            styles: {
+                // Style all elements
+                'input': {
+                    'color': 'gray'
+                },
+                // Styling ccv field
+                'input.ccv': {
+                    // 'font-size': '16px'
+                },
+                // Styling expiration-date field
+                'input.expiration-date': {
+                    // 'font-size': '16px'
+                },
+                // Styling card-number field
+                'input.card-number': {
+                    // 'font-size': '16px'
+                },
+                // style focus state
+                ':focus': {
+                    // 'color': 'black'
+                },
+                // style valid state
+                '.valid': {
+                    'color': 'green'
+                },
+                // style invalid state
+                '.invalid': {
+                    'color': 'red'
+                },
+                // Media queries
+                // Note that these apply to the iframe, not the root window.
+                 '@media screen and (max-width: 400px)': {
+                    'input': {
+                        'color': 'orange'
+                    }
+                }
+            }
+        })
+</script>
+
+<script>
+    var lastIndex = -1;
+    function Check() {
+            
+
+        var phone = originalValues["cardholder-phone"];
+        var email = originalValues["cardholder-email"];
+        var name = originalValues["cardholder-name"];
+
+        if (phone === "" || email === "" || name === "") {
+            $("#alertText").html('信用卡資訊有誤，請重新輸入');
+            $("#alertModal").modal('show');
+            return;
+        }
+       const pattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!pattern.test(email)) {
+            document.getElementById("alertText").innerText = "請輸入有效的 Email";
+            $("#alertModal").modal('show');
+        } else {
+
+            // 目前選的TAB INDEX
+            var tabIndex = hidKeepIndexs;
+
+            //檢查載具是否符合編審
+            var hasError = $(".is-invalid").first();
+            if (hasError.length != 0) {
+                document.getElementById("alertText").innerText = "輸入資料有誤，請重新檢查輸入資料";
+                $("#alertModal").modal('show');
+                return;
+            }
+        }
+
+
+        //取票方式
+        var fd = new FormData();
+
+        //兌換FT點數總和
+        var FtPointSum = 0;
+
+        //檢查是否有0元訂單
+        var HaveZeroDeal = false;
+
+
+        for (var i = 0; i < orderArray.length; i++) {
+            fd.append("DeliveryDetailList[" + i + "].ProdDeliveryType", $("[name='ProdDelivery_" + orderArray[i] + "']:checked").val());
+            fd.append("DeliveryDetailList[" + i + "].ProdDeliveryType", $("#prodDelivery_FT_" + orderArray[i]).val()); //prodDelivery_FT_
+            fd.append("DeliveryDetailList[" + i + "].MailName", $("#MailName_" + i).val());
+            fd.append("DeliveryDetailList[" + i + "].MailAddress", $("#MailAddress_" + i).val());
+            fd.append("DeliveryDetailList[" + i + "].MailBlockCode", $("#MailBlockCode_" + i).val());
+            fd.append("DeliveryDetailList[" + i + "].MailPhone", $("#MailPhone_" + i).val());
+            fd.append("DeliveryDetailList[" + i + "].OrderNo", orderArray[i]);
+            //訂單折抵金額
+
+            if ($("#DISCOUNT_NUMBER_" + orderArray[i]).val() == "0" && $("#APDiscountVal_" + orderArray[i]).val() != null) {
+                fd.append("DeliveryDetailList[" + i + "].Discount", $("#APDiscountVal_" + orderArray[i]).val());
+            } else {
+                fd.append("DeliveryDetailList[" + i + "].Discount", $("#DISCOUNT_NUMBER_" + orderArray[i]).val());
+            }
+
+            if (!isNaN($("#DISCOUNT_NUMBER_" + orderArray[i]).val())) {
+                FtPointSum += parseFloat($("#DISCOUNT_NUMBER_" + orderArray[i]).val());
+            }
+
+            if ($("#PurchaseOrderAmount_" + orderArray[i]).html() == "0") {
+                HaveZeroDeal = true;
+            }
+
+        };
+
+        fd.append("SumAmount", $("#SumAmount").html().replace(",", ""));
+        //fd.append("ActivityIdArray", $('[id*=AcitvityId]').val());
+        //fd.append("OrderNo", $('[id*=OrderNo]').val());
+        //var ccidValue = "";
+
+        //ccCode.forEach(function (element, index) {
+        //    ccidValue += element;
+        //});
+
+        //fd.append("Ccid", ccidValue);
+        //fd.append("Ccid", $("#ccid_" + tabIndex).val());
+        //fd.append("CheckCode", $("#checkCode_" + tabIndex).val());
+        //fd.append("DateMonth", $("#dateMonth_" + tabIndex).val());
+        //fd.append("DateYear", $("#dateYear_" + tabIndex).val());
+        fd.append("SumDiscount", FtPointSum);
+        //fd.append("Token", $("#captchaToken").val());
+        //fd.append("puzzle_data", $("#puzzle_data").val());
+        //fd.append("Challenge_key", $("#challenge_key").val());
+        fd.append("Vehicle", $("#txtVehicle").val());
+        fd.append("VehicleType", $("#VehicleType").val());
+        fd.append("CardHolderName", window.originalValues['cardholder-name']);
+        fd.append("CardHolderPhone", window.originalValues['cardholder-phone']);
+        fd.append("CardHolderEmail", window.originalValues['cardholder-email']);
+
+        //20250828
+        fd.append("OrderList", "");
+        fd.append("MemberNo", "00519185083");
+
+        if ($("#invoiceUsed input").is(':checked') == true) {
+            fd.append("invoiceUsed", $("#invoiceUsed input").val());
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.type = 'JSON';
+
+        function iniMailInput(index) {
+            if (index != undefined) {
+                $("#MailName_" + index).removeClass("is-invalid");
+                $("#MailNameErrorMessage_" + index).html();
+                $("#MailAddress_" + index).removeClass("is-invalid");
+                $("#MailAddreddErrorMessage_" + index).html();
+                $("#MailBlockCode_" + index).removeClass("is-invalid");
+                $("#MailBlockCoddErrorMessage_" + index).html();
+                $("#MailPhone_" + index).removeClass("is-invalid");
+                $("#MailPhoneErrorMessage_" + index).html();
+            }
+        }
+
+        //加入監聽事件
+        xhr.addEventListener("load", uploadComplete, false);
+        function uploadComplete() {
+            var checkResult = 0;
+            if (xhr.response == "") {
+                document.getElementById("alertText").innerText = "未收到正確回傳值";
+                $("#alertModal").modal('show');
+            } else {
+                var jsonResponse = JSON.parse(xhr.response);
+
+                //紀錄本次點選
+                index = jsonResponse[2];
+                //上次點選(初始)
+                lastIndex = lastIndex == -1 ? index : lastIndex,
+                    //編審清除
+                    iniMailInput(lastIndex);
+                lastIndex = index;
+
+                switch (jsonResponse[0]) {
+                    case "-1":
+                        document.getElementById("modalHeader").innerHTML = "";
+                        document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                        //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                        $('#MyId').modal('show');
+                        break;
+                    case "-2":
+                        $("#MailName_" + index).focus();
+                        $("#MailName_" + index).addClass("is-invalid");
+                        $("#MailNameErrorMessage_" + index).html(jsonResponse[1]);
+                        //document.getElementById("MailNameErrorMessage").innerHTML = "收件人姓名格式錯誤";
+                        break;
+                    case "-3":
+                        $("#MailAddress_" + index).focus();
+                        $("#MailAddress_" + index).addClass("is-invalid");
+                        $("#MailAddreddErrorMessage_" + index).html(jsonResponse[1]);
+                        //document.getElementById("MailAddreddErrorMessage").innerHTML = "收件人地址格式錯誤";
+                        break;
+                    case "-4":
+                        $("#MailBlockCode_" + index).focus();
+                        $("#MailBlockCode_" + index).addClass("is-invalid");
+                        $("#MailBlockCoddErrorMessage_" + index).html(jsonResponse[1]);
+                        //document.getElementById("MailBlockCoddErrorMessage").innerHTML = "郵遞區號格式錯誤";
+                        break;
+                    case "-5":
+                        $("#MailPhone_" + index).focus();
+                        $("#MailPhone_" + index).addClass("is-invalid");
+                        $("#MailPhoneErrorMessage_" + index).html(jsonResponse[1]);
+                        //document.getElementById("MailPhoneErrorMessage").innerHTML = "收件電話格式錯誤";
+                        break;
+                    case "00":
+                        checkResult = 1;
+                        location.href = jsonResponse[1];
+                        break;
+                    case "-98":
+                        document.getElementById("modalHeader").innerHTML = "";
+                        document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                        //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                        $('#MyId').modal('show');
+                        break;
+                    case "-99":
+                        document.getElementById("modalHeader").innerHTML = "";
+                        document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                        //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                        $('#MyId').modal('show');
+                        break;
+                    case "97"://刷新頁面
+                        location.href = jsonResponse[1];
+                        break;
+
+                    default:
+                        $("#alertText").html(jsonResponse[0]);
+                        $("#alertModal").modal('show');
+                        break;
+                }
+            }
+            if (checkResult == 0) {
+                if (displayCreditCard) {
+                    document.getElementById("btnSubmit").innerHTML = "確認";
+                }
+                else {
+                    document.getElementById("btnSubmit").innerHTML = "結帳";
+                }
+                document.getElementById("btnSubmit").disabled = "";
+            }
+        }
+
+        //Post
+        if (FtPointSum >0) {
+            $("#alertText").html('扣除點數大於剩餘點數，請重新操作');
+            $("#alertModal").modal('show');
+            return;
+        }
+        else if (HaveZeroDeal) {
+            $("#alertText").html('請先完成0元訂單，再進行信用卡付款');
+            $("#alertModal").modal('show');
+            return;
+        } else {
+            document.getElementById("btnSubmit").innerHTML = "請稍待...";
+            document.getElementById("btnSubmit").disabled = "disabled";
+            setTimeout(function () {
+                // 五秒後執行這裡的程式碼
+                document.getElementById("btnSubmit").disabled = false; // 把 disable 改成 able
+                document.getElementById("btnSubmit").innerHTML = "結帳";
+            }, 　3000); //
+        }
+
+        const tappayStatus = TPDirect.card.getTappayFieldsStatus();
+        var Getprime = false;
+        var prime = "";
+        var ccid = "";
+        //確認是否可以 getPrime
+        // Get prime
+        if (tappayStatus.canGetPrime == false) {
+            $("#alertText").html('信用卡資訊有誤，請重新輸入');
+            $("#alertModal").modal('show');
+            return;
+        }
+
+        TPDirect.card.getPrime(function (result) {
+            if (result.status == 0) {
+                //alert('get prime 成功，prime: ' + result.card.prime);
+                // send prime to your server, to pay with Pay by Prime API .
+                if (fd.has("prime")) {
+                    fd.delete("prime");
+                }
+                //一般信用卡不走全盈流程
+                if (fd.has("payType")) {
+                    fd.delete("payType");
+                }
+                prime = result.card.prime;
+                ccid = result.card.bincode;
+                fd.append("Prime", result.card.prime);
+                fd.append("Ccid", result.card.bincode + '******' + result.card.lastfour);
+                xhr.open("POST", "/Payment/Home/Check");
+                xhr.send(fd);
+            }
+        });
+    }
+
+</script>
+
+<script>
+    var lastIndex = -1;
+    function CheckPrice0(Order_No) {
+            
+
+            // 目前選的TAB INDEX
+            var tabIndex = hidKeepIndexs;
+
+            //取票方式
+            var fd = new FormData();
+            //fd.append("OrderNo", Order_No);
+
+                fd.append("DeliveryDetailList[0].ProdDeliveryType", $("[name='ProdDelivery_" + Order_No +"']:checked").val());
+                fd.append("DeliveryDetailList[0].MailName", $("#MailName_0").val());
+                fd.append("DeliveryDetailList[0].MailAddress", $("#MailAddress_0").val());
+                fd.append("DeliveryDetailList[0].MailBlockCode", $("#MailBlockCode_0" ).val());
+                fd.append("DeliveryDetailList[0].MailPhone", $("#MailPhone_0").val());
+                fd.append("DeliveryDetailList[0].OrderNo", Order_No);
+
+                if ($("#DISCOUNT_NUMBER_" + Order_No).val() == "0" && $("#APDiscountVal_" + Order_No).val() !=null)
+                {
+                    fd.append("DeliveryDetailList[0].Discount", $("#APDiscountVal_" + Order_No).val());
+                } else
+                {
+                    fd.append("DeliveryDetailList[0].Discount", $("#DISCOUNT_NUMBER_" + Order_No).val());
+                }
+
+            fd.append("SumAmount", $("#SumAmount").html().replace(",", ""));
+            //fd.append("ActivityIdArray", $('[id*=AcitvityId]').val());
+            //fd.append("OrderNo", $('[id*=OrderNo]').val());
+            fd.append("Vehicle", $("#txtVehicle").val());
+            fd.append("VehicleType", $("#VehicleType").val());
+            var ccidValue = "";
+
+            ccCode.forEach(function (element, index) {
+                ccidValue += element;
+            });
+
+            fd.append("Ccid", ccidValue);
+            //fd.append("Ccid", $("#ccid_" + tabIndex).val());
+            fd.append("CheckCode", $("#checkCode_" + tabIndex).val());
+            fd.append("DateMonth", $("#dateMonth_" + tabIndex).val());
+            fd.append("DateYear", $("#dateYear_" + tabIndex).val());
+            fd.append("SumDiscount", $("#DISCOUNT_NUMBER_" + Order_No).val());
+            //20250908
+            fd.append("OrderList", "");
+            fd.append("MemberNo", "00519185083");
+
+            //fd.append("Token", $("#captchaToken").val());
+            //fd.append("puzzle_data", $("#puzzle_data").val());
+            //fd.append("Challenge_key", $("#challenge_key").val());
+
+
+            var xhr = new XMLHttpRequest();
+            xhr.type = 'JSON';
+
+            function iniMailInput(index) {
+                if (index != undefined)
+                {
+                    $("#MailName_" + index).removeClass("is-invalid");
+                    $("#MailNameErrorMessage_" + index).html();
+                    $("#MailAddress_" + index).removeClass("is-invalid");
+                    $("#MailAddreddErrorMessage_" + index).html();
+                    $("#MailBlockCode_" + index).removeClass("is-invalid");
+                    $("#MailBlockCoddErrorMessage_" + index).html();
+                    $("#MailPhone_" + index).removeClass("is-invalid");
+                    $("#MailPhoneErrorMessage_" + index).html();
+                }
+            }
+
+            document.getElementById("btnSubmit").innerHTML="請稍待...";
+            document.getElementById("btnSubmit").disabled = "disabled";
+
+            //加入監聽事件
+            xhr.addEventListener("load", uploadComplete, false);
+            function uploadComplete() {
+                var checkResult = 0;
+                if (xhr.response == "") {
+                    document.getElementById("alertText").innerText = "未收到正確回傳值";
+                    $("#alertModal").modal('show');
+                } else {
+                    var jsonResponse = JSON.parse(xhr.response);
+
+                    //紀錄本次點選
+                    index = jsonResponse[2];
+                    //上次點選(初始)
+                    lastIndex = lastIndex == -1 ? index : lastIndex,
+                    //編審清除
+                    iniMailInput(lastIndex);
+                    lastIndex = index;
+
+                    switch (jsonResponse[0]) {
+                        case "-1":
+                            document.getElementById("modalHeader").innerHTML = "";
+                            document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                            //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                            $('#MyId').modal('show');
+                            break;
+                        case "-2":
+                            $("#MailName_" + index).focus();
+                            $("#MailName_" + index).addClass("is-invalid");
+                            $("#MailNameErrorMessage_" + index).html(jsonResponse[1]);
+                            //document.getElementById("MailNameErrorMessage").innerHTML = "收件人姓名格式錯誤";
+                            break;
+                        case "-3":
+                            $("#MailAddress_" + index).focus();
+                            $("#MailAddress_" + index).addClass("is-invalid");
+                            $("#MailAddreddErrorMessage_" + index).html(jsonResponse[1]);
+                            //document.getElementById("MailAddreddErrorMessage").innerHTML = "收件人地址格式錯誤";
+                            break;
+                        case "-4":
+                            $("#MailBlockCode_" + index).focus();
+                            $("#MailBlockCode_" + index).addClass("is-invalid");
+                            $("#MailBlockCoddErrorMessage_" + index).html(jsonResponse[1]);
+                            //document.getElementById("MailBlockCoddErrorMessage").innerHTML = "郵遞區號格式錯誤";
+                            break;
+                        case "-5":
+                            $("#MailPhone_" + index).focus();
+                            $("#MailPhone_" + index).addClass("is-invalid");
+                            $("#MailPhoneErrorMessage_" + index).html(jsonResponse[1]);
+                            //document.getElementById("MailPhoneErrorMessage").innerHTML = "收件電話格式錯誤";
+                            break;
+
+                        case "00":
+                            checkResult = 1;
+                            location.href = jsonResponse[1];
+                            break;
+                        case "-98":
+                            document.getElementById("modalHeader").innerHTML = "";
+                            document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                            //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                            $('#MyId').modal('show');
+                            break;
+                        case "-99":
+                            document.getElementById("modalHeader").innerHTML = "";
+                            document.getElementById("modalDesc").innerHTML = jsonResponse[1];
+                            //document.getElementById("modalDesc").innerHTML = "信用卡號與優惠碼不一致，請重新輸入!";
+                            $('#MyId').modal('show');
+                            break;
+                        case "97"://刷新頁面
+                            location.href = jsonResponse[1];
+                            break;
+
+                        default:
+                            $("#alertText").html(jsonResponse[0]);
+                            $("#alertModal").modal('show');
+                            break;
+                    }
+                }
+                if (checkResult == 0) {
+                    if (displayCreditCard) {
+                        document.getElementById("btnSubmit").innerHTML = "確認";
+                    }
+                    else
+                    {
+                        document.getElementById("btnSubmit").innerHTML = "結帳";
+                    }
+                    document.getElementById("btnSubmit").disabled = "";
+                }
+            }
+            //Post
+            xhr.open("POST","/Payment/Home/CheckforPrice0");
+            xhr.send(fd);
+    }
+
+</script>
+
+<script>
+
+    setContainerMinHht('.container.thin');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('#header').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - footerHht);
+        }
+    }
+
+</script>
+        <script>
+    // 結帳 START
+    // 日期
+    var monthHTML = '',
+        yearHTML = '';
+    for (var i = 0; i < 12; i++) {
+        monthHTML += '<option value="' + (i + 1) + '">' + (i + 1) + '</option>';
+    }
+    var year = new Date().getFullYear();
+    for (var i = 0; i < 10; i++) {
+        var strYear = ((year + i) + '').substring(2);
+        yearHTML += '<option value="' + strYear + '">' + strYear + '</option>';
+    }
+
+    $('#dateMonth_1').append(monthHTML);
+    $('#dateYear_1').append(yearHTML);
+
+    // 信用卡
+    
+    // 結帳 END
+        </script>
+
+
+<script>
+    function autoSenderDate(i)
+    {
+        $("#MailName_" + i).val('鍾皓鈞');
+        $("#MailAddress_" + i).val('新竹縣新豐鄉信義街35號');
+        $("#MailBlockCode_" + i).val('304');
+        $("#MailPhone_" + i).val('0911633551');
+    }
+
+    var hidKeepIndexs = "1";
+
+    ////////////////
+    //rb更換相關
+    ////////////////
+    function rbChange(i, rbNo, orderNo) {
+        //當選到郵寄，顯示相關欄位
+        if ($("#postArea_" + i).html() != undefined) {
+
+            if ($("#prodDelivery_FT_" + rbNo).val() != "P") {
+                $("#postArea_" + i).get(0).style.display = "none";
+            }
+            else {
+                $("#postArea_" + i).get(0).style.display = "";
+            }
+        }
+
+        //變更手續費
+        var InitSum = parseFloat($("#SumAmount").html().replace(",", ""));
+        var ChargeColumnValue = parseFloat($("#AddedChargeAmount_" + orderNo).html().replace(",", ""));
+        var rbValue = parseFloat($("#Charge_prodDelivery_FT_" + rbNo).html().replace(",", ""));
+        var OrderAmount = parseFloat($("#PurchaseOrderAmount_" + orderNo).html().replace(",", ""));
+        //新的總金額 = 原本總金額 - 原先取票手續費 + 新的手續費
+        var NewSum = (InitSum - ChargeColumnValue + rbValue).numberFormat(0, ".", ",");
+        //將總金額更換為新的總金額
+        //加總新的訂單金額
+        var NewOrderSum = (OrderAmount - ChargeColumnValue + rbValue).numberFormat(0, ".", ",");
+
+        $("#SumAmount").html(NewSum);
+        if (NewSum == "0") {
+            $(".tab-content").attr("style", "display: none");
+            document.getElementById("btnSubmit").style.display = "none";
+        }
+        else {
+            $(".tab-content").attr("style", "display:''");
+            document.getElementById("btnSubmit").style.display = "";
+            $("#btnSubmitForPrice0_" + orderNo).attr("style", "display:none");
+        }
+        if (NewOrderSum == "0") {
+            $("#btnSubmitForPrice0_" + orderNo).attr("style", "display:''");
+        } else {
+            $("#btnSubmitForPrice0_" + orderNo).attr("style", "display:none");
+        }
+        //將取票手續費更換為rb選的金額
+        $("#AddedChargeAmount_" + orderNo).html(rbValue);
+        //更新訂單金額
+        $("#PurchaseOrderAmount_" + orderNo).html(NewOrderSum);
+
+
+        var displayCreditCard = NewSum == 0 ? true:false;
+
+        if (displayCreditCard) {
+            $(".payment").attr("style", "display: none");
+            $('#invoicetxt').attr("style", "display:''");
+        } else {
+            $(".payment").attr("style", "display:'' ");
+        }
+
+    };
+
+    ////////////////
+    //刪除訂單相關
+    ////////////////
+
+    var selectedOrder;
+    var template;
+    function toDelete(OrderNo,Template) {
+        selectedOrder = OrderNo;
+        template = Template;
+        //跳出確認畫面
+        $("#confirmModal").modal('show');
+    }
+
+    ////////////////
+    //訂單異動處理(購物車倒數結束、刪除訂單)
+    ////////////////
+
+    function OrderChange(TargetOrder,fromDel) {
+
+
+        //購物車相關數量調整
+        //上方
+        var cartOrderNum = document.getElementById("cartOrderNum");
+        cartOrderNum.innerText = totalOrderQty - nowOrderQty;
+        //右邊Icon
+        //var IconCartOrderNum = document.getElementById("IconCartOrderNum");
+        //IconCartOrderNum.innerText = totalOrderQty - nowOrderQty;
+
+
+        if (fromDel) {
+            //移除購物車
+            clearTimeout(timer);
+            var $cartBtn = $('.cart-btn');
+            $cartBtn.remove();
+
+        }
+
+        //調整刪單後，金額相關調整
+
+        var sumAmount = parseInt($("#SumAmount").html().replace(",", ""));
+        var PurchaseAmount = parseInt($("#PurchaseAmount_" + TargetOrder).html().replace(",", ""));
+        var AddedChargeAmount = parseInt($("#AddedChargeAmount_" + TargetOrder).html());
+        var ExchangeAmount = parseFloat($("#DISCOUNT_NUMBER_" + TargetOrder).val());//扣抵點數
+        sumAmount = (sumAmount - PurchaseAmount - AddedChargeAmount + ExchangeAmount).numberFormat(0, ".", ",");
+        $("#SumAmount").html(sumAmount);
+        //隱藏刪除的區塊
+        if (sumAmount == "0") {
+            $(".tab-content").attr("style", "display: none");
+            document.getElementById("btnSubmit").style.display = "none";
+        }
+        $("#div_" + TargetOrder).remove();
+        //紀錄現在訂單數量
+
+
+        //最後一筆訂單刪除後回首頁
+        if (totalOrderQty - nowOrderQty <= 0) {
+            window.location = "https://www.famiticket.com.tw/Home";
+        }
+        else
+        {
+            reBuildCart();
+        }
+    }
+    function btnDelSubmit()
+        {
+        var fd = new FormData();
+        fd.append("OrderNo", selectedOrder);
+        fd.append("ActivityTemplate", template);
+            var xhr = new XMLHttpRequest();
+            xhr.type = 'JSON';
+
+            //加入監聽事件
+            xhr.addEventListener("load", uploadComplete, false);
+            function uploadComplete() {
+                var jsonResponse = JSON.parse(xhr.response);
+                switch (jsonResponse[0]) {
+                    case "success":
+
+                        //document.getElementById("alertText").innerText = "刪除訂單成功";
+                        //$("#alertModal").modal('show');
+
+                        //調整陣列(時間、訂單)
+                        var index = orderArray.indexOf(selectedOrder);
+                        orderArray.splice(index, 1);
+                        TimeArray.splice(index, 1);
+                        totalOrderQty--;
+
+                        OrderChange(selectedOrder,true);
+                        //調整刪單後，金額相關調整
+                        window.location.reload();
+                        break;
+                    case "fail":
+                        $("#alertText").html("刪除訂單失敗");
+                        $("#alertModal").modal('show');
+                        break;
+                }
+        };
+
+            //Post
+            xhr.open("POST","/Payment/Home/DeleteOrder");
+            xhr.send(fd);
+    };
+    //指定千分位數字加符號(小數幾位，小數點符號，千分位符號)
+    Number.prototype.numberFormat = function (c, d, t) {
+        var n = this,
+            c = isNaN(c = Math.abs(c)) ? 2 : c,
+            d = d == undefined ? "." : d,
+            t = t == undefined ? "," : t,
+            s = n < 0 ? "-" : "",
+            i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c))),
+            j = (j = i.length) > 3 ? j % 3 : 0;
+        return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+    };
+
+    ////////////////
+    //Ft點數折抵相關(2021/10/14)
+    ////////////////
+    function FtPointChange(orderNo,orderList) {
+        var InitSum = parseFloat($("#SumCoculate").html().replace(",", ""));//原始總金額
+        var ExchangeAmount = parseFloat($("#DISCOUNT_NUMBER_" + orderNo).val());//扣抵點數
+        if (isNaN(ExchangeAmount)) {
+            ExchangeAmount = 0;
+        }
+        var OrderAmount = parseFloat($("#Amounthidden_" + orderNo).html().replace(",", ""));//原始單筆訂單金額
+        var ChargeAmount = parseFloat($("#AddedChargeAmount_" + orderNo).html().replace(",", ""));//手續費
+        var NewOrderAmount = (OrderAmount + ChargeAmount - ExchangeAmount).numberFormat(0, ".", ",");//扣除折抵後的訂單金額
+        var NewOrderSum = 0;//重新加總訂單金額
+        //btnSubmitForPrice0_
+        $("#FTPointDiscount_" + orderNo).html(ExchangeAmount);
+        $("#PurchaseOrderAmount_" + orderNo).html(NewOrderAmount);
+
+
+        for (var i = 0; i < orderArray.length; i++) {
+            NewOrderSum += parseFloat($("#PurchaseOrderAmount_" + orderArray[i]).html().replace(",", ""));
+        }
+        NewOrderSum = NewOrderSum.numberFormat(0, ".", ",");
+        $("#SumAmount").html(NewOrderSum);
+        if (NewOrderSum == "0") {
+            $(".tab-content").attr("style", "display: none");
+            document.getElementById("btnSubmit").style.display = "none";
+
+        } else {
+            $(".tab-content").attr("style", "display:''");
+            document.getElementById("btnSubmit").style.display = "";
+        }
+        if (NewOrderAmount == "0") {
+            $("#btnSubmitForPrice0_" + orderNo).attr("style", "display:''");
+        } else {
+            $("#btnSubmitForPrice0_" + orderNo).attr("style", "display:none");
+        }
+
+        var displayCreditCard = NewOrderSum == 0 ? true : false;
+
+        if (displayCreditCard) {
+            $(".payment").attr("style", "display: none");
+            $('#invoicetxt').attr("style", "display:''");
+        } else {
+            $(".payment").attr("style", "display:'' ");
+        }
+
+    };
+</script>
+
+<script>
+    function reBuildCart() {
+
+        $('#cart-btn').remove();
+
+        var cartNum = totalOrderQty - nowOrderQty;
+        var cartHtml = '<a href="#" class="cart-btn" id="cart-btn" ><div class="cart-btn__inner"><i class="fas fa-cart-plus"></i><span class="cart-btn__text">購物車</span><span class="cart-btn__time">&nbsp;</span><span class="cart-btn__count" id="IconCartOrderNum">' + cartNum + '</span></div> </a>';
+        $("#header").append(cartHtml);
+        setCountDown(parseInt(TimeArray[nowOrderQty]).numberFormat(0, ".", "") - alreadyCount, null, true)
+    }
+</script>
+<script>
+    // 發票資訊
+    $('#VehicleType').on('change', function (e) {
+        if (e.target.value == 'COMPANYNO' || e.target.value == 'DONATECODE') {
+            $('#invoiceUsed')[0].style.display = 'none';
+            $("#invoiceUsed input").prop('checked', false);
+        } else {
+            $('#invoiceUsed')[0].style.display = 'inline-block';
+        }
+        if (e.target.value == 'DONATECODE') {
+            $('#donateSearch')[0].style.display = 'inline-block';
+        } else {
+            $('#donateSearch')[0].style.display = 'none';
+        }
+    })
+
+    let skipValidation = true;
+
+    if ('Y' == 'N') {
+        $('#invoiceB').hide();
+        $('#invoiceD').hide();
+    } else {
+            //發票預設
+    const defaultVehicleType = 'EL0007';
+    const defaultNo = '0911633551';
+    $('#VehicleType').val(defaultVehicleType);
+    $('#txtVehicle').val(defaultNo);
+
+        // 延遲開啟驗證，等畫面初始化完畢再啟用
+        setTimeout(() => {
+            skipValidation = false;
+            // 若需要立即執行一次驗證，可以在這裡加：vehicleNoKeyUp($('#txtVehicle'));
+        }, 100);
+
+    if (defaultVehicleType == 'EL0007') {
+        $('#txtVehicle').attr("maxlength", "20");
+        //$('#txtVehicle').attr('disabled', 'disabled');
+    }
+    }
+
+
+
+    $('#VehicleType').change(function () {
+        $('#txtVehicle').removeClass("is-invalid");
+        $('#txtVehicle').removeAttr('disabled');
+        var ddlVehicle = $("#VehicleType").val();
+        $('#txtVehicle').val('');
+        if (ddlVehicle == "3J0002") { //手機條碼
+            $('#txtVehicle').attr("maxlength", "8");
+        } else if (ddlVehicle == "CQ0001") { //自然人憑證
+            $('#txtVehicle').attr("maxlength", "16");
+        } else if (ddlVehicle == "COMPANYNO"){ //統一編號
+            $('#txtVehicle').attr("maxlength", "8");
+        } else if (ddlVehicle == "DONATECODE") { //捐贈碼
+            $('#txtVehicle').attr("maxlength", "7");
+        } else if (ddlVehicle == "EL0007") {
+            //$('#txtVehicle').attr('disabled', 'disabled');
+            $('#txtVehicle').attr("maxlength", "20");
+            $('#txtVehicle').val('0911633551');
+        }
+    });
+
+
+    function CheckCompanyNo(idvalue) {
+        var tmp = new String("12121241");
+        var sum = 0;
+        re = /^\d{8}$/;
+        if (!re.test(idvalue)) {
+            return false;
+        }
+        for (i = 0; i < 8; i++) {
+            s1 = parseInt(idvalue.substr(i, 1));
+            s2 = parseInt(tmp.substr(i, 1));
+            sum += cal(s1 * s2);
+        }
+        if (!valid(sum)) {
+            if (idvalue.substr(6, 1) == "7") return (valid(sum + 1));
+        }
+        console.log("統編加總總和 = " + sum);
+        console.log("總和 % 10 = " + sum % 10);
+        console.log("總和% 5 = " + sum % 5);
+        console.log("統編編審結果 = " + ((valid(sum)) == true ? "正確" : "失敗"));
+        return (valid(sum));
+    }
+    function valid(n) {
+        if (n % 10 != 0 && n % 5 != 0) {
+            return false;
+        }
+        return true;
+    }
+    function cal(n) {
+        var sum = 0;
+        while (n != 0) {
+            sum += (n % 10);
+            n = (n - n % 10) / 10;  // 取整數
+        }
+        return sum;
+    }
+    function vehicleNoKeyUp(e) {
+
+        if (skipValidation) return;
+        var ddlVehicle = $("#VehicleType").val();
+        var value = $(e).val();
+
+        if (!ddlVehicle) {
+            var func = function () {
+                $("#VehicleType").focus();
+                $(e).val('');
+            }
+            showAlert("請選擇載具類型", func);
+            return;
+        }
+        const reCellPhone = /^(09[0-9]{8}|[1-9][0-9]{7,14})$/;
+        const rePhone = /^\/[A-Z0-9+-.]{7}$/;
+        const reCQ = /^[A-Z]{2}[0-9]{14}$/;
+        const reDonate = /^[0-9]{3,7}$/;
+
+        if (value) {
+            if (ddlVehicle == "3J0002") { //手機條碼
+                if (!rePhone.test(value)) {
+                    $(e).addClass("is-invalid");
+                    $("#invalidVehicle").text("手機條碼須為8碼且開頭為/符號");
+                } else {
+                    $(e).removeClass("is-invalid");
+                    $("#invalidVehicle").text("");
+                }
+            } else if (ddlVehicle == "CQ0001") { //自然人憑證
+                if (!reCQ.test(value)) {
+                    $(e).addClass("is-invalid");
+                    $("#invalidVehicle").text("自然人憑證須為2碼英文+14碼數字");
+                } else {
+                    $(e).removeClass("is-invalid");
+                    $("#invalidVehicle").text("");
+                }
+            } else if (ddlVehicle == "DONATECODE") { //捐贈碼
+                if (!reDonate.test(value)) {
+                    $(e).addClass("is-invalid");
+                    $("#invalidVehicle").text("捐贈碼須為3至7碼數字");
+                } else {
+                    $(e).removeClass("is-invalid");
+                    $("#invalidVehicle").text("");
+                }
+            } else if (ddlVehicle == "COMPANYNO") { //公司統一編號
+                    var valid = CheckCompanyNo(value);
+                    if (!valid) {
+                        $(e).addClass("is-invalid");
+                        $("#invalidVehicle").text("統一編號須為8碼數字");
+                    }
+                    else {
+                        $(e).removeClass("is-invalid");
+                        $("#invalidVehicle").text("");
+                    }
+            }
+            else if (ddlVehicle == "EL0007") {
+                if (!reCellPhone.test(value)) {
+                    $(e).addClass("is-invalid");
+                    $("#invalidVehicle").text("手機號碼不符合標準");
+                } else {
+                    $(e).removeClass("is-invalid");
+                    $("#invalidVehicle").text("");
+                }
+            }
+        } else {
+            if (ddlVehicle == "EL0007" || ddlVehicle == "CQ0001") {
+                $(e).addClass("is-invalid");
+                $("#invalidVehicle").text("請輸入載具號碼");
+            } else if (ddlVehicle == "COMPANYNO") {
+                $(e).addClass("is-invalid");
+                $("#invalidVehicle").text("請輸入公司統一編號");
+            } else if (ddlVehicle == "DONATE") {
+                $(e).addClass("is-invalid");
+                $("#invalidVehicle").text("請輸入捐贈碼");
+            }
+        }
+    }
+
+    function showInvoiceDetail()
+    {
+        $("#InvoiceServiceTermModal").modal("show");
+    }
+
+    var token = "";
+    var targetWindow;
+    //API_01
+    function getToken(OrderNo)
+    {
+        var webUrl = "https://ticketcp.moc.gov.tw/prec-ticket";
+
+        var targetUrl = "https://ticketcp.moc.gov.tw";
+
+        $.ajax({
+            type: "POST",
+            url: '/Payment/Api/GetToken',
+            success: function (data) {
+                token = JSON.parse(data).result.token;
+            },
+        })
+
+       var url = webUrl + "/page/confirm-order?marketCd=" + "FM";
+
+        if (targetWindow && !targetWindow.closed) {
+            // If the window is open, focus on it
+            targetWindow.focus();
+        } else {
+            // Otherwise, open a new window and store the reference
+            targetWindow = window.open(url, "_blank", "width=800,height=600,top=200,left=300");
+
+               targetWindow.postMessage(null,url);
+
+            var OrderNoArray = [];
+            var PurchaseAmountArray = [];
+            //購票編號
+            var seqNoArray = [];
+            //票價
+            var productAmountArray = [];
+            //節目名稱
+            var nameArray = [];
+            //票種
+            var specificationArray = [];
+            //單位名稱
+            var orgNameArray = [];
+
+            var ftPointArray = [];
+
+            var AREAArray = [];
+
+            var ATYPEArray = [];
+
+            $(".OrderNo").each(function () {
+                OrderNoArray.push($(this).val());
+            })
+
+            $(".PurchaseAmount").each(function () {
+                PurchaseAmountArray.push($(this).val());
+            })
+
+            var TicketPrice = ".TicketPrice." + OrderNo;
+            $(TicketPrice).each(function () {
+                productAmountArray.push($(this).val());
+            })
+            var PriceName = ".PriceName." + OrderNo;
+            $(PriceName).each(function () {
+                specificationArray.push($(this).val());
+            })
+            var ActivityName = ".ActivityName." + OrderNo;
+            $(ActivityName).each(function () {
+                nameArray.push($(this).val());
+            })
+            var ATYPE = ".ATYPE." + OrderNo;
+            $(ATYPE).each(function () {
+                ATYPEArray.push($(this).val());
+            })
+            var TicketNo = ".TicketNo." + OrderNo;
+            $(TicketNo).each(function () {
+                seqNoArray.push($(this).val());
+            })
+            var OrgName = ".OrgName." + OrderNo;
+            $(OrgName).each(function () {
+                orgNameArray.push($(this).val());
+            })
+            var FtPoint = ".FtPoint." + OrderNo;
+            $(FtPoint).each(function () {
+                ftPointArray.push($(this).val());
+            })
+            var AREA = ".AREA." + OrderNo;
+            $(AREA).each(function () {
+                AREAArray.push($(this).val());
+            })
+            var data = {
+                marketCd: "FM",
+                orderNo: OrderNo,
+                amount: parseInt(PurchaseAmountArray[i]),
+                callbackUrl: "https://tickets.tradevan.com.tw",
+                productInfos: []
+            };
+            for (var i = 0; i < seqNoArray.length; i++) {
+                var list =
+                {
+                    productAmount: productAmountArray[i],
+                    specification: specificationArray[i],
+                    seqNo: seqNoArray[i],
+                    name: nameArray[i],
+                    orgName: orgNameArray[i],
+                    eventHall: '無',
+                    area: AREAArray[i],
+                    type: ATYPEArray[i]
+                }
+                if (ftPointArray[i] == "A") {
+                    data.productInfos.push(list)
+                }
+            }
+            var sendMsgToCpwindow = () => {
+                targetWindow.postMessage(data, targetUrl)
+            }
+
+            var receiverMsg = (e) => {
+                if (e.origin === targetUrl) {
+                    var result = JSON.parse(e.data).code;
+                    var detail = JSON.parse(e.data).marketCd;
+                    if (result == "0000") {
+                        sendMsgToCpwindow()
+                    }
+                    if (detail) {
+                        if (token) {
+                            callApi04(e.data, token, OrderNo)
+                        }
+                        else {
+                            alert("成年禮金未折抵成功，請重新嘗試");
+                        }
+                    }
+                }
+            }
+
+            window.addEventListener('message', receiverMsg);
+        }
+    }
+
+    function callApi03(postData, token, OrderNo)
+    {
+        $.ajax({
+            type: "POST",
+            url: '/Payment/Api/UpdataeDetail',
+            dataType: "text",
+            data: postData,
+            contentType:"application/json",
+            success: function (result) {
+                if (result == "OK") {
+                    callApi05(postData, token, OrderNo,'COMPLETE')
+                }
+                else if (result == "NG")
+                {
+                    callApi05(postData, token, OrderNo,'CANCEL')
+                }
+                else
+                {
+                    alert("訂單不成立，請刪除訂單後重新選購。")
+                }
+            },
+        })
+    }
+
+    function callApi04(postData, token, OrderNo)
+    {
+        var res =
+        {
+            "marketCd": JSON.parse(postData).marketCd,
+            "mergeTransactionId": JSON.parse(postData).mergeTransactionId,
+            "token": token
+        }
+        $.ajax({
+            type: "POST",
+            url: '/Payment/Api/ConfirmPayment',
+            dataType: "json",
+            data: JSON.stringify(res),
+            contentType:"application/json",
+            success: function (result) {
+                if (result.code == "0000"){
+                    callApi03(postData, token, OrderNo)
+                }
+                else
+                {
+                    alert("訂單不成立，請刪除訂單後重新選購。")
+                }
+            },
+       })
+    }
+
+    function callApi05(postData, token, OrderNo, OrderStatus)
+    {
+        var res =
+        {
+            "marketCd": "FM",
+            "orderNo": OrderNo,
+            "mergeTransactionId": JSON.parse(postData).mergeTransactionId,
+            "orderStatus": OrderStatus,
+            "token": token
+        }
+        $.ajax({
+            type: "POST",
+            url: '/Payment/Api/CompletePayment',
+            dataType: "json",
+            data: JSON.stringify(res),
+            contentType:"application/json",
+            success: function (result) {
+                if (result.code == "0000")
+                {
+                    window.location.reload()
+                }
+                else
+                {
+                    callErrorApi05(postData, token, OrderNo)
+                }
+            },
+        })
+    }
+
+        function callErrorApi05(postData,token, OrderNo)
+        {
+            var seqNoArray = [];
+            var TicketNo = ".TicketNo." + OrderNo;
+            $(TicketNo).each(function () {
+                seqNoArray.push($(this).val());
+            })
+        var res =
+        {
+            "marketCd": "FM",
+            "orderNo": OrderNo,
+            "mergeTransactionId": JSON.parse(postData).mergeTransactionId,
+            "orderStatus": "CANCEL",
+            "token": token,
+            productInfos: []
+        }
+        for (var i = 0; i < seqNoArray.length; i++) {
+            var list =
+            {
+                seqNo: seqNoArray[i],
+            }
+            res.productInfos.push(list)
+        }
+        $.ajax({
+            type: "POST",
+            url: '/Payment/Api/CompleteCancelPayment',
+            dataType: "json",
+            data: JSON.stringify(res),
+            contentType:"application/json",
+            success: function (result) {
+                if (result.code == "0000") {
+                    $("#btnEditOrder_" + OrderNo).addClass("RefundHide")
+                    $("#APbtn_" + OrderNo).addClass("RefundHide")
+                }
+                alert("折抵失敗，請刪除訂單後重新選購。")
+            },
+        })
+    }
+
+</script>
+
+
+    </div>
+
+    <form id="frmSearchHeader" name="frmSearchHeader" method="post" action="https://www.famiticket.com.tw/Home/Activity/Search">
+        <input type="hidden" id="hdnSearchHeaderCatg" name="searchCatgB">
+        <input type="hidden" id="hdnSearchHeaderName" name="searchName">
+        <input type="hidden" id="hdnSearchHeaderDateS" name="searchDateS">
+        <input type="hidden" id="hdnSearchHeaderDateE" name="searchDateE">
+    </form>
+    <script>
+        function btnSearchHeaderClick() {
+            document.getElementById("hdnSearchHeaderCatg").value = document.getElementById("searchCatg").value;
+            document.getElementById("hdnSearchHeaderName").value = document.getElementById("searchName").value;
+            document.getElementById("frmSearchHeader").submit();
+        }
+    </script>
+
+
+
+
+
+<iframe src="https://fraud.tappaysdk.com/ddca/iframe?%7B%22appKey%22%3A%22app_ugSJrX7bTMo0x6C6l9LsZqAh1SSUopFRfGW34sGzjaFlSqlzvysYhk6Kbduf%22%2C%22appID%22%3A18823%2C%22serverType%22%3A%22production%22%2C%22hostname%22%3A%22www.famiticket.com.tw%22%2C%22origin%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%22%2C%22referrer%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%2FSales%2Fhome%22%2C%22href%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%2FPayment%2FHome%2FIndex2%22%2C%22port%22%3A%22%22%2C%22protocol%22%3A%22https%3A%22%2C%22sdk_version%22%3A%22v5.15.0%22%2C%22mode%22%3A%22production%22%7D" style="display: none;"></iframe><iframe allowpaymentrequest="true" frameborder="0" allowtransparency="true" scrolling="no" src="https://js.tappaysdk.com/sdk/tpdirect/api/html/v5.15.0?%7B%22appKey%22%3A%22app_ugSJrX7bTMo0x6C6l9LsZqAh1SSUopFRfGW34sGzjaFlSqlzvysYhk6Kbduf%22%2C%22appID%22%3A18823%2C%22serverType%22%3A%22production%22%2C%22hostname%22%3A%22www.famiticket.com.tw%22%2C%22origin%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%22%2C%22referrer%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%2FSales%2Fhome%22%2C%22href%22%3A%22https%3A%2F%2Fwww.famiticket.com.tw%2FPayment%2FHome%2FIndex2%22%2C%22port%22%3A%22%22%2C%22protocol%22%3A%22https%3A%22%2C%22sdk_version%22%3A%22v5.15.0%22%2C%22mode%22%3A%22production%22%7D" style="display: none;"></iframe></body>

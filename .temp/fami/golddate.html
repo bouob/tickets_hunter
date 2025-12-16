@@ -1,0 +1,782 @@
+https://www.famiticket.com.tw/Sales/Home/Index/55542360-5ea2-49e9-8416-22d36ab626c1
+日期區域:<tbody>
+                                                    <tr>
+                                                        <td data-title="時間" class="session__m-icon session__m-icon--time">2025.12.20 (六) 19:00</td>
+                                                        <td data-title="名稱" class="session__m-icon session__m-icon--title">週六場</td>
+                                                        <td data-title="場地" class="session__m-icon session__m-icon--locate">中原文創園區</td>
+                                                        <td data-title="購買狀態">
+                                                                <button type="button" class="session__buy btn btn-buy" onclick="buyTicket(55586, 5607,null, '週六場', '2025.12.20 (六) 19:00')">立即購買</button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td data-title="時間" class="session__m-icon session__m-icon--time">2025.12.21 (日) 14:00</td>
+                                                        <td data-title="名稱" class="session__m-icon session__m-icon--title">週日場</td>
+                                                        <td data-title="場地" class="session__m-icon session__m-icon--locate">中原文創園區</td>
+                                                        <td data-title="購買狀態">
+                                                                <button type="button" class="session__buy btn btn-buy" onclick="buyTicket(55587, 5607,null, '週日場', '2025.12.21 (日) 14:00')">立即購買</button>
+                                                        </td>
+                                                    </tr>
+                                        </tbody>
+
+<body>
+    <header class="header container">
+        <div class="row">
+
+            <div class="header__col col-lg-12">
+                <div class="famitkt-logo">
+                    <a class="famitkt-logo__link" href="https://www.famiticket.com.tw/Home">
+                        <img class="famitkt-logo__img img-responsive img-left" src="/Sales/Images/logo.png">
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center ml-auto">
+                    <div class="header__search d-none d-lg-block">
+                        <button class="btn header__search-btn" type="button" data-target="#searchModal" data-toggle="modal">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                        <div class="user-serve">
+                            <div class="user-serve__inner">
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/User/Orders">
+                                    <i class="fa-user"></i>
+                                    <span class="user-serve__name" id="membername">鍾*鈞</span>
+                                </a>
+                                <!--
+                                    <a class="user-serve__item user-serve__item--cart" href="./member">
+                                        <i class="fa-basket"></i>
+                                        <span>99</span>
+                                    </a>
+                                -->
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/user/signout">
+                                    <i class="fa-logout"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <div class="d-lg-none">
+                        <button class="navbar-toggler" aria-expanded="false" aria-controls="navbarNav" aria-label="Toggle navigation" type="button" data-target="#navbarNav" data-toggle="collapse">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </header>
+
+
+    <nav class="header__navbar navbar navbar-expand-lg">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="" data-toggle="dropdown"><span>活動分類</span></a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                                                                        <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242">戶外觀光</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/562">休閒農場</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/2">農遊超市</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/701">住宿</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/582">ESIM</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241">餐飲</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/82">其他</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/561">餐券</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164">主題樂園</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/741">日本樂園</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/461">樂園</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221">紓壓放鬆</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221/523">美容SPA</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01">展演票券</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/581">文化幣(限線上)</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/42">體驗</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/424">展覽</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/321">表演&amp;劇場</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/C11">演唱會</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01">運動賽事</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/161">其他</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/002">TPBL</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/001">中華職棒</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/62">TPVL</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/721">PLG</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61">交通</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/261">阿里山線</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/342">台灣好行</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01">電影</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/301">交換票</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/481">特價電影票</a></li>
+
+                                                </ul>
+                                            </li>
+
+
+                        </ul>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" data-toggle="modal" data-target="#searchModal" href="#searchModal">活動探索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/Faq">常見問題</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/User/Orders">會員專區</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/TicketInstruction">購票須知</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modal -->
+    <div class="modal fade search-modal" id="searchModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        活動探索
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body search-modal__body">
+                    <div class="search-modal__inner">
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchName">活動名稱：</label>
+                            <input id="searchName" type="text" class="search-modal__input" maxlength="27">
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchCatg">活動分類：</label>
+                            <select id="searchCatg" class="search-modal__select">
+                                                                    <option value="">全部</option>
+                                                <option value="242">戶外觀光</option>
+                                                <option value="241">餐飲</option>
+                                                <option value="164">主題樂園</option>
+                                                <option value="221">紓壓放鬆</option>
+                                                <option value="C01">展演票券</option>
+                                                <option value="S01">運動賽事</option>
+                                                <option value="61">交通</option>
+                                                <option value="M01">電影</option>
+
+                            </select>
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <button type="button" class="btn search-modal__submit" onclick="btnSearchHeaderClick();">
+                                <i class="fas fa-search"></i><span class="search-modal__submit-text">搜尋</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alertModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        貼心提醒
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-1">
+                        <label id="alertText"></label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal" data-dismiss="modal">
+                            <span>確定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        
+
+<script>
+    var root = '/Sales/';
+
+    function buyTicket(sessionSeq, placeSeq, prefSeq, sessionName, sessionTime) {
+        app.startBuyTicket("0c4800ef-c65f-4e80-8d15-cd71045554c7",
+            { seq: sessionSeq, name: sessionName, time: sessionTime },
+            placeSeq, prefSeq, document.getElementById("defaultView"));
+    }
+
+    function showIntro(index) {
+            document.getElementById("Intro_" + 0).style.display = "none";
+            document.getElementById("Intro_" + 1).style.display = "none";
+        document.getElementById("Intro_" + index).style.display = "block";
+    }
+
+    function gotoMemberEdit() {
+        location.href = 'https://www.famiticket.com.tw/Home/User/Edit/#btnGvVerify';
+    }
+</script>
+<div id="app"><div class="modal show"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div></div><button type="button" class="close"><span>×</span></button></div><div></div></div></div></div></div>
+
+
+<script src="/Sales/Scripts/bundle.js?20251118"></script>
+
+        
+            <div id="defaultView" class="detail container thin">
+                <ul class="progressbar" data-li-count="6">
+                    <li class="active">
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>場次
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>區域
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>票種
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>劃位
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>結帳
+                    </li>
+                    <li>
+                        <div class="progressbar__dot">
+                            <div class="progressbar__dot-graph">
+                                <i class="progressbar__count"></i>
+                            </div>
+                        </div>完成
+                    </li>
+                </ul>
+                <h4 class="detail__title">
+                    <!--活動名稱-->
+                    台瘋金曲派對-2025開森室內樂團沙龍音樂會
+                </h4>
+                <figure class="detail__banner">
+                    <!--活動圖片-->
+                    <img class="detail__banner-img" src="https://www.famiticket.com.tw/Home/api/getimage/13154" alt="">
+                </figure>
+                <div class="session">
+                                                    <div>
+                                    <table class="session__list">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="session__icon session__icon--time"></i>場次時間</th>
+                                                <th><i class="session__icon session__icon--title"></i>場次名稱</th>
+                                                <th><i class="session__icon session__icon--locate"></i>場地</th>
+                                                <th>購買狀態</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                    <tr>
+                                                        <td data-title="時間" class="session__m-icon session__m-icon--time">2025.12.20 (六) 19:00</td>
+                                                        <td data-title="名稱" class="session__m-icon session__m-icon--title">週六場</td>
+                                                        <td data-title="場地" class="session__m-icon session__m-icon--locate">中原文創園區</td>
+                                                        <td data-title="購買狀態">
+                                                                <button type="button" class="session__buy btn btn-buy" onclick="buyTicket(55586, 5607,null, '週六場', '2025.12.20 (六) 19:00')">立即購買</button>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td data-title="時間" class="session__m-icon session__m-icon--time">2025.12.21 (日) 14:00</td>
+                                                        <td data-title="名稱" class="session__m-icon session__m-icon--title">週日場</td>
+                                                        <td data-title="場地" class="session__m-icon session__m-icon--locate">中原文創園區</td>
+                                                        <td data-title="購買狀態">
+                                                                <button type="button" class="session__buy btn btn-buy" onclick="buyTicket(55587, 5607,null, '週日場', '2025.12.21 (日) 14:00')">立即購買</button>
+                                                        </td>
+                                                    </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                </div>
+                <ul class="nav nav-tabs notes-tab">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-toggle="tab" href="#intro_0">活動介紹</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="tab" href="#intro_1">注意事項</a>
+                        </li>
+                </ul>
+                <div class="tab-content">
+                        <div class="tab-pane fade active show" id="intro_0">
+                            <p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>歲月、流光、年華 我們最美好的回憶<span lang="EN-US">…</span></b></span><br>
+<span style="line-height:normal"><b>【瘋金曲派對】<span lang="EN-US">2025</span>開森室內樂團沙龍音樂會</b></span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal">跟著薩克斯風吹響時光的號角，一晚聽遍1940-2000經典國語、台語、校園民歌，全場跟著唱到燒聲！從《給我一個吻》到《失戀陣線聯盟》，從《山頂的黑狗兄》到《鼓聲若響》，每一首都是我們青春中最動人的篇章。那些陪你走過愛情、思念與夢想的歌，一次唱好唱滿！</span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal">開森室內樂團薩克斯風重奏團，邀請您在歲末年終，一起用音樂喚醒記憶，唱出屬於我們的黃金年代。</span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">帶爸媽重回青春、揪朋友一起大合唱，</span><br>
+<span style="line-height:115%">今年最歡樂的音樂派對，不來絕對會後悔！</span></b></span></span></p>
+
+<p>&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>演出陣容</b></span></span></span></span></p>
+
+<p><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%">莊曜宇、江宇澤、劉兆惟、董綸</span></span></span></p>
+
+<p><span style="font-size:14px;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13092" style="width: 200px; height: 200px;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13093" style="width: 200px; height: 200px;"></span></p>
+
+<p><span style="font-size:14px;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13134" style="width: 200px; height: 200px;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13135" style="width: 200px; height: 200px;"></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>演出資訊</b></span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span lang="EN-US"><span style="line-height:115%">📍</span></span> </b><span style="line-height:normal"><b> </b><b>中<span style="display: none;">&nbsp;</span>原文創園區<span lang="EN-US"> 14</span>號倉庫</b><span style="display: none;">&nbsp;</span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal">&nbsp; &nbsp;（桃園市中壢區忠仁路33號）地點與停車資訊詳見下方</span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b><span lang="EN-US">📅</span> 場次Ａ：</b></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b><span lang="EN-US">2025/12/20 (六) 19:00&nbsp;</span></b><strong>(18:30開放入場)</strong></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b style="font-family: Aptos, sans-serif;"><span lang="EN-US">📅</span> 場次Ｂ：</b></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b><span lang="EN-US">2025/12/21 (日) 14:00&nbsp;</span></b><strong>(13:30開放入場)</strong></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>票價</b></span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><span lang="EN-US">💰</span> <b><span lang="EN-US">$800 / $500</span> </b></span></span><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>（<span lang="EN-US">9/1~11/30</span><i>早鳥優惠八折</i><b><i> </i></b>）</b></span></span><br>
+<span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">※</span></b><span style="line-height:normal">票價與位置分配圖請見下方</span></span><br>
+<span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">※</span></b><span style="line-height:normal">依價位、顏色入座，無對號</span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-top:0cm; margin-right:0cm; margin-bottom:8.0pt; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="color:#006000">購票與取票方式</span></b></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><b><span lang="EN-US"><span style="color:black">(</span></span><span style="color:black">方式一)線上刷卡：運用本FamiTicket活動網站(含APP: My FamiPort)</span></b><span style="color:black">，取票方式可選擇：(1)獲取電子票券，(2)或至全家FamiPort機台輸入訂單編號→列印取票條碼→給櫃檯刷取票條碼完成取票</span></span></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><b><span lang="EN-US"><span style="color:black">(</span></span><span style="color:black">方式二) 現金付款</span></b><span style="color:black"> ：<b>運用線下全家FamiPort 機台：</b>點選活動，進入購票，並列印小白單給全家櫃台取票</span></span></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm">&nbsp;</p>
+
+<p style="margin-top:0cm; margin-right:0cm; margin-bottom:8.0pt; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="color:#006000">開森官方聯絡資訊</span></b></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><b><span lang="EN-US"><span style="color:black">FACEBOOK</span></span><span style="color:black">粉絲專頁</span></b><span style="color:black">【開森Kind Soul 文化藝術 】<a href="https://www.facebook.com/kindsoul.cultural.arts" style="color:#467886; text-decoration:underline">https://www.facebook.com/kindsoul.cultural.arts</a></span></span></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><b><span lang="EN-US"><span style="color:black">INSTAGRAM</span></span><span style="color:black">官方帳號</span></b><span style="color:black">【kindsoul_music】</span></span></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><a href="https://www.instagram.com/kindsoul_music" style="color:#467886; text-decoration:underline">https://www.instagram.com/kindsoul_music</a></span></span></span></p>
+
+<p style="margin:0cm 0cm 8pt; margin-right:0cm; margin-left:0cm"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:115%"><b><span style="color:black">聯絡人-</span></b><span style="color:black">鍾小姐 0936156090</span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>時光精選曲目</b></span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal">玫瑰玫瑰我愛你、給我一個吻、失戀陣線聯盟、外婆的澎湖灣、紅蜻蜓、我的未來不是夢、月亮代表我的心、山頂的黑狗兄、愛拼才會贏、墓仔埔也敢去、牽阮的手、快樂的出帆、愛的小路、望月想愛人、歡喜就好、鼓聲若響、舊情綿綿、追追追、舞女、酒後的心聲、傷心酒店</span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><span lang="EN-US">(</span>註：演出單位有權微調變更曲目內容<span lang="EN-US">)</span></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><span style="line-height:normal"><b>主辦單位：</b>開森室內樂團<br>
+<b>協辦單位</b>：中原文創園區、開森文化藝術有限公司</span></span><br>
+<strong><span style="font-family:Arial,Helvetica,sans-serif;">聯絡資訊：</span></strong><span style="font-family:Arial,Helvetica,sans-serif;">鍾小姐 0936156090</span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">活動資訊海報</span></b></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13216" style="width: 100%; height: 100%;"></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">價位與座位圖</span></b></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13217" style="width: 100%; height: 100%;"></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt">&nbsp;</p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="color:#006000;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%">演出地點與停車資訊</span></b></span></span></span></p>
+
+<p style="margin-bottom:10.0pt; margin:0cm 0cm 8pt"><span style="font-size:14px;"><span style="font-family:Arial,Helvetica,sans-serif;"><b><span style="line-height:115%"><span style="color:#0066cc"><img alt="" src="https://www.famiticket.com.tw/Home/api/getimage/13138" style="width: 100%; height: 100%;"></span></span></b></span></span></p>
+
+                        </div>
+                        <div class="tab-pane fade" id="intro_1">
+                            <p>1. 本場音樂會為沙龍音樂會，以輕鬆舒服呈現，觀賞節目中，請輕聲細語。</p>
+
+<p>2. 為尊重智慧財產權，節目進行中，全面禁止錄音、錄影，拍照禁止使用閃光燈。</p>
+
+<p>3. 為維護節目品質，請即刻將您的行動電話關機，或改以靜音方式。</p>
+
+<p>4. 入座依照票價區域分別自由入座，並進場時盡量往前入座。中場休息後請您盡速就座。</p>
+
+<p>5. 若遇有緊急事件，請由觀眾席後方，盡速安全疏散。</p>
+
+<p>6. 禁止攜帶金屬、玻璃、寶特瓶容器、雷射筆、煙火或任何危險物品入場。嚴禁朝舞台和表演者丟擲任何物品。</p>
+
+<p>7. 若需退票，退票作業請於表演日前3日進行退件作業，酌收票面金額5%手續費，逾期恕不退票。</p>
+
+<p>8.&nbsp;上述事項若有未盡事宜，主辦保留活動更改之權利。</p>
+
+                        </div>
+                </div>
+            </div>
+        
+
+
+<div class="d-flex justify-content-center goTop__wrap no-print">
+    <a class="goTop" href="#">
+        <span class="goTop__text">TOP</span>
+    </a>
+</div>
+<footer class="footer-outer no-print">
+    <div class="container ">
+        <div class="row footer">
+            <div class="col-lg-4 col-sm-10 footer__desc">
+                <img class="footer__desc-img" src="/Sales/images/logofooter.png">
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; gap: 10px;">
+                    <li class="line-cs">
+                        <a href="https://www.facebook.com/famiticket">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13948" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://www.instagram.com/famiticket/?hl=zh-tw">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13949" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://lin.ee/q5kJ632">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13950" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <i class="fas fa-clock"></i>服務時間：
+                        <br>星期一～星期五 09:00~17:00
+                        <br>國定假日公休
+                    </li>
+                    
+                    <li class="line-cs"><span>LINE線上客服</span><a href="https://lin.ee/q5kJ632"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="36" border="0"></a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__service">
+                <ul>
+                    <li><a href="http://www.familynet.com.tw" target="_blank">關於全網</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Home/Cooperation">廠商合作</a></li>
+                    <li><a href="#" onclick="showData('ServiceTermModal');">會員服務條款</a></li>
+                    <li><a href="#" onclick="showData('SecurityStatementModal');">資安聲明</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__account">
+                <ul>
+                    <li><a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx" target="_blank">發票查詢</a></li>
+                    <li><a href="#" onclick="showData('InvoiceNoticeModal');">發票開立須知</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/GetPage" target="_blank">申請退票</a></li>
+                    <li><a href="/Sales/Template/%e9%80%80%e7%a5%a8%e7%94%b3%e8%ab%8b%e6%9b%b8.xlsx" download="">退票申請書下載</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/RefundProcess" target="_blank">退票進度查詢</a></li>
+                    <li><a href="https://www.family.com.tw/marketing/inquiry.aspx" target="_blank">取票店鋪查詢</a></li>
+                </ul>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        <div class="container">
+            <div class="copyright__inner row">
+                <div class="col-sm-12 color-w">
+                    Copyright © FamilyNet Co., Ltd. 全網行銷股份有限公司  統一編號：27560883
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="ServiceTermModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        會員服務條款
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="STText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="SecurityStatementModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        資安聲明
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="SSText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="InvoiceNoticeModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        發票開立須知
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="ISText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script>
+    $('a.goTop').on('click', function (e) {
+        e.preventDefault();
+        $('html, body').stop().animate({ scrollTop: 0 }, 300);
+    });
+</script>
+<script>
+    var $catgBar = $('.catg-bar');
+    $catgBar.each(function (index, element) {
+        var $this = $(this),
+            $catgDropDown = $this.find('.catg-bar__dropdown'),
+            $catgBarCategory = $this.find('.catg-bar__category');
+        $catgBarCategory.on('mouseenter', function (e) {
+            var $this = $(this),
+                index = $(this).index();
+            $catgBarCategory.removeClass('catg-bar__category--active');
+            $this.addClass('catg-bar__category--active');
+            if ($catgDropDown.find('.category__list').eq(index).length) {
+                $this.addClass('catg-bar__category--haschild');
+            }
+            $catgDropDown.css('top', $this.position().top + $this.innerHeight());
+            $catgDropDown.addClass('catg-bar__dropdown--active');
+            $catgDropDown.find('.category__list').removeClass('category__list--active');
+            $catgDropDown.find('.category__list').eq(index).addClass('category__list--active');
+        });
+        $this.on('mouseleave', function () {
+            $catgDropDown.removeClass('catg-bar__dropdown--active');
+            $catgBarCategory.removeClass('catg-bar__category--active');
+        });
+    });
+    setContainerMinHht('.min-hight-container');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('.header').outerHeight(),
+            navHht = $('.header__navbar').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight(),
+            goTopHht = $('.goTop__wrap').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - navHht - footerHht - goTopHht);
+        }
+    }
+    function showData(type) {
+
+        $.ajax('/Sales/Home/FooterData', {
+            dataType: 'json',
+            data: JSON.stringify({ "type": type }),
+            contentType: "application/json; charset=utf-8",
+            type: "POST",
+        })
+            .done(function (res) {
+                debugger;
+                if (res.STATUS == "OK") {
+  
+                    if (res.TYPE == "ServiceTermModal") {                        
+                        $('#STText').append(res.CONTENT);
+                        $("#ServiceTermModal").modal('show');
+                    }
+                    if (res.TYPE == "SecurityStatementModal") {
+                        $('#SSText').append(res.CONTENT);
+                        $("#SecurityStatementModal").modal('show');
+                    }
+                    if (res.TYPE == "InvoiceNoticeModal") {
+                        debugger;
+                        $('#ISText').append(res.CONTENT);
+                        $("#InvoiceNoticeModal").modal('show');
+                    }
+                }
+            });
+    }
+</script>
+
+    </div>
+
+    <form id="frmSearchHeader" name="frmSearchHeader" method="post" action="https://www.famiticket.com.tw/Home/Activity/Search">
+        <input type="hidden" id="hdnSearchHeaderCatg" name="searchCatgB">
+        <input type="hidden" id="hdnSearchHeaderName" name="searchName">
+        <input type="hidden" id="hdnSearchHeaderDateS" name="searchDateS">
+        <input type="hidden" id="hdnSearchHeaderDateE" name="searchDateE">
+    </form>
+    <script src="/Sales/Scripts/fm-cal.js"></script>
+    <script>
+        var d = new Date();
+        //new calendar(searchDateS, d.getFullYear(), d.getMonth() + 1);
+        //new calendar(searchDateE, d.getFullYear(), d.getMonth() + 1);
+
+        // 倒數
+        var nowOrder = 0;
+        var totalOrder = 0;
+        var TimeArray = [];
+
+
+            var timeoutId;
+            function clearCountDown() {
+                var $cartBtn = $('.cart-btn');
+                var $headerCartIcon = $('#cart_icon');
+            $cartBtn.remove();
+            $headerCartIcon.remove();
+                clearTimeout(timeoutId);
+            }
+        function setCountDown(time, afterCountDown, isSecond) {
+
+            var $cartBtn = $('.cart-btn');
+            var $cart_icon = document.getElementById("cart_icon");
+            doCountDown(time, afterCountDown, isSecond);
+
+        }
+        setCountDown(-1);
+
+        function doCountDown(time, afterCountDown, isSecond)
+        {
+
+        var $cartBtn = $('.cart-btn');
+        var $cart_icon = document.getElementById("cart_icon");
+        if ($cartBtn.length) {
+                if (!isSecond) {
+                    time = time / 1000;
+                }
+                var minute = Math.floor(time / 60),
+                    second = time % 60;
+                if (minute < 10) {
+                    minute = '0' + minute;
+                }
+                if (second < 10) {
+                    second = '0' + second;
+                }
+        $cartBtn.find('.cart-btn__time').text(minute + ':' + second);
+                time--;
+                timeoutId = setTimeout(function() {
+                    if (time >= 0) {
+                        {
+                            setCountDown(time, afterCountDown, true)
+                                        }
+                    } else {
+                        nowOrder++;
+                        if (nowOrder <= 0) {
+                            var newTime = parseInt(TimeArray[nowOrder]);
+                            time = newTime;
+
+                            var cartOrderNum = document.getElementById("cartOrderNum");
+                            var IconCartOrderNum = document.getElementById("IconCartOrderNum");
+                            IconCartOrderNum.innerText = totalOrder - nowOrder;
+                            cartOrderNum.innerText = totalOrder - nowOrder;
+
+                            setCountDown(time, afterCountDown, true);
+                        }
+                        else {
+                            if (typeof afterCountDown == 'function') {
+                                afterCountDown();
+                            }
+                                    $cartBtn.remove();
+                                    $cart_icon.remove();
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+    </script>
+    <script>
+        function btnSearchHeaderClick() {
+            document.getElementById("hdnSearchHeaderCatg").value = document.getElementById("searchCatg").value;
+            document.getElementById("hdnSearchHeaderName").value = document.getElementById("searchName").value;
+            document.getElementById("frmSearchHeader").submit();
+        }
+    </script>
+
+
+
+</body>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tickets Hunter Logo Preview</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #1a1a2e; 
+      color: #fff; 
+      padding: 40px;
+    }
+    h1 { color: #FF5722; text-align: center; }
+    h2 { color: #888; margin-top: 40px; }
+    .grid { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 30px; 
+      align-items: center;
+    }
+    .item { 
+      text-align: center; 
+      background: #16213e; 
+      padding: 20px; 
+      border-radius: 10px;
+    }
+    .item img { display: block; margin: 0 auto 10px; }
+    .size { color: #888; font-size: 12px; }
+    .light { background: #f5f5f5; }
+    .light .size { color: #666; }
+    .crosshair {
+      position: relative;
+      display: inline-block;
+    }
+    .crosshair::before, .crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.3);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .crosshair::before {
+      width: 1px;
+      height: 100%;
+      left: 50%;
+      top: 0;
+    }
+    .crosshair::after {
+      width: 100%;
+      height: 1px;
+      left: 0;
+      top: 50%;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎫 Tickets Hunter Logo</h1>
+  <p style="text-align:center; color:#FF5722;">Color: #FF5722 (夕陽橘) | 正方形背景</p>
+  
+  <h2>置中檢查 (白色十字線)</h2>
+  <div class="grid">
+    <div class="item">
+      <div class="crosshair">
+        <img src="logo_512.png" width="512" height="512">
+      </div>
+      <div class="size">512×512</div>
+    </div>
+  </div>
+  
+  <h2>各尺寸預覽</h2>
+  <div class="grid">
+    <div class="item">
+      <img src="logo_256.png" width="256" height="256">
+      <div class="size">256×256</div>
+    </div>
+    <div class="item">
+      <img src="logo_128.png" width="128" height="128">
+      <div class="size">128×128</div>
+    </div>
+    <div class="item">
+      <img src="logo_64.png" width="64" height="64">
+      <div class="size">64×64</div>
+    </div>
+    <div class="item">
+      <img src="logo_32.png" width="32" height="32">
+      <div class="size">32×32</div>
+    </div>
+    <div class="item">
+      <img src="logo_16.png" width="16" height="16">
+      <div class="size">16×16</div>
+    </div>
+  </div>
+  
+  <h2>淺色背景</h2>
+  <div class="grid">
+    <div class="item light">
+      <img src="logo_128.png" width="128" height="128">
+      <div class="size">128×128</div>
+    </div>
+    <div class="item light">
+      <img src="logo_64.png" width="64" height="64">
+      <div class="size">64×64</div>
+    </div>
+    <div class="item light">
+      <img src="logo_32.png" width="32" height="32">
+      <div class="size">32×32</div>
+    </div>
+  </div>
+</body>
+</html>

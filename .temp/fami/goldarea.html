@@ -1,0 +1,560 @@
+網址:https://www.famiticket.com.tw/Sales/Home/Index/4a06285b-6546-4e6c-b889-10b447784623
+程式進入區域選擇頁面選擇區域
+
+需要識別區塊內的區域 以及點選:<div class="area-list"><div class="area-list__content"><a class="area disabled" href="#"><div class="area__inner" style="background-color: rgb(8, 122, 60); color: rgb(255, 255, 255);"><div class="area__name">藍區</div><div class="area__price">640 / 800</div><div class="area__sale-status">售完</div></div></a><a class="area" href="#"><div class="area__inner" style="background-color: rgb(8, 122, 60); color: rgb(255, 255, 255);"><div class="area__name">粉區</div><div class="area__price">400 / 500</div><div class="area__sale-status">剩餘 60</div></div></a></div></div>
+
+
+
+
+
+<body>
+    <header class="header container">
+        <div class="row">
+
+            <div class="header__col col-lg-12">
+                <div class="famitkt-logo">
+                    <a class="famitkt-logo__link" href="https://www.famiticket.com.tw/Home">
+                        <img class="famitkt-logo__img img-responsive img-left" src="/Sales/Images/logo.png">
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center ml-auto">
+                    <div class="header__search d-none d-lg-block">
+                        <button class="btn header__search-btn" type="button" data-target="#searchModal" data-toggle="modal">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                        <div class="user-serve">
+                            <div class="user-serve__inner">
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/User/Orders">
+                                    <i class="fa-user"></i>
+                                    <span class="user-serve__name" id="membername">鍾*鈞</span>
+                                </a>
+                                <!--
+                                    <a class="user-serve__item user-serve__item--cart" href="./member">
+                                        <i class="fa-basket"></i>
+                                        <span>99</span>
+                                    </a>
+                                -->
+                                <a class="user-serve__item" href="https://www.famiticket.com.tw/Home/user/signout">
+                                    <i class="fa-logout"></i>
+                                </a>
+                            </div>
+                        </div>
+                    <div class="d-lg-none">
+                        <button class="navbar-toggler" aria-expanded="false" aria-controls="navbarNav" aria-label="Toggle navigation" type="button" data-target="#navbarNav" data-toggle="collapse">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </header>
+
+
+    <nav class="header__navbar navbar navbar-expand-lg">
+        <div class="container">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="" data-toggle="dropdown"><span>活動分類</span></a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+                                                                        <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242">戶外觀光</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/562">休閒農場</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/2">農遊超市</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/701">住宿</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/242/582">ESIM</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241">餐飲</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/82">其他</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/241/561">餐券</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164">主題樂園</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/741">日本樂園</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/164/461">樂園</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221">紓壓放鬆</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/221/523">美容SPA</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01">展演票券</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/581">文化幣(限線上)</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/42">體驗</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/424">展覽</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/321">表演&amp;劇場</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/C01/C11">演唱會</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01">運動賽事</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/161">其他</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/002">TPBL</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/001">中華職棒</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/62">TPVL</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/S01/721">PLG</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61">交通</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/261">阿里山線</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/61/342">台灣好行</a></li>
+
+                                                </ul>
+                                            </li>
+                                            <li class="dropdown-item dropdown-submenu">
+                                                <a class="dropdown-menu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01">電影</a>
+                                                <ul class="dropdown-menu">
+                                                                                                <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/301">交換票</a></li>
+                                            <li class="dropdown-item"><a class="dropdown-submenu__link" href="https://www.famiticket.com.tw/Home/Activity/Search/M01/481">特價電影票</a></li>
+
+                                                </ul>
+                                            </li>
+
+
+                        </ul>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" data-toggle="modal" data-target="#searchModal" href="#searchModal">活動探索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/Faq">常見問題</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/User/Orders">會員專區</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://www.famiticket.com.tw/Home/Home/TicketInstruction">購票須知</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modal -->
+    <div class="modal fade search-modal" id="searchModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        活動探索
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body search-modal__body">
+                    <div class="search-modal__inner">
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchName">活動名稱：</label>
+                            <input id="searchName" type="text" class="search-modal__input" maxlength="27">
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <label for="searchCatg">活動分類：</label>
+                            <select id="searchCatg" class="search-modal__select">
+                                                                    <option value="">全部</option>
+                                                <option value="242">戶外觀光</option>
+                                                <option value="241">餐飲</option>
+                                                <option value="164">主題樂園</option>
+                                                <option value="221">紓壓放鬆</option>
+                                                <option value="C01">展演票券</option>
+                                                <option value="S01">運動賽事</option>
+                                                <option value="61">交通</option>
+                                                <option value="M01">電影</option>
+
+                            </select>
+                        </div>
+                        <div class="search-modal__input-wrapper">
+                            <button type="button" class="btn search-modal__submit" onclick="btnSearchHeaderClick();">
+                                <i class="fas fa-search"></i><span class="search-modal__submit-text">搜尋</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alertModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        貼心提醒
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-1">
+                        <label id="alertText"></label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal" data-dismiss="modal">
+                            <span>確定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        
+
+<script>
+    var root = '/Sales/';
+
+    function buyTicket(sessionSeq, placeSeq, prefSeq, sessionName, sessionTime) {
+        app.startBuyTicket("e7cb61ba-9ab6-4e06-85c3-e2a3bfe52dc0",
+            { seq: sessionSeq, name: sessionName, time: sessionTime },
+            placeSeq, prefSeq, document.getElementById("defaultView"));
+    }
+
+    function showIntro(index) {
+            document.getElementById("Intro_" + 0).style.display = "none";
+            document.getElementById("Intro_" + 1).style.display = "none";
+        document.getElementById("Intro_" + index).style.display = "block";
+    }
+
+    function gotoMemberEdit() {
+        location.href = 'https://www.famiticket.com.tw/Home/User/Edit/#btnGvVerify';
+    }
+</script>
+<div id="app"><div class="container thin"><ul class="progressbar" data-li-count="6"><li class="active"><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>場次</li><li class="active"><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>區域</li><li class=""><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>票種</li><li class=""><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>訂單</li><li class=""><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>結帳</li><li class=""><div class="progressbar__dot"><div class="progressbar__dot-graph"><i class="progressbar__count"></i></div></div>完成</li></ul><div><div class="area-selector__title area-selector__title--activity">台瘋金曲派對-2025開森室內樂團沙龍音樂會</div><div class="area-selector__sub-title">場次名稱: 週六場, 時間: 2025.12.20 (六) 19:00</div><div class="area-selector__activity-info"><img src="https://www.famiticket.com.tw/Home/api/getimage/13154"></div></div><div class="area-selector__inner row"><div class="col-12"><div class="area-selector__title">請選擇區域</div></div><div class="col-md-6"><div class="area-selector__preview-outer"><button class="btn btn-submit"><i class="fas fa-search"></i>檢視原圖</button><div class="area-selector__preview" style="background-image: url(&quot;https://www.famiticket.com.tw/Home/api/getimage/13190&quot;); min-height: 465px;"></div></div></div><div class="modal show full-size"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div></div><button type="button" class="close"><span>×</span></button></div><div class="modal-body"><div class="full-size__wrap"><img src="https://www.famiticket.com.tw/Home/api/getimage/13190"></div></div></div></div></div><div class="col-md-6"><div class="area-selector__list-outer"><div class="area-list"><div class="area-list__content"><a class="area disabled" href="#"><div class="area__inner" style="background-color: rgb(8, 122, 60); color: rgb(255, 255, 255);"><div class="area__name">藍區</div><div class="area__price">640 / 800</div><div class="area__sale-status">售完</div></div></a><a class="area" href="#"><div class="area__inner" style="background-color: rgb(8, 122, 60); color: rgb(255, 255, 255);"><div class="area__name">粉區</div><div class="area__price">400 / 500</div><div class="area__sale-status">剩餘 60</div></div></a></div></div></div></div></div><div class="qnr-modal"><div class="qnr-modal__body"><div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;"><div class="loading"></div></div></div></div></div></div>
+
+
+<script src="/Sales/Scripts/bundle.js?20251118"></script>
+
+        
+            
+        
+
+
+<div class="d-flex justify-content-center goTop__wrap no-print">
+    <a class="goTop" href="#">
+        <span class="goTop__text">TOP</span>
+    </a>
+</div>
+<footer class="footer-outer no-print">
+    <div class="container ">
+        <div class="row footer">
+            <div class="col-lg-4 col-sm-10 footer__desc">
+                <img class="footer__desc-img" src="/Sales/images/logofooter.png">
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; gap: 10px;">
+                    <li class="line-cs">
+                        <a href="https://www.facebook.com/famiticket">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13948" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://www.instagram.com/famiticket/?hl=zh-tw">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13949" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                    <li class="line-cs">
+                        <a href="https://lin.ee/q5kJ632">
+                            <img src="https://www.famiticket.com.tw/Home/api/getimage/13950" alt="加入好友" height="36" border="0">
+                        </a>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <i class="fas fa-clock"></i>服務時間：
+                        <br>星期一～星期五 09:00~17:00
+                        <br>國定假日公休
+                    </li>
+                    
+                    <li class="line-cs"><span>LINE線上客服</span><a href="https://lin.ee/q5kJ632"><img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="36" border="0"></a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__service">
+                <ul>
+                    <li><a href="http://www.familynet.com.tw" target="_blank">關於全網</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Home/Cooperation">廠商合作</a></li>
+                    <li><a href="#" onclick="showData('ServiceTermModal');">會員服務條款</a></li>
+                    <li><a href="#" onclick="showData('SecurityStatementModal');">資安聲明</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-sm-10 footer__account">
+                <ul>
+                    <li><a href="https://eiv.familynet.com.tw/Page/EIV_Q.aspx" target="_blank">發票查詢</a></li>
+                    <li><a href="#" onclick="showData('InvoiceNoticeModal');">發票開立須知</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/GetPage" target="_blank">申請退票</a></li>
+                    <li><a href="/Sales/Template/%e9%80%80%e7%a5%a8%e7%94%b3%e8%ab%8b%e6%9b%b8.xlsx" download="">退票申請書下載</a></li>
+                    <li><a href="https://www.famiticket.com.tw/Home/Refund/RefundProcess" target="_blank">退票進度查詢</a></li>
+                    <li><a href="https://www.family.com.tw/marketing/inquiry.aspx" target="_blank">取票店鋪查詢</a></li>
+                </ul>
+                
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="copyright">
+        <div class="container">
+            <div class="copyright__inner row">
+                <div class="col-sm-12 color-w">
+                    Copyright © FamilyNet Co., Ltd. 全網行銷股份有限公司  統一編號：27560883
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="ServiceTermModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        會員服務條款
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="STText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="SecurityStatementModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        資安聲明
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="SSText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade terms-modal" id="InvoiceNoticeModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        發票開立須知
+                    </div>
+                    <button class="close" type="button" data-dismiss="modal">
+                        <span>×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="terms-modal__content">
+                        <label id="ISText"></label>
+                    </div>
+                    <button class="btn terms-modal__submit" type="button" data-dismiss="modal">
+                        <span>關閉</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script>
+    $('a.goTop').on('click', function (e) {
+        e.preventDefault();
+        $('html, body').stop().animate({ scrollTop: 0 }, 300);
+    });
+</script>
+<script>
+    var $catgBar = $('.catg-bar');
+    $catgBar.each(function (index, element) {
+        var $this = $(this),
+            $catgDropDown = $this.find('.catg-bar__dropdown'),
+            $catgBarCategory = $this.find('.catg-bar__category');
+        $catgBarCategory.on('mouseenter', function (e) {
+            var $this = $(this),
+                index = $(this).index();
+            $catgBarCategory.removeClass('catg-bar__category--active');
+            $this.addClass('catg-bar__category--active');
+            if ($catgDropDown.find('.category__list').eq(index).length) {
+                $this.addClass('catg-bar__category--haschild');
+            }
+            $catgDropDown.css('top', $this.position().top + $this.innerHeight());
+            $catgDropDown.addClass('catg-bar__dropdown--active');
+            $catgDropDown.find('.category__list').removeClass('category__list--active');
+            $catgDropDown.find('.category__list').eq(index).addClass('category__list--active');
+        });
+        $this.on('mouseleave', function () {
+            $catgDropDown.removeClass('catg-bar__dropdown--active');
+            $catgBarCategory.removeClass('catg-bar__category--active');
+        });
+    });
+    setContainerMinHht('.min-hight-container');
+    function setContainerMinHht(targetSelector) {
+        // 設定中間內容的最小高度
+        var headerHht = $('.header').outerHeight(),
+            navHht = $('.header__navbar').outerHeight(),
+            footerHht = $('.footer-outer').outerHeight(),
+            goTopHht = $('.goTop__wrap').outerHeight();
+        if (targetSelector) {
+            $(targetSelector).css('min-height', window.innerHeight - headerHht - navHht - footerHht - goTopHht);
+        }
+    }
+    function showData(type) {
+
+        $.ajax('/Sales/Home/FooterData', {
+            dataType: 'json',
+            data: JSON.stringify({ "type": type }),
+            contentType: "application/json; charset=utf-8",
+            type: "POST",
+        })
+            .done(function (res) {
+                debugger;
+                if (res.STATUS == "OK") {
+  
+                    if (res.TYPE == "ServiceTermModal") {                        
+                        $('#STText').append(res.CONTENT);
+                        $("#ServiceTermModal").modal('show');
+                    }
+                    if (res.TYPE == "SecurityStatementModal") {
+                        $('#SSText').append(res.CONTENT);
+                        $("#SecurityStatementModal").modal('show');
+                    }
+                    if (res.TYPE == "InvoiceNoticeModal") {
+                        debugger;
+                        $('#ISText').append(res.CONTENT);
+                        $("#InvoiceNoticeModal").modal('show');
+                    }
+                }
+            });
+    }
+</script>
+
+    </div>
+
+    <form id="frmSearchHeader" name="frmSearchHeader" method="post" action="https://www.famiticket.com.tw/Home/Activity/Search">
+        <input type="hidden" id="hdnSearchHeaderCatg" name="searchCatgB">
+        <input type="hidden" id="hdnSearchHeaderName" name="searchName">
+        <input type="hidden" id="hdnSearchHeaderDateS" name="searchDateS">
+        <input type="hidden" id="hdnSearchHeaderDateE" name="searchDateE">
+    </form>
+    <script src="/Sales/Scripts/fm-cal.js"></script>
+    <script>
+        var d = new Date();
+        //new calendar(searchDateS, d.getFullYear(), d.getMonth() + 1);
+        //new calendar(searchDateE, d.getFullYear(), d.getMonth() + 1);
+
+        // 倒數
+        var nowOrder = 0;
+        var totalOrder = 0;
+        var TimeArray = [];
+
+
+            var timeoutId;
+            function clearCountDown() {
+                var $cartBtn = $('.cart-btn');
+                var $headerCartIcon = $('#cart_icon');
+            $cartBtn.remove();
+            $headerCartIcon.remove();
+                clearTimeout(timeoutId);
+            }
+        function setCountDown(time, afterCountDown, isSecond) {
+
+            var $cartBtn = $('.cart-btn');
+            var $cart_icon = document.getElementById("cart_icon");
+            doCountDown(time, afterCountDown, isSecond);
+
+        }
+        setCountDown(-1);
+
+        function doCountDown(time, afterCountDown, isSecond)
+        {
+
+        var $cartBtn = $('.cart-btn');
+        var $cart_icon = document.getElementById("cart_icon");
+        if ($cartBtn.length) {
+                if (!isSecond) {
+                    time = time / 1000;
+                }
+                var minute = Math.floor(time / 60),
+                    second = time % 60;
+                if (minute < 10) {
+                    minute = '0' + minute;
+                }
+                if (second < 10) {
+                    second = '0' + second;
+                }
+        $cartBtn.find('.cart-btn__time').text(minute + ':' + second);
+                time--;
+                timeoutId = setTimeout(function() {
+                    if (time >= 0) {
+                        {
+                            setCountDown(time, afterCountDown, true)
+                                        }
+                    } else {
+                        nowOrder++;
+                        if (nowOrder <= 0) {
+                            var newTime = parseInt(TimeArray[nowOrder]);
+                            time = newTime;
+
+                            var cartOrderNum = document.getElementById("cartOrderNum");
+                            var IconCartOrderNum = document.getElementById("IconCartOrderNum");
+                            IconCartOrderNum.innerText = totalOrder - nowOrder;
+                            cartOrderNum.innerText = totalOrder - nowOrder;
+
+                            setCountDown(time, afterCountDown, true);
+                        }
+                        else {
+                            if (typeof afterCountDown == 'function') {
+                                afterCountDown();
+                            }
+                                    $cartBtn.remove();
+                                    $cart_icon.remove();
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+    </script>
+    <script>
+        function btnSearchHeaderClick() {
+            document.getElementById("hdnSearchHeaderCatg").value = document.getElementById("searchCatg").value;
+            document.getElementById("hdnSearchHeaderName").value = document.getElementById("searchName").value;
+            document.getElementById("frmSearchHeader").submit();
+        }
+    </script>
+
+
+
+</body>
