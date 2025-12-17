@@ -9,6 +9,9 @@
   - 購物車頁面自動偵測與通知
 - 新增 UDN 日期/區域選擇支援 Feature 003 遞補機制
 - 修復 UDN 區域選擇器（table.yd_ticketsTable → table.status）
+- 優化 TixCraft 日期/區域選擇效能（主動輪詢取代被動等待）
+- 修復 UDN 快速購票關鍵字匹配與回退邏輯
+- 新增 UDN 日期/場次選擇 AND 邏輯支援
 
 ## 2025.12.16
 
