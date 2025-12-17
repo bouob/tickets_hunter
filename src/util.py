@@ -1408,12 +1408,74 @@ def get_target_item_from_matched_list(matched_blocks, auto_select_mode):
     return matched_blocks[target_index] if target_index is not None else None
 
 
-def get_matched_blocks_by_keyword(config_dict, auto_select_mode, keyword_string, formated_area_list):
-    keyword_array = []
+def get_debug_mode(config_dict):
+    """
+    Safely read debug mode setting from config.
+
+    Consolidates 6 different access patterns found in codebase:
+    - Pattern 1: config_dict["advanced"]["verbose"] (HIGH RISK - KeyError)
+    - Pattern 2: config_dict["advanced"].get("verbose", False)
+    - Pattern 3: config_dict.get("advanced", {}).get("verbose", False) (SAFEST)
+
+    Args:
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: Debug mode status, defaults to False
+
+    Example:
+        # Before (6 different patterns, 80+ locations):
+        show_debug_message = config_dict["advanced"]["verbose"]
+
+        # After (unified):
+        show_debug_message = get_debug_mode(config_dict)
+    """
     try:
-        keyword_array = json.loads("["+ keyword_string +"]")
-    except Exception as exc:
-        keyword_array = []
+        return config_dict.get("advanced", {}).get("verbose", False)
+    except:
+        return False
+
+
+def parse_keyword_string_to_array(keyword_string):
+    """
+    Parse keyword string to array using JSON format.
+
+    Expected input format: '"keyword1","keyword2"' or '"keyword1 sub1","keyword2"'
+    Inner space = AND logic, outer comma = OR logic.
+
+    This function only handles parsing. For custom fallback logic,
+    check the return value and implement fallback at call site.
+
+    Args:
+        keyword_string: Comma-separated quoted keywords
+
+    Returns:
+        list: Parsed keywords, or empty list on failure
+
+    Example:
+        parse_keyword_string_to_array('"VIP","1F"') -> ["VIP", "1F"]
+        parse_keyword_string_to_array('"VIP Rock Area"') -> ["VIP Rock Area"]
+        parse_keyword_string_to_array('') -> []
+        parse_keyword_string_to_array('invalid') -> []
+
+    Note:
+        For locations requiring custom fallback (e.g., comma split, semicolon split),
+        implement fallback at call site:
+
+        keywords = parse_keyword_string_to_array(keyword)
+        if not keywords:
+            keywords = [kw.strip() for kw in keyword.split(',') if kw.strip()]
+    """
+    if not keyword_string or not keyword_string.strip():
+        return []
+    try:
+        return json.loads("[" + keyword_string + "]")
+    except:
+        return []
+
+
+def get_matched_blocks_by_keyword(config_dict, auto_select_mode, keyword_string, formated_area_list):
+    keyword_array = parse_keyword_string_to_array(keyword_string)
 
     matched_blocks = []
     for keyword_item_set in keyword_array:

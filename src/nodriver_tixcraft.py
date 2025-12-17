@@ -510,7 +510,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     if show_debug_message:
         print("nodriver_kktix_signin:", url)
@@ -608,7 +608,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     return has_redirected
 
 async def nodriver_kktix_paused_main(tab, url, config_dict):
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -701,7 +701,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
         tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
-            if config_dict["advanced"]["verbose"]:
+            if util.get_debug_mode(config_dict):
                 print(f"Setting tixcraft TIXUISID cookie, length: {len(tixcraft_sid)}")
 
             try:
@@ -717,10 +717,10 @@ async def nodriver_goto_homepage(driver, config_dict):
                         name="TIXUISID",
                         domain=cookie_domain
                     ))
-                    if config_dict["advanced"]["verbose"]:
+                    if util.get_debug_mode(config_dict):
                         print(f"Deleted existing SID and TIXUISID cookies for domain: {cookie_domain}")
                 except Exception as del_e:
-                    if config_dict["advanced"]["verbose"]:
+                    if util.get_debug_mode(config_dict):
                         print(f"Note: Could not delete existing cookies: {del_e}")
 
                 # Step 2: Set new TIXUISID cookie using CDP
@@ -733,7 +733,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                     http_only=True
                 ))
 
-                if config_dict["advanced"]["verbose"]:
+                if util.get_debug_mode(config_dict):
                     print(f"CDP setCookie result: {cookie_result}")
                     print("tixcraft TIXUISID cookie set successfully")
 
@@ -741,13 +741,13 @@ async def nodriver_goto_homepage(driver, config_dict):
                 updated_cookies = await driver.cookies.get_all()
                 sid_cookies = [c for c in updated_cookies if c.name == 'TIXUISID']
                 if not sid_cookies:
-                    if config_dict["advanced"]["verbose"]:
+                    if util.get_debug_mode(config_dict):
                         print("Warning: TixCraft TIXUISID cookie not found after setting")
-                elif config_dict["advanced"]["verbose"]:
+                elif util.get_debug_mode(config_dict):
                     print(f"Verified TIXUISID cookie: domain={sid_cookies[0].domain}, value length={len(sid_cookies[0].value)}")
 
             except Exception as e:
-                if config_dict["advanced"]["verbose"]:
+                if util.get_debug_mode(config_dict):
                     print(f"Error setting TixCraft TIXUISID cookie: {str(e)}")
                     import traceback
                     traceback.print_exc()
@@ -769,13 +769,13 @@ async def nodriver_goto_homepage(driver, config_dict):
                 cookies_filtered.append(new_cookie)
                 await driver.cookies.set_all(cookies_filtered)
 
-                if config_dict["advanced"]["verbose"]:
+                if util.get_debug_mode(config_dict):
                     print("tixcraft TIXUISID cookie set successfully (fallback method)")
 
     if 'ibon.com' in homepage:
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
-        if config_dict["advanced"]["verbose"]:
+        if util.get_debug_mode(config_dict):
             if login_result['success']:
                 print("ibon login process completed successfully")
             else:
@@ -796,7 +796,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     ticket_number = config_dict["ticket_number"]
@@ -1073,7 +1073,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     ticket_number_str = str(config_dict["ticket_number"])
@@ -1223,7 +1223,7 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     answer_list = []
@@ -1769,7 +1769,7 @@ async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"]["verbose"] if config_dict else False
+    show_debug_message = util.get_debug_mode(config_dict) if config_dict else False
     try:
         result = await tab.evaluate('''
             (function() {
@@ -1876,7 +1876,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"]["verbose"] if config_dict else False
+    show_debug_message = util.get_debug_mode(config_dict) if config_dict else False
 
     # 重試機制：最多嘗試 3 次
     for retry_count in range(3):
@@ -2170,7 +2170,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     # 增加執行計數器，防止無限迴圈
@@ -2605,7 +2605,7 @@ def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
 
 async def nodriver_kktix_main(tab, url, config_dict):
     global kktix_dict
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     if not 'kktix_dict' in globals():
         kktix_dict = {}
@@ -2879,7 +2879,7 @@ async def nodriver_kktix_confirm_order_button(tab, config_dict):
     KKTIX 訂單確認按鈕自動點擊功能
     對應 Chrome 版本的 kktix_confirm_order_button()
     """
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
     ret = False
 
     try:
@@ -2915,7 +2915,7 @@ async def nodriver_kktix_double_check_all_text_value(tab, config_dict, ticket_nu
     對應 Chrome 版本的 kktix_double_check_all_text_value()
     確認票數輸入正確後才自動按下一步
     """
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
     is_do_press_next_button = False
 
     try:
@@ -3030,7 +3030,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     Returns:
         bool: 是否成功填寫會員序號
     """
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
@@ -4613,7 +4613,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     answer_list = []
@@ -5031,14 +5031,8 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     if area_keyword:
         # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
         # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
-        # Supports OR logic - iterates through keywords until match found (Line 3086-3099)
-        try:
-            # Use JSON parsing instead of simple comma split to handle keywords with commas
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-        except Exception as e:
-            if show_debug_message:
-                print(f"[AREA KEYWORD] Parse error: {e}")
-            area_keyword_array = []
+        # Supports OR logic - iterates through keywords until match found
+        area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
         # T012: Start checking keywords log
         if show_debug_message:
@@ -5420,7 +5414,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
     is_ticket_number_assigned = False
 
     # 等待票券選擇器出現（智慧等待，取代固定 0.5 秒延遲）
@@ -5457,15 +5451,9 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     # Parse keywords using JSON
-    area_keyword_array = []
-    if area_keyword:
-        try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-            if show_debug_message:
-                print(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
-        except Exception as e:
-            if show_debug_message:
-                print(f"[TICKET SELECT] Keyword parse error: {e}")
+    area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
+    if show_debug_message and area_keyword_array:
+        print(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
 
     # 過濾並收集票種資訊（包含票種名稱）
     valid_ticket_types = []
@@ -5691,7 +5679,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     return is_ticket_number_assigned, select_obj
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     if show_debug_message:
         print("Starting to check agreement checkbox")
@@ -5717,7 +5705,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     # 檢查是否已經設定過票券數量（方案 B：狀態標記）
@@ -5996,7 +5984,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
     show_debug_message = True       # debug.
     show_debug_message = False      # online
 
-    if config_dict["advanced"]["verbose"]:
+    if util.get_debug_mode(config_dict):
         show_debug_message = True
 
     is_need_redo_ocr = False
@@ -6066,7 +6054,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
     if await check_and_handle_pause(config_dict):
         return False, "", False
 
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:
@@ -9048,7 +9036,7 @@ async def nodriver_ticketplus_check_next_button(tab):
 
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
     """處理活動專屬代碼（折價券/優惠序號）"""
-    show_debug_message = config_dict["advanced"]["verbose"]
+    show_debug_message = util.get_debug_mode(config_dict)
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
@@ -9740,11 +9728,9 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
                 matched_rows = formated_area_list
             else:
                 # 有關鍵字，進行 OR 匹配
-                # Use json.loads to properly handle quoted strings (same as util.py:1390)
-                keywords = []
-                try:
-                    keywords = json.loads("[" + date_keyword + "]")
-                except Exception:
+                keywords = util.parse_keyword_string_to_array(date_keyword)
+                if not keywords:
+                    # Fallback: comma-separated plain text
                     keywords = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
                 for item in formated_area_list:
                     item_text = item.get('txt', item.get('text', ''))
@@ -10665,45 +10651,38 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     target_found = False
 
     if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            keyword_array = json.loads("[" + date_keyword + "]")
+        keyword_array = util.parse_keyword_string_to_array(date_keyword)
+        if show_debug_message:
+            print(f"[IBON DATE PIERCE KEYWORD] Start checking keywords in order: {keyword_array}")
+
+        # NEW: Iterate keywords in priority order (early return)
+        for keyword_index, keyword_item in enumerate(keyword_array):
             if show_debug_message:
-                print(f"[IBON DATE PIERCE KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON DATE PIERCE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON DATE PIERCE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all buttons for this keyword
+            for button in enabled_buttons:
+                date_context = button.get('date_context', '').lower()
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
 
-                # Check all buttons for this keyword
-                for button in enabled_buttons:
-                    date_context = button.get('date_context', '').lower()
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    is_match = all(sub_kw.lower() in date_context for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T006: Keyword matched log - IMMEDIATELY select and stop
-                        matched_buttons = [button]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON DATE PIERCE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON DATE PIERCE SELECT] Selected date: {date_context[:50]} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # T006: Keyword matched log - IMMEDIATELY select and stop
+                    matched_buttons = [button]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON DATE PIERCE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                        print(f"[IBON DATE PIERCE SELECT] Selected date: {date_context[:50]} (keyword match)")
                     break
 
-            # T007: All keywords failed log
-            if not target_found:
-                if show_debug_message:
-                    print(f"[IBON DATE PIERCE KEYWORD] All keywords failed to match")
+            if target_found:
+                # EARLY RETURN: Stop checking further keywords
+                break
 
-        except json.JSONDecodeError as e:
+        # T007: All keywords failed log
+        if not target_found:
             if show_debug_message:
-                print(f"[IBON DATE PIERCE] Keyword parse error: {e}")
-                print(f"[IBON DATE PIERCE] Treating as 'all keywords failed'")
-            matched_buttons = []  # Let Feature 003 fallback logic handle this
+                print(f"[IBON DATE PIERCE KEYWORD] All keywords failed to match")
     else:
         matched_buttons = enabled_buttons
 
@@ -11010,52 +10989,44 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     target_found = False
 
     if len(date_keyword) > 0 and enabled_buttons:
-        try:
-            # Parse as JSON array (auto-removes quotes)
-            import json
-            keyword_array = json.loads("[" + date_keyword + "]")
+        # Parse as JSON array (auto-removes quotes)
+        keyword_array = util.parse_keyword_string_to_array(date_keyword)
+        if show_debug_message:
+            print(f"[IBON DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+
+        # NEW: Iterate keywords in priority order (early return)
+        for keyword_index, keyword_item in enumerate(keyword_array):
             if show_debug_message:
-                print(f"[IBON DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+                print(f"[IBON DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
 
-            # NEW: Iterate keywords in priority order (early return)
-            for keyword_index, keyword_item in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[IBON DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            # Check all buttons for this keyword
+            for button in enabled_buttons:
+                button_text = button.get('text', '').lower()
+                date_context = button.get('date_context', '').lower()
+                search_text = f"{button_text} {date_context}"
 
-                # Check all buttons for this keyword
-                for button in enabled_buttons:
-                    button_text = button.get('text', '').lower()
-                    date_context = button.get('date_context', '').lower()
-                    search_text = f"{button_text} {date_context}"
+                # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
+                sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                # Check if all sub-keywords match (AND logic within group)
+                is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
 
-                    # Split by space for AND logic (e.g., "AA BB" means AA AND BB)
-                    sub_keywords = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
-                    # Check if all sub-keywords match (AND logic within group)
-                    is_match = all(sub_kw.lower() in search_text for sub_kw in sub_keywords)
-
-                    if is_match:
-                        # T006: Keyword matched log - IMMEDIATELY select and stop
-                        matched_buttons = [button]
-                        target_found = True
-                        if show_debug_message:
-                            print(f"[IBON DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                            print(f"[IBON DATE SELECT] Selected date: {date_context[:50]} (keyword match)")
-                        break
-
-                if target_found:
-                    # EARLY RETURN: Stop checking further keywords
+                if is_match:
+                    # T006: Keyword matched log - IMMEDIATELY select and stop
+                    matched_buttons = [button]
+                    target_found = True
+                    if show_debug_message:
+                        print(f"[IBON DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                        print(f"[IBON DATE SELECT] Selected date: {date_context[:50]} (keyword match)")
                     break
 
-            # T007: All keywords failed log
-            if not target_found:
-                if show_debug_message:
-                    print(f"[IBON DATE KEYWORD] All keywords failed to match")
+            if target_found:
+                # EARLY RETURN: Stop checking further keywords
+                break
 
-        except json.JSONDecodeError as e:
+        # T007: All keywords failed log
+        if not target_found:
             if show_debug_message:
-                print(f"[IBON DATE] Keyword parse error: {e}")
-                print(f"[IBON DATE] Treating as 'all keywords failed'")
-            matched_buttons = []  # Let Feature 003 fallback logic handle this
+                print(f"[IBON DATE KEYWORD] All keywords failed to match")
     else:
         matched_buttons = enabled_buttons
 
@@ -17340,12 +17311,7 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 
     if len(area_keyword) > 0:
         # Parse JSON array keyword
-        area_keyword_array = []
-        try:
-            import json
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-        except:
-            area_keyword_array = []
+        area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
         # Feature 003: Enhanced fallback logic with early return
         for keyword_index, area_keyword_item in enumerate(area_keyword_array):
@@ -22983,10 +22949,8 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
     else:
         # Parse keyword - use json.loads to properly handle quoted strings (same as util.py:1390)
         # Input format: "AAA","BBB CC","VIP 2" -> ['AAA', 'BBB CC', 'VIP 2']
-        keyword_sets = []
-        try:
-            keyword_sets = json.loads("[" + area_keyword_item + "]")
-        except Exception:
+        keyword_sets = util.parse_keyword_string_to_array(area_keyword_item)
+        if not keyword_sets:
             # Fallback to simple split if json parsing fails
             keyword_sets = [kw.strip() for kw in area_keyword_item.split(',') if kw.strip()]
 
@@ -23916,10 +23880,8 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                     matched_blocks = [item[0] for item in formated_list]
                 else:
                     # Parse keywords
-                    keyword_sets = []
-                    try:
-                        keyword_sets = json.loads("[" + date_keyword + "]")
-                    except:
+                    keyword_sets = util.parse_keyword_string_to_array(date_keyword)
+                    if not keyword_sets:
                         keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
 
                     if show_debug_message:
@@ -24059,10 +24021,8 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
                 matched_blocks = [item[0] for item in formated_list]
             else:
                 # Parse keywords
-                keyword_sets = []
-                try:
-                    keyword_sets = json.loads("[" + area_keyword_item + "]")
-                except:
+                keyword_sets = util.parse_keyword_string_to_array(area_keyword_item)
+                if not keyword_sets:
                     keyword_sets = [kw.strip() for kw in area_keyword_item.split(',') if kw.strip()]
 
                 if show_debug_message:
