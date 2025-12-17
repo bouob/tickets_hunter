@@ -4968,9 +4968,27 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
         except:
             pass
 
+        # Active polling during cooldown period (same pattern as area selection)
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
-            await asyncio.sleep(interval)
+            if show_debug_message:
+                print(f"[DATE SELECT] Waiting up to {interval}s with active polling...")
+            # Poll every 0.2s during the wait period
+            poll_count = int(interval * 5)
+            for poll_idx in range(poll_count):
+                await asyncio.sleep(0.2)
+                try:
+                    # Check for date list elements (TixCraft uses .btn-group within .auto-continue-info or .btn-primary)
+                    el = await tab.wait_for('.btn-group .btn-primary, .auto-continue-info a, .btn-group button', timeout=0.1)
+                    if el:
+                        if show_debug_message:
+                            print(f"[DATE DELAYED] Date links detected after {(poll_idx + 1) * 0.2:.1f}s")
+                        # Re-run the date selection logic
+                        return await nodriver_tixcraft_date_auto_select(tab, url, config_dict)
+                except:
+                    pass
+            if show_debug_message:
+                print(f"[DATE DELAYED] No date links detected during {interval}s polling")
 
     return is_date_clicked
 
@@ -5112,21 +5130,40 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             retry_phases.append({"name": "DELAYED", "wait_timeout": 2, "delay_before": interval})
 
         for phase in retry_phases:
-            # Wait before this phase (0 for immediate, interval for delayed)
+            el = None
+
+            # Wait before this phase with active polling (0 for immediate, interval for delayed)
             if phase["delay_before"] > 0:
                 if show_debug_message:
-                    print(f"[AREA SELECT] Waiting {phase['delay_before']}s before retry...")
-                await asyncio.sleep(phase["delay_before"])
-
-            # Wait for area links to appear
-            try:
-                el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
-                if show_debug_message:
-                    print(f"[AREA {phase['name']}] Area links detected")
-            except:
-                if show_debug_message:
-                    print(f"[AREA {phase['name']}] Timeout waiting for area links")
-                continue
+                    print(f"[AREA SELECT] Waiting up to {phase['delay_before']}s with active polling...")
+                # Poll every 0.2s during the wait period
+                poll_count = int(phase["delay_before"] * 5)
+                for poll_idx in range(poll_count):
+                    await asyncio.sleep(0.2)
+                    try:
+                        el = await tab.wait_for('.zone a', timeout=0.1)
+                        if el:
+                            if show_debug_message:
+                                print(f"[AREA {phase['name']}] Area links detected after {(poll_idx + 1) * 0.2:.1f}s")
+                            break
+                    except:
+                        pass
+                if el:
+                    pass  # Found element during polling, proceed to keyword check
+                else:
+                    if show_debug_message:
+                        print(f"[AREA {phase['name']}] No area links detected during {phase['delay_before']}s polling")
+                    continue
+            else:
+                # Immediate phase: wait for area links to appear
+                try:
+                    el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
+                    if show_debug_message:
+                        print(f"[AREA {phase['name']}] Area links detected")
+                except:
+                    if show_debug_message:
+                        print(f"[AREA {phase['name']}] Timeout waiting for area links")
+                    continue
 
             if not el:
                 continue
