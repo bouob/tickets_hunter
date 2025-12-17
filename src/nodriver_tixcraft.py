@@ -18029,7 +18029,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             for i, date_item in enumerate(dates):
                                 date_text = date_item.get('text', '')
                                 for kw in keywords:
-                                    if kw in date_text:
+                                    # Support AND logic (space-separated keywords)
+                                    kw_parts = kw.split(' ') if ' ' in kw else [kw]
+                                    all_match = all(part in date_text for part in kw_parts)
+                                    if all_match:
                                         target_date_idx = i
                                         keyword_matched = True
                                         if show_debug_message:
@@ -18097,7 +18100,8 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                     if isinstance(perf_result, dict) and perf_result.get('count', 0) > 0:
                         perfs = perf_result.get('perfs', [])
-                        target_perf_idx = 0  # Default to first performance
+                        target_perf_idx = None  # None means no match yet
+                        keyword_matched = False
 
                         # Check if any is already active
                         has_active = any(p.get('isActive') for p in perfs)
@@ -18114,16 +18118,46 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             for i, perf_item in enumerate(perfs):
                                 perf_text = perf_item.get('text', '')
                                 for kw in keywords:
-                                    if kw in perf_text:
+                                    # Support AND logic (space-separated keywords)
+                                    kw_parts = kw.split(' ') if ' ' in kw else [kw]
+                                    all_match = all(part in perf_text for part in kw_parts)
+                                    if all_match:
                                         target_perf_idx = i
+                                        keyword_matched = True
                                         if show_debug_message:
                                             print(f"[UDN QUICK BUY] Performance matched: {perf_text} with keyword: {kw}")
                                         break
-                                if target_perf_idx != 0:
+                                if keyword_matched:
                                     break  # Early return when matched
 
+                        # Fallback logic based on date_auto_fallback and mode
+                        if not keyword_matched and not has_active:
+                            date_auto_fallback = config_dict.get("date_auto_fallback", False)
+                            date_mode = config_dict["date_auto_select"].get("mode", "from top to bottom")
+
+                            if date_auto_fallback:
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] Performance keyword not matched, fallback with mode: {date_mode}")
+
+                                if date_mode == "from bottom to top":
+                                    target_perf_idx = len(perfs) - 1
+                                elif date_mode == "center":
+                                    target_perf_idx = len(perfs) // 2
+                                elif date_mode == "random":
+                                    import random
+                                    target_perf_idx = random.randint(0, len(perfs) - 1)
+                                else:  # "from top to bottom" or default
+                                    target_perf_idx = 0
+
+                                if show_debug_message:
+                                    selected_perf = perfs[target_perf_idx].get('text', '') if target_perf_idx is not None and target_perf_idx < len(perfs) else ''
+                                    print(f"[UDN QUICK BUY] Fallback selected performance: {selected_perf}")
+                            else:
+                                # Strict mode: default to first
+                                target_perf_idx = 0
+
                         # Click the performance button if not already active
-                        if not has_active:
+                        if not has_active and target_perf_idx is not None:
                             await tab.evaluate(f'''
                                 (() => {{
                                     const perfBtns = document.querySelectorAll('div.sd-btn.bg--gray');
