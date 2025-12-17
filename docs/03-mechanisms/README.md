@@ -22,7 +22,9 @@ docs/03-mechanisms/
 ├── 09-terms-agreement.md        Stage 9:  同意條款
 ├── 10-order-submit.md           Stage 10: 訂單送出
 ├── 11-queue-payment.md          Stage 11: 排隊付款
-└── 12-error-handling.md         Stage 12: 錯誤處理
+├── 12-error-handling.md         Stage 12: 錯誤處理
+│
+└── 13-active-polling-pattern.md 跨階段: Active Polling 主動輪詢機制 ✅ NEW
 
 ✅ = 已完成詳細文件化
 ```
@@ -314,7 +316,36 @@ docs/03-mechanisms/
 
 ---
 
-### 3. 設定驅動開發
+### 3. Active Polling Pattern（主動輪詢）
+
+**核心理念**：刷新冷卻期間持續偵測，不錯過快速出現的機會。
+
+**傳統問題**：
+```
+[reload] ──────── 8s sleep ────────→ [check]
+                     ↑
+               票出現但沒偵測到
+```
+
+**Active Polling 解決方案**：
+```
+[reload] → [0.2s check] → [0.2s check] → ... → [found!]
+                  ↑
+            立即偵測並處理
+```
+
+**關鍵參數**：
+- 輪詢間隔：0.2 秒
+- 輪詢次數：`interval * 5`（自動計算）
+- 最快反應時間：0.2 秒（相比傳統 8 秒，提升 **40x**）
+
+**應用階段**：Stage 4（日期選擇）、Stage 5（區域選擇）
+
+**詳細說明**：[13-active-polling-pattern.md](./13-active-polling-pattern.md)
+
+---
+
+### 4. 設定驅動開發
 
 **核心理念**：所有行為由 `settings.json` 控制,使用者友善。
 

@@ -52,7 +52,8 @@
       "mcp__discord__read_messages",
       "mcp__chrome-devtools__evaluate_script",
       "mcp__chrome-devtools__click",
-      "mcp__chrome-devtools__wait_for"
+      "mcp__chrome-devtools__wait_for",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": [],
     "ask": []
