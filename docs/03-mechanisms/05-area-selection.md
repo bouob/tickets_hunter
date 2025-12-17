@@ -294,13 +294,15 @@ if config_dict["ticket_number"] > 1:
 | **iBon** | Button list | ✅ Closed | **DOMSnapshot 平坦化**策略 | `nodriver_ibon_area_auto_select()` | 100% ✅ |
 | **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 area 面板 | `nodriver_ticketplus_area_auto_select()` | 100% ✅ |
 | **KHAM** | Table rows | ❌ 無 | Table mode + Seat map 雙模式 | `nodriver_kham_area_auto_select()` | 100% ✅ |
+| **UDN** | Table rows | ❌ 無 | 複用 KHAM 邏輯 (`table.yd_ticketsTable`) | `nodriver_kham_area_auto_select()` | 100% ✅ |
 
 **程式碼位置**（`nodriver_tixcraft.py`）：
 - **TixCraft**: Line 2993 (`nodriver_tixcraft_area_auto_select`, 主要參考範例) ⭐
 - KKTIX: Line ~1000-1168 (`nodriver_kktix_assign_ticket_number`)
 - iBon: Line 9083 (1295 行，Shadow DOM 最複雜範例)
 - TicketPlus: Line ~2300-2500 (`nodriver_ticketplus_area_auto_select`)
-- KHAM: Line 12463-13022 (`nodriver_kham_area_auto_select`)
+- KHAM: Line 16790-17213 (`nodriver_kham_area_auto_select`)
+- **UDN**: Line 17669-17688 (複用 KHAM 邏輯，Feature 010: 2025-12-17)
 
 ---
 

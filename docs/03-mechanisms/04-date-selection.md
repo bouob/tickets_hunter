@@ -259,13 +259,15 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
 | **iBon** | Button list | ✅ Closed | **DOMSnapshot 平坦化**策略 | `nodriver_ibon_date_auto_select()` | 100% ✅ |
 | **TicketPlus** | Expansion panel | ❌ 無 | 需先展開 date 面板 | `nodriver_ticketplus_date_auto_select()` | 100% ✅ |
 | **KHAM** | Table rows | ❌ 無 | 支援 3 域名變體 (kham/ticket/udn) | `nodriver_kham_date_auto_select()` | 100% ✅ |
+| **UDN** | Session blocks | ❌ 無 | 複用 KHAM 邏輯 (`div.yd_session-block`) | `nodriver_kham_date_auto_select()` | 100% ✅ |
 
 **程式碼位置**（`nodriver_tixcraft.py`）：
 - **TixCraft**: Line 2660 (`nodriver_tixcraft_date_auto_select`, 主要參考範例) ⭐
 - KKTIX: Line ~700-900 (`nodriver_kktix_presale_home`)
 - iBon: Line 5860 (282 行，Shadow DOM 最複雜範例)
 - TicketPlus: Line 2210 (`nodriver_ticketplus_date_auto_select`)
-- KHAM: Line 12200-12462 (`nodriver_kham_date_auto_select`)
+- KHAM: Line 16401-16680 (`nodriver_kham_date_auto_select`)
+- **UDN**: 複用 KHAM 邏輯，選擇器 `div.yd_session-block` (Feature 010: 2025-12-17)
 
 ---
 
