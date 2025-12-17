@@ -25,97 +25,7 @@ https://tickets.udnfunlife.com/application/UTK01/UTK0101_.aspx
 [UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
 [UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
 [UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: Could not find node with given id [code: -32000]
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Already logged in, proceeding to redirect...
-[KHAM LOGIN] Redirecting to target: https://tickets.udnfunlife.com/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P12YQQ5C&kdid=A05
-https://tickets.udnfunlife.com/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P12YQQ5C&kdid=A05
-https://tickets.udnfunlife.com/application/UTK02/UTK0222_02.aspx?PRODUCT_ID=P12YQQ5C
-[UDN QUICK BUY] Detected UTK0222_02 fast purchase page
-[UDN QUICK BUY] Date keywords parsed: ['2026/01/18']
-[UDN QUICK BUY] Date matched: 2026/01/18 台中市 with keyword: 2026/01/18
-[UDN QUICK BUY] Found 7 ticket areas
-[UDN QUICK BUY] Area keywords parsed: ['2樓座位']
-[UDN QUICK BUY] Matched area: 2樓座位 with keyword: 2樓座位
-[UDN QUICK BUY] Clicking buy button for area: 2樓座位, fastcode: 98583
-[UDN QUICK BUY] Set quantity to 4 (max: 4)
-[UDN QUICK BUY] Clicked submit button, waiting for navigation...
-https://tickets.udnfunlife.com/application/UTK02/UTK0206_.aspx
-[SUCCESS] Reached checkout page - ticket purchase successful!
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx
-[UDN LOGIN] Already logged in, proceeding to redirect...
-[KHAM LOGIN] Redirecting to target: https://tickets.udnfunlife.com/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P12YQQ5C&kdid=A05
-[WinError 1225] 遠端電腦拒絕網路連線。
-successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_ochvickn
-run button pressed.
-execute in shell mode.
-try python
-https://tickets.udnfunlife.com/application/UTK01/UTK0101_.aspx
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
-[UDN LOGIN] include_frames method failed: 'NoneType' object is not iterable
-[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
-[UDN LOGIN] Not logged in, executing login with account: vic***
+[UDN LOGIN] include_frames method failed: Node with given id does not belong to the document [code: -32000]
 [UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...
 [UDN LOGIN] Already logged in, proceeding to redirect...
 [KHAM LOGIN] Redirecting to target: https://tickets.udnfunlife.com/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P12YQQ5C&kdid=A05
@@ -123,21 +33,14 @@ https://tickets.udnfunlife.com/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P12YQQ
 https://tickets.udnfunlife.com/application/UTK02/UTK0222_02.aspx?PRODUCT_ID=P12YQQ5C
 [UDN QUICK BUY] Detected UTK0222_02 fast purchase page
 [UDN QUICK BUY] Date keywords parsed: ['2026/01/31']
-[UDN QUICK BUY] Found 4 ticket areas
+[UDN QUICK BUY] Date keyword not matched, fallback with mode: from bottom to top
+[UDN QUICK BUY] Fallback selected date: 2026/01/18 台中市 (index: 1)
+[UDN QUICK BUY] Found 7 ticket areas
 [UDN QUICK BUY] Area keywords parsed: ['3樓座位']
-[UDN QUICK BUY] No keyword match, selecting first available: 特B區
+[UDN QUICK BUY] No keyword match, fallback with mode: from top to bottom
+[UDN QUICK BUY] Fallback selected area: 特B區
 [UDN QUICK BUY] Clicking buy button for area: 特B區, fastcode: 98590
 [UDN QUICK BUY] Set quantity to 4 (max: 4)
 [UDN QUICK BUY] Clicked submit button, waiting for navigation...
 https://tickets.udnfunlife.com/application/UTK02/UTK0206_.aspx
 [SUCCESS] Reached checkout page - ticket purchase successful!
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-Dialog message: 請確定刪除此場次?
-https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx
-[UDN LOGIN] Already logged in, proceeding to redirect...

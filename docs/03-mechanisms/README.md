@@ -366,6 +366,65 @@ docs/03-mechanisms/
 
 ---
 
+### 5. Selection Mode Standard（選擇模式標準）
+
+**核心理念**：統一使用共用函式計算選擇目標，禁止手寫 if/elif 邏輯。
+
+**背景**：
+- 選擇模式邏輯曾在專案中重複 8+ 次
+- 不同開發者可能使用不同格式（底線 vs 空格）
+- 重複代碼增加維護負擔
+
+**共用函式**（定義於 `util.py`）：
+
+| 函式 | 用途 | 參數 | 返回值 |
+|------|------|------|--------|
+| `get_target_index_by_mode()` | 計算目標索引 | 列表長度, 模式 | int 或 None |
+| `get_target_item_from_matched_list()` | 取得目標物件 | 物件列表, 模式 | 物件或 None |
+
+**使用規範**：
+
+```python
+# 需要索引時（JavaScript 操作、DOM 點擊）
+target_idx = util.get_target_index_by_mode(len(items), mode)
+
+# 需要物件時（NoDriver 元素操作）
+target = util.get_target_item_from_matched_list(items, mode)
+```
+
+**禁止的寫法**：
+
+```python
+# 禁止：手寫選擇模式邏輯
+if mode == "from bottom to top":
+    target = items[-1]
+elif mode == "center":
+    target = items[len(items) // 2]
+elif mode == "random":
+    target = random.choice(items)
+else:
+    target = items[0]
+```
+
+**支援的模式**：
+
+| 模式 | 常數 | 格式相容性 | 行為 |
+|------|------|-----------|------|
+| 從上到下 | `CONST_FROM_TOP_TO_BOTTOM` | `from top to bottom`, `from_top_to_bottom` | 選第一個 (index: 0) |
+| 從下到上 | `CONST_FROM_BOTTOM_TO_TOP` | `from bottom to top`, `from_bottom_to_top` | 選最後一個 (index: -1) |
+| 中間 | `CONST_CENTER` | `center` | 選中間 (index: length // 2) |
+| 隨機 | `CONST_RANDOM` | `random` | 隨機選擇 |
+
+**應用階段**：Stage 4（日期選擇）、Stage 5（區域選擇）
+
+**重構記錄**（2025-12）：
+- 新增 `get_target_index_by_mode()` 基礎函式
+- 重構 `get_target_item_from_matched_list()` 內部調用基礎函式
+- 統一 UDN、iBon、FamiTicket 共 8 處重複代碼
+- 支援底線格式（`from_bottom_to_top`）向後相容
+
+---
+
 ## 跨文件導航
 
 ### 核心文件
