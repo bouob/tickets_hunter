@@ -97,6 +97,7 @@ CONST_HKTICKETING_TYPE02_SIGN_IN_URL = "https://hkt.hkticketing.com/hant/#/login
 CONST_KHAM_SIGN_IN_URL = "https://kham.com.tw/application/UTK13/UTK1306_.aspx"
 CONST_KKTIX_SIGN_IN_URL = "https://kktix.com/users/sign_in?back_to=%s"
 CONST_TICKET_SIGN_IN_URL = "https://ticket.com.tw/application/utk13/utk1306_.aspx"
+CONST_UDN_SIGN_IN_URL = "https://tickets.udnfunlife.com/application/UTK01/UTK0101_.aspx"
 CONST_URBTIX_SIGN_IN_URL = "https://www.urbtix.hk/member-login"
 
 CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
@@ -644,6 +645,10 @@ async def nodriver_goto_homepage(driver, config_dict):
     if 'ticket.com.tw' in homepage:
         if len(config_dict["advanced"]["ticket_account"])>0:
             homepage = CONST_TICKET_SIGN_IN_URL
+
+    if 'udnfunlife.com' in homepage:
+        if len(config_dict["advanced"]["udn_account"])>0:
+            homepage = CONST_UDN_SIGN_IN_URL
 
     if 'urbtix.hk' in homepage:
         if len(config_dict["advanced"]["urbtix_account"])>0:
@@ -16200,8 +16205,36 @@ async def nodriver_kham_go_buy_redirect(tab, domain_name):
     elif 'ticket.com' in domain_name:
         my_css_selector = 'div.row > div > a.btn.btn-order.btn-block'
     elif 'udnfunlife.com' in domain_name:
-        # udn fast buy button
-        my_css_selector = 'button[name="fastBuy"]'
+        # UDN fast buy button uses nexturl attribute instead of onclick
+        # Navigate directly to the nexturl for quick purchase (UTK0222_02)
+        try:
+            next_url = await tab.evaluate('''
+                (() => {
+                    const btn = document.querySelector('button[name="fastBuy"]');
+                    if (btn) {
+                        const nexturl = btn.getAttribute('nexturl');
+                        if (nexturl) {
+                            // Convert relative URL to absolute
+                            if (nexturl.startsWith('../')) {
+                                return window.location.origin + '/application/' + nexturl.replace('../', '');
+                            } else if (nexturl.startsWith('/')) {
+                                return window.location.origin + nexturl;
+                            }
+                            return nexturl;
+                        }
+                    }
+                    return null;
+                })()
+            ''')
+
+            if next_url:
+                await tab.get(next_url)
+                return True
+        except:
+            pass
+
+        # Fallback to traditional buy button if fast buy not available
+        my_css_selector = '#buttonBuy'
     else:
         return False
 
@@ -16211,15 +16244,7 @@ async def nodriver_kham_go_buy_redirect(tab, domain_name):
             await el_btn.click()
             is_button_clicked = True
     except Exception as exc:
-        # Try alternative selector for udn
-        if 'udnfunlife.com' in domain_name:
-            try:
-                el_btn = await tab.query_selector('#buttonBuy')
-                if el_btn:
-                    await el_btn.click()
-                    is_button_clicked = True
-            except:
-                pass
+        pass
 
     return is_button_clicked
 
@@ -17050,7 +17075,9 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
         if 'ticket.com.tw' in domain_name:
             selector = "li.main"
         elif 'udnfunlife' in domain_name:
-            selector = "table.yd_ticketsTable > tbody > tr.main"
+            # UDN UTK0204: table.status > tr.status_tr (verified via MCP)
+            # Soldout items have class="status_tr Soldout"
+            selector = "table.status > tbody > tr.status_tr"
 
         # Get all area rows using query_selector_all
         area_list = None
@@ -17436,6 +17463,8 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         kham_dict = {}
         kham_dict["is_popup_checkout"] = False
         kham_dict["played_sound_order"] = False
+        kham_dict["shown_checkout_message"] = False  # Track if checkout message was shown
+        kham_dict["udn_quick_buy_submitted"] = False  # Track if quick buy was submitted
 
     domain_name = url.split('/')[2]
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -17461,6 +17490,138 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 ''')
             except:
                 pass
+
+            # For UDN login page: execute login first, then redirect after login completes
+            # This prevents the infinite redirect loop between login page and event page
+            if 'udnfunlife.com' in url.lower():
+                udn_account = config_dict["advanced"]["udn_account"]
+                udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
+                if udn_password == "":
+                    udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+
+                if len(udn_account) > 4:
+                    # Check if already logged in by looking for logout button or user menu
+                    is_logged_in = False
+                    try:
+                        login_state_raw = await tab.evaluate('''
+                            (() => {
+                                // Method 1: Check member area login item visibility
+                                const memberArea = document.querySelector('.yd_mainNav-member');
+                                if (memberArea) {
+                                    const subList = memberArea.querySelector('.yd_mainNav-subList');
+                                    if (subList) {
+                                        const listItems = subList.querySelectorAll('li');
+                                        const loginItem = listItems[0];
+                                        if (loginItem && window.getComputedStyle(loginItem).display === 'none') {
+                                            return { isLoggedIn: true };
+                                        }
+                                    }
+                                }
+                                // Method 2: Check for welcome message or user name display
+                                const welcomeText = document.body.innerText;
+                                if (welcomeText.includes('您好') || welcomeText.includes('登出')) {
+                                    return { isLoggedIn: true };
+                                }
+                                return { isLoggedIn: false };
+                            })()
+                        ''')
+                        login_state = util.parse_nodriver_result(login_state_raw)
+                        if isinstance(login_state, dict):
+                            is_logged_in = login_state.get('isLoggedIn', False)
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] Login state check error: {exc}")
+
+                    if is_logged_in:
+                        if show_debug_message:
+                            print("[UDN LOGIN] Already logged in, proceeding to redirect...")
+                    else:
+                        # Not logged in yet - execute login and DON'T redirect
+                        # Let the login process complete first
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] Not logged in, executing login with account: {udn_account[:3]}***")
+
+                        # Trigger login dialog
+                        await tab.evaluate('if(typeof doLoginRWD === "function") doLoginRWD();')
+                        await tab.sleep(0.5)
+
+                        # Fill account
+                        try:
+                            await tab.evaluate(f'''
+                                (() => {{
+                                    const emailInput = document.getElementById('ID');
+                                    if (emailInput && !emailInput.value) {{
+                                        emailInput.value = "{udn_account}";
+                                        emailInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    }}
+                                }})()
+                            ''')
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[UDN LOGIN] Fill account error: {exc}")
+
+                        # Fill password
+                        try:
+                            await tab.evaluate(f'''
+                                (() => {{
+                                    const passInput = document.getElementById('password');
+                                    if (passInput && !passInput.value) {{
+                                        passInput.value = "{udn_password}";
+                                        passInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    }}
+                                }})()
+                            ''')
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[UDN LOGIN] Fill password error: {exc}")
+
+                        # Click reCAPTCHA checkbox
+                        try:
+                            recaptcha_clicked = False
+                            try:
+                                checkboxes = await tab.select_all('.recaptcha-checkbox-border', include_frames=True)
+                                if checkboxes and len(checkboxes) > 0:
+                                    await checkboxes[0].click()
+                                    recaptcha_clicked = True
+                                    if show_debug_message:
+                                        print("[UDN LOGIN] reCAPTCHA clicked via include_frames")
+                            except Exception as e1:
+                                if show_debug_message:
+                                    print(f"[UDN LOGIN] include_frames method failed: {e1}")
+
+                            if not recaptcha_clicked:
+                                try:
+                                    recaptcha_pos = await tab.evaluate('''
+                                        (() => {
+                                            const frame = document.querySelector('iframe[title*="reCAPTCHA"]');
+                                            if (frame) {
+                                                frame.scrollIntoView({ block: 'center' });
+                                                const rect = frame.getBoundingClientRect();
+                                                return { x: rect.left + 27, y: rect.top + 30, found: true };
+                                            }
+                                            return { found: false };
+                                        })()
+                                    ''')
+                                    if isinstance(recaptcha_pos, dict) and recaptcha_pos.get('found'):
+                                        x = recaptcha_pos['x']
+                                        y = recaptcha_pos['y']
+                                        await tab.mouse_click(x, y)
+                                        recaptcha_clicked = True
+                                        if show_debug_message:
+                                            print(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
+                                except Exception as e2:
+                                    if show_debug_message:
+                                        print(f"[UDN LOGIN] mouse_click method failed: {e2}")
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
+
+                        if show_debug_message:
+                            print("[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...")
+
+                        # DON'T redirect yet - return and let user complete login
+                        # Next iteration will check if logged in and redirect then
+                        return tab
 
             # Redirect to target page after login
             config_homepage = config_dict["homepage"]
@@ -17503,6 +17664,23 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             print(f"KHAM seat selection result: {is_seat_selection_success}")
 
         # Return to avoid double processing by UTK0202/UTK0205 logic below
+        return tab
+
+    # UDN UTK0205 seat selection page (Feature 010: UDN seat auto select)
+    # UDN shares the same UTK backend system with KHAM, so we reuse KHAM seat selection logic
+    # Reference: research.md - DOM structure and selectors are identical
+    if "udnfunlife.com" in url and 'utk0205' in url.lower():
+        if show_debug_message:
+            print("[UDN SEAT] Detected UDN UTK0205 seat selection page")
+
+        is_seat_selection_success = await nodriver_kham_seat_main(tab, config_dict, ocr, domain_name)
+
+        if show_debug_message:
+            print(f"[UDN SEAT] Seat selection result: {is_seat_selection_success}")
+            if is_seat_selection_success:
+                print("[SUCCESS] UDN seat selection completed")
+
+        # Return to avoid double processing
         return tab
 
     # Activity Group page (UTK0201_040.aspx?AGID=)
@@ -17615,17 +17793,135 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
     # UDN specific handling
     if 'udnfunlife' in domain_name:
-        # UDN login
-        if 'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx' == url.lower():
+        # UDN homepage login (popup dialog with reCAPTCHA)
+        # UDN uses a popup login dialog on homepage, not UTK1306 page
+        if 'utk01/utk0101_.aspx' in url.lower():
             udn_account = config_dict["advanced"]["udn_account"]
             udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
             if udn_password == "":
                 udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
             if len(udn_account) > 4:
-                # Use generic login (need to implement nodriver_udn_login if needed)
-                pass
+                # Check if already logged in
+                # Detection method: Check if "登入/註冊" menu item is hidden
+                # When logged in: "登入/註冊" is display:none, "登出" is visible
+                # When not logged in: "登入/註冊" is visible, "登出" is display:none
+                is_logged_in = False
+                try:
+                    login_state_raw = await tab.evaluate('''
+                        (() => {
+                            const memberArea = document.querySelector('.yd_mainNav-member');
+                            if (!memberArea) return { loginItemHidden: false };
+                            const subList = memberArea.querySelector('.yd_mainNav-subList');
+                            if (!subList) return { loginItemHidden: false };
+                            const listItems = subList.querySelectorAll('li');
+                            // First item is "登入/註冊", check if it's hidden
+                            const loginItem = listItems[0];
+                            const loginItemHidden = loginItem && window.getComputedStyle(loginItem).display === 'none';
+                            return { loginItemHidden: loginItemHidden };
+                        })()
+                    ''')
+                    # Use util.parse_nodriver_result to handle nodriver's special return format
+                    login_state = util.parse_nodriver_result(login_state_raw)
+                    if isinstance(login_state, dict):
+                        # User is logged in if "登入/註冊" item is hidden
+                        is_logged_in = login_state.get('loginItemHidden', False)
+                except Exception as exc:
+                    if show_debug_message:
+                        print(f"[UDN LOGIN] Login state check error: {exc}")
 
-        # UDN ticket selection
+                if not is_logged_in:
+                    if show_debug_message:
+                        print(f"[UDN LOGIN] Starting login with account: {udn_account[:3]}***")
+
+                    # Trigger login dialog
+                    await tab.evaluate('if(typeof doLoginRWD === "function") doLoginRWD();')
+                    await tab.sleep(0.5)
+
+                    # Fill account
+                    try:
+                        await tab.evaluate(f'''
+                            (() => {{
+                                const emailInput = document.getElementById('ID');
+                                if (emailInput && !emailInput.value) {{
+                                    emailInput.value = "{udn_account}";
+                                    emailInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                }}
+                            }})()
+                        ''')
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] Fill account error: {exc}")
+
+                    # Fill password
+                    try:
+                        await tab.evaluate(f'''
+                            (() => {{
+                                const passInput = document.getElementById('password');
+                                if (passInput && !passInput.value) {{
+                                    passInput.value = "{udn_password}";
+                                    passInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                }}
+                            }})()
+                        ''')
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] Fill password error: {exc}")
+
+                    # Click reCAPTCHA checkbox
+                    try:
+                        recaptcha_clicked = False
+
+                        # Method 1: Use nodriver's include_frames to find checkbox inside iframe
+                        try:
+                            checkboxes = await tab.select_all('.recaptcha-checkbox-border', include_frames=True)
+                            if checkboxes and len(checkboxes) > 0:
+                                await checkboxes[0].click()
+                                recaptcha_clicked = True
+                                if show_debug_message:
+                                    print("[UDN LOGIN] reCAPTCHA clicked via include_frames")
+                        except Exception as e1:
+                            if show_debug_message:
+                                print(f"[UDN LOGIN] include_frames method failed: {e1}")
+
+                        # Method 2: Fallback to CDP mouse event
+                        if not recaptcha_clicked:
+                            try:
+                                recaptcha_pos = await tab.evaluate('''
+                                    (() => {
+                                        const frame = document.querySelector('iframe[title*="reCAPTCHA"]');
+                                        if (frame) {
+                                            frame.scrollIntoView({ block: 'center' });
+                                            const rect = frame.getBoundingClientRect();
+                                            return { x: rect.left + 27, y: rect.top + 30, found: true };
+                                        }
+                                        return { found: false };
+                                    })()
+                                ''')
+
+                                if isinstance(recaptcha_pos, dict) and recaptcha_pos.get('found'):
+                                    x = recaptcha_pos['x']
+                                    y = recaptcha_pos['y']
+                                    await tab.mouse_click(x, y)
+                                    recaptcha_clicked = True
+                                    if show_debug_message:
+                                        print(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
+                            except Exception as e2:
+                                if show_debug_message:
+                                    print(f"[UDN LOGIN] mouse_click method failed: {e2}")
+
+                        if not recaptcha_clicked and show_debug_message:
+                            print("[UDN LOGIN] reCAPTCHA checkbox not found")
+                    except Exception as exc:
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
+
+                    # After filling credentials and clicking reCAPTCHA, stop here
+                    # User needs to complete reCAPTCHA verification and click login manually
+                    # The bot will check login status on next iteration
+                    if show_debug_message:
+                        print("[UDN LOGIN] Credentials filled, waiting for user to complete reCAPTCHA and login...")
+
+        # UDN ticket selection (UTK0203 date/session selection)
         if 'utk0203_.aspx?product_id=' in url.lower():
             # Try layout format 1
             try:
@@ -17648,6 +17944,421 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         await nodriver_kham_product(tab, domain_name, config_dict)
             except:
                 pass
+
+        # UDN UTK0204 area selection page (Feature 010: UDN area auto select)
+        # URL pattern: .aspx?PERFORMANCE_ID=xxx&PRODUCT_ID=xxx (without PERFORMANCE_PRICE_AREA_ID)
+        # This page shows available ticket areas for selection
+        # Note: UTK0204 combines area selection and seat map on the same page
+        if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
+            # Exclude seat selection page (UTK0205) which has PERFORMANCE_PRICE_AREA_ID
+            if 'performance_price_area_id=' not in url.lower():
+                if show_debug_message:
+                    print("[UDN AREA] Detected UDN UTK0204 area selection page")
+
+                if config_dict["area_auto_select"]["enable"]:
+                    # UDN uses nodriver_kham_performance for area selection
+                    # UDN selector: table.status > tbody > tr.status_tr (verified via MCP)
+                    model_name = "UTK0204"
+
+                    is_price_assign_by_bot, is_captcha_sent = await nodriver_kham_performance(
+                        tab, config_dict, ocr, domain_name, model_name
+                    )
+
+                    if show_debug_message:
+                        print(f"[UDN AREA] Area selection result: is_price_assign_by_bot={is_price_assign_by_bot}")
+
+                    # Feature 010: UDN seat auto select
+                    # After area selection, seat map may appear on the same page
+                    # Check for seat map and perform seat selection if available
+                    if is_price_assign_by_bot:
+                        await tab.sleep(0.5)  # Wait for seat map to load
+                        is_seat_success = await nodriver_udn_seat_main(tab, config_dict)
+                        if show_debug_message:
+                            print(f"[UDN SEAT] Seat selection result: {is_seat_success}")
+                            if is_seat_success:
+                                print("[SUCCESS] UDN seat selection and add to cart completed")
+
+        # UDN UTK0222_02 fast purchase page (Feature 010: UDN quick buy)
+        # URL pattern: UTK0222_02.aspx?PRODUCT_ID=xxx
+        # This page shows: 1) Date selection 2) Performance selection 3) Area selection
+        if 'utk0222_02.aspx' in url.lower():
+            # Skip if quick buy was already submitted (waiting for navigation)
+            if kham_dict.get("udn_quick_buy_submitted", False):
+                return tab
+
+            if show_debug_message:
+                print("[UDN QUICK BUY] Detected UTK0222_02 fast purchase page")
+
+            try:
+                # Step 1: Date selection (li.yd_datedBtn)
+                if config_dict["date_auto_select"]["enable"]:
+                    date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
+
+                    date_result_raw = await tab.evaluate('''
+                        (() => {
+                            const dateBtns = document.querySelectorAll('li.yd_datedBtn');
+                            const dates = [];
+                            dateBtns.forEach((btn, idx) => {
+                                dates.push({
+                                    index: idx,
+                                    text: btn.textContent.trim()
+                                });
+                            });
+                            return { dates: dates, count: dates.length };
+                        })()
+                    ''')
+                    date_result = util.parse_nodriver_result(date_result_raw)
+
+                    if isinstance(date_result, dict) and date_result.get('count', 0) > 0:
+                        dates = date_result.get('dates', [])
+                        target_date_idx = None  # None means no match yet
+                        keyword_matched = False
+
+                        # Match date keyword (use JSON parsing like other platforms)
+                        if date_keyword:
+                            import json
+                            try:
+                                keywords = json.loads("[" + date_keyword + "]")
+                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
+                            except:
+                                keywords = []
+
+                            if show_debug_message:
+                                print(f"[UDN QUICK BUY] Date keywords parsed: {keywords}")
+
+                            for i, date_item in enumerate(dates):
+                                date_text = date_item.get('text', '')
+                                for kw in keywords:
+                                    if kw in date_text:
+                                        target_date_idx = i
+                                        keyword_matched = True
+                                        if show_debug_message:
+                                            print(f"[UDN QUICK BUY] Date matched: {date_text} with keyword: {kw}")
+                                        break
+                                if keyword_matched:
+                                    break  # Early return when matched
+
+                        # Fallback logic based on date_auto_fallback and mode
+                        if not keyword_matched:
+                            date_auto_fallback = config_dict.get("date_auto_fallback", False)
+                            date_mode = config_dict["date_auto_select"].get("mode", "from top to bottom")
+
+                            if date_auto_fallback:
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] Date keyword not matched, fallback with mode: {date_mode}")
+
+                                if date_mode == "from bottom to top":
+                                    target_date_idx = len(dates) - 1
+                                elif date_mode == "center":
+                                    target_date_idx = len(dates) // 2
+                                elif date_mode == "random":
+                                    import random
+                                    target_date_idx = random.randint(0, len(dates) - 1)
+                                else:  # "from top to bottom" or default
+                                    target_date_idx = 0
+
+                                if show_debug_message:
+                                    selected_date = dates[target_date_idx].get('text', '') if target_date_idx < len(dates) else ''
+                                    print(f"[UDN QUICK BUY] Fallback selected date: {selected_date} (index: {target_date_idx})")
+                            else:
+                                # Strict mode: no fallback, use first date as default
+                                target_date_idx = 0
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] Fallback disabled, using first date")
+
+                        # Click the date button
+                        await tab.evaluate(f'''
+                            (() => {{
+                                const dateBtns = document.querySelectorAll('li.yd_datedBtn');
+                                if (dateBtns[{target_date_idx}]) {{
+                                    dateBtns[{target_date_idx}].click();
+                                }}
+                            }})()
+                        ''')
+                        await tab.sleep(0.3)
+
+                # Step 2: Performance/Session selection (div.sd-btn.bg--gray)
+                if config_dict["date_auto_select"]["enable"]:
+                    perf_result_raw = await tab.evaluate('''
+                        (() => {
+                            const perfBtns = document.querySelectorAll('div.sd-btn.bg--gray');
+                            const perfs = [];
+                            perfBtns.forEach((btn, idx) => {
+                                perfs.push({
+                                    index: idx,
+                                    text: btn.textContent.trim().replace(/\\s+/g, ' '),
+                                    isActive: btn.classList.contains('active')
+                                });
+                            });
+                            return { perfs: perfs, count: perfs.length };
+                        })()
+                    ''')
+                    perf_result = util.parse_nodriver_result(perf_result_raw)
+
+                    if isinstance(perf_result, dict) and perf_result.get('count', 0) > 0:
+                        perfs = perf_result.get('perfs', [])
+                        target_perf_idx = 0  # Default to first performance
+
+                        # Check if any is already active
+                        has_active = any(p.get('isActive') for p in perfs)
+
+                        # Match performance keyword (use date_keyword for time/venue matching)
+                        if date_keyword and not has_active:
+                            import json
+                            try:
+                                keywords = json.loads("[" + date_keyword + "]")
+                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
+                            except:
+                                keywords = []
+
+                            for i, perf_item in enumerate(perfs):
+                                perf_text = perf_item.get('text', '')
+                                for kw in keywords:
+                                    if kw in perf_text:
+                                        target_perf_idx = i
+                                        if show_debug_message:
+                                            print(f"[UDN QUICK BUY] Performance matched: {perf_text} with keyword: {kw}")
+                                        break
+                                if target_perf_idx != 0:
+                                    break  # Early return when matched
+
+                        # Click the performance button if not already active
+                        if not has_active:
+                            await tab.evaluate(f'''
+                                (() => {{
+                                    const perfBtns = document.querySelectorAll('div.sd-btn.bg--gray');
+                                    if (perfBtns[{target_perf_idx}]) {{
+                                        perfBtns[{target_perf_idx}].click();
+                                    }}
+                                }})()
+                            ''')
+                            await tab.sleep(0.3)
+
+                # Step 3: Area selection
+                # Get area keywords from config
+                area_keyword = config_dict["area_auto_select"]["area_keyword"].strip() if config_dict["area_auto_select"]["enable"] else ""
+
+                # Find all ticket rows from VISIBLE tables only
+                # Each performance has its own table, controlled by parent .sd-target display
+                ticket_info_raw = await tab.evaluate('''
+                    (() => {
+                        const tables = document.querySelectorAll('table.yd_ticketsTable');
+                        const tickets = [];
+                        tables.forEach((table) => {
+                            // Check if this table's parent container is visible
+                            let parent = table.parentElement;
+                            let isVisible = true;
+                            for (let i = 0; i < 5 && parent; i++) {
+                                if (window.getComputedStyle(parent).display === 'none') {
+                                    isVisible = false;
+                                    break;
+                                }
+                                parent = parent.parentElement;
+                            }
+                            if (!isVisible) return;
+
+                            // Get ticket rows from visible table
+                            const rows = table.querySelectorAll('tr.main');
+                            rows.forEach((row, idx) => {
+                                const cells = row.querySelectorAll('td');
+                                if (cells.length >= 5) {
+                                    const areaName = cells[1] ? cells[1].textContent.trim() : '';
+                                    const ticketType = cells[2] ? cells[2].textContent.trim() : '';
+                                    const price = cells[3] ? cells[3].textContent.trim() : '';
+                                    const buyBtn = cells[4] ? cells[4].querySelector('.yd_btn--link') : null;
+                                    const fastcode = buyBtn ? buyBtn.getAttribute('fastcode') : null;
+                                    const isDisabled = buyBtn ? buyBtn.style.cursor === 'default' : true;
+                                    tickets.push({
+                                        index: idx,
+                                        areaName: areaName,
+                                        ticketType: ticketType,
+                                        price: price,
+                                        fastcode: fastcode,
+                                        isDisabled: isDisabled
+                                    });
+                                }
+                            });
+                        });
+                        return { tickets: tickets };
+                    })()
+                ''')
+                ticket_info = util.parse_nodriver_result(ticket_info_raw)
+
+                if isinstance(ticket_info, dict) and 'tickets' in ticket_info:
+                    tickets = ticket_info['tickets']
+                    if show_debug_message:
+                        print(f"[UDN QUICK BUY] Found {len(tickets)} ticket areas")
+
+                    # Find matching area based on keyword (use JSON parsing like other platforms)
+                    target_ticket = None
+                    if area_keyword:
+                        import json
+                        try:
+                            keywords = json.loads("[" + area_keyword + "]")
+                            keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
+                        except:
+                            keywords = []
+
+                        if show_debug_message:
+                            print(f"[UDN QUICK BUY] Area keywords parsed: {keywords}")
+
+                        # Get keyword_exclude for filtering
+                        keyword_exclude = config_dict.get("keyword_exclude", "")
+
+                        for kw in keywords:
+                            if target_ticket:
+                                break  # Early return when matched
+
+                            # Support AND logic (space-separated keywords)
+                            kw_parts = kw.split(' ') if ' ' in kw else [kw]
+
+                            for ticket in tickets:
+                                if ticket.get('isDisabled'):
+                                    continue
+                                area_name = ticket.get('areaName', '')
+
+                                # Apply keyword_exclude filter
+                                if keyword_exclude and util.reset_row_text_if_match_keyword_exclude(config_dict, area_name):
+                                    if show_debug_message:
+                                        print(f"[UDN QUICK BUY] Excluded by keyword_exclude: {area_name}")
+                                    continue
+
+                                # Check AND logic - all parts must match
+                                all_match = all(part in area_name for part in kw_parts)
+                                if all_match:
+                                    target_ticket = ticket
+                                    if show_debug_message:
+                                        print(f"[UDN QUICK BUY] Matched area: {area_name} with keyword: {kw}")
+                                    break
+
+                    # If no keyword match, apply fallback logic based on area_auto_fallback and mode
+                    if not target_ticket:
+                        area_auto_fallback = config_dict.get("area_auto_fallback", False)
+                        area_mode = config_dict["area_auto_select"].get("mode", "from top to bottom")
+
+                        if area_auto_fallback:
+                            # Filter available tickets (not disabled, has fastcode, respecting keyword_exclude)
+                            available_tickets = []
+                            keyword_exclude = config_dict.get("keyword_exclude", "")
+                            for ticket in tickets:
+                                if ticket.get('isDisabled') or not ticket.get('fastcode'):
+                                    continue
+                                area_name = ticket.get('areaName', '')
+                                if keyword_exclude and util.reset_row_text_if_match_keyword_exclude(config_dict, area_name):
+                                    continue
+                                available_tickets.append(ticket)
+
+                            if available_tickets:
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] No keyword match, fallback with mode: {area_mode}")
+
+                                if area_mode == "from bottom to top":
+                                    target_ticket = available_tickets[-1]
+                                elif area_mode == "center":
+                                    target_ticket = available_tickets[len(available_tickets) // 2]
+                                elif area_mode == "random":
+                                    import random
+                                    target_ticket = random.choice(available_tickets)
+                                else:  # "from top to bottom" or default
+                                    target_ticket = available_tickets[0]
+
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] Fallback selected area: {target_ticket.get('areaName')}")
+                        else:
+                            # Strict mode: no fallback, don't select anything
+                            if show_debug_message:
+                                print(f"[UDN QUICK BUY] No keyword match, fallback disabled, waiting for manual selection")
+
+                    # Click the buy button
+                    if target_ticket and target_ticket.get('fastcode'):
+                        fastcode = target_ticket['fastcode']
+                        if show_debug_message:
+                            print(f"[UDN QUICK BUY] Clicking buy button for area: {target_ticket.get('areaName')}, fastcode: {fastcode}")
+
+                        await tab.evaluate(f'''
+                            (() => {{
+                                const btn = document.querySelector('.yd_btn--link[fastcode="{fastcode}"]');
+                                if (btn && btn.style.cursor !== 'default') {{
+                                    btn.click();
+                                }}
+                            }})()
+                        ''')
+
+                        # Step 4: Handle quantity selection dialog
+                        # After clicking "立即購票", a lightbox appears with quantity input
+                        # Wait for lightbox with retry
+                        ticket_number = config_dict.get("ticket_number", 2)
+                        lightbox_found = False
+
+                        for retry in range(5):  # Retry up to 5 times (total 2.5s max)
+                            await tab.sleep(0.5)
+
+                            qty_set_raw = await tab.evaluate(f'''
+                                (() => {{
+                                    const activeLightbox = document.querySelector('.yd_lightbox.active');
+                                    if (!activeLightbox) return {{ success: false, reason: 'no_lightbox' }};
+
+                                    const qtyInput = activeLightbox.querySelector('#QRY2, .yd_counterNum');
+                                    if (!qtyInput) return {{ success: false, reason: 'no_qty_input' }};
+
+                                    // Get max limit
+                                    const maxLimit = parseInt(qtyInput.getAttribute('perflimit') || '4');
+                                    const targetQty = Math.min({ticket_number}, maxLimit);
+
+                                    // Set quantity
+                                    qtyInput.value = targetQty;
+                                    qtyInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    qtyInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+                                    return {{ success: true, qty: targetQty, max: maxLimit }};
+                                }})()
+                            ''')
+                            qty_set = util.parse_nodriver_result(qty_set_raw)
+
+                            if isinstance(qty_set, dict) and qty_set.get('success'):
+                                lightbox_found = True
+                                if show_debug_message:
+                                    print(f"[UDN QUICK BUY] Set quantity to {qty_set.get('qty')} (max: {qty_set.get('max')})")
+
+                                await tab.sleep(0.3)
+
+                                # Click the "快速訂購" button
+                                await tab.evaluate('''
+                                    (() => {
+                                        const activeLightbox = document.querySelector('.yd_lightbox.active');
+                                        if (!activeLightbox) return;
+                                        const submitBtn = activeLightbox.querySelector('#f_btn, input[value="快速訂購"], button.yd_btn--primary');
+                                        if (submitBtn) {
+                                            submitBtn.click();
+                                        }
+                                    })()
+                                ''')
+
+                                # Mark as submitted to prevent duplicate processing
+                                kham_dict["udn_quick_buy_submitted"] = True
+
+                                if show_debug_message:
+                                    print("[UDN QUICK BUY] Clicked submit button, waiting for navigation...")
+
+                                # Wait for navigation to checkout page
+                                for nav_wait in range(10):  # Wait up to 5 seconds for navigation
+                                    await tab.sleep(0.5)
+                                    current_url = str(tab.target.url).lower()
+                                    if 'utk0206' in current_url:
+                                        if show_debug_message:
+                                            print("[UDN QUICK BUY] Successfully navigated to checkout page")
+                                        break
+                                break  # Exit retry loop after successful submit
+                            else:
+                                if show_debug_message and retry == 4:  # Only print on last retry
+                                    print(f"[UDN QUICK BUY] Failed to set quantity after retries: {qty_set}")
+                    else:
+                        if show_debug_message:
+                            print("[UDN QUICK BUY] No available ticket area found")
+
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[UDN QUICK BUY] Error: {exc}")
 
     else:
         # Kham / Ticket.com.tw handling
@@ -18315,6 +19026,17 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 # Handle captcha
                 await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
 
+                # UDN login (Feature 010: uses same UTK backend as KHAM)
+                if 'udnfunlife' in domain_name:
+                    udn_account = config_dict["advanced"]["udn_account"]
+                    udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
+                    if udn_password == "":
+                        udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                    if len(udn_account) > 4:
+                        if show_debug_message:
+                            print(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
+                        await nodriver_kham_login(tab, udn_account, udn_password, ocr)
+
                 # Kham login
                 kham_account = config_dict["advanced"]["kham_account"]
                 kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
@@ -18334,8 +19056,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
     # Check if reached checkout page (ticket purchase successful)
     if '/utk02/utk0206_.aspx' in url.lower():
+        # Reset quick buy flag since we've reached checkout
+        kham_dict["udn_quick_buy_submitted"] = False
+
+        # Show success message (only once)
         if show_debug_message:
-            print("[SUCCESS] Reached checkout page - ticket purchase successful!")
+            if not kham_dict["shown_checkout_message"]:
+                print("[SUCCESS] Reached checkout page - ticket purchase successful!")
+        kham_dict["shown_checkout_message"] = True
 
         # Play sound notification (only once)
         if not kham_dict["played_sound_order"]:
@@ -19395,6 +20123,348 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
               f"Seat:{is_seat_assigned} Submit:{is_submit_success}")
 
     return is_submit_success
+
+
+# ====================================================================================
+# UDN Platform Seat Selection (Feature 010: UDN seat auto select)
+# UTK0204 page combines area selection and seat map on the same page
+# ====================================================================================
+
+async def nodriver_udn_seat_auto_select(tab, config_dict):
+    """
+    UDN - UTK0204 座位自動選擇
+
+    UDN 的 UTK0204 頁面同時包含區域選擇和座位地圖。
+    點擊區域後，座位地圖會在同一頁面顯示。
+
+    座位元素結構（透過 MCP 測試驗證）：
+    - 選擇器：td[title*="排"]
+    - 格式：{區域}-{排號}排-{座號}號（如：特B區-10排-19號）
+    - 可選座位：background-image 包含 icon_chair_empty_1.gif
+    - 已售座位：background-image 包含 icon_chair_sale_1.gif
+    """
+    is_seat_assigned = False
+    ticket_number = config_dict["ticket_number"]
+    show_debug = config_dict["advanced"].get("verbose", False)
+
+    try:
+        import json
+        result = await tab.evaluate(f'''
+            (function() {{
+                const ticketNumber = {ticket_number};
+                const showDebug = {json.dumps(show_debug)};
+
+                // Step 1: Find all seat elements with title containing "排"
+                const allSeats = document.querySelectorAll('td[title*="排"]');
+                if (allSeats.length === 0) {{
+                    if (showDebug) console.log('[UDN SEAT] No seat map found');
+                    return {{ success: false, reason: 'no_seat_map', found: 0, selected: 0 }};
+                }}
+
+                // Step 2: Filter available seats by background image
+                const availableSeats = [];
+                allSeats.forEach(seat => {{
+                    const style = seat.getAttribute('style') || '';
+                    if (style.includes('icon_chair_empty_1.gif')) {{
+                        const title = seat.getAttribute('title');
+                        if (title && title.includes('排') && title.includes('號')) {{
+                            // Parse seat info: {區域}-{排號}排-{座號}號
+                            const parts = title.split('-');
+                            if (parts.length >= 3) {{
+                                const areaName = parts[0];
+                                const rowMatch = parts[1].match(/(\d+)排/);
+                                const seatMatch = parts[2].match(/(\d+)號/);
+                                if (rowMatch && seatMatch) {{
+                                    availableSeats.push({{
+                                        element: seat,
+                                        title: title,
+                                        area: areaName,
+                                        row: parseInt(rowMatch[1]),
+                                        seat: parseInt(seatMatch[1])
+                                    }});
+                                }}
+                            }}
+                        }}
+                    }}
+                }});
+
+                if (showDebug) {{
+                    console.log('[UDN SEAT] Total seats: ' + allSeats.length);
+                    console.log('[UDN SEAT] Available seats: ' + availableSeats.length);
+                }}
+
+                if (availableSeats.length === 0) {{
+                    return {{ success: false, reason: 'no_available_seats', found: allSeats.length, selected: 0 }};
+                }}
+
+                if (availableSeats.length < ticketNumber) {{
+                    return {{ success: false, reason: 'not_enough_seats', found: availableSeats.length, needed: ticketNumber, selected: 0 }};
+                }}
+
+                // Step 3: Sort by row (ascending) then by seat number (prefer middle)
+                // Strategy: Front rows first, middle seats preferred
+                availableSeats.sort((a, b) => {{
+                    if (a.row !== b.row) return a.row - b.row;
+                    // For same row, calculate distance from middle
+                    // Assume middle seat is around 25 (based on typical venue layout)
+                    const midSeat = 25;
+                    const distA = Math.abs(a.seat - midSeat);
+                    const distB = Math.abs(b.seat - midSeat);
+                    return distA - distB;
+                }});
+
+                // Step 4: Select seats (up to ticketNumber)
+                const selectedSeats = [];
+                for (let i = 0; i < Math.min(ticketNumber, availableSeats.length); i++) {{
+                    const seatInfo = availableSeats[i];
+                    seatInfo.element.click();
+                    selectedSeats.push(seatInfo.title);
+                    if (showDebug) {{
+                        console.log('[UDN SEAT] Clicked seat: ' + seatInfo.title);
+                    }}
+                }}
+
+                return {{
+                    success: true,
+                    found: availableSeats.length,
+                    selected: selectedSeats.length,
+                    seats: selectedSeats
+                }};
+            }})();
+        ''')
+
+        if result and result.get('success'):
+            is_seat_assigned = True
+            if show_debug:
+                print(f"[UDN SEAT] Selected {result.get('selected')} seats: {result.get('seats')}")
+        else:
+            if show_debug:
+                reason = result.get('reason', 'unknown') if result else 'no_result'
+                print(f"[UDN SEAT] Selection failed: {reason}")
+
+    except Exception as exc:
+        if show_debug:
+            print(f"[ERROR] UDN seat selection error: {exc}")
+            import traceback
+            traceback.print_exc()
+
+    return is_seat_assigned
+
+
+async def nodriver_udn_seat_select_ticket_type(tab, config_dict):
+    """
+    UDN - 選擇票種並加入購物車
+
+    點擊座位後，頁面會顯示：
+    1. 已選座位資訊（如：特B區-10排-19號）
+    2. 票種選擇 combobox
+    3. 「加入購物車 Add to Cart」按鈕
+    """
+    is_success = False
+    show_debug = config_dict["advanced"].get("verbose", False)
+
+    try:
+        import json
+        result = await tab.evaluate(f'''
+            (function() {{
+                const showDebug = {json.dumps(show_debug)};
+
+                // Step 1: Find ticket type combobox
+                // UDN uses <select> element for ticket type selection
+                const comboboxes = document.querySelectorAll('select');
+                let ticketTypeSelect = null;
+
+                for (const select of comboboxes) {{
+                    const options = select.querySelectorAll('option');
+                    for (const opt of options) {{
+                        // Look for price pattern like "全票-NT$1,880"
+                        if (opt.textContent.includes('NT$') || opt.textContent.includes('票')) {{
+                            ticketTypeSelect = select;
+                            break;
+                        }}
+                    }}
+                    if (ticketTypeSelect) break;
+                }}
+
+                if (!ticketTypeSelect) {{
+                    if (showDebug) console.log('[UDN TICKET] No ticket type select found');
+                    return {{ success: false, reason: 'no_ticket_select' }};
+                }}
+
+                // Step 2: Select first valid ticket type (skip "請選擇" placeholder)
+                const options = ticketTypeSelect.querySelectorAll('option');
+                let selectedOption = null;
+                for (const opt of options) {{
+                    if (opt.textContent.includes('NT$') && !opt.textContent.includes('請選擇')) {{
+                        opt.selected = true;
+                        ticketTypeSelect.value = opt.value;
+                        // Trigger change event
+                        ticketTypeSelect.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        selectedOption = opt.textContent;
+                        break;
+                    }}
+                }}
+
+                if (!selectedOption) {{
+                    if (showDebug) console.log('[UDN TICKET] No valid ticket type option found');
+                    return {{ success: false, reason: 'no_valid_option' }};
+                }}
+
+                if (showDebug) {{
+                    console.log('[UDN TICKET] Selected ticket type: ' + selectedOption);
+                }}
+
+                // Step 3: Find and click "加入購物車" button
+                const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+                let addToCartBtn = null;
+                for (const btn of buttons) {{
+                    const text = btn.textContent || btn.value || '';
+                    if (text.includes('加入購物車') || text.includes('Add to Cart')) {{
+                        addToCartBtn = btn;
+                        break;
+                    }}
+                }}
+
+                if (!addToCartBtn) {{
+                    if (showDebug) console.log('[UDN TICKET] No add to cart button found');
+                    return {{ success: false, reason: 'no_cart_button', ticketType: selectedOption }};
+                }}
+
+                // Click the button
+                addToCartBtn.click();
+                if (showDebug) {{
+                    console.log('[UDN TICKET] Clicked add to cart button');
+                }}
+
+                return {{
+                    success: true,
+                    ticketType: selectedOption,
+                    buttonClicked: true
+                }};
+            }})();
+        ''')
+
+        if result and result.get('success'):
+            is_success = True
+            if show_debug:
+                print(f"[UDN TICKET] Added to cart: {result.get('ticketType')}")
+
+            # Wait for dialog and dismiss it
+            await tab.sleep(0.5)
+            try:
+                dialog_result = await tab.evaluate('''
+                    (function() {
+                        // Find dialog with "完成加入購物車" message
+                        const dialogs = document.querySelectorAll('[role="dialog"], .ui-dialog');
+                        for (const dialog of dialogs) {
+                            const text = dialog.textContent || '';
+                            if (text.includes('完成加入購物車') || text.includes('購物車')) {
+                                // Find OK button
+                                const buttons = dialog.querySelectorAll('button');
+                                for (const btn of buttons) {
+                                    const btnText = btn.textContent || '';
+                                    if (btnText.includes('Ok') || btnText.includes('確定') || btnText === 'Ok') {
+                                        btn.click();
+                                        return { dismissed: true };
+                                    }
+                                }
+                            }
+                        }
+                        return { dismissed: false };
+                    })();
+                ''')
+                if show_debug and dialog_result:
+                    print(f"[UDN TICKET] Dialog dismissed: {dialog_result.get('dismissed')}")
+            except Exception as dialog_exc:
+                if show_debug:
+                    print(f"[UDN TICKET] Dialog dismiss error (may be normal): {dialog_exc}")
+
+        else:
+            if show_debug:
+                reason = result.get('reason', 'unknown') if result else 'no_result'
+                print(f"[UDN TICKET] Failed: {reason}")
+
+    except Exception as exc:
+        if show_debug:
+            print(f"[ERROR] UDN ticket type selection error: {exc}")
+            import traceback
+            traceback.print_exc()
+
+    return is_success
+
+
+async def nodriver_udn_seat_main(tab, config_dict):
+    """
+    UDN UTK0204 座位選擇主流程
+
+    流程（透過 MCP 測試驗證）：
+    1. 偵測座位地圖是否存在
+    2. 選擇可用座位
+    3. 選擇票種
+    4. 加入購物車
+    5. 處理確認對話框
+
+    Returns:
+        bool: True if successfully added to cart
+    """
+    show_debug = config_dict["advanced"].get("verbose", False)
+    is_success = False
+
+    # Check if seat map is present
+    try:
+        seat_map_check_raw = await tab.evaluate('''
+            (function() {
+                const seats = document.querySelectorAll('td[title*="排"]');
+                const availableSeats = Array.from(seats).filter(s => {
+                    const style = s.getAttribute('style') || '';
+                    return style.includes('icon_chair_empty_1.gif');
+                });
+                return {
+                    hasSeatMap: seats.length > 0,
+                    totalSeats: seats.length,
+                    availableSeats: availableSeats.length
+                };
+            })();
+        ''')
+        seat_map_check = util.parse_nodriver_result(seat_map_check_raw)
+
+        if not seat_map_check or not seat_map_check.get('hasSeatMap'):
+            if show_debug:
+                print("[UDN SEAT MAIN] No seat map detected on this page")
+            return False
+
+        if show_debug:
+            print(f"[UDN SEAT MAIN] Seat map found: {seat_map_check.get('totalSeats')} total, "
+                  f"{seat_map_check.get('availableSeats')} available")
+
+        if seat_map_check.get('availableSeats', 0) == 0:
+            if show_debug:
+                print("[UDN SEAT MAIN] No available seats")
+            return False
+
+    except Exception as exc:
+        if show_debug:
+            print(f"[UDN SEAT MAIN] Error checking seat map: {exc}")
+        return False
+
+    # Step 1: Select seats
+    is_seat_selected = await nodriver_udn_seat_auto_select(tab, config_dict)
+
+    if not is_seat_selected:
+        if show_debug:
+            print("[UDN SEAT MAIN] Seat selection failed")
+        return False
+
+    # Wait for UI to update after seat selection
+    await tab.sleep(0.3)
+
+    # Step 2: Select ticket type and add to cart
+    is_success = await nodriver_udn_seat_select_ticket_type(tab, config_dict)
+
+    if show_debug:
+        print(f"[UDN SEAT MAIN] Result: seat_selected={is_seat_selected}, added_to_cart={is_success}")
+
+    return is_success
 
 
 async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_item):
