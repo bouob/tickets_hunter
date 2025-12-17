@@ -9370,16 +9370,7 @@ async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_m
             print("[MODE SELECT] No enabled buttons available")
         return None
 
-    target_button = None
-    if auto_select_mode == "random":
-        import random
-        target_button = random.choice(enabled_buttons)
-    elif auto_select_mode == "from bottom to top":
-        target_button = enabled_buttons[-1]
-    elif auto_select_mode == "center":
-        target_button = enabled_buttons[len(enabled_buttons) // 2]
-    else:  # from top to bottom (default)
-        target_button = enabled_buttons[0]
+    target_button = util.get_target_item_from_matched_list(enabled_buttons, auto_select_mode)
 
     if show_debug_message and target_button:
         button_text = target_button.get('text', 'unknown') if isinstance(target_button, dict) else 'non-dict'
@@ -9781,15 +9772,7 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
                 return False
 
         # 選擇目標日期
-        target_item = None
-        if len(matched_rows) > 0:
-            if auto_select_mode == "from_bottom_to_top":
-                target_item = matched_rows[-1]
-            elif auto_select_mode == "random":
-                import random
-                target_item = random.choice(matched_rows)
-            else:  # from_top_to_bottom (default)
-                target_item = matched_rows[0]
+        target_item = util.get_target_item_from_matched_list(matched_rows, auto_select_mode)
 
         # 點擊目標日期的按鈕
         if target_item:
@@ -9990,15 +9973,7 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
                 return True, False  # is_need_refresh=True, is_area_selected=False
 
         # 選擇目標區域
-        target_item = None
-        if len(matched_areas) > 0:
-            if auto_select_mode == "from_bottom_to_top":
-                target_item = matched_areas[-1]
-            elif auto_select_mode == "random":
-                import random
-                target_item = random.choice(matched_areas)
-            else:  # from_top_to_bottom (default)
-                target_item = matched_areas[0]
+        target_item = util.get_target_item_from_matched_list(matched_areas, auto_select_mode)
 
         # 點擊目標區域
         if target_item:
@@ -10747,14 +10722,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             return False  # Return False to trigger reload logic in caller
 
     # Step 9: Select target based on mode
-    if auto_select_mode == "random":
-        target_button = random.choice(matched_buttons)
-    elif auto_select_mode == "from bottom to top":
-        target_button = matched_buttons[-1]
-    elif auto_select_mode == "center":
-        target_button = matched_buttons[len(matched_buttons) // 2]
-    else:  # from top to bottom
-        target_button = matched_buttons[0]
+    target_button = util.get_target_item_from_matched_list(matched_buttons, auto_select_mode)
 
     # T013: Log selected date with selection type
     if show_debug_message:
@@ -11107,14 +11075,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             return False  # Return False to trigger reload logic in caller
 
     # Step 8: Select target button based on mode
-    if auto_select_mode == "random":
-        target_button = random.choice(matched_buttons)
-    elif auto_select_mode == "from bottom to top":
-        target_button = matched_buttons[-1]
-    elif auto_select_mode == "center":
-        target_button = matched_buttons[len(matched_buttons) // 2]
-    else:  # from top to bottom (default)
-        target_button = matched_buttons[0]
+    target_button = util.get_target_item_from_matched_list(matched_buttons, auto_select_mode)
 
     # Determine selection method (T013 equivalent)
     is_keyword_match = (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons))
@@ -18050,18 +18011,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 if show_debug_message:
                                     print(f"[UDN QUICK BUY] Date keyword not matched, fallback with mode: {date_mode}")
 
-                                if date_mode == "from bottom to top":
-                                    target_date_idx = len(dates) - 1
-                                elif date_mode == "center":
-                                    target_date_idx = len(dates) // 2
-                                elif date_mode == "random":
-                                    import random
-                                    target_date_idx = random.randint(0, len(dates) - 1)
-                                else:  # "from top to bottom" or default
-                                    target_date_idx = 0
+                                target_date_idx = util.get_target_index_by_mode(len(dates), date_mode)
 
                                 if show_debug_message:
-                                    selected_date = dates[target_date_idx].get('text', '') if target_date_idx < len(dates) else ''
+                                    selected_date = dates[target_date_idx].get('text', '') if target_date_idx is not None and target_date_idx < len(dates) else ''
                                     print(f"[UDN QUICK BUY] Fallback selected date: {selected_date} (index: {target_date_idx})")
                             else:
                                 # Strict mode: no fallback, use first date as default
@@ -18139,15 +18092,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 if show_debug_message:
                                     print(f"[UDN QUICK BUY] Performance keyword not matched, fallback with mode: {date_mode}")
 
-                                if date_mode == "from bottom to top":
-                                    target_perf_idx = len(perfs) - 1
-                                elif date_mode == "center":
-                                    target_perf_idx = len(perfs) // 2
-                                elif date_mode == "random":
-                                    import random
-                                    target_perf_idx = random.randint(0, len(perfs) - 1)
-                                else:  # "from top to bottom" or default
-                                    target_perf_idx = 0
+                                target_perf_idx = util.get_target_index_by_mode(len(perfs), date_mode)
 
                                 if show_debug_message:
                                     selected_perf = perfs[target_perf_idx].get('text', '') if target_perf_idx is not None and target_perf_idx < len(perfs) else ''
@@ -18286,17 +18231,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 if show_debug_message:
                                     print(f"[UDN QUICK BUY] No keyword match, fallback with mode: {area_mode}")
 
-                                if area_mode == "from bottom to top":
-                                    target_ticket = available_tickets[-1]
-                                elif area_mode == "center":
-                                    target_ticket = available_tickets[len(available_tickets) // 2]
-                                elif area_mode == "random":
-                                    import random
-                                    target_ticket = random.choice(available_tickets)
-                                else:  # "from top to bottom" or default
-                                    target_ticket = available_tickets[0]
+                                target_ticket = util.get_target_item_from_matched_list(available_tickets, area_mode)
 
-                                if show_debug_message:
+                                if show_debug_message and target_ticket:
                                     print(f"[UDN QUICK BUY] Fallback selected area: {target_ticket.get('areaName')}")
                         else:
                             # Strict mode: no fallback, don't select anything
