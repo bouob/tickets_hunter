@@ -6,7 +6,8 @@
 # Python cache
 __pycache__/
 *.pyc
-.ptyhon-version
+*.pyo
+.python-version
 
 # Sensitive config files
 /src/settings.json
@@ -37,7 +38,7 @@ user_data/
 .env
 .env.*
 
-# Claude Code
+# Private documentation (Claude Code)
 .claude/
 CLAUDE.md
 /docs/
@@ -45,6 +46,5 @@ CLAUDE.md
 specs/
 .mcp.json
 
-
-#Temp Disable
-/FAQ/
+# OCR models (large binary files)
+/src/assets/model/

@@ -1338,37 +1338,144 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
                     break
     return matched_blocks
 
+
+def get_target_index_by_mode(list_length, auto_select_mode):
+    """
+    Calculate target index based on selection mode.
+
+    This is the foundational function for selection mode logic.
+    Use this when you need an index (e.g., for JavaScript DOM operations).
+    Use get_target_item_from_matched_list() when you need the actual object.
+
+    Args:
+        list_length: Length of the list to select from
+        auto_select_mode: Selection mode. Supports both formats:
+                         - Space format: "from top to bottom", "from bottom to top"
+                         - Underscore format: "from_top_to_bottom", "from_bottom_to_top"
+
+    Returns:
+        int: Target index, or None if list_length <= 0
+
+    Example:
+        # Before (repeated 8+ times in codebase):
+        if mode == "from bottom to top":
+            idx = len(items) - 1
+        elif mode == "center":
+            idx = len(items) // 2
+        elif mode == "random":
+            idx = random.randint(0, len(items) - 1)
+        else:
+            idx = 0
+
+        # After (1 line):
+        idx = get_target_index_by_mode(len(items), mode)
+    """
+    if list_length <= 0:
+        return None
+
+    # Normalize mode format: convert underscore to space for compatibility
+    # This allows both "from_bottom_to_top" and "from bottom to top" formats
+    mode = auto_select_mode.replace('_', ' ') if auto_select_mode else ""
+
+    if mode == CONST_FROM_BOTTOM_TO_TOP:
+        return list_length - 1
+    elif mode == CONST_CENTER:
+        return list_length // 2
+    elif mode == CONST_RANDOM:
+        return random.randint(0, list_length - 1)
+    else:  # CONST_FROM_TOP_TO_BOTTOM or default
+        return 0
+
+
 def get_target_item_from_matched_list(matched_blocks, auto_select_mode):
-    target_area = None
-    if not matched_blocks is None:
-        matched_blocks_count = len(matched_blocks)
-        if matched_blocks_count > 0:
-            target_row_index = 0
+    """
+    Get target item from matched list based on selection mode.
 
-            if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                pass
+    This is a higher-level function that returns the actual object.
+    Internally uses get_target_index_by_mode() for index calculation.
 
-            if auto_select_mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_row_index = matched_blocks_count - 1
+    Args:
+        matched_blocks: List of matched items (can be any type)
+        auto_select_mode: Selection mode
 
-            if auto_select_mode == CONST_RANDOM:
-                if matched_blocks_count > 1:
-                    target_row_index = random.randint(0,matched_blocks_count-1)
+    Returns:
+        The selected item from the list, or None if list is empty/None
+    """
+    if matched_blocks is None or len(matched_blocks) == 0:
+        return None
 
-            if auto_select_mode == CONST_CENTER:
-                if matched_blocks_count > 2:
-                    target_row_index = int(matched_blocks_count/2)
+    target_index = get_target_index_by_mode(len(matched_blocks), auto_select_mode)
+    return matched_blocks[target_index] if target_index is not None else None
 
-            target_area = matched_blocks[target_row_index]
-    return target_area
+
+def get_debug_mode(config_dict):
+    """
+    Safely read debug mode setting from config.
+
+    Consolidates 6 different access patterns found in codebase:
+    - Pattern 1: config_dict["advanced"]["verbose"] (HIGH RISK - KeyError)
+    - Pattern 2: config_dict["advanced"].get("verbose", False)
+    - Pattern 3: config_dict.get("advanced", {}).get("verbose", False) (SAFEST)
+
+    Args:
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: Debug mode status, defaults to False
+
+    Example:
+        # Before (6 different patterns, 80+ locations):
+        show_debug_message = config_dict["advanced"]["verbose"]
+
+        # After (unified):
+        show_debug_message = get_debug_mode(config_dict)
+    """
+    try:
+        return config_dict.get("advanced", {}).get("verbose", False)
+    except:
+        return False
+
+
+def parse_keyword_string_to_array(keyword_string):
+    """
+    Parse keyword string to array using JSON format.
+
+    Expected input format: '"keyword1","keyword2"' or '"keyword1 sub1","keyword2"'
+    Inner space = AND logic, outer comma = OR logic.
+
+    This function only handles parsing. For custom fallback logic,
+    check the return value and implement fallback at call site.
+
+    Args:
+        keyword_string: Comma-separated quoted keywords
+
+    Returns:
+        list: Parsed keywords, or empty list on failure
+
+    Example:
+        parse_keyword_string_to_array('"VIP","1F"') -> ["VIP", "1F"]
+        parse_keyword_string_to_array('"VIP Rock Area"') -> ["VIP Rock Area"]
+        parse_keyword_string_to_array('') -> []
+        parse_keyword_string_to_array('invalid') -> []
+
+    Note:
+        For locations requiring custom fallback (e.g., comma split, semicolon split),
+        implement fallback at call site:
+
+        keywords = parse_keyword_string_to_array(keyword)
+        if not keywords:
+            keywords = [kw.strip() for kw in keyword.split(',') if kw.strip()]
+    """
+    if not keyword_string or not keyword_string.strip():
+        return []
+    try:
+        return json.loads("[" + keyword_string + "]")
+    except:
+        return []
 
 
 def get_matched_blocks_by_keyword(config_dict, auto_select_mode, keyword_string, formated_area_list):
-    keyword_array = []
-    try:
-        keyword_array = json.loads("["+ keyword_string +"]")
-    except Exception as exc:
-        keyword_array = []
+    keyword_array = parse_keyword_string_to_array(keyword_string)
 
     matched_blocks = []
     for keyword_item_set in keyword_array:

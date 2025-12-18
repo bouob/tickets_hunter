@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.15) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.18) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -207,8 +207,6 @@
   <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/keyword-mechanism.md" target="_blank">關鍵字與回退機制</a> - 深入理解搶票邏輯</li>
   <li><a href="https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md" target="_blank">詳細設定說明</a> - settings.json 完整欄位參考</li>
 </ul>
-
-<p><strong>重要更新 (2025.10.29)</strong>：關鍵字分隔符號已變更：逗號 (<code>,</code>) → 分號 (<code>;</code>)。範例：<code>11/16;11/17;11/18</code>（詳見「關鍵字與回退機制」）</p>
 
 <hr/>
 
@@ -673,9 +671,9 @@
         <div class="row mb-3">
           <label for="ocr_model_path" class="col-sm-2 col-form-label">自訂 OCR 模型</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="ocr_model_path" value="" placeholder="例如：C:\models\custom_ocr.onnx" />
+            <input class="form-control" id="ocr_model_path" value="" placeholder="例如：assets/ocr_model 或 C:\models\my_ocr" />
             <div class="form-text">
-              自訂 OCR 模型檔案路徑。若未填寫，將使用內建的 ddddocr 模型。
+              自訂 OCR 模型<strong>資料夾</strong>路徑，資料夾內需包含 <code>custom.onnx</code> 和 <code>charsets.json</code>。支援相對路徑。若未填寫，將使用內建的 ddddocr 模型。
             </div>
           </div>
         </div>
@@ -1109,6 +1107,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2025121602"></script>
+  <script src="settings.js?v=2025121814"></script>
 </body>
 </html>
