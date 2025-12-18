@@ -3914,24 +3914,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
     area_auto_fallback = config_dict.get("area_auto_fallback", False)
 
     if area_keyword:
-        # Parse JSON array with enhanced comma detection
-        import json
-        area_keyword_array = []
-        try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-
-            # Enhanced parsing: if single element contains comma, split into multiple groups
-            # e.g., "CAT I,CAT F" → ["CAT I", "CAT F"] (OR logic between groups)
-            if len(area_keyword_array) == 1 and isinstance(area_keyword_array[0], str):
-                single_keyword = area_keyword_array[0]
-                if ',' in single_keyword:
-                    # Split by comma and strip whitespace
-                    area_keyword_array = [kw.strip() for kw in single_keyword.split(',') if kw.strip()]
-                    if show_debug_message:
-                        print(f"[TICKETMASTER AREA] Enhanced parsing: split '{single_keyword}' into {len(area_keyword_array)} groups")
-
-        except:
-            area_keyword_array = []
+        area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
         if show_debug_message:
             print(f"[TICKETMASTER AREA] Parsed keyword groups: {area_keyword_array}")
@@ -8850,19 +8833,11 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
     # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
     # Multiple keywords use OR logic (try each one sequentially - Early Return Pattern)
-    keyword_array = []
-    if area_keyword_raw:
-        try:
-            # Use JSON parsing instead of simple comma split to handle keywords with commas
-            keyword_array = json.loads("[" + area_keyword_raw + "]")
+    keyword_array = util.parse_keyword_string_to_array(area_keyword_raw)
 
-            if show_debug_message:
-                print(f"[TicketPlus] Parsed keywords: {keyword_array}")
-                print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
-        except Exception as e:
-            if show_debug_message:
-                print(f"[TicketPlus] Keyword parse error: {e}, using raw keyword")
-            keyword_array = [area_keyword_raw] if area_keyword_raw else []
+    if show_debug_message:
+        print(f"[TicketPlus] Parsed keywords: {keyword_array}")
+        print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
 
     # 總是執行票數選擇（TicketPlus 按鈕可以在票數為 0 時啟用）
     need_select_ticket = True
@@ -17943,12 +17918,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                         # Match date keyword (use JSON parsing like other platforms)
                         if date_keyword:
-                            import json
-                            try:
-                                keywords = json.loads("[" + date_keyword + "]")
-                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                            except:
-                                keywords = []
+                            keywords = util.parse_keyword_string_to_array(date_keyword)
 
                             if show_debug_message:
                                 print(f"[UDN QUICK BUY] Date keywords parsed: {keywords}")
@@ -18027,12 +17997,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                         # Match performance keyword (use date_keyword for time/venue matching)
                         if date_keyword and not has_active:
-                            import json
-                            try:
-                                keywords = json.loads("[" + date_keyword + "]")
-                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                            except:
-                                keywords = []
+                            keywords = util.parse_keyword_string_to_array(date_keyword)
 
                             for i, perf_item in enumerate(perfs):
                                 perf_text = perf_item.get('text', '')
@@ -18137,12 +18102,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     # Find matching area based on keyword (use JSON parsing like other platforms)
                     target_ticket = None
                     if area_keyword:
-                        import json
-                        try:
-                            keywords = json.loads("[" + area_keyword + "]")
-                            keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                        except:
-                            keywords = []
+                        keywords = util.parse_keyword_string_to_array(area_keyword)
 
                         if show_debug_message:
                             print(f"[UDN QUICK BUY] Area keywords parsed: {keywords}")
