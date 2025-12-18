@@ -1,7 +1,7 @@
 # 12-Stage 搶票機制文件索引
 
 **文件說明**：提供 12 階段搶票自動化機制的完整索引與導覽，便於查找相關文件
-**最後更新**：2025-11-27
+**最後更新**：2025-12-18
 
 ---
 
@@ -375,12 +375,14 @@ docs/03-mechanisms/
 - 不同開發者可能使用不同格式（底線 vs 空格）
 - 重複代碼增加維護負擔
 
-**共用函式**（定義於 `util.py`）：
+**共用函式**（定義於 `util.py`，v2025.12.18 更新）：
 
 | 函式 | 用途 | 參數 | 返回值 |
 |------|------|------|--------|
 | `get_target_index_by_mode()` | 計算目標索引 | 列表長度, 模式 | int 或 None |
 | `get_target_item_from_matched_list()` | 取得目標物件 | 物件列表, 模式 | 物件或 None |
+| `get_debug_mode()` | 安全讀取 debug 設定 | config_dict | bool |
+| `parse_keyword_string_to_array()` | 解析關鍵字字串 | 關鍵字字串 | list |
 
 **使用規範**：
 
@@ -417,11 +419,13 @@ else:
 
 **應用階段**：Stage 4（日期選擇）、Stage 5（區域選擇）
 
-**重構記錄**（2025-12）：
+**重構記錄**（v2025.12.18 更新）：
 - 新增 `get_target_index_by_mode()` 基礎函式
 - 重構 `get_target_item_from_matched_list()` 內部調用基礎函式
 - 統一 UDN、iBon、FamiTicket 共 8 處重複代碼
 - 支援底線格式（`from_bottom_to_top`）向後相容
+- **新增 `get_debug_mode()`**：替換 28 個直接索引存取，避免 KeyError
+- **新增 `parse_keyword_string_to_array()`**：替換 9 個 json.loads 模式，簡化約 73 行代碼
 
 ---
 
@@ -512,5 +516,5 @@ else:
 
 ---
 
-**最後更新**：2025-11-27（v2.0）
+**最後更新**：2025-12-18（v2.1）
 **維護者**：Tickets Hunter 開發團隊

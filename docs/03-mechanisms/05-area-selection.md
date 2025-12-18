@@ -1,7 +1,7 @@
 # Stage 5: 區域選擇機制
 
 **文件說明**：詳細說明搶票系統的區域選擇機制、座位區域匹配與自動選擇策略
-**最後更新**：2025-11-12
+**最後更新**：2025-12-18
 
 ---
 
@@ -285,6 +285,43 @@ if config_dict["ticket_number"] > 1:
 
 ---
 
+### 6. 選擇模式索引計算（v2025.12.18 新增）
+
+**使用統一的 `util.get_target_index_by_mode()` 函數**：
+
+```python
+# v2025.12.18: 使用統一的選擇模式索引計算（推薦）
+import util
+target_index = util.get_target_index_by_mode(len(matched_list), auto_select_mode)
+
+# 支援的 auto_select_mode 值：
+# - "from top to bottom" / "from_top_to_bottom" → index = 0（第一個）
+# - "from bottom to top" / "from_bottom_to_top" → index = len-1（最後一個）
+# - "center" → index = len//2（中間）
+# - "random" → index = random.randint(0, len-1)（隨機）
+
+# 範例：
+matched_list = ["A區", "B區", "C區", "D區", "E區"]  # 5 個選項
+index = util.get_target_index_by_mode(5, "center")  # 返回 2（C區）
+```
+
+**舊寫法（已棄用）**：
+```python
+# ❌ 舊寫法：每個平台自行實作重複邏輯
+if auto_select_mode == "from top to bottom":
+    target_index = 0
+elif auto_select_mode == "from bottom to top":
+    target_index = len(matched_list) - 1
+# ... 重複 8 次於不同平台
+```
+
+**優勢**：
+- 統一 UDN、iBon、FamiTicket 等 8 個重複實作
+- 支援空格和底線兩種格式（`from top to bottom` / `from_top_to_bottom`）
+- 集中維護，減少 bug 風險
+
+---
+
 ## 平台實作差異
 
 | 平台 | 選擇器類型 | Shadow DOM | 特殊處理 | 函數名稱 | 完成度 |
@@ -481,11 +518,11 @@ if is_need_refresh and matched_blocks is None:
 |------|------|---------|
 | v1.0 | 2024 | 初版：基本區域選擇邏輯 |
 | v1.1 | 2025-10 | 新增 AND 邏輯支援 + keyword_exclude |
-| **v1.2** | **2025-11** | **Feature 003: Early Return + Conditional Fallback** |
+| v1.2 | 2025-11 | Feature 003: Early Return + Conditional Fallback |
+| **v1.3** | **2025-12-18** | **util 共用函數重構** |
 
-**v1.2 重大變更**：
-- ✅ 實作 Early Return Pattern（優先級驅動）
-- ✅ 實作條件回退機制（`area_auto_fallback` 開關）
-- ✅ 預設改為嚴格模式（避免誤購不想要的區域）
-- ✅ 強化票數可用性檢查（避免票數不足）
-- ✅ 統一所有平台的關鍵字解析邏輯
+**v1.3 重大變更**：
+- ✅ 新增 `util.parse_keyword_string_to_array()` 統一關鍵字解析
+- ✅ 新增 `util.get_target_index_by_mode()` 統一選擇模式索引計算
+- ✅ 新增 `util.get_debug_mode()` 安全讀取 debug 設定
+- ✅ 統一 UDN、iBon、FamiTicket 等 8 個重複選擇模式實作

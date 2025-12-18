@@ -1,7 +1,7 @@
 # Stage 4: 日期選擇機制
 
 **文件說明**：詳細說明搶票系統的日期選擇機制、關鍵字匹配與自動回退策略
-**最後更新**：2025-11-12
+**最後更新**：2025-12-18
 
 ---
 
@@ -191,15 +191,15 @@ if formated_area_list is None or len(formated_area_list) == 0:
 }
 ```
 
-**關鍵字解析**（`implementation-guide.md` 標準）：
+**關鍵字解析**（v2025.12.18 標準：使用 `util.parse_keyword_string_to_array()`）：
 ```python
-# Parse keywords - support multiple formats:
-# 1. "keyword1,keyword2,keyword3" (with outer quotes)
-# 2. keyword1,keyword2,keyword3 (without quotes)
-# 3. "\"keyword1\",\"keyword2\"" (JSON array format)
+# v2025.12.18: 使用統一的關鍵字解析函數（推薦）
+import util
+keyword_array = util.parse_keyword_string_to_array(date_keyword)
 
-import json
-keyword_array = json.loads("[" + date_keyword + "]")
+# 舊寫法（已棄用，但仍相容）：
+# import json
+# keyword_array = json.loads("[" + date_keyword + "]")
 
 # Example results:
 # Input: "\"10/03\",\"10/04\",\"10/05\""
@@ -208,6 +208,11 @@ keyword_array = json.loads("[" + date_keyword + "]")
 # Input: "\"10/03 週六\",\"10/04 週日\""
 # Output: [["10/03", "週六"], ["10/04", "週日"]]  # AND logic within each
 ```
+
+**`util.parse_keyword_string_to_array()` 優勢**：
+- 統一處理多種輸入格式（JSON 字串、純文字）
+- 自動處理空白和引號
+- 錯誤處理更完善，避免 JSONDecodeError
 
 ---
 
@@ -460,10 +465,11 @@ for i, kw in enumerate(keyword_array):
 |------|------|---------|
 | v1.0 | 2024 | 初版：基本日期選擇邏輯 |
 | v1.1 | 2025-10 | 新增 AND/OR 邏輯支援 |
-| **v1.2** | **2025-11** | **Feature 003: Early Return + Conditional Fallback** |
+| v1.2 | 2025-11 | Feature 003: Early Return + Conditional Fallback |
+| **v1.3** | **2025-12-18** | **util 共用函數重構** |
 
-**v1.2 重大變更**：
-- ✅ 實作 Early Return Pattern（優先級驅動）
-- ✅ 實作條件回退機制（`date_auto_fallback` 開關）
-- ✅ 預設改為嚴格模式（避免誤購）
-- ✅ 統一所有平台的關鍵字解析邏輯
+**v1.3 重大變更**：
+- ✅ 新增 `util.parse_keyword_string_to_array()` 統一關鍵字解析
+- ✅ 新增 `util.get_target_index_by_mode()` 統一選擇模式計算
+- ✅ 新增 `util.get_debug_mode()` 安全讀取 debug 設定
+- ✅ 簡化約 73 行重複代碼
