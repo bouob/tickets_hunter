@@ -632,22 +632,22 @@ def convert_string_to_pattern(my_str, dynamic_length=True):
             if not match_result is None:
                 my_formated += "[a-z]"
 
-            pattern = re.compile("[\d]")
+            pattern = re.compile(r"[\d]")
             match_result = pattern.match(char)
             #print("match_result d:", match_result)
             if not match_result is None:
-                my_formated += "[\d]"
+                my_formated += r"[\d]"
 
         # for dynamic length
         if dynamic_length:
             for i in range(10):
                 my_formated = my_formated.replace("[A-Z][A-Z]","[A-Z]")
                 my_formated = my_formated.replace("[a-z][a-z]","[a-z]")
-                my_formated = my_formated.replace("[\d][\d]","[\d]")
+                my_formated = my_formated.replace(r"[\d][\d]",r"[\d]")
 
             my_formated = my_formated.replace("[A-Z]","[A-Z]+")
             my_formated = my_formated.replace("[a-z]","[a-z]+")
-            my_formated = my_formated.replace("[\d]","[\d]+")
+            my_formated = my_formated.replace(r"[\d]",r"[\d]+")
     return my_formated
 
 def guess_answer_list_from_multi_options(tmp_text):
@@ -667,7 +667,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if '(' in tmp_text and ')' in tmp_text:
-            pattern = '\(.{1,4}\)'
+            pattern = r'\(.{1,4}\)'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
@@ -676,7 +676,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if '[' in tmp_text and ']' in tmp_text:
-            pattern = '\[.{1,4}\]'
+            pattern = r'\[.{1,4}\]'
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
@@ -685,7 +685,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if "\n" in tmp_text and ')' in tmp_text:
-            pattern = "\\n.{1,4}\)"
+            pattern = r"\\n.{1,4}\)"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
@@ -694,7 +694,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if "\n" in tmp_text and ']' in tmp_text:
-            pattern = "\\n.{1,4}\]"
+            pattern = r"\\n.{1,4}\]"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
@@ -722,7 +722,7 @@ def guess_answer_list_from_multi_options(tmp_text):
     if len(options_list) == 0:
         if " " in tmp_text and '?' in tmp_text:
             if ('.' in tmp_text or ':' in tmp_text or ')' in tmp_text or ']' in tmp_text or '>' in tmp_text):
-                pattern = "[ /\n\|;\.\?]{1}.{1}[\.:)\]>]{1}.{2,3}"
+                pattern = r"[ /\n\|;\.\?]{1}.{1}[\.:)\]>]{1}.{2,3}"
                 options_list = re.findall(pattern, tmp_text)
                 if len(options_list) <= 2:
                     options_list = []
@@ -876,10 +876,10 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
                             break
         if offical_hint_string == "":
             if '(' in tmp_text and ')' in tmp_text:
-                hint_list = re.findall('\(.*?\)', tmp_text)
+                hint_list = re.findall(r'\(.*?\)', tmp_text)
                 if not hint_list is None:
                     if show_debug_message:
-                        print("\(.*?\)hint_list:", hint_list)
+                        print(r"\(.*?\)hint_list:", hint_list)
                     for hint in hint_list:
                         if symbol in hint:
                             offical_hint_string = hint[1:-1]
@@ -1053,7 +1053,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
+                my_anwser_formated = r'[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
         target_symbol = "個半形"
@@ -1067,7 +1067,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     answer_char_count = '0'
 
                 star_index -= 1
-                my_anwser_formated = '[A-Za-z\d]' * int(answer_char_count)
+                my_anwser_formated = r'[A-Za-z\d]' * int(answer_char_count)
             offical_hint_string = tmp_text[star_index: space_index]
 
     if len(offical_hint_string) > 0:
