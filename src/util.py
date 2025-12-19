@@ -685,7 +685,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if "\n" in tmp_text and ')' in tmp_text:
-            pattern = r"\\n.{1,4}\)"
+            pattern = r"\n.{1,4}\)"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
@@ -694,7 +694,7 @@ def guess_answer_list_from_multi_options(tmp_text):
 
     if len(options_list) == 0:
         if "\n" in tmp_text and ']' in tmp_text:
-            pattern = r"\\n.{1,4}\]"
+            pattern = r"\n.{1,4}\]"
             options_list = re.findall(pattern, tmp_text)
             if len(options_list) <= 2:
                 options_list = []
