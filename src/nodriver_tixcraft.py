@@ -6380,9 +6380,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_quit_bot = True
             tixcraft_dict["is_popup_checkout"] = True
 
-        # Headless-specific behavior: open checkout URL in new browser window
-        if config_dict["advanced"]["headless"]:
-            if tixcraft_dict["is_popup_checkout"]:
+            # Issue #193: Move inside the block to execute only once on first checkout detection
+            # Headless-specific behavior: open checkout URL in new browser window
+            if config_dict["advanced"]["headless"]:
                 domain_name = url.split('/')[2]
                 checkout_url = "https://%s/ticket/checkout" % (domain_name)
                 print("Ticket purchase successful, please check order at: %s" % (checkout_url))
