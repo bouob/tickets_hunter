@@ -50,7 +50,7 @@
 2. **檢查規格**：`docs/05-validation/README.md`（索引）→ FR-xxx, SC-xxx
 3. **查找 API**：`docs/06-api-reference/nodriver_api_guide.md`
 4. **搜尋案例**：`docs/08-troubleshooting/README.md`
-5. **啟用日誌**：`config_dict["advanced"]["verbose"] = True`
+5. **啟用日誌**：請使用者在「進階設定」啟用「輸出除錯訊息」
 
 ### MCP 即時除錯（Chrome DevTools 連接）
 
@@ -300,7 +300,7 @@ docs/02-development/development_guide.md  ← 開發規範
 5. ✅ **查閱 Issues FAQ**：`docs/10-project-tracking/issues-faq-tracking.md` ⭐ 新增
    - 按平台分類的常見問題
    - 已解決 Issues 的解決方案彙整
-6. ✅ **啟用詳細日誌**：`config_dict["advanced"]["verbose"] = True`
+6. ✅ **啟用詳細日誌**：請使用者在「進階設定」啟用「輸出除錯訊息」
 7. ✅ **MCP 即時除錯**：`docs/07-testing-debugging/mcp_integration_guide.md` ⭐
    - 使用 `--mcp_debug` 參數啟動 NoDriver
    - 透過 MCP 工具即時觀察頁面狀態
@@ -413,6 +413,36 @@ grep -i "ERROR\|WARNING\|failed" .temp/test_output.txt
 - 暫停機制
 - 安全性原則
 - Code Review 標準
+
+---
+
+## 🗣️ 使用者溝通規範（NON-NEGOTIABLE）
+
+**核心原則**：回應使用者時，使用「使用者名稱（UI 顯示）」而非「技術名稱（JSON key）」。
+
+### 快速對照（常用）
+
+| 技術名稱 | 使用者名稱 | 使用範例 |
+|----------|-----------|----------|
+| `verbose: true` | 輸出除錯訊息 | 「請啟用『輸出除錯訊息』選項」 |
+| `ocr_captcha.enable` | OCR（啟用） | 「請啟用『OCR 自動辨識驗證碼』」 |
+| `ocr_captcha.force_submit` | 自動送出 | 「請啟用『自動送出』」 |
+| `headless` | 無圖形界面模式 | 「請關閉『無圖形界面模式』」 |
+| `date_auto_fallback` | 日期自動遞補 | 「請啟用『日期自動遞補』」 |
+| `area_auto_fallback` | 區域自動遞補 | 「請啟用『區域自動遞補』」 |
+| `settings.json` | 設定檔 | 「請檢查設定檔」 |
+| `nodriver` | NoDriver 模式 | 「目前使用 NoDriver 模式」 |
+
+### 回應範例
+
+**錯誤**（技術導向）：
+> 請將 `settings.json` 中的 `advanced.verbose` 設為 `true`
+
+**正確**（使用者導向）：
+> 請在設定介面的「進階設定」中，找到「輸出除錯訊息」選項並打勾啟用
+
+### 完整對照表
+詳細對照請查詢：`docs/11-reference/settings-terminology.md`
 
 ---
 
