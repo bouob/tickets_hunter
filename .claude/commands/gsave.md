@@ -81,7 +81,7 @@ FAQ/              - 常見問題解答
 ```
 
 **分離規則**：
-- **公開檔案**：src/, tests/, README.md, CHANGELOG.md, .github/, guide/ 等
+- **公開檔案**：src/, README.md, CHANGELOG.md, .github/, guide/, build_scripts/ 等
 - **機敏檔案**：上述清單中的檔案
 
 **分組策略**：
