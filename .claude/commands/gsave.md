@@ -76,7 +76,6 @@ CLAUDE.md         - 專案開發規範
 docs/             - 技術文件和指南
 .specify/         - 規格模板和指令碼
 specs/            - 功能規格和設計文件
-FAQ/              - 常見問題解答
 .temp/            - 臨時測試資料
 ```
 
@@ -111,7 +110,7 @@ Files modified:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  FILTER MARKER FOR /publicpr ⚠️
-Private patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .temp/
+Private patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, .temp/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -125,7 +124,7 @@ git commit -m "[標準訊息]"
 
 **4.2 後提交機敏檔案**（如果有）：
 ```bash
-git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ FAQ/ .temp/
+git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ .temp/
 git commit -m "[PRIVATE 標記訊息]"
 ```
 
@@ -164,7 +163,7 @@ Files modified:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  FILTER MARKER FOR /publicpr ⚠️
-Private patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, FAQ/, .temp/
+Private patterns: .claude/, docs/, CLAUDE.md, .specify/, specs/, .temp/
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
