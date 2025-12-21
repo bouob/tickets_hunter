@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.18)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.21)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -3914,24 +3914,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
     area_auto_fallback = config_dict.get("area_auto_fallback", False)
 
     if area_keyword:
-        # Parse JSON array with enhanced comma detection
-        import json
-        area_keyword_array = []
-        try:
-            area_keyword_array = json.loads("[" + area_keyword + "]")
-
-            # Enhanced parsing: if single element contains comma, split into multiple groups
-            # e.g., "CAT I,CAT F" → ["CAT I", "CAT F"] (OR logic between groups)
-            if len(area_keyword_array) == 1 and isinstance(area_keyword_array[0], str):
-                single_keyword = area_keyword_array[0]
-                if ',' in single_keyword:
-                    # Split by comma and strip whitespace
-                    area_keyword_array = [kw.strip() for kw in single_keyword.split(',') if kw.strip()]
-                    if show_debug_message:
-                        print(f"[TICKETMASTER AREA] Enhanced parsing: split '{single_keyword}' into {len(area_keyword_array)} groups")
-
-        except:
-            area_keyword_array = []
+        area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
         if show_debug_message:
             print(f"[TICKETMASTER AREA] Parsed keyword groups: {area_keyword_array}")
@@ -6397,9 +6380,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_quit_bot = True
             tixcraft_dict["is_popup_checkout"] = True
 
-        # Headless-specific behavior: open checkout URL in new browser window
-        if config_dict["advanced"]["headless"]:
-            if tixcraft_dict["is_popup_checkout"]:
+            # Issue #193: Move inside the block to execute only once on first checkout detection
+            # Headless-specific behavior: open checkout URL in new browser window
+            if config_dict["advanced"]["headless"]:
                 domain_name = url.split('/')[2]
                 checkout_url = "https://%s/ticket/checkout" % (domain_name)
                 print("Ticket purchase successful, please check order at: %s" % (checkout_url))
@@ -8850,19 +8833,11 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     # Parse keywords using JSON to avoid splitting keywords containing commas (e.g., "5,600")
     # Format: "\"keyword1\",\"keyword2\"" → ['keyword1', 'keyword2']
     # Multiple keywords use OR logic (try each one sequentially - Early Return Pattern)
-    keyword_array = []
-    if area_keyword_raw:
-        try:
-            # Use JSON parsing instead of simple comma split to handle keywords with commas
-            keyword_array = json.loads("[" + area_keyword_raw + "]")
+    keyword_array = util.parse_keyword_string_to_array(area_keyword_raw)
 
-            if show_debug_message:
-                print(f"[TicketPlus] Parsed keywords: {keyword_array}")
-                print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
-        except Exception as e:
-            if show_debug_message:
-                print(f"[TicketPlus] Keyword parse error: {e}, using raw keyword")
-            keyword_array = [area_keyword_raw] if area_keyword_raw else []
+    if show_debug_message:
+        print(f"[TicketPlus] Parsed keywords: {keyword_array}")
+        print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
 
     # 總是執行票數選擇（TicketPlus 按鈕可以在票數為 0 時啟用）
     need_select_ticket = True
@@ -10424,22 +10399,26 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         print("date_keyword:", date_keyword)
         print("auto_select_mode:", auto_select_mode)
 
-    # Step 1: Initial wait for Angular to initialize
+    # Step 1: Auto-detect buttons (no fixed wait - responds immediately when ready)
     if show_debug_message:
-        print("[IBON DATE PIERCE] Waiting for Angular to initialize...")
+        print("[IBON DATE PIERCE] Auto-detecting purchase buttons...")
 
     await tab  # Sync state
-    initial_wait = random.uniform(1.2, 1.8)
-    await tab.sleep(initial_wait)
 
-    # Step 2: Poll and wait for button presence using CDP search
-    # Must use CDP perform_search to penetrate Shadow DOM (regular JS querySelectorAll won't work)
-    max_wait = 5  # Max 5 seconds additional wait
-    check_interval = 0.3
-    max_attempts = int(max_wait / check_interval)
+    # Initialize CDP DOM state (required for perform_search to work)
+    try:
+        await tab.send(cdp.dom.get_document(depth=0, pierce=False))
+    except:
+        pass
+
+    # Auto-detect: fast polling until buttons found or timeout
+    import time
+    max_wait = 3  # Maximum wait (safety limit)
+    check_interval = 0.1  # Fast polling for quick response
+    start_time = time.time()
     button_found = False
 
-    for attempt in range(max_attempts):
+    while (time.time() - start_time) < max_wait:
         try:
             # Use CDP search to check button presence (penetrates Shadow DOM)
             search_id, result_count = await tab.send(cdp.dom.perform_search(
@@ -10455,8 +10434,9 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
             if result_count > 0:
                 button_found = True
+                elapsed = time.time() - start_time
                 if show_debug_message:
-                    print(f"[IBON DATE PIERCE] Found {result_count} button(s) after {initial_wait + attempt * check_interval:.1f}s")
+                    print(f"[IBON DATE PIERCE] Found {result_count} button(s) after {elapsed:.2f}s")
                 break
         except:
             pass
@@ -10464,7 +10444,8 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
         await tab.sleep(check_interval)
 
     if not button_found and show_debug_message:
-        print(f"[IBON DATE PIERCE] No buttons found after {initial_wait + max_wait:.1f}s, proceeding with search anyway...")
+        elapsed = time.time() - start_time
+        print(f"[IBON DATE PIERCE] No buttons found after {elapsed:.1f}s, proceeding with search anyway...")
 
     # Step 4: Get document with pierce=True to enable Shadow DOM traversal
     # Use shallow depth to avoid CBOR stack overflow on complex pages
@@ -10791,21 +10772,23 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
     is_date_assigned = False
 
-    # Wait for page to load (1.2-1.8s: stable for slower Angular pages)
-    wait_time = random.uniform(1.2, 1.8)
-    if show_debug_message:
-        print(f"[IBON DATE] Waiting {wait_time:.2f} seconds for Angular to load...")
-    await tab.sleep(wait_time)
+    # Auto-detect buttons (no fixed wait - responds immediately when ready)
+    # IMPORTANT: get_document() must be called before perform_search() to initialize CDP DOM state
+    try:
+        await tab.send(cdp.dom.get_document(depth=0, pierce=False))
+    except:
+        pass
 
-    # Poll and wait for purchase buttons to render (use CDP search to penetrate Shadow DOM)
+    import time
+    max_wait = 3  # Maximum wait (safety limit)
+    check_interval = 0.1  # Fast polling for quick response
+    start_time = time.time()
     content_appeared = False
-    max_wait = 2  # Max 2 seconds wait (reduced from 10s)
-    check_interval = 0.3
-    max_attempts = int(max_wait / check_interval)
-    if show_debug_message:
-        print("[IBON DATE] Waiting for purchase buttons to render...")
 
-    for attempt in range(max_attempts):
+    if show_debug_message:
+        print("[IBON DATE] Auto-detecting purchase buttons...")
+
+    while (time.time() - start_time) < max_wait:
         try:
             # Use CDP search to check button presence (penetrates Shadow DOM, same as pierce method)
             search_id, result_count = await tab.send(cdp.dom.perform_search(
@@ -10821,15 +10804,17 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
             if result_count > 0:
                 content_appeared = True
+                elapsed = time.time() - start_time
                 if show_debug_message:
-                    print(f"[IBON DATE] Found {result_count} purchase button(s) after {attempt * check_interval:.1f}s")
+                    print(f"[IBON DATE] Found {result_count} purchase button(s) after {elapsed:.2f}s")
                 break
         except:
             pass
         await tab.sleep(check_interval)
 
     if not content_appeared and show_debug_message:
-        print(f"[IBON DATE] No buttons found after {max_wait}s, proceeding with snapshot anyway...")
+        elapsed = time.time() - start_time
+        print(f"[IBON DATE] No buttons found after {elapsed:.1f}s, proceeding with snapshot anyway...")
 
     # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
     if show_debug_message:
@@ -12292,26 +12277,26 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         print(f"ticket_number: {ticket_number}")
 
     # Wait for Shadow DOM to fully load (ibon orders page needs more time for TR elements to render)
-    # Use intelligent waiting: check for page elements rather than blind sleep
+    # Auto-detect TR elements (no fixed wait - responds immediately when ready)
     try:
-        # cdp and random already imported at file start (Line 11, 29)
-
         # First, ensure page state is synced
         await tab  # Sync state
 
-        # Wait for initial page load with basic delay
-        initial_wait = random.uniform(1.5, 2.0)
+        # Initialize CDP DOM state (required for perform_search to work)
+        try:
+            await tab.send(cdp.dom.get_document(depth=0, pierce=False))
+        except:
+            pass
+
+        import time
+        max_wait = 3  # Maximum wait (safety limit)
+        check_interval = 0.1  # Fast polling for quick response
+        start_time = time.time()
+
         if show_debug_message:
-            print(f"Waiting {initial_wait:.2f} seconds for initial page load...")
-        await tab.sleep(initial_wait)
+            print("[IBON AREA] Auto-detecting area table...")
 
-        # Then wait for TR elements to appear (intelligent waiting)
-        # Use CDP perform_search to penetrate Shadow DOM (consistent with date select)
-        max_wait = 5  # Max 5 seconds additional wait
-        check_interval = 0.3
-        max_attempts = int(max_wait / check_interval)
-
-        for attempt in range(max_attempts):
+        while (time.time() - start_time) < max_wait:
             try:
                 # Use CDP search to check TR presence (penetrates Shadow DOM)
                 search_id, tr_count = await tab.send(cdp.dom.perform_search(
@@ -12326,8 +12311,9 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                     pass
 
                 if tr_count > 0:
+                    elapsed = time.time() - start_time
                     if show_debug_message:
-                        print(f"[IBON AREA WAIT] Found {tr_count} TR elements after {initial_wait + attempt * check_interval:.1f}s")
+                        print(f"[IBON AREA] Found {tr_count} TR elements after {elapsed:.2f}s")
                     break
             except:
                 pass
@@ -12336,7 +12322,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     except Exception as e:
         if show_debug_message:
-            print(f"[IBON AREA WAIT] Error during wait: {e}")
+            print(f"[IBON AREA] Error during auto-detect: {e}")
         pass
 
     # Phase 1: Extract all area data using DOMSnapshot (to pierce closed Shadow DOM)
@@ -17943,12 +17929,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                         # Match date keyword (use JSON parsing like other platforms)
                         if date_keyword:
-                            import json
-                            try:
-                                keywords = json.loads("[" + date_keyword + "]")
-                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                            except:
-                                keywords = []
+                            keywords = util.parse_keyword_string_to_array(date_keyword)
 
                             if show_debug_message:
                                 print(f"[UDN QUICK BUY] Date keywords parsed: {keywords}")
@@ -18027,12 +18008,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                         # Match performance keyword (use date_keyword for time/venue matching)
                         if date_keyword and not has_active:
-                            import json
-                            try:
-                                keywords = json.loads("[" + date_keyword + "]")
-                                keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                            except:
-                                keywords = []
+                            keywords = util.parse_keyword_string_to_array(date_keyword)
 
                             for i, perf_item in enumerate(perfs):
                                 perf_text = perf_item.get('text', '')
@@ -18137,12 +18113,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     # Find matching area based on keyword (use JSON parsing like other platforms)
                     target_ticket = None
                     if area_keyword:
-                        import json
-                        try:
-                            keywords = json.loads("[" + area_keyword + "]")
-                            keywords = [util.format_keyword_string(kw) for kw in keywords if kw]
-                        except:
-                            keywords = []
+                        keywords = util.parse_keyword_string_to_array(area_keyword)
 
                         if show_debug_message:
                             print(f"[UDN QUICK BUY] Area keywords parsed: {keywords}")
