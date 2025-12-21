@@ -1,5 +1,12 @@
 # Changelog
 
+## 2025.12.21
+
+- 修復 TixCraft 購票成功後重複顯示 checkout 訊息問題 (Issue #193)
+- 優化 iBon 元素偵測效能，加快頁面處理速度
+- 新增 UDN 登入半自動操作說明（需手動完成 reCAPTCHA）
+- 修復 Python 3.12+ SyntaxWarning 警告訊息
+
 ## 2025.12.18
 
 - 新增 UDN 售票網自動座位選擇功能（Feature 010）

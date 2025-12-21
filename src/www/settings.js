@@ -502,7 +502,7 @@ function maxbot_save_api(callback)
         .fail(function(xhr, status, error) {
             console.error("[MaxBot] Save API error:", status, error);
             console.error("[MaxBot] Response content:", xhr.responseText);
-            alert("儲存設定失敗：" + status);
+            run_message("儲存失敗：" + status);
         })
         .always(function() {
             //alert( "finished" );
@@ -549,8 +549,11 @@ function maxbot_resume_api()
 }
 function maxbot_save()
 {
-    save_changes_to_dict(false);
-    maxbot_save_api();
+    run_message("儲存中...");
+    save_changes_to_dict(true);  // silent mode - don't show modal
+    maxbot_save_api(function() {
+        run_message("已存檔");
+    });
 }
 
 function check_unsaved_fields()
