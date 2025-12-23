@@ -13907,9 +13907,235 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
 
     return is_sold_out
 
+
+def extract_answer_by_question_pattern(answer_list, question_text):
+    """
+    Extract answer from answer_list based on question pattern (first/last N chars)
+
+    Args:
+        answer_list: List of user-provided answers
+        question_text: Question text to analyze
+
+    Returns:
+        str or None: Extracted answer or None if no pattern matched
+    """
+    import re
+
+    if not answer_list or not question_text:
+        return None
+
+    # Convert Chinese numbers to digits for pattern matching
+    chinese_to_digit = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+                        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'}
+
+    processed_question = question_text
+    for cn, digit in chinese_to_digit.items():
+        processed_question = processed_question.replace(cn, digit)
+
+    # Pattern for last N chars (末X碼, 後X碼, 最後X碼, 末X位)
+    last_n_patterns = [r'末(\d+)碼', r'後(\d+)碼', r'最後(\d+)碼', r'末(\d+)位']
+    for pattern in last_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[-n:]
+
+    # Pattern for first N chars (前X碼, 首X碼, 前X位)
+    first_n_patterns = [r'前(\d+)碼', r'首(\d+)碼', r'前(\d+)位']
+    for pattern in first_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[:n]
+
+    return None
+
+
+async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
+                                          input_text_css, next_step_button_css):
+    """
+    ibon verification form filling (supports single/multiple input fields)
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        answer_list: List of answers to try
+        fail_list: List of previously failed answers
+        input_text_css: CSS selector for input fields
+        next_step_button_css: CSS selector for submit button
+
+    Returns:
+        tuple[bool, list]: (is_answer_sent, updated fail_list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_answer_sent = False
+
+    try:
+        # Get all input fields and their values
+        input_info = await tab.evaluate(f'''
+            (function() {{
+                var inputs = document.querySelectorAll("{input_text_css}");
+                var result = [];
+                inputs.forEach(function(input) {{
+                    result.push({{
+                        value: input.value || ""
+                    }});
+                }});
+                return {{
+                    count: inputs.length,
+                    inputs: result
+                }};
+            }})()
+        ''')
+        input_info = util.parse_nodriver_result(input_info)
+
+        if not input_info:
+            if show_debug_message:
+                print("[IBON VERIFY] Failed to get input info")
+            return is_answer_sent, fail_list
+
+        form_input_count = input_info.get('count', 0)
+        if show_debug_message:
+            print(f"[IBON VERIFY] Found {form_input_count} input field(s)")
+
+        if form_input_count == 0:
+            return is_answer_sent, fail_list
+
+        # Determine multi-question mode
+        is_multi_question_mode = False
+        if form_input_count == 2 and len(answer_list) >= 2:
+            if len(answer_list[0]) > 0 and len(answer_list[1]) > 0:
+                is_multi_question_mode = True
+
+        if show_debug_message:
+            print(f"[IBON VERIFY] Multi-question mode: {is_multi_question_mode}")
+            print(f"[IBON VERIFY] Answer list: {answer_list}")
+            print(f"[IBON VERIFY] Fail list: {fail_list}")
+
+        if is_multi_question_mode:
+            # Multi-field mode: fill answer_list[0] to first field, answer_list[1] to second
+            answer_1 = answer_list[0]
+            answer_2 = answer_list[1]
+
+            # Fill both fields using JavaScript
+            fill_result = await tab.evaluate(f'''
+                (function() {{
+                    var inputs = document.querySelectorAll("{input_text_css}");
+                    if (inputs.length >= 2) {{
+                        var answer1 = "{answer_1}";
+                        var answer2 = "{answer_2}";
+
+                        if (inputs[0].value !== answer1) {{
+                            inputs[0].value = "";
+                            inputs[0].value = answer1;
+                            inputs[0].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            inputs[0].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+
+                        if (inputs[1].value !== answer2) {{
+                            inputs[1].value = "";
+                            inputs[1].value = answer2;
+                            inputs[1].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            inputs[1].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+
+                        return true;
+                    }}
+                    return false;
+                }})()
+            ''')
+
+            if fill_result:
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Filled multi-field: '{answer_1}' and '{answer_2}'")
+
+                # Click submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_answer_sent = True
+                        fail_list.append(answer_1)
+                        fail_list.append(answer_2)
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Submitted multi-field answers")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+
+        else:
+            # Single-field mode: find first answer not in fail_list
+            inferred_answer = ""
+            for answer in answer_list:
+                if answer not in fail_list:
+                    inferred_answer = answer
+                    break
+
+            if len(inferred_answer) > 0:
+                # Fill the answer
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            input.value = "";
+                            input.value = "{inferred_answer}";
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+                    }})()
+                ''')
+
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Filled single-field: '{inferred_answer}'")
+
+                # Click submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_answer_sent = True
+                        fail_list.append(inferred_answer)
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Submitted, attempt #{len(fail_list)}")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+            else:
+                # No answer to fill, focus the input
+                if show_debug_message:
+                    print("[IBON VERIFY] No answer available, focusing input")
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
+
+        if is_answer_sent:
+            await asyncio.sleep(0.3)
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[IBON VERIFY] Error: {exc}")
+
+    return is_answer_sent, fail_list
+
+
 async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     """
-    Handle verification question on ibon (simplified version)
+    Handle verification question on ibon with auto-fill support
+
+    Features:
+    - Reads answers from user_guess_string (user dictionary)
+    - Supports first/last N chars extraction (e.g., "phone last 3 digits")
+    - Auto-guess from question text (if auto_guess_options enabled)
+    - Multi-field support
 
     Args:
         tab: NoDriver tab object
@@ -13918,42 +14144,88 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
 
     Returns:
         list: Updated fail_list
-
-    TODO: Full implementation needs:
-    - Question text extraction from #content > label
-    - Answer list parsing from config or auto-guess
-    - Form filling with retry mechanism
-    - Integration with util.get_answer_list_from_question_string()
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # CSS selectors for ibon verification page
+    INPUT_CSS = 'div.editor-box input[type="text"], div.editor-box input:not([type]), div.form-group > input'
+    SUBMIT_BTN_CSS = 'div.editor-box a.btn'
+
     try:
-        # Get question text
+        # Get question text (both title and description)
         question_text = await tab.evaluate('''
             (function() {
-                const content = document.querySelector('#content');
+                var text = "";
+                var content = document.querySelector('#content');
                 if (content) {
-                    const label = content.querySelector('label');
+                    // Get label text (title)
+                    var label = content.querySelector('label');
                     if (label) {
-                        return label.textContent || label.innerText || '';
+                        text += label.textContent || label.innerText || '';
+                    }
+                    // Get form-group span text (description)
+                    var formGroup = content.querySelector('div.form-group');
+                    if (formGroup) {
+                        var spans = formGroup.querySelectorAll('span');
+                        spans.forEach(function(span) {
+                            text += ' ' + (span.textContent || span.innerText || '');
+                        });
                     }
                 }
-                return '';
+                return text.trim();
             })()
         ''')
 
         if len(question_text) > 0:
             if show_debug_message:
-                print(f"[IBON] Verification question found: {question_text}")
+                print(f"[IBON VERIFY] Question found: {question_text}")
 
-            # TODO: Implement answer extraction and form filling
-            # This requires integration with:
-            # - util.get_answer_list_from_user_guess_string()
-            # - util.get_answer_list_from_question_string()
-            # - Form filling logic
+            # Write question to file for debugging
+            write_question_to_file(question_text)
+
+            # Step 1: Get answers from user dictionary
+            answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
 
             if show_debug_message:
-                print("[IBON] Verification question handling not fully implemented")
+                print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
+
+            # Step 2: Try to extract answer based on question pattern (first/last N chars)
+            if len(answer_list) > 0:
+                extracted_answer = extract_answer_by_question_pattern(answer_list, question_text)
+                if extracted_answer:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
+                    # Prepend extracted answer to the list for priority
+                    if extracted_answer not in answer_list:
+                        answer_list = [extracted_answer] + answer_list
+
+            # Step 3: If no user dictionary and auto_guess enabled, try auto-guess
+            if len(answer_list) == 0:
+                if config_dict["advanced"].get("auto_guess_options", False):
+                    answer_list = util.get_answer_list_from_question_string(None, question_text)
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Auto-guessed answers: {answer_list}")
+
+            # Step 4: Fill the form if we have answers
+            if len(answer_list) > 0:
+                is_answer_sent, fail_list = await nodriver_ibon_fill_verify_form(
+                    tab, config_dict, answer_list, fail_list,
+                    INPUT_CSS, SUBMIT_BTN_CSS
+                )
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Answer sent: {is_answer_sent}")
+            else:
+                if show_debug_message:
+                    print("[IBON VERIFY] No answers available, waiting for user input")
+                # Focus the input field
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{INPUT_CSS}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
 
     except Exception as e:
         if show_debug_message:
@@ -14148,9 +14420,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             is_enter_verify_mode = True
-            # TODO:
-            #ibon_dict["fail_list"] = ibon_verification_question(driver, ibon_dict["fail_list"], config_dict)
-            pass
+            ibon_dict["fail_list"] = await nodriver_ibon_verification_question(tab, ibon_dict["fail_list"], config_dict)
             is_match_target_feature = True
 
     if not is_enter_verify_mode:
