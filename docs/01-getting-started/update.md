@@ -1,7 +1,7 @@
 # 定期維護更新指南
 
 **文件說明**：列出需要定期更新的項目與維護檢查清單，確保專案與外部環境保持同步
-**最後更新**：2025-11-18
+**最後更新**：2025-12-22
 
 ---
 
@@ -13,12 +13,13 @@
 
 | 項目 | 頻率 | 關鍵檔案 | 檢查命令 |
 |------|------|----------|----------|
-| **Chrome User-Agent** | 2-3個月 | `src/util.py:22`, `src/chrome_tixcraft.py:128`, `src/nodriver_tixcraft.py:102` | `grep -r "Chrome/[0-9]" src/*.py` |
+| **Chrome User-Agent** | 2-3個月 | `src/util.py:26`, `src/chrome_tixcraft.py:130`, `src/nodriver_tixcraft.py:116` | `grep -r "Chrome/[0-9]" src/*.py` |
+| **Python 版本** | 年度 | 全專案 | Python 3.10-3.11（推薦），3.12（可能支援） |
 | **Python 套件** | 3-6個月 | `requirements.txt` | `pip list --outdated` |
 | **NoDriver 版本** | 每月 | 官方 repo | `pip show nodriver` |
 | **平台相容性** | 每週 | 各平台主函式 | 手動測試 |
 | **Chrome 擴充套件** | 有新版時 | `src/webdriver/Max*_1.0.0/` | 檢查 manifest.json |
-| **版本號統一** | 每次發布 | `src/chrome_tixcraft.py:47`, `src/nodriver_tixcraft.py:44`, `src/config_launcher.py:36`, `src/settings.py:42`, `src/settings_old.py:37`, `README.md:5,484`, `www/settings.html:79` | 確保一致性 |
+| **版本號統一** | 每次發布 | `src/chrome_tixcraft.py:54`, `src/nodriver_tixcraft.py:44`, `src/config_launcher.py:36`, `src/settings.py:46`, `src/settings_old.py:40`, `README.md`, `www/settings.html` | 確保一致性 |
 | **法規追蹤** | 法規修正時 | `README.md`, `LEGAL_NOTICE.md` | 監控官方公告 |
 | **網頁介面** | 重大更新後 | `www/settings.html` | 版本/平台同步 |
 | **Spec 文件** | 每次平台更新 | `specs/001-ticket-automation-system/`, `specs/platform-completion/` | 檢查平台完成度矩陣 |
@@ -51,19 +52,22 @@
 
 ### 平台 NoDriver 支援狀態維護
 
-**完全支援** ✅（89-98% 完成）- 7 個平台
-- TixCraft（拓元）、KKTIX、TicketPlus（遠大）
-- iBon、KHAM（寬宏）、ticket.com.tw（年代）
-- TicketMaster（89%，NoDriver 專用）🆕
-- **維護重點**：微優化、邊界情況處理
+> **2025-12-22 更新**：NoDriver 版本已支援 **13/14 個平台**，僅 Urbtix 未實作
 
-**部分支援** ⚠️（40-60% 完成）- 1 個平台
-- Cityline（進行中 40-60%）
+**完全支援** ✅（89-100% 完成）- **12 個平台**
+- **TixCraft Family**：TixCraft（拓元）、Teamear（添翼）、Indievox（獨立音樂）- 95%
+- **台灣主流**：KKTIX (95%)、TicketPlus (95%)、iBon (95%)
+- **年代/寬宏**：KHAM (98%)、年代售票 (100%)、UDN 售票 (90%)
+- **其他**：TicketMaster (89%，NoDriver 專用)、HK Ticketing (95%) 🆕、FamiTicket (98%) 🆕
+- **維護重點**：微優化、邊界情況處理、使用者問題回報
+
+**部分支援** ⚠️（60% 完成）- **1 個平台**
+- Cityline（進行中 60%）
 - **維護重點**：完成缺失功能、增加測試覆蓋
 
-**未支援** ❌（0% 完成）- 3 個平台
-- FamiTicket、Urbtix、HKTicketing
-- **維護重點**：根據優先級規劃遷移
+**未支援** ❌（0% 完成）- **1 個平台**
+- Urbtix（唯一未有 NoDriver 實作的平台）
+- **維護重點**：根據使用者需求評估是否實作
 
 ### 平台完成度檢查流程
 
@@ -250,9 +254,9 @@ grep -r "Chrome/[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+" src/*.py
 ```
 
 **更新檔案**（記錄當前 Chrome 版本號）：
-- `src/util.py:22` - 主要 USER_AGENT 定義
-- `src/chrome_tixcraft.py:128` - Chrome WebDriver 版本
-- `src/nodriver_tixcraft.py:102` - NoDriver 版本
+- `src/util.py:26` - 主要 USER_AGENT 定義
+- `src/chrome_tixcraft.py:130` - Chrome WebDriver 版本
+- `src/nodriver_tixcraft.py:116` - NoDriver 版本
 
 #### NoDriver 版本檢查
 ```bash
@@ -273,9 +277,11 @@ python -m pip install git+https://github.com/ultrafunkamsterdam/nodriver --upgra
 
 #### 平台功能測試（NoDriver 優先）
 **測試平台優先級**：
-1. 🥇 **完全支援** - KKTIX、TixCraft、TicketPlus、iBon、KHAM、ticket.com.tw、TicketMaster
-2. 🥈 **部分支援** - Cityline
-3. 🥉 **Chrome 版本** - 僅嚴重錯誤修復
+1. 🥇 **完全支援（12 平台）**：
+   - TixCraft Family（拓元/添翼/獨立音樂）、KKTIX、TicketPlus、iBon
+   - KHAM、年代售票、UDN、TicketMaster、HK Ticketing、FamiTicket
+2. 🥈 **部分支援** - Cityline (60%)
+3. 🥉 **Chrome 版本** - 僅嚴重錯誤修復（Urbtix）
 
 **檢查項目**：
 - [ ] 手動測試主要流程（登入 → 選票 → 結帳）
@@ -330,9 +336,13 @@ grep -r "status.*未開始\|進行中" specs/
 
 ### 年度規劃 🎯
 
-- [ ] 技術棧升級評估（Python、NoDriver 重大版本）
+- [ ] **Python 版本評估**：
+  - 當前推薦：**Python 3.10-3.11**
+  - 可能支援：Python 3.12（部分套件相容性待驗證）
+  - NoDriver 最低要求：Python 3.10+
+- [ ] 技術棧升級評估（NoDriver 重大版本）
 - [ ] 架構重構需求分析（考慮 MVP 原則）
-- [ ] 新平台支援規劃（根據用戶需求）
+- [ ] 新平台支援規劃（根據用戶需求，當前待評估：inline、FunOne、Fantopia）
 - [ ] 安全性全面審查（查詢憲法第 III-IX 條）
 - [ ] 法規變更全面檢討（台灣文化創意產業發展法）
 
@@ -354,8 +364,17 @@ grep -r "status.*未開始\|進行中" specs/
 # 清除本地敏感設定檔（避免提交）
 /gdefault
 
+# 更新專案版本日期
+/gupdate
+
 # 推送累積的 commits 到遠端倉庫
 /gpush
+
+# 建立 PR 到公開庫（自動過濾機敏檔案）
+/publicpr
+
+# 建立 Release Tag 並觸發 GitHub Actions
+/publicrelease
 ```
 
 ### 專案工具指令（speckit）
@@ -381,6 +400,12 @@ grep -r "status.*未開始\|進行中" specs/
 
 # 為當前功能生成品質檢查清單
 /speckit.checklist
+
+# 建立或更新專案憲章
+/speckit.constitution
+
+# 從 GitHub 同步最新 speckit 範本與指令
+/speckit.sync
 ```
 
 ### 除錯工具指令
@@ -388,6 +413,19 @@ grep -r "status.*未開始\|進行中" specs/
 ```bash
 # 整合 spec 檢查、合規驗證、代碼定位的除錯工具
 /debug
+
+# 啟動 MCP 除錯模式（Chrome DevTools 連接）
+/mcpstart
+```
+
+### GitHub Issues 管理指令
+
+```bash
+# 尋找重複的 GitHub issues
+/dedupe
+
+# 分析開啟的 issues 並提供處理建議
+/review-issues
 ```
 
 ---
@@ -398,13 +436,13 @@ grep -r "status.*未開始\|進行中" specs/
 
 | 檔案 | 行數 | 內容 | 說明 |
 |------|------|------|------|
-| `src/chrome_tixcraft.py` | 47 | `CONST_APP_VERSION` | Chrome 引擎版本 |
+| `src/chrome_tixcraft.py` | 54 | `CONST_APP_VERSION` | Chrome 引擎版本 |
 | `src/nodriver_tixcraft.py` | 44 | `CONST_APP_VERSION` | NoDriver 引擎版本 |
 | `src/config_launcher.py` | 36 | `CONST_APP_VERSION` | 設定啟動器版本 |
-| `src/settings.py` | 42 | `CONST_APP_VERSION` | 網頁設定介面版本 |
-| `src/settings_old.py` | 37 | `CONST_APP_VERSION` | 舊版設定介面版本 |
-| `README.md` | 5, 484 | 版本資訊/更新日期 | 對外展示版本 |
-| `www/settings.html` | 79 | 網頁介面版本 | 使用者介面版本 |
+| `src/settings.py` | 46 | `CONST_APP_VERSION` | 網頁設定介面版本 |
+| `src/settings_old.py` | 40 | `CONST_APP_VERSION` | 舊版設定介面版本（可能未同步）|
+| `README.md` | - | 版本資訊/更新日期 | 對外展示版本 |
+| `www/settings.html` | - | 網頁介面版本 | 使用者介面版本 |
 
 ### 核心設定檔案
 
@@ -491,7 +529,7 @@ grep -r "CONST_APP_VERSION\|TicketsHunter" src/*.py | grep -v ".pyc"
 ### 🗓️ 月度檢查
 - [ ] Chrome 版本號檢查更新
 - [ ] NoDriver 套件版本確認
-- [ ] NoDriver 平台功能測試（7 個完全支援平台）
+- [ ] NoDriver 平台功能測試（**12 個完全支援平台**）
 - [ ] OCR 辨識率驗證（若使用）
 - [ ] 擴充套件功能檢查
 - [ ] 網頁介面版本同步
@@ -536,8 +574,12 @@ grep -r "CONST_APP_VERSION\|TicketsHunter" src/*.py | grep -v ".pyc"
 - 📅 **設定日曆提醒**：每月第一個工作日進行月度檢查
 - 🔔 **監控官方動態**：訂閱 Chrome 版本更新、法規修改
 - 📊 **建立指標**：追蹤平台相容性、搶票成功率
-- 🎯 **優先遷移**：Cityline(40%) → FamiTicket → HKTicketing → Urbtix
+- 🎯 **下一步計畫**：
+  - 完善 Cityline (60% → 85%)
+  - 評估 Urbtix 實作需求（唯一未支援平台）
+  - 處理使用者回報問題（GitHub Issues）
+- 🐍 **Python 版本**：維持 3.10-3.11，評估 3.12 相容性
 
 ---
 
-*最後更新：2025.11.18 | 維護責任人：Claude Code | 下次季度檢查：2026.02.18*
+*最後更新：2025-12-22 | 維護責任人：Claude Code | 下次季度檢查：2026-03-22*

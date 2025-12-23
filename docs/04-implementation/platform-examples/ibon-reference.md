@@ -24,7 +24,7 @@
 
 | 階段 | 函數名稱 | 行數 | 說明 |
 |------|---------|------|------|
-| Main | `nodriver_ibon_main()` | 13985 | 主控制流程（URL 路由）|
+| Main | `nodriver_ibon_main()` | 14253 | 主控制流程（URL 路由）|
 | Stage 2 | `nodriver_ibon_login()` | 9068 | Cookie 登入處理 |
 | Stage 4 | `nodriver_ibon_date_auto_select()` | 10625 | 日期選擇（DOMSnapshot）|
 | Stage 4 | `nodriver_ibon_date_auto_select_pierce()` | 10234 | 日期選擇（CDP pierce）|
@@ -34,6 +34,9 @@
 | Stage 7 | `nodriver_ibon_get_captcha_image_from_shadow_dom()` | 12970 | 驗證碼圖片擷取 |
 | Stage 7 | `nodriver_ibon_captcha()` | 13627 | OCR 驗證碼處理 |
 | Stage 7 | `nodriver_ibon_auto_ocr()` | 13455 | 自動 OCR 重試 |
+| Stage 8 | `nodriver_ibon_verification_question()` | 14130 | 驗證問題自動填寫 |
+| Stage 8 | `nodriver_ibon_fill_verify_form()` | 13958 | 驗證表單填寫（支援多欄位）|
+| Stage 8 | `extract_answer_by_question_pattern()` | 13911 | 前/末 X 碼智慧提取 |
 | Stage 9 | `nodriver_ibon_ticket_agree()` | 11691 | 同意條款勾選 |
 | Stage 10 | `nodriver_ibon_purchase_button_press()` | 13724 | 送出購票按鈕 |
 | Util | `nodriver_ibon_check_sold_out()` | 13781 | 售完檢測 |
@@ -612,6 +615,169 @@ remote_object = await tab.send(
 
 ---
 
+## 特殊設計 5: 驗證問題自動填寫
+
+### 概述
+
+iBon 購票流程中有時會出現驗證問題頁面，要求使用者輸入手機號碼末幾碼、信用卡前 6 碼、訂單號碼等資訊。此功能可自動偵測並填寫這些驗證問題。
+
+**核心函數**：
+
+| 函數名稱 | 行數 | 說明 |
+|---------|------|------|
+| `extract_answer_by_question_pattern()` | ~13911 | 從答案清單中根據問題模式提取答案（前/末 X 碼） |
+| `nodriver_ibon_fill_verify_form()` | ~13958 | 填寫驗證表單（支援單/多欄位） |
+| `nodriver_ibon_verification_question()` | ~14130 | 驗證問題主處理邏輯 |
+
+### 答案來源與優先順序
+
+1. **使用者自訂字典**：`user_guess_string`（進階設定 → 優惠代碼）
+2. **自動猜測**：`auto_guess_options`（需啟用，從問題文字推測答案）
+
+### 前/末 X 碼智慧提取
+
+**支援的問題模式**：
+
+| 問題類型 | 關鍵字偵測 | 範例問題 | 字典輸入 | 自動輸出 |
+|---------|----------|---------|---------|---------|
+| 手機末 X 碼 | `末X碼`、`後X碼`、`最後X碼` | 「請輸入手機末三碼」 | `0912345678` | `678` |
+| 信用卡前 6 碼 | `前X碼`、`首X碼` | 「請輸入信用卡前6碼」 | `123456` | `123456` |
+| 訂單號碼前 X 碼 | `前X碼` | 「請輸入訂單號碼前4碼」 | `D12345678` | `D123` |
+
+**中文數字支援**：
+- 自動轉換：`三` → `3`、`四` → `4`、`六` → `6`
+- 例：「請輸入手機末三碼」→ 偵測為「末 3 碼」
+
+**實作程式碼**（`extract_answer_by_question_pattern`）：
+
+```python
+def extract_answer_by_question_pattern(answer_list, question_text):
+    """
+    根據問題模式從答案清單中提取答案
+
+    Args:
+        answer_list: 使用者字典答案列表
+        question_text: 問題文字
+
+    Returns:
+        tuple: (提取的答案, 剩餘答案清單) 或 (None, 原答案清單)
+    """
+    import re
+
+    # 中文數字對照表
+    chinese_to_digit = {
+        '一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'
+    }
+
+    # 末 X 碼模式
+    last_patterns = [
+        r"末([一二三四五六七八九十\d]+)碼",
+        r"後([一二三四五六七八九十\d]+)碼",
+        r"最後([一二三四五六七八九十\d]+)碼",
+        r"末([一二三四五六七八九十\d]+)位",
+    ]
+
+    # 前 X 碼模式
+    first_patterns = [
+        r"前([一二三四五六七八九十\d]+)碼",
+        r"首([一二三四五六七八九十\d]+)碼",
+        r"前([一二三四五六七八九十\d]+)位",
+    ]
+
+    # 檢查末 X 碼
+    for pattern in last_patterns:
+        match = re.search(pattern, question_text)
+        if match:
+            n_str = match.group(1)
+            n = int(chinese_to_digit.get(n_str, n_str))
+            for i, answer in enumerate(answer_list):
+                if len(answer) >= n:
+                    extracted = answer[-n:]  # 取末 N 碼
+                    remaining = answer_list[:i] + answer_list[i+1:]
+                    return extracted, remaining
+
+    # 檢查前 X 碼
+    for pattern in first_patterns:
+        match = re.search(pattern, question_text)
+        if match:
+            n_str = match.group(1)
+            n = int(chinese_to_digit.get(n_str, n_str))
+            for i, answer in enumerate(answer_list):
+                if len(answer) >= n:
+                    extracted = answer[:n]  # 取前 N 碼
+                    remaining = answer_list[:i] + answer_list[i+1:]
+                    return extracted, remaining
+
+    return None, answer_list
+```
+
+### 多欄位支援
+
+**使用情境**：某些驗證頁面有 2 個輸入欄位（如：信用卡前 6 碼 + 身分證字號）
+
+**字典輸入格式**：使用分號 `;` 分隔多個答案，按順序對應輸入欄位
+
+| 字典輸入 | 解析結果 | 對應欄位 |
+|---------|---------|---------|
+| `123456;A123456789` | `["123456", "A123456789"]` | 欄位1=123456, 欄位2=A123456789 |
+| `0912345678;D12345678` | `["0912345678", "D12345678"]` | 欄位1（末X碼提取）, 欄位2（訂單號碼） |
+
+**多欄位判斷邏輯**：
+
+```python
+# 判斷是否為多欄位模式
+is_multi_question_mode = False
+if form_input_count == 2 and len(answer_list) >= 2:
+    if len(answer_list[0]) > 0 and len(answer_list[1]) > 0:
+        is_multi_question_mode = True
+
+# 填入邏輯
+if is_multi_question_mode:
+    # 雙欄位：按順序填入
+    await nodriver_ibon_form_fill(tab, form_input_1, answer_list[0])
+    await nodriver_ibon_form_fill(tab, form_input_2, answer_list[1])
+else:
+    # 單欄位：填入第一個未嘗試過的答案
+    for answer in answer_list:
+        if answer not in fail_list:
+            await nodriver_ibon_form_fill(tab, form_input_1, answer)
+            break
+```
+
+### CSS 選擇器
+
+```python
+# 問題文字
+QUESTION_DESC_CSS = '#content div.form-group'
+
+# 輸入欄位（支援多個）
+INPUT_CSS = 'div.editor-box input[type="text"], div.editor-box input:not([type]), div.form-group > input'
+
+# 送出按鈕
+SUBMIT_BTN_CSS = 'div.editor-box a.btn'
+```
+
+### fail_list 機制
+
+- 每次嘗試的答案會加入 `fail_list`
+- 下次重試時會跳過已失敗的答案
+- 避免無限重複嘗試相同的錯誤答案
+- `fail_list` 在離開驗證頁面後自動清空
+
+### 測試範例
+
+| 測試案例 | 字典輸入 | 問題文字 | 預期輸出 |
+|----------|----------|----------|----------|
+| 手機末三碼 | `0912345678` | 請輸入手機末三碼 | `678` |
+| 手機後四碼 | `0912345678` | 請輸入手機後4碼 | `5678` |
+| 信用卡前6碼 | `123456` | 請輸入信用卡號前6碼 | `123456` |
+| 訂單前4碼 | `D12345678` | 請輸入訂單號碼前4碼 | `D123` |
+| 完整訂單號碼 | `D12345678` | 請輸入訂單號碼 | `D12345678` |
+| 雙欄位 | `123456;A123456789` | 信用卡前6碼 + 身分證 | 欄位1=`123456`, 欄位2=`A123456789` |
+
+---
+
 ## 版本歷史
 
 | 版本 | 日期 | 變更內容 |
@@ -620,6 +786,13 @@ remote_object = await tab.send(
 | **v1.1** | **2025-08** | **DOMSnapshot 平坦化技術導入** |
 | **v1.2** | **2025-10** | **Event 頁面支援 + Angular 整合** |
 | **v1.3** | **2025-11** | **Early Return Pattern + 效能優化** |
+| **v1.4** | **2025-12** | **驗證問題自動填寫（前/末 X 碼智慧提取）** |
+
+**v1.4 亮點**：
+- ✅ 驗證問題自動填寫功能
+- ✅ 前/末 X 碼智慧提取（含中文數字轉換）
+- ✅ 多欄位支援（雙欄位按順序填入）
+- ✅ fail_list 機制避免重複嘗試
 
 **v1.3 亮點**：
 - ✅ iBon 是唯一需要 DOMSnapshot 的平台（最複雜）
