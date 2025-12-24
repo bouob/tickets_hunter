@@ -773,6 +773,25 @@ async def nodriver_goto_homepage(driver, config_dict):
                     print("tixcraft TIXUISID cookie set successfully (fallback method)")
 
     if 'ibon.com' in homepage:
+        # Special handling for tour.ibon.com.tw:
+        # Need to visit ticket.ibon.com.tw first to complete OAuth and get _at_e token
+        is_tour_ibon = 'tour.ibon.com.tw' in homepage
+        original_homepage = homepage
+
+        if is_tour_ibon:
+            if util.get_debug_mode(config_dict):
+                print("[TOUR IBON] Detected tour.ibon.com.tw homepage")
+                print("[TOUR IBON] Step 1: Visiting ticket.ibon.com.tw first for OAuth...")
+
+            # Step 1: Visit ticket.ibon.com.tw homepage first
+            try:
+                tab = await driver.get("https://ticket.ibon.com.tw/")
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[TOUR IBON] Error visiting ticket.ibon.com.tw: {e}")
+
+        # Step 2: Set ibon cookie
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if util.get_debug_mode(config_dict):
@@ -782,6 +801,18 @@ async def nodriver_goto_homepage(driver, config_dict):
                 print(f"ibon login process failed: {login_result.get('reason', 'unknown')}")
                 if 'error' in login_result:
                     print(f"Error details: {login_result['error']}")
+
+        # Step 3: For tour.ibon.com.tw, navigate to original homepage after OAuth
+        if is_tour_ibon:
+            if util.get_debug_mode(config_dict):
+                print(f"[TOUR IBON] Step 2: Navigating to tour.ibon homepage: {original_homepage}")
+
+            try:
+                tab = await driver.get(original_homepage)
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[TOUR IBON] Error navigating to tour.ibon homepage: {e}")
 
         # 不管成功與否，都繼續後續處理，讓使用者手動處理登入問題
         # 這樣可以避免完全中斷搶票流程
@@ -14233,6 +14264,345 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
 
     return fail_list
 
+
+async def nodriver_tour_ibon_event_detail(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw event detail page (/event/{eventId})
+    Click the purchase button to proceed to options page
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if button clicked successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_button_clicked = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Event detail page detected")
+
+        # Find and click purchase button (multiple text variations)
+        button_text_list = ["立即購票", "搶票", "購票", "Buy"]
+
+        for button_text in button_text_list:
+            try:
+                # Use text-based selector to find button
+                result = await tab.evaluate(f'''
+                    (function() {{
+                        var buttons = Array.from(document.querySelectorAll('button'));
+                        var targetBtn = buttons.find(btn => btn.textContent.includes("{button_text}"));
+                        if (targetBtn) {{
+                            targetBtn.click();
+                            return true;
+                        }}
+                        return false;
+                    }})()
+                ''')
+
+                if result:
+                    is_button_clicked = True
+                    if show_debug_message:
+                        print(f"[TOUR IBON] Clicked button: {button_text}")
+                    break
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[TOUR IBON] Button click error ({button_text}): {e}")
+
+        if not is_button_clicked and show_debug_message:
+            print("[TOUR IBON] Purchase button not found")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Event detail error: {e}")
+
+    return is_button_clicked
+
+
+async def nodriver_tour_ibon_options(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw options page (/event/{eventId}/options)
+    Select ticket quantity -> Add to cart -> Confirm payment method
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if all steps completed successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_all_completed = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Options page detected")
+
+        # Step 1: Select ticket quantity from <select> element
+        # Support multiple ticket types with area_keyword matching
+        ticket_number = config_dict.get("ticket_number", 2)
+
+        # Get area keyword for ticket type matching
+        area_keyword = ""
+        area_auto_select_enable = config_dict.get("area_auto_select", {}).get("enable", False)
+        if area_auto_select_enable:
+            area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+            area_keyword = util.format_keyword_string(area_keyword)
+
+        try:
+            # Step 1a: Get all ticket types from page
+            ticket_types = await tab.evaluate('''
+                (function() {
+                    var headings = document.querySelectorAll('h4');
+                    return Array.from(headings).map(h => h.textContent.trim());
+                })()
+            ''')
+
+            # Step 1b: Find matching ticket type using Python util function
+            target_index = 0  # Default to first ticket type
+            if area_keyword and ticket_types:
+                for i, ticket_name in enumerate(ticket_types):
+                    if util.is_text_match_keyword(area_keyword, ticket_name):
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[TOUR IBON] Keyword '{area_keyword}' matched ticket: {ticket_name}")
+                        break
+
+            # Step 1c: Select quantity for the matched ticket type
+            select_result = await tab.evaluate(f'''
+                (function() {{
+                    var targetIndex = {target_index};
+                    var ticketNumber = "{ticket_number}";
+                    var selects = document.querySelectorAll('select#input-qty, select[id*="qty"]');
+                    var headings = document.querySelectorAll('h4');
+
+                    if (selects.length > targetIndex) {{
+                        var select = selects[targetIndex];
+                        select.value = ticketNumber;
+                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{
+                            success: true,
+                            index: targetIndex,
+                            ticketName: headings[targetIndex] ? headings[targetIndex].textContent.trim() : '',
+                            value: select.value
+                        }};
+                    }}
+                    return {{ success: false, reason: 'no select found', selectCount: selects.length }};
+                }})()
+            ''')
+
+            if select_result and isinstance(select_result, dict) and select_result.get('success') and show_debug_message:
+                print(f"[TOUR IBON] Selected ticket: {select_result.get('ticketName', 'unknown')}, quantity: {ticket_number}")
+
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Quantity selection error: {e}")
+
+        # Step 2: Click the ENABLED "加入訂購" button (only enabled after quantity selected)
+        await asyncio.sleep(0.3)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    // Find enabled "加入訂購" button (disabled buttons have disabled attribute)
+                    var addBtn = buttons.find(btn =>
+                        btn.textContent.includes("加入訂購") && !btn.disabled
+                    );
+                    if (addBtn) {
+                        addBtn.click();
+                        return { success: true };
+                    }
+                    // If no enabled button found, report all button states
+                    var allAddBtns = buttons.filter(btn => btn.textContent.includes("加入訂購"));
+                    return {
+                        success: false,
+                        reason: 'no enabled button',
+                        buttonCount: allAddBtns.length,
+                        allDisabled: allAddBtns.every(btn => btn.disabled)
+                    };
+                })()
+            ''')
+
+            if result and isinstance(result, dict) and result.get('success') and show_debug_message:
+                print("[TOUR IBON] Clicked: 加入訂購")
+            elif result and isinstance(result, dict) and not result.get('success') and show_debug_message:
+                print(f"[TOUR IBON] Add button not ready: {result.get('reason')}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Add to cart error: {e}")
+
+        # Step 3: Wait and click "確認付款方式" button
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    var confirmBtn = buttons.find(btn => btn.textContent.includes("確認付款方式"));
+                    if (confirmBtn) {
+                        confirmBtn.click();
+                        return true;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if result:
+                is_all_completed = True
+                if show_debug_message:
+                    print("[TOUR IBON] Clicked: 確認付款方式")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Confirm payment error: {e}")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Options page error: {e}")
+
+    return is_all_completed
+
+
+async def nodriver_tour_ibon_checkout(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw checkout page (/event/{eventId}/checkout)
+    Fill form (name, phone) -> Check agreement -> Submit
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if form submitted successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_form_submitted = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Checkout page detected")
+
+        # Get personal data from config
+        real_name = config_dict.get("contact", {}).get("real_name", "")
+        phone = config_dict.get("contact", {}).get("phone", "")
+
+        if not real_name or not phone:
+            if show_debug_message:
+                print("[TOUR IBON] Missing contact data in settings")
+            return False
+
+        # Step 1: Fill real name and phone using fieldset structure
+        try:
+            result = await tab.evaluate(f'''
+                (function() {{
+                    var fieldsets = document.querySelectorAll('fieldset');
+                    var nameInput = null;
+                    var phoneInput = null;
+
+                    fieldsets.forEach(function(fs) {{
+                        var legend = fs.querySelector('legend');
+                        var input = fs.querySelector('input');
+                        if (legend && input && !input.readOnly) {{
+                            if (legend.textContent.includes('真實姓名')) nameInput = input;
+                            if (legend.textContent.includes('手機號碼')) phoneInput = input;
+                        }}
+                    }});
+
+                    var results = {{ name: false, phone: false }};
+
+                    if (nameInput) {{
+                        nameInput.focus();
+                        nameInput.value = "{real_name}";
+                        nameInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        nameInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        nameInput.blur();
+                        results.name = true;
+                    }}
+
+                    if (phoneInput) {{
+                        phoneInput.focus();
+                        phoneInput.value = "{phone}";
+                        phoneInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        phoneInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        phoneInput.blur();
+                        results.phone = true;
+                    }}
+
+                    return results;
+                }})()
+            ''')
+
+            if result and isinstance(result, dict) and show_debug_message:
+                if result.get('name'):
+                    print(f"[TOUR IBON] Filled name: {real_name}")
+                if result.get('phone'):
+                    print(f"[TOUR IBON] Filled phone: {phone}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Form fill error: {e}")
+
+        # Step 2: Check agreement checkbox (wait for form validation first)
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    // Try by id first, then fallback to search
+                    var agreeCheckbox = document.getElementById('agreeCheck');
+                    if (!agreeCheckbox) {
+                        var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+                        agreeCheckbox = checkboxes.find(cb => {
+                            var parent = cb.closest('div');
+                            return parent && parent.textContent.includes("我已詳閱");
+                        });
+                    }
+                    if (agreeCheckbox && !agreeCheckbox.checked) {
+                        agreeCheckbox.click();
+                        return { clicked: true, checked: agreeCheckbox.checked };
+                    }
+                    return { clicked: false, checked: agreeCheckbox ? agreeCheckbox.checked : false };
+                })()
+            ''')
+
+            if result and show_debug_message:
+                print(f"[TOUR IBON] Agreement checkbox: {result}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Checkbox error: {e}")
+
+        # Step 3: Click submit button (下一步) - wait for validation to complete
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    var submitBtn = buttons.find(btn => btn.textContent.includes("下一步") && !btn.disabled);
+                    if (submitBtn) {
+                        submitBtn.click();
+                        return true;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if result:
+                is_form_submitted = True
+                if show_debug_message:
+                    print("[TOUR IBON] Clicked: 下一步")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Submit error: {e}")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Checkout error: {e}")
+
+    return is_form_submitted
+
+
 async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -14256,7 +14626,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
     target_url = None
 
     # Detect login page patterns
-    if 'huiwan.ibon.com.tw/huiwan/loginhuiwan' in url.lower():
+    # Support both patterns: /huiwan/loginhuiwan and /huiwan//loginhuiwan (with double slash)
+    url_lower = url.lower()
+    if 'huiwan.ibon.com.tw' in url_lower and 'loginhuiwan' in url_lower:
         is_login_page = True
         # Extract target URL from query parameter
         if 'targeturl=' in url.lower():
@@ -14278,8 +14650,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         if show_debug_message:
             print("[IBON LOGIN] Re-authenticating with cookie...")
 
-        # Re-execute login process
-        login_result = await nodriver_ibon_login(tab, config_dict, None)
+        # Re-execute login process (get driver from tab.browser)
+        driver = getattr(tab, 'browser', None)
+        login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if show_debug_message:
             if login_result['success']:
@@ -14361,14 +14734,23 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print(f"[IBON] Redirect failed: {redirect_exc}")
 
 
-    # https://tour.ibon.com.tw/event/e23010000300mxu
-    if 'tour' in url.lower() and '/event/' in url.lower():
-        is_event_page = False
-        if len(url.split('/'))==5:
-            is_event_page = True
-        if is_event_page:
-            # ibon auto press signup
-            await nodriver_press_button(tab, '.btn.btn-signup')
+    # tour.ibon.com.tw URL routing
+    # https://tour.ibon.com.tw/event/{eventId}
+    # https://tour.ibon.com.tw/event/{eventId}/options
+    # https://tour.ibon.com.tw/event/{eventId}/checkout
+    if 'tour.ibon.com.tw' in url.lower() and '/event/' in url.lower():
+        url_parts = url.split('/')
+
+        # Event detail page: /event/{eventId}
+        if len(url_parts) == 5:
+            await nodriver_tour_ibon_event_detail(tab, config_dict)
+
+        # Options or checkout page: /event/{eventId}/options or /event/{eventId}/checkout
+        elif len(url_parts) == 6:
+            if '/options' in url.lower():
+                await nodriver_tour_ibon_options(tab, config_dict)
+            elif '/checkout' in url.lower():
+                await nodriver_tour_ibon_checkout(tab, config_dict)
 
     is_match_target_feature = False
 
