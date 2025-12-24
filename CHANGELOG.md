@@ -1,5 +1,12 @@
 # Changelog
 
+## 2025.12.24
+
+- 修復 TixCraft 多票種頁面無法選擇指定票種的問題 (Issue #200/#201)
+- 新增 tour.ibon.com.tw 新版介面自動化支援
+- 新增 iBon 購票驗證表單自動填寫功能
+- 新增 UDN 半自動登入操作指南
+
 ## 2025.12.21
 
 - 修復 TixCraft 購票成功後重複顯示 checkout 訊息問題 (Issue #193)
