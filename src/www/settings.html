@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.21) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2025.12.24) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -787,6 +787,40 @@
 
       <!-- tab 5 -->
       <div class="tab-pane fade" id="autofill-tab-pane" role="tabpanel" aria-labelledby="autofill-tab" tabindex="2">
+
+        <!-- 通用個人資料區塊 -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h6 class="mb-0">通用個人資料</h6>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <label for="real_name" class="col-sm-2 col-form-label">真實姓名</label>
+              <div class="col-sm-10 col-lg-8 col-xl-6">
+                <input class="form-control" id="real_name" value="" placeholder="請輸入真實姓名" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <label for="phone" class="col-sm-2 col-form-label">手機號碼</label>
+              <div class="col-sm-10 col-lg-8 col-xl-6">
+                <input class="form-control" id="phone" value="" placeholder="例如：0912345678" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <label for="credit_card_prefix" class="col-sm-2 col-form-label">信用卡前六碼</label>
+              <div class="col-sm-10 col-lg-8 col-xl-6">
+                <input class="form-control" id="credit_card_prefix" value="" placeholder="例如：412345" maxlength="6" />
+                <div class="form-text">部分平台可能需要驗證信用卡前六碼</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="mb-4"/>
+
+        <!-- 平台帳號區塊 -->
         <div class="row mb-3">
           <label for="tixcraft_sid" class="col-sm-2 col-form-label">拓元家族 cookie TIXUISID</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
@@ -1107,6 +1141,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2025122121"></script>
+  <script src="settings.js?v=2025122423"></script>
 </body>
 </html>
