@@ -5,6 +5,30 @@
 **最後更新**：2025-12-23
 
 ---
+## 📜 憲法（行為紅線）
+
+**位置**：`.specify/memory/constitution.md` | **版本**：2.0.0
+
+憲法定義**不可違反的行為規則**，不限制思考方式。
+
+### 7 大行為規範（速記）
+
+| 原則 | 類型 | 核心要點 |
+|------|------|----------|
+| **I. 技術架構** | MUST | NoDriver > UC > Selenium |
+| **II. 共用庫保護** | MUST | util.py 改動需跨平台/跨 Driver 分析 |
+| **III. 設定驅動** | MUST | settings.json 控制所有可配置行為 |
+| **IV. 程式碼安全** | MUST | 禁 emoji in .py、禁硬寫敏感資訊 |
+| **V. Git 工作流程** | MUST | /gsave 提交、雙 Repo 安全 |
+| **VI. 測試驗證** | SHOULD | 核心修改應有測試驗證 |
+| **VII. 文件同步** | SHOULD | 程式碼變更應同步文件 |
+
+**MUST**：無例外，違反阻擋合併
+**SHOULD**：允許例外，需記錄理由
+
+**詳細規範**：查詢 `.specify/memory/constitution.md`
+
+---
 
 ## 🚀 Quick Reference（速查表）
 
@@ -111,31 +135,6 @@
 | **KHAM** | `structure.md` KHAM 區塊 | 自動座位切換 |
 | **FamiTicket** | NoDriver 實作參考 | 全家網票務流程 |
 | **Cityline** | NoDriver 實作參考 | 香港城市電腦售票 |
-
----
-
-## 📜 憲法（行為紅線）
-
-**位置**：`.specify/memory/constitution.md` | **版本**：2.0.0
-
-憲法定義**不可違反的行為規則**，不限制思考方式。
-
-### 7 大行為規範（速記）
-
-| 原則 | 類型 | 核心要點 |
-|------|------|----------|
-| **I. 技術架構** | MUST | NoDriver > UC > Selenium |
-| **II. 共用庫保護** | MUST | util.py 改動需跨平台/跨 Driver 分析 |
-| **III. 設定驅動** | MUST | settings.json 控制所有可配置行為 |
-| **IV. 程式碼安全** | MUST | 禁 emoji in .py、禁硬寫敏感資訊 |
-| **V. Git 工作流程** | MUST | /gsave 提交、雙 Repo 安全 |
-| **VI. 測試驗證** | SHOULD | 核心修改應有測試驗證 |
-| **VII. 文件同步** | SHOULD | 程式碼變更應同步文件 |
-
-**MUST**：無例外，違反阻擋合併
-**SHOULD**：允許例外，需記錄理由
-
-**詳細規範**：查詢 `.specify/memory/constitution.md`
 
 ---
 
