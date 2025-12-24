@@ -5359,19 +5359,31 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
 
     return is_need_refresh, matched_blocks
 
-async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
-    """簡化版本：參考 Chrome 邏輯設定票券數量，並檢查 option 是否可用"""
+async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, select_id=None):
+    """簡化版本：參考 Chrome 邏輯設定票券數量，並檢查 option 是否可用
+
+    Args:
+        tab: NoDriver tab object
+        select_obj: The select element (for compatibility)
+        ticket_number: Target ticket count to select
+        select_id: The specific select element ID to use (fixes Issue #200/#201)
+    """
     is_ticket_number_assigned = False
 
-    if select_obj is None:
+    if select_obj is None and select_id is None:
         return is_ticket_number_assigned
+
+    # Build JavaScript selector - prefer specific ID over querySelector
+    if select_id:
+        js_selector = f"document.getElementById('{select_id}')"
+    else:
+        js_selector = "document.querySelector('.mobile-select') || document.querySelector('select[id*=\"TicketForm_ticketPrice_\"]')"
 
     try:
         # 嘗試透過 JavaScript 設定選擇器的值，並檢查 option 是否 disabled
         result = await tab.evaluate(f'''
             (function() {{
-                const select = document.querySelector('.mobile-select') ||
-                               document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+                const select = {js_selector};
                 if (!select) return {{success: false, error: "Select not found"}};
 
                 // 售完關鍵字列表
@@ -5664,16 +5676,18 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     select_obj = matched_ticket['select'] if matched_ticket else None
     form_select_count = len(valid_ticket_types)
 
+    # Get select ID for JavaScript operations
+    select_id = matched_ticket['id'] if matched_ticket else None
+
     # 檢查是否已經選擇了票券數量（非 "0"）
-    if form_select_count > 0:
+    if select_id:
         try:
-            # 使用 JavaScript 取得當前選中的值
-            current_value = await tab.evaluate('''
-                (function() {
-                    const select = document.querySelector('.mobile-select') ||
-                                   document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+            # 使用 JavaScript 取得當前選中的值（使用正確的 select ID）
+            current_value = await tab.evaluate(f'''
+                (function() {{
+                    const select = document.getElementById('{select_id}');
                     return select ? select.value : "0";
-                })();
+                }})();
             ''')
 
             # 解析結果
@@ -5687,10 +5701,8 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             if show_debug_message:
                 print(f"Failed to check current selected value: {exc}")
 
-    # 回傳結果（保持與 Chrome 版本相容）
-    select_obj = form_select_list[0] if form_select_count > 0 else None
-
-    return is_ticket_number_assigned, select_obj
+    # 回傳結果：select_obj 和 select_id 用於後續操作
+    return is_ticket_number_assigned, select_obj, select_id
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
     show_debug_message = util.get_debug_mode(config_dict)
@@ -5743,12 +5755,13 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     is_ticket_number_assigned = False
 
     # PS: some events on tixcraft have multi <select>.
-    is_ticket_number_assigned, select_obj = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
+    # Fix Issue #200/#201: Now returns select_id for correct element targeting
+    is_ticket_number_assigned, select_obj, select_id = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
 
     if not is_ticket_number_assigned:
         if show_debug_message:
             print(f"Setting ticket number: {ticket_number}")
-        is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number)
+        is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, select_id)
 
     # Record state after successful setting
     if is_ticket_number_assigned:
