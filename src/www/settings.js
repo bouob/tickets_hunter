@@ -55,6 +55,11 @@ const user_guess_string = document.querySelector('#user_guess_string');
 const auto_guess_options = document.querySelector('#auto_guess_options');
 
 
+// user info - personal data
+const real_name = document.querySelector('#real_name');
+const phone = document.querySelector('#phone');
+const credit_card_prefix = document.querySelector('#credit_card_prefix');
+
 // auto fill
 const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
@@ -210,6 +215,13 @@ function load_settins_to_form(settings)
         // dictionary
         user_guess_string.value = format_keyword_for_display(settings.advanced.user_guess_string);
         auto_guess_options.checked = settings.advanced.auto_guess_options;
+
+        // contact info
+        if (settings.contact) {
+            real_name.value = settings.contact.real_name || '';
+            phone.value = settings.contact.phone || '';
+            credit_card_prefix.value = settings.contact.credit_card_prefix || '';
+        }
 
         // auto fill
         tixcraft_sid.value = settings.advanced.tixcraft_sid;
@@ -447,6 +459,12 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.user_guess_string = format_config_keyword_for_json(user_guess_string.value);
 
             settings.advanced.auto_guess_options = auto_guess_options.checked;
+
+            // contact info
+            if (!settings.contact) settings.contact = {};
+            settings.contact.real_name = real_name.value;
+            settings.contact.phone = phone.value;
+            settings.contact.credit_card_prefix = credit_card_prefix.value;
 
             // auto fill
             settings.advanced.tixcraft_sid = tixcraft_sid.value;

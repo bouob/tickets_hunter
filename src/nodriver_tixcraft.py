@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.21)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.24)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -773,6 +773,25 @@ async def nodriver_goto_homepage(driver, config_dict):
                     print("tixcraft TIXUISID cookie set successfully (fallback method)")
 
     if 'ibon.com' in homepage:
+        # Special handling for tour.ibon.com.tw:
+        # Need to visit ticket.ibon.com.tw first to complete OAuth and get _at_e token
+        is_tour_ibon = 'tour.ibon.com.tw' in homepage
+        original_homepage = homepage
+
+        if is_tour_ibon:
+            if util.get_debug_mode(config_dict):
+                print("[TOUR IBON] Detected tour.ibon.com.tw homepage")
+                print("[TOUR IBON] Step 1: Visiting ticket.ibon.com.tw first for OAuth...")
+
+            # Step 1: Visit ticket.ibon.com.tw homepage first
+            try:
+                tab = await driver.get("https://ticket.ibon.com.tw/")
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[TOUR IBON] Error visiting ticket.ibon.com.tw: {e}")
+
+        # Step 2: Set ibon cookie
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if util.get_debug_mode(config_dict):
@@ -782,6 +801,18 @@ async def nodriver_goto_homepage(driver, config_dict):
                 print(f"ibon login process failed: {login_result.get('reason', 'unknown')}")
                 if 'error' in login_result:
                     print(f"Error details: {login_result['error']}")
+
+        # Step 3: For tour.ibon.com.tw, navigate to original homepage after OAuth
+        if is_tour_ibon:
+            if util.get_debug_mode(config_dict):
+                print(f"[TOUR IBON] Step 2: Navigating to tour.ibon homepage: {original_homepage}")
+
+            try:
+                tab = await driver.get(original_homepage)
+                await asyncio.sleep(random.uniform(1.5, 2.5))
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[TOUR IBON] Error navigating to tour.ibon homepage: {e}")
 
         # 不管成功與否，都繼續後續處理，讓使用者手動處理登入問題
         # 這樣可以避免完全中斷搶票流程
@@ -5328,19 +5359,31 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
 
     return is_need_refresh, matched_blocks
 
-async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number):
-    """簡化版本：參考 Chrome 邏輯設定票券數量，並檢查 option 是否可用"""
+async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, select_id=None):
+    """簡化版本：參考 Chrome 邏輯設定票券數量，並檢查 option 是否可用
+
+    Args:
+        tab: NoDriver tab object
+        select_obj: The select element (for compatibility)
+        ticket_number: Target ticket count to select
+        select_id: The specific select element ID to use (fixes Issue #200/#201)
+    """
     is_ticket_number_assigned = False
 
-    if select_obj is None:
+    if select_obj is None and select_id is None:
         return is_ticket_number_assigned
+
+    # Build JavaScript selector - prefer specific ID over querySelector
+    if select_id:
+        js_selector = f"document.getElementById('{select_id}')"
+    else:
+        js_selector = "document.querySelector('.mobile-select') || document.querySelector('select[id*=\"TicketForm_ticketPrice_\"]')"
 
     try:
         # 嘗試透過 JavaScript 設定選擇器的值，並檢查 option 是否 disabled
         result = await tab.evaluate(f'''
             (function() {{
-                const select = document.querySelector('.mobile-select') ||
-                               document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+                const select = {js_selector};
                 if (!select) return {{success: false, error: "Select not found"}};
 
                 // 售完關鍵字列表
@@ -5608,7 +5651,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             if show_debug_message:
                 print(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
                 print(f"[TICKET SELECT] No ticket type selected")
-            return False, None
+            return False, None, None
         else:
             # Fallback enabled or no keyword specified
             if area_keyword_array and show_debug_message:
@@ -5633,16 +5676,18 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     select_obj = matched_ticket['select'] if matched_ticket else None
     form_select_count = len(valid_ticket_types)
 
+    # Get select ID for JavaScript operations
+    select_id = matched_ticket['id'] if matched_ticket else None
+
     # 檢查是否已經選擇了票券數量（非 "0"）
-    if form_select_count > 0:
+    if select_id:
         try:
-            # 使用 JavaScript 取得當前選中的值
-            current_value = await tab.evaluate('''
-                (function() {
-                    const select = document.querySelector('.mobile-select') ||
-                                   document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+            # 使用 JavaScript 取得當前選中的值（使用正確的 select ID）
+            current_value = await tab.evaluate(f'''
+                (function() {{
+                    const select = document.getElementById('{select_id}');
                     return select ? select.value : "0";
-                })();
+                }})();
             ''')
 
             # 解析結果
@@ -5656,10 +5701,8 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             if show_debug_message:
                 print(f"Failed to check current selected value: {exc}")
 
-    # 回傳結果（保持與 Chrome 版本相容）
-    select_obj = form_select_list[0] if form_select_count > 0 else None
-
-    return is_ticket_number_assigned, select_obj
+    # 回傳結果：select_obj 和 select_id 用於後續操作
+    return is_ticket_number_assigned, select_obj, select_id
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
     show_debug_message = util.get_debug_mode(config_dict)
@@ -5712,12 +5755,13 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     is_ticket_number_assigned = False
 
     # PS: some events on tixcraft have multi <select>.
-    is_ticket_number_assigned, select_obj = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
+    # Fix Issue #200/#201: Now returns select_id for correct element targeting
+    is_ticket_number_assigned, select_obj, select_id = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
 
     if not is_ticket_number_assigned:
         if show_debug_message:
             print(f"Setting ticket number: {ticket_number}")
-        is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number)
+        is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, select_id)
 
     # Record state after successful setting
     if is_ticket_number_assigned:
@@ -13907,9 +13951,240 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
 
     return is_sold_out
 
+
+def extract_answer_by_question_pattern(answer_list, question_text):
+    """
+    Extract answer from answer_list based on question pattern (first/last N chars)
+
+    Args:
+        answer_list: List of user-provided answers
+        question_text: Question text to analyze
+
+    Returns:
+        str or None: Extracted answer or None if no pattern matched
+    """
+    import re
+
+    if not answer_list or not question_text:
+        return None
+
+    # Convert Chinese numbers to digits for pattern matching
+    chinese_to_digit = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+                        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'}
+
+    processed_question = question_text
+    for cn, digit in chinese_to_digit.items():
+        processed_question = processed_question.replace(cn, digit)
+
+    # Pattern for last N chars (末X碼, 後X碼, 最後X碼, 末X位)
+    last_n_patterns = [r'末(\d+)碼', r'後(\d+)碼', r'最後(\d+)碼', r'末(\d+)位']
+    for pattern in last_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[-n:]
+
+    # Pattern for first N chars (前X碼, 首X碼, 前X位)
+    first_n_patterns = [r'前(\d+)碼', r'首(\d+)碼', r'前(\d+)位']
+    for pattern in first_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[:n]
+
+    return None
+
+
+async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
+                                          input_text_css, next_step_button_css):
+    """
+    ibon verification form filling (supports single/multiple input fields)
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        answer_list: List of answers to try
+        fail_list: List of previously failed answers
+        input_text_css: CSS selector for input fields
+        next_step_button_css: CSS selector for submit button
+
+    Returns:
+        tuple[bool, list]: (is_answer_sent, updated fail_list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_answer_sent = False
+
+    try:
+        # Get all input fields and their values
+        input_info = await tab.evaluate(f'''
+            (function() {{
+                var inputs = document.querySelectorAll("{input_text_css}");
+                var result = [];
+                inputs.forEach(function(input) {{
+                    result.push({{
+                        value: input.value || ""
+                    }});
+                }});
+                return {{
+                    count: inputs.length,
+                    inputs: result
+                }};
+            }})()
+        ''')
+        input_info = util.parse_nodriver_result(input_info)
+
+        if not input_info:
+            if show_debug_message:
+                print("[IBON VERIFY] Failed to get input info")
+            return is_answer_sent, fail_list
+
+        form_input_count = input_info.get('count', 0)
+        if show_debug_message:
+            print(f"[IBON VERIFY] Found {form_input_count} input field(s)")
+
+        if form_input_count == 0:
+            return is_answer_sent, fail_list
+
+        # Determine multi-question mode
+        is_multi_question_mode = False
+        if form_input_count == 2 and len(answer_list) >= 2:
+            if len(answer_list[0]) > 0 and len(answer_list[1]) > 0:
+                is_multi_question_mode = True
+
+        if show_debug_message:
+            print(f"[IBON VERIFY] Multi-question mode: {is_multi_question_mode}")
+            print(f"[IBON VERIFY] Answer list: {answer_list}")
+            print(f"[IBON VERIFY] Fail list: {fail_list}")
+
+        if is_multi_question_mode:
+            # Multi-field mode: fill answer_list[0] to first field, answer_list[1] to second
+            answer_1 = answer_list[0]
+            answer_2 = answer_list[1]
+            # JSON encode for safe JavaScript string insertion
+            answer_1_js = json.dumps(answer_1)
+            answer_2_js = json.dumps(answer_2)
+
+            # Fill both fields using JavaScript
+            fill_result = await tab.evaluate(f'''
+                (function() {{
+                    var inputs = document.querySelectorAll("{input_text_css}");
+                    if (inputs.length >= 2) {{
+                        var answer1 = {answer_1_js};
+                        var answer2 = {answer_2_js};
+
+                        if (inputs[0].value !== answer1) {{
+                            inputs[0].value = "";
+                            inputs[0].value = answer1;
+                            inputs[0].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            inputs[0].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+
+                        if (inputs[1].value !== answer2) {{
+                            inputs[1].value = "";
+                            inputs[1].value = answer2;
+                            inputs[1].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            inputs[1].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+
+                        return true;
+                    }}
+                    return false;
+                }})()
+            ''')
+
+            if fill_result:
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Filled multi-field: '{answer_1}' and '{answer_2}'")
+
+                # Click submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_answer_sent = True
+                        fail_list.append(answer_1)
+                        fail_list.append(answer_2)
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Submitted multi-field answers")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+
+        else:
+            # Single-field mode: find first answer not in fail_list
+            inferred_answer = ""
+            for answer in answer_list:
+                if answer not in fail_list:
+                    inferred_answer = answer
+                    break
+
+            if len(inferred_answer) > 0:
+                # JSON encode for safe JavaScript string insertion
+                inferred_answer_js = json.dumps(inferred_answer)
+                # Fill the answer
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input) {{
+                            input.value = "";
+                            input.value = {inferred_answer_js};
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        }}
+                    }})()
+                ''')
+
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Filled single-field: '{inferred_answer}'")
+
+                # Click submit button
+                try:
+                    btn = await tab.query_selector(next_step_button_css)
+                    if btn:
+                        await btn.click()
+                        is_answer_sent = True
+                        fail_list.append(inferred_answer)
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Submitted, attempt #{len(fail_list)}")
+                except Exception as btn_exc:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+            else:
+                # No answer to fill, focus the input
+                if show_debug_message:
+                    print("[IBON VERIFY] No answer available, focusing input")
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{input_text_css}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
+
+        if is_answer_sent:
+            await asyncio.sleep(0.3)
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[IBON VERIFY] Error: {exc}")
+
+    return is_answer_sent, fail_list
+
+
 async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     """
-    Handle verification question on ibon (simplified version)
+    Handle verification question on ibon with auto-fill support
+
+    Features:
+    - Reads answers from user_guess_string (user dictionary)
+    - Supports first/last N chars extraction (e.g., "phone last 3 digits")
+    - Auto-guess from question text (if auto_guess_options enabled)
+    - Multi-field support
 
     Args:
         tab: NoDriver tab object
@@ -13918,48 +14193,437 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
 
     Returns:
         list: Updated fail_list
-
-    TODO: Full implementation needs:
-    - Question text extraction from #content > label
-    - Answer list parsing from config or auto-guess
-    - Form filling with retry mechanism
-    - Integration with util.get_answer_list_from_question_string()
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # CSS selectors for ibon verification page
+    INPUT_CSS = 'div.editor-box input[type="text"], div.editor-box input:not([type]), div.form-group > input'
+    SUBMIT_BTN_CSS = 'div.editor-box a.btn'
+
     try:
-        # Get question text
+        # Get question text (both title and description)
         question_text = await tab.evaluate('''
             (function() {
-                const content = document.querySelector('#content');
+                var text = "";
+                var content = document.querySelector('#content');
                 if (content) {
-                    const label = content.querySelector('label');
+                    // Get label text (title)
+                    var label = content.querySelector('label');
                     if (label) {
-                        return label.textContent || label.innerText || '';
+                        text += label.textContent || label.innerText || '';
+                    }
+                    // Get form-group span text (description)
+                    var formGroup = content.querySelector('div.form-group');
+                    if (formGroup) {
+                        var spans = formGroup.querySelectorAll('span');
+                        spans.forEach(function(span) {
+                            text += ' ' + (span.textContent || span.innerText || '');
+                        });
                     }
                 }
-                return '';
+                return text.trim();
             })()
         ''')
 
         if len(question_text) > 0:
             if show_debug_message:
-                print(f"[IBON] Verification question found: {question_text}")
+                print(f"[IBON VERIFY] Question found: {question_text}")
 
-            # TODO: Implement answer extraction and form filling
-            # This requires integration with:
-            # - util.get_answer_list_from_user_guess_string()
-            # - util.get_answer_list_from_question_string()
-            # - Form filling logic
+            # Write question to file for debugging
+            write_question_to_file(question_text)
+
+            # Step 1: Get answers from user dictionary
+            answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
 
             if show_debug_message:
-                print("[IBON] Verification question handling not fully implemented")
+                print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
+
+            # Step 2: Try to extract answer based on question pattern (first/last N chars)
+            if len(answer_list) > 0:
+                extracted_answer = extract_answer_by_question_pattern(answer_list, question_text)
+                if extracted_answer:
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
+                    # Prepend extracted answer to the list for priority
+                    if extracted_answer not in answer_list:
+                        answer_list = [extracted_answer] + answer_list
+
+            # Step 3: If no user dictionary and auto_guess enabled, try auto-guess
+            if len(answer_list) == 0:
+                if config_dict["advanced"].get("auto_guess_options", False):
+                    answer_list = util.get_answer_list_from_question_string(None, question_text)
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Auto-guessed answers: {answer_list}")
+
+            # Step 4: Fill the form if we have answers
+            if len(answer_list) > 0:
+                is_answer_sent, fail_list = await nodriver_ibon_fill_verify_form(
+                    tab, config_dict, answer_list, fail_list,
+                    INPUT_CSS, SUBMIT_BTN_CSS
+                )
+                if show_debug_message:
+                    print(f"[IBON VERIFY] Answer sent: {is_answer_sent}")
+            else:
+                if show_debug_message:
+                    print("[IBON VERIFY] No answers available, waiting for user input")
+                # Focus the input field
+                await tab.evaluate(f'''
+                    (function() {{
+                        var input = document.querySelector("{INPUT_CSS}");
+                        if (input && document.activeElement !== input) {{
+                            input.focus();
+                        }}
+                    }})()
+                ''')
 
     except Exception as e:
         if show_debug_message:
             print(f"[IBON] Verification question error: {e}")
 
     return fail_list
+
+
+async def nodriver_tour_ibon_event_detail(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw event detail page (/event/{eventId})
+    Click the purchase button to proceed to options page
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if button clicked successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_button_clicked = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Event detail page detected")
+
+        # Find and click purchase button (multiple text variations)
+        button_text_list = ["立即購票", "搶票", "購票", "Buy"]
+
+        for button_text in button_text_list:
+            try:
+                # Use text-based selector to find button
+                result = await tab.evaluate(f'''
+                    (function() {{
+                        var buttons = Array.from(document.querySelectorAll('button'));
+                        var targetBtn = buttons.find(btn => btn.textContent.includes("{button_text}"));
+                        if (targetBtn) {{
+                            targetBtn.click();
+                            return true;
+                        }}
+                        return false;
+                    }})()
+                ''')
+
+                if result:
+                    is_button_clicked = True
+                    if show_debug_message:
+                        print(f"[TOUR IBON] Clicked button: {button_text}")
+                    break
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[TOUR IBON] Button click error ({button_text}): {e}")
+
+        if not is_button_clicked and show_debug_message:
+            print("[TOUR IBON] Purchase button not found")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Event detail error: {e}")
+
+    return is_button_clicked
+
+
+async def nodriver_tour_ibon_options(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw options page (/event/{eventId}/options)
+    Select ticket quantity -> Add to cart -> Confirm payment method
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if all steps completed successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_all_completed = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Options page detected")
+
+        # Step 1: Select ticket quantity from <select> element
+        # Support multiple ticket types with area_keyword matching
+        ticket_number = config_dict.get("ticket_number", 2)
+
+        # Get area keyword for ticket type matching
+        area_keyword = ""
+        area_auto_select_enable = config_dict.get("area_auto_select", {}).get("enable", False)
+        if area_auto_select_enable:
+            area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+            area_keyword = util.format_keyword_string(area_keyword)
+
+        try:
+            # Step 1a: Get all ticket types from page
+            ticket_types = await tab.evaluate('''
+                (function() {
+                    var headings = document.querySelectorAll('h4');
+                    return Array.from(headings).map(h => h.textContent.trim());
+                })()
+            ''')
+
+            # Step 1b: Find matching ticket type using Python util function
+            target_index = 0  # Default to first ticket type
+            if area_keyword and ticket_types:
+                for i, ticket_name in enumerate(ticket_types):
+                    if util.is_text_match_keyword(area_keyword, ticket_name):
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[TOUR IBON] Keyword '{area_keyword}' matched ticket: {ticket_name}")
+                        break
+
+            # Step 1c: Select quantity for the matched ticket type
+            select_result = await tab.evaluate(f'''
+                (function() {{
+                    var targetIndex = {target_index};
+                    var ticketNumber = "{ticket_number}";
+                    var selects = document.querySelectorAll('select#input-qty, select[id*="qty"]');
+                    var headings = document.querySelectorAll('h4');
+
+                    if (selects.length > targetIndex) {{
+                        var select = selects[targetIndex];
+                        select.value = ticketNumber;
+                        select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{
+                            success: true,
+                            index: targetIndex,
+                            ticketName: headings[targetIndex] ? headings[targetIndex].textContent.trim() : '',
+                            value: select.value
+                        }};
+                    }}
+                    return {{ success: false, reason: 'no select found', selectCount: selects.length }};
+                }})()
+            ''')
+
+            if select_result and isinstance(select_result, dict) and select_result.get('success') and show_debug_message:
+                print(f"[TOUR IBON] Selected ticket: {select_result.get('ticketName', 'unknown')}, quantity: {ticket_number}")
+
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Quantity selection error: {e}")
+
+        # Step 2: Click the ENABLED "加入訂購" button (only enabled after quantity selected)
+        await asyncio.sleep(0.3)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    // Find enabled "加入訂購" button (disabled buttons have disabled attribute)
+                    var addBtn = buttons.find(btn =>
+                        btn.textContent.includes("加入訂購") && !btn.disabled
+                    );
+                    if (addBtn) {
+                        addBtn.click();
+                        return { success: true };
+                    }
+                    // If no enabled button found, report all button states
+                    var allAddBtns = buttons.filter(btn => btn.textContent.includes("加入訂購"));
+                    return {
+                        success: false,
+                        reason: 'no enabled button',
+                        buttonCount: allAddBtns.length,
+                        allDisabled: allAddBtns.every(btn => btn.disabled)
+                    };
+                })()
+            ''')
+
+            if result and isinstance(result, dict) and result.get('success') and show_debug_message:
+                print("[TOUR IBON] Clicked: 加入訂購")
+            elif result and isinstance(result, dict) and not result.get('success') and show_debug_message:
+                print(f"[TOUR IBON] Add button not ready: {result.get('reason')}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Add to cart error: {e}")
+
+        # Step 3: Wait and click "確認付款方式" button
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    var confirmBtn = buttons.find(btn => btn.textContent.includes("確認付款方式"));
+                    if (confirmBtn) {
+                        confirmBtn.click();
+                        return true;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if result:
+                is_all_completed = True
+                if show_debug_message:
+                    print("[TOUR IBON] Clicked: 確認付款方式")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Confirm payment error: {e}")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Options page error: {e}")
+
+    return is_all_completed
+
+
+async def nodriver_tour_ibon_checkout(tab, config_dict):
+    """
+    Handle tour.ibon.com.tw checkout page (/event/{eventId}/checkout)
+    Fill form (name, phone) -> Check agreement -> Submit
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if form submitted successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    is_form_submitted = False
+
+    try:
+        if show_debug_message:
+            print("[TOUR IBON] Checkout page detected")
+
+        # Get personal data from config
+        real_name = config_dict.get("contact", {}).get("real_name", "")
+        phone = config_dict.get("contact", {}).get("phone", "")
+
+        if not real_name or not phone:
+            if show_debug_message:
+                print("[TOUR IBON] Missing contact data in settings")
+            return False
+
+        # JSON encode for safe JavaScript string insertion
+        real_name_js = json.dumps(real_name)
+        phone_js = json.dumps(phone)
+
+        # Step 1: Fill real name and phone using fieldset structure
+        try:
+            result = await tab.evaluate(f'''
+                (function() {{
+                    var fieldsets = document.querySelectorAll('fieldset');
+                    var nameInput = null;
+                    var phoneInput = null;
+
+                    fieldsets.forEach(function(fs) {{
+                        var legend = fs.querySelector('legend');
+                        var input = fs.querySelector('input');
+                        if (legend && input && !input.readOnly) {{
+                            if (legend.textContent.includes('真實姓名')) nameInput = input;
+                            if (legend.textContent.includes('手機號碼')) phoneInput = input;
+                        }}
+                    }});
+
+                    var results = {{ name: false, phone: false }};
+
+                    if (nameInput) {{
+                        nameInput.focus();
+                        nameInput.value = {real_name_js};
+                        nameInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        nameInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        nameInput.blur();
+                        results.name = true;
+                    }}
+
+                    if (phoneInput) {{
+                        phoneInput.focus();
+                        phoneInput.value = {phone_js};
+                        phoneInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        phoneInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        phoneInput.blur();
+                        results.phone = true;
+                    }}
+
+                    return results;
+                }})()
+            ''')
+
+            if result and isinstance(result, dict) and show_debug_message:
+                if result.get('name'):
+                    print(f"[TOUR IBON] Filled name: {real_name}")
+                if result.get('phone'):
+                    print(f"[TOUR IBON] Filled phone: {phone}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Form fill error: {e}")
+
+        # Step 2: Check agreement checkbox (wait for form validation first)
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    // Try by id first, then fallback to search
+                    var agreeCheckbox = document.getElementById('agreeCheck');
+                    if (!agreeCheckbox) {
+                        var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+                        agreeCheckbox = checkboxes.find(cb => {
+                            var parent = cb.closest('div');
+                            return parent && parent.textContent.includes("我已詳閱");
+                        });
+                    }
+                    if (agreeCheckbox && !agreeCheckbox.checked) {
+                        agreeCheckbox.click();
+                        return { clicked: true, checked: agreeCheckbox.checked };
+                    }
+                    return { clicked: false, checked: agreeCheckbox ? agreeCheckbox.checked : false };
+                })()
+            ''')
+
+            if result and show_debug_message:
+                print(f"[TOUR IBON] Agreement checkbox: {result}")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Checkbox error: {e}")
+
+        # Step 3: Click submit button (下一步) - wait for validation to complete
+        await asyncio.sleep(0.5)
+
+        try:
+            result = await tab.evaluate('''
+                (function() {
+                    var buttons = Array.from(document.querySelectorAll('button'));
+                    var submitBtn = buttons.find(btn => btn.textContent.includes("下一步") && !btn.disabled);
+                    if (submitBtn) {
+                        submitBtn.click();
+                        return true;
+                    }
+                    return false;
+                })()
+            ''')
+
+            if result:
+                is_form_submitted = True
+                if show_debug_message:
+                    print("[TOUR IBON] Clicked: 下一步")
+        except Exception as e:
+            if show_debug_message:
+                print(f"[TOUR IBON] Submit error: {e}")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[TOUR IBON] Checkout error: {e}")
+
+    return is_form_submitted
+
 
 async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
@@ -13984,7 +14648,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
     target_url = None
 
     # Detect login page patterns
-    if 'huiwan.ibon.com.tw/huiwan/loginhuiwan' in url.lower():
+    # Support both patterns: /huiwan/loginhuiwan and /huiwan//loginhuiwan (with double slash)
+    url_lower = url.lower()
+    if 'huiwan.ibon.com.tw' in url_lower and 'loginhuiwan' in url_lower:
         is_login_page = True
         # Extract target URL from query parameter
         if 'targeturl=' in url.lower():
@@ -14006,8 +14672,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         if show_debug_message:
             print("[IBON LOGIN] Re-authenticating with cookie...")
 
-        # Re-execute login process
-        login_result = await nodriver_ibon_login(tab, config_dict, None)
+        # Re-execute login process (get driver from tab.browser)
+        driver = getattr(tab, 'browser', None)
+        login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
         if show_debug_message:
             if login_result['success']:
@@ -14089,14 +14756,23 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     print(f"[IBON] Redirect failed: {redirect_exc}")
 
 
-    # https://tour.ibon.com.tw/event/e23010000300mxu
-    if 'tour' in url.lower() and '/event/' in url.lower():
-        is_event_page = False
-        if len(url.split('/'))==5:
-            is_event_page = True
-        if is_event_page:
-            # ibon auto press signup
-            await nodriver_press_button(tab, '.btn.btn-signup')
+    # tour.ibon.com.tw URL routing
+    # https://tour.ibon.com.tw/event/{eventId}
+    # https://tour.ibon.com.tw/event/{eventId}/options
+    # https://tour.ibon.com.tw/event/{eventId}/checkout
+    if 'tour.ibon.com.tw' in url.lower() and '/event/' in url.lower():
+        url_parts = url.split('/')
+
+        # Event detail page: /event/{eventId}
+        if len(url_parts) == 5:
+            await nodriver_tour_ibon_event_detail(tab, config_dict)
+
+        # Options or checkout page: /event/{eventId}/options or /event/{eventId}/checkout
+        elif len(url_parts) == 6:
+            if '/options' in url.lower():
+                await nodriver_tour_ibon_options(tab, config_dict)
+            elif '/checkout' in url.lower():
+                await nodriver_tour_ibon_checkout(tab, config_dict)
 
     is_match_target_feature = False
 
@@ -14148,9 +14824,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             is_enter_verify_mode = True
-            # TODO:
-            #ibon_dict["fail_list"] = ibon_verification_question(driver, ibon_dict["fail_list"], config_dict)
-            pass
+            ibon_dict["fail_list"] = await nodriver_ibon_verification_question(tab, ibon_dict["fail_list"], config_dict)
             is_match_target_feature = True
 
     if not is_enter_verify_mode:
