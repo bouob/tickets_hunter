@@ -5651,7 +5651,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             if show_debug_message:
                 print(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
                 print(f"[TICKET SELECT] No ticket type selected")
-            return False, None
+            return False, None, None
         else:
             # Fallback enabled or no keyword specified
             if area_keyword_array and show_debug_message:
@@ -14064,14 +14064,17 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             # Multi-field mode: fill answer_list[0] to first field, answer_list[1] to second
             answer_1 = answer_list[0]
             answer_2 = answer_list[1]
+            # JSON encode for safe JavaScript string insertion
+            answer_1_js = json.dumps(answer_1)
+            answer_2_js = json.dumps(answer_2)
 
             # Fill both fields using JavaScript
             fill_result = await tab.evaluate(f'''
                 (function() {{
                     var inputs = document.querySelectorAll("{input_text_css}");
                     if (inputs.length >= 2) {{
-                        var answer1 = "{answer_1}";
-                        var answer2 = "{answer_2}";
+                        var answer1 = {answer_1_js};
+                        var answer2 = {answer_2_js};
 
                         if (inputs[0].value !== answer1) {{
                             inputs[0].value = "";
@@ -14120,13 +14123,15 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                     break
 
             if len(inferred_answer) > 0:
+                # JSON encode for safe JavaScript string insertion
+                inferred_answer_js = json.dumps(inferred_answer)
                 # Fill the answer
                 await tab.evaluate(f'''
                     (function() {{
                         var input = document.querySelector("{input_text_css}");
                         if (input) {{
                             input.value = "";
-                            input.value = "{inferred_answer}";
+                            input.value = {inferred_answer_js};
                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                         }}
@@ -14506,6 +14511,10 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
                 print("[TOUR IBON] Missing contact data in settings")
             return False
 
+        # JSON encode for safe JavaScript string insertion
+        real_name_js = json.dumps(real_name)
+        phone_js = json.dumps(phone)
+
         # Step 1: Fill real name and phone using fieldset structure
         try:
             result = await tab.evaluate(f'''
@@ -14527,7 +14536,7 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
 
                     if (nameInput) {{
                         nameInput.focus();
-                        nameInput.value = "{real_name}";
+                        nameInput.value = {real_name_js};
                         nameInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
                         nameInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
                         nameInput.blur();
@@ -14536,7 +14545,7 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
 
                     if (phoneInput) {{
                         phoneInput.focus();
-                        phoneInput.value = "{phone}";
+                        phoneInput.value = {phone_js};
                         phoneInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
                         phoneInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
                         phoneInput.blur();
