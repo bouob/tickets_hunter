@@ -13952,53 +13952,6 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     return is_sold_out
 
 
-def extract_answer_by_question_pattern(answer_list, question_text):
-    """
-    Extract answer from answer_list based on question pattern (first/last N chars)
-
-    Args:
-        answer_list: List of user-provided answers
-        question_text: Question text to analyze
-
-    Returns:
-        str or None: Extracted answer or None if no pattern matched
-    """
-    import re
-
-    if not answer_list or not question_text:
-        return None
-
-    # Convert Chinese numbers to digits for pattern matching
-    chinese_to_digit = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
-                        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'}
-
-    processed_question = question_text
-    for cn, digit in chinese_to_digit.items():
-        processed_question = processed_question.replace(cn, digit)
-
-    # Pattern for last N chars (末X碼, 後X碼, 最後X碼, 末X位)
-    last_n_patterns = [r'末(\d+)碼', r'後(\d+)碼', r'最後(\d+)碼', r'末(\d+)位']
-    for pattern in last_n_patterns:
-        match = re.search(pattern, processed_question)
-        if match:
-            n = int(match.group(1))
-            for answer in answer_list:
-                if len(answer) >= n:
-                    return answer[-n:]
-
-    # Pattern for first N chars (前X碼, 首X碼, 前X位)
-    first_n_patterns = [r'前(\d+)碼', r'首(\d+)碼', r'前(\d+)位']
-    for pattern in first_n_patterns:
-        match = re.search(pattern, processed_question)
-        if match:
-            n = int(match.group(1))
-            for answer in answer_list:
-                if len(answer) >= n:
-                    return answer[:n]
-
-    return None
-
-
 async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
                                           input_text_css, next_step_button_css):
     """
@@ -14201,33 +14154,36 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     SUBMIT_BTN_CSS = 'div.editor-box a.btn'
 
     try:
-        # Get question text (both title and description)
-        question_text = await tab.evaluate('''
+        # Get question texts from all form-groups (returns array)
+        question_texts = await tab.evaluate('''
             (function() {
-                var text = "";
+                var questions = [];
                 var content = document.querySelector('#content');
                 if (content) {
-                    // Get label text (title)
-                    var label = content.querySelector('label');
-                    if (label) {
-                        text += label.textContent || label.innerText || '';
-                    }
-                    // Get form-group span text (description)
-                    var formGroup = content.querySelector('div.form-group');
-                    if (formGroup) {
-                        var spans = formGroup.querySelectorAll('span');
-                        spans.forEach(function(span) {
-                            text += ' ' + (span.textContent || span.innerText || '');
-                        });
-                    }
+                    // Get all form-groups with input fields
+                    var formGroups = content.querySelectorAll('div.form-group');
+                    formGroups.forEach(function(formGroup) {
+                        // Only process form-groups that have input fields
+                        if (formGroup.querySelector('input')) {
+                            var span = formGroup.querySelector('span');
+                            if (span) {
+                                questions.push(span.textContent || span.innerText || '');
+                            }
+                        }
+                    });
                 }
-                return text.trim();
+                return questions;
             })()
         ''')
+        question_texts = util.parse_nodriver_result(question_texts) or []
+
+        # For backward compatibility, create combined question_text
+        question_text = ' '.join(question_texts).strip()
 
         if len(question_text) > 0:
             if show_debug_message:
                 print(f"[IBON VERIFY] Question found: {question_text}")
+                print(f"[IBON VERIFY] Question count: {len(question_texts)}")
 
             # Write question to file for debugging
             write_question_to_file(question_text)
@@ -14238,9 +14194,32 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
             if show_debug_message:
                 print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
 
-            # Step 2: Try to extract answer based on question pattern (first/last N chars)
-            if len(answer_list) > 0:
-                extracted_answer = extract_answer_by_question_pattern(answer_list, question_text)
+            # Step 2: Smart extraction for multi-field forms
+            # For each question, try to extract the appropriate answer
+            if len(answer_list) > 0 and len(question_texts) > 1:
+                # Multi-field mode: extract answer for each question
+                extracted_answers = []
+                for idx, q_text in enumerate(question_texts):
+                    extracted = util.extract_answer_by_question_pattern(answer_list, q_text)
+                    if extracted:
+                        extracted_answers.append(extracted)
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Q{idx+1} extracted: {extracted}")
+                    elif idx < len(answer_list):
+                        # No pattern match, use original answer at this position
+                        extracted_answers.append(answer_list[idx])
+                        if show_debug_message:
+                            print(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
+
+                # Replace answer_list with extracted answers if we got results
+                if len(extracted_answers) >= len(question_texts):
+                    answer_list = extracted_answers
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Final answers for multi-field: {answer_list}")
+
+            elif len(answer_list) > 0:
+                # Single-field mode: original logic
+                extracted_answer = util.extract_answer_by_question_pattern(answer_list, question_text)
                 if extracted_answer:
                     if show_debug_message:
                         print(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
