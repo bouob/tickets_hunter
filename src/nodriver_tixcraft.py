@@ -12326,6 +12326,40 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         # First, ensure page state is synced
         await tab  # Sync state
 
+        # Quick check: Is this actually an area selection page?
+        # If URL is verification page (UTK0201_0.aspx with rn=), skip area selection
+        try:
+            current_url = tab.target.url
+            if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
+                if show_debug_message:
+                    print("[IBON AREA] Detected verification page URL, skipping area selection")
+                # Return (False, False) to skip reload and let main loop re-check URL
+                return False, False
+        except:
+            pass
+
+        # Quick check: Does page have verification form instead of area table?
+        try:
+            page_type_result = await tab.evaluate('''
+                (function() {
+                    // Check for verification form markers
+                    var verifyInputs = document.querySelectorAll('#content div.form-group input');
+                    var areaTable = document.querySelector('table.table, table[class*="area"], tbody tr td a');
+
+                    if (verifyInputs.length > 0 && !areaTable) {
+                        return "verify";
+                    }
+                    return "area";
+                })()
+            ''')
+            if page_type_result == "verify":
+                if show_debug_message:
+                    print("[IBON AREA] Detected verification form, skipping area selection")
+                # Return (False, False) to skip reload and let main loop re-check URL
+                return False, False
+        except:
+            pass
+
         # Initialize CDP DOM state (required for perform_search to work)
         try:
             await tab.send(cdp.dom.get_document(depth=0, pierce=False))
@@ -12341,6 +12375,17 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             print("[IBON AREA] Auto-detecting area table...")
 
         while (time.time() - start_time) < max_wait:
+            # Check if URL changed to verification page (UTK0201_0.aspx)
+            try:
+                current_url = tab.target.url
+                if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
+                    if show_debug_message:
+                        print("[IBON AREA] URL changed to verification page, exiting area selection")
+                    # Return (False, False) to skip reload and let main loop re-check URL
+                    return False, False
+            except:
+                pass
+
             try:
                 # Use CDP search to check TR presence (penetrates Shadow DOM)
                 search_id, tr_count = await tab.send(cdp.dom.perform_search(
@@ -13973,7 +14018,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
 
     try:
         # Get all input fields and their values
-        input_info = await tab.evaluate(f'''
+        input_info_raw = await tab.evaluate(f'''
             (function() {{
                 var inputs = document.querySelectorAll("{input_text_css}");
                 var result = [];
@@ -13988,11 +14033,18 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                 }};
             }})()
         ''')
+
+        # Handle NoDriver result format - may return tuple (result, exception)
+        input_info = input_info_raw
+        if isinstance(input_info_raw, tuple) and len(input_info_raw) >= 1:
+            input_info = input_info_raw[0]
+
         input_info = util.parse_nodriver_result(input_info)
 
-        if not input_info:
+        # Handle NoDriver error result (ExceptionDetails object or non-dict)
+        if not input_info or not isinstance(input_info, dict):
             if show_debug_message:
-                print("[IBON VERIFY] Failed to get input info")
+                print(f"[IBON VERIFY] Failed to get input info: {type(input_info)}")
             return is_answer_sent, fail_list
 
         form_input_count = input_info.get('count', 0)
@@ -14022,7 +14074,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             answer_2_js = json.dumps(answer_2)
 
             # Fill both fields using JavaScript
-            fill_result = await tab.evaluate(f'''
+            fill_result_raw = await tab.evaluate(f'''
                 (function() {{
                     var inputs = document.querySelectorAll("{input_text_css}");
                     if (inputs.length >= 2) {{
@@ -14048,6 +14100,11 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                     return false;
                 }})()
             ''')
+
+            # Handle tuple result from NoDriver
+            fill_result = fill_result_raw
+            if isinstance(fill_result_raw, tuple) and len(fill_result_raw) >= 1:
+                fill_result = fill_result_raw[0]
 
             if fill_result:
                 if show_debug_message:
@@ -14150,12 +14207,13 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     # CSS selectors for ibon verification page
-    INPUT_CSS = 'div.editor-box input[type="text"], div.editor-box input:not([type]), div.form-group > input'
-    SUBMIT_BTN_CSS = 'div.editor-box a.btn'
+    # Note: use single quotes in CSS selector to avoid breaking JavaScript string
+    INPUT_CSS = "#content div.form-group input[type='text'], #content div.form-group input:not([type]), div.editor-box input[type='text'], div.editor-box input:not([type])"
+    SUBMIT_BTN_CSS = '#content a.btn, div.editor-box a.btn'
 
     try:
         # Get question texts from all form-groups (returns array)
-        question_texts = await tab.evaluate('''
+        question_texts_raw = await tab.evaluate('''
             (function() {
                 var questions = [];
                 var content = document.querySelector('#content');
@@ -14175,7 +14233,25 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
                 return questions;
             })()
         ''')
-        question_texts = util.parse_nodriver_result(question_texts) or []
+
+        # Handle NoDriver result format - may return tuple (result, exception) or array
+        question_texts = []
+        raw_data = question_texts_raw
+
+        # If it's a tuple (result, exception), extract the result
+        if isinstance(raw_data, tuple) and len(raw_data) >= 1:
+            raw_data = raw_data[0]
+
+        # Parse the result into a list of strings
+        if isinstance(raw_data, list):
+            for q in raw_data:
+                if isinstance(q, dict) and 'value' in q:
+                    # NoDriver format: {'type': 'string', 'value': '...'}
+                    question_texts.append(str(q['value']))
+                elif isinstance(q, str) and q:
+                    question_texts.append(q)
+        elif isinstance(raw_data, str) and raw_data:
+            question_texts = [raw_data]
 
         # For backward compatibility, create combined question_text
         question_text = ' '.join(question_texts).strip()
@@ -14195,21 +14271,23 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
                 print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
 
             # Step 2: Smart extraction for multi-field forms
-            # For each question, try to extract the appropriate answer
+            # For each question, try to extract from its corresponding answer
             if len(answer_list) > 0 and len(question_texts) > 1:
                 # Multi-field mode: extract answer for each question
                 extracted_answers = []
                 for idx, q_text in enumerate(question_texts):
-                    extracted = util.extract_answer_by_question_pattern(answer_list, q_text)
-                    if extracted:
-                        extracted_answers.append(extracted)
-                        if show_debug_message:
-                            print(f"[IBON VERIFY] Q{idx+1} extracted: {extracted}")
-                    elif idx < len(answer_list):
-                        # No pattern match, use original answer at this position
-                        extracted_answers.append(answer_list[idx])
-                        if show_debug_message:
-                            print(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
+                    if idx < len(answer_list):
+                        # Only try to extract from THIS position's answer
+                        extracted = util.extract_answer_by_question_pattern([answer_list[idx]], q_text)
+                        if extracted:
+                            extracted_answers.append(extracted)
+                            if show_debug_message:
+                                print(f"[IBON VERIFY] Q{idx+1} extracted from answer[{idx}]: {extracted}")
+                        else:
+                            # No pattern match, use original answer at this position
+                            extracted_answers.append(answer_list[idx])
+                            if show_debug_message:
+                                print(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
 
                 # Replace answer_list with extracted answers if we got results
                 if len(extracted_answers) >= len(question_texts):
