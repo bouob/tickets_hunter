@@ -7,11 +7,11 @@
 ---
 ## 📜 憲法（行為紅線）
 
-**位置**：`.specify/memory/constitution.md` | **版本**：2.0.0
+**位置**：`.specify/memory/constitution.md` | **版本**：2.1.0
 
 憲法定義**不可違反的行為規則**，不限制思考方式。
 
-### 7 大行為規範（速記）
+### 9 大行為規範（速記）
 
 | 原則 | 類型 | 核心要點 |
 |------|------|----------|
@@ -19,9 +19,11 @@
 | **II. 共用庫保護** | MUST | util.py 改動需跨平台/跨 Driver 分析 |
 | **III. 設定驅動** | MUST | settings.json 控制所有可配置行為 |
 | **IV. 程式碼安全** | MUST | 禁 emoji in .py、禁硬寫敏感資訊 |
-| **V. Git 工作流程** | MUST | /gsave 提交、雙 Repo 安全 |
+| **V. Git 工作流程** | MUST | /gsave 提交、雙 Repo 安全、提交前測試 |
 | **VI. 測試驗證** | SHOULD | 核心修改應有測試驗證 |
-| **VII. 文件同步** | SHOULD | 程式碼變更應同步文件 |
+| **VII. 文件同步** | SHOULD | 程式碼變更應同步文件、新 API 更新文件 |
+| **VIII. 測試紀律** | MUST/SHOULD | 新功能寫測試、測試失敗必修正、重構不破壞測試 |
+| **IX. 例外處理** | MUST | 禁止空的 except: pass，必須有日誌或處理 |
 
 **MUST**：無例外，違反阻擋合併
 **SHOULD**：允許例外，需記錄理由
@@ -45,7 +47,7 @@
 3. **編寫代碼**：`docs/02-development/coding_templates.md`
 
 #### 📝 文件更新（3 步驟）
-1. **同步代碼**：憲法第 VIII 條（文件與代碼同步）
+1. **同步代碼**：憲法第 VII 條（文件同步）
 2. **記錄變更**：`docs/10-project-tracking/accept_changelog.md`
 3. **一致性檢查**：`/speckit.analyze`（speckit 專案）
 
