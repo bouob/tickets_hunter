@@ -1601,6 +1601,57 @@ def get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLI
 
     return local_array + online_array
 
+def extract_answer_by_question_pattern(answer_list, question_text):
+    """
+    Extract answer from answer_list based on question pattern (first/last N chars)
+
+    Supported patterns:
+    - Last N chars: 末X碼, 後X碼, 最後X碼, 末X位
+    - First N chars: 前X碼, 首X碼, 前X位
+    - Chinese numbers (一~十) are automatically converted
+
+    Args:
+        answer_list: List of user-provided answers
+        question_text: Question text to analyze
+
+    Returns:
+        str or None: Extracted answer or None if no pattern matched
+    """
+    import re
+
+    if not answer_list or not question_text:
+        return None
+
+    # Convert Chinese numbers to digits for pattern matching
+    chinese_to_digit = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+                        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'}
+
+    processed_question = question_text
+    for cn, digit in chinese_to_digit.items():
+        processed_question = processed_question.replace(cn, digit)
+
+    # Pattern for last N chars (末X碼, 後X碼, 最後X碼, 末X位)
+    last_n_patterns = [r'末(\d+)碼', r'後(\d+)碼', r'最後(\d+)碼', r'末(\d+)位']
+    for pattern in last_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[-n:]
+
+    # Pattern for first N chars (前X碼, 首X碼, 前X位)
+    first_n_patterns = [r'前(\d+)碼', r'首(\d+)碼', r'前(\d+)位']
+    for pattern in first_n_patterns:
+        match = re.search(pattern, processed_question)
+        if match:
+            n = int(match.group(1))
+            for answer in answer_list:
+                if len(answer) >= n:
+                    return answer[:n]
+
+    return None
+
 def check_answer_keep_symbol(captcha_text_div_text):
     is_need_keep_symbol = False
 

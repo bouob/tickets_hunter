@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.24)"
+CONST_APP_VERSION = "TicketsHunter (2025.12.26)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -12064,8 +12064,8 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
-        # 同時檢查區域名稱與內容
-        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+        # 同時檢查區域名稱、票價與內容
+        row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
@@ -12123,7 +12123,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
             # Check all areas for this keyword
             for area in valid_areas:
-                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
                 row_text = util.format_keyword_string(row_text)
 
                 # Support AND logic with space-separated sub-keywords
@@ -12326,6 +12326,84 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         # First, ensure page state is synced
         await tab  # Sync state
 
+        # Quick check: Is this actually an area selection page?
+        # If URL is verification page (UTK0201_0.aspx with rn=), skip area selection
+        try:
+            current_url = tab.target.url
+            if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
+                if show_debug_message:
+                    print("[IBON AREA] Detected verification page URL, skipping area selection")
+                # Return (False, False) to skip reload and let main loop re-check URL
+                return False, False
+        except:
+            pass
+
+        # Quick check: Does page have Cloudflare or verification form instead of area table?
+        try:
+            import time as time_module
+            cloudflare_max_wait = 15  # Maximum wait for Cloudflare (seconds)
+            cloudflare_check_interval = 0.5  # Check interval (seconds)
+            cloudflare_start_time = time_module.time()
+            cloudflare_detected_once = False
+            page_type_result = "area"
+
+            while (time_module.time() - cloudflare_start_time) < cloudflare_max_wait:
+                page_type_result = await tab.evaluate('''
+                    (function() {
+                        // Check for Cloudflare verification page
+                        var bodyText = document.body ? document.body.innerText : '';
+                        var title = document.title || '';
+
+                        // Cloudflare indicators
+                        if (title === '請稍候...' ||
+                            bodyText.indexOf('正在驗證') !== -1 ||
+                            bodyText.indexOf('驗證您是否是人類') !== -1 ||
+                            bodyText.indexOf('Checking your browser') !== -1 ||
+                            bodyText.indexOf('verify you are human') !== -1) {
+                            return "cloudflare";
+                        }
+
+                        // Check for ibon verification form markers
+                        var verifyInputs = document.querySelectorAll('#content div.form-group input');
+                        var areaTable = document.querySelector('table.table, table[class*="area"], tbody tr td a');
+
+                        if (verifyInputs.length > 0 && !areaTable) {
+                            return "verify";
+                        }
+                        return "area";
+                    })()
+                ''')
+
+                if page_type_result == "cloudflare":
+                    if not cloudflare_detected_once:
+                        cloudflare_detected_once = True
+                        if show_debug_message:
+                            print("[IBON AREA] Detected Cloudflare verification, waiting for completion...")
+                    # Continue waiting, check again
+                    await tab.sleep(cloudflare_check_interval)
+                    continue
+                elif page_type_result == "verify":
+                    if show_debug_message:
+                        print("[IBON AREA] Detected verification form, skipping area selection")
+                    return False, False
+                else:
+                    # page_type_result == "area" - Cloudflare completed or not present
+                    if cloudflare_detected_once and show_debug_message:
+                        elapsed = time_module.time() - cloudflare_start_time
+                        print(f"[IBON AREA] Cloudflare verification completed after {elapsed:.1f}s")
+                    break
+
+            # If timeout while Cloudflare still active
+            if cloudflare_detected_once and page_type_result == "cloudflare":
+                if show_debug_message:
+                    print("[IBON AREA] Cloudflare verification timeout, letting main loop retry")
+                return False, False
+
+        except Exception as cf_exc:
+            if show_debug_message:
+                print(f"[IBON AREA] Cloudflare/page type check error: {cf_exc}")
+            pass
+
         # Initialize CDP DOM state (required for perform_search to work)
         try:
             await tab.send(cdp.dom.get_document(depth=0, pierce=False))
@@ -12341,6 +12419,17 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             print("[IBON AREA] Auto-detecting area table...")
 
         while (time.time() - start_time) < max_wait:
+            # Check if URL changed to verification page (UTK0201_0.aspx)
+            try:
+                current_url = tab.target.url
+                if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
+                    if show_debug_message:
+                        print("[IBON AREA] URL changed to verification page, exiting area selection")
+                    # Return (False, False) to skip reload and let main loop re-check URL
+                    return False, False
+            except:
+                pass
+
             try:
                 # Use CDP search to check TR presence (penetrates Shadow DOM)
                 search_id, tr_count = await tab.send(cdp.dom.perform_search(
@@ -12601,8 +12690,8 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
-        # 同時檢查區域名稱與內容
-        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+        # 同時檢查區域名稱、票價與內容
+        row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
@@ -12666,7 +12755,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
             # Check all areas for this keyword
             for area in valid_areas:
-                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
                 row_text = util.format_keyword_string(row_text)
 
                 # Support AND logic with space-separated sub-keywords
@@ -13952,53 +14041,6 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     return is_sold_out
 
 
-def extract_answer_by_question_pattern(answer_list, question_text):
-    """
-    Extract answer from answer_list based on question pattern (first/last N chars)
-
-    Args:
-        answer_list: List of user-provided answers
-        question_text: Question text to analyze
-
-    Returns:
-        str or None: Extracted answer or None if no pattern matched
-    """
-    import re
-
-    if not answer_list or not question_text:
-        return None
-
-    # Convert Chinese numbers to digits for pattern matching
-    chinese_to_digit = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
-                        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'}
-
-    processed_question = question_text
-    for cn, digit in chinese_to_digit.items():
-        processed_question = processed_question.replace(cn, digit)
-
-    # Pattern for last N chars (末X碼, 後X碼, 最後X碼, 末X位)
-    last_n_patterns = [r'末(\d+)碼', r'後(\d+)碼', r'最後(\d+)碼', r'末(\d+)位']
-    for pattern in last_n_patterns:
-        match = re.search(pattern, processed_question)
-        if match:
-            n = int(match.group(1))
-            for answer in answer_list:
-                if len(answer) >= n:
-                    return answer[-n:]
-
-    # Pattern for first N chars (前X碼, 首X碼, 前X位)
-    first_n_patterns = [r'前(\d+)碼', r'首(\d+)碼', r'前(\d+)位']
-    for pattern in first_n_patterns:
-        match = re.search(pattern, processed_question)
-        if match:
-            n = int(match.group(1))
-            for answer in answer_list:
-                if len(answer) >= n:
-                    return answer[:n]
-
-    return None
-
-
 async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
                                           input_text_css, next_step_button_css):
     """
@@ -14020,7 +14062,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
 
     try:
         # Get all input fields and their values
-        input_info = await tab.evaluate(f'''
+        input_info_raw = await tab.evaluate(f'''
             (function() {{
                 var inputs = document.querySelectorAll("{input_text_css}");
                 var result = [];
@@ -14035,11 +14077,18 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                 }};
             }})()
         ''')
+
+        # Handle NoDriver result format - may return tuple (result, exception)
+        input_info = input_info_raw
+        if isinstance(input_info_raw, tuple) and len(input_info_raw) >= 1:
+            input_info = input_info_raw[0]
+
         input_info = util.parse_nodriver_result(input_info)
 
-        if not input_info:
+        # Handle NoDriver error result (ExceptionDetails object or non-dict)
+        if not input_info or not isinstance(input_info, dict):
             if show_debug_message:
-                print("[IBON VERIFY] Failed to get input info")
+                print(f"[IBON VERIFY] Failed to get input info: {type(input_info)}")
             return is_answer_sent, fail_list
 
         form_input_count = input_info.get('count', 0)
@@ -14069,7 +14118,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             answer_2_js = json.dumps(answer_2)
 
             # Fill both fields using JavaScript
-            fill_result = await tab.evaluate(f'''
+            fill_result_raw = await tab.evaluate(f'''
                 (function() {{
                     var inputs = document.querySelectorAll("{input_text_css}");
                     if (inputs.length >= 2) {{
@@ -14095,6 +14144,11 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                     return false;
                 }})()
             ''')
+
+            # Handle tuple result from NoDriver
+            fill_result = fill_result_raw
+            if isinstance(fill_result_raw, tuple) and len(fill_result_raw) >= 1:
+                fill_result = fill_result_raw[0]
 
             if fill_result:
                 if show_debug_message:
@@ -14197,37 +14251,59 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     # CSS selectors for ibon verification page
-    INPUT_CSS = 'div.editor-box input[type="text"], div.editor-box input:not([type]), div.form-group > input'
-    SUBMIT_BTN_CSS = 'div.editor-box a.btn'
+    # Note: use single quotes in CSS selector to avoid breaking JavaScript string
+    INPUT_CSS = "#content div.form-group input[type='text'], #content div.form-group input:not([type]), div.editor-box input[type='text'], div.editor-box input:not([type])"
+    SUBMIT_BTN_CSS = '#content a.btn, div.editor-box a.btn'
 
     try:
-        # Get question text (both title and description)
-        question_text = await tab.evaluate('''
+        # Get question texts from all form-groups (returns array)
+        question_texts_raw = await tab.evaluate('''
             (function() {
-                var text = "";
+                var questions = [];
                 var content = document.querySelector('#content');
                 if (content) {
-                    // Get label text (title)
-                    var label = content.querySelector('label');
-                    if (label) {
-                        text += label.textContent || label.innerText || '';
-                    }
-                    // Get form-group span text (description)
-                    var formGroup = content.querySelector('div.form-group');
-                    if (formGroup) {
-                        var spans = formGroup.querySelectorAll('span');
-                        spans.forEach(function(span) {
-                            text += ' ' + (span.textContent || span.innerText || '');
-                        });
-                    }
+                    // Get all form-groups with input fields
+                    var formGroups = content.querySelectorAll('div.form-group');
+                    formGroups.forEach(function(formGroup) {
+                        // Only process form-groups that have input fields
+                        if (formGroup.querySelector('input')) {
+                            var span = formGroup.querySelector('span');
+                            if (span) {
+                                questions.push(span.textContent || span.innerText || '');
+                            }
+                        }
+                    });
                 }
-                return text.trim();
+                return questions;
             })()
         ''')
+
+        # Handle NoDriver result format - may return tuple (result, exception) or array
+        question_texts = []
+        raw_data = question_texts_raw
+
+        # If it's a tuple (result, exception), extract the result
+        if isinstance(raw_data, tuple) and len(raw_data) >= 1:
+            raw_data = raw_data[0]
+
+        # Parse the result into a list of strings
+        if isinstance(raw_data, list):
+            for q in raw_data:
+                if isinstance(q, dict) and 'value' in q:
+                    # NoDriver format: {'type': 'string', 'value': '...'}
+                    question_texts.append(str(q['value']))
+                elif isinstance(q, str) and q:
+                    question_texts.append(q)
+        elif isinstance(raw_data, str) and raw_data:
+            question_texts = [raw_data]
+
+        # For backward compatibility, create combined question_text
+        question_text = ' '.join(question_texts).strip()
 
         if len(question_text) > 0:
             if show_debug_message:
                 print(f"[IBON VERIFY] Question found: {question_text}")
+                print(f"[IBON VERIFY] Question count: {len(question_texts)}")
 
             # Write question to file for debugging
             write_question_to_file(question_text)
@@ -14238,9 +14314,34 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
             if show_debug_message:
                 print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
 
-            # Step 2: Try to extract answer based on question pattern (first/last N chars)
-            if len(answer_list) > 0:
-                extracted_answer = extract_answer_by_question_pattern(answer_list, question_text)
+            # Step 2: Smart extraction for multi-field forms
+            # For each question, try to extract from its corresponding answer
+            if len(answer_list) > 0 and len(question_texts) > 1:
+                # Multi-field mode: extract answer for each question
+                extracted_answers = []
+                for idx, q_text in enumerate(question_texts):
+                    if idx < len(answer_list):
+                        # Only try to extract from THIS position's answer
+                        extracted = util.extract_answer_by_question_pattern([answer_list[idx]], q_text)
+                        if extracted:
+                            extracted_answers.append(extracted)
+                            if show_debug_message:
+                                print(f"[IBON VERIFY] Q{idx+1} extracted from answer[{idx}]: {extracted}")
+                        else:
+                            # No pattern match, use original answer at this position
+                            extracted_answers.append(answer_list[idx])
+                            if show_debug_message:
+                                print(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
+
+                # Replace answer_list with extracted answers if we got results
+                if len(extracted_answers) >= len(question_texts):
+                    answer_list = extracted_answers
+                    if show_debug_message:
+                        print(f"[IBON VERIFY] Final answers for multi-field: {answer_list}")
+
+            elif len(answer_list) > 0:
+                # Single-field mode: original logic
+                extracted_answer = util.extract_answer_by_question_pattern(answer_list, question_text)
                 if extracted_answer:
                     if show_debug_message:
                         print(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
