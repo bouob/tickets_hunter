@@ -1,0 +1,82 @@
+try python
+=== ibon Auto-Login Started ===
+Setting ibon cookie (NoDriver) with length: 227
+Cookie contains mem_id: True
+Cookie contains mem_email: True
+Cookie contains huiwanTK: True
+Cookie contains ibonqwareverify: True
+CDP setCookie result: True
+ibon cookie set successfully (NoDriver)
+Verified: ibon cookie exists with value length: 227
+Cookie domain: .ibon.com.tw
+[SUCCESS] ibon cookie set successfully
+[INFO] Cookie will be applied when navigating to event page
+ibon login process completed successfully
+https://ticket.ibon.com.tw/ActivityInfo/Details/39335
+[IBON DATE PIERCE] Starting date selection with pierce=True
+date_keyword:
+auto_select_mode: random
+[IBON DATE PIERCE] Auto-detecting purchase buttons...
+[IBON DATE PIERCE] Found 3 button(s) after 0.00s
+[IBON DATE PIERCE] Got document root: NodeId(2)
+[IBON DATE PIERCE] Found 3 button(s) via search
+[IBON DATE PIERCE] Button class: btn btn-pink btn-buy ng-tns-c58-1 ng-star-inserted
+[IBON DATE PIERCE DEBUG] Button has no parent_id
+[IBON DATE PIERCE] Button: disabled=False, date=''
+[IBON DATE PIERCE] Button class: btn btn-pink btn-buy ng-tns-c58-1 ng-star-inserted
+[IBON DATE PIERCE DEBUG] Button has no parent_id
+[IBON DATE PIERCE] Button: disabled=False, date=''
+[IBON DATE PIERCE] Button class: btn btn-pink btn-buy ng-tns-c58-1 ng-star-inserted
+[IBON DATE PIERCE DEBUG] Button has no parent_id
+[IBON DATE PIERCE] Button: disabled=False, date=''
+[IBON DATE PIERCE] 3 enabled button(s)
+[IBON DATE PIERCE SELECT] Selected date:  (fallback)
+[IBON DATE PIERCE] Click result: (RemoteObject(type_='boolean', subtype=None, class_name=None, value=True, unserializable_value=None, description=None, deep_serialized_value=None, object_id=None, preview=None, custom_preview=None), None)
+[IBON DATE PIERCE] Button clicked successfully
+https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=B0AHQM1X&PRODUCT_ID=B0AHNPA0&strItem=WEB%E7%B6%B2%E7%AB%99%E5%85%A5%E5%8F%A31&__cf_chl_rt_tk=3Sz9IB50rSXWWIKUX.YiN.r2cBRE2YuxLd.ZBl4P2eA-1766729318-1.0.1.1-Z2jlhmnGQM8gK8wwOXgEivreDtujQt_FYv.N91QQ6HI
+NoDriver ibon_area_auto_select started
+area_keyword_item: 學生
+auto_select_mode: random
+ticket_number: 2
+[IBON AREA] Auto-detecting area table...
+[IBON AREA] URL changed to verification page, exiting area selection
+https://orders.ibon.com.tw/application/UTK02/UTK0201_0.aspx?rn=1240606462&PERFORMANCE_ID=B0AHQM1X&PRODUCT_ID=B0AHNPA0&SHOW_PLACE_MAP=True
+[IBON VERIFY] Question found: 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券的稅號：(範例：D12345678) 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券當初購票填寫的手機末三碼：（範例：000)
+[IBON VERIFY] Question count: 2
+[IBON VERIFY] User dictionary answers: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Q1 using original: X0MCV65JS26S
+[IBON VERIFY] Q2 extracted from answer[1]: 551
+[IBON VERIFY] Final answers for multi-field: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Found 2 input field(s)
+[IBON VERIFY] Multi-question mode: True
+[IBON VERIFY] Answer list: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Fail list: []
+[IBON VERIFY] Filled multi-field: 'X0MCV65JS26S' and '551'
+[IBON VERIFY] Submitted multi-field answers
+[IBON VERIFY] Answer sent: True
+[IBON VERIFY] Question found: 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券的稅號：(範例：D12345678) 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券當初購票填寫的手機末三碼：（範例：000)
+[IBON VERIFY] Question count: 2
+[IBON VERIFY] User dictionary answers: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Q1 using original: X0MCV65JS26S
+[IBON VERIFY] Q2 extracted from answer[1]: 551
+[IBON VERIFY] Final answers for multi-field: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Found 2 input field(s)
+[IBON VERIFY] Multi-question mode: True
+[IBON VERIFY] Answer list: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Fail list: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Filled multi-field: 'X0MCV65JS26S' and '551'
+[IBON VERIFY] Submitted multi-field answers
+[IBON VERIFY] Answer sent: True
+[IBON VERIFY] Question found: 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券的稅號：(範例：D12345678) 請輸入2026/01/02 19:30場次 2026 Chuei Li Yu Fan Meeting ‘Drawing Yu’ in Taipei票券當初購票填寫的手機末三碼：（範例：000)
+[IBON VERIFY] Question count: 2
+[IBON VERIFY] User dictionary answers: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Q1 using original: X0MCV65JS26S
+[IBON VERIFY] Q2 extracted from answer[1]: 551
+[IBON VERIFY] Final answers for multi-field: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Found 2 input field(s)
+[IBON VERIFY] Multi-question mode: True
+[IBON VERIFY] Answer list: ['X0MCV65JS26S', '551']
+[IBON VERIFY] Fail list: ['X0MCV65JS26S', '551', 'X0MCV65JS26S', '551']
+[IBON VERIFY] Filled multi-field: 'X0MCV65JS26S' and '551'
+[IBON VERIFY] Submitted multi-field answers
+[IBON VERIFY] Answer sent: True
