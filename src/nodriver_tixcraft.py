@@ -12064,8 +12064,8 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
-        # 同時檢查區域名稱與內容
-        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+        # 同時檢查區域名稱、票價與內容
+        row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
@@ -12123,7 +12123,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
             # Check all areas for this keyword
             for area in valid_areas:
-                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
                 row_text = util.format_keyword_string(row_text)
 
                 # Support AND logic with space-separated sub-keywords
@@ -12338,26 +12338,70 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         except:
             pass
 
-        # Quick check: Does page have verification form instead of area table?
+        # Quick check: Does page have Cloudflare or verification form instead of area table?
         try:
-            page_type_result = await tab.evaluate('''
-                (function() {
-                    // Check for verification form markers
-                    var verifyInputs = document.querySelectorAll('#content div.form-group input');
-                    var areaTable = document.querySelector('table.table, table[class*="area"], tbody tr td a');
+            import time as time_module
+            cloudflare_max_wait = 15  # Maximum wait for Cloudflare (seconds)
+            cloudflare_check_interval = 0.5  # Check interval (seconds)
+            cloudflare_start_time = time_module.time()
+            cloudflare_detected_once = False
+            page_type_result = "area"
 
-                    if (verifyInputs.length > 0 && !areaTable) {
-                        return "verify";
-                    }
-                    return "area";
-                })()
-            ''')
-            if page_type_result == "verify":
+            while (time_module.time() - cloudflare_start_time) < cloudflare_max_wait:
+                page_type_result = await tab.evaluate('''
+                    (function() {
+                        // Check for Cloudflare verification page
+                        var bodyText = document.body ? document.body.innerText : '';
+                        var title = document.title || '';
+
+                        // Cloudflare indicators
+                        if (title === '請稍候...' ||
+                            bodyText.indexOf('正在驗證') !== -1 ||
+                            bodyText.indexOf('驗證您是否是人類') !== -1 ||
+                            bodyText.indexOf('Checking your browser') !== -1 ||
+                            bodyText.indexOf('verify you are human') !== -1) {
+                            return "cloudflare";
+                        }
+
+                        // Check for ibon verification form markers
+                        var verifyInputs = document.querySelectorAll('#content div.form-group input');
+                        var areaTable = document.querySelector('table.table, table[class*="area"], tbody tr td a');
+
+                        if (verifyInputs.length > 0 && !areaTable) {
+                            return "verify";
+                        }
+                        return "area";
+                    })()
+                ''')
+
+                if page_type_result == "cloudflare":
+                    if not cloudflare_detected_once:
+                        cloudflare_detected_once = True
+                        if show_debug_message:
+                            print("[IBON AREA] Detected Cloudflare verification, waiting for completion...")
+                    # Continue waiting, check again
+                    await tab.sleep(cloudflare_check_interval)
+                    continue
+                elif page_type_result == "verify":
+                    if show_debug_message:
+                        print("[IBON AREA] Detected verification form, skipping area selection")
+                    return False, False
+                else:
+                    # page_type_result == "area" - Cloudflare completed or not present
+                    if cloudflare_detected_once and show_debug_message:
+                        elapsed = time_module.time() - cloudflare_start_time
+                        print(f"[IBON AREA] Cloudflare verification completed after {elapsed:.1f}s")
+                    break
+
+            # If timeout while Cloudflare still active
+            if cloudflare_detected_once and page_type_result == "cloudflare":
                 if show_debug_message:
-                    print("[IBON AREA] Detected verification form, skipping area selection")
-                # Return (False, False) to skip reload and let main loop re-check URL
+                    print("[IBON AREA] Cloudflare verification timeout, letting main loop retry")
                 return False, False
-        except:
+
+        except Exception as cf_exc:
+            if show_debug_message:
+                print(f"[IBON AREA] Cloudflare/page type check error: {cf_exc}")
             pass
 
         # Initialize CDP DOM state (required for perform_search to work)
@@ -12646,8 +12690,8 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 print(f"[ibon] 跳過: {area['areaName']}")
             continue
 
-        # 同時檢查區域名稱與內容
-        row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+        # 同時檢查區域名稱、票價與內容
+        row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
@@ -12711,7 +12755,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
             # Check all areas for this keyword
             for area in valid_areas:
-                row_text = area['areaName'] + ' ' + util.remove_html_tags(area['innerHTML'])
+                row_text = area['areaName'] + ' ' + area.get('price', '') + ' ' + util.remove_html_tags(area['innerHTML'])
                 row_text = util.format_keyword_string(row_text)
 
                 # Support AND logic with space-separated sub-keywords
