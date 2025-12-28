@@ -9012,6 +9012,22 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         if show_debug_message:
             print("Ticket selection failed, cannot continue")
 
+        # 票選擇失敗時自動刷新頁面（等待票區有票）
+        # interval=0: 立即刷新, interval>0: 等待N秒後刷新
+        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if auto_reload_interval >= 0:
+            if auto_reload_interval > 0:
+                if show_debug_message:
+                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before reload...")
+                await asyncio.sleep(auto_reload_interval)
+            if show_debug_message:
+                print("[AUTO RELOAD] Reloading page...")
+            try:
+                await tab.reload()
+            except Exception as reload_exc:
+                if show_debug_message:
+                    print(f"[AUTO RELOAD] Reload failed: {reload_exc}")
+
     if show_debug_message:
         print("=== TicketPlus Simplified Booking Ended ===")
 
@@ -9207,32 +9223,8 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
 
-            # 註解自動重載檢查（API 和按鈕檢查）
-            # 改為完全依靠程式在抓取網頁元素時的選擇器自然判斷
-            '''
-            is_reloading = False
-            show_debug_message = config_dict["advanced"].get("verbose", False)
-
-            # NoDriver 模式總是使用 WebDriver 刷新邏輯
-            is_reload_at_webdriver = False
-            if config_dict.get("webdriver_type", "") == "nodriver":
-                is_reload_at_webdriver = True
-            elif not config_dict["browser"] in CONST_CHROME_FAMILY:
-                is_reload_at_webdriver = True
-            else:
-                if not config_dict["advanced"]["chrome_extension"]:
-                    is_reload_at_webdriver = True
-
-            if is_reload_at_webdriver:
-                is_reloading = await nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict)
-
-            if is_reloading:
-                # 頁面已刷新，等待刷新完成後繼續處理
-                if show_debug_message:
-                    print("[ORDER PAGE] Page reloaded, waiting for page ready...")
-                # 刷新後可能需要額外時間讓頁面準備好（隨機延遲 0.8-1.2 秒避免偵測）
-                await asyncio.sleep(random.uniform(0.8, 1.2))
-            '''
+            # 註：自動重載邏輯已移至 nodriver_ticketplus_order() 函數內
+            # 當票選擇失敗時（關鍵字匹配的票區無票），會自動刷新頁面
 
             # 無論是否刷新，都執行訂單處理（展開票區、選票數）
             ticketplus_dict = await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict)
