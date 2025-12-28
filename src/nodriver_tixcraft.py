@@ -9033,6 +9033,74 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
 
     return ticketplus_dict
 
+async def nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=800):
+    """等待 Vue.js 票區元素渲染完成（動態偵測）
+
+    Args:
+        tab: NoDriver tab
+        max_wait_ms: 最大等待時間（毫秒），預設 800ms
+
+    Returns:
+        bool: True 表示 Vue.js 已就緒，False 表示超時
+    """
+    try:
+        # 先等待頁面基本載入（reload 後 DOM 需要一點時間重建）
+        await asyncio.sleep(0.15)
+
+        result = await tab.evaluate(f'''
+            (function() {{
+                return new Promise((resolve) => {{
+                    const startTime = Date.now();
+                    const maxWait = {max_wait_ms};
+
+                    const check = () => {{
+                        // TicketPlus 票區元素選擇器（按優先順序）
+                        const selectors = [
+                            '.v-expansion-panel-header',  // 展開面板標題（最常見）
+                            '.order-content .v-btn',      // 訂單區按鈕
+                            'button.nextBtn',             // 下一步按鈕
+                            '.ticket-list button'         // 票區列表按鈕
+                        ];
+
+                        let hasContent = false;
+                        for (const selector of selectors) {{
+                            const elements = document.querySelectorAll(selector);
+                            if (elements.length > 0) {{
+                                // 只要有元素且含有關鍵字即可
+                                hasContent = Array.from(elements).some(el => {{
+                                    const text = el.textContent || '';
+                                    return text.includes('NT') ||
+                                           text.includes('剩餘') ||
+                                           text.includes('熱賣') ||
+                                           text.includes('下一步') ||
+                                           text.includes('售完');
+                                }});
+                                if (hasContent) break;
+                            }}
+                        }}
+
+                        if (hasContent) {{
+                            resolve({{ ready: true, elapsed: Date.now() - startTime }});
+                        }} else if (Date.now() - startTime < maxWait) {{
+                            setTimeout(check, 30);  // 每 30ms 檢查
+                        }} else {{
+                            resolve({{ ready: false, elapsed: maxWait }});
+                        }}
+                    }};
+
+                    // 開始檢查
+                    check();
+                }});
+            }})();
+        ''')
+
+        if isinstance(result, dict):
+            return result.get('ready', False)
+        return False
+
+    except Exception as exc:
+        return False
+
 async def nodriver_ticketplus_check_next_button(tab):
     """檢查下一步按鈕是否啟用"""
     try:
@@ -9215,10 +9283,25 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             ticketplus_dict["start_time"] = time.time()
+            show_debug_message = config_dict["advanced"].get("verbose", False)
 
-            # Initial delay when first entering order page (1.5-2.0s)
-            # This ensures Vue.js has sufficient time to initialize DOM elements
-            await asyncio.sleep(random.uniform(1.5, 2.0))
+            # 混合方案：首次進入固定等待，刷新後動態偵測
+            if not ticketplus_dict.get("order_page_visited", False):
+                # 首次進入：固定等待確保 Vue.js 完整初始化
+                if show_debug_message:
+                    print("[VUE INIT] First visit, waiting 1.0-1.5s for Vue.js...")
+                await asyncio.sleep(random.uniform(1.0, 1.5))
+                ticketplus_dict["order_page_visited"] = True
+            else:
+                # 刷新後：動態偵測 Vue.js 就緒（更快）
+                if show_debug_message:
+                    print("[VUE INIT] Reload detected, using dynamic detection...")
+                is_ready = await nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=600)
+                if show_debug_message:
+                    print(f"[VUE INIT] Vue.js ready: {is_ready}")
+                # 如果偵測失敗，加入短暫 fallback 延遲
+                if not is_ready:
+                    await asyncio.sleep(0.2)
 
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
