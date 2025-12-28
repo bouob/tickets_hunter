@@ -10564,9 +10564,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             button_class = attrs.get('class', '')
             button_disabled = 'disabled' in attrs
 
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Button class: {button_class}")
-
             # Extract date context by traversing up to find .tr container
             date_context = ''
 
@@ -10577,14 +10574,10 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                 # Get parent_id to start traversal
                 if not hasattr(button_node, 'parent_id') or not button_node.parent_id:
-                    if show_debug_message:
-                        print(f"[IBON DATE PIERCE DEBUG] Button has no parent_id")
                     current_node_id = None
                 else:
                     current_node_id = button_node.parent_id  # Start from parent, not button itself
-            except Exception as e:
-                if show_debug_message:
-                    print(f"[IBON DATE PIERCE DEBUG] Failed to get button parent: {e}")
+            except Exception:
                 current_node_id = None
 
             if current_node_id:
@@ -10603,9 +10596,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                         parent_class = parent_attrs.get('class', '')
 
-                        if show_debug_message and level < 3:
-                            print(f"[IBON DATE PIERCE DEBUG] Level {level + 1}, parent class: {parent_class[:50] if parent_class else 'none'}")
-
                         # Check if this is .tr container (flexible matching)
                         is_tr_container = (
                             ' tr ' in f' {parent_class} ' or
@@ -10616,18 +10606,12 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                         if is_tr_container:
                             # Found potential container, extract outer HTML for date context
-                            # Use HTML text directly for keyword matching (don't force specific date format)
                             try:
                                 outer_html = await tab.send(cdp.dom.get_outer_html(node_id=current_node_id))
-                                # Use HTML text directly as date_context for flexible keyword matching
-                                # This allows matching any format: "11/30", "2025.11.30", "2025-11-30", etc.
                                 date_context = outer_html[:200]  # Use first 200 chars
-                                if show_debug_message:
-                                    print(f"[IBON DATE PIERCE DEBUG] Found container HTML: {date_context[:80]}...")
                                 break
-                            except Exception as html_err:
-                                if show_debug_message:
-                                    print(f"[IBON DATE PIERCE DEBUG] get_outer_html failed: {html_err}")
+                            except Exception:
+                                pass
 
                         # Move up to parent
                         if hasattr(parent_node, 'parent_id') and parent_node.parent_id:
@@ -10635,9 +10619,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                         else:
                             break
 
-                    except Exception as e:
-                        if show_debug_message:
-                            print(f"[IBON DATE PIERCE DEBUG] Traversal error at level {level + 1}: {e}")
+                    except Exception:
                         break
 
             purchase_buttons.append({
@@ -10646,9 +10628,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                 'disabled': button_disabled,
                 'date_context': date_context
             })
-
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Button: disabled={button_disabled}, date='{date_context}'")
 
         except Exception as e:
             if show_debug_message:
@@ -10914,9 +10893,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                 button_class = attrs.get('class', '')
                 button_disabled = 'disabled' in attrs
 
-                # Debug: Log all button classes found
-                if show_debug_message and button_class:
-                    print(f"[IBON DATE DEBUG] Button class: {button_class}")
 
                 # ibon purchase buttons have 'btn-buy' or 'ng-tns-c57' in class
                 if 'btn-buy' in button_class or ('ng-tns-c57' in button_class and 'btn' in button_class):
@@ -12411,12 +12387,16 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             pass
 
         import time
-        max_wait = 3  # Maximum wait (safety limit)
-        check_interval = 0.1  # Fast polling for quick response
+        max_wait = 5  # Maximum wait (increased for page load after Cloudflare)
+        check_interval = 0.15  # Polling interval
         start_time = time.time()
+        min_tr_count = 3  # Minimum TR elements to consider page loaded (header + at least 1 data row)
 
         if show_debug_message:
             print("[IBON AREA] Auto-detecting area table...")
+
+        last_tr_count = 0
+        stable_count = 0  # Track if TR count is stable (page finished loading)
 
         while (time.time() - start_time) < max_wait:
             # Check if URL changed to verification page (UTK0201_0.aspx)
@@ -12443,7 +12423,15 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 except:
                     pass
 
-                if tr_count > 0:
+                # Check if TR count is stable (same as last check)
+                if tr_count == last_tr_count and tr_count >= min_tr_count:
+                    stable_count += 1
+                else:
+                    stable_count = 0
+                last_tr_count = tr_count
+
+                # Page loaded: minimum TR count reached AND stable for 2 consecutive checks
+                if tr_count >= min_tr_count and stable_count >= 1:
                     elapsed = time.time() - start_time
                     if show_debug_message:
                         print(f"[IBON AREA] Found {tr_count} TR elements after {elapsed:.2f}s")
@@ -12502,22 +12490,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             if show_debug_message:
                 print(f"[DOMSNAPSHOT] Extracted {len(node_names)} nodes, {len(strings)} strings")
 
-            # Debug: Check layout structure
-            if show_debug_message and hasattr(document_snapshot, 'layout'):
-                layout = document_snapshot.layout
-                has_node_index = hasattr(layout, 'node_index')
-                has_bounds = hasattr(layout, 'bounds')
-                print(f"[DOMSNAPSHOT] Layout available: node_index={has_node_index}, bounds={has_bounds}")
-                if has_node_index:
-                    node_index_count = len(list(layout.node_index)) if layout.node_index else 0
-                    print(f"[DOMSNAPSHOT] Layout node_index count: {node_index_count}")
-                    # Show first few node indices for debugging
-                    node_indices = list(layout.node_index)
-                    print(f"[DOMSNAPSHOT] First 10 layout node indices: {node_indices[:10]}")
-                if has_bounds:
-                    bounds_count = len(list(layout.bounds)) if layout.bounds else 0
-                    bounds_per_rect = bounds_count // node_index_count if node_index_count > 0 else 0
-                    print(f"[DOMSNAPSHOT] Layout bounds count: {bounds_count}, nodes: {node_index_count}, bounds/node: {bounds_per_rect}")
 
             # Build children map for traversal
             children_map = {}
@@ -12827,10 +12799,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     try:
         # cdp already imported at file start (Line 29)
 
-        if show_debug_message:
-            print(f"[CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
-            print(f"[CDP CLICK] TR ID: {target_area['id']}, backend_node_id: {target_area.get('backend_node_id')}")
-
         # Get backend_node_id from target area
         backend_node_id = target_area.get('backend_node_id')
 
@@ -12841,8 +12809,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             # Request document first (required for pushNodesByBackendIdsToFrontend)
             try:
                 document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Requested document with pierce=True")
             except Exception as doc_exc:
                 if show_debug_message:
                     print(f"[CDP CLICK] Document request failed: {doc_exc}")
@@ -12860,45 +12826,26 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
                 node_id = node_ids[0]
 
-                if show_debug_message:
-                    print(f"[CDP CLICK] Converted backend_node_id to node_id: {node_id}")
-
                 # Scroll into view
                 try:
                     await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Scrolled element into view")
-                except Exception as e:
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Scroll warning: {e}")
+                except Exception:
+                    pass  # Scroll not always needed
 
-                # Focus element
+                # Focus element (ignore focus warnings)
                 try:
                     await tab.send(cdp.dom.focus(node_id=node_id))
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Focused element")
-                except Exception as e:
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Focus warning: {e}")
+                except Exception:
+                    pass  # Element may not be focusable
 
-                # Get real-time box model (current coordinates)
+                # Get real-time box model and click
                 box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Got box model")
-
-                # Calculate center point
                 content_quad = box_model.content if hasattr(box_model, 'content') else box_model.model.content
                 x = (content_quad[0] + content_quad[2]) / 2
                 y = (content_quad[1] + content_quad[5]) / 2
 
-                if show_debug_message:
-                    print(f"[CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
-
                 # Execute mouse click
                 await tab.mouse_click(x, y)
-
-                if show_debug_message:
-                    print(f"[CDP CLICK] Mouse click executed successfully")
 
                 # Wait for navigation
                 await tab.sleep(random.uniform(0.5, 0.8))
@@ -12934,11 +12881,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
     ticket_number = str(config_dict.get("ticket_number", 2))
-
-    if show_debug_message:
-        print(f"NoDriver ibon_ticket_number_auto_select started")
-        print(f"ticket_number: {ticket_number}")
-
     is_ticket_number_assigned = False
 
     try:
@@ -13044,9 +12986,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         # Parse result
         result_parsed = util.parse_nodriver_result(result)
 
-        if show_debug_message:
-            print(f"Ticket number selection result: {result_parsed}")
-
         if isinstance(result_parsed, dict):
             if result_parsed.get('success'):
                 is_ticket_number_assigned = True
@@ -13059,10 +12998,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 else:
                     if show_debug_message:
                         print(f"[TICKET] Set to: {result_parsed.get('set_value')}")
-                        if result_parsed.get('verified'):
-                            print(f"[TICKET] Verified: true")
-                        if result_parsed.get('selector'):
-                            print(f"[TICKET] Selector used: {result_parsed.get('selector')}")
             else:
                 if show_debug_message:
                     error_msg = result_parsed.get('error')
@@ -13124,8 +13059,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 img_backend_node_id = doc.nodes.backend_node_id[idx]
 
                             if show_debug_message:
-                                print(f"[CAPTCHA] Found captcha IMG: {target_img_url}")
-                                print(f"[CAPTCHA] Backend node ID: {img_backend_node_id}")
+                                print(f"[CAPTCHA] Found IMG: {target_img_url}")
                             break
 
             if img_backend_node_id:
@@ -13146,8 +13080,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             img_backend_node_id = doc.nodes.backend_node_id[idx]
                             
                             if show_debug_message:
-                                print(f"[CAPTCHA] Found captcha CANVAS element")
-                                print(f"[CAPTCHA] Backend node ID: {img_backend_node_id}")
+                                print(f"[CAPTCHA] Found CANVAS element")
                             break
                 
                 if img_backend_node_id:
@@ -13180,8 +13113,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                     result = await tab.send(cdp.dom.push_nodes_by_backend_ids_to_frontend([img_backend_node_id]))
                     if result and len(result) > 0:
                         img_node_id = result[0]
-                        if show_debug_message:
-                            print(f"[CAPTCHA] Converted to node_id: {img_node_id}")
 
                         # Scroll element into view first to ensure it's rendered
                         try:
@@ -13201,8 +13132,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             width = max(quad[0], quad[2], quad[4], quad[6]) - x
                             height = max(quad[1], quad[3], quad[5], quad[7]) - y
 
-                            if show_debug_message:
-                                print(f"[CAPTCHA] IMG box: x={x}, y={y}, w={width}, h={height}")
 
                             # Get device pixel ratio
                             device_pixel_ratio = await tab.evaluate('window.devicePixelRatio')
@@ -13220,8 +13149,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 full_img_bytes = base64.b64decode(full_screenshot)
                                 full_img = Image.open(io.BytesIO(full_img_bytes))
 
-                                if show_debug_message:
-                                    print(f"[CAPTCHA] Full screenshot: {full_img.size}")
 
                                 # Crop using PIL (coordinates need to account for device pixel ratio)
                                 left = int(x * device_pixel_ratio)
@@ -13230,9 +13157,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 bottom = int((y + height) * device_pixel_ratio)
 
                                 cropped_img = full_img.crop((left, top, right, bottom))
-
-                                if show_debug_message:
-                                    print(f"[CAPTCHA] Cropped: {cropped_img.size}, crop box: ({left}, {top}, {right}, {bottom})")
 
                                 # Convert back to bytes
                                 img_buffer = io.BytesIO()
@@ -13928,6 +13852,52 @@ async def nodriver_ibon_check_sold_out(tab, config_dict):
 
     return is_sold_out
 
+
+async def nodriver_ibon_wait_for_select_elements(tab, config_dict, max_wait_time=3.0):
+    """
+    Wait for ticket quantity select elements to appear on page.
+    Prevents false sold-out detection when page hasn't fully loaded.
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        max_wait_time: Maximum wait time in seconds (default 3.0)
+
+    Returns:
+        int: Number of select elements found (0 if none found after timeout)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    wait_interval = 0.2
+    start_time = time.time()
+
+    while time.time() - start_time < max_wait_time:
+        try:
+            select_count = await tab.evaluate('''
+                (function() {
+                    let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+                    if (selects.length === 0) {
+                        selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                    }
+                    if (selects.length === 0) {
+                        selects = document.querySelectorAll('select.form-control-sm');
+                    }
+                    return selects.length;
+                })()
+            ''')
+            if select_count and select_count > 0:
+                if show_debug_message:
+                    elapsed = time.time() - start_time
+                    print(f"[IBON] Page loaded, found {select_count} select element(s) after {elapsed:.2f}s")
+                return select_count
+        except Exception:
+            pass
+        await asyncio.sleep(wait_interval)
+
+    if show_debug_message:
+        print(f"[IBON] Warning: No select elements found after {max_wait_time}s wait")
+    return 0
+
+
 async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     """
     Check if tickets are sold out on ibon ticket selection page
@@ -14008,7 +13978,10 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
                 let hasSoldOutMessage = soldOutKeywords.some(keyword => pageText.includes(keyword));
 
                 // Final determination: sold out if any method detects it
-                const isSoldOut = hasAmountSoldOut || hasPriceSoldOut || !hasValidOptions || hasSoldOutMessage;
+                // IMPORTANT: Only consider "no valid options" as sold-out when select elements exist
+                // If selectCount === 0, the page might still be loading (not sold out)
+                const noValidOptionsButSelectsExist = selectCount > 0 && !hasValidOptions;
+                const isSoldOut = hasAmountSoldOut || hasPriceSoldOut || noValidOptionsButSelectsExist || hasSoldOutMessage;
 
                 return {
                     hasAmountSoldOut: hasAmountSoldOut,
@@ -14017,7 +13990,8 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
                     selectCount: selectCount,
                     hasValidOptions: hasValidOptions,
                     hasSoldOutMessage: hasSoldOutMessage,
-                    isSoldOut: isSoldOut
+                    isSoldOut: isSoldOut,
+                    pageNotLoaded: selectCount === 0
                 };
             })()
         ''')
@@ -14025,14 +13999,16 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
         result = util.parse_nodriver_result(result)
         if isinstance(result, dict):
             is_sold_out = result.get('isSoldOut', False)
+            page_not_loaded = result.get('pageNotLoaded', False)
             if show_debug_message:
-                print(f"[IBON SOLD OUT CHECK] AMOUNT_STR sold out: {result.get('hasAmountSoldOut', False)} (count: {result.get('amountSoldOutCount', 0)})")
-                print(f"[IBON SOLD OUT CHECK] PRICE_STR sold out: {result.get('hasPriceSoldOut', False)}")
-                print(f"[IBON SOLD OUT CHECK] Select elements found: {result.get('selectCount', 0)}")
-                print(f"[IBON SOLD OUT CHECK] Has valid options: {result.get('hasValidOptions', False)}")
-                print(f"[IBON SOLD OUT CHECK] Body text has sold out message: {result.get('hasSoldOutMessage', False)}")
-                if is_sold_out:
-                    print("[IBON SOLD OUT CHECK] All tickets are sold out, page reload required")
+                select_count = result.get('selectCount', 0)
+                has_valid = result.get('hasValidOptions', False)
+                if page_not_loaded:
+                    print("[IBON] Page not fully loaded, waiting...")
+                elif is_sold_out:
+                    print("[IBON] Sold out detected, will reload")
+                else:
+                    print(f"[IBON] Tickets available ({select_count} selects, valid={has_valid})")
 
     except Exception as e:
         if show_debug_message:
@@ -15032,8 +15008,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             pass
 
                 if is_do_ibon_performance_with_ticket_number:
-                    # Step 0: Check if tickets are sold out FIRST (before OCR)
+                    # Wait for page to load before checking sold-out (prevents false detection)
                     show_debug_message = config_dict["advanced"].get("verbose", False)
+                    await nodriver_ibon_wait_for_select_elements(tab, config_dict)
+
+                    # Step 0: Check if tickets are sold out FIRST (before OCR)
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                     if is_sold_out_detected:
@@ -15158,6 +15137,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     is_do_ibon_performance_with_ticket_number = True
 
                 if is_do_ibon_performance_with_ticket_number:
+                    # Wait for page to load before checking sold-out (prevents false detection)
+                    await nodriver_ibon_wait_for_select_elements(tab, config_dict)
+
                     # Step 0: Check if tickets are sold out FIRST (before OCR)
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
