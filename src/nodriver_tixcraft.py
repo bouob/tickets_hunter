@@ -9034,17 +9034,17 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     return ticketplus_dict
 
 async def nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=800):
-    """等待 Vue.js 票區元素渲染完成（動態偵測）
+    """Wait for Vue.js ticket area elements to render (dynamic detection).
 
     Args:
         tab: NoDriver tab
-        max_wait_ms: 最大等待時間（毫秒），預設 800ms
+        max_wait_ms: Maximum wait time in milliseconds, default 800ms
 
     Returns:
-        bool: True 表示 Vue.js 已就緒，False 表示超時
+        bool: True if Vue.js is ready, False if timed out
     """
     try:
-        # 先等待頁面基本載入（reload 後 DOM 需要一點時間重建）
+        # Wait for basic page load (DOM needs time to rebuild after reload)
         await asyncio.sleep(0.15)
 
         result = await tab.evaluate(f'''
@@ -9054,19 +9054,19 @@ async def nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=800):
                     const maxWait = {max_wait_ms};
 
                     const check = () => {{
-                        // TicketPlus 票區元素選擇器（按優先順序）
+                        // TicketPlus ticket area element selectors (in priority order)
                         const selectors = [
-                            '.v-expansion-panel-header',  // 展開面板標題（最常見）
-                            '.order-content .v-btn',      // 訂單區按鈕
-                            'button.nextBtn',             // 下一步按鈕
-                            '.ticket-list button'         // 票區列表按鈕
+                            '.v-expansion-panel-header',  // Expansion panel header (most common)
+                            '.order-content .v-btn',      // Order content buttons
+                            'button.nextBtn',             // Next step button
+                            '.ticket-list button'         // Ticket list buttons
                         ];
 
                         let hasContent = false;
                         for (const selector of selectors) {{
                             const elements = document.querySelectorAll(selector);
                             if (elements.length > 0) {{
-                                // 只要有元素且含有關鍵字即可
+                                // Check if elements contain expected keywords
                                 hasContent = Array.from(elements).some(el => {{
                                     const text = el.textContent || '';
                                     return text.includes('NT') ||
@@ -9082,13 +9082,13 @@ async def nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=800):
                         if (hasContent) {{
                             resolve({{ ready: true, elapsed: Date.now() - startTime }});
                         }} else if (Date.now() - startTime < maxWait) {{
-                            setTimeout(check, 30);  // 每 30ms 檢查
+                            setTimeout(check, 30);  // Check every 30ms
                         }} else {{
                             resolve({{ ready: false, elapsed: maxWait }});
                         }}
                     }};
 
-                    // 開始檢查
+                    // Start checking
                     check();
                 }});
             }})();
@@ -9285,23 +9285,28 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             ticketplus_dict["start_time"] = time.time()
             show_debug_message = config_dict["advanced"].get("verbose", False)
 
-            # 混合方案：首次進入固定等待，刷新後動態偵測
-            if not ticketplus_dict.get("order_page_visited", False):
-                # 首次進入：固定等待確保 Vue.js 完整初始化
-                if show_debug_message:
-                    print("[VUE INIT] First visit, waiting 1.0-1.5s for Vue.js...")
-                await asyncio.sleep(random.uniform(1.0, 1.5))
+            # Unified dynamic detection: longer wait for first visit, shorter for reload
+            is_first_visit = not ticketplus_dict.get("order_page_visited", False)
+            if is_first_visit:
+                max_wait = 1200  # First visit: max 1.2s (cold start, more init needed)
+                fallback_delay = 0.3  # Fallback delay if detection times out
                 ticketplus_dict["order_page_visited"] = True
             else:
-                # 刷新後：動態偵測 Vue.js 就緒（更快）
-                if show_debug_message:
-                    print("[VUE INIT] Reload detected, using dynamic detection...")
-                is_ready = await nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=600)
-                if show_debug_message:
-                    print(f"[VUE INIT] Vue.js ready: {is_ready}")
-                # 如果偵測失敗，加入短暫 fallback 延遲
-                if not is_ready:
-                    await asyncio.sleep(0.2)
+                max_wait = 600   # Reload: max 0.6s (warm start, faster)
+                fallback_delay = 0.2  # Shorter fallback for reload
+
+            if show_debug_message:
+                visit_type = "First visit" if is_first_visit else "Reload"
+                print(f"[VUE INIT] {visit_type}, dynamic detection (max {max_wait}ms)...")
+
+            is_ready = await nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=max_wait)
+
+            if show_debug_message:
+                print(f"[VUE INIT] Vue.js ready: {is_ready}")
+
+            # Add fallback delay if detection failed (timed out)
+            if not is_ready:
+                await asyncio.sleep(fallback_delay)
 
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
