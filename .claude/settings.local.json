@@ -53,7 +53,8 @@
       "mcp__chrome-devtools__evaluate_script",
       "mcp__chrome-devtools__click",
       "mcp__chrome-devtools__wait_for",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Skill(mcpstart)"
     ],
     "deny": [],
     "ask": []

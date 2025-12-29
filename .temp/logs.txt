@@ -1,0 +1,308 @@
+https://ticketplus.com.tw/
+nodriver_ticketplus_account_sign_in
+Could not find node with given id [code: -32000]
+nodriver_ticketplus_account_sign_in
+nodriver_ticketplus_account_sign_in
+country_code +886
+Entering password...
+press enter
+https://ticketplus.com.tw/activity/215ed8c0518703991cffb6921608838a
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword: 
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword: 
+date_list_count: 2
+formated_area_list count: 0
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword: 
+date_list_count: 2
+formated_area_list count: 2
+Date selection and click successful: button_clicked
+   目標文字:                  【下午場】2026 FIFTY FIFTY | Let’s Play Tweny Party               日期2026-01-10(六)時間13:00地點                     WESTAR                     
+https://ticketplus.com.tw/order/215ed8c0518703991cffb6921608838a/61bb0601ce9562c9fa03ee4af26b3031
+[VUE INIT] First visit, waiting 1.0-1.5s for Vue.js...
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 3 - 簡化型 (Page1/Page3)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Standard style 3 button
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 3 - 簡化型 (Page1/Page3)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Standard style 3 button
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 3 - 簡化型 (Page1/Page3)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Standard style 3 button
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 3 - 簡化型 (Page1/Page3)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Standard style 3 button
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 0 - Unknown
+Layout detection details: Button found=False, Button status=禁用
+Layout detection debug: No layout detected
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 0 - Unknown
+Layout detection details: Button found=False, Button status=禁用
+Layout detection debug: No layout detected
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: ['VVIP']
+[TicketPlus] Total keyword groups: 1
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] Trying keyword #1/1: 'VVIP'
+Unified selector started - keyword: VVIP, tickets: 2
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+[TicketPlus AREA KEYWORD] Keyword #1 failed, trying next...
+[TicketPlus AREA KEYWORD] All 1 keywords failed to match
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 1 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload detected, using dynamic detection...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
