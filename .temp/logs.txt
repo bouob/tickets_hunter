@@ -2,74 +2,93 @@ try python
 https://hkt.hkticketing.com/hant/#/allEvents/detail/selectTicket?activityId=50000000864001
 [HKTICKETING] Type 02 Ticket Selection page detected
 [HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 7 attempts
+[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan","19 Jan","1月18日"
+[HKTICKETING TYPE02 DATE] Found 2 date elements after 4 attempts
 [HKTICKETING TYPE02 DATE] Found 2 dates
   [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
   [1] 2026年1月18日 (星期日) 晚上7時30分
 [HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
 [HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
+[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan', '19 Jan', '1月18日']
+[HKTICKETING TYPE02 DATE] Matched: 2026年1月18日 (星期日) 晚上7時30分
+[HKTICKETING TYPE02 DATE] Date clicked successfully
+[HKTICKETING TYPE02] Date assigned: True
+[HKTICKETING TYPE02 AREA] area_keyword:
+[HKTICKETING TYPE02 AREA] Found 3 areas
+  [0] A/標準門票 (HK$ 1080.00)
+  [1] B/標準門票 (HK$ 780.00) [暫無可售] (disabled)
+  [2] C/標準門票 (HK$ 580.00) [暫無可售] (disabled)
+[HKTICKETING TYPE02 AREA] Area clicked successfully
+[HKTICKETING TYPE02] Area assigned: True
+[HKTICKETING TYPE02 TICKET] Target ticket number: 2
+[HKTICKETING TYPE02 TICKET] Set to 1 (clicked + 1 times)
+[HKTICKETING TYPE02] Next button clicked
 [HKTICKETING] Type 02 Ticket Selection page detected
 [HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
+[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan","19 Jan","1月18日"
 [HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
 [HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
-[HKTICKETING] Type 02 Ticket Selection page detected
-[HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
-[HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
-[HKTICKETING] Type 02 Ticket Selection page detected
-[HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
-[HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
-[HKTICKETING] Type 02 Ticket Selection page detected
-[HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
-[HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
-[HKTICKETING] Type 02 Ticket Selection page detected
-[HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
-[HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月17日 (星期六) 晚上7時30分
-[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date
-[HKTICKETING TYPE02 DATE] Keyword sets: ['18 Jan,19 Jan,1月18日']
-[HKTICKETING TYPE02] Date assigned: False
-[HKTICKETING] Type 02 Ticket Selection page detected
-[HKTICKETING TYPE02] Starting Type 02 flow...
-[HKTICKETING TYPE02 DATE] date_keyword: "18 Jan,19 Jan,1月18日"
-[HKTICKETING TYPE02 DATE] Found 2 date elements after 1 attempts
-[HKTICKETING TYPE02 DATE] Found 2 dates
-  [0] 2026年1月17日 (星期六) 晚上7時30分 (selected)
-  [1] 2026年1月18日 (星期日) 晚上7時30分
+  [0] 2026年1月17日 (星期六) 晚上7時30分
+  [1] 2026年1月18日 (星期日) 晚上7時30分 (selected)
+[HKTICKETING TYPE02 DATE] Currently selected: 2026年1月18日 (星期日) 晚上7時30分
+[HKTICKETING TYPE02 DATE] Selected date matches keyword, keeping selection
+[HKTICKETING TYPE02] Date assigned: True
+[HKTICKETING TYPE02 AREA] area_keyword:
+[HKTICKETING TYPE02] Area assigned: False
+https://hkt.hkticketing.com/hant/#/login/account?loginBefore=%252FallEvents%252Fdetail%252FselectTicket%253FactivityId%253D50000000864001
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
+[HKTICKETING] Type 02 Login page detected
+[HKTICKETING TYPE02] No account/password configured, please login manually
