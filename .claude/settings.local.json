@@ -35,7 +35,8 @@
       "SlashCommand(/gsave)",
       "SlashCommand(/speckit.analyze)",
       "Skill(discord-skill)",
-      "Skill(mcpstart)"
+      "Skill(mcpstart)",
+      "Skill(ui-ux-pro-max)"
     ],
     "deny": [],
     "ask": []

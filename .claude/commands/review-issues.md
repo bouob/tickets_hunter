@@ -113,93 +113,29 @@ gh issue list --state closed --limit 100 --json number,title,body,labels,closedA
 
 ## 回應範本
 
-回應以使用者語言為主，簡潔直入重點，結尾加 `---\n*Claude Code*`
+使用 `issue-reply` skill 的標準模板回覆，確保格式一致。
 
-### 範本 1：問題已修正
-```
-**此問題已在 [版本號] 修正**
-[簡述修正內容]
-**請更新並檢查**：確認版本 >= [版本號]
-若更新後仍有問題，請開啟新 issue 並提供完整錯誤日誌。
----
-*Claude Code*
-```
+### 模板對應表
 
-### 範本 2：資訊不足
-```
-**此 issue 缺少必要資訊**
-若需協助，請開啟新 issue 並提供：問題描述、重現步驟、預期vs實際行為、基本資訊
----
-*Claude Code*
-```
+| 場景 | 模板檔案 | 變數 | 動作 |
+|------|---------|------|------|
+| 已在版本中修正 | `templates/fixed.md` | `{{version}}`, `{{summary}}` | `gh issue close` |
+| 確認修正，待發布 | `templates/pending-release.md` | 無 | `gh issue close` |
+| 請求補充資訊 | `templates/missing-info.md` | `{{fields}}` | `gh issue comment` |
+| 未補充資訊關閉 | `templates/missing-info-close.md` | `{{reason}}` | `gh issue close` |
+| 重複問題 | `templates/duplicate.md` | `{{original}}` | `gh issue close` |
 
-### 範本 3：無法重現
-```
-**無法在最新版本重現此問題，且長時間無回應**
-若問題仍存在，請開啟新 issue 並提供：版本號、錯誤日誌、重現步驟
----
-*Claude Code*
-```
+### 使用方式
 
-### 範本 4：重複問題
-```
-此問題與 #[編號] 重複，已自動關閉。請至原 issue 追蹤進度。
----
-*Claude Code*
-```
+1. 從 `.claude/skills/issue-reply/templates/` 讀取模板
+2. 將 `{{variable}}` 替換為實際值
+3. 使用 `gh issue comment` 或 `gh issue close --comment` 發送
 
-### 範本 5：版本未提供（提醒）
-```
-**請補充 Release 版本資訊**
-請提供版本號（如 v2025.11.19），可在 console 輸出或 Settings 視窗標題找到。
-**請在 3 天內回覆**，否則此 issue 將被自動關閉。
----
-*Claude Code*
-```
+### 模板原則
 
-### 範本 6：版本未補充（關閉）
-```
-**此 issue 因未補充版本資訊已自動關閉**
-若問題仍存在，請開啟新 issue 並提供：版本號、錯誤訊息、重現步驟
----
-*Claude Code*
-```
-
-### 範本 7：必填欄位未提供（提醒）
-```
-**請補充必填資訊**
-請提供：**票務平台**（TixCraft/KKTIX/iBon 等）、**目標網址**
-**請在 3 天內回覆**，否則此 issue 將被自動關閉。
----
-*Claude Code*
-```
-
-### 範本 8：必填欄位未補充（關閉）
-```
-**此 issue 因未補充必填資訊已自動關閉**
-若問題仍存在，請開啟新 issue 並提供：票務平台、目標網址、版本號、錯誤訊息、重現步驟
----
-*Claude Code*
-```
-
-### 範本 9：Owner 已確認修正，等待發布（自動關閉）
-```
-**此問題已確認並將在下個版本修正**
-請等待下次 Release 發布後更新至最新版本。
-發布時會在 [Releases](https://github.com/bouob/tickets_hunter/releases) 頁面公告。
-若更新後問題仍存在，請開啟新 issue 回報。
----
-*Claude Code*
-```
-
-### 範本 10：Owner 標記不修復（自動關閉）
-```
-**此問題已評估後決定不予修復**
-原因：[Owner 說明的原因]
-若有其他疑問，歡迎在 [Discord](https://discord.gg/GCE5s6W6dV) 討論。
----
-*Claude Code*
-```
+- 簡潔：不透露技術細節
+- 行動導向：告訴使用者下一步該做什麼
+- 統一簽名：所有模板結尾為 `---\n*Claude Code*`
 
 ## 技術參考
 

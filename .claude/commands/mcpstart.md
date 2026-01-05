@@ -102,3 +102,23 @@ python -u src/nodriver_tixcraft.py --input src/settings.json --mcp_connect 9222
 - 使用獨立 Chrome profile，登入狀態會保留
 - Chrome 136+ 不允許預設 profile 進行遠程除錯，必須使用 `--user-data-dir`
 - 端口固定為 9222，`.mcp.json` 無需每次更新
+
+---
+
+## 資源管理
+
+使用完 MCP 除錯功能後，執行 `/mcpstop` 釋放資源：
+- 關閉除錯模式的 Chrome（釋放約 200-400 MB 記憶體）
+- 端口 9222 釋放
+- MCP server 進入待機狀態（資源佔用極小，約 20-30 MB）
+
+## 相關指令
+
+| 指令 | 用途 |
+|------|------|
+| `/mcpstop` | 停止 MCP 除錯模式 |
+| `/mcp-sync` | 同步官方 MCP 更新 |
+
+## 進階文檔
+
+查閱 Chrome DevTools Skill 獲取完整工具參考：`.claude/skills/chrome-devtools-skill/`
