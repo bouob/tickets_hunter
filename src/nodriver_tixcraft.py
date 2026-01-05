@@ -24630,6 +24630,29 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
 
     date_keyword = util.format_keyword_string(date_keyword)
 
+    # Wait for date elements to be rendered (SPA page)
+    date_info = None
+    for wait_attempt in range(10):
+        try:
+            date_info = await tab.evaluate('''
+                (function() {
+                    var items = document.querySelectorAll('div.sessionList___al29_');
+                    return items.length;
+                })();
+            ''')
+            if date_info and int(date_info) > 0:
+                if show_debug_message:
+                    print(f"[HKTICKETING TYPE02 DATE] Found {date_info} date elements after {wait_attempt + 1} attempts")
+                break
+        except Exception:
+            pass
+        await asyncio.sleep(0.3)
+
+    if not date_info or int(date_info) == 0:
+        if show_debug_message:
+            print("[HKTICKETING TYPE02 DATE] No date elements found after waiting")
+        return False
+
     # Get all date items via JavaScript
     is_date_assigned = False
     try:
@@ -24661,13 +24684,44 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                 for d in dates_data:
                     print(f"  [{d['index']}] {d['text']} {'(selected)' if d['isSelected'] else ''}")
 
-            # Check if already selected
+            # Check if already selected AND matches keyword
+            selected_date_text = None
             for d in dates_data:
                 if d['isSelected']:
-                    is_date_assigned = True
+                    selected_date_text = d['text']
                     if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] Already selected: {d['text']}")
+                        print(f"[HKTICKETING TYPE02 DATE] Currently selected: {d['text']}")
                     break
+
+            # If a date is selected, check if it matches the keyword
+            if selected_date_text and len(date_keyword) > 0:
+                # Check if selected date matches keyword
+                normalized_selected = util.format_keyword_string(selected_date_text)
+                keyword_sets = util.parse_keyword_string_to_array(date_keyword)
+                if not keyword_sets:
+                    keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
+
+                for keyword_set in keyword_sets:
+                    keyword_parts = keyword_set.split(' ') if isinstance(keyword_set, str) else [str(keyword_set)]
+                    is_match = True
+                    for kw in keyword_parts:
+                        kw_formatted = util.format_keyword_string(str(kw))
+                        if kw_formatted not in normalized_selected:
+                            is_match = False
+                            break
+                    if is_match:
+                        is_date_assigned = True
+                        if show_debug_message:
+                            print(f"[HKTICKETING TYPE02 DATE] Selected date matches keyword, keeping selection")
+                        break
+
+                if not is_date_assigned and show_debug_message:
+                    print(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
+            elif selected_date_text and len(date_keyword) == 0:
+                # No keyword specified, any selected date is acceptable
+                is_date_assigned = True
+                if show_debug_message:
+                    print(f"[HKTICKETING TYPE02 DATE] No keyword specified, keeping current selection")
 
             if not is_date_assigned and len(dates_data) > 0:
                 # Get actual elements for clicking
