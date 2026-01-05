@@ -21508,6 +21508,7 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
 
     # Check if date is already assigned (for select element)
     is_date_assigned = False
+    selected_text = None
     try:
         selected_text = await tab.evaluate('''
             (function() {
@@ -21518,11 +21519,47 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
                 return null;
             })();
         ''')
-        if selected_text and len(selected_text) > 8 and '20' in selected_text:
-            is_date_assigned = True
     except Exception as exc:
         if show_debug_message:
             print("[HKTICKETING DATE] Check selected date error:", exc)
+
+    # If a date is selected, check if it matches the keyword
+    if selected_text and len(selected_text) > 8 and '20' in selected_text:
+        if show_debug_message:
+            print(f"[HKTICKETING DATE] Currently selected: {selected_text}")
+
+        if len(date_keyword) > 0:
+            # Check if selected date matches keyword
+            normalized_selected = util.format_keyword_string(selected_text)
+            keyword_sets = util.parse_keyword_string_to_array(date_keyword)
+            if not keyword_sets:
+                keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
+
+            for keyword_set in keyword_sets:
+                keyword_parts = keyword_set.split(' ') if isinstance(keyword_set, str) else [str(keyword_set)]
+                is_match = True
+                for kw in keyword_parts:
+                    kw_formatted = util.format_keyword_string(str(kw))
+                    if kw_formatted not in normalized_selected:
+                        is_match = False
+                        break
+                if is_match:
+                    is_date_assigned = True
+                    if show_debug_message:
+                        print(f"[HKTICKETING DATE] Selected date matches keyword, keeping selection")
+                    break
+
+            if not is_date_assigned and show_debug_message:
+                print(f"[HKTICKETING DATE] Selected date does not match keyword, will select target date")
+        else:
+            # No keyword specified - only keep selection if date_auto_fallback is enabled
+            if date_auto_fallback:
+                is_date_assigned = True
+                if show_debug_message:
+                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=true, keeping current selection")
+            else:
+                if show_debug_message:
+                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
     if show_debug_message:
         print("[HKTICKETING DATE] is_date_assigned:", is_date_assigned)
@@ -22765,10 +22802,14 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                 if not is_date_assigned and show_debug_message:
                     print(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
             elif selected_date_text and len(date_keyword) == 0:
-                # No keyword specified, any selected date is acceptable
-                is_date_assigned = True
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02 DATE] No keyword specified, keeping current selection")
+                # No keyword specified - only keep selection if date_auto_fallback is enabled
+                if date_auto_fallback:
+                    is_date_assigned = True
+                    if show_debug_message:
+                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=true, keeping current selection")
+                else:
+                    if show_debug_message:
+                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
             if not is_date_assigned and len(dates_data) > 0:
                 # Get actual elements for clicking
