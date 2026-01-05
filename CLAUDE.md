@@ -8,7 +8,7 @@
 
 ## 📜 憲法（行為紅線）
 
-**位置**：`.specify/memory/constitution.md` | **版本**：2.1.0
+**位置**：`.specify/memory/constitution.md` | **版本**：2.2.0
 
 憲法定義**不可違反的行為規則**，不限制思考方式。
 
@@ -24,7 +24,7 @@
 | **VI. 測試驗證** | SHOULD | 核心修改應有測試驗證 |
 | **VII. 文件同步** | SHOULD | 程式碼變更應同步文件、新 API 更新文件 |
 | **VIII. 測試紀律** | MUST/SHOULD | 新功能寫測試、測試失敗必修正、重構不破壞測試 |
-| **IX. 例外處理** | MUST | 禁止空的 except: pass，必須有日誌或處理 |
+| **IX. 例外處理** | SHOULD | 空 except: pass 需符合回退/可選/預期失敗/重試模式 |
 
 **MUST**：無例外，違反阻擋合併
 **SHOULD**：允許例外，需記錄理由

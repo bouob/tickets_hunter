@@ -3,32 +3,30 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-版本變更：2.0.0 → 2.1.0
-修改類型：MINOR（新增測試紀律與程式碼品質規則）
-修改日期：2025-12-26
+版本變更：2.1.0 → 2.2.0
+修改類型：MINOR（放寬例外處理規則）
+修改日期：2026-01-05
 
 本次更新內容：
-- 新增第 VIII 條「測試紀律」（整合測試相關規則）
-- 新增第 IX 條「例外處理」（禁止空 catch）
-- 強化第 VI 條，新增 /gsave 前測試要求
-- 將原第 VII 條「文件同步」編號調整
+- 第 IX 條「例外處理」從 MUST 降級為 SHOULD
+- 新增 4 種允許空 except: pass 的情況：
+  1. 回退模式（Fallback Pattern）
+  2. 可選操作（Non-critical）
+  3. 預期的超時/失敗
+  4. 重試模式（Retry Pattern）
+- 保留關鍵操作的錯誤處理要求
 
-新增的規則（來自使用者需求）：
-1. [SHOULD] 新功能必須進行單元測試
-2. [SHOULD] 修改後執行測試驗證
-3. [MUST] 測試失敗必須修正後才能合併
-4. [MUST] 重構不得破壞現有測試
-5. [SHOULD] /gsave 前執行完整測試
-6. [MUST] 禁止空的 except: pass（必須有日誌或處理邏輯）
+修改原因：
+- 原規則對搶票自動化程式過於嚴苛
+- 許多「失敗」是預期行為（元素未載入、超時等）
+- 速度優先，過多日誌會拖慢執行
 
 需同步更新的模板文件：
 ✅ constitution.md - 本次更新
-⬜ CLAUDE.md - 版本引用（2.1.0）、原則速記表調整
-⬜ plan-template.md - 「憲法檢查」區塊可新增測試紀律項目
-⬜ tasks-template.md - 無需更新（已包含測試任務概念）
-⬜ spec-template.md - 無需更新
+⬜ CLAUDE.md - 原則速記表第 IX 條說明調整
 
 修訂歷史：
+- v2.2.0 (2026-01-05): 放寬第 IX 條例外處理規則，從 MUST 改為 SHOULD
 - v2.1.0 (2025-12-26): 新增測試紀律（第 VIII 條）與例外處理（第 IX 條）規則
 - v2.0.0 (2025-12-23): 重新定義為行為規範，精簡原則，新增共用庫保護
 - v1.1.0 (2025-12-23): 規則層級系統與例外處理機制
@@ -254,51 +252,76 @@ print("✅ 購票成功")
 
 ---
 
-## IX. 例外處理（MUST）
+## IX. 例外處理（SHOULD）
 
-### 禁止空的 catch
+### 空的 except 使用規範
 
-**規則**：禁止使用空的 `except: pass` 或無任何處理的例外捕獲。
+**規則**：空的 `except: pass` 應符合以下任一條件，否則需加入日誌或處理邏輯。
+
+**允許的情況**：
+
+1. **回退模式（Fallback Pattern）**：失敗後有後續替代方案
+```python
+# 允許：有回退邏輯
+try:
+    date_elem = await item.query_selector('span.timezoneSuffix')
+except:
+    pass  # 繼續嘗試下一個選擇器
+
+if not date_text:  # 回退到其他選擇器
+    date_elem = await item.query_selector('.event-info > p')
+```
+
+2. **可選操作（Non-critical）**：失敗不影響主流程
+```python
+# 允許：日誌輸出失敗不影響功能
+try:
+    area_text = await target_area.inner_text
+    print(f"[AREA SELECT] Selected: {area_text}")
+except:
+    pass  # 文字擷取失敗時跳過日誌
+```
+
+3. **預期的超時/失敗**：在自動化流程中屬正常情況
+```python
+# 允許：等待元素超時是預期行為
+try:
+    await tab.wait_for('#gameList', timeout=3)
+except:
+    pass  # timeout 沒關係，繼續嘗試讀取
+```
+
+4. **重試模式（Retry Pattern）**：多種方法依序嘗試
+```python
+# 允許：點擊失敗時嘗試 JS 方法
+try:
+    await element.click()
+except:
+    try:
+        await element.evaluate('el => el.click()')
+    except:
+        pass  # 所有方法都失敗，繼續下一步
+```
 
 **禁止的模式**：
 ```python
-# 禁止：吞掉所有異常，無任何記錄
+# 禁止：關鍵操作無任何處理
 try:
-    risky_operation()
+    save_user_data(data)
 except:
-    pass
+    pass  # 資料遺失但無人知曉
 
-# 禁止：捕獲異常但不處理也不記錄
+# 禁止：隱藏真正的錯誤
 try:
-    risky_operation()
-except Exception:
-    pass
+    config = load_config()
+except:
+    pass  # 配置載入失敗會導致後續崩潰
 ```
 
-**必須的處理**：
-```python
-# 正確：記錄異常
-try:
-    risky_operation()
-except Exception as e:
-    logging.warning(f"Operation failed: {e}")
-
-# 正確：有意忽略特定異常並註明原因
-try:
-    optional_cleanup()
-except FileNotFoundError:
-    pass  # 檔案不存在時無需清理，可安全忽略
-
-# 正確：重新拋出或轉換異常
-try:
-    parse_config()
-except json.JSONDecodeError as e:
-    raise ConfigError(f"Invalid config format: {e}")
-```
-
-**例外情況**：
-- 明確註明忽略原因的特定異常（見上方範例）
-- 清理程式碼中預期可能失敗的操作（需註解說明）
+**最佳實踐**：
+- 關鍵操作（資料儲存、配置載入）必須有錯誤處理或日誌
+- 空的 `except: pass` 建議加上簡短註解說明忽略原因
+- 優先使用具體例外類型（如 `except TimeoutError`）而非裸露的 `except`
 
 ---
 
@@ -354,4 +377,4 @@ except json.JSONDecodeError as e:
 
 ---
 
-**版本**：2.1.0 | **通過日期**：2025-10-19 | **最後修訂**：2025-12-26
+**版本**：2.2.0 | **通過日期**：2025-10-19 | **最後修訂**：2026-01-05
