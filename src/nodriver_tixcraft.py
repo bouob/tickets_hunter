@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2025.12.26)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.05)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -824,11 +824,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     if await check_and_handle_pause(config_dict):
         return True, False, None
 
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     ticket_number = config_dict["ticket_number"]
 
@@ -1101,11 +1097,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
     if await check_and_handle_pause(config_dict):
         return True, False, False
 
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -1251,11 +1243,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
 
 async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div):
     """增強版驗證碼處理，包含重試機制和人類化延遲"""
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     answer_list = []
     success = False  # 初始化按鈕點擊狀態
@@ -1391,72 +1379,6 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                     print("All captcha filling attempts failed")
 
     return fail_list, is_question_popup, success
-
-async def wait_for_kktix_element(tab, selector, timeout=10, check_visible=True):
-    """等待 KKTIX 元素載入並確保可見，參考 NoDriver API 指南"""
-    try:
-        result = await tab.evaluate(f'''
-            (function() {{
-                return new Promise((resolve) => {{
-                    let retryCount = 0;
-                    const maxRetries = {timeout * 5};  // 每200ms檢查一次
-
-                    function checkElement() {{
-                        const element = document.querySelector('{selector}');
-                        if (element) {{
-                            let isVisible = true;
-
-                            // 檢查可見性（如果需要）
-                            if ({str(check_visible).lower()}) {{
-                                const rect = element.getBoundingClientRect();
-                                const style = window.getComputedStyle(element);
-                                isVisible = rect.width > 0 && rect.height > 0 &&
-                                          style.display !== 'none' &&
-                                          style.visibility !== 'hidden' &&
-                                          style.opacity !== '0';
-                            }}
-
-                            if (isVisible) {{
-                                resolve({{
-                                    success: true,
-                                    found: true,
-                                    visible: isVisible,
-                                    dimensions: element.getBoundingClientRect(),
-                                    retries: retryCount
-                                }});
-                                return;
-                            }}
-                        }}
-
-                        if (retryCount < maxRetries) {{
-                            retryCount++;
-                            setTimeout(checkElement, 200);
-                        }} else {{
-                            resolve({{
-                                success: false,
-                                error: "Timeout waiting for element",
-                                selector: '{selector}',
-                                timeout: {timeout},
-                                retries: retryCount
-                            }});
-                        }}
-                    }}
-
-                    checkElement();
-                }});
-            }})();
-        ''')
-
-        # 解析結果
-        result = util.parse_nodriver_result(result)
-        return result
-
-    except Exception as exc:
-        return {
-            'success': False,
-            'error': f'Exception in wait_for_kktix_element: {exc}',
-            'selector': selector
-        }
 
 async def debug_kktix_page_state(tab, show_debug=True):
     """收集 KKTIX 頁面狀態供除錯，參考 NoDriver API 指南"""
@@ -2198,11 +2120,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if await check_and_handle_pause(config_dict):
         return fail_list, played_sound_ticket
 
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     # 增加執行計數器，防止無限迴圈
     global kktix_dict
@@ -2314,7 +2232,6 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if not played_sound_ticket:
                     if config_dict["advanced"]["play_sound"]["ticket"]:
                         play_sound_while_ordering(config_dict)
-                    send_discord_notification(config_dict, "ticket", "KKTIX")
                 played_sound_ticket = True
 
                 # 收集除錯資訊（僅在 debug 模式下）
@@ -2940,58 +2857,6 @@ async def nodriver_kktix_confirm_order_button(tab, config_dict):
 
     return ret
 
-async def nodriver_kktix_double_check_all_text_value(tab, config_dict, ticket_number):
-    """
-    KKTIX 雙重檢查票數輸入功能
-    對應 Chrome 版本的 kktix_double_check_all_text_value()
-    確認票數輸入正確後才自動按下一步
-    """
-    show_debug_message = util.get_debug_mode(config_dict)
-    is_do_press_next_button = False
-
-    try:
-        # 檢查所有票數輸入框的值 - 使用與填入相同的選擇器
-        ticket_values = await tab.evaluate('''
-            () => {
-                const inputs = document.querySelectorAll('div.display-table-row input');
-                const values = [];
-                inputs.forEach(input => {
-                    const value = input.value ? input.value.trim() : '';
-                    if (value.length > 0 && value !== '0') {
-                        values.push(value);
-                    }
-                });
-                return values;
-            }
-        ''')
-
-        if ticket_values:
-            target_ticket_str = str(ticket_number)
-            for current_value in ticket_values:
-                if current_value == target_ticket_str:
-                    if show_debug_message:
-                        print(f"KKTIX ticket count check passed: found target ticket count {target_ticket_str}")
-                    is_do_press_next_button = True
-                    break
-
-            if show_debug_message and not is_do_press_next_button:
-                print(f"KKTIX ticket count check warning: target {target_ticket_str}, actual values {ticket_values}")
-        elif show_debug_message:
-            # 加入更詳細的除錯資訊，確保數量正確處理
-            try:
-                input_count_raw = await tab.evaluate('() => document.querySelectorAll("div.display-table-row input").length')
-                input_count = util.parse_nodriver_result(input_count_raw)
-                input_count = input_count if isinstance(input_count, int) else 0
-                print(f"KKTIX ticket count check warning: no valid ticket values found (found {input_count} input fields)")
-            except Exception as exc:
-                print(f"KKTIX ticket count check warning: unable to get input field count ({exc})")
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"KKTIX 票數檢查失敗: {exc}")
-
-    return is_do_press_next_button
-
 
 async def nodriver_tixcraft_home_close_window(tab):
     accept_all_cookies_btn = None
@@ -3510,7 +3375,6 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
             continue
 
         # Check exclude keywords
-        import util
         if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
             continue
 
@@ -3739,7 +3603,6 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
     for row in area_list:
         try:
             row_html = await row.get_html()
-            import util
             row_text = util.remove_html_tags(row_html)
         except:
             break
@@ -3778,7 +3641,6 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
     for row in formated_area_list:
         try:
             row_html = await row.get_html()
-            import util
             row_text = util.remove_html_tags(row_html)
             formated_area_list_text.append(row_text)
         except:
@@ -3879,7 +3741,6 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
                 print(f"[TICKETMASTER DATE SELECT] No date selected, will reload page and retry")
 
     # Select target
-    import util
     if formated_area_list is None or len(formated_area_list) == 0:
         target_area = None
     elif matched_blocks is None or len(matched_blocks) == 0:
@@ -3981,7 +3842,6 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
 
     # Select target
     auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "from top to bottom")
-    import util
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
     if target_area:
@@ -4108,7 +3968,6 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
             ''')
             # Parse NoDriver RemoteObject format if needed
             if isinstance(current_value, list):
-                import util
                 current_value = util.parse_nodriver_result(current_value)
         except:
             pass
@@ -4159,7 +4018,6 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         ''')
 
         # Parse NoDriver RemoteObject format
-        import util
         result = util.parse_nodriver_result(result)
 
         if result and result.get('success'):
@@ -4624,11 +4482,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
 
 
 async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     answer_list = []
 
@@ -5728,11 +5582,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         return False
 
     global tixcraft_dict
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     # 檢查是否已經設定過票券數量（方案 B：狀態標記）
     current_url, _ = await nodriver_current_url(tab)
@@ -5949,8 +5799,7 @@ async def nodriver_tixcraft_reload_captcha(tab, domain_name):
 
 async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
     """取得驗證碼圖片並進行 OCR 識別"""
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+    show_debug_message = False
 
     ocr_answer = None
     if not ocr is None:
@@ -6008,11 +5857,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                                      previous_answer, Captcha_Browser,
                                      ocr_captcha_image_source, domain_name):
     """OCR 自動識別主邏輯"""
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
-
-    if util.get_debug_mode(config_dict):
-        show_debug_message = True
+    show_debug_message = util.get_debug_mode(config_dict)
 
     is_need_redo_ocr = False
     is_form_submitted = False
@@ -6402,7 +6247,6 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         if not tixcraft_dict["played_sound_ticket"]:
             if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            send_discord_notification(config_dict, "ticket", "TixCraft")
         tixcraft_dict["played_sound_ticket"] = True
     else:
         tixcraft_dict["played_sound_ticket"] = False
@@ -7670,759 +7514,9 @@ async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
 
     return False
 
-async def nodriver_ticketplus_order_expansion_auto_select(tab, config_dict, area_keyword_item, current_layout_style):
-    """TicketPlus 座位區域自動選擇功能 - 重構版使用純 JavaScript"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-    auto_select_mode = config_dict["area_auto_select"]["mode"]
-    area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
-    ticket_number = config_dict["ticket_number"]
 
-    if show_debug_message:
-        print("current_layout_style:", current_layout_style)
-        print("area_keyword_item:", area_keyword_item)
-        print(f"target_ticket_number: {ticket_number}")
-
-    is_need_refresh = False
-    is_price_panel_expanded = False
-
-    try:
-        # 檢查暫停狀態
-        if await check_and_handle_pause(config_dict):
-            is_need_refresh = False
-            is_price_assign_by_bot = False
-            return is_need_refresh, is_price_assign_by_bot
-
-        # 等待頁面元素載入完成 (關鍵修復)
-        if show_debug_message:
-            print("Waiting for page elements to load...")
-
-        # 等待頁面元素載入（符合用戶要求：0.8-1.5 秒等待時間，包含暫停檢查）
-        if await sleep_with_pause_check(tab, 1.0, config_dict):
-            if show_debug_message:
-                print("Paused during page element loading")
-            return False, False
-
-        # 使用純 JavaScript 處理展開面板選擇和票數設定（包含暫停檢查）
-        result = await evaluate_with_pause_check(tab, f'''
-            (function() {{
-                try {{
-                const ticketAreas = [];
-                const areaAutoFallback = {'true' if area_auto_fallback else 'false'};
-                console.log('=== TicketPlus 票種區域檢測開始 ===');
-                console.log('版面樣式: {current_layout_style}, fallback:', areaAutoFallback);
-
-                let elements = [];
-                let isExpansionPanel = false;
-
-                // 嘗試找 expansion panel 版面 (增強版偵測，加入重試機制)
-                let expansionPanels = document.querySelectorAll('.v-expansion-panels.seats-area .v-expansion-panel');
-
-                // 如果第一次沒找到，嘗試其他選擇器
-                if (expansionPanels.length === 0) {{
-                    expansionPanels = document.querySelectorAll('.v-expansion-panels .v-expansion-panel');
-                    console.log('使用備用選擇器找到 expansion panels 數量:', expansionPanels.length);
-                }}
-
-                if (expansionPanels.length > 0) {{
-                    console.log('[SUCCESS] 找到 expansion panels 數量:', expansionPanels.length);
-                    elements = Array.from(expansionPanels);
-                    isExpansionPanel = true;
-                }} else {{
-                    // 使用簡單 row 版面 - 增強版多選擇器策略
-                    let ticketRows = [];
-
-                    // 策略1: Page1/Page3 標準 row 選擇器
-                    ticketRows = document.querySelectorAll('.row.py-1.py-md-4.rwd-margin.no-gutters.text-title');
-                    console.log('[STRATEGY 1] Standard row selector found:', ticketRows.length);
-
-                    // 策略2: 更寬鬆的 row 選擇器
-                    if (ticketRows.length === 0) {{
-                        ticketRows = document.querySelectorAll('.rwd-margin .row.py-1.py-md-4');
-                        console.log('[STRATEGY 2] Relaxed row selector found:', ticketRows.length);
-                    }}
-
-                    // 策略3: 通過 count-button 反向查找父級 row
-                    if (ticketRows.length === 0) {{
-                        const countButtons = document.querySelectorAll('.count-button');
-                        console.log('[STRATEGY 3] Count buttons found:', countButtons.length);
-                        if (countButtons.length > 0) {{
-                            const rows = new Set();
-                            countButtons.forEach(cb => {{
-                                const row = cb.closest('.row');
-                                if (row) rows.add(row);
-                            }});
-                            ticketRows = Array.from(rows);
-                            console.log('[STRATEGY 3] Rows found via count-button:', ticketRows.length);
-                        }}
-                    }}
-
-                    // 策略4: 通用 row 類別選擇器
-                    if (ticketRows.length === 0) {{
-                        ticketRows = document.querySelectorAll('.row[class*="py-"]');
-                        console.log('[STRATEGY 4] Generic row selector found:', ticketRows.length);
-                    }}
-
-                    // 策略5: 包含價格的容器
-                    if (ticketRows.length === 0) {{
-                        ticketRows = document.querySelectorAll('[class*="row"]:has(.font-weight-bold)');
-                        console.log('[STRATEGY 5] Price container selector found:', ticketRows.length);
-                    }}
-
-                    elements = Array.from(ticketRows);
-                    isExpansionPanel = false;
-                    console.log('[INFO] 最終使用 row 版面，元素數量:', elements.length);
-                }}
-
-                if (elements.length > 0) {{
-                    for (let i = 0; i < elements.length; i++) {{
-                        const element = elements[i];
-                        let text = '';
-                        let areaName = '';
-                        let priceMatch = null;
-
-                        if (isExpansionPanel) {{
-                            // expansion panel 版面 (增強版解析)
-                            const header = element.querySelector('.v-expansion-panel-header');
-                            if (header) {{
-                                text = header.textContent?.trim() || '';
-                                priceMatch = text.match(/NT\\.?([\\d,]+)/);
-
-                                // 優先從第二個 d-flex 取得區域名稱（避開 area-color）
-                                let areaDiv = header.querySelector('.col.col-8 .d-flex.align-center:last-child') ||
-                                            header.querySelector('.d-flex.align-center:not(:has(.area-color))') ||
-                                            header.querySelector('.d-flex.align-center');
-
-                                if (areaDiv) {{
-                                    const textContent = areaDiv.textContent?.trim() || '';
-                                    // 移除狀態標籤和剩餘數量
-                                    const nameMatch = textContent.match(/^\\s*([^剩餘熱賣<]+?)(?:\\s*剩餘|\\s*熱賣|\\s*<|$)/);
-                                    areaName = nameMatch ? nameMatch[1].trim() : textContent.split('\\n')[0].trim();
-                                    console.log('區域名稱解析: "' + textContent + '" -> "' + areaName + '"');
-                                }}
-                            }}
-                        }} else {{
-                            // 簡單 row 版面
-                            text = element.textContent?.trim() || '';
-
-                            // 從第一個 col 取得票種名稱
-                            const nameDiv = element.querySelector('.font-weight-medium');
-                            if (nameDiv) {{
-                                areaName = nameDiv.textContent?.trim() || '';
-                                // 移除狀態標籤（如 "熱賣中"）
-                                areaName = areaName.replace(/\\s*(熱賣中|已售完|剩餘.*?)\\s*$/, '').trim();
-                            }}
-
-                            // 從價格 col 取得價格 (修復跨行文本問題)
-                            const priceDiv = element.querySelector('.font-weight-bold');
-                            if (priceDiv) {{
-                                const priceText = priceDiv.textContent?.replace(/\\s+/g, ' ').trim() || '';
-                                priceMatch = priceText.match(/NT\\.?\\s*([\\d,]+)/);
-                                console.log('價格文本解析: "' + priceDiv.textContent + '" -> "' + priceText + '"');
-                            }}
-                        }}
-
-                        console.log('Element ' + (i + 1) + ': 區域="' + areaName + '", 價格匹配=' + !!priceMatch + ', 版面=' + (isExpansionPanel ? 'expansion' : 'row'));
-
-                        // 檢查是否售完
-                        const isSoldOut = element.querySelector('.soldout') !== null ||
-                                        text.includes('剩餘 0') ||
-                                        text.includes('已售完') ||
-                                        element.querySelector('button[disabled]');
-
-                        console.log('  - 售完狀態: ' + isSoldOut);
-
-                        // 檢查排除關鍵字 (修復字串轉義問題)
-                        const excludeKeywords = {json.dumps(config_dict.get('keyword_exclude', ''))};
-                        const isExcluded = excludeKeywords && excludeKeywords.split(',').some(keyword => {{
-                            const cleanKeyword = keyword.trim().replace(/"/g, '');
-                            return cleanKeyword && (text.includes(cleanKeyword) || areaName.includes(cleanKeyword));
-                        }});
-                        console.log('  - 排除檢查: ' + isExcluded + ' (關鍵字: ' + excludeKeywords + ')');
-
-                        // 檢查是否有票數控制項 (修復 expansion panel 邏輯)
-                        const hasCounter = isExpansionPanel ? true : element.querySelector('.count-button') !== null;
-                        console.log('  - 有控制項: ' + hasCounter + ' (expansion panel: ' + isExpansionPanel + ')');
-                        console.log('  - 價格匹配: ' + !!priceMatch + ' (價格: ' + (priceMatch ? priceMatch[1] : 'null') + ')');
-                        console.log('  - 區域名稱: "' + areaName + '" (長度: ' + areaName.length + ')');
-                        console.log('  - 包含票區一覽: ' + areaName.includes('票區一覽'));
-
-                        // 驗證條件
-                        const hasPrice = priceMatch !== null;
-                        const hasValidName = areaName && areaName.length > 0;
-                        const notOverview = !areaName.includes('票區一覽');
-                        const notSoldOut = !isSoldOut;
-                        const notExcluded = !isExcluded;
-
-                        console.log('  - 驗證: 價格=' + hasPrice + ', 名稱=' + hasValidName + ', 非一覽=' + notOverview + ', 未售完=' + notSoldOut + ', 非排除=' + notExcluded + ', 有控制項=' + hasCounter);
-
-                        if (hasPrice && hasValidName && notOverview && notSoldOut && notExcluded && hasCounter) {{
-                            ticketAreas.push({{
-                                element: element,
-                                text: text,
-                                areaName: areaName,
-                                price: priceMatch[1],
-                                hasCounter: hasCounter,
-                                isExpansionPanel: isExpansionPanel
-                            }});
-                            console.log('  [SUCCESS] 有效票種區域已加入');
-                        }} else {{
-                            console.log('  [SKIP] 跳過此元素');
-                        }}
-                    }}
-                }}
-
-                console.log('總共找到有效票種區域:', ticketAreas.length);
-
-                if (ticketAreas.length === 0) {{
-                    console.error('[ERROR] 沒有找到可用的票種區域');
-                    console.log('總元素數量:', elements.length);
-                    console.log('Expansion panels:', expansionPanels.length);
-                    return {{
-                        success: false,
-                        error: "沒有找到可用的票種區域 (已等待頁面載入)",
-                        needRefresh: true,
-                        panelExpanded: false,
-                        debug: {{
-                            totalElements: elements.length,
-                            expansionPanelsFound: expansionPanels.length,
-                            isExpansionPanelMode: isExpansionPanel
-                        }}
-                    }};
-                }}
-
-                // 關鍵字匹配邏輯 (修復優先順序)
-                let selectedArea = null;
-                const areaKeyword = "{area_keyword_item}".trim();
-
-                // 優先處理使用者關鍵字 (修復核心邏輯)
-                if (areaKeyword && areaKeyword.length > 0) {{
-                    console.log('[SEARCH] 優先使用關鍵字搜尋:', areaKeyword);
-                    const keywordArray = areaKeyword.split(' ').map(k => k.trim()).filter(k => k);
-
-                    // 嘗試完全匹配
-                    for (const area of ticketAreas) {{
-                        let isMatch = true;
-                        for (const keyword of keywordArray) {{
-                            if (!area.text.includes(keyword) && !area.areaName.includes(keyword)) {{
-                                isMatch = false;
-                                break;
-                            }}
-                        }}
-                        if (isMatch) {{
-                            selectedArea = area;
-                            console.log('[SUCCESS] 關鍵字完全匹配:', area.areaName);
-                            break;
-                        }}
-                    }}
-
-                    // 如果完全匹配失敗，嘗試部分匹配
-                    if (!selectedArea) {{
-                        for (const keyword of keywordArray) {{
-                            for (const area of ticketAreas) {{
-                                if (area.text.includes(keyword) || area.areaName.includes(keyword)) {{
-                                    selectedArea = area;
-                                    console.log('[WARNING] 關鍵字部分匹配:', area.areaName, '匹配詞:', keyword);
-                                    break;
-                                }}
-                            }}
-                            if (selectedArea) break;
-                        }}
-                    }}
-                }}
-
-                // T022-T024: Conditional fallback based on area_auto_fallback switch
-                if (!selectedArea && areaKeyword && areaKeyword.length > 0) {{
-                    if (areaAutoFallback) {{
-                        // T022: Fallback enabled
-                        console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                        if (ticketAreas.length > 0) {{
-                            const mode = "{auto_select_mode}";
-                            if (mode === "from bottom to top") {{
-                                selectedArea = ticketAreas[ticketAreas.length - 1];
-                                console.log('選擇最後一個:', selectedArea.areaName);
-                            }} else if (mode === "random") {{
-                                const randomIndex = Math.floor(Math.random() * ticketAreas.length);
-                                selectedArea = ticketAreas[randomIndex];
-                                console.log('隨機選擇:', selectedArea.areaName);
-                            }} else {{
-                                selectedArea = ticketAreas[0];
-                                console.log('選擇第一個:', selectedArea.areaName);
-                            }}
-                        }}
-                    }} else {{
-                        // T023: Fallback disabled - strict mode
-                        console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                        console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                        return {{
-                            success: false,
-                            error: 'No keyword matches and fallback is disabled',
-                            strict_mode: true
-                        }};
-                    }}
-                }} else if (!selectedArea && ticketAreas.length > 0) {{
-                    // No keyword specified, select based on mode
-                    console.log('無關鍵字，使用自動選擇模式:', "{auto_select_mode}");
-                    const mode = "{auto_select_mode}";
-                    if (mode === "from bottom to top") {{
-                        selectedArea = ticketAreas[ticketAreas.length - 1];
-                        console.log('選擇最後一個:', selectedArea.areaName);
-                    }} else if (mode === "random") {{
-                        const randomIndex = Math.floor(Math.random() * ticketAreas.length);
-                        selectedArea = ticketAreas[randomIndex];
-                        console.log('隨機選擇:', selectedArea.areaName);
-                    }} else {{
-                        selectedArea = ticketAreas[0];
-                        console.log('選擇第一個:', selectedArea.areaName);
-                    }}
-                }}
-
-                if (!selectedArea) {{
-                    return {{
-                        success: false,
-                        error: "找不到符合條件的票種區域",
-                        needRefresh: true,
-                        panelExpanded: false,
-                        foundAreas: ticketAreas.length,
-                        keywords: areaKeyword ? areaKeyword.split(' ') : []
-                    }};
-                }}
-
-                console.log('最終選中區域:', selectedArea.areaName);
-
-                // 處理展開面板或直接選擇
-                const area = selectedArea.element;
-                let ticketSet = false;
-
-                if (selectedArea.isExpansionPanel) {{
-                    // expansion panel 版面：需要先展開
-                    const header = area.querySelector('.v-expansion-panel-header');
-                    if (header) {{
-                        console.log('開始展開票種區域: ' + selectedArea.areaName);
-
-                        // 1. 先點擊 header 展開面板
-                        header.click();
-
-                        // 2. 設置選中狀態（修復 seats-area is-select 問題）
-                        const seatsArea = area.closest('.seats-area') || area.parentElement;
-                        if (seatsArea) {{
-                            // 移除其他選中狀態
-                            document.querySelectorAll('.seats-area.is-select').forEach(el => {{
-                                el.classList.remove('is-select');
-                            }});
-
-                            // 設置當前選中
-                            seatsArea.classList.add('is-select');
-                            console.log('已設置選中狀態: seats-area is-select');
-
-                            // 觸發 Vue 事件確保狀態同步
-                            seatsArea.dispatchEvent(new Event('click', {{bubbles: true}}));
-                        }}
-
-                        console.log('[SUCCESS] Panel 已展開，返回等待動畫完成');
-                        return {{
-                            success: true,
-                            needTicketSetting: true,
-                            areaName: selectedArea.areaName,
-                            isExpansionPanel: true
-                        }};
-                    }}
-                }} else {{
-                    // 簡單 row 版面：直接設定票數
-                    console.log('簡單版面，直接設定票數: ' + selectedArea.areaName);
-                    const countButtons = area.querySelectorAll('.count-button');
-                    const ticketSet = setTicketCount(countButtons, {ticket_number});
-                    return {{
-                        success: true,
-                        needTicketSetting: false,
-                        areaName: selectedArea.areaName,
-                        ticketSet: ticketSet,
-                        isExpansionPanel: false
-                    }};
-                }}
-
-                // 票數設定輔助函數 (改為同步)
-                function setTicketCount(countButtons, targetCount) {{
-                    for (const countButton of countButtons) {{
-                        // 多種選擇器策略
-                        const countDiv = countButton.querySelector('div:not(.v-btn__content):not(.v-btn)') ||
-                                       countButton.querySelector('div') ||
-                                       countButton.querySelector('input[readonly]');
-
-                        const plusButton = countButton.querySelector('button[class*="plus"]') ||
-                                         countButton.querySelector('button .mdi-plus') ||
-                                         countButton.querySelector('button:not([disabled]):last-child');
-
-                        if (countDiv && plusButton && !plusButton.disabled) {{
-                            let currentCount = 0;
-                            const countText = countDiv.textContent?.trim() || countDiv.value || '0';
-                            if (/^\\d+$/.test(countText)) {{
-                                currentCount = parseInt(countText);
-                            }}
-
-                            console.log('找到票數控制項，當前數量:', currentCount, '目標數量:', targetCount);
-
-                            if (currentCount < targetCount) {{
-                                const clicksNeeded = Math.min(targetCount - currentCount, 10);
-                                console.log('需要點擊加號', clicksNeeded, '次');
-
-                                for (let i = 0; i < clicksNeeded; i++) {{
-                                    if (!plusButton.disabled) {{
-                                        plusButton.click();
-                                        // Remove await, use quick click instead
-                                    }}
-                                }}
-                                console.log('Ticket number set successfully');
-                                return true;
-                            }} else {{
-                                console.log('Ticket number already sufficient');
-                                return true;
-                            }}
-                        }}
-                    }}
-                    console.log('Warning: No valid ticket number control found');
-                    return false;
-                }}
-
-                // This code should not be reached, as there are returns above
-                return {{
-                    success: false,
-                    error: "Unexpected execution path",
-                    needRefresh: true,
-                    panelExpanded: false
-                }};
-                }} catch (error) {{
-                    console.error('JavaScript 執行錯誤:', error);
-                    return {{
-                        success: false,
-                        error: 'JavaScript 執行錯誤: ' + error.message,
-                        needRefresh: true,
-                        panelExpanded: false
-                    }};
-                }}
-            }})();
-        ''')
-
-        # 檢查是否因暫停而中斷
-        if result is None:
-            if show_debug_message:
-                print("JavaScript execution interrupted due to pause")
-            return False, False
-
-        # 處理 JavaScript 執行結果
-        parsed_result = util.parse_nodriver_result(result)
-
-        if show_debug_message:
-            print(f"JavaScript 執行原始結果類型: {type(result)}")
-            print(f"解析後結果類型: {type(parsed_result)}")
-
-        if isinstance(parsed_result, dict):
-            if parsed_result.get('success'):
-                is_price_panel_expanded = parsed_result.get('panelExpanded', True)
-                is_need_refresh = parsed_result.get('needRefresh', False)
-
-                # 檢查是否需要第二步票數設定
-                if parsed_result.get('needTicketSetting', False):
-                    if show_debug_message:
-                        area_name = parsed_result.get('areaName', '未知')
-                        print(f"Successfully expanded area: {area_name}")
-                        print("Waiting for animation to complete...")
-
-                    # 等待展開動畫完成（包含暫停檢查）
-                    if await asyncio_sleep_with_pause_check(0.5, config_dict):
-                        if show_debug_message:
-                            print("Paused while waiting for animation")
-                        return False, False
-
-                    # 第二步：設定票數
-                    ticket_result = await _set_expansion_panel_tickets(tab, ticket_number, show_debug_message)
-                    if ticket_result:
-                        is_price_panel_expanded = True
-                        is_need_refresh = False
-                        if show_debug_message:
-                            print("Ticket count setting completed")
-                    else:
-                        is_need_refresh = True
-                        if show_debug_message:
-                            print("Ticket count setting failed")
-                else:
-                    # 簡單版面，已經完成票數設定
-                    if show_debug_message:
-                        area_name = parsed_result.get('areaName', '未知')
-                        ticket_set = parsed_result.get('ticketSet', False)
-                        print(f"Successfully selected area: {area_name}")
-                        print(f"Ticket count setting: {'completed' if ticket_set else 'failed'}")
-            else:
-                is_need_refresh = parsed_result.get('needRefresh', True)
-                error_msg = parsed_result.get('error', '未知錯誤')
-                if show_debug_message:
-                    print(f"Selection failed: {error_msg}")
-                    if 'foundAreas' in parsed_result:
-                        print(f"找到 {parsed_result['foundAreas']} 個區域")
-                    if 'debug' in parsed_result:
-                        debug_info = parsed_result['debug']
-                        print(f"Debug: Total elements={debug_info.get('totalElements', 0)}, Expansion panels={debug_info.get('expansionPanelsFound', 0)}, Mode={debug_info.get('isExpansionPanelMode', False)}")
-        else:
-            is_need_refresh = True
-            if show_debug_message:
-                print(f"[ERROR] JavaScript 執行結果格式錯誤: {parsed_result}")
-                print(f"原始結果: {result}")
-
-    except Exception as exc:
-        is_need_refresh = True
-        if show_debug_message:
-            print(f"[ERROR] 展開面板選擇失敗: {exc}")
-
-    return is_need_refresh, is_price_panel_expanded
-
-async def _set_expansion_panel_tickets(tab, ticket_number, show_debug_message):
-    """設定展開後的 expansion panel 票數"""
-    try:
-        result = await tab.evaluate(f'''
-            (function() {{
-                try {{
-                    // 尋找展開後的票數控制項
-                    const expandedContent = document.querySelector('.v-expansion-panel-content:not([style*="display: none"])');
-                    if (!expandedContent) {{
-                        return {{ success: false, error: "未找到展開的 panel 內容" }};
-                    }}
-
-                    const countButtons = expandedContent.querySelectorAll('.count-button');
-                    if (countButtons.length === 0) {{
-                        return {{ success: false, error: "未找到票數控制項" }};
-                    }}
-
-                    // 使用與原有相同的票數設定邏輯
-                    for (const countButton of countButtons) {{
-                        const countDiv = countButton.querySelector('div:not(.v-btn__content):not(.v-btn)') ||
-                                       countButton.querySelector('div') ||
-                                       countButton.querySelector('input[readonly]');
-
-                        const plusButton = countButton.querySelector('button[class*="plus"]') ||
-                                         countButton.querySelector('button .mdi-plus') ||
-                                         countButton.querySelector('button:not([disabled]):last-child');
-
-                        if (countDiv && plusButton && !plusButton.disabled) {{
-                            let currentCount = 0;
-                            const countText = countDiv.textContent?.trim() || countDiv.value || '0';
-                            if (/^\\d+$/.test(countText)) {{
-                                currentCount = parseInt(countText);
-                            }}
-
-                            console.log('找到票數控制項，當前數量:', currentCount, '目標數量:', {ticket_number});
-
-                            if (currentCount < {ticket_number}) {{
-                                const clicksNeeded = Math.min({ticket_number} - currentCount, 10);
-                                console.log('需要點擊加號', clicksNeeded, '次');
-
-                                for (let i = 0; i < clicksNeeded; i++) {{
-                                    if (!plusButton.disabled) {{
-                                        plusButton.click();
-                                    }}
-                                }}
-                                console.log('Ticket number set successfully');
-                                return {{ success: true }};
-                            }} else {{
-                                console.log('Ticket number already sufficient');
-                                return {{ success: true }};
-                            }}
-                        }}
-                    }}
-                    return {{ success: false, error: "No valid ticket number control found" }};
-                }} catch (error) {{
-                    console.error('Ticket number setting error:', error);
-                    return {{ success: false, error: 'JavaScript execution error: ' + error.message }};
-                }}
-            }})();
-        ''')
-
-        parsed_result = util.parse_nodriver_result(result)
-        if show_debug_message:
-            print(f"Ticket count assignment result: {parsed_result}")
-
-        return isinstance(parsed_result, dict) and parsed_result.get('success', False)
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] Ticket count assignment failed: {exc}")
-        return False
-
-async def nodriver_ticketplus_assign_ticket_number(tab, target_area, config_dict):
-    """TicketPlus ticket quantity assignment - refactored version supporting two layouts"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    # Check pause state
-    if await check_and_handle_pause(config_dict):
-        return False
-
-    target_ticket_number = config_dict["ticket_number"]
-
-    if show_debug_message:
-        print(f"=== Ticket assignment START (target count: {target_ticket_number}) ===")
-
-    try:
-        # 使用純 JavaScript 處理票數選擇，支援兩種佈局
-        result = await tab.evaluate(f'''
-            (function() {{
-                const targetNumber = {target_ticket_number};
-
-                try {{
-                    // 多種選擇器策略，支援不同佈局
-                    const selectors = [
-                        'div.count-button > div',           // 標準選擇器
-                        '.count-button div:not(.v-btn__content)',  // 排除按鈕內容的 div
-                        '.row.rwd-margin .count-button div'  // 更具體的選擇器
-                    ];
-
-                    let countDiv = null;
-                    let plusButton = null;
-
-                    // 找到有效的計數器和按鈕
-                    for (let selector of selectors) {{
-                        const divs = document.querySelectorAll(selector);
-                        for (let div of divs) {{
-                            const parentCountButton = div.closest('.count-button');
-                            if (parentCountButton) {{
-                                const buttons = parentCountButton.querySelectorAll('button');
-                                const plus = Array.from(buttons).find(btn => {{
-                                    const icon = btn.querySelector('i.mdi-plus, .mdi-plus, [class*="plus"]');
-                                    return icon && !btn.disabled;
-                                }});
-
-                                if (plus) {{
-                                    countDiv = div;
-                                    plusButton = plus;
-                                    break;
-                                }}
-                            }}
-                        }}
-                        if (countDiv && plusButton) break;
-                    }}
-
-                    if (!countDiv || !plusButton) {{
-                        return {{
-                            success: false,
-                            error: "找不到計數器或加號按鈕",
-                            found_div: !!countDiv,
-                            found_button: !!plusButton
-                        }};
-                    }}
-
-                    // 取得目前數量
-                    let currentCount = 0;
-                    const countText = countDiv.textContent?.trim() || '0';
-                    if (/^\\d+$/.test(countText)) {{
-                        currentCount = parseInt(countText);
-                    }}
-
-                    if (currentCount >= targetNumber) {{
-                        return {{
-                            success: true,
-                            message: "數量已足夠",
-                            currentCount: currentCount,
-                            targetCount: targetNumber,
-                            clickCount: 0
-                        }};
-                    }}
-
-                    // 計算需要點擊的次數
-                    const needClicks = targetNumber - currentCount;
-                    let actualClicks = 0;
-
-                    // 點擊加號按鈕
-                    for (let i = 0; i < needClicks && i < 10; i++) {{
-                        if (plusButton.disabled) {{
-                            break;
-                        }}
-
-                        plusButton.click();
-                        actualClicks++;
-
-                        // 等待 UI 更新
-                        const maxWait = 50; // 最多等待 50 * 10ms = 500ms
-                        let waitCount = 0;
-                        let newCount = currentCount;
-
-                        while (waitCount < maxWait) {{
-                            const newText = countDiv.textContent?.trim() || '0';
-                            if (/^\\d+$/.test(newText)) {{
-                                newCount = parseInt(newText);
-                                if (newCount > currentCount + i) {{
-                                    break;
-                                }}
-                            }}
-                            waitCount++;
-                            // 同步等待 10ms
-                            const startTime = Date.now();
-                            while (Date.now() - startTime < 10) {{ /* 忙等待 */ }}
-                        }}
-
-                        // 檢查是否達到目標
-                        if (newCount >= targetNumber) {{
-                            break;
-                        }}
-                    }}
-
-                    // 最終檢查
-                    const finalText = countDiv.textContent?.trim() || '0';
-                    const finalCount = /^\\d+$/.test(finalText) ? parseInt(finalText) : 0;
-
-                    return {{
-                        success: finalCount > currentCount,
-                        currentCount: currentCount,
-                        finalCount: finalCount,
-                        targetCount: targetNumber,
-                        clickCount: actualClicks,
-                        message: finalCount >= targetNumber ? "達到目標數量" : "部分完成"
-                    }};
-
-                }} catch (error) {{
-                    return {{
-                        success: false,
-                        error: "JavaScript執行錯誤: " + error.message
-                    }};
-                }}
-            }})();
-        ''')
-
-        # 使用統一解析函數處理返回值
-        result = util.parse_nodriver_result(result)
-
-        # 處理結果
-        success = False
-        if isinstance(result, dict):
-            success = result.get('success', False)
-            if show_debug_message:
-                if success:
-                    current = result.get('currentCount', 0)
-                    final = result.get('finalCount', 0)
-                    clicks = result.get('clickCount', 0)
-                    message = result.get('message', '')
-                    print(f"[SUCCESS] Ticket count assigned: {current} -> {final} (clicked {clicks} times) - {message}")
-                else:
-                    error = result.get('error', 'Unknown error')
-                    print(f"[ERROR] Ticket count assignment failed: {error}")
-                    # Show debug info
-                    if 'found_div' in result:
-                        print(f"  Counter found: {result.get('found_div')}")
-                    if 'found_button' in result:
-                        print(f"  Button found: {result.get('found_button')}")
-        else:
-            if show_debug_message:
-                print(f"[ERROR] Ticket count assignment failed: Invalid result format - {result}")
-
-        if show_debug_message:
-            print(f"=== Ticket assignment END (result: {'Success' if success else 'Failed'}) ===")
-
-        # Check pause after assignment
-        if await check_and_handle_pause(config_dict):
-            return False
-
-        return success
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] Ticket assignment exception: {exc}")
-        return False
+# NOTE: nodriver_ticketplus_order_expansion_auto_select and _set_expansion_panel_tickets
+# removed - functionality merged into nodriver_ticketplus_unified_select (line 6887)
 
 async def nodriver_ticketplus_ticket_agree(tab, config_dict):
     """TicketPlus 同意條款勾選功能"""
@@ -8672,125 +7766,6 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
             print(f"Queue status check error: {exc}")
         return False
 
-async def nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict):
-    """自動重載即將開賣的頁面（雙重檢查：API pending + 按鈕 disabled）"""
-    is_reloading = False
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    try:
-        # 檢查 1: API pending 狀態 (暫時註解，NoDriver 不支援 async 函數返回值)
-        # TODO: 未來如果 NoDriver 支援 Promise/async，可以重新啟用此檢查
-        '''
-        js_check_api = \'\'\'
-        (async function() {
-            try {
-                // 查找 API URL
-                const entries = performance.getEntries();
-                let apiUrl = null;
-
-                for (const entry of entries) {
-                    if (entry.name && entry.name.includes('apis.ticketplus.com.tw/config/api/')) {
-                        // 支援新格式 API (eventId-based, 2024+ confirmed)
-                        if (entry.name.includes('get?eventId=')) {
-                            apiUrl = entry.name;
-                            console.log('[API CHECK] Using new format: eventId-based');
-                            break;
-                        }
-                        // 舊格式 API (productId/ticketAreaId-based, legacy support)
-                        // 保留以確保向下相容，如確認完全停用可移除
-                        if (entry.name.includes('get?productId=') ||
-                            entry.name.includes('get?ticketAreaId=')) {
-                            apiUrl = entry.name;
-                            console.log('[API CHECK] Using legacy format: productId/ticketAreaId-based');
-                            break;
-                        }
-                    }
-                }
-
-                if (!apiUrl) return { isPending: false, reason: 'No API URL found' };
-
-                // 取得產品資訊
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                // 檢查是否為 pending 狀態（支援多種資料結構）
-                if (data.result) {
-                    // 檢查 product 欄位（舊格式）
-                    if (data.result.product && data.result.product.length > 0) {
-                        if (data.result.product[0].status === "pending") {
-                            return { isPending: true, reason: 'API status pending (product)' };
-                        }
-                    }
-
-                    // 檢查 session 欄位（新格式可能使用）
-                    if (data.result.session && data.result.session.length > 0) {
-                        if (data.result.session[0].status === "pending") {
-                            return { isPending: true, reason: 'API status pending (session)' };
-                        }
-                    }
-
-                    // 檢查 event 欄位
-                    if (data.result.event && data.result.event.status === "pending") {
-                        return { isPending: true, reason: 'API status pending (event)' };
-                    }
-
-                    // 檢查 result 直接的 status
-                    if (data.result.status === "pending") {
-                        return { isPending: true, reason: 'API status pending (result)' };
-                    }
-                }
-
-                return { isPending: false, reason: 'API status not pending' };
-            } catch (err) {
-                return { isPending: false, reason: 'API check error: ' + err.message };
-            }
-        })();
-        \'\'\'
-
-        # 執行檢查
-        api_result = await tab.evaluate(js_check_api)
-        is_api_pending = isinstance(api_result, dict) and api_result.get('isPending', False)
-        '''
-
-        # API 檢查已註解，直接設為 False
-        is_api_pending = False
-
-        # 檢查 2: 下一步按鈕狀態（使用現有的按鈕檢查函數）
-        is_button_enabled = await nodriver_ticketplus_check_next_button(tab)
-        is_button_disabled = not is_button_enabled
-
-        if show_debug_message:
-            print(f"[AUTO RELOAD CHECK] Button disabled: {is_button_disabled}")
-            # print(f"[AUTO RELOAD CHECK] API pending: {is_api_pending}, Button disabled: {is_button_disabled}")
-            # if isinstance(api_result, dict):
-            #     print(f"  API reason: {api_result.get('reason', 'unknown')}")
-
-        # 只依據按鈕狀態判斷是否需要刷新
-        # if is_api_pending or is_button_disabled:
-        if is_button_disabled:
-            if show_debug_message:
-                print("[AUTO RELOAD] Reloading page...")
-
-            try:
-                await tab.reload()
-                is_reloading = True
-
-                # 延遲 auto_reload_page_interval (參考 ibon 實作)
-                auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-                if auto_reload_interval > 0:
-                    if show_debug_message:
-                        print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
-                    await asyncio.sleep(auto_reload_interval)
-            except Exception as reload_exc:
-                if show_debug_message:
-                    print(f"[AUTO RELOAD] Reload failed: {reload_exc}")
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"[AUTO RELOAD] Check failed: {exc}")
-
-    return is_reloading
-
 async def nodriver_ticketplus_confirm(tab, config_dict):
     """確認訂單頁面處理"""
     # 先確認勾選同意條款
@@ -9012,10 +7987,94 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         if show_debug_message:
             print("Ticket selection failed, cannot continue")
 
+        # 票選擇失敗時自動刷新頁面（等待票區有票）
+        # interval=0: 立即刷新, interval>0: 等待N秒後刷新
+        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if auto_reload_interval >= 0:
+            if auto_reload_interval > 0:
+                if show_debug_message:
+                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before reload...")
+                await asyncio.sleep(auto_reload_interval)
+            if show_debug_message:
+                print("[AUTO RELOAD] Reloading page...")
+            try:
+                await tab.reload()
+            except Exception as reload_exc:
+                if show_debug_message:
+                    print(f"[AUTO RELOAD] Reload failed: {reload_exc}")
+
     if show_debug_message:
         print("=== TicketPlus Simplified Booking Ended ===")
 
     return ticketplus_dict
+
+async def nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=800):
+    """Wait for Vue.js ticket area elements to render (dynamic detection).
+
+    Args:
+        tab: NoDriver tab
+        max_wait_ms: Maximum wait time in milliseconds, default 800ms
+
+    Returns:
+        bool: True if Vue.js is ready, False if timed out
+    """
+    try:
+        # Wait for basic page load (DOM needs time to rebuild after reload)
+        await asyncio.sleep(0.15)
+
+        result = await tab.evaluate(f'''
+            (function() {{
+                return new Promise((resolve) => {{
+                    const startTime = Date.now();
+                    const maxWait = {max_wait_ms};
+
+                    const check = () => {{
+                        // TicketPlus ticket area element selectors (in priority order)
+                        const selectors = [
+                            '.v-expansion-panel-header',  // Expansion panel header (most common)
+                            '.order-content .v-btn',      // Order content buttons
+                            'button.nextBtn',             // Next step button
+                            '.ticket-list button'         // Ticket list buttons
+                        ];
+
+                        let hasContent = false;
+                        for (const selector of selectors) {{
+                            const elements = document.querySelectorAll(selector);
+                            if (elements.length > 0) {{
+                                // Check if elements contain expected keywords
+                                hasContent = Array.from(elements).some(el => {{
+                                    const text = el.textContent || '';
+                                    return text.includes('NT') ||
+                                           text.includes('剩餘') ||
+                                           text.includes('熱賣') ||
+                                           text.includes('下一步') ||
+                                           text.includes('售完');
+                                }});
+                                if (hasContent) break;
+                            }}
+                        }}
+
+                        if (hasContent) {{
+                            resolve({{ ready: true, elapsed: Date.now() - startTime }});
+                        }} else if (Date.now() - startTime < maxWait) {{
+                            setTimeout(check, 30);  // Check every 30ms
+                        }} else {{
+                            resolve({{ ready: false, elapsed: maxWait }});
+                        }}
+                    }};
+
+                    // Start checking
+                    check();
+                }});
+            }})();
+        ''')
+
+        if isinstance(result, dict):
+            return result.get('ready', False)
+        return False
+
+    except Exception as exc:
+        return False
 
 async def nodriver_ticketplus_check_next_button(tab):
     """檢查下一步按鈕是否啟用"""
@@ -9199,40 +8258,36 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             ticketplus_dict["start_time"] = time.time()
+            show_debug_message = config_dict["advanced"].get("verbose", False)
 
-            # Initial delay when first entering order page (1.5-2.0s)
-            # This ensures Vue.js has sufficient time to initialize DOM elements
-            await asyncio.sleep(random.uniform(1.5, 2.0))
+            # Unified dynamic detection: longer wait for first visit, shorter for reload
+            is_first_visit = not ticketplus_dict.get("order_page_visited", False)
+            if is_first_visit:
+                max_wait = 1200  # First visit: max 1.2s (cold start, more init needed)
+                fallback_delay = 0.3  # Fallback delay if detection times out
+                ticketplus_dict["order_page_visited"] = True
+            else:
+                max_wait = 600   # Reload: max 0.6s (warm start, faster)
+                fallback_delay = 0.2  # Shorter fallback for reload
+
+            if show_debug_message:
+                visit_type = "First visit" if is_first_visit else "Reload"
+                print(f"[VUE INIT] {visit_type}, dynamic detection (max {max_wait}ms)...")
+
+            is_ready = await nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=max_wait)
+
+            if show_debug_message:
+                print(f"[VUE INIT] Vue.js ready: {is_ready}")
+
+            # Add fallback delay if detection failed (timed out)
+            if not is_ready:
+                await asyncio.sleep(fallback_delay)
 
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
 
-            # 註解自動重載檢查（API 和按鈕檢查）
-            # 改為完全依靠程式在抓取網頁元素時的選擇器自然判斷
-            '''
-            is_reloading = False
-            show_debug_message = config_dict["advanced"].get("verbose", False)
-
-            # NoDriver 模式總是使用 WebDriver 刷新邏輯
-            is_reload_at_webdriver = False
-            if config_dict.get("webdriver_type", "") == "nodriver":
-                is_reload_at_webdriver = True
-            elif not config_dict["browser"] in CONST_CHROME_FAMILY:
-                is_reload_at_webdriver = True
-            else:
-                if not config_dict["advanced"]["chrome_extension"]:
-                    is_reload_at_webdriver = True
-
-            if is_reload_at_webdriver:
-                is_reloading = await nodriver_ticketplus_order_auto_reload_coming_soon(tab, config_dict)
-
-            if is_reloading:
-                # 頁面已刷新，等待刷新完成後繼續處理
-                if show_debug_message:
-                    print("[ORDER PAGE] Page reloaded, waiting for page ready...")
-                # 刷新後可能需要額外時間讓頁面準備好（隨機延遲 0.8-1.2 秒避免偵測）
-                await asyncio.sleep(random.uniform(0.8, 1.2))
-            '''
+            # 註：自動重載邏輯已移至 nodriver_ticketplus_order() 函數內
+            # 當票選擇失敗時（關鍵字匹配的票區無票），會自動刷新頁面
 
             # 無論是否刷新，都執行訂單處理（展開票區、選票數）
             ticketplus_dict = await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict)
@@ -9345,52 +8400,6 @@ async def nodriver_ibon_login(tab, config_dict, driver):
             import traceback
             traceback.print_exc()
         return {'success': False, 'reason': 'exception', 'error': str(cookie_error)}
-
-async def nodriver_ibon_date_mode_select(buttons, auto_select_mode, show_debug_message=False):
-    """
-    NoDriver ibon 日期模式自動選擇
-    當沒有日期關鍵字時，根據模式從 enabled 按鈕中選擇
-
-    Args:
-        buttons: 按鈕列表
-        auto_select_mode: 選擇模式 (random, center, from top to bottom, from bottom to top)
-        show_debug_message: 是否顯示除錯訊息
-
-    Returns:
-        選中的按鈕 dict，如果沒有可用按鈕則返回 None
-    """
-    # 過濾出 enabled 的按鈕
-    enabled_buttons = []
-    for button in buttons:
-        if isinstance(button, dict):
-            element_html = button.get('element', '')
-            if 'disabled' not in element_html.lower():
-                enabled_buttons.append(button)
-            elif show_debug_message:
-                print(f"  [MODE SELECT] Filtering out disabled button: {button.get('text', 'unknown')}")
-
-    if show_debug_message:
-        print(f"[MODE SELECT] Found {len(enabled_buttons)} enabled buttons out of {len(buttons)} total")
-
-    if not enabled_buttons:
-        if show_debug_message:
-            print("[MODE SELECT] No enabled buttons available")
-        return None
-
-    target_button = util.get_target_item_from_matched_list(enabled_buttons, auto_select_mode)
-
-    if show_debug_message and target_button:
-        button_text = target_button.get('text', 'unknown') if isinstance(target_button, dict) else 'non-dict'
-        button_index = enabled_buttons.index(target_button) if target_button in enabled_buttons else -1
-        print(f"[MODE SELECT] Selected button {button_index}/{len(enabled_buttons)} by mode '{auto_select_mode}': '{button_text}'")
-
-    return target_button
-
-
-# ============================================================
-# FamiTicket NoDriver Functions (Feature 005)
-# 遷移自 chrome_tixcraft.py，遵循 NoDriver First 原則
-# ============================================================
 
 async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
     """
@@ -10564,9 +9573,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             button_class = attrs.get('class', '')
             button_disabled = 'disabled' in attrs
 
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Button class: {button_class}")
-
             # Extract date context by traversing up to find .tr container
             date_context = ''
 
@@ -10577,14 +9583,10 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                 # Get parent_id to start traversal
                 if not hasattr(button_node, 'parent_id') or not button_node.parent_id:
-                    if show_debug_message:
-                        print(f"[IBON DATE PIERCE DEBUG] Button has no parent_id")
                     current_node_id = None
                 else:
                     current_node_id = button_node.parent_id  # Start from parent, not button itself
-            except Exception as e:
-                if show_debug_message:
-                    print(f"[IBON DATE PIERCE DEBUG] Failed to get button parent: {e}")
+            except Exception:
                 current_node_id = None
 
             if current_node_id:
@@ -10603,9 +9605,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                         parent_class = parent_attrs.get('class', '')
 
-                        if show_debug_message and level < 3:
-                            print(f"[IBON DATE PIERCE DEBUG] Level {level + 1}, parent class: {parent_class[:50] if parent_class else 'none'}")
-
                         # Check if this is .tr container (flexible matching)
                         is_tr_container = (
                             ' tr ' in f' {parent_class} ' or
@@ -10616,18 +9615,12 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
                         if is_tr_container:
                             # Found potential container, extract outer HTML for date context
-                            # Use HTML text directly for keyword matching (don't force specific date format)
                             try:
                                 outer_html = await tab.send(cdp.dom.get_outer_html(node_id=current_node_id))
-                                # Use HTML text directly as date_context for flexible keyword matching
-                                # This allows matching any format: "11/30", "2025.11.30", "2025-11-30", etc.
                                 date_context = outer_html[:200]  # Use first 200 chars
-                                if show_debug_message:
-                                    print(f"[IBON DATE PIERCE DEBUG] Found container HTML: {date_context[:80]}...")
                                 break
-                            except Exception as html_err:
-                                if show_debug_message:
-                                    print(f"[IBON DATE PIERCE DEBUG] get_outer_html failed: {html_err}")
+                            except Exception:
+                                pass
 
                         # Move up to parent
                         if hasattr(parent_node, 'parent_id') and parent_node.parent_id:
@@ -10635,9 +9628,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                         else:
                             break
 
-                    except Exception as e:
-                        if show_debug_message:
-                            print(f"[IBON DATE PIERCE DEBUG] Traversal error at level {level + 1}: {e}")
+                    except Exception:
                         break
 
             purchase_buttons.append({
@@ -10646,9 +9637,6 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                 'disabled': button_disabled,
                 'date_context': date_context
             })
-
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Button: disabled={button_disabled}, date='{date_context}'")
 
         except Exception as e:
             if show_debug_message:
@@ -10914,9 +9902,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                 button_class = attrs.get('class', '')
                 button_disabled = 'disabled' in attrs
 
-                # Debug: Log all button classes found
-                if show_debug_message and button_class:
-                    print(f"[IBON DATE DEBUG] Button class: {button_class}")
 
                 # ibon purchase buttons have 'btn-buy' or 'ng-tns-c57' in class
                 if 'btn-buy' in button_class or ('ng-tns-c57' in button_class and 'btn' in button_class):
@@ -11148,633 +10133,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
     return is_date_assigned
 
-
-async def extract_date_context_from_path(tab, button_node, path):
-    """從按鈕節點的父層結構中提取日期資訊"""
-    try:
-        from nodriver import cdp
-
-        # 獲取父節點
-        parent = await tab.send(cdp.dom.describe_node(node_id=button_node.node_id))
-        parent_id = getattr(parent.node, 'parent_id', None)
-
-        if parent_id:
-            # 搜尋父節點中的日期相關文字
-            parent_html = await tab.send(cdp.dom.get_outer_html(node_id=parent_id))
-            html_content = parent_html.outer_html
-
-            # 日期正則表達式模式
-            import re
-            date_patterns = [
-                r'(\d{4})/(\d{1,2})/(\d{1,2})',  # 2025/09/28
-                r'(\d{1,2})/(\d{1,2})\s*\(\w+\)',  # 9/28 (日)
-                r'(\d{4}-\d{1,2}-\d{1,2})',  # 2025-09-28
-            ]
-
-            for pattern in date_patterns:
-                matches = re.findall(pattern, html_content)
-                if matches:
-                    return str(matches[0]) if isinstance(matches[0], tuple) else matches[0]
-
-        return ""
-    except:
-        return ""
-
-
-async def click_button_via_cdp(tab, target_button, show_debug_message):
-    """使用 NoDriver CDP API 點擊按鈕（通過 node_id）"""
-    try:
-        from nodriver import cdp
-
-        if show_debug_message:
-            print(f"[CDP CLICK] Starting CDP click for: {target_button['text']}")
-            print(f"[CDP CLICK] Node ID: {target_button.get('node_id')}")
-
-        # 方法1: 使用 CDP DOM.scrollIntoViewIfNeeded + DOM.focus + Input.dispatchMouseEvent
-        try:
-            node_id = target_button.get('node_id')
-            if not node_id:
-                raise Exception("No node_id available")
-
-            # 步驟1: 滾動到視窗內
-            try:
-                await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Scrolled element into view")
-            except Exception as e:
-                if show_debug_message:
-                    print(f"[CDP CLICK] Scroll failed (may not be needed): {e}")
-
-            # 步驟2: 聚焦元素
-            try:
-                await tab.send(cdp.dom.focus(node_id=node_id))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Focused element")
-            except Exception as e:
-                if show_debug_message:
-                    print(f"[CDP CLICK] Focus failed: {e}")
-
-            # 步驟3: 獲取元素的 box model (位置)
-            try:
-                box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Got box model")
-
-                # 計算元素中心點
-                # box_model is a GetBoxModelResult, which has 'model' attribute of type BoxModel
-                # BoxModel has 'content' attribute which is a list of 8 numbers [x1,y1,x2,y2,x3,y3,x4,y4]
-                content_quad = box_model.content if hasattr(box_model, 'content') else box_model.model.content
-                x = (content_quad[0] + content_quad[2]) / 2
-                y = (content_quad[1] + content_quad[5]) / 2
-
-                if show_debug_message:
-                    print(f"[CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
-
-                # 步驟4: 使用 NoDriver 內建的 mouse_click 方法
-                await tab.mouse_click(x, y)
-
-                if show_debug_message:
-                    print(f"[CDP CLICK] Mouse click executed successfully")
-
-                # 等待導航
-                await tab.sleep(1.0)
-
-                return {'success': True, 'buttonText': target_button.get('text', ''), 'method': 'cdp_mouse_event'}
-
-            except Exception as box_error:
-                if show_debug_message:
-                    print(f"[CDP CLICK] Box model/mouse event failed: {box_error}")
-                raise box_error
-
-        except Exception as cdp_error:
-            if show_debug_message:
-                print(f"[CDP CLICK] CDP method failed: {cdp_error}")
-            raise cdp_error
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"[CDP CLICK] All methods failed: {e}")
-        return {'success': False, 'error': str(e)}
-
-async def click_button_via_enhanced_javascript(tab, target_button, show_debug_message):
-    """使用增強的 JavaScript 方法點擊按鈕（專為 Shadow DOM 設計）"""
-    try:
-        if show_debug_message:
-            print(f"[JS CLICK] Attempting enhanced JavaScript click for: {target_button['text']}")
-
-        # 使用 TreeWalker 的增強 JavaScript 在 Shadow DOM 中尋找並點擊按鈕
-        click_js = f'''
-        (function() {{
-            const targetText = "{target_button['text']}";
-            const targetClasses = "{target_button['classes']}";
-
-            console.log(`[TreeWalker] Starting enhanced search for button: "${{targetText}}"`);
-
-            // 使用 TreeWalker 進行更深層的 DOM 遍歷（包括 closed Shadow DOM）
-            function findButtonWithTreeWalker() {{
-                // 創建一個接受所有節點的 NodeFilter
-                const walker = document.createTreeWalker(
-                    document.body || document.documentElement,
-                    NodeFilter.SHOW_ELEMENT,
-                    {{
-                        acceptNode: function(node) {{
-                            return NodeFilter.FILTER_ACCEPT;
-                        }}
-                    }},
-                    false
-                );
-
-                let currentNode;
-                const foundButtons = [];
-
-                // 遍歷所有節點
-                while (currentNode = walker.nextNode()) {{
-                    // 檢查當前節點是否為按鈕
-                    if (currentNode.tagName && currentNode.tagName.toLowerCase() === 'button') {{
-                        const text = currentNode.textContent.trim();
-                        const classes = currentNode.className || '';
-
-                        if (text === targetText && classes.includes('btn-buy')) {{
-                            foundButtons.push(currentNode);
-                            console.log(`[TreeWalker] Found target button: "${{text}}" with classes: "${{classes}}"`);
-                        }}
-                    }}
-
-                    // 檢查是否有 Shadow DOM（包括 closed）
-                    if (currentNode.shadowRoot) {{
-                        console.log(`[TreeWalker] Found open shadow DOM in ${{currentNode.tagName}}`);
-                        const shadowButtons = findButtonsInShadowDOM(currentNode.shadowRoot);
-                        foundButtons.push(...shadowButtons);
-                    }}
-
-                    // 嘗試訪問 closed Shadow DOM（使用反射技術）
-                    try {{
-                        const shadowHost = currentNode;
-                        // 檢查是否有 closed shadow DOM（通過檢查特定特徵）
-                        if (shadowHost.tagName && shadowHost.tagName.toLowerCase() === 'app-game') {{
-                            console.log(`[TreeWalker] Attempting to access closed shadow DOM in app-game`);
-                            // 使用瀏覽器內建的方法直接查找按鈕
-                            const directButtons = shadowHost.querySelectorAll('button');
-                            if (directButtons.length > 0) {{
-                                console.log(`[TreeWalker] Found ${{directButtons.length}} buttons via direct query`);
-                                for (let btn of directButtons) {{
-                                    const text = btn.textContent.trim();
-                                    const classes = btn.className || '';
-                                    if (text === targetText && classes.includes('btn-buy')) {{
-                                        foundButtons.push(btn);
-                                        console.log(`[TreeWalker] Found target in closed shadow: "${{text}}"`);
-                                    }}
-                                }}
-                            }}
-                        }}
-                    }} catch (e) {{
-                        // Closed shadow DOM 可能無法直接訪問
-                    }}
-                }}
-
-                return foundButtons;
-            }}
-
-            // 在 Shadow DOM 中搜尋按鈕
-            function findButtonsInShadowDOM(shadowRoot) {{
-                const buttons = [];
-                const walker = document.createTreeWalker(
-                    shadowRoot,
-                    NodeFilter.SHOW_ELEMENT,
-                    {{
-                        acceptNode: function(node) {{
-                            return NodeFilter.FILTER_ACCEPT;
-                        }}
-                    }},
-                    false
-                );
-
-                let currentNode;
-                while (currentNode = walker.nextNode()) {{
-                    if (currentNode.tagName && currentNode.tagName.toLowerCase() === 'button') {{
-                        const text = currentNode.textContent.trim();
-                        const classes = currentNode.className || '';
-
-                        if (text === targetText && classes.includes('btn-buy')) {{
-                            buttons.push(currentNode);
-                            console.log(`[TreeWalker] Found target in shadow DOM: "${{text}}"`);
-                        }}
-                    }}
-
-                    // 遞歸處理嵌套的 Shadow DOM
-                    if (currentNode.shadowRoot) {{
-                        const nestedButtons = findButtonsInShadowDOM(currentNode.shadowRoot);
-                        buttons.push(...nestedButtons);
-                    }}
-                }}
-
-                return buttons;
-            }}
-
-            // 進行多種點擊嘗試
-            function attemptClick(button) {{
-                console.log(`[TreeWalker] Attempting to click button...`);
-
-                // 方法 1: 標準點擊事件
-                try {{
-                    button.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-
-                    // 創建多種事件類型
-                    const events = [
-                        new MouseEvent('mousedown', {{ bubbles: true, cancelable: true, view: window }}),
-                        new MouseEvent('mouseup', {{ bubbles: true, cancelable: true, view: window }}),
-                        new MouseEvent('click', {{ bubbles: true, cancelable: true, view: window }}),
-                        new Event('change', {{ bubbles: true, cancelable: true }}),
-                        new Event('input', {{ bubbles: true, cancelable: true }})
-                    ];
-
-                    // 依序觸發事件
-                    events.forEach(event => {{
-                        button.dispatchEvent(event);
-                        console.log(`[TreeWalker] Dispatched ${{event.type}} event`);
-                    }});
-
-                    // 方法 2: 直接調用 click()
-                    button.click();
-                    console.log(`[TreeWalker] Called button.click()`);
-
-                    // 方法 3: 觸發 form 提交（如果按鈕在 form 中）
-                    const form = button.closest('form');
-                    if (form) {{
-                        console.log(`[TreeWalker] Found parent form, attempting submit`);
-                        form.submit();
-                    }}
-
-                    // 方法 4: 模擬鍵盤 Enter
-                    button.focus();
-                    const enterEvent = new KeyboardEvent('keypress', {{
-                        key: 'Enter',
-                        code: 'Enter',
-                        keyCode: 13,
-                        which: 13,
-                        bubbles: true,
-                        cancelable: true
-                    }});
-                    button.dispatchEvent(enterEvent);
-                    console.log(`[TreeWalker] Dispatched Enter keypress`);
-
-                    return true;
-                }} catch (e) {{
-                    console.log(`[TreeWalker] Click attempt failed: ${{e.message}}`);
-                    return false;
-                }}
-            }}
-
-            // 執行搜尋和點擊
-            const buttons = findButtonWithTreeWalker();
-
-            if (buttons.length === 0) {{
-                console.log(`[TreeWalker] No matching buttons found`);
-                return {{ success: false, error: "No matching buttons found" }};
-            }}
-
-            console.log(`[TreeWalker] Found ${{buttons.length}} matching button(s)`);
-
-            // 嘗試點擊找到的按鈕
-            for (let i = 0; i < buttons.length; i++) {{
-                const button = buttons[i];
-                console.log(`[TreeWalker] Attempting to click button ${{i + 1}}/${{buttons.length}}`);
-
-                if (!button.disabled && button.offsetParent !== null) {{
-                    const clickSuccess = attemptClick(button);
-                    if (clickSuccess) {{
-                        console.log(`[TreeWalker] Successfully clicked button ${{i + 1}}`);
-
-                        // 等待一小段時間檢查頁面是否開始導航
-                        setTimeout(() => {{
-                            console.log(`[TreeWalker] Current URL after click: ${{window.location.href}}`);
-                        }}, 500);
-
-                        return {{
-                            success: true,
-                            buttonText: targetText,
-                            clickedIndex: i,
-                            totalFound: buttons.length
-                        }};
-                    }}
-                }} else {{
-                    console.log(`[TreeWalker] Button ${{i + 1}} not clickable (disabled: ${{button.disabled}}, visible: ${{button.offsetParent !== null}})`);
-                }}
-            }}
-
-            return {{ success: false, error: "All click attempts failed" }};
-        }})();
-        '''
-
-        click_result = await tab.evaluate(click_js)
-
-        if show_debug_message:
-            if isinstance(click_result, dict):
-                if isinstance(click_result, dict) and click_result.get('success'):
-                    print(f"[JS CLICK] [SUCCESS] Enhanced JavaScript click succeeded: {click_result.get('buttonText', '')}")
-                else:
-                    print(f"[JS CLICK] [ERROR] Enhanced JavaScript click failed: {click_result.get('error', 'Unknown error')}")
-            else:
-                print(f"[JS CLICK] Unexpected result type: {type(click_result)}")
-
-        # 返回統一格式的結果
-        if isinstance(click_result, dict) and click_result.get('success'):
-            return {
-                "success": True,
-                "buttonText": click_result.get('buttonText', target_button['text']),
-                "method": "enhanced_javascript"
-            }
-        else:
-            error_msg = click_result.get('error', 'Unknown error') if isinstance(click_result, dict) else 'Unexpected result'
-            return {"success": False, "error": error_msg}
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"CDP click failed: {e}")
-        return {"success": False, "error": str(e)}
-
-async def click_button_via_javascript(tab, target_button, show_debug_message):
-    """使用 JavaScript 方法點擊按鈕（回退方法）"""
-    click_js = f'''
-    (function() {{
-        try {{
-            const targetText = "{target_button['text']}";
-            const targetClasses = "{target_button.get('classes', '')}";
-            let targetBtn = null;
-
-            // 搜尋主 DOM
-            const buttons = document.querySelectorAll('button');
-            for (let btn of buttons) {{
-                const text = (btn.textContent || btn.innerText || '').trim();
-                const classes = btn.className || '';
-
-                if (text === targetText && classes.includes(targetClasses.split(' ')[0])) {{
-                    targetBtn = btn;
-                    break;
-                }}
-            }}
-
-            // 搜尋 Shadow DOM
-            if (!targetBtn) {{
-                const allElements = document.querySelectorAll('*');
-                for (let element of allElements) {{
-                    if (element.shadowRoot) {{
-                        try {{
-                            const shadowButtons = element.shadowRoot.querySelectorAll('button');
-                            for (let btn of shadowButtons) {{
-                                const text = (btn.textContent || btn.innerText || '').trim();
-                                const classes = btn.className || '';
-
-                                if (text === targetText && classes.includes(targetClasses.split(' ')[0])) {{
-                                    targetBtn = btn;
-                                    break;
-                                }}
-                            }}
-                            if (targetBtn) break;
-                        }} catch (e) {{}}
-                    }}
-                }}
-            }}
-
-            if (targetBtn && !targetBtn.disabled) {{
-                targetBtn.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-
-                const clickEvent = new MouseEvent('click', {{
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    detail: 1
-                }});
-
-                targetBtn.dispatchEvent(clickEvent);
-                targetBtn.click();
-
-                return {{ success: true, clicked: true, buttonText: targetBtn.textContent.trim() }};
-            }} else {{
-                return {{ success: false, error: 'Button not found or disabled' }};
-            }}
-        }} catch (e) {{
-            return {{ success: false, error: e.message }};
-        }}
-    }})();
-    '''
-
-    return await tab.evaluate(click_js)
-
-async def check_ibon_login_status(tab, config_dict):
-    """
-    檢查 ibon 登入狀態並處理頁面重新載入
-    基於原本成功版本的經驗：cookie 設置後需要重新載入頁面
-    """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    if show_debug_message:
-        print("Checking ibon login status and handling page reload...")
-
-    try:
-        # 檢查當前 URL
-        current_url = await tab.evaluate('window.location.href')
-        if show_debug_message:
-            print(f"Current URL: {current_url}")
-
-        # 檢查登入狀態的指標
-        login_check_js = '''
-        (function() {
-            const result = {
-                isLoggedIn: false,
-                hasLoginElements: false,
-                hasCookieData: false,
-                needsReload: false,
-                cookieLength: 0,
-                cookieCount: 0
-            };
-
-            // 獲取所有 cookie 資訊（僅統計，不輸出內容）
-            const cookies = document.cookie;
-            result.cookieLength = cookies.length;
-            result.cookieCount = cookies.split(';').filter(c => c.trim()).length;
-
-            // Only output statistics, not actual cookie content for security
-            console.log(`[COOKIE CHECK] Cookie count: ${result.cookieCount}, total length: ${cookies.length}`);
-
-            // 更詳細的 cookie 檢查
-            const hasMemId = cookies.includes('mem_id');
-            const hasHuiwanTK = cookies.includes('huiwanTK');
-            const hasMemEmail = cookies.includes('mem_email');
-            const hasIbonVerify = cookies.includes('ibonqwareverify');
-
-            console.log(`[COOKIE CHECK] Has mem_id: ${hasMemId}`);
-            console.log(`[COOKIE CHECK] Has huiwanTK: ${hasHuiwanTK}`);
-            console.log(`[COOKIE CHECK] Has mem_email: ${hasMemEmail}`);
-            console.log(`[COOKIE CHECK] Has ibonqwareverify: ${hasIbonVerify}`);
-
-            // 任何一個關鍵 cookie 存在就認為有登入資料
-            result.hasCookieData = hasMemId || hasHuiwanTK || hasMemEmail || hasIbonVerify;
-
-            // 檢查是否有登入相關元素
-            const loginElements = document.querySelectorAll('a[href*="login"], .member, [class*="login"]');
-            result.hasLoginElements = loginElements.length > 0;
-
-            // 檢查頁面是否已完全載入 Angular 應用
-            const appGameElements = document.querySelectorAll('app-game');
-            const hasAngularApp = appGameElements.length > 0;
-
-            console.log(`[COOKIE CHECK] Found ${appGameElements.length} app-game elements`);
-
-            // 檢查是否有購票按鈕（包括 Shadow DOM 中的）
-            let hasPurchaseButton = false;
-            let totalButtons = 0;
-
-            // 先檢查主 DOM 中的按鈕
-            const mainButtons = document.querySelectorAll('button');
-            totalButtons = mainButtons.length;
-
-            console.log(`[COOKIE CHECK] Found ${mainButtons.length} buttons in main DOM`);
-
-            for (let btn of mainButtons) {
-                const text = (btn.textContent || '').trim();
-                const classes = btn.className || '';
-                console.log(`[COOKIE CHECK] Button: "${text}" with classes: "${classes}"`);
-
-                if (text.includes('線上購票') || text.includes('購票') ||
-                    classes.includes('btn-buy') || classes.includes('btn-pink')) {
-                    hasPurchaseButton = true;
-                    console.log(`[COOKIE CHECK] Found purchase button in main DOM: "${text}"`);
-                    break;
-                }
-            }
-
-            // 如果主 DOM 沒有找到，檢查 app-game 中的按鈕（可能在 Shadow DOM 中）
-            if (!hasPurchaseButton && hasAngularApp) {
-                console.log(`[COOKIE CHECK] Checking app-game elements for purchase buttons...`);
-                for (let appGame of appGameElements) {
-                    try {
-                        // 嘗試直接查詢（某些情況下可以訪問 closed shadow DOM）
-                        const gameButtons = appGame.querySelectorAll('button');
-                        console.log(`[COOKIE CHECK] Found ${gameButtons.length} buttons in app-game`);
-
-                        for (let gameBtn of gameButtons) {
-                            const text = (gameBtn.textContent || '').trim();
-                            const classes = gameBtn.className || '';
-                            console.log(`[COOKIE CHECK] App-game button: "${text}" with classes: "${classes}"`);
-
-                            if (text.includes('線上購票') || text.includes('購票') ||
-                                classes.includes('btn-buy') || classes.includes('btn-pink')) {
-                                hasPurchaseButton = true;
-                                console.log(`[COOKIE CHECK] Found purchase button in app-game: "${text}"`);
-                                break;
-                            }
-                        }
-                        if (hasPurchaseButton) break;
-                    } catch (e) {
-                        console.log(`[COOKIE CHECK] Could not access app-game shadow DOM: ${e.message}`);
-                    }
-                }
-            }
-
-            // 判斷登入狀態
-            console.log(`[COOKIE CHECK] Has cookie data: ${result.hasCookieData}`);
-            console.log(`[COOKIE CHECK] Has purchase button: ${hasPurchaseButton}`);
-            console.log(`[COOKIE CHECK] Has Angular app: ${hasAngularApp}`);
-
-            if (result.hasCookieData) {
-                result.isLoggedIn = true;
-
-                // 改進重新載入邏輯：
-                // 如果有 cookie 但沒有 Angular 應用和購票按鈕，可能需要重新載入
-                if (!hasAngularApp && !hasPurchaseButton && totalButtons === 0) {
-                    console.log(`[COOKIE CHECK] Page seems not loaded properly, may need reload`);
-                    result.needsReload = true;
-                } else {
-                    console.log(`[COOKIE CHECK] Page seems loaded properly, no reload needed`);
-                    result.needsReload = false;
-                }
-            } else {
-                console.log(`[COOKIE CHECK] No valid cookie data found`);
-                result.isLoggedIn = false;
-                result.needsReload = false;
-            }
-
-            console.log(`[COOKIE CHECK] Final result - logged in: ${result.isLoggedIn}, needs reload: ${result.needsReload}`);
-
-            return {
-                ...result,
-                hasAngularApp: hasAngularApp,
-                hasPurchaseButton: hasPurchaseButton,
-                totalButtons: totalButtons,
-                angularElements: appGameElements.length
-            };
-        })();
-        '''
-
-        login_status_raw = await tab.evaluate(login_check_js, return_by_value=True)
-
-        if show_debug_message:
-            print(f"Login status check result:")
-            print(f"  - Result type: {type(login_status_raw)}")
-            print(f"  - Result content: {login_status_raw}")
-
-        # 解析返回的結果（處理 nodriver 的特殊格式）
-        if isinstance(login_status_raw, dict):
-            login_status = login_status_raw
-        else:
-            # 使用 util 函數解析 NoDriver 格式（util 已在文件頂部導入）
-            login_status = util.parse_nodriver_result(login_status_raw) if login_status_raw else {
-                'isLoggedIn': False,
-                'hasCookieData': False,
-                'needsReload': False,
-                'error': f'Parse failed for type: {type(login_status_raw)}'
-            }
-
-        if show_debug_message and isinstance(login_status, dict):
-            print(f"  - Is logged in: {login_status.get('isLoggedIn', False)}")
-            print(f"  - Has cookie data: {login_status.get('hasCookieData', False)}")
-            print(f"  - Has Angular app: {login_status.get('hasAngularApp', False)}")
-            print(f"  - Has purchase button: {login_status.get('hasPurchaseButton', False)}")
-            print(f"  - Total buttons: {login_status.get('totalButtons', 0)}")
-            print(f"  - Needs reload: {login_status.get('needsReload', False)}")
-
-        # 如果需要重新載入頁面（有 cookie 但沒有購票按鈕）
-        if login_status.get('needsReload', False):
-            if show_debug_message:
-                print("Reloading page to apply ibon cookie...")
-
-            # 重新載入頁面
-            await tab.reload()
-
-            # 等待頁面完全載入
-            await tab.sleep(3.0)
-
-            # Re-check after reload
-            final_status_raw = await tab.evaluate(login_check_js)
-
-            # Use unified parsing function to handle NoDriver format
-            if isinstance(final_status_raw, dict):
-                final_status = final_status_raw
-            else:
-                final_status = util.parse_nodriver_result(final_status_raw) if final_status_raw else {
-                    'hasPurchaseButton': False,
-                    'totalButtons': 0,
-                    'error': f'Parse failed for type: {type(final_status_raw)}'
-                }
-
-            if show_debug_message:
-                print(f"After reload - Has purchase button: {final_status.get('hasPurchaseButton', False)}")
-                print(f"After reload - Total buttons: {final_status.get('totalButtons', 0)}")
-
-            return final_status
-
-        return login_status
-
-    except Exception as e:
-        if show_debug_message:
-            print(f"Error checking ibon login status: {e}")
-        return {
-            'isLoggedIn': False,
-            'hasCookieData': False,
-            'needsReload': False,
-            'error': str(e)
-        }
 
 async def nodriver_ibon_ticket_agree(tab):
     for i in range(3):
@@ -12411,12 +10769,16 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             pass
 
         import time
-        max_wait = 3  # Maximum wait (safety limit)
-        check_interval = 0.1  # Fast polling for quick response
+        max_wait = 5  # Maximum wait (increased for page load after Cloudflare)
+        check_interval = 0.15  # Polling interval
         start_time = time.time()
+        min_tr_count = 3  # Minimum TR elements to consider page loaded (header + at least 1 data row)
 
         if show_debug_message:
             print("[IBON AREA] Auto-detecting area table...")
+
+        last_tr_count = 0
+        stable_count = 0  # Track if TR count is stable (page finished loading)
 
         while (time.time() - start_time) < max_wait:
             # Check if URL changed to verification page (UTK0201_0.aspx)
@@ -12443,7 +10805,15 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 except:
                     pass
 
-                if tr_count > 0:
+                # Check if TR count is stable (same as last check)
+                if tr_count == last_tr_count and tr_count >= min_tr_count:
+                    stable_count += 1
+                else:
+                    stable_count = 0
+                last_tr_count = tr_count
+
+                # Page loaded: minimum TR count reached AND stable for 2 consecutive checks
+                if tr_count >= min_tr_count and stable_count >= 1:
                     elapsed = time.time() - start_time
                     if show_debug_message:
                         print(f"[IBON AREA] Found {tr_count} TR elements after {elapsed:.2f}s")
@@ -12502,22 +10872,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             if show_debug_message:
                 print(f"[DOMSNAPSHOT] Extracted {len(node_names)} nodes, {len(strings)} strings")
 
-            # Debug: Check layout structure
-            if show_debug_message and hasattr(document_snapshot, 'layout'):
-                layout = document_snapshot.layout
-                has_node_index = hasattr(layout, 'node_index')
-                has_bounds = hasattr(layout, 'bounds')
-                print(f"[DOMSNAPSHOT] Layout available: node_index={has_node_index}, bounds={has_bounds}")
-                if has_node_index:
-                    node_index_count = len(list(layout.node_index)) if layout.node_index else 0
-                    print(f"[DOMSNAPSHOT] Layout node_index count: {node_index_count}")
-                    # Show first few node indices for debugging
-                    node_indices = list(layout.node_index)
-                    print(f"[DOMSNAPSHOT] First 10 layout node indices: {node_indices[:10]}")
-                if has_bounds:
-                    bounds_count = len(list(layout.bounds)) if layout.bounds else 0
-                    bounds_per_rect = bounds_count // node_index_count if node_index_count > 0 else 0
-                    print(f"[DOMSNAPSHOT] Layout bounds count: {bounds_count}, nodes: {node_index_count}, bounds/node: {bounds_per_rect}")
 
             # Build children map for traversal
             children_map = {}
@@ -12827,10 +11181,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     try:
         # cdp already imported at file start (Line 29)
 
-        if show_debug_message:
-            print(f"[CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
-            print(f"[CDP CLICK] TR ID: {target_area['id']}, backend_node_id: {target_area.get('backend_node_id')}")
-
         # Get backend_node_id from target area
         backend_node_id = target_area.get('backend_node_id')
 
@@ -12841,8 +11191,6 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             # Request document first (required for pushNodesByBackendIdsToFrontend)
             try:
                 document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Requested document with pierce=True")
             except Exception as doc_exc:
                 if show_debug_message:
                     print(f"[CDP CLICK] Document request failed: {doc_exc}")
@@ -12860,45 +11208,26 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
                 node_id = node_ids[0]
 
-                if show_debug_message:
-                    print(f"[CDP CLICK] Converted backend_node_id to node_id: {node_id}")
-
                 # Scroll into view
                 try:
                     await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Scrolled element into view")
-                except Exception as e:
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Scroll warning: {e}")
+                except Exception:
+                    pass  # Scroll not always needed
 
-                # Focus element
+                # Focus element (ignore focus warnings)
                 try:
                     await tab.send(cdp.dom.focus(node_id=node_id))
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Focused element")
-                except Exception as e:
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Focus warning: {e}")
+                except Exception:
+                    pass  # Element may not be focusable
 
-                # Get real-time box model (current coordinates)
+                # Get real-time box model and click
                 box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
-                if show_debug_message:
-                    print(f"[CDP CLICK] Got box model")
-
-                # Calculate center point
                 content_quad = box_model.content if hasattr(box_model, 'content') else box_model.model.content
                 x = (content_quad[0] + content_quad[2]) / 2
                 y = (content_quad[1] + content_quad[5]) / 2
 
-                if show_debug_message:
-                    print(f"[CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
-
                 # Execute mouse click
                 await tab.mouse_click(x, y)
-
-                if show_debug_message:
-                    print(f"[CDP CLICK] Mouse click executed successfully")
 
                 # Wait for navigation
                 await tab.sleep(random.uniform(0.5, 0.8))
@@ -12934,11 +11263,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
     ticket_number = str(config_dict.get("ticket_number", 2))
-
-    if show_debug_message:
-        print(f"NoDriver ibon_ticket_number_auto_select started")
-        print(f"ticket_number: {ticket_number}")
-
     is_ticket_number_assigned = False
 
     try:
@@ -13044,9 +11368,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         # Parse result
         result_parsed = util.parse_nodriver_result(result)
 
-        if show_debug_message:
-            print(f"Ticket number selection result: {result_parsed}")
-
         if isinstance(result_parsed, dict):
             if result_parsed.get('success'):
                 is_ticket_number_assigned = True
@@ -13059,10 +11380,6 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 else:
                     if show_debug_message:
                         print(f"[TICKET] Set to: {result_parsed.get('set_value')}")
-                        if result_parsed.get('verified'):
-                            print(f"[TICKET] Verified: true")
-                        if result_parsed.get('selector'):
-                            print(f"[TICKET] Selector used: {result_parsed.get('selector')}")
             else:
                 if show_debug_message:
                     error_msg = result_parsed.get('error')
@@ -13124,8 +11441,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 img_backend_node_id = doc.nodes.backend_node_id[idx]
 
                             if show_debug_message:
-                                print(f"[CAPTCHA] Found captcha IMG: {target_img_url}")
-                                print(f"[CAPTCHA] Backend node ID: {img_backend_node_id}")
+                                print(f"[CAPTCHA] Found IMG: {target_img_url}")
                             break
 
             if img_backend_node_id:
@@ -13146,8 +11462,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             img_backend_node_id = doc.nodes.backend_node_id[idx]
                             
                             if show_debug_message:
-                                print(f"[CAPTCHA] Found captcha CANVAS element")
-                                print(f"[CAPTCHA] Backend node ID: {img_backend_node_id}")
+                                print(f"[CAPTCHA] Found CANVAS element")
                             break
                 
                 if img_backend_node_id:
@@ -13180,8 +11495,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                     result = await tab.send(cdp.dom.push_nodes_by_backend_ids_to_frontend([img_backend_node_id]))
                     if result and len(result) > 0:
                         img_node_id = result[0]
-                        if show_debug_message:
-                            print(f"[CAPTCHA] Converted to node_id: {img_node_id}")
 
                         # Scroll element into view first to ensure it's rendered
                         try:
@@ -13201,8 +11514,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             width = max(quad[0], quad[2], quad[4], quad[6]) - x
                             height = max(quad[1], quad[3], quad[5], quad[7]) - y
 
-                            if show_debug_message:
-                                print(f"[CAPTCHA] IMG box: x={x}, y={y}, w={width}, h={height}")
 
                             # Get device pixel ratio
                             device_pixel_ratio = await tab.evaluate('window.devicePixelRatio')
@@ -13220,8 +11531,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 full_img_bytes = base64.b64decode(full_screenshot)
                                 full_img = Image.open(io.BytesIO(full_img_bytes))
 
-                                if show_debug_message:
-                                    print(f"[CAPTCHA] Full screenshot: {full_img.size}")
 
                                 # Crop using PIL (coordinates need to account for device pixel ratio)
                                 left = int(x * device_pixel_ratio)
@@ -13230,9 +11539,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 bottom = int((y + height) * device_pixel_ratio)
 
                                 cropped_img = full_img.crop((left, top, right, bottom))
-
-                                if show_debug_message:
-                                    print(f"[CAPTCHA] Cropped: {cropped_img.size}, crop box: ({left}, {top}, {right}, {bottom})")
 
                                 # Convert back to bytes
                                 img_buffer = io.BytesIO()
@@ -13928,6 +12234,52 @@ async def nodriver_ibon_check_sold_out(tab, config_dict):
 
     return is_sold_out
 
+
+async def nodriver_ibon_wait_for_select_elements(tab, config_dict, max_wait_time=3.0):
+    """
+    Wait for ticket quantity select elements to appear on page.
+    Prevents false sold-out detection when page hasn't fully loaded.
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+        max_wait_time: Maximum wait time in seconds (default 3.0)
+
+    Returns:
+        int: Number of select elements found (0 if none found after timeout)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    wait_interval = 0.2
+    start_time = time.time()
+
+    while time.time() - start_time < max_wait_time:
+        try:
+            select_count = await tab.evaluate('''
+                (function() {
+                    let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
+                    if (selects.length === 0) {
+                        selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
+                    }
+                    if (selects.length === 0) {
+                        selects = document.querySelectorAll('select.form-control-sm');
+                    }
+                    return selects.length;
+                })()
+            ''')
+            if select_count and select_count > 0:
+                if show_debug_message:
+                    elapsed = time.time() - start_time
+                    print(f"[IBON] Page loaded, found {select_count} select element(s) after {elapsed:.2f}s")
+                return select_count
+        except Exception:
+            pass
+        await asyncio.sleep(wait_interval)
+
+    if show_debug_message:
+        print(f"[IBON] Warning: No select elements found after {max_wait_time}s wait")
+    return 0
+
+
 async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     """
     Check if tickets are sold out on ibon ticket selection page
@@ -14008,7 +12360,10 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
                 let hasSoldOutMessage = soldOutKeywords.some(keyword => pageText.includes(keyword));
 
                 // Final determination: sold out if any method detects it
-                const isSoldOut = hasAmountSoldOut || hasPriceSoldOut || !hasValidOptions || hasSoldOutMessage;
+                // IMPORTANT: Only consider "no valid options" as sold-out when select elements exist
+                // If selectCount === 0, the page might still be loading (not sold out)
+                const noValidOptionsButSelectsExist = selectCount > 0 && !hasValidOptions;
+                const isSoldOut = hasAmountSoldOut || hasPriceSoldOut || noValidOptionsButSelectsExist || hasSoldOutMessage;
 
                 return {
                     hasAmountSoldOut: hasAmountSoldOut,
@@ -14017,7 +12372,8 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
                     selectCount: selectCount,
                     hasValidOptions: hasValidOptions,
                     hasSoldOutMessage: hasSoldOutMessage,
-                    isSoldOut: isSoldOut
+                    isSoldOut: isSoldOut,
+                    pageNotLoaded: selectCount === 0
                 };
             })()
         ''')
@@ -14025,14 +12381,16 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
         result = util.parse_nodriver_result(result)
         if isinstance(result, dict):
             is_sold_out = result.get('isSoldOut', False)
+            page_not_loaded = result.get('pageNotLoaded', False)
             if show_debug_message:
-                print(f"[IBON SOLD OUT CHECK] AMOUNT_STR sold out: {result.get('hasAmountSoldOut', False)} (count: {result.get('amountSoldOutCount', 0)})")
-                print(f"[IBON SOLD OUT CHECK] PRICE_STR sold out: {result.get('hasPriceSoldOut', False)}")
-                print(f"[IBON SOLD OUT CHECK] Select elements found: {result.get('selectCount', 0)}")
-                print(f"[IBON SOLD OUT CHECK] Has valid options: {result.get('hasValidOptions', False)}")
-                print(f"[IBON SOLD OUT CHECK] Body text has sold out message: {result.get('hasSoldOutMessage', False)}")
-                if is_sold_out:
-                    print("[IBON SOLD OUT CHECK] All tickets are sold out, page reload required")
+                select_count = result.get('selectCount', 0)
+                has_valid = result.get('hasValidOptions', False)
+                if page_not_loaded:
+                    print("[IBON] Page not fully loaded, waiting...")
+                elif is_sold_out:
+                    print("[IBON] Sold out detected, will reload")
+                else:
+                    print(f"[IBON] Tickets available ({select_count} selects, valid={has_valid})")
 
     except Exception as e:
         if show_debug_message:
@@ -15032,8 +13390,11 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             pass
 
                 if is_do_ibon_performance_with_ticket_number:
-                    # Step 0: Check if tickets are sold out FIRST (before OCR)
+                    # Wait for page to load before checking sold-out (prevents false detection)
                     show_debug_message = config_dict["advanced"].get("verbose", False)
+                    await nodriver_ibon_wait_for_select_elements(tab, config_dict)
+
+                    # Step 0: Check if tickets are sold out FIRST (before OCR)
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                     if is_sold_out_detected:
@@ -15135,7 +13496,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                 if not ibon_dict.get("played_sound_ticket", False):
                                     if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                    send_discord_notification(config_dict, "ticket", "iBon")
                                     ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -15158,6 +13518,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     is_do_ibon_performance_with_ticket_number = True
 
                 if is_do_ibon_performance_with_ticket_number:
+                    # Wait for page to load before checking sold-out (prevents false detection)
+                    await nodriver_ibon_wait_for_select_elements(tab, config_dict)
+
                     # Step 0: Check if tickets are sold out FIRST (before OCR)
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
@@ -15260,7 +13623,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                 if not ibon_dict.get("played_sound_ticket", False):
                                     if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                    send_discord_notification(config_dict, "ticket", "iBon")
                                     ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
                             if show_debug_message:
@@ -15428,7 +13790,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         if not ibon_dict.get("played_sound_ticket", False):
                             if config_dict["advanced"]["play_sound"]["ticket"]:
                                 play_sound_while_ordering(config_dict)
-                            send_discord_notification(config_dict, "ticket", "iBon")
                             ibon_dict["played_sound_ticket"] = True
                         if show_debug_message:
                             print("[NEW EVENTBUY] Purchase button clicked successfully")
@@ -15576,7 +13937,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                 if not ibon_dict.get("played_sound_ticket", False):
                                     if config_dict["advanced"]["play_sound"]["ticket"]:
                                         play_sound_while_ordering(config_dict)
-                                    send_discord_notification(config_dict, "ticket", "iBon")
                                     ibon_dict["played_sound_ticket"] = True
                     else:
                         is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
@@ -15726,108 +14086,6 @@ async def nodriver_cityline_login(tab, cityline_account):
                     await asyncio.sleep(random.uniform(1.0, 2.0))
         except Exception as exc:
             pass  # Silent fail, will retry on next loop
-
-async def nodriver_cityline_handle_login_redirect(tab, url, config_dict):
-    """
-    Handle Cityline login completion and redirect to target event page
-    Reference: KKTIX signin implementation (nodriver_kktix_signin:497-597)
-    Strategy: Wait for user to manually complete login, then detect URL change and redirect
-    """
-    # Check pause state
-    if await check_and_handle_pause(config_dict):
-        return False
-
-    show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    # Step 1: Determine target URL (prioritize homepage config)
-    import urllib.parse
-    target_url = config_dict["homepage"]  # Always use homepage from config as target
-
-    if show_debug_message:
-        print(f"[CITYLINE LOGIN] Target URL from config: {target_url}")
-
-    # Step 2: Wait for manual login completion (smart polling with extended timeout)
-    max_wait = 300  # 5 minutes timeout (enough time for manual login)
-    check_interval = 1.0  # Check every 1 second
-    max_attempts = int(max_wait / check_interval)
-    login_completed = False
-
-    print("=" * 80)
-    print("[CITYLINE LOGIN] Waiting for manual login completion...")
-    print("=" * 80)
-    print("Please complete the following steps manually:")
-    print("  1. Enter your password in the browser window")
-    print("  2. Click the 'Login' button")
-    print("  3. Wait for page to redirect")
-    print(f"\nProgram will wait up to {max_wait} seconds ({max_wait//60} minutes)")
-    print("=" * 80)
-
-    for attempt in range(max_attempts):
-        try:
-            # Method 1: Check URL change (primary method)
-            current_url = await tab.evaluate('window.location.href')
-            url_changed = '/Login.html' not in current_url
-
-            # Method 2: Check DOM element (secondary verification)
-            member_element_exists = await tab.evaluate('''
-                (function() {
-                    const memberName = document.querySelector('.memberName');
-                    const userBox = document.querySelector('.user-box');
-                    return (memberName !== null || userBox !== null);
-                })()
-            ''')
-
-            # Login completed if either condition is met
-            if url_changed or member_element_exists:
-                login_completed = True
-                detection_method = "DOM element" if member_element_exists else "URL change"
-                print(f"\n[CITYLINE LOGIN] Login completed after {attempt * check_interval:.0f}s (detected by: {detection_method})")
-                print(f"[CITYLINE LOGIN] Current URL: {current_url}")
-                if show_debug_message:
-                    print(f"[CITYLINE LOGIN] Member element exists: {member_element_exists}")
-                break
-
-            # Progress indicator every 10 seconds
-            if attempt > 0 and attempt % 10 == 0 and show_debug_message:
-                print(f"[CITYLINE LOGIN] Still waiting... ({attempt}s elapsed)")
-
-        except Exception as exc:
-            if show_debug_message and attempt == max_attempts - 1:
-                print(f"[ERROR] Check login status failed: {exc}")
-
-        if attempt < max_attempts - 1:
-            await asyncio.sleep(check_interval)
-
-    if not login_completed:
-        print(f"[WARNING] Login timeout after {max_wait}s")
-        print("[WARNING] Please check if login was successful manually")
-        return False
-
-    # Step 3: Redirect to target URL (homepage from config)
-    try:
-        current_url = await tab.evaluate('window.location.href')
-
-        # Check if current URL matches target URL
-        if current_url == target_url:
-            if show_debug_message:
-                print(f"[CITYLINE LOGIN] Already on target page: {target_url}")
-            return True
-
-        # Need to redirect to target URL
-        if show_debug_message:
-            print(f"[CITYLINE LOGIN] Current URL: {current_url}")
-            print(f"[CITYLINE LOGIN] Target URL: {target_url}")
-
-        print("[CITYLINE LOGIN] Redirecting to target page...")
-        await tab.get(target_url)
-        await asyncio.sleep(random.uniform(1.5, 3.0))
-
-        print("[CITYLINE LOGIN] Redirect completed")
-        return True
-
-    except Exception as exc:
-        print(f"[ERROR] Redirect failed: {exc}")
-        return False
 
 async def nodriver_cityline_date_auto_select(tab, config_dict):
     """
@@ -16695,7 +14953,6 @@ async def nodriver_cityline_main(tab, url, config_dict):
         if not cityline_dict["played_sound_ticket"]:
             if config_dict["advanced"]["play_sound"]["ticket"]:
                 play_sound_while_ordering(config_dict)
-            send_discord_notification(config_dict, "ticket", "Cityline")
         cityline_dict["played_sound_ticket"] = True
 
         # Integrated performance page processing (area + ticket number + next button)
@@ -21441,80 +19698,6 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
     return is_seat_type_assigned
 
 
-async def nodriver_ticket_find_best_seats(available_seats, ticket_number, allow_non_adjacent, tab):
-    """
-    智慧座位選擇演算法
-    策略：優先選擇座位密度高的排，然後選中間位置
-    Reference: chrome_tixcraft.py Line 9051-9111
-
-    This function logic is 100% same as Chrome version
-    Only difference: use async and evaluate to get attributes
-    """
-    if len(available_seats) < ticket_number:
-        return []
-
-    # Step 1: Analyze seat distribution (same as Chrome)
-    rows = {}
-    for seat in available_seats:
-        try:
-            # Use evaluate to get title attribute
-            seat_title = await tab.evaluate('''
-                (function(elem) {
-                    return elem.getAttribute('title');
-                })(arguments[0])
-            ''', seat)
-
-            if seat_title and '排' in seat_title and '號' in seat_title:
-                parts = seat_title.split('-')
-                if len(parts) >= 3:
-                    row_num = int(parts[1].replace('排', ''))
-                    seat_num = int(parts[2].replace('號', ''))
-
-                    if row_num not in rows:
-                        rows[row_num] = []
-                    rows[row_num].append((seat, seat_num))
-        except:
-            continue
-
-    # Step 2: Sort by seat count (rows with more seats first)
-    sorted_rows = sorted(rows.items(), key=lambda x: -len(x[1]))
-
-    selected_seats = []
-    for row_num, row_seats in sorted_rows:
-        # Step 3: Sort by seat number, select middle position
-        row_seats.sort(key=lambda x: x[1])
-        seat_count = len(row_seats)
-
-        if allow_non_adjacent:
-            # Non-adjacent mode: select from middle position
-            start_idx = max(0, (seat_count - ticket_number) // 2)
-            for i in range(min(ticket_number, seat_count)):
-                if start_idx + i < len(row_seats):
-                    selected_seats.append(row_seats[start_idx + i][0])
-                    if len(selected_seats) >= ticket_number:
-                        break
-        else:
-            # Adjacent mode: find adjacent seats
-            for start_idx in range(len(row_seats) - ticket_number + 1):
-                continuous = True
-                for i in range(ticket_number - 1):
-                    current_num = row_seats[start_idx + i][1]
-                    next_num = row_seats[start_idx + i + 1][1]
-                    if abs(next_num - current_num) > 2:  # Allow odd-even adjacent
-                        continuous = False
-                        break
-
-                if continuous:
-                    for i in range(ticket_number):
-                        selected_seats.append(row_seats[start_idx + i][0])
-                    break
-
-        if len(selected_seats) >= ticket_number:
-            break
-
-    return selected_seats[:ticket_number]
-
-
 async def _analyze_seat_quality(tab, config_dict):
     """
     分析座位品質並篩選候選排/列
@@ -22686,13 +20869,6 @@ def get_maxbot_extension_path(extension_folder):
             #print("final path:", path)
     return config_filepath
 
-def is_port_in_use(port: int, host: str = '127.0.0.1') -> bool:
-    """Check if a TCP port is already in use."""
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(1)
-        return s.connect_ex((host, port)) == 0
-
 def get_extension_config(config_dict, args=None):
     default_lang = "zh-TW"
     no_sandbox=True
@@ -23325,6 +21501,7 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
 
     # Check if date is already assigned (for select element)
     is_date_assigned = False
+    selected_text = None
     try:
         selected_text = await tab.evaluate('''
             (function() {
@@ -23335,11 +21512,47 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
                 return null;
             })();
         ''')
-        if selected_text and len(selected_text) > 8 and '20' in selected_text:
-            is_date_assigned = True
     except Exception as exc:
         if show_debug_message:
             print("[HKTICKETING DATE] Check selected date error:", exc)
+
+    # If a date is selected, check if it matches the keyword
+    if selected_text and len(selected_text) > 8 and '20' in selected_text:
+        if show_debug_message:
+            print(f"[HKTICKETING DATE] Currently selected: {selected_text}")
+
+        if len(date_keyword) > 0:
+            # Check if selected date matches keyword
+            normalized_selected = util.format_keyword_string(selected_text)
+            keyword_sets = util.parse_keyword_string_to_array(date_keyword)
+            if not keyword_sets:
+                keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
+
+            for keyword_set in keyword_sets:
+                keyword_parts = keyword_set.split(' ') if isinstance(keyword_set, str) else [str(keyword_set)]
+                is_match = True
+                for kw in keyword_parts:
+                    kw_formatted = util.format_keyword_string(str(kw))
+                    if kw_formatted not in normalized_selected:
+                        is_match = False
+                        break
+                if is_match:
+                    is_date_assigned = True
+                    if show_debug_message:
+                        print(f"[HKTICKETING DATE] Selected date matches keyword, keeping selection")
+                    break
+
+            if not is_date_assigned and show_debug_message:
+                print(f"[HKTICKETING DATE] Selected date does not match keyword, will select target date")
+        else:
+            # No keyword specified - only keep selection if date_auto_fallback is enabled
+            if date_auto_fallback:
+                is_date_assigned = True
+                if show_debug_message:
+                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=true, keeping current selection")
+            else:
+                if show_debug_message:
+                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
     if show_debug_message:
         print("[HKTICKETING DATE] is_date_assigned:", is_date_assigned)
@@ -23830,19 +22043,6 @@ async def nodriver_hkticketing_ticket_number_auto_select(tab, config_dict):
     return is_ticket_number_assigned
 
 
-async def nodriver_hkticketing_nav_to_footer(tab):
-    """
-    Scroll to page footer
-    Reference: chrome_tixcraft.py hkticketing_nav_to_footer (line 7967-7978)
-    """
-    try:
-        el_footer = await tab.query_selector('#wrapFooter')
-        if el_footer:
-            await el_footer.scroll_into_view()
-    except Exception as exc:
-        pass
-
-
 async def nodriver_hkticketing_ticket_delivery_option(tab, config_dict=None):
     """
     Select ticket delivery option
@@ -24168,67 +22368,6 @@ async def nodriver_hkticketing_type02_check_traffic_overload(tab, config_dict=No
     except Exception as exc:
         if show_debug_message:
             print(f"[HKTICKETING TYPE02] Traffic check error: {exc}")
-
-    return False
-
-
-async def nodriver_hkticketing_type02_check_login_status(tab, config_dict=None):
-    """
-    Check if user is logged in on hkt.hkticketing.com
-
-    Returns:
-        bool: whether user is logged in
-    """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
-
-    try:
-        result = await tab.evaluate('''
-            (function() {
-                // Check ACCOUNT_INFO in localStorage
-                var accountInfo = localStorage.getItem('ACCOUNT_INFO');
-                if (accountInfo) {
-                    try {
-                        var info = JSON.parse(accountInfo);
-                        if (info.userName && info.userName.length > 0) {
-                            return { loggedIn: true, userName: info.userName };
-                        }
-                    } catch (e) {}
-                }
-
-                // Check if login link is visible (not logged in)
-                var loginLink = document.querySelector('a[href*="/login"]');
-                if (loginLink) {
-                    var text = loginLink.innerText || '';
-                    if (text.includes('登入') || text.includes('Login')) {
-                        return { loggedIn: false, reason: 'login link visible' };
-                    }
-                }
-
-                // Check for user menu or logout option
-                var userMenu = document.querySelector('[class*="user"], [class*="account"], [class*="logout"]');
-                if (userMenu) {
-                    return { loggedIn: true, reason: 'user menu found' };
-                }
-
-                return { loggedIn: false, reason: 'unknown' };
-            })();
-        ''')
-
-        # Handle case where evaluate returns a list instead of dict
-        if isinstance(result, list) and len(result) > 0:
-            result = result[0] if isinstance(result[0], dict) else None
-
-        if result and isinstance(result, dict):
-            is_logged_in = result.get('loggedIn', False)
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Login status: {result}")
-            return is_logged_in
-
-    except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Check login error: {exc}")
 
     return False
 
@@ -24568,6 +22707,29 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
 
     date_keyword = util.format_keyword_string(date_keyword)
 
+    # Wait for date elements to be rendered (SPA page)
+    date_info = None
+    for wait_attempt in range(10):
+        try:
+            date_info = await tab.evaluate('''
+                (function() {
+                    var items = document.querySelectorAll('div.sessionList___al29_');
+                    return items.length;
+                })();
+            ''')
+            if date_info and int(date_info) > 0:
+                if show_debug_message:
+                    print(f"[HKTICKETING TYPE02 DATE] Found {date_info} date elements after {wait_attempt + 1} attempts")
+                break
+        except Exception:
+            pass
+        await asyncio.sleep(0.3)
+
+    if not date_info or int(date_info) == 0:
+        if show_debug_message:
+            print("[HKTICKETING TYPE02 DATE] No date elements found after waiting")
+        return False
+
     # Get all date items via JavaScript
     is_date_assigned = False
     try:
@@ -24599,13 +22761,48 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                 for d in dates_data:
                     print(f"  [{d['index']}] {d['text']} {'(selected)' if d['isSelected'] else ''}")
 
-            # Check if already selected
+            # Check if already selected AND matches keyword
+            selected_date_text = None
             for d in dates_data:
                 if d['isSelected']:
+                    selected_date_text = d['text']
+                    if show_debug_message:
+                        print(f"[HKTICKETING TYPE02 DATE] Currently selected: {d['text']}")
+                    break
+
+            # If a date is selected, check if it matches the keyword
+            if selected_date_text and len(date_keyword) > 0:
+                # Check if selected date matches keyword
+                normalized_selected = util.format_keyword_string(selected_date_text)
+                keyword_sets = util.parse_keyword_string_to_array(date_keyword)
+                if not keyword_sets:
+                    keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
+
+                for keyword_set in keyword_sets:
+                    keyword_parts = keyword_set.split(' ') if isinstance(keyword_set, str) else [str(keyword_set)]
+                    is_match = True
+                    for kw in keyword_parts:
+                        kw_formatted = util.format_keyword_string(str(kw))
+                        if kw_formatted not in normalized_selected:
+                            is_match = False
+                            break
+                    if is_match:
+                        is_date_assigned = True
+                        if show_debug_message:
+                            print(f"[HKTICKETING TYPE02 DATE] Selected date matches keyword, keeping selection")
+                        break
+
+                if not is_date_assigned and show_debug_message:
+                    print(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
+            elif selected_date_text and len(date_keyword) == 0:
+                # No keyword specified - only keep selection if date_auto_fallback is enabled
+                if date_auto_fallback:
                     is_date_assigned = True
                     if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] Already selected: {d['text']}")
-                    break
+                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=true, keeping current selection")
+                else:
+                    if show_debug_message:
+                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
             if not is_date_assigned and len(dates_data) > 0:
                 # Get actual elements for clicking
@@ -25599,7 +23796,6 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             if not hkticketing_dict.get("played_sound_ticket", False):
                 if config_dict["advanced"]["play_sound"]["ticket"]:
                     play_sound_while_ordering(config_dict)
-                send_discord_notification(config_dict, "ticket", "HKTicketing")
                 hkticketing_dict["played_sound_ticket"] = True
 
             await nodriver_hkticketing_type02_performance(tab, config_dict)
@@ -25722,7 +23918,6 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
                     if not hkticketing_dict["played_sound_ticket"]:
                         if config_dict["advanced"]["play_sound"]["ticket"]:
                             play_sound_while_ordering(config_dict)
-                        send_discord_notification(config_dict, "ticket", "HKTicketing")
                         hkticketing_dict["played_sound_ticket"] = True
 
                     await nodriver_hkticketing_performance(tab, config_dict, domain_name)
