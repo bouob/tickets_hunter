@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.01.05
+
+- 修復 HKTicketing 日期選擇：正確驗證關鍵字匹配並支援回退機制
+- 修復 TicketPlus 票種選擇失敗時自動重載功能
+- 優化 TicketPlus Vue.js 偵測機制，加快頁面載入速度
+- 修復 iBon 頁面載入前誤判售罄問題
+- 清理 NoDriver 冗餘程式碼，提升整體效能
+- 調整 Discord 通知時機，只在完成訂單時發送
+
 ## 2025.12.26
 
 - 新增 iBon Cloudflare 驗證偵測機制（最長等待 15 秒）

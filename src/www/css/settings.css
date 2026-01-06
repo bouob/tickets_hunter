@@ -188,10 +188,6 @@ textarea {
     box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), 0.5);
 }
 
-.bmc-emoji {
-    font-size: 1.25rem;
-}
-
 /* Dark Mode: Use Bootstrap's teal color with adjusted shades */
 [data-bs-theme="dark"] .bmc-button {
     --bs-btn-bg: #0dcaf0;

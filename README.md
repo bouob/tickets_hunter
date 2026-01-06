@@ -2,6 +2,8 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/bouob/tickets_hunter?style=flat-square)](https://github.com/bouob/tickets_hunter/releases)
 
+![Alt](https://repobeats.axiom.co/api/embed/26c8cdbc93817a90a4a12b0cc0b79bc0dc3459fd.svg "Repobeats analytics image")
+
 **📖 前言**：因原專案 MaxBot作者 max32002/tixcraft_bot 已停止更新，本專案為後續延伸產品
 
 **🎯 目標**：讓一般民眾與代購黃牛有相同的起跑線，用魔法對抗魔法；各位都能順利搶到大巨蛋棒球票！
@@ -164,16 +166,6 @@ tickets_hunter/
     ├── LICENSE                 # 授權條款
     └── requirement.txt         # Python 相依套件
 ```
-
----
-
-## 🎬 教學資源
-
-### 📖 使用者手冊（推薦新手閱讀）
-- [完整使用者手冊](guide/README.md) - 專為第一次使用者設計
-- [快速入門指南](guide/quick-start.md) - 5分鐘快速開始搶票
-- [關鍵字與回退機制](guide/keyword-mechanism.md) - 理解搶票邏輯
-- [詳細設定說明](guide/settings-guide.md) - settings.json 完整欄位說明
 
 ---
 
