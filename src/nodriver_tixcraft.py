@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.05)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.07)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -11253,11 +11253,16 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
 async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     """
-    ibon ticket number auto-selection using NoDriver CDP
-    Finds the first ticket quantity SELECT element and sets the desired quantity
+    ibon ticket number auto-selection using NoDriver CDP with keyword matching
+
+    Enhancement (2026-01-07):
+    - Supports ticket type keyword matching using area_keyword
+    - Supports keyword exclusion using keyword_exclude
+    - Respects auto_select_mode for fallback selection
+
     Returns: is_ticket_number_assigned (bool)
     """
-    # 函數開始時檢查暫停
+    # Check pause at function start
     if await check_and_handle_pause(config_dict):
         return False
 
@@ -11265,18 +11270,22 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     ticket_number = str(config_dict.get("ticket_number", 2))
     is_ticket_number_assigned = False
 
+    # Get keyword settings for ticket type matching
+    area_keyword = config_dict["area_auto_select"].get("area_keyword", "").strip()
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+    auto_select_mode = config_dict["area_auto_select"].get("mode", 1)
+
     try:
-        # Optimized: wait for SELECT element (reduced from 30 to 15 attempts = 1.5s max)
+        # Step 1: Wait for SELECT element
         wait_result = await tab.evaluate('''
             () => {
                 return new Promise((resolve) => {
                     let attempts = 0;
-                    const maxAttempts = 15; // 15 * 100ms = 1.5 seconds max wait (reduced from 30)
+                    const maxAttempts = 15;
 
                     const checkSelect = setInterval(() => {
                         attempts++;
 
-                        // Try multiple selectors in priority order
                         let select = document.querySelector('table.rwdtable select.form-control-sm') ||
                                     document.querySelector('table.table select[name*="AMOUNT_DDL"]') ||
                                     document.querySelector('select.form-control-sm');
@@ -11300,93 +11309,249 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
             else:
                 print(f"[TICKET DOM] {wait_parsed.get('error')}")
 
-        # Use JavaScript to find first ticket quantity SELECT and set value
+        # Step 2: Extract all ticket types with their names and availability
+        ticket_types_result = await tab.evaluate(f'''
+            (function() {{
+                let ticketTypes = [];
+                const targetTicketNumber = "{ticket_number}";
+
+                // Try new format first (table.rwdtable)
+                let rows = document.querySelectorAll('table.rwdtable tbody tr');
+                let tableType = 'rwdtable';
+
+                // Fallback to old format (table.table)
+                if (rows.length === 0) {{
+                    rows = document.querySelectorAll('table.table tbody tr');
+                    tableType = 'table';
+                }}
+
+                rows.forEach((row, index) => {{
+                    // Find SELECT element in this row
+                    let select = row.querySelector('select.form-control-sm') ||
+                                row.querySelector('select[name*="AMOUNT_DDL"]');
+
+                    if (!select) return;
+
+                    // Get ticket type name from first cell
+                    let nameCell = row.querySelector('td:first-child, td[data-title]');
+                    let ticketName = nameCell ? nameCell.textContent.trim() : '';
+
+                    // Get price from price cell
+                    let priceCell = row.querySelector('td:nth-child(3)');
+                    let price = priceCell ? priceCell.textContent.trim() : '';
+
+                    // Check if this ticket type has valid options (not sold out)
+                    let hasValidOption = Array.from(select.options).some(
+                        opt => opt.value !== '0' && opt.value !== ''
+                    );
+
+                    // Check current value
+                    let currentValue = select.value;
+                    let isAlreadySelected = currentValue !== '0' && currentValue !== '';
+
+                    // Check if target ticket_number option exists
+                    let hasTargetOption = Array.from(select.options).some(
+                        opt => opt.value === targetTicketNumber
+                    );
+
+                    ticketTypes.push({{
+                        index: index,
+                        name: ticketName,
+                        price: price,
+                        hasValidOption: hasValidOption,
+                        isAlreadySelected: isAlreadySelected,
+                        currentValue: currentValue,
+                        hasTargetOption: hasTargetOption,
+                        selectName: select.name || ''
+                    }});
+                }});
+
+                return {{
+                    ticketTypes: ticketTypes,
+                    tableType: tableType,
+                    totalRows: rows.length
+                }};
+            }})();
+        ''')
+
+        ticket_types_parsed = util.parse_nodriver_result(ticket_types_result)
+
+        if not isinstance(ticket_types_parsed, dict):
+            if show_debug_message:
+                print(f"[TICKET] Failed to parse ticket types")
+            return False
+
+        ticket_types = ticket_types_parsed.get('ticketTypes', [])
+
+        if show_debug_message:
+            print(f"[TICKET] Found {len(ticket_types)} ticket type(s)")
+            for tt in ticket_types:
+                status = "selected" if tt.get('isAlreadySelected') else ("available" if tt.get('hasValidOption') else "sold out")
+                print(f"  [{tt.get('index')}] {tt.get('name')} - {tt.get('price')} ({status})")
+
+        if len(ticket_types) == 0:
+            if show_debug_message:
+                print(f"[TICKET] No ticket types found")
+            return False
+
+        # Step 3: Check if any ticket type is already selected
+        for tt in ticket_types:
+            if tt.get('isAlreadySelected'):
+                if show_debug_message:
+                    print(f"[TICKET] Already assigned: {tt.get('name')} = {tt.get('currentValue')}")
+                return True
+
+        # Step 4: Filter valid ticket types (with available options)
+        valid_tickets = [tt for tt in ticket_types if tt.get('hasValidOption')]
+
+        if len(valid_tickets) == 0:
+            if show_debug_message:
+                print(f"[TICKET] All ticket types sold out")
+            return False
+
+        # Step 5: Apply keyword_exclude filter
+        filtered_tickets = []
+        for ticket in valid_tickets:
+            ticket_name = ticket.get('name', '')
+            if keyword_exclude and len(keyword_exclude) > 0:
+                if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
+                    if show_debug_message:
+                        print(f"[TICKET] Excluded by keyword: {ticket_name}")
+                    continue
+            filtered_tickets.append(ticket)
+
+        if len(filtered_tickets) == 0:
+            if show_debug_message:
+                print(f"[TICKET] All ticket types excluded by keyword_exclude")
+            # Fallback to valid_tickets if all excluded
+            filtered_tickets = valid_tickets
+
+        # Step 5.5: Shortcut for single ticket type (skip keyword matching)
+        # Fix (2026-01-07): If only 1 valid ticket type, select it directly
+        if len(filtered_tickets) == 1:
+            matched_ticket = filtered_tickets[0]
+            if show_debug_message:
+                print(f"[TICKET] Single ticket type, selecting directly: {matched_ticket.get('name')}")
+        else:
+            # Step 6: Apply area_keyword matching (for multiple ticket types)
+            matched_ticket = None
+
+            if area_keyword and len(area_keyword) > 0:
+                # Parse keyword array (supports "kw1","kw2" format)
+                try:
+                    area_keyword_array = json.loads("[" + area_keyword + "]")
+                except:
+                    area_keyword_array = [area_keyword]
+
+                # Try each keyword in priority order
+                for keyword_item in area_keyword_array:
+                    keyword_item = keyword_item.strip()
+                    if not keyword_item:
+                        continue
+
+                    for ticket in filtered_tickets:
+                        ticket_name = ticket.get('name', '')
+                        row_text = util.format_keyword_string(ticket_name)
+
+                        # Support AND logic (space-separated keywords must all match)
+                        keyword_parts = [kw.strip() for kw in keyword_item.split(' ') if kw.strip()]
+                        is_match = all(
+                            util.format_keyword_string(kw) in row_text
+                            for kw in keyword_parts
+                        )
+
+                        if is_match:
+                            matched_ticket = ticket
+                            if show_debug_message:
+                                print(f"[TICKET] Keyword matched: '{keyword_item}' -> {ticket_name}")
+                            break
+
+                    if matched_ticket:
+                        break
+
+                if not matched_ticket and show_debug_message:
+                    print(f"[TICKET] No ticket matched keyword: {area_keyword}")
+
+        # Step 7: Fallback selection if no keyword match
+        if not matched_ticket:
+            if len(filtered_tickets) > 0:
+                # Use auto_select_mode for fallback
+                matched_ticket = util.get_target_item_from_matched_list(
+                    filtered_tickets, auto_select_mode
+                )
+                if show_debug_message:
+                    print(f"[TICKET] Fallback selection: {matched_ticket.get('name') if matched_ticket else 'None'}")
+
+        if not matched_ticket:
+            if show_debug_message:
+                print(f"[TICKET] No suitable ticket type found")
+            return False
+
+        # Step 8: Set the ticket quantity for the matched ticket type
+        target_index = matched_ticket.get('index', 0)
+        has_target_option = matched_ticket.get('hasTargetOption', False)
+
+        # Determine which value to set
+        value_to_set = ticket_number if has_target_option else "1"
+
         result = await tab.evaluate(f'''
             (function() {{
-                // Try multiple selectors in priority order
-                let selects = document.querySelectorAll('table.rwdtable select.form-control-sm');
-                let selectorUsed = "table.rwdtable select.form-control-sm";
-
-                // Fallback 1: old .aspx format
-                if (selects.length === 0) {{
-                    selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
-                    selectorUsed = 'table.table select[name*="AMOUNT_DDL"]';
+                // Find all rows
+                let rows = document.querySelectorAll('table.rwdtable tbody tr');
+                if (rows.length === 0) {{
+                    rows = document.querySelectorAll('table.table tbody tr');
                 }}
 
-                // Fallback 2: generic form-control-sm
-                if (selects.length === 0) {{
-                    selects = document.querySelectorAll('select.form-control-sm');
-                    selectorUsed = "select.form-control-sm";
+                if ({target_index} >= rows.length) {{
+                    return {{success: false, error: "Target row index out of range"}};
                 }}
 
-                if (selects.length === 0) {{
-                    return {{success: false, error: "No ticket SELECT found"}};
+                let row = rows[{target_index}];
+                let select = row.querySelector('select.form-control-sm') ||
+                            row.querySelector('select[name*="AMOUNT_DDL"]');
+
+                if (!select) {{
+                    return {{success: false, error: "SELECT not found in target row"}};
                 }}
 
-                // Use first SELECT (usually full-price ticket)
-                const select = selects[0];
+                // Set the value
+                select.value = "{value_to_set}";
 
-                // Check current selected value
-                const currentValue = select.value;
-
-                if (currentValue !== "0" && currentValue !== "") {{
-                    return {{success: true, already_assigned: true, current: currentValue}};
-                }}
-
-                // Check if target quantity option exists
-                const targetOption = Array.from(select.options).find(opt => opt.value === "{ticket_number}");
-
-                if (!targetOption) {{
-                    // Target quantity not available, try setting to 1
-                    const option1 = Array.from(select.options).find(opt => opt.value === "1");
-                    if (option1) {{
-                        select.value = "1";
-                        select.dispatchEvent(new Event('change', {{bubbles: true}}));
-                        return {{success: true, set_value: "1", fallback: true}};
-                    }}
-                    return {{success: false, error: "Target option not found"}};
-                }}
-
-                // Set target quantity
-                select.value = "{ticket_number}";
-
-                // Trigger multiple events to ensure iBon processes the change
+                // Trigger events
                 select.dispatchEvent(new Event('input', {{bubbles: true}}));
                 select.dispatchEvent(new Event('change', {{bubbles: true}}));
                 select.dispatchEvent(new Event('blur', {{bubbles: true}}));
 
-                // Verify the value was actually set
+                // Verify
                 const finalValue = select.value;
-                if (finalValue !== "{ticket_number}") {{
-                    return {{success: false, error: "Value verification failed", expected: "{ticket_number}", actual: finalValue, selector: selectorUsed}};
+                if (finalValue !== "{value_to_set}") {{
+                    return {{success: false, error: "Value verification failed", expected: "{value_to_set}", actual: finalValue}};
                 }}
 
-                return {{success: true, set_value: "{ticket_number}", verified: true, selector: selectorUsed}};
+                return {{
+                    success: true,
+                    set_value: "{value_to_set}",
+                    ticket_name: row.querySelector('td:first-child')?.textContent.trim() || '',
+                    verified: true
+                }};
             }})();
         ''')
 
-        # Parse result
         result_parsed = util.parse_nodriver_result(result)
 
         if isinstance(result_parsed, dict):
             if result_parsed.get('success'):
                 is_ticket_number_assigned = True
-                if result_parsed.get('already_assigned'):
-                    if show_debug_message:
-                        print(f"[TICKET] Already assigned: {result_parsed.get('current')}")
-                elif result_parsed.get('fallback'):
-                    if show_debug_message:
-                        print(f"[TICKET] Fallback to 1 (target {ticket_number} not available)")
-                else:
-                    if show_debug_message:
-                        print(f"[TICKET] Set to: {result_parsed.get('set_value')}")
+                ticket_name = result_parsed.get('ticket_name', '')
+                set_value = result_parsed.get('set_value', '')
+                if show_debug_message:
+                    if value_to_set != ticket_number:
+                        print(f"[TICKET] Set '{ticket_name}' to {set_value} (fallback, target {ticket_number} not available)")
+                    else:
+                        print(f"[TICKET] Set '{ticket_name}' to {set_value}")
             else:
                 if show_debug_message:
-                    error_msg = result_parsed.get('error')
-                    if error_msg == "Value verification failed":
-                        print(f"[TICKET] Verification failed: expected {result_parsed.get('expected')}, actual {result_parsed.get('actual')}")
-                    else:
-                        print(f"[TICKET] Failed: {error_msg}")
+                    print(f"[TICKET] Failed: {result_parsed.get('error')}")
 
     except Exception as exc:
         if show_debug_message:
@@ -11698,7 +11863,8 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
 
             # Auto submit if enabled
             if auto_submit:
-                # Check if ticket number is selected
+                # Check if ticket number is selected (any SELECT, not just first one)
+                # Fix (2026-01-07): Multi-ticket types may have selected ticket at index > 0
                 ticket_ok = await tab.evaluate('''
                     (function() {
                         // Try new EventBuy format first: table.rwdtable select.form-control-sm
@@ -11708,8 +11874,10 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                             selects = document.querySelectorAll('table.table select[name*="AMOUNT_DDL"]');
                         }
                         if (selects.length === 0) return false;
-                        const select = selects[0];
-                        return select.value !== "0" && select.value !== "";
+                        // Check if ANY select has a non-zero value (ticket selected)
+                        return Array.from(selects).some(select =>
+                            select.value !== "0" && select.value !== ""
+                        );
                     })();
                 ''')
 
@@ -12355,9 +12523,15 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
                     if (hasValidOptions) break;
                 }
 
-                // Method 4: Check if page contains sold out messages in body text
-                const pageText = document.body.innerText || document.body.textContent;
-                let hasSoldOutMessage = soldOutKeywords.some(keyword => pageText.includes(keyword));
+                // Method 4: Check if TICKET TABLE contains sold out messages (NOT entire page)
+                // Fix (2026-01-07): Only check ticket table, not entire page.
+                // The area dropdown may contain "(已售完)" for OTHER areas, causing false positives.
+                let hasSoldOutMessage = false;
+                const ticketTable = document.querySelector('table.rwdtable, table.table');
+                if (ticketTable) {
+                    const tableText = ticketTable.innerText || ticketTable.textContent;
+                    hasSoldOutMessage = soldOutKeywords.some(keyword => tableText.includes(keyword));
+                }
 
                 // Final determination: sold out if any method detects it
                 // IMPORTANT: Only consider "no valid options" as sold-out when select elements exist
@@ -12397,6 +12571,73 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
             print(f"[IBON SOLD OUT CHECK] Error: {e}")
 
     return is_sold_out
+
+
+async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
+    """
+    Navigate to area selection page when tickets are sold out.
+    Fix (2026-01-07): Instead of just reloading the same sold-out page (causes infinite loop),
+    navigate back to the area selection page where other areas might be available.
+
+    URL Formats:
+    - New format: ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}
+      -> Navigate to: ticket.ibon.com.tw/Event/{eventId}/{sessionId}
+    - Old format: orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_PRICE_AREA_ID=xxx
+      -> Navigate to: orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=xxx
+
+    Args:
+        tab: NoDriver tab object
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if navigation successful, False otherwise
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    navigation_success = False
+
+    try:
+        url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
+        url_lower = url.lower()
+
+        # New format: ticket.ibon.com.tw/EventBuy/{eventId}/{sessionId}/{areaId}
+        if '/eventbuy/' in url_lower and 'ticket.ibon.com.tw' in url_lower:
+            parts = url.split('/')
+            # URL: https://ticket.ibon.com.tw/EventBuy/xxx/yyy/zzz
+            # parts: ['https:', '', 'ticket.ibon.com.tw', 'EventBuy', 'eventId', 'sessionId', 'areaId']
+            if len(parts) >= 7:
+                # Navigate to Event page (area selection)
+                event_url = '/'.join(parts[:3] + ['Event', parts[4], parts[5]])
+                if show_debug_message:
+                    print(f"[IBON] Sold out - navigating to area selection: {event_url}")
+                await tab.get(event_url)
+                navigation_success = True
+
+        # Old format: orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_PRICE_AREA_ID=xxx
+        # Note: Old .aspx pages require PRODUCT_ID and other parameters that are hard to reconstruct.
+        # Using tab.back() is safer to return to the previous area selection page.
+        elif '/utk02/utk0202_' in url_lower and 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
+            if show_debug_message:
+                print("[IBON] Sold out - using tab.back() to return to area selection")
+            await tab.back()
+            navigation_success = True
+
+        # Fallback: use tab.back() if URL pattern not recognized
+        if not navigation_success:
+            if show_debug_message:
+                print("[IBON] Sold out - using tab.back() as fallback")
+            await tab.back()
+            navigation_success = True
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[IBON] Navigation error: {e}")
+        # Fallback to reload if navigation fails
+        try:
+            await tab.reload()
+        except Exception:
+            pass
+
+    return navigation_success
 
 
 async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
@@ -13399,13 +13640,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     if is_sold_out_detected:
                         if show_debug_message:
-                            print("[IBON] All tickets sold out, reloading page (skip OCR)...")
+                            print("[IBON] All tickets sold out, navigating to area selection...")
 
-                        try:
-                            await tab.reload()
-                        except Exception as reload_exc:
-                            if show_debug_message:
-                                print(f"[IBON] Reload error: {reload_exc}")
+                        # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
+                        await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                         # Wait before next check (FR-061: auto_reload_page_interval)
                         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
@@ -13424,21 +13662,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             if show_debug_message:
                                 print(f"[IBON] Checkbox error: {exc}")
 
-                    # Step 2: Handle captcha (only executed when tickets are available)
-                    is_captcha_sent = False
-                    if config_dict["ocr_captcha"]["enable"]:
-                        try:
-                            # Initialize OCR instance
-                            import ddddocr
-                            ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
-                            ocr.set_ranges(0)  # Restrict to digits only for ibon
-
-                            is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
-                        except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Captcha error: {exc}")
-
-                    # Step 3: Assign ticket number with retry (exponential backoff)
+                    # Step 2: Assign ticket number FIRST (before captcha)
+                    # Fix (2026-01-07): Captcha auto_submit checks if ticket number is selected.
+                    # Must select ticket number first, then process captcha.
                     is_ticket_number_assigned = False
                     max_retries = 3
 
@@ -13464,19 +13690,30 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         if show_debug_message:
                             print(f"[IBON] Ticket number error: {exc}")
 
+                    # Step 3: Handle captcha (after ticket number is selected)
+                    is_captcha_sent = False
+                    if config_dict["ocr_captcha"]["enable"]:
+                        try:
+                            # Initialize OCR instance
+                            import ddddocr
+                            ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
+                            ocr.set_ranges(0)  # Restrict to digits only for ibon
+
+                            is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
+                        except Exception as exc:
+                            if show_debug_message:
+                                print(f"[IBON] Captcha error: {exc}")
+
                     # Step 3.5: Final check if tickets are sold out (backup check)
                     if not is_ticket_number_assigned:
                         is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                         if is_sold_out_detected:
                             if show_debug_message:
-                                print("[IBON] All tickets sold out, reloading page...")
+                                print("[IBON] All tickets sold out, navigating to area selection...")
 
-                            try:
-                                await tab.reload()
-                            except Exception as reload_exc:
-                                if show_debug_message:
-                                    print(f"[IBON] Reload error: {reload_exc}")
+                            # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
+                            await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                             # Wait before next check (FR-061: auto_reload_page_interval)
                             auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
@@ -13526,13 +13763,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     if is_sold_out_detected:
                         if show_debug_message:
-                            print("[IBON] All tickets sold out, reloading page (skip OCR)...")
+                            print("[IBON] All tickets sold out, navigating to area selection...")
 
-                        try:
-                            await tab.reload()
-                        except Exception as reload_exc:
-                            if show_debug_message:
-                                print(f"[IBON] Reload error: {reload_exc}")
+                        # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
+                        await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                         # Wait before next check (FR-061: auto_reload_page_interval)
                         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
@@ -13597,13 +13831,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                         if is_sold_out_detected:
                             if show_debug_message:
-                                print("[IBON] All tickets sold out, reloading page...")
+                                print("[IBON] All tickets sold out, navigating to area selection...")
 
-                            try:
-                                await tab.reload()
-                            except Exception as reload_exc:
-                                if show_debug_message:
-                                    print(f"[IBON] Reload error: {reload_exc}")
+                            # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
+                            await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
 
                             # Wait before next check (FR-061: auto_reload_page_interval)
                             auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
