@@ -1,6 +1,7 @@
 ---
 description: "分析開啟狀態的 GitHub issues，整理相似問題並提供處理建議"
-model: Opus
+model: opus
+context: fork
 allowed-tools: ["Bash", "Task"]
 ---
 
