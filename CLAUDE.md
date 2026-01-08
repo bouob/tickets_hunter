@@ -8,11 +8,11 @@
 
 ## 📜 憲法（行為紅線）
 
-**位置**：`.specify/memory/constitution.md` | **版本**：2.2.0
+**位置**：`.specify/memory/constitution.md` | **版本**：3.0.0
 
 憲法定義**不可違反的行為規則**，不限制思考方式。
 
-### 9 大行為規範（速記）
+### 8 大行為規範（速記）
 
 | 原則 | 類型 | 核心要點 |
 |------|------|----------|
@@ -24,7 +24,6 @@
 | **VI. 測試驗證** | SHOULD | 核心修改應有測試驗證 |
 | **VII. 文件同步** | SHOULD | 程式碼變更應同步文件、新 API 更新文件 |
 | **VIII. 測試紀律** | MUST/SHOULD | 新功能寫測試、測試失敗必修正、重構不破壞測試 |
-| **IX. 例外處理** | SHOULD | 空 except: pass 需符合回退/可選/預期失敗/重試模式 |
 
 **MUST**：無例外，違反阻擋合併
 **SHOULD**：允許例外，需記錄理由
@@ -150,23 +149,6 @@ timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json
 
 **正確**：`print("[SUCCESS] 操作成功")`
 **錯誤**：`print("✅ 操作成功")`
-
-### 例外處理規範
-
-```python
-# 正確：有日誌的異常處理
-try:
-    element.click()
-except Exception as e:
-    if debug_mode:
-        print(f"[DEBUG] Click failed: {e}")
-
-# 錯誤：空的異常處理（禁止）
-try:
-    element.click()
-except:
-    pass
-```
 
 ---
 
