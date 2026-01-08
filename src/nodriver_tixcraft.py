@@ -689,43 +689,48 @@ async def nodriver_goto_homepage(driver, config_dict):
         tixcraft_family = True
 
     if tixcraft_family:
-        # Determine correct cookie domain based on homepage
+        # Determine correct cookie domain and name based on homepage
+        # Each site uses different session cookie names (Issue #207)
         if 'ticketmaster.sg' in homepage:
             cookie_domain = ".ticketmaster.sg"
+            cookie_name = "TIXPUISID"
         elif 'ticketmaster.com' in homepage:
             cookie_domain = ".ticketmaster.com"
+            cookie_name = "TIXUISID"
         elif 'indievox.com' in homepage:
             cookie_domain = ".indievox.com"
+            cookie_name = "IVUISID"
         else:
             cookie_domain = ".tixcraft.com"
+            cookie_name = "TIXUISID"
 
         tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
             if util.get_debug_mode(config_dict):
-                print(f"Setting tixcraft TIXUISID cookie, length: {len(tixcraft_sid)}")
+                print(f"Setting tixcraft {cookie_name} cookie, length: {len(tixcraft_sid)}")
 
             try:
                 from nodriver import cdp
 
-                # Step 1: Delete existing cookies (both legacy SID and TIXUISID)
+                # Step 1: Delete existing cookies (both legacy SID and session cookie)
                 try:
                     await tab.send(cdp.network.delete_cookies(
                         name="SID",
                         domain=cookie_domain
                     ))
                     await tab.send(cdp.network.delete_cookies(
-                        name="TIXUISID",
+                        name=cookie_name,
                         domain=cookie_domain
                     ))
                     if util.get_debug_mode(config_dict):
-                        print(f"Deleted existing SID and TIXUISID cookies for domain: {cookie_domain}")
+                        print(f"Deleted existing SID and {cookie_name} cookies for domain: {cookie_domain}")
                 except Exception as del_e:
                     if util.get_debug_mode(config_dict):
                         print(f"Note: Could not delete existing cookies: {del_e}")
 
-                # Step 2: Set new TIXUISID cookie using CDP
+                # Step 2: Set new session cookie using CDP
                 cookie_result = await tab.send(cdp.network.set_cookie(
-                    name="TIXUISID",
+                    name=cookie_name,
                     value=tixcraft_sid,
                     domain=cookie_domain,
                     path="/",
@@ -735,31 +740,31 @@ async def nodriver_goto_homepage(driver, config_dict):
 
                 if util.get_debug_mode(config_dict):
                     print(f"CDP setCookie result: {cookie_result}")
-                    print("tixcraft TIXUISID cookie set successfully")
+                    print(f"tixcraft {cookie_name} cookie set successfully")
 
                 # Verify cookie was set
                 updated_cookies = await driver.cookies.get_all()
-                sid_cookies = [c for c in updated_cookies if c.name == 'TIXUISID']
+                sid_cookies = [c for c in updated_cookies if c.name == cookie_name]
                 if not sid_cookies:
                     if util.get_debug_mode(config_dict):
-                        print("Warning: TixCraft TIXUISID cookie not found after setting")
+                        print(f"Warning: TixCraft {cookie_name} cookie not found after setting")
                 elif util.get_debug_mode(config_dict):
-                    print(f"Verified TIXUISID cookie: domain={sid_cookies[0].domain}, value length={len(sid_cookies[0].value)}")
+                    print(f"Verified {cookie_name} cookie: domain={sid_cookies[0].domain}, value length={len(sid_cookies[0].value)}")
 
             except Exception as e:
                 if util.get_debug_mode(config_dict):
-                    print(f"Error setting TixCraft TIXUISID cookie: {str(e)}")
+                    print(f"Error setting TixCraft {cookie_name} cookie: {str(e)}")
                     import traceback
                     traceback.print_exc()
                     print("Falling back to old method...")
 
                 # Fallback to old method if CDP fails
                 cookies = await driver.cookies.get_all()
-                # Filter out all existing SID and TIXUISID cookies to avoid conflicts
-                cookies_filtered = [c for c in cookies if c.name not in ('SID', 'TIXUISID')]
-                # Create new TIXUISID cookie with correct attributes (Issue #144)
+                # Filter out all existing SID and session cookies to avoid conflicts
+                cookies_filtered = [c for c in cookies if c.name not in ('SID', cookie_name)]
+                # Create new session cookie with correct attributes (Issue #144, #207)
                 new_cookie = cdp.network.CookieParam(
-                    "TIXUISID",
+                    cookie_name,
                     tixcraft_sid,
                     domain=cookie_domain,
                     path="/",
@@ -770,7 +775,7 @@ async def nodriver_goto_homepage(driver, config_dict):
                 await driver.cookies.set_all(cookies_filtered)
 
                 if util.get_debug_mode(config_dict):
-                    print("tixcraft TIXUISID cookie set successfully (fallback method)")
+                    print(f"tixcraft {cookie_name} cookie set successfully (fallback method)")
 
     if 'ibon.com' in homepage:
         # Special handling for tour.ibon.com.tw:

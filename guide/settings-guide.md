@@ -902,16 +902,22 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 ### Cookie 設定（快速登入）
 
-#### 拓元家族 cookie TIXUISID（tixcraft_sid）
+#### 拓元家族 cookie（tixcraft_sid）
 類型：字串 | 預設：空白
 
-拓元售票的 Cookie TIXUISID，用於快速登入。
+拓元家族網站的登入 Cookie，用於快速登入。
 
+**各平台 Cookie 名稱**：
+| 平台 | Cookie 名稱 |
+|------|------------|
+| TixCraft 拓元 | `TIXUISID` |
+| iNDIEVOX | `IVUISID` |
+| Ticketmaster SG | `TIXPUISID` |
 
 **取得方式**：
-1. 在拓元網站登入
+1. 在對應網站登入
 2. 開啟瀏覽器開發者工具（F12）
-3. Application → Cookies → 找到 `TIXUISID`
+3. Application → Cookies → 找到上表對應的 Cookie 名稱
 4. 複製值並填入
 
 ---
