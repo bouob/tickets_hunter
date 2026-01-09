@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.01.09
+
+- 修復 KHAM/ticket.com.tw 座位選擇對話框處理與跨排座位支援
+- 修復 TixCraft 家族平台 Cookie 登入失效問題 (Issue #207)
+  - iNDIEVOX、Ticketmaster SG Cookie domain 設定修正
+
 ## 2026.01.07
 
 - 修復 iBon 多票種選擇：支援關鍵字匹配與排除關鍵字過濾
