@@ -33,6 +33,7 @@ user_data/
 *.tmp
 .temp/
 .history/
+logs.txt
 
 # Environment files
 .env

@@ -4,115 +4,141 @@ goto url: http://127.0.0.1:16888/settings.html
 run button pressed.
 execute in shell mode.
 try python
-=== ibon Auto-Login Started ===
-Setting ibon cookie (NoDriver) with length: 219
-Cookie contains mem_id: True
-Cookie contains mem_email: True
-Cookie contains huiwanTK: True
-Cookie contains ibonqwareverify: True
-CDP setCookie result: True
-ibon cookie set successfully (NoDriver)
-Verified: ibon cookie exists with value length: 219
-Cookie domain: .ibon.com.tw
-[SUCCESS] ibon cookie set successfully
-[INFO] Cookie will be applied when navigating to event page
-ibon login process completed successfully
-https://ticket.ibon.com.tw/ActivityInfo/Details/39334
-[IBON DATE PIERCE] Starting date selection with pierce=True
-date_keyword: "01/25"
-auto_select_mode: from top to bottom
-[IBON DATE PIERCE] Auto-detecting purchase buttons...
-[IBON DATE PIERCE] Found 2 button(s) after 0.01s
-[IBON DATE PIERCE] Got document root: NodeId(2)
-[IBON DATE PIERCE] Found 2 button(s) via search
-[IBON DATE PIERCE] 2 enabled button(s)
-[IBON DATE PIERCE KEYWORD] Start checking keywords in order: ['01/25']
-[IBON DATE PIERCE KEYWORD] Checking keyword #1: 01/25
-[IBON DATE PIERCE KEYWORD] All keywords failed to match
-[IBON DATE PIERCE FALLBACK] date_auto_fallback=false, fallback is disabled
-[IBON DATE PIERCE SELECT] No date selected, will reload page and retry
-[IBON DATE] pierce method failed, trying DOMSnapshot fallback...
-[IBON DATE] Starting date selection on ActivityInfo/Details page
-date_keyword: "01/25"
-auto_select_mode: from top to bottom
-[IBON DATE] Auto-detecting purchase buttons...
-[IBON DATE] Found 2 purchase button(s) after 0.00s
-[IBON DATE] Capturing DOM snapshot with CDP...
-[IBON DATE] Analyzing 2 document(s)...
-[IBON DATE] Total nodes in snapshot: 2903
-[IBON DATE] Total BUTTON nodes found: 8
-[IBON DATE] Found button: class='btn btn-pink btn-buy ng-tns-c58-1 ng-star-inserted...', disabled=False, text='', date_context='2026/01/24(六) 18:00'
-[IBON DATE] Found button: class='btn btn-pink btn-buy ng-tns-c58-1 ng-star-inserted...', disabled=False, text='', date_context='2026/01/25(日) 17:00'
-[IBON DATE] Found 2 purchase button(s)
-[IBON DATE] Found 2 enabled button(s)
-[IBON DATE KEYWORD] Start checking keywords in order: ['01/25']
-[IBON DATE KEYWORD] Checking keyword #1: 01/25
-[IBON DATE KEYWORD] Keyword #1 matched: '01/25'
-[IBON DATE SELECT] Selected date: 2026/01/25(日) 17:00 (keyword match)
-[IBON DATE SELECT] Selected date: 2026/01/25(日) 17:00 (keyword match)
-[IBON DATE] Selected target button (keyword match): date_context='2026/01/25(日) 17:00'
-[IBON DATE] Button node_id: NodeId(178)
-[IBON DATE] Resolved button object_id: 1610002562267853592.1.1
-[IBON DATE] Button clicked, result: (RemoteObject(type_='boolean', subtype=None, class_name=None, value=True, unserializable_value=None, description=None, deep_serialized_value=None, object_id=None, preview=None, custom_preview=None), None)
-[IBON DATE] Purchase button clicked successfully
-https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=B0AKR6W3&PRODUCT_ID=B0AHMRY9&strItem=WEB%E7%B6%B2%E7%AB%99%E5%85%A5%E5%8F%A31
-NoDriver ibon_area_auto_select started
-area_keyword_item:
-auto_select_mode: from top to bottom
-ticket_number: 2
-[IBON AREA] Auto-detecting area table...
-[IBON AREA] Found 9 TR elements after 0.12s
-[DOMSNAPSHOT] Capturing page structure for area extraction...
-[DOMSNAPSHOT] Extracted 1193 nodes, 1144 strings
-[DOMSNAPSHOT] Found 8 TR elements
-[AREA EXTRACT] Found 6 total areas
-[ibon] 跳過: VIP1區6580
-[ibon] 跳過: VIP2區6580
-[ibon] 跳過: VIP3區6580
-[ibon] 跳過: B1區4880
-[ibon] 座位不足: B2區4880 (1/2)
-[ibon] 有效區域: 1
-[IBON AREA] Total matched areas: 1
-[IBON AREA SELECT] Selected area: A區5580 (fallback)
-[TARGET] Selected area: A區5580 (index: 3, id: B0AKRBT4)
-[CLICK SUCCESS] Clicked area: A區5580 (id: B0AKRBT4)
-https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=B0AKR6W3&GROUP_ID=&PERFORMANCE_PRICE_AREA_ID=B0AKRBT4
-[IBON] Area already selected, checking ticket availability...
-[IBON] Page loaded, found 2 select element(s) after 0.35s
-[IBON] Tickets available (2 selects, valid=True)
-[IBON CAPTCHA] Starting captcha handling
-[IBON CAPTCHA] OCR enabled: True
-[IBON CAPTCHA] Auto submit: True
-[TICKET] Found 2 ticket type(s)
-  [0] 全票＋福利券 - 5,580 (available)
-  [1] 全票 - 5,550 (available)
-[TICKET] Excluded by keyword: 全票＋福利券
-[TICKET] Single ticket type, selecting directly: 全票
-[TICKET] Set '全票' to 2
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0202&ts=1767780735799
-[CAPTCHA] Screenshot: 5745 bytes
-[CAPTCHA OCR] Using global OCR (beta=True), raw result: 7447
-[CAPTCHA OCR] Processing time: 0.853s
-[CAPTCHA OCR] Result: 7447
-[CAPTCHA INPUT] answer: 7447, auto_submit: True
-[CAPTCHA INPUT] Filled answer: 7447
-[CAPTCHA INPUT] Alert handler registered before submit
-[CAPTCHA INPUT] Form submitted
-[CAPTCHA INPUT] No alert appeared (captcha may be correct)
-[CAPTCHA OCR] Checking URL for verification...
-[CAPTCHA OCR] Captcha '7447' accepted, URL changed
-[CAPTCHA OCR] Before: https://orders.ibon.com.tw/application/UTK02/UTK0202_.aspx?PERFORMANCE_ID=B0AKR6W3&GROUP_ID=&PERFORMANCE_PRICE_AREA_ID=B0AKRBT4
-[CAPTCHA OCR] After: https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
-[IBON CAPTCHA] Form submitted successfully
-[TICKET] Found 0 ticket type(s)
-[TICKET] No ticket types found
-[TICKET RETRY] Attempt 1/3 failed, waiting 0.5s
-[TICKET] Found 2 ticket type(s)
-  [0] 2026 FTISLAND CONCERT ‘FTSODE’ in TAIPEI - 臺大綜合體育館 一樓 (selected)
-  [1] 2026 FTISLAND CONCERT ‘FTSODE’ in TAIPEI - 臺大綜合體育館 一樓 (selected)
-[TICKET] Already assigned: 2026 FTISLAND CONCERT ‘FTSODE’ in TAIPEI = B0AKRBT4|B0AKRBTO|0
-[TICKET RETRY] Success after 2 attempt(s)
-[IBON PURCHASE] Purchase button not found or not clickable
-https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
-Reached checkout page - ticket purchase successful!
-https://ticket.ibon.com.tw/
+https://ticket.com.tw/application/utk13/utk1306_.aspx
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK1306
+[CAPTCHA] Screenshot: 2657 bytes
+OCR elapsed time: 1.083s
+OCR answer: B4KM
+[TICKET LOGIN] Login button clicked
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] IMG not found, searching for CANVAS element...
+[CAPTCHA] Neither IMG nor CANVAS found
+OCR elapsed time: 0.867s
+OCR answer is None
+previous_answer: None
+https://ticket.com.tw/application/UTK01/UTK0101_.aspx
+[KHAM LOGIN] Redirecting to target: https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P14I5PJC
+https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P14I5PJC
+Starting captcha processing for purchase page...
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK1306
+[CAPTCHA] DOM API error: Could not compute box model. [code: -32000]
+OCR elapsed time: 0.832s
+OCR answer is None
+previous_answer: None
+https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=P14I5PJC
+date_keyword: "21"
+auto_reload_coming_soon_page_enable: True
+Valid date rows count: 1
+First row text sample: 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160
+date_keyword array: ['21']
+[KHAM DATE KEYWORD] Checking keyword #1: 21
+[KHAM DATE KEYWORD] Keyword #1 matched: '21'
+[KHAM DATE SELECT] Selected date: 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160 (keyword match)
+After keyword match, found count: 1
+Target row selected (mode: from top to bottom): 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160
+Date buy button clicked successfully
+https://ticket.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=P14NI0R1&PRODUCT_ID=P14I5PJC
+area_keyword: "3樓","2200"
+Valid area rows count: 34
+First row text sample: &nbsp;1樓B1區5200 剩位35
+[KHAM AREA KEYWORD] Keyword matched (table): &nbsp;3樓3C區2200 剩位2
+Matched area blocks: 1
+Target area row selected (mode: random)
+Clicking target area row...
+Area row clicked successfully
+[KHAM PERFORMANCE] Keyword matched: '3樓'
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205
+[CAPTCHA] Screenshot: 2693 bytes
+OCR elapsed time: 1.008s
+OCR answer: GXnn
+[ALLOW NOT ADJACENT] Checkbox checked: False
+[SUBMIT] Searching for ticket.com.tw submit button...
+[SUBMIT] Add shopping cart button not found
+https://ticket.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=P14NI0R1&GROUP_ID=86&PERFORMANCE_PRICE_AREA_ID=P14NKB0T
+Detected ticket.com.tw UTK0205 seat selection page
+[TICKET SEAT] Already selected seats: 0
+[TICKET SEAT TYPE] Capturing DOM snapshot...
+[TICKET SEAT TYPE] Total nodes in snapshot: 1758
+[TICKET SEAT TYPE] Extracted text from node 735: '原價-NT$2,200'
+[TICKET SEAT TYPE] Found button #1: text='原價-NT$2,200', disabled=False
+[TICKET SEAT TYPE] Extracted text from node 741: '身心障礙者-NT$1,100'
+[TICKET SEAT TYPE] Found button #2: text='身心障礙者-NT$1,100', disabled=False
+[TICKET SEAT TYPE] Extracted text from node 747: '身障陪同者-NT$1,100'
+[TICKET SEAT TYPE] Found button #3: text='身障陪同者-NT$1,100', disabled=False
+[TICKET SEAT TYPE] Found 3 ticket type button(s)
+[TICKET SEAT TYPE] Found 3 enabled button(s)
+[TICKET SEAT TYPE] Excluded by keyword_exclude: 身心障礙者-NT$1,100
+[TICKET SEAT TYPE] Excluded by keyword_exclude: 身障陪同者-NT$1,100
+[TICKET SEAT TYPE] No keyword match, using first button: 原價-NT$2,200
+[TICKET SEAT TYPE] Button node_id: NodeId(48469)
+[TICKET SEAT TYPE] Resolved button object_id: 2732724451135518688.8.4
+[TICKET SEAT TYPE] Button clicked, result: (RemoteObject(type_='boolean', subtype=None, class_name=None, value=True, unserializable_value=None, description=None, deep_serialized_value=None, object_id=None, preview=None, custom_preview=None), None)
+[TICKET SEAT TYPE] Successfully clicked: 原價-NT$2,200
+[TICKET SEAT TYPE] Seats loaded: table found, 2 available seats
+[TICKET SEAT TYPE] Assignment result: True
+[TICKET SEAT] Stage direction: up
+[TICKET SEAT] Found 2 available seats
+[TICKET SEAT] Finding best seats: tickets=2, stage=up, adjacent=False, available=2
+[TICKET SEAT] _find_best_seats result: {'success': True, 'selectedSeats': [{'title': '3樓3C區-5排-8號'}, {'title': '3樓3C區-8排-6號'}], 'count': 2}
+[TICKET SEAT] _execute input: type=<class 'dict'>, value={'success': True, 'selectedSeats': [{'title': '3樓3C區-5排-8號'}, {'title': '3樓3C區-8排-6號'}], 'count': 2}
+[TICKET SEAT] Using algorithm selected seats: ['3樓3C區-5排-8號', '3樓3C區-8排-6號']
+[TICKET SEAT] Selected 2 seats successfully
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205
+[CAPTCHA] Screenshot: 2618 bytes
+OCR elapsed time: 1.025s
+OCR answer: GXnn
+Captcha text already inputed: GXnn target answer: GXnn
+[TICKET SUBMIT] Order submitted successfully
+[TICKET SUBMIT] Success dialog found, closing...
+[TICKET SUBMIT] Dialog closed successfully
+[TICKET SEAT MAIN] Type:True Seat:True Submit:True
+Seat selection result: True
+Detected UTK0202/UTK0205 ticket number selection page, model: UTK0205
+[CAPTCHA] Already filled: GXnn
+[ALLOW NOT ADJACENT] Checkbox checked: False
+[TICKET DIALOG] Closed on attempt 1/5
+Ticket number set to: 2
+[SUBMIT] Searching for ticket.com.tw submit button...
+[SUBMIT] Add shopping cart button not found
+Dialog message: 提醒您 !! 您與稍早選的座位是不同排 !! 您上次選的座位是第 5排
+Detected ticket.com.tw UTK0205 seat selection page
+[TICKET SEAT] Already selected seats: 2
+[TICKET SEAT] Already have 2 seats (need 2), skipping to submit
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205&ts=1767968918836
+[CAPTCHA] Screenshot: 345 bytes
+OCR elapsed time: 0.989s
+OCR answer: 一
+[TICKET SEAT MAIN] Type:True Seat:True Submit:False
+Seat selection result: False
+Detected UTK0202/UTK0205 ticket number selection page, model: UTK0205
+Dialog message: 加入購物車完成, 請於 10 分鐘內完成結帳!
+[ALLOW NOT ADJACENT] Checkbox checked: False
+[TICKET DIALOG] Closed on attempt 1/5
+Starting Kham OCR processing...
+away_from_keyboard_enable: False
+previous_answer: None
+[CAPTCHA] IMG not found, searching for CANVAS element...
+[CAPTCHA] Neither IMG nor CANVAS found
+OCR elapsed time: 0.791s
+OCR answer is None
+previous_answer: None
+Ticket number set to: 2
+https://ticket.com.tw/application/UTK02/UTK0206_.aspx
+[SUCCESS] Reached checkout page - ticket purchase successful!
