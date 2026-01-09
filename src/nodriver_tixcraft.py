@@ -17554,13 +17554,16 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 if is_reset:
                     await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
 
-            # Close dialog buttons
-            try:
-                el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
-                if el_btn:
-                    await el_btn.click()
-            except:
-                pass
+            # Close dialog buttons (ticket.com.tw uses retry mechanism)
+            if "ticket.com.tw" in url:
+                await nodriver_ticket_close_dialog_with_retry(tab, config_dict)
+            else:
+                try:
+                    el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
+                    if el_btn:
+                        await el_btn.click()
+                except:
+                    pass
 
             if config_dict["area_auto_select"]["enable"]:
                 # Switch to auto seat
@@ -17870,13 +17873,16 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 else:
                     await nodriver_kham_allow_not_adjacent_seat(tab, config_dict)
 
-            # Close dialog buttons
-            try:
-                el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
-                if el_btn:
-                    await el_btn.click()
-            except:
-                pass
+            # Close dialog buttons (ticket.com.tw uses retry mechanism)
+            if "ticket.com.tw" in url:
+                await nodriver_ticket_close_dialog_with_retry(tab, config_dict)
+            else:
+                try:
+                    el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
+                    if el_btn:
+                        await el_btn.click()
+                except:
+                    pass
 
             # Handle captcha only if not already sent
             if config_dict["ocr_captcha"]["enable"] and not is_captcha_sent:
@@ -19886,12 +19892,13 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                             })()
                         ''')
 
-                        # Parse result
+                        # Parse result using util function for nodriver CDP format
                         table_found = False
                         seat_count = 0
-                        if isinstance(check_result, dict):
-                            table_found = check_result.get('tableFound', False)
-                            seat_count = check_result.get('seatCount', 0)
+                        parsed_result = util.parse_nodriver_result(check_result)
+                        if isinstance(parsed_result, dict):
+                            table_found = parsed_result.get('tableFound', False)
+                            seat_count = parsed_result.get('seatCount', 0)
 
                         # Success condition: table exists AND at least 1 seat found
                         if table_found and seat_count > 0:
@@ -20011,9 +20018,9 @@ async def _analyze_seat_quality(tab, config_dict):
         }})();
     ''')
 
-    # 轉換 CDP 格式
-    result_dict = result if isinstance(result, dict) else {}
-    return result_dict
+    # 轉換 CDP 格式 using util function
+    result_dict = util.parse_nodriver_result(result) if not isinstance(result, dict) else result
+    return result_dict if isinstance(result_dict, dict) else {}
 
 
 async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
@@ -20053,13 +20060,27 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
                 console.log('[TICKET SEAT] DOM position tracking enabled for aisle detection');
             }}
 
-            // 取得所有可用座位
-            const availableSeats = Array.from(
-                document.querySelectorAll('#locationChoice table td[title][style*="cursor: pointer"]')
-            );
+            // 取得所有可用座位 - 使用與 _analyze_seat_quality 一致的選擇器
+            const availableSeats = [];
+            const allTableRowsCheck = document.querySelectorAll('table#TBL tbody tr, #locationChoice table tbody tr');
+            Array.from(allTableRowsCheck).forEach(tr => {{
+                const allTds = tr.children;
+                for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
+                    const seat = allTds[colIndex];
+                    const style = seat.getAttribute('style');
+                    const title = seat.getAttribute('title');
+                    if (style && title && style.includes('cursor: pointer') && style.includes('icon_chair_empty')) {{
+                        availableSeats.push(seat);
+                    }}
+                }}
+            }});
+
+            if (showDebug) {{
+                console.log('[TICKET SEAT] Available seats found: ' + availableSeats.length);
+            }}
 
             if (availableSeats.length < ticketNumber) {{
-                return {{ success: false, found: availableSeats.length, selected: 0 }};
+                return {{ success: false, found: availableSeats.length, selected: 0, reason: 'not_enough_seats' }};
             }}
 
             // 根據舞台方向分組及分析品質
@@ -20067,7 +20088,7 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
             if (stageDirection === 'up' || stageDirection === 'down') {{
                 // 按排分組（加入 DOM 位置追蹤）
                 const rows = {{}};
-                const allTableRows = document.querySelectorAll('#locationChoice table tbody tr');
+                const allTableRows = document.querySelectorAll('table#TBL tbody tr, #locationChoice table tbody tr');
 
                 Array.from(allTableRows).forEach((tr, rowIndexInTable) => {{
                     const allTds = tr.children;
@@ -20100,6 +20121,10 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
                         }}
                     }}
                 }});
+
+                if (showDebug) {{
+                    console.log('[TICKET SEAT] Rows grouped: ' + Object.keys(rows).length);
+                }}
 
                 // 分析品質並排序
                 const rowQuality = [];
@@ -20137,6 +20162,15 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
                         return b.rowNum - a.rowNum;
                     }}
                 }});
+
+                if (showDebug) {{
+                    console.log('[TICKET SEAT] RowQuality count: ' + rowQuality.length);
+                    if (rowQuality.length > 0) {{
+                        console.log('[TICKET SEAT] First row: ' + rowQuality[0].rowNum +
+                                   ', seats=' + rowQuality[0].totalSeats +
+                                   ', middle=' + rowQuality[0].middleCount);
+                    }}
+                }}
 
                 // 搜尋最佳座位組合
                 for (const row of rowQuality) {{
@@ -20243,7 +20277,7 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
                 const MIDDLE_ROW_MAX = 15;
 
                 // 遍歷表格，按列收集座位並記錄 DOM 垂直位置
-                const allTableRows = document.querySelectorAll('#locationChoice table tbody tr');
+                const allTableRows = document.querySelectorAll('table#TBL tbody tr, #locationChoice table tbody tr');
                 Array.from(allTableRows).forEach((tr, rowIndexInTable) => {{
                     const allTds = tr.children;
                     for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
@@ -20397,6 +20431,41 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
                 }}
             }}
 
+            // 【跨排選座】當允許不連續座位且仍未選到足夠座位時，從所有可用座位中選擇
+            if (selectedSeats.length < ticketNumber && allowNonAdjacent && availableSeats.length >= ticketNumber) {{
+                if (showDebug) {{
+                    console.log('[TICKET SEAT] Cross-row selection: selecting from all available seats');
+                }}
+                selectedSeats.length = 0; // 清空之前的結果
+                // 收集所有可用座位資訊
+                const allSeatsWithInfo = [];
+                const crossRowTableRows = document.querySelectorAll('table#TBL tbody tr, #locationChoice table tbody tr');
+                Array.from(crossRowTableRows).forEach((tr, rowIdx) => {{
+                    const allTds = tr.children;
+                    for (let colIdx = 0; colIdx < allTds.length; colIdx++) {{
+                        const seat = allTds[colIdx];
+                        const style = seat.getAttribute('style');
+                        const title = seat.getAttribute('title');
+                        if (style && title && style.includes('cursor: pointer') && style.includes('icon_chair_empty')) {{
+                            allSeatsWithInfo.push({{ title: title, rowIdx: rowIdx, colIdx: colIdx }});
+                        }}
+                    }}
+                }});
+                // 選擇前 ticketNumber 個座位
+                for (let i = 0; i < Math.min(ticketNumber, allSeatsWithInfo.length); i++) {{
+                    selectedSeats.push(allSeatsWithInfo[i]);
+                }}
+            }}
+
+            if (showDebug) {{
+                console.log('[TICKET SEAT] Algorithm result: found=' + availableSeats.length +
+                           ', selected=' + selectedSeats.length);
+                if (selectedSeats.length > 0) {{
+                    console.log('[TICKET SEAT] Selected titles: ' +
+                               selectedSeats.map(s => s.title).join(', '));
+                }}
+            }}
+
             return {{
                 success: selectedSeats.length > 0,
                 selectedSeats: selectedSeats.map(s => ({{ title: s.title }})),
@@ -20405,8 +20474,13 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
         }})();
     ''')
 
-    result_dict = result if isinstance(result, dict) else {}
-    return result_dict
+    # 轉換 CDP 格式 using util function
+    result_dict = util.parse_nodriver_result(result) if not isinstance(result, dict) else result
+
+    if show_debug:
+        print(f"[TICKET SEAT] _find_best_seats result: {result_dict}")
+
+    return result_dict if isinstance(result_dict, dict) else {}
 
 
 async def _execute_seat_selection(tab, seats_to_click, config_dict):
@@ -20428,6 +20502,10 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
     # 【修復 BUG-001】提取演算法選定的座位 title 列表
     selected_seat_titles = []
     use_algorithm_result = False
+
+    if show_debug:
+        print(f"[TICKET SEAT] _execute input: type={type(seats_to_click)}, value={seats_to_click}")
+
     if seats_to_click and isinstance(seats_to_click, dict):
         if 'selectedSeats' in seats_to_click and seats_to_click['selectedSeats']:
             selected_seat_titles = [s['title'] for s in seats_to_click['selectedSeats']]
@@ -20435,6 +20513,9 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
 
             if show_debug:
                 print(f"[TICKET SEAT] Using algorithm selected seats: {selected_seat_titles}")
+        else:
+            if show_debug:
+                print(f"[TICKET SEAT] No selectedSeats in result, keys={seats_to_click.keys()}")
 
     import json
     # 執行 JavaScript 點擊座位
@@ -20451,9 +20532,15 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
             // 【修復 BUG-001】優先使用演算法選定的座位
             if (useAlgorithm && selectedTitles.length > 0) {{
                 for (const targetTitle of selectedTitles) {{
-                    const seat = document.querySelector(
-                        `#locationChoice table td[title="${{targetTitle}}"][style*="cursor: pointer"]`
+                    // 使用與 _analyze_seat_quality 一致的選擇器
+                    let seat = document.querySelector(
+                        `table#TBL td[title="${{targetTitle}}"][style*="cursor: pointer"]`
                     );
+                    if (!seat) {{
+                        seat = document.querySelector(
+                            `#locationChoice table td[title="${{targetTitle}}"][style*="cursor: pointer"]`
+                        );
+                    }}
                     if (seat && seat.getAttribute('style').includes('icon_chair_empty')) {{
                         seat.click();
                         clickedCount++;
@@ -20482,11 +20569,19 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
                     console.log('[FALLBACK] Stage direction: ' + stageDirection);
                 }}
 
-                const availableSeats = Array.from(
-                    document.querySelectorAll('#locationChoice table td[title][style*="cursor: pointer"]')
-                ).filter(seat => {{
-                    const style = seat.getAttribute('style');
-                    return style && style.includes('icon_chair_empty');
+                // 使用與 _analyze_seat_quality 一致的選擇器
+                const availableSeats = [];
+                const allTableRowsFallback = document.querySelectorAll('table#TBL tbody tr, #locationChoice table tbody tr');
+                Array.from(allTableRowsFallback).forEach(tr => {{
+                    const allTds = tr.children;
+                    for (let colIndex = 0; colIndex < allTds.length; colIndex++) {{
+                        const seat = allTds[colIndex];
+                        const style = seat.getAttribute('style');
+                        const title = seat.getAttribute('title');
+                        if (style && title && style.includes('cursor: pointer') && style.includes('icon_chair_empty')) {{
+                            availableSeats.push(seat);
+                        }}
+                    }}
                 }});
 
                 let foundSeats = [];
@@ -20600,7 +20695,10 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
         }})();
     ''')
 
-    result_dict = result if isinstance(result, dict) else {}
+    # 轉換 CDP 格式 using util function
+    result_dict = util.parse_nodriver_result(result) if not isinstance(result, dict) else result
+    if not isinstance(result_dict, dict):
+        result_dict = {}
     return result_dict.get('success', False)
 
 
@@ -20948,6 +21046,52 @@ async def nodriver_ticket_check_seat_taken_dialog(tab, config_dict):
             print(f"[ERROR] Dialog check error: {exc}")
 
     return is_dialog_found
+
+
+async def nodriver_ticket_close_dialog_with_retry(tab, config_dict, max_attempts=5, interval=0.3):
+    """
+    [ticket.com.tw] 多次檢查並關閉對話框
+
+    解決問題：網頁操作太快，對話框出現速度慢，單次檢查會錯過
+
+    Args:
+        tab: NoDriver tab
+        config_dict: 設定字典
+        max_attempts: 最大嘗試次數 (預設 5 次)
+        interval: 每次嘗試間隔秒數 (預設 0.3 秒)
+
+    Returns:
+        bool: 是否成功關閉對話框
+    """
+    show_debug = config_dict["advanced"].get("verbose", False)
+    dialog_closed = False
+
+    for attempt in range(max_attempts):
+        try:
+            # 嘗試多種選擇器
+            dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
+            if not dialog_btn:
+                dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
+            if not dialog_btn:
+                dialog_btn = await tab.query_selector('.ui-dialog-buttonset button')
+
+            if dialog_btn:
+                await dialog_btn.click()
+                dialog_closed = True
+                if show_debug:
+                    print(f"[TICKET DIALOG] Closed on attempt {attempt + 1}/{max_attempts}")
+                # 等待一下讓對話框關閉動畫完成
+                await tab.sleep(0.2)
+                break
+        except Exception as e:
+            if show_debug and attempt == max_attempts - 1:
+                print(f"[TICKET DIALOG] Close failed after {max_attempts} attempts: {e}")
+
+        # 等待後再嘗試
+        if attempt < max_attempts - 1:
+            await tab.sleep(interval)
+
+    return dialog_closed
 
 
 async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
