@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.07)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.09)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -692,13 +692,13 @@ async def nodriver_goto_homepage(driver, config_dict):
         # Determine correct cookie domain and name based on homepage
         # Each site uses different session cookie names (Issue #207)
         if 'ticketmaster.sg' in homepage:
-            cookie_domain = ".ticketmaster.sg"
+            cookie_domain = "ticketmaster.sg"
             cookie_name = "TIXPUISID"
         elif 'ticketmaster.com' in homepage:
             cookie_domain = ".ticketmaster.com"
             cookie_name = "TIXUISID"
         elif 'indievox.com' in homepage:
-            cookie_domain = ".indievox.com"
+            cookie_domain = "www.indievox.com"
             cookie_name = "IVUISID"
         else:
             cookie_domain = ".tixcraft.com"
@@ -722,6 +722,17 @@ async def nodriver_goto_homepage(driver, config_dict):
                         name=cookie_name,
                         domain=cookie_domain
                     ))
+                    # Delete cookies from alternate domain to avoid conflicts
+                    if 'indievox.com' in homepage:
+                        await tab.send(cdp.network.delete_cookies(
+                            name=cookie_name,
+                            domain=".indievox.com"
+                        ))
+                    if 'ticketmaster.sg' in homepage:
+                        await tab.send(cdp.network.delete_cookies(
+                            name=cookie_name,
+                            domain=".ticketmaster.sg"
+                        ))
                     if util.get_debug_mode(config_dict):
                         print(f"Deleted existing SID and {cookie_name} cookies for domain: {cookie_domain}")
                 except Exception as del_e:
