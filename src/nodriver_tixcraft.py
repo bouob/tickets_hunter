@@ -24322,6 +24322,950 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
     return tab
 
 
+# =============================================================================
+# FunOne Tickets Platform Support
+# URL: https://tickets.funone.io
+# Features: Cookie login, session selection, ticket selection, order submit
+# =============================================================================
+
+# Global state dictionary for FunOne
+funone_dict = {}
+
+async def nodriver_funone_inject_cookie(tab, config_dict):
+    """
+    Inject FunOne session cookie using CDP network.set_cookie
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if injection successful
+    """
+    import nodriver.cdp as cdp
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    funone_session_cookie = config_dict["advanced"].get("funone_session_cookie", "").strip()
+
+    if len(funone_session_cookie) == 0:
+        if show_debug_message:
+            print("[FUNONE] No session cookie configured")
+        return False
+
+    try:
+        # Inject ticket_session cookie
+        await tab.send(cdp.network.set_cookie(
+            name="ticket_session",
+            value=funone_session_cookie,
+            domain="tickets.funone.io",
+            path="/",
+            secure=False,
+            http_only=True
+        ))
+
+        if show_debug_message:
+            print("[FUNONE] Session cookie injected successfully")
+        return True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Cookie injection failed: {exc}")
+        return False
+
+
+async def nodriver_funone_check_login_status(tab):
+    """
+    Check if user is logged in by detecting login button presence
+
+    Returns:
+        bool: True if logged in (no login button found)
+    """
+    try:
+        # Check for login button text
+        login_button_js = '''
+        (function() {
+            const links = document.querySelectorAll('a, button');
+            for (const link of links) {
+                const text = link.textContent || '';
+                if (text.includes('登入') || text.includes('註冊') || text.includes('Login')) {
+                    return true;  // Login button found = not logged in
+                }
+            }
+            return false;  // No login button = logged in
+        })()
+        '''
+        has_login_button = await tab.evaluate(login_button_js)
+        return not has_login_button
+
+    except Exception as exc:
+        return False
+
+
+async def nodriver_funone_verify_login(tab, config_dict):
+    """
+    Verify login status, re-inject cookie if needed
+
+    Returns:
+        bool: True if login is valid
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    is_logged_in = await nodriver_funone_check_login_status(tab)
+
+    if is_logged_in:
+        if show_debug_message:
+            print("[FUNONE] Login status verified - already logged in")
+        return True
+
+    # Try to inject cookie and reload
+    cookie_injected = await nodriver_funone_inject_cookie(tab, config_dict)
+
+    if cookie_injected:
+        if show_debug_message:
+            print("[FUNONE] Cookie injected, reloading page...")
+        try:
+            await tab.reload()
+            await tab.sleep(1)
+
+            # Check login status again
+            is_logged_in = await nodriver_funone_check_login_status(tab)
+            if is_logged_in:
+                if show_debug_message:
+                    print("[FUNONE] Login successful after cookie injection")
+                return True
+        except Exception as exc:
+            if show_debug_message:
+                print(f"[FUNONE] Reload after cookie injection failed: {exc}")
+
+    if show_debug_message:
+        print("[FUNONE] Not logged in - waiting for manual OTP login")
+    return False
+
+
+async def nodriver_funone_close_popup(tab):
+    """
+    Close cookie consent and announcement popups
+
+    Returns:
+        bool: True if any popup was closed
+    """
+    closed_any = False
+
+    try:
+        # Close common popups
+        close_popup_js = '''
+        (function() {
+            let closed = 0;
+
+            // Close cookie consent
+            const cookieButtons = document.querySelectorAll('button, a');
+            for (const btn of cookieButtons) {
+                const text = (btn.textContent || '').toLowerCase();
+                if (text.includes('accept') || text.includes('got it') || text.includes('ok') || text.includes('close')) {
+                    if (btn.closest('.cookie') || btn.closest('[class*="consent"]') || btn.closest('[class*="popup"]')) {
+                        btn.click();
+                        closed++;
+                    }
+                }
+            }
+
+            // Close modal dialogs with close button
+            const closeIcons = document.querySelectorAll('[class*="close"], [aria-label="close"], .modal button');
+            for (const icon of closeIcons) {
+                const style = window.getComputedStyle(icon);
+                if (style.display !== 'none' && style.visibility !== 'hidden') {
+                    icon.click();
+                    closed++;
+                }
+            }
+
+            return closed;
+        })()
+        '''
+        result = await tab.evaluate(close_popup_js)
+        closed_any = result > 0
+
+    except Exception as exc:
+        pass
+
+    return closed_any
+
+
+async def nodriver_funone_date_auto_select(tab, url, config_dict):
+    """
+    Auto-select session/date on activity detail page
+
+    Returns:
+        bool: True if session selected and next button clicked
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Get date keyword from config
+    date_keyword = config_dict.get("date_auto_select", {}).get("date_keyword", "")
+    auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "random")
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)
+
+    if show_debug_message:
+        print(f"[FUNONE] Date selection - keyword: '{date_keyword}', mode: {auto_select_mode}")
+
+    try:
+        # Get all session options
+        get_sessions_js = '''
+        (function() {
+            const sessions = [];
+            // Look for session buttons/options
+            const buttons = document.querySelectorAll('button, [role="button"], .session-item, [class*="session"], [class*="date"]');
+
+            for (const btn of buttons) {
+                const text = btn.textContent || '';
+                const isDisabled = btn.disabled || btn.classList.contains('disabled') || btn.classList.contains('sold-out');
+
+                // Filter out non-session buttons
+                if (text.length > 3 && text.length < 200 && !isDisabled) {
+                    // Check if it looks like a date/session
+                    if (/\\d{4}|\\d{1,2}[/.-]\\d{1,2}|\\d{1,2}:\\d{2}/.test(text) ||
+                        text.includes('場') || text.includes('場次')) {
+                        sessions.push({
+                            text: text.trim(),
+                            index: sessions.length
+                        });
+                    }
+                }
+            }
+            return sessions;
+        })()
+        '''
+        sessions = await tab.evaluate(get_sessions_js)
+
+        if not sessions or len(sessions) == 0:
+            if show_debug_message:
+                print("[FUNONE] No sessions found")
+            return False
+
+        if show_debug_message:
+            print(f"[FUNONE] Found {len(sessions)} sessions")
+
+        # Find matching session by keyword
+        target_index = -1
+
+        if date_keyword and len(date_keyword) > 0:
+            keywords = util.parse_keyword_string_to_array(date_keyword)
+
+            for i, session in enumerate(sessions):
+                session_text = session.get('text', '')
+                for kw in keywords:
+                    if kw.lower() in session_text.lower():
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[FUNONE] Keyword '{kw}' matched session: {session_text}")
+                        break
+                if target_index >= 0:
+                    break
+
+        # Fallback selection if no keyword match
+        if target_index < 0:
+            if date_keyword and len(date_keyword) > 0 and not date_auto_fallback:
+                if show_debug_message:
+                    print("[FUNONE] No keyword match, date_auto_fallback=False, stopping")
+                return False
+
+            # Use auto_select_mode for fallback
+            target_index = util.get_target_index_by_mode(len(sessions), auto_select_mode)
+            if show_debug_message:
+                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+
+        if target_index < 0 or target_index >= len(sessions):
+            target_index = 0
+
+        # Click the selected session
+        click_session_js = f'''
+        (function() {{
+            const sessions = [];
+            const buttons = document.querySelectorAll('button, [role="button"], .session-item, [class*="session"], [class*="date"]');
+
+            for (const btn of buttons) {{
+                const text = btn.textContent || '';
+                const isDisabled = btn.disabled || btn.classList.contains('disabled') || btn.classList.contains('sold-out');
+
+                if (text.length > 3 && text.length < 200 && !isDisabled) {{
+                    if (/\\d{{4}}|\\d{{1,2}}[/.-]\\d{{1,2}}|\\d{{1,2}}:\\d{{2}}/.test(text) ||
+                        text.includes('場') || text.includes('場次')) {{
+                        sessions.push(btn);
+                    }}
+                }}
+            }}
+
+            if (sessions.length > {target_index}) {{
+                sessions[{target_index}].click();
+                return true;
+            }}
+            return false;
+        }})()
+        '''
+        clicked = await tab.evaluate(click_session_js)
+
+        if clicked:
+            if show_debug_message:
+                print(f"[FUNONE] Session {target_index} clicked")
+            await tab.sleep(0.5)
+
+            # Click next button
+            click_next_js = '''
+            (function() {
+                const buttons = document.querySelectorAll('button, a');
+                for (const btn of buttons) {
+                    const text = (btn.textContent || '').trim();
+                    if (text === '下一步' || text === 'Next' || text.includes('下一步')) {
+                        btn.click();
+                        return true;
+                    }
+                }
+                return false;
+            })()
+            '''
+            next_clicked = await tab.evaluate(click_next_js)
+
+            if next_clicked and show_debug_message:
+                print("[FUNONE] Next button clicked")
+
+            return next_clicked
+
+        return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Date selection error: {exc}")
+        return False
+
+
+async def nodriver_funone_area_auto_select(tab, url, config_dict):
+    """
+    Auto-select ticket type on ticket selection page
+
+    Returns:
+        bool: True if ticket type selected
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Get area keyword from config
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+    auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "random")
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+    area_auto_fallback = config_dict.get("area_auto_fallback", False)
+
+    if show_debug_message:
+        print(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
+
+    try:
+        # Get all ticket types
+        get_tickets_js = '''
+        (function() {
+            const tickets = [];
+            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
+
+            for (const item of items) {
+                const text = item.textContent || '';
+                const isDisabled = item.disabled || item.classList.contains('disabled') || item.classList.contains('sold-out');
+
+                // Filter ticket type buttons
+                if (text.length > 2 && text.length < 300 && !isDisabled) {
+                    // Check if it looks like a ticket type (contains price or zone info)
+                    if (/\\$|NT|TWD|\\d+元|區|票/.test(text) || text.includes('票種')) {
+                        tickets.push({
+                            text: text.trim().replace(/\\s+/g, ' '),
+                            index: tickets.length
+                        });
+                    }
+                }
+            }
+            return tickets;
+        })()
+        '''
+        tickets = await tab.evaluate(get_tickets_js)
+
+        if not tickets or len(tickets) == 0:
+            if show_debug_message:
+                print("[FUNONE] No ticket types found")
+            return False
+
+        if show_debug_message:
+            print(f"[FUNONE] Found {len(tickets)} ticket types")
+
+        # Apply exclude keywords first
+        if keyword_exclude and len(keyword_exclude) > 0:
+            exclude_keywords = util.parse_keyword_string_to_array(keyword_exclude)
+            filtered_tickets = []
+
+            for ticket in tickets:
+                ticket_text = ticket.get('text', '')
+                excluded = False
+
+                for ex_kw in exclude_keywords:
+                    if ex_kw.lower() in ticket_text.lower():
+                        if show_debug_message:
+                            print(f"[FUNONE] Excluding ticket '{ticket_text[:50]}' (matched '{ex_kw}')")
+                        excluded = True
+                        break
+
+                if not excluded:
+                    filtered_tickets.append(ticket)
+
+            tickets = filtered_tickets
+
+        if len(tickets) == 0:
+            if show_debug_message:
+                print("[FUNONE] All tickets filtered out by exclude keywords")
+            return False
+
+        # Find matching ticket by keyword
+        target_index = -1
+
+        if area_keyword and len(area_keyword) > 0:
+            keywords = util.parse_keyword_string_to_array(area_keyword)
+
+            for i, ticket in enumerate(tickets):
+                ticket_text = ticket.get('text', '')
+                for kw in keywords:
+                    if kw.lower() in ticket_text.lower():
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[FUNONE] Keyword '{kw}' matched ticket: {ticket_text[:50]}")
+                        break
+                if target_index >= 0:
+                    break
+
+        # Fallback selection if no keyword match
+        if target_index < 0:
+            if area_keyword and len(area_keyword) > 0 and not area_auto_fallback:
+                if show_debug_message:
+                    print("[FUNONE] No keyword match, area_auto_fallback=False, stopping")
+                return False
+
+            target_index = util.get_target_index_by_mode(len(tickets), auto_select_mode)
+            if show_debug_message:
+                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+
+        if target_index < 0 or target_index >= len(tickets):
+            target_index = 0
+
+        # Click the selected ticket type
+        original_index = tickets[target_index].get('index', target_index)
+
+        click_ticket_js = f'''
+        (function() {{
+            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
+            const tickets = [];
+
+            for (const item of items) {{
+                const text = item.textContent || '';
+                const isDisabled = item.disabled || item.classList.contains('disabled') || item.classList.contains('sold-out');
+
+                if (text.length > 2 && text.length < 300 && !isDisabled) {{
+                    if (/\\$|NT|TWD|\\d+元|區|票/.test(text) || text.includes('票種')) {{
+                        tickets.push(item);
+                    }}
+                }}
+            }}
+
+            if (tickets.length > {original_index}) {{
+                tickets[{original_index}].click();
+                return true;
+            }}
+            return false;
+        }})()
+        '''
+        clicked = await tab.evaluate(click_ticket_js)
+
+        if clicked and show_debug_message:
+            print(f"[FUNONE] Ticket type {target_index} clicked")
+
+        return clicked
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Area selection error: {exc}")
+        return False
+
+
+async def nodriver_funone_assign_ticket_number(tab, config_dict):
+    """
+    Set ticket quantity
+
+    Returns:
+        bool: True if quantity set successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 2)
+
+    if show_debug_message:
+        print(f"[FUNONE] Setting ticket quantity to {ticket_number}")
+
+    try:
+        # Try to set ticket number via dropdown or input
+        set_quantity_js = f'''
+        (function() {{
+            const targetQty = {ticket_number};
+
+            // Try select/dropdown first
+            const selects = document.querySelectorAll('select');
+            for (const sel of selects) {{
+                const options = sel.querySelectorAll('option');
+                if (options.length > 1) {{
+                    for (const opt of options) {{
+                        if (opt.value == targetQty || opt.textContent.trim() == targetQty.toString()) {{
+                            sel.value = opt.value;
+                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            return {{ success: true, type: 'select', value: targetQty }};
+                        }}
+                    }}
+                    // If exact match not found, select closest available
+                    for (const opt of options) {{
+                        const val = parseInt(opt.value);
+                        if (!isNaN(val) && val > 0 && val <= targetQty) {{
+                            sel.value = opt.value;
+                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            return {{ success: true, type: 'select', value: val }};
+                        }}
+                    }}
+                }}
+            }}
+
+            // Try number input
+            const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+            for (const input of inputs) {{
+                const placeholder = input.placeholder || '';
+                const name = input.name || '';
+                if (placeholder.includes('數量') || placeholder.includes('張') ||
+                    name.includes('qty') || name.includes('quantity') || name.includes('num')) {{
+                    input.value = targetQty;
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    return {{ success: true, type: 'input', value: targetQty }};
+                }}
+            }}
+
+            // Try plus/minus buttons
+            const plusBtns = document.querySelectorAll('button, [role="button"]');
+            for (const btn of plusBtns) {{
+                const text = btn.textContent || '';
+                if (text === '+' || btn.classList.contains('plus') || btn.classList.contains('add')) {{
+                    // Click plus button multiple times
+                    for (let i = 0; i < targetQty - 1; i++) {{
+                        btn.click();
+                    }}
+                    return {{ success: true, type: 'button', value: targetQty }};
+                }}
+            }}
+
+            return {{ success: false }};
+        }})()
+        '''
+        result = await tab.evaluate(set_quantity_js)
+
+        if result and result.get('success'):
+            if show_debug_message:
+                print(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
+            return True
+        else:
+            if show_debug_message:
+                print("[FUNONE] Could not find quantity selector")
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Set quantity error: {exc}")
+        return False
+
+
+async def nodriver_funone_captcha_handler(tab, config_dict):
+    """
+    Handle captcha - detect and wait for manual input
+
+    Returns:
+        bool: True if captcha is filled
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Check for captcha image
+        check_captcha_js = '''
+        (function() {
+            // Look for captcha image
+            const imgs = document.querySelectorAll('img');
+            for (const img of imgs) {
+                const src = img.src || '';
+                const alt = img.alt || '';
+                if (src.includes('captcha') || alt.includes('captcha') || alt.includes('驗證')) {
+                    return { hasCaptcha: true, type: 'image' };
+                }
+            }
+
+            // Look for captcha input
+            const inputs = document.querySelectorAll('input');
+            for (const input of inputs) {
+                const name = (input.name || '').toLowerCase();
+                const placeholder = (input.placeholder || '').toLowerCase();
+                if (name.includes('captcha') || placeholder.includes('驗證') || placeholder.includes('captcha')) {
+                    const value = input.value || '';
+                    return { hasCaptcha: true, type: 'input', filled: value.length > 0 };
+                }
+            }
+
+            return { hasCaptcha: false };
+        })()
+        '''
+        captcha_info = await tab.evaluate(check_captcha_js)
+
+        if captcha_info and captcha_info.get('hasCaptcha'):
+            if show_debug_message:
+                print(f"[FUNONE] Captcha detected - type: {captcha_info.get('type')}")
+
+            # Play sound once to alert user
+            if not funone_dict.get("played_sound_ticket", False):
+                if config_dict["advanced"]["play_sound"]["ticket"]:
+                    play_sound_while_ordering(config_dict)
+                funone_dict["played_sound_ticket"] = True
+
+            # Check if already filled
+            if captcha_info.get('filled'):
+                if show_debug_message:
+                    print("[FUNONE] Captcha already filled")
+                return True
+
+            if show_debug_message:
+                print("[FUNONE] Waiting for manual captcha input...")
+            return False
+
+        # No captcha found
+        return True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Captcha check error: {exc}")
+        return False
+
+
+async def nodriver_funone_ticket_agree(tab):
+    """
+    Check agreement checkboxes
+
+    Returns:
+        bool: True if agreements checked
+    """
+    try:
+        check_agree_js = '''
+        (function() {
+            let checked = 0;
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+            for (const cb of checkboxes) {
+                if (!cb.checked) {
+                    const label = cb.closest('label') || document.querySelector(`label[for="${cb.id}"]`);
+                    const text = label ? label.textContent : '';
+
+                    // Check if it's an agreement checkbox
+                    if (text.includes('同意') || text.includes('agree') || text.includes('條款') ||
+                        text.includes('terms') || text.includes('規則')) {
+                        cb.checked = true;
+                        cb.dispatchEvent(new Event('change', { bubbles: true }));
+                        checked++;
+                    }
+                }
+            }
+
+            return checked;
+        })()
+        '''
+        result = await tab.evaluate(check_agree_js)
+        return result >= 0
+
+    except Exception as exc:
+        return False
+
+
+async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
+    """
+    Submit order - click submit button
+
+    Returns:
+        bool: True if order submitted
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Find and click submit button
+        submit_js = '''
+        (function() {
+            const buttons = document.querySelectorAll('button, input[type="submit"]');
+
+            for (const btn of buttons) {
+                const text = (btn.textContent || btn.value || '').trim();
+
+                // Submit button patterns
+                if (text.includes('確認') || text.includes('送出') || text.includes('提交') ||
+                    text.includes('Submit') || text.includes('Confirm') || text.includes('購買') ||
+                    text === '確定' || text === '下一步') {
+
+                    // Check if button is visible and enabled
+                    const style = window.getComputedStyle(btn);
+                    if (style.display !== 'none' && !btn.disabled) {
+                        btn.click();
+                        return { clicked: true, buttonText: text };
+                    }
+                }
+            }
+
+            return { clicked: false };
+        })()
+        '''
+        result = await tab.evaluate(submit_js)
+
+        if result and result.get('clicked'):
+            if show_debug_message:
+                print(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
+            return True
+        else:
+            if show_debug_message:
+                print("[FUNONE] Submit button not found or not clickable")
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Order submit error: {exc}")
+        return False
+
+
+async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
+    """
+    Auto reload page for error handling and coming soon detection
+
+    Returns:
+        bool: True if page was reloaded
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Check for error pages or coming soon
+        check_status_js = '''
+        (function() {
+            const bodyText = document.body.textContent || '';
+            const title = document.title || '';
+
+            // Error page patterns
+            if (bodyText.includes('503') || bodyText.includes('502') || bodyText.includes('500') ||
+                title.includes('Error') || bodyText.includes('Service Unavailable')) {
+                return { status: 'error', reason: 'server_error' };
+            }
+
+            // Coming soon / not yet available
+            if (bodyText.includes('即將開賣') || bodyText.includes('尚未開放') ||
+                bodyText.includes('Coming Soon') || bodyText.includes('Not Available')) {
+                return { status: 'coming_soon', reason: 'not_available' };
+            }
+
+            // Sold out
+            if (bodyText.includes('售罄') || bodyText.includes('已售完') ||
+                bodyText.includes('Sold Out') || bodyText.includes('sold out')) {
+                return { status: 'sold_out', reason: 'no_tickets' };
+            }
+
+            return { status: 'ok' };
+        })()
+        '''
+        status = await tab.evaluate(check_status_js)
+
+        if status:
+            page_status = status.get('status')
+            reason = status.get('reason', '')
+
+            if page_status == 'error':
+                if show_debug_message:
+                    print(f"[FUNONE] Error page detected: {reason}, reloading...")
+                await tab.reload()
+                return True
+
+            elif page_status == 'coming_soon':
+                auto_reload_coming_soon = config_dict.get("tixcraft", {}).get("auto_reload_coming_soon_page", True)
+                if auto_reload_coming_soon:
+                    if show_debug_message:
+                        print("[FUNONE] Coming soon page, auto-reloading...")
+                    await tab.sleep(1)
+                    await tab.reload()
+                    return True
+
+            elif page_status == 'sold_out':
+                if show_debug_message:
+                    print("[FUNONE] Sold out detected")
+                return False
+
+        return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Auto reload error: {exc}")
+        return False
+
+
+async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_local):
+    """
+    Handle various error types
+
+    Returns:
+        bool: True if error was handled
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    error_str = str(error).lower()
+
+    if 'timeout' in error_str:
+        if show_debug_message:
+            print("[FUNONE] Timeout error, reloading page...")
+        try:
+            await tab.reload()
+            return True
+        except:
+            pass
+
+    if 'network' in error_str or 'connection' in error_str:
+        if show_debug_message:
+            print("[FUNONE] Network error, waiting and retrying...")
+        await tab.sleep(2)
+        try:
+            await tab.reload()
+            return True
+        except:
+            pass
+
+    return False
+
+
+async def nodriver_funone_main(tab, url, config_dict):
+    """
+    Main control function for FunOne Tickets platform
+
+    Args:
+        tab: NoDriver tab
+        url: Current page URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        tab: Updated NoDriver tab
+    """
+    global funone_dict
+
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return tab
+
+    # Initialize state dictionary
+    if 'is_session_selecting' not in funone_dict:
+        funone_dict = {
+            "is_session_selecting": False,
+            "is_ticket_selecting": False,
+            "played_sound_ticket": False,
+            "played_sound_order": False,
+            "session_cookie_injected": False,
+            "fail_list": [],
+            "reload_count": 0
+        }
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Determine page type
+    page_type = "UNKNOWN"
+
+    if 'tickets.funone.io' in url:
+        if '/activity/activity_detail/' in url:
+            page_type = "ACTIVITY_DETAIL"
+        elif '/login' in url:
+            page_type = "LOGIN"
+        elif '/member' in url:
+            page_type = "MEMBER"
+        elif url.rstrip('/') == 'https://tickets.funone.io':
+            page_type = "HOME"
+        else:
+            # Check for ticket selection or order pages dynamically
+            page_type = "TICKET_FLOW"
+
+    if show_debug_message:
+        print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
+
+    # Close popups first
+    await nodriver_funone_close_popup(tab)
+
+    # Inject cookie if not done yet
+    if not funone_dict.get("session_cookie_injected", False):
+        cookie_result = await nodriver_funone_inject_cookie(tab, config_dict)
+        if cookie_result:
+            funone_dict["session_cookie_injected"] = True
+
+    # Handle different page types
+    if page_type == "HOME":
+        # On homepage, just ensure logged in
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    elif page_type == "ACTIVITY_DETAIL":
+        # Activity detail page - select session and click next
+        is_logged_in = await nodriver_funone_verify_login(tab, config_dict)
+
+        if is_logged_in:
+            if not funone_dict.get("is_session_selecting", False):
+                funone_dict["is_session_selecting"] = True
+                success = await nodriver_funone_date_auto_select(tab, url, config_dict)
+                if success:
+                    funone_dict["is_session_selecting"] = False
+                else:
+                    funone_dict["is_session_selecting"] = False
+
+    elif page_type == "LOGIN":
+        # Login page - try cookie injection
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    elif page_type == "TICKET_FLOW":
+        # Ticket selection flow
+        is_logged_in = await nodriver_funone_verify_login(tab, config_dict)
+
+        if is_logged_in:
+            # Try area selection
+            area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+
+            if area_selected:
+                await tab.sleep(0.3)
+
+                # Set ticket number
+                await nodriver_funone_assign_ticket_number(tab, config_dict)
+                await tab.sleep(0.3)
+
+                # Check agreements
+                await nodriver_funone_ticket_agree(tab)
+
+                # Handle captcha
+                captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
+
+                if captcha_done:
+                    # Try to submit
+                    submit_result = await nodriver_funone_order_submit(tab, config_dict, funone_dict)
+
+                    if submit_result:
+                        # Play order success sound
+                        if not funone_dict.get("played_sound_order", False):
+                            if config_dict["advanced"]["play_sound"]["order"]:
+                                play_sound_while_ordering(config_dict)
+                            send_discord_notification(config_dict, "order", "FunOne")
+                            funone_dict["played_sound_order"] = True
+                        print("[FUNONE] Order submitted successfully!")
+
+    elif page_type == "MEMBER":
+        # Member page - verify login status
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    # Auto reload check
+    await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
+
+    return tab
+
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -24525,6 +25469,10 @@ async def main(args):
             softix_family = True
         if softix_family:
             tab = await nodriver_hkticketing_main(tab, url, config_dict)
+
+        # FunOne Tickets
+        if 'tickets.funone.io' in url:
+            tab = await nodriver_funone_main(tab, url, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
