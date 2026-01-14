@@ -1,4 +1,4 @@
-# CLAUDE.md v3.0（精簡版）
+﻿# CLAUDE.md v3.0（精簡版）
 
 **專案**：Tickets Hunter - 多平台搶票自動化系統
 **版本**：v3.0

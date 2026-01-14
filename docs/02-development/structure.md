@@ -451,6 +451,34 @@ FamiTicket 主流程
 - ✅ 隨機延遲 0.4-1.2 秒模擬人類操作（反爬蟲）
 - ✅ 使用 NoDriver 官方 API（`query_selector_all`、`wait_for`）
 
+### 🎪 **FunOne Tickets** (v2026.01.13 新增)
+
+#### NoDriver
+```
+FunOne Tickets 主流程 (Feature 011)
+├── nodriver_funone_main                    # 行 25143 ✅ (主控制器 - URL 路由器)
+├── nodriver_funone_inject_cookie           # 行 24334 ✅ (Cookie 注入登入)
+├── nodriver_funone_check_login_status      # 行 24376 ✅ (登入狀態檢查)
+├── nodriver_funone_verify_login            # 行 24404 ✅ (驗證登入+重新注入)
+├── nodriver_funone_close_popup             # 行 24445 ✅ (關閉彈窗)
+├── nodriver_funone_date_auto_select        # 行 24494 ✅ (場次選擇+關鍵字匹配)
+├── nodriver_funone_area_auto_select        # 行 24641 ✅ (票種選擇+關鍵字匹配)
+├── nodriver_funone_assign_ticket_number    # 行 24790 ✅ (張數設定)
+├── nodriver_funone_captcha_handler         # 行 24880 ✅ (驗證碼等待)
+├── nodriver_funone_ticket_agree            # 行 24949 ✅ (同意條款)
+├── nodriver_funone_order_submit            # 行 24987 ✅ (訂單提交)
+├── nodriver_funone_auto_reload             # 行 25039 ✅ (開賣前自動刷新)
+└── nodriver_funone_error_handler           # 行 25110 ✅ (錯誤處理)
+```
+
+**FunOne Tickets NoDriver 功能特點**：
+- ✅ 完整 13 函數實作，涵蓋 Cookie 登入→場次→票種→張數→驗證碼→提交完整流程
+- ✅ Cookie 注入登入（FunOne 使用 OTP 登入，僅能透過 Cookie 快速登入）
+- ✅ 場次/票種選擇支援關鍵字匹配 + random/from_top_to_bottom 遞補模式
+- ✅ 支援售罄跳過（pass_date_is_sold_out）
+- ✅ 使用通用 `ticket_number` 設定（與其他平台一致）
+- ✅ 驗證碼需人工輸入（平台無 OCR 自動辨識介面）
+
 ### 🌐 **其他平台**
 
 #### Chrome/Undetected
