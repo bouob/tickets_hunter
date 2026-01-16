@@ -25041,29 +25041,56 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
 
 async def nodriver_funone_captcha_handler(tab, config_dict):
     """
-    Handle captcha - detect and wait for manual input
+    Handle captcha - detect and auto-fill using OCR
 
     Returns:
-        bool: True if captcha is filled
+        bool: True if captcha is filled or no captcha exists
     """
     global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
+    ocr_enabled = config_dict.get("ocr_captcha", {}).get("enable", False)
 
     try:
-        # Check for captcha image
+        # Check for captcha image and input
+        # FunOne uses img[alt="vCode"] with base64 data URI
         check_captcha_js = '''
         (function() {
-            // Look for captcha image
+            // Look for FunOne captcha image (alt="vCode" with base64 src)
+            const captchaImg = document.querySelector('img[alt="vCode"]');
+            if (captchaImg) {
+                const src = captchaImg.src || '';
+                // FunOne captcha is embedded as base64
+                if (src.startsWith('data:image')) {
+                    // Find the corresponding input field
+                    const inputs = document.querySelectorAll('input[type="text"]');
+                    let captchaInput = null;
+                    for (const input of inputs) {
+                        const placeholder = (input.placeholder || '').toLowerCase();
+                        if (placeholder.includes('驗證') || placeholder.includes('captcha')) {
+                            captchaInput = input;
+                            break;
+                        }
+                    }
+                    return {
+                        hasCaptcha: true,
+                        type: 'base64',
+                        base64Data: src,
+                        filled: captchaInput ? captchaInput.value.length > 0 : false
+                    };
+                }
+            }
+
+            // Fallback: Look for any captcha-related image
             const imgs = document.querySelectorAll('img');
             for (const img of imgs) {
                 const src = img.src || '';
                 const alt = img.alt || '';
                 if (src.includes('captcha') || alt.includes('captcha') || alt.includes('驗證')) {
-                    return { hasCaptcha: true, type: 'image' };
+                    return { hasCaptcha: true, type: 'image', filled: false };
                 }
             }
 
-            // Look for captcha input
+            // Look for captcha input to check if filled
             const inputs = document.querySelectorAll('input');
             for (const input of inputs) {
                 const name = (input.name || '').toLowerCase();
@@ -25080,33 +25107,110 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
         captcha_info = await tab.evaluate(check_captcha_js)
         captcha_info = util.parse_nodriver_result(captcha_info)
 
-        if captcha_info and isinstance(captcha_info, dict) and captcha_info.get('hasCaptcha'):
+        if not captcha_info or not isinstance(captcha_info, dict) or not captcha_info.get('hasCaptcha'):
+            # No captcha found
+            return True
+
+        if show_debug_message:
+            print(f"[FUNONE] Captcha detected - type: {captcha_info.get('type')}")
+
+        # Check if already filled
+        if captcha_info.get('filled'):
             if show_debug_message:
-                print(f"[FUNONE] Captcha detected - type: {captcha_info.get('type')}")
+                print("[FUNONE] Captcha already filled")
+            return True
 
-            # Play sound once to alert user
-            if not funone_dict.get("played_sound_ticket", False):
-                if config_dict["advanced"]["play_sound"]["ticket"]:
-                    play_sound_while_ordering(config_dict)
-                funone_dict["played_sound_ticket"] = True
+        # Play sound once to alert user
+        if not funone_dict.get("played_sound_ticket", False):
+            if config_dict["advanced"]["play_sound"]["ticket"]:
+                play_sound_while_ordering(config_dict)
+            funone_dict["played_sound_ticket"] = True
 
-            # Check if already filled
-            if captcha_info.get('filled'):
-                if show_debug_message:
-                    print("[FUNONE] Captcha already filled")
+        # Try OCR if enabled and we have base64 data
+        if ocr_enabled and captcha_info.get('type') == 'base64' and captcha_info.get('base64Data'):
+            ocr_result = await nodriver_funone_ocr_captcha(tab, config_dict, captcha_info.get('base64Data'))
+            if ocr_result:
                 return True
 
-            if show_debug_message:
-                print("[FUNONE] Waiting for manual captcha input...")
-            return False
-
-        # No captcha found
-        return True
+        if show_debug_message:
+            print("[FUNONE] Waiting for manual captcha input...")
+        return False
 
     except Exception as exc:
         if show_debug_message:
             print(f"[FUNONE] Captcha check error: {exc}")
         return False
+
+
+async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
+    """
+    Perform OCR on FunOne captcha image and fill the input
+
+    Args:
+        tab: Browser tab
+        config_dict: Configuration dictionary
+        base64_data: Base64 encoded image data (data:image/png;base64,...)
+
+    Returns:
+        bool: True if OCR succeeded and input was filled
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Extract base64 content (remove data:image/...;base64, prefix)
+        if ',' in base64_data:
+            base64_content = base64_data.split(',')[1]
+        else:
+            base64_content = base64_data
+
+        # Decode base64 to image bytes
+        import base64 as b64
+        img_bytes = b64.b64decode(base64_content)
+
+        if show_debug_message:
+            print(f"[FUNONE OCR] Image size: {len(img_bytes)} bytes")
+
+        # Initialize ddddocr with beta mode (best for FunOne captcha)
+        # FunOne captcha requires beta mode and uppercase conversion
+        ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
+        ocr_answer = ocr.classification(img_bytes)
+
+        if ocr_answer:
+            # FunOne captcha is case-sensitive and uses uppercase letters
+            ocr_answer = ocr_answer.upper()
+
+            if show_debug_message:
+                print(f"[FUNONE OCR] Result: {ocr_answer}")
+
+            # Fill the captcha input
+            fill_captcha_js = f'''
+            (function() {{
+                const inputs = document.querySelectorAll('input[type="text"]');
+                for (const input of inputs) {{
+                    const placeholder = (input.placeholder || '').toLowerCase();
+                    if (placeholder.includes('驗證') || placeholder.includes('captcha')) {{
+                        input.value = '{ocr_answer}';
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{ success: true, value: '{ocr_answer}' }};
+                    }}
+                }}
+                return {{ success: false }};
+            }})()
+            '''
+            fill_result = await tab.evaluate(fill_captcha_js)
+            fill_result = util.parse_nodriver_result(fill_result)
+
+            if fill_result and isinstance(fill_result, dict) and fill_result.get('success'):
+                if show_debug_message:
+                    print(f"[FUNONE OCR] Captcha filled: {ocr_answer}")
+                return True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE OCR] Error: {exc}")
+
+    return False
 
 
 async def nodriver_funone_detect_step(tab):
