@@ -171,7 +171,7 @@ def get_config_dict(args):
             is_headless_enable_ocr = False
             if config_dict["advanced"]["headless"]:
                 # for tixcraft headless.
-                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                if len(config_dict["accounts"]["tixcraft_sid"]) > 1:
                     is_headless_enable_ocr = True
 
             if is_headless_enable_ocr:
@@ -529,10 +529,10 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     # for like human.
     await asyncio.sleep(random.uniform(1, 3))
 
-    kktix_account = config_dict["advanced"]["kktix_account"]
+    kktix_account = config_dict["accounts"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
-        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
 
     has_redirected = False
     if len(kktix_account) > 4:
@@ -630,36 +630,36 @@ async def nodriver_goto_homepage(driver, config_dict):
             pass
         
 
-        if len(config_dict["advanced"]["kktix_account"])>0:
+        if len(config_dict["accounts"]["kktix_account"])>0:
             if not 'https://kktix.com/users/sign_in?' in homepage:
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
     if 'famiticket.com' in homepage:
-        if len(config_dict["advanced"]["fami_account"])>0:
+        if len(config_dict["accounts"]["fami_account"])>0:
             homepage = CONST_FAMI_SIGN_IN_URL
 
     if 'kham.com' in homepage:
-        if len(config_dict["advanced"]["kham_account"])>0:
+        if len(config_dict["accounts"]["kham_account"])>0:
             homepage = CONST_KHAM_SIGN_IN_URL
 
     if 'ticket.com.tw' in homepage:
-        if len(config_dict["advanced"]["ticket_account"])>0:
+        if len(config_dict["accounts"]["ticket_account"])>0:
             homepage = CONST_TICKET_SIGN_IN_URL
 
     if 'udnfunlife.com' in homepage:
-        if len(config_dict["advanced"]["udn_account"])>0:
+        if len(config_dict["accounts"]["udn_account"])>0:
             homepage = CONST_UDN_SIGN_IN_URL
 
     if 'urbtix.hk' in homepage:
-        if len(config_dict["advanced"]["urbtix_account"])>0:
+        if len(config_dict["accounts"]["urbtix_account"])>0:
             homepage = CONST_URBTIX_SIGN_IN_URL
 
     if 'cityline.com' in homepage:
-        if len(config_dict["advanced"]["cityline_account"])>0:
+        if len(config_dict["accounts"]["cityline_account"])>0:
             homepage = CONST_CITYLINE_SIGN_IN_URL
 
     if 'hkticketing.com' in homepage:
-        if len(config_dict["advanced"]["hkticketing_account"])>0:
+        if len(config_dict["accounts"]["hkticketing_account"])>0:
             if 'hkt.hkticketing.com' in homepage:
                 # Type02: hkt.hkticketing.com SPA
                 homepage = CONST_HKTICKETING_TYPE02_SIGN_IN_URL
@@ -669,7 +669,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     # https://ticketplus.com.tw/*
     if 'ticketplus.com.tw' in homepage:
-        if len(config_dict["advanced"]["ticketplus_account"]) > 1:
+        if len(config_dict["accounts"]["ticketplus_account"]) > 1:
             homepage = "https://ticketplus.com.tw/"
 
     try:
@@ -704,7 +704,7 @@ async def nodriver_goto_homepage(driver, config_dict):
             cookie_domain = ".tixcraft.com"
             cookie_name = "TIXUISID"
 
-        tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
+        tixcraft_sid = config_dict["accounts"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
             if util.get_debug_mode(config_dict):
                 print(f"Setting tixcraft {cookie_name} cookie, length: {len(tixcraft_sid)}")
@@ -832,6 +832,49 @@ async def nodriver_goto_homepage(driver, config_dict):
 
         # 不管成功與否，都繼續後續處理，讓使用者手動處理登入問題
         # 這樣可以避免完全中斷搶票流程
+
+    # FunOne cookie injection (same pattern as TixCraft/iBon)
+    if 'tickets.funone.io' in homepage:
+        funone_cookie = config_dict["accounts"].get("funone_session_cookie", "").strip()
+        if len(funone_cookie) > 1:
+            if util.get_debug_mode(config_dict):
+                print(f"[FUNONE] Setting ticket_session cookie, length: {len(funone_cookie)}")
+
+            try:
+                from nodriver import cdp
+
+                # Set ticket_session cookie using CDP
+                await tab.send(cdp.network.set_cookie(
+                    name="ticket_session",
+                    value=funone_cookie,
+                    domain="tickets.funone.io",
+                    path="/",
+                    secure=False,
+                    http_only=True
+                ))
+
+                if util.get_debug_mode(config_dict):
+                    print("[FUNONE] ticket_session cookie set successfully")
+
+                # Verify cookie was set
+                updated_cookies = await driver.cookies.get_all()
+                funone_cookies = [c for c in updated_cookies if c.name == 'ticket_session']
+                if funone_cookies:
+                    if util.get_debug_mode(config_dict):
+                        print(f"[FUNONE] Verified cookie: domain={funone_cookies[0].domain}, value length={len(funone_cookies[0].value)}")
+
+                    # Reload page to apply cookie
+                    if util.get_debug_mode(config_dict):
+                        print("[FUNONE] Reloading page to apply cookie...")
+                    await tab.reload()
+                    await asyncio.sleep(1.5)
+                else:
+                    if util.get_debug_mode(config_dict):
+                        print("[FUNONE] Warning: ticket_session cookie not found after setting")
+
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[FUNONE] Error setting cookie: {str(e)}")
 
     return tab
 
@@ -2793,10 +2836,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
             if config_dict["advanced"]["headless"]:
                 if not kktix_dict["is_popup_checkout"]:
-                    kktix_account = config_dict["advanced"]["kktix_account"]
+                    kktix_account = config_dict["accounts"]["kktix_account"]
                     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
                     if kktix_password == "":
-                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+                        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
 
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
@@ -6439,10 +6482,10 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     is_filled_form = False
     is_submited = False
 
-    ticketplus_account = config_dict["advanced"]["ticketplus_account"]
+    ticketplus_account = config_dict["accounts"]["ticketplus_account"]
     ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
     if ticketplus_password == "":
-        ticketplus_password = util.decryptMe(config_dict["advanced"]["ticketplus_password"])
+        ticketplus_password = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
 
     # manually keyin verify code.
     country_code = ""
@@ -6518,7 +6561,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
 
     # auto fill account info.
     is_user_signin = False
-    if len(config_dict["advanced"]["ticketplus_account"]) > 0:
+    if len(config_dict["accounts"]["ticketplus_account"]) > 0:
         is_user_signin = await nodriver_ticketplus_is_signin(tab)
         #print("is_user_signin:", is_user_signin)
         if not is_user_signin:
@@ -8362,7 +8405,7 @@ async def nodriver_ibon_login(tab, config_dict, driver):
         print("=== ibon Auto-Login Started ===")
 
     # 檢查是否有 ibon cookie 設定
-    ibonqware = config_dict["advanced"]["ibonqware"]
+    ibonqware = config_dict["accounts"]["ibonqware"]
     if len(ibonqware) <= 1:
         if show_debug_message:
             print("No ibon cookie configured, skipping auto-login")
@@ -15131,7 +15174,7 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
     # Login page
     if 'cityline.com/Login.html' in url:
-        cityline_account = config_dict["advanced"]["cityline_account"]
+        cityline_account = config_dict["accounts"]["cityline_account"]
         if len(cityline_account) > 4:
             # Auto-fill email and monitor login button (will auto-click when enabled)
             await nodriver_cityline_login(tab, cityline_account)
@@ -15227,10 +15270,10 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
 
 async def nodriver_facebook_main(tab, config_dict):
-    facebook_account = config_dict["advanced"]["facebook_account"].strip()
+    facebook_account = config_dict["accounts"]["facebook_account"].strip()
     facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
     if facebook_password == "":
-        facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+        facebook_password = util.decryptMe(config_dict["accounts"]["facebook_password"])
     if len(facebook_account) > 4:
         await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
@@ -16686,10 +16729,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # For UDN login page: execute login first, then redirect after login completes
             # This prevents the infinite redirect loop between login page and event page
             if 'udnfunlife.com' in url.lower():
-                udn_account = config_dict["advanced"]["udn_account"]
+                udn_account = config_dict["accounts"]["udn_account"]
                 udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
                 if udn_password == "":
-                    udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                    udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
 
                 if len(udn_account) > 4:
                     # Check if already logged in by looking for logout button or user menu
@@ -16988,10 +17031,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         # UDN homepage login (popup dialog with reCAPTCHA)
         # UDN uses a popup login dialog on homepage, not UTK1306 page
         if 'utk01/utk0101_.aspx' in url.lower():
-            udn_account = config_dict["advanced"]["udn_account"]
+            udn_account = config_dict["accounts"]["udn_account"]
             udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
             if udn_password == "":
-                udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
             if len(udn_account) > 4:
                 # Check if already logged in
                 # Detection method: Check if "登入/註冊" menu item is hidden
@@ -18221,28 +18264,28 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                 # UDN login (Feature 010: uses same UTK backend as KHAM)
                 if 'udnfunlife' in domain_name:
-                    udn_account = config_dict["advanced"]["udn_account"]
+                    udn_account = config_dict["accounts"]["udn_account"]
                     udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
                     if udn_password == "":
-                        udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                        udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
                     if len(udn_account) > 4:
                         if show_debug_message:
                             print(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
                         await nodriver_kham_login(tab, udn_account, udn_password, ocr)
 
                 # Kham login
-                kham_account = config_dict["advanced"]["kham_account"]
+                kham_account = config_dict["accounts"]["kham_account"]
                 kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
                 if kham_password == "":
-                    kham_password = util.decryptMe(config_dict["advanced"]["kham_password"])
+                    kham_password = util.decryptMe(config_dict["accounts"]["kham_password"])
                 if len(kham_account) > 4:
                     await nodriver_kham_login(tab, kham_account, kham_password, ocr)
 
                 # Ticket.com.tw login
-                ticket_account = config_dict["advanced"]["ticket_account"]
+                ticket_account = config_dict["accounts"]["ticket_account"]
                 ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
                 if ticket_password == "":
-                    ticket_password = util.decryptMe(config_dict["advanced"]["ticket_password"])
+                    ticket_password = util.decryptMe(config_dict["accounts"]["ticket_password"])
                 if len(ticket_account) > 4:
                     # Use dedicated ticket login function (different selectors)
                     await nodriver_ticket_login(tab, ticket_account, ticket_password, config_dict)
@@ -24242,7 +24285,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         is_hkticketing_sign_in_page = True
 
     if is_hkticketing_sign_in_page:
-        hkticketing_account = config_dict["advanced"]["hkticketing_account"].strip()
+        hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
         # Password is encrypted in settings.json, need to decrypt
         hkticketing_password = util.decryptMe(config_dict["advanced"].get("hkticketing_password", ""))
         if len(hkticketing_account) > 4:
@@ -24345,7 +24388,7 @@ async def nodriver_funone_inject_cookie(tab, config_dict):
     import nodriver.cdp as cdp
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
-    funone_session_cookie = config_dict["advanced"].get("funone_session_cookie", "").strip()
+    funone_session_cookie = config_dict["accounts"].get("funone_session_cookie", "").strip()
 
     if len(funone_session_cookie) == 0:
         if show_debug_message:
@@ -24395,7 +24438,19 @@ async def nodriver_funone_check_login_status(tab):
         })()
         '''
         has_login_button = await tab.evaluate(login_button_js)
-        return not has_login_button
+
+        # Handle NoDriver return format (may return list instead of direct value)
+        if isinstance(has_login_button, list):
+            if len(has_login_button) > 0:
+                has_login_button = has_login_button[0]
+                if isinstance(has_login_button, list) and len(has_login_button) > 0:
+                    has_login_button = has_login_button[0]
+
+        # Convert to boolean
+        if has_login_button is True or has_login_button == 'true':
+            return False  # Login button found = not logged in
+        else:
+            return True   # No login button = logged in
 
     except Exception as exc:
         return False
@@ -24403,10 +24458,10 @@ async def nodriver_funone_check_login_status(tab):
 
 async def nodriver_funone_verify_login(tab, config_dict):
     """
-    Verify login status, re-inject cookie if needed
+    Verify login status (cookie is already injected in goto_homepage)
 
     Returns:
-        bool: True if login is valid
+        bool: True if logged in
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
@@ -24414,28 +24469,8 @@ async def nodriver_funone_verify_login(tab, config_dict):
 
     if is_logged_in:
         if show_debug_message:
-            print("[FUNONE] Login status verified - already logged in")
+            print("[FUNONE] Login status verified - logged in")
         return True
-
-    # Try to inject cookie and reload
-    cookie_injected = await nodriver_funone_inject_cookie(tab, config_dict)
-
-    if cookie_injected:
-        if show_debug_message:
-            print("[FUNONE] Cookie injected, reloading page...")
-        try:
-            await tab.reload()
-            await tab.sleep(1)
-
-            # Check login status again
-            is_logged_in = await nodriver_funone_check_login_status(tab)
-            if is_logged_in:
-                if show_debug_message:
-                    print("[FUNONE] Login successful after cookie injection")
-                return True
-        except Exception as exc:
-            if show_debug_message:
-                print(f"[FUNONE] Reload after cookie injection failed: {exc}")
 
     if show_debug_message:
         print("[FUNONE] Not logged in - waiting for manual OTP login")
@@ -24657,23 +24692,48 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         print(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
 
     try:
-        # Get all ticket types
+        # Get all ticket areas (FunOne uses div.zone_box elements)
         get_tickets_js = '''
         (function() {
             const tickets = [];
-            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
 
+            // First try FunOne-specific zone_box elements
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                for (const box of zoneBoxes) {
+                    const text = box.textContent || '';
+                    const isDisabled = box.classList.contains('disabled');
+
+                    // Get zone name
+                    const zoneName = box.querySelector('.zone_name');
+                    const name = zoneName ? zoneName.textContent.trim() : text.trim();
+
+                    tickets.push({
+                        text: name,
+                        fullText: text.trim().replace(/\\s+/g, ' '),
+                        index: tickets.length,
+                        disabled: isDisabled,
+                        type: 'zone_box'
+                    });
+                }
+                return tickets;
+            }
+
+            // Fallback to generic button search
+            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
             for (const item of items) {
                 const text = item.textContent || '';
                 const isDisabled = item.disabled || item.classList.contains('disabled') || item.classList.contains('sold-out');
 
                 // Filter ticket type buttons
-                if (text.length > 2 && text.length < 300 && !isDisabled) {
+                if (text.length > 2 && text.length < 300) {
                     // Check if it looks like a ticket type (contains price or zone info)
                     if (/\\$|NT|TWD|\\d+元|區|票/.test(text) || text.includes('票種')) {
                         tickets.push({
                             text: text.trim().replace(/\\s+/g, ' '),
-                            index: tickets.length
+                            index: tickets.length,
+                            disabled: isDisabled,
+                            type: 'button'
                         });
                     }
                 }
@@ -24690,6 +24750,19 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
         if show_debug_message:
             print(f"[FUNONE] Found {len(tickets)} ticket types")
+
+        # Filter out disabled (sold out) tickets first
+        available_tickets = [t for t in tickets if not t.get('disabled', False)]
+        if show_debug_message and len(available_tickets) != len(tickets):
+            sold_out_count = len(tickets) - len(available_tickets)
+            print(f"[FUNONE] {sold_out_count} ticket types sold out, {len(available_tickets)} available")
+
+        if len(available_tickets) == 0:
+            if show_debug_message:
+                print("[FUNONE] All ticket types are sold out")
+            return False
+
+        tickets = available_tickets
 
         # Apply exclude keywords first
         if keyword_exclude and len(keyword_exclude) > 0:
@@ -24750,9 +24823,30 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
         # Click the selected ticket type
         original_index = tickets[target_index].get('index', target_index)
+        ticket_type = tickets[target_index].get('type', 'button')
+        ticket_name = tickets[target_index].get('text', '')
+
+        if show_debug_message:
+            print(f"[FUNONE] Clicking area '{ticket_name}' (index: {original_index}, type: {ticket_type})")
 
         click_ticket_js = f'''
         (function() {{
+            // First try FunOne-specific zone_box elements
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {{
+                const availableBoxes = [];
+                for (const box of zoneBoxes) {{
+                    if (!box.classList.contains('disabled')) {{
+                        availableBoxes.push(box);
+                    }}
+                }}
+                if (availableBoxes.length > {original_index}) {{
+                    availableBoxes[{original_index}].click();
+                    return true;
+                }}
+            }}
+
+            // Fallback to generic button search
             const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
             const tickets = [];
 
@@ -24801,12 +24895,57 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         print(f"[FUNONE] Setting ticket quantity to {ticket_number}")
 
     try:
-        # Try to set ticket number via dropdown or input
+        # Try to set ticket number via dropdown, input, or +/- buttons
         set_quantity_js = f'''
         (function() {{
             const targetQty = {ticket_number};
 
-            // Try select/dropdown first
+            // FunOne-specific: Look for quantity control with +/- buttons and textbox
+            // The structure is typically: [- button] [textbox] [+ button]
+            const allButtons = document.querySelectorAll('button');
+            let plusBtn = null;
+            let minusBtn = null;
+            let qtyInput = null;
+
+            // Find the quantity input textbox (usually near +/- buttons)
+            const textInputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+            for (const input of textInputs) {{
+                const currentVal = parseInt(input.value);
+                // Check if this looks like a quantity input (value is a small number)
+                if (!isNaN(currentVal) && currentVal >= 0 && currentVal <= 10) {{
+                    // Find adjacent +/- buttons
+                    const parent = input.parentElement;
+                    if (parent) {{
+                        const siblings = parent.querySelectorAll('button');
+                        for (const btn of siblings) {{
+                            const text = btn.textContent.trim();
+                            if (text === '+') plusBtn = btn;
+                            if (text === '-') minusBtn = btn;
+                        }}
+                    }}
+                    if (plusBtn) {{
+                        qtyInput = input;
+                        break;
+                    }}
+                }}
+            }}
+
+            // If found FunOne-style quantity control
+            if (plusBtn && qtyInput) {{
+                const currentVal = parseInt(qtyInput.value) || 0;
+                const clicksNeeded = targetQty - currentVal;
+
+                if (clicksNeeded > 0) {{
+                    for (let i = 0; i < clicksNeeded; i++) {{
+                        plusBtn.click();
+                    }}
+                    return {{ success: true, type: 'plus_button', value: targetQty, clicks: clicksNeeded }};
+                }} else if (clicksNeeded === 0) {{
+                    return {{ success: true, type: 'already_set', value: targetQty }};
+                }}
+            }}
+
+            // Try select/dropdown
             const selects = document.querySelectorAll('select');
             for (const sel of selects) {{
                 const options = sel.querySelectorAll('option');
@@ -24830,7 +24969,7 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
                 }}
             }}
 
-            // Try number input
+            // Try direct input with value setting
             const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
             for (const input of inputs) {{
                 const placeholder = input.placeholder || '';
@@ -24844,16 +24983,15 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
                 }}
             }}
 
-            // Try plus/minus buttons
-            const plusBtns = document.querySelectorAll('button, [role="button"]');
-            for (const btn of plusBtns) {{
-                const text = btn.textContent || '';
+            // Fallback: Try any plus button
+            for (const btn of allButtons) {{
+                const text = btn.textContent.trim();
                 if (text === '+' || btn.classList.contains('plus') || btn.classList.contains('add')) {{
-                    // Click plus button multiple times
-                    for (let i = 0; i < targetQty - 1; i++) {{
+                    // Click plus button targetQty times (assuming starting from 0)
+                    for (let i = 0; i < targetQty; i++) {{
                         btn.click();
                     }}
-                    return {{ success: true, type: 'button', value: targetQty }};
+                    return {{ success: true, type: 'button_fallback', value: targetQty }};
                 }}
             }}
 
@@ -24861,8 +24999,9 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         }})()
         '''
         result = await tab.evaluate(set_quantity_js)
+        result = util.parse_nodriver_result(result)
 
-        if result and result.get('success'):
+        if result and isinstance(result, dict) and result.get('success'):
             if show_debug_message:
                 print(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
             return True
@@ -24916,8 +25055,9 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
         })()
         '''
         captcha_info = await tab.evaluate(check_captcha_js)
+        captcha_info = util.parse_nodriver_result(captcha_info)
 
-        if captcha_info and captcha_info.get('hasCaptcha'):
+        if captcha_info and isinstance(captcha_info, dict) and captcha_info.get('hasCaptcha'):
             if show_debug_message:
                 print(f"[FUNONE] Captcha detected - type: {captcha_info.get('type')}")
 
@@ -24946,6 +25086,84 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
         return False
 
 
+async def nodriver_funone_detect_step(tab):
+    """
+    Detect which step of the ticket flow we're on.
+
+    Returns:
+        int: Step number (1=Area, 2=Quantity, 3=Form, 4=Payment, 5=Complete, 0=Unknown)
+    """
+    try:
+        detect_step_js = '''
+        (function() {
+            const url = window.location.href;
+            const bodyText = document.body.textContent || '';
+
+            // Check URL for step parameter
+            const stepMatch = url.match(/[?&]step=(\d+)/);
+            if (stepMatch) {
+                return parseInt(stepMatch[1]);
+            }
+
+            // Check for step indicators in the DOM
+            // Step 1: Area selection - has zone_box elements
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                return 1;
+            }
+
+            // Step 2: Quantity selection - has +/- buttons and ticket info
+            const plusBtns = document.querySelectorAll('button');
+            let hasPlusMinusBtn = false;
+            for (const btn of plusBtns) {
+                const text = btn.textContent.trim();
+                if (text === '+' || text === '-') {
+                    hasPlusMinusBtn = true;
+                    break;
+                }
+            }
+            if (hasPlusMinusBtn && (bodyText.includes('張數') || bodyText.includes('票種'))) {
+                return 2;
+            }
+
+            // Step 3: Form filling
+            const formInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]');
+            if (formInputs.length >= 3 && (bodyText.includes('填寫') || bodyText.includes('表單'))) {
+                return 3;
+            }
+
+            // Step 4: Payment
+            if (bodyText.includes('付款') || bodyText.includes('結帳') || bodyText.includes('信用卡')) {
+                return 4;
+            }
+
+            // Step 5: Complete
+            if (bodyText.includes('購票完成') || bodyText.includes('訂單成功')) {
+                return 5;
+            }
+
+            // Check active step indicator
+            const activeSteps = document.querySelectorAll('.step.active, .active-step, [class*="step"][class*="active"]');
+            if (activeSteps.length > 0) {
+                const stepText = activeSteps[0].textContent || '';
+                if (stepText.includes('1') || stepText.includes('區域')) return 1;
+                if (stepText.includes('2') || stepText.includes('張數')) return 2;
+                if (stepText.includes('3') || stepText.includes('表單')) return 3;
+                if (stepText.includes('4') || stepText.includes('結帳')) return 4;
+                if (stepText.includes('5') || stepText.includes('完成')) return 5;
+            }
+
+            return 0; // Unknown
+        })()
+        '''
+        step = await tab.evaluate(detect_step_js)
+        step = util.parse_nodriver_result(step)
+        return int(step) if step else 0
+
+    except Exception as exc:
+        return 0
+
+
 async def nodriver_funone_ticket_agree(tab):
     """
     Check agreement checkboxes
@@ -24957,19 +25175,59 @@ async def nodriver_funone_ticket_agree(tab):
         check_agree_js = '''
         (function() {
             let checked = 0;
+
+            // FunOne-specific: custom div.checkbox elements
+            const customCheckboxes = document.querySelectorAll('.checkbox_block .checkbox, div.checkbox');
+            for (const cb of customCheckboxes) {
+                // Check if not already checked (FunOne adds 'checked' class or changes style)
+                const isChecked = cb.classList.contains('checked') ||
+                                  cb.classList.contains('active') ||
+                                  cb.querySelector('svg, .checkmark, [class*="check"]');
+
+                if (!isChecked) {
+                    cb.click();
+                    checked++;
+                }
+            }
+
+            if (checked > 0) {
+                return checked;
+            }
+
+            // Standard input checkboxes
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
 
             for (const cb of checkboxes) {
                 if (!cb.checked) {
+                    // Try multiple ways to find the associated text
                     const label = cb.closest('label') || document.querySelector(`label[for="${cb.id}"]`);
-                    const text = label ? label.textContent : '';
+                    let text = label ? label.textContent : '';
+
+                    // If no label text, check parent/sibling elements
+                    if (!text && cb.parentElement) {
+                        text = cb.parentElement.textContent || '';
+                    }
+
+                    // FunOne specific: check for nearby text about terms/agreement
+                    const nearbyText = cb.closest('div')?.textContent || '';
 
                     // Check if it's an agreement checkbox
                     if (text.includes('同意') || text.includes('agree') || text.includes('條款') ||
-                        text.includes('terms') || text.includes('規則')) {
-                        cb.checked = true;
-                        cb.dispatchEvent(new Event('change', { bubbles: true }));
+                        text.includes('terms') || text.includes('規則') || text.includes('閱讀') ||
+                        nearbyText.includes('同意') || nearbyText.includes('服務條款')) {
+                        cb.click(); // Use click instead of just setting checked for better event handling
                         checked++;
+                    }
+                }
+            }
+
+            // If no checkbox found with text, just click any unchecked checkbox
+            if (checked === 0) {
+                for (const cb of checkboxes) {
+                    if (!cb.checked) {
+                        cb.click();
+                        checked++;
+                        break; // Only click first unchecked checkbox
                     }
                 }
             }
@@ -25002,10 +25260,10 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
             for (const btn of buttons) {
                 const text = (btn.textContent || btn.value || '').trim();
 
-                // Submit button patterns
-                if (text.includes('確認') || text.includes('送出') || text.includes('提交') ||
-                    text.includes('Submit') || text.includes('Confirm') || text.includes('購買') ||
-                    text === '確定' || text === '下一步') {
+                // Submit button patterns - FunOne uses "立即購買"
+                if (text.includes('立即購買') || text.includes('確認') || text.includes('送出') ||
+                    text.includes('提交') || text.includes('Submit') || text.includes('Confirm') ||
+                    text.includes('購買') || text === '確定' || text === '下一步') {
 
                     // Check if button is visible and enabled
                     const style = window.getComputedStyle(btn);
@@ -25020,8 +25278,9 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
         })()
         '''
         result = await tab.evaluate(submit_js)
+        result = util.parse_nodriver_result(result)
 
-        if result and result.get('clicked'):
+        if result and isinstance(result, dict) and result.get('clicked'):
             if show_debug_message:
                 print(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
             return True
@@ -25064,18 +25323,76 @@ async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
                 return { status: 'coming_soon', reason: 'not_available' };
             }
 
-            // Sold out
-            if (bodyText.includes('售罄') || bodyText.includes('已售完') ||
-                bodyText.includes('Sold Out') || bodyText.includes('sold out')) {
-                return { status: 'sold_out', reason: 'no_tickets' };
+            // Sold out detection - be smart about it
+            // On FunOne area selection page, "已售完" appears next to disabled areas
+            // Only trigger sold out if ALL available areas are sold out
+
+            // Check if we're on area selection page (has zone_box elements)
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                // On area selection page - check if any area is available
+                let hasAvailable = false;
+                for (const box of zoneBoxes) {
+                    if (!box.classList.contains('disabled')) {
+                        hasAvailable = true;
+                        break;
+                    }
+                }
+                if (!hasAvailable) {
+                    return { status: 'sold_out', reason: 'all_areas_sold_out' };
+                }
+                // Some areas available, not sold out
+                return { status: 'ok' };
+            }
+
+            // Check if we're on quantity selection page (Step 2)
+            // Has ticket info table but may show "熱賣中" etc - not sold out
+            const step2Indicators = document.querySelectorAll('.ticket_info, [class*="step2"], [class*="quantity"]');
+            if (step2Indicators.length > 0 || bodyText.includes('張數') || bodyText.includes('票種')) {
+                // On quantity page, don't trigger sold out unless specific message
+                if (bodyText.includes('已無票券') || bodyText.includes('No tickets available')) {
+                    return { status: 'sold_out', reason: 'no_tickets_message' };
+                }
+                return { status: 'ok' };
+            }
+
+            // For other pages, check for actual sold out indicators
+            // Only if the page seems to be a final "sold out" page
+            const soldOutPatterns = ['已售完', 'Sold Out', 'sold out'];
+            let hasSoldOutText = false;
+            for (const pattern of soldOutPatterns) {
+                if (bodyText.includes(pattern)) {
+                    hasSoldOutText = true;
+                    break;
+                }
+            }
+
+            // Only report sold out if the entire page seems to be about sold out
+            // Not just a label next to some areas
+            if (hasSoldOutText) {
+                // Check if there are any actionable buttons (if yes, not sold out page)
+                const actionButtons = document.querySelectorAll('button:not(:disabled)');
+                let hasActionButton = false;
+                for (const btn of actionButtons) {
+                    const text = btn.textContent || '';
+                    if (text.includes('購買') || text.includes('下一步') || text.includes('確認') ||
+                        text.includes('選') || text.includes('+')) {
+                        hasActionButton = true;
+                        break;
+                    }
+                }
+                if (!hasActionButton) {
+                    return { status: 'sold_out', reason: 'no_tickets' };
+                }
             }
 
             return { status: 'ok' };
         })()
         '''
         status = await tab.evaluate(check_status_js)
+        status = util.parse_nodriver_result(status)
 
-        if status:
+        if status and isinstance(status, dict):
             page_status = status.get('status')
             reason = status.get('reason', '')
 
@@ -25165,7 +25482,6 @@ async def nodriver_funone_main(tab, url, config_dict):
             "is_ticket_selecting": False,
             "played_sound_ticket": False,
             "played_sound_order": False,
-            "session_cookie_injected": False,
             "fail_list": [],
             "reload_count": 0
         }
@@ -25194,12 +25510,6 @@ async def nodriver_funone_main(tab, url, config_dict):
     # Close popups first
     await nodriver_funone_close_popup(tab)
 
-    # Inject cookie if not done yet
-    if not funone_dict.get("session_cookie_injected", False):
-        cookie_result = await nodriver_funone_inject_cookie(tab, config_dict)
-        if cookie_result:
-            funone_dict["session_cookie_injected"] = True
-
     # Handle different page types
     if page_type == "HOME":
         # On homepage, just ensure logged in
@@ -25227,23 +25537,33 @@ async def nodriver_funone_main(tab, url, config_dict):
         is_logged_in = await nodriver_funone_verify_login(tab, config_dict)
 
         if is_logged_in:
-            # Try area selection
-            area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+            # Detect which step we're on
+            step = await nodriver_funone_detect_step(tab)
 
-            if area_selected:
-                await tab.sleep(0.3)
+            if show_debug_message:
+                print(f"[FUNONE] Detected step: {step}")
 
+            if step == 1:
+                # Step 1: Area selection
+                area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+                if area_selected:
+                    await tab.sleep(0.5)
+                    # Page should navigate to step 2 after area selection
+
+            elif step == 2:
+                # Step 2: Quantity selection
                 # Set ticket number
-                await nodriver_funone_assign_ticket_number(tab, config_dict)
+                qty_set = await nodriver_funone_assign_ticket_number(tab, config_dict)
                 await tab.sleep(0.3)
 
                 # Check agreements
                 await nodriver_funone_ticket_agree(tab)
+                await tab.sleep(0.2)
 
                 # Handle captcha
                 captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
 
-                if captcha_done:
+                if captcha_done and qty_set:
                     # Try to submit
                     submit_result = await nodriver_funone_order_submit(tab, config_dict, funone_dict)
 
@@ -25255,6 +25575,24 @@ async def nodriver_funone_main(tab, url, config_dict):
                             send_discord_notification(config_dict, "order", "FunOne")
                             funone_dict["played_sound_order"] = True
                         print("[FUNONE] Order submitted successfully!")
+
+            elif step >= 3:
+                # Step 3+: Form filling, payment, etc.
+                # Handle captcha if present
+                await nodriver_funone_captcha_handler(tab, config_dict)
+
+            else:
+                # Unknown step - try area selection first, then quantity
+                area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+
+                if not area_selected:
+                    # Maybe we're already past area selection, try quantity
+                    await nodriver_funone_assign_ticket_number(tab, config_dict)
+                    await tab.sleep(0.3)
+                    await nodriver_funone_ticket_agree(tab)
+                    captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
+                    if captcha_done:
+                        await nodriver_funone_order_submit(tab, config_dict, funone_dict)
 
     elif page_type == "MEMBER":
         # Member page - verify login status
@@ -25327,7 +25665,7 @@ async def main(args):
             ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
             ocr.set_ranges(1)  # Restrict to lowercase letters only (a-z) for TixCraft captchas
             Captcha_Browser = NonBrowser()
-            if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+            if len(config_dict["accounts"]["tixcraft_sid"]) > 1:
                 #set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
                 pass
     except Exception as exc:
