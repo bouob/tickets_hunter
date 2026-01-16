@@ -24902,6 +24902,7 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
 
             // FunOne-specific: Look for quantity control with +/- buttons and textbox
             // The structure is typically: [- button] [textbox] [+ button]
+            // Note: FunOne buttons may not have text content (use icons instead)
             const allButtons = document.querySelectorAll('button');
             let plusBtn = null;
             let minusBtn = null;
@@ -24917,10 +24918,32 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
                     const parent = input.parentElement;
                     if (parent) {{
                         const siblings = parent.querySelectorAll('button');
+
+                        // First try: Look for buttons with +/- text
                         for (const btn of siblings) {{
                             const text = btn.textContent.trim();
                             if (text === '+') plusBtn = btn;
                             if (text === '-') minusBtn = btn;
+                        }}
+
+                        // Second try: FunOne style - buttons without text
+                        // Structure: [button1 (minus)] [textbox] [button2 (plus)]
+                        if (!plusBtn && siblings.length >= 2) {{
+                            // Get all children in order to determine position
+                            const children = Array.from(parent.children);
+                            const inputIndex = children.indexOf(input);
+
+                            // Find buttons before and after the input
+                            for (let i = 0; i < children.length; i++) {{
+                                if (children[i].tagName === 'BUTTON') {{
+                                    if (i < inputIndex) {{
+                                        minusBtn = children[i];
+                                    }} else if (i > inputIndex) {{
+                                        plusBtn = children[i];
+                                        break;
+                                    }}
+                                }}
+                            }}
                         }}
                     }}
                     if (plusBtn) {{
@@ -25177,14 +25200,17 @@ async def nodriver_funone_ticket_agree(tab):
             let checked = 0;
 
             // FunOne-specific: custom div.checkbox elements
+            // Structure: <div class="checkbox_block active"> <div class="checkbox"><svg>...</svg></div> </div>
+            // The parent checkbox_block gets 'active' class when checked
             const customCheckboxes = document.querySelectorAll('.checkbox_block .checkbox, div.checkbox');
             for (const cb of customCheckboxes) {
-                // Check if not already checked (FunOne adds 'checked' class or changes style)
-                const isChecked = cb.classList.contains('checked') ||
-                                  cb.classList.contains('active') ||
-                                  cb.querySelector('svg, .checkmark, [class*="check"]');
+                // Check if not already checked
+                // FunOne: parent element gets 'active' class when checked
+                const parent = cb.parentElement;
+                const parentActive = parent && parent.classList.contains('active');
+                const selfChecked = cb.classList.contains('checked') || cb.classList.contains('active');
 
-                if (!isChecked) {
+                if (!parentActive && !selfChecked) {
                     cb.click();
                     checked++;
                 }
