@@ -24463,17 +24463,21 @@ async def nodriver_funone_verify_login(tab, config_dict):
     Returns:
         bool: True if logged in
     """
+    global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     is_logged_in = await nodriver_funone_check_login_status(tab)
 
+    # Only print when login status changes (reduce repetitive messages)
     if is_logged_in:
-        if show_debug_message:
+        if show_debug_message and funone_dict.get("last_login_status") != True:
             print("[FUNONE] Login status verified - logged in")
+            funone_dict["last_login_status"] = True
         return True
 
-    if show_debug_message:
+    if show_debug_message and funone_dict.get("last_login_status") != False:
         print("[FUNONE] Not logged in - waiting for manual OTP login")
+        funone_dict["last_login_status"] = False
     return False
 
 
@@ -24680,6 +24684,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
     Returns:
         bool: True if ticket type selected
     """
+    global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     # Get area keyword from config
@@ -24688,8 +24693,11 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
     keyword_exclude = config_dict.get("keyword_exclude", "")
     area_auto_fallback = config_dict.get("area_auto_fallback", False)
 
-    if show_debug_message:
+    # Only print area selection config once
+    area_config_key = f"{area_keyword}_{auto_select_mode}"
+    if show_debug_message and funone_dict.get("last_area_config") != area_config_key:
         print(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
+        funone_dict["last_area_config"] = area_config_key
 
     try:
         # Get all ticket areas (FunOne uses div.zone_box elements)
@@ -24744,12 +24752,16 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         tickets = await tab.evaluate(get_tickets_js)
 
         if not tickets or len(tickets) == 0:
-            if show_debug_message:
+            # Only print "No ticket types found" if we previously found some
+            if show_debug_message and funone_dict.get("last_area_count", -1) != 0:
                 print("[FUNONE] No ticket types found")
+                funone_dict["last_area_count"] = 0
             return False
 
-        if show_debug_message:
+        # Only print ticket count when it changes
+        if show_debug_message and funone_dict.get("last_area_count") != len(tickets):
             print(f"[FUNONE] Found {len(tickets)} ticket types")
+            funone_dict["last_area_count"] = len(tickets)
 
         # Filter out disabled (sold out) tickets first
         available_tickets = [t for t in tickets if not t.get('disabled', False)]
@@ -24888,11 +24900,14 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
     Returns:
         bool: True if quantity set successfully
     """
+    global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
     ticket_number = config_dict.get("ticket_number", 2)
 
-    if show_debug_message:
+    # Only print setting message once
+    if show_debug_message and funone_dict.get("last_ticket_qty") != ticket_number:
         print(f"[FUNONE] Setting ticket quantity to {ticket_number}")
+        funone_dict["last_ticket_qty"] = ticket_number
 
     try:
         # Try to set ticket number via dropdown, input, or +/- buttons
@@ -25027,10 +25042,13 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         if result and isinstance(result, dict) and result.get('success'):
             if show_debug_message:
                 print(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
+            funone_dict["qty_selector_notfound"] = False  # Reset flag on success
             return True
         else:
-            if show_debug_message:
+            # Only print once when quantity selector not found
+            if show_debug_message and not funone_dict.get("qty_selector_notfound"):
                 print("[FUNONE] Could not find quantity selector")
+                funone_dict["qty_selector_notfound"] = True
             return False
 
     except Exception as exc:
@@ -25111,8 +25129,11 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
             # No captcha found
             return True
 
-        if show_debug_message:
-            print(f"[FUNONE] Captcha detected - type: {captcha_info.get('type')}")
+        # Only print captcha type once
+        captcha_type = captcha_info.get('type')
+        if show_debug_message and funone_dict.get("last_captcha_type") != captcha_type:
+            print(f"[FUNONE] Captcha detected - type: {captcha_type}")
+            funone_dict["last_captcha_type"] = captcha_type
 
         # Check if already filled
         if captcha_info.get('filled'):
@@ -25132,8 +25153,10 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
             if ocr_result:
                 return True
 
-        if show_debug_message:
+        # Only print waiting message once
+        if show_debug_message and not funone_dict.get("waiting_captcha_printed"):
             print("[FUNONE] Waiting for manual captcha input...")
+            funone_dict["waiting_captcha_printed"] = True
         return False
 
     except Exception as exc:
@@ -25180,7 +25203,13 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
             ocr_answer = ocr_answer.upper()
 
             if show_debug_message:
-                print(f"[FUNONE OCR] Result: {ocr_answer}")
+                print(f"[FUNONE OCR] Result: {ocr_answer} (length: {len(ocr_answer)})")
+
+            # FunOne captcha requires exactly 5 characters
+            if len(ocr_answer) != 5:
+                if show_debug_message:
+                    print(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - skipping")
+                return False
 
             # Fill the captcha input
             fill_captcha_js = f'''
@@ -25379,6 +25408,7 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
     Returns:
         bool: True if order submitted
     """
+    global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     try:
@@ -25413,10 +25443,13 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
         if result and isinstance(result, dict) and result.get('clicked'):
             if show_debug_message:
                 print(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
+            funone_dict["submit_notfound"] = False  # Reset flag on success
             return True
         else:
-            if show_debug_message:
+            # Only print once when submit button not found
+            if show_debug_message and not funone_dict.get("submit_notfound"):
                 print("[FUNONE] Submit button not found or not clickable")
+                funone_dict["submit_notfound"] = True
             return False
 
     except Exception as exc:
@@ -25613,7 +25646,18 @@ async def nodriver_funone_main(tab, url, config_dict):
             "played_sound_ticket": False,
             "played_sound_order": False,
             "fail_list": [],
-            "reload_count": 0
+            "reload_count": 0,
+            # State tracking for log deduplication
+            "last_page_type": None,
+            "last_step": None,
+            "last_login_status": None,
+            "last_area_count": None,
+            "last_area_config": None,
+            "last_ticket_qty": None,
+            "qty_selector_notfound": False,
+            "submit_notfound": False,
+            "last_captcha_type": None,
+            "waiting_captcha_printed": False
         }
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -25634,8 +25678,10 @@ async def nodriver_funone_main(tab, url, config_dict):
             # Check for ticket selection or order pages dynamically
             page_type = "TICKET_FLOW"
 
-    if show_debug_message:
+    # Only print when page type changes (reduce repetitive messages)
+    if show_debug_message and funone_dict.get("last_page_type") != page_type:
         print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
+        funone_dict["last_page_type"] = page_type
 
     # Close popups first
     await nodriver_funone_close_popup(tab)
@@ -25670,8 +25716,10 @@ async def nodriver_funone_main(tab, url, config_dict):
             # Detect which step we're on
             step = await nodriver_funone_detect_step(tab)
 
-            if show_debug_message:
+            # Only print when step changes (reduce repetitive messages)
+            if show_debug_message and funone_dict.get("last_step") != step:
                 print(f"[FUNONE] Detected step: {step}")
+                funone_dict["last_step"] = step
 
             if step == 1:
                 # Step 1: Area selection
