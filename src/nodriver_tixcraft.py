@@ -6483,7 +6483,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     is_submited = False
 
     ticketplus_account = config_dict["accounts"]["ticketplus_account"]
-    ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
+    ticketplus_password = config_dict["advanced"].get("ticketplus_password_plaintext", "").strip()
     if ticketplus_password == "":
         ticketplus_password = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
 
@@ -6973,9 +6973,69 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                     # Single keyword
                     exclude_keywords = [keyword_exclude.strip()] if keyword_exclude.strip() else []
 
-        # 統一的結構化判斷與選擇邏輯
+        # [FIX] Wait for Vue.js elements to render (expansion panels or count buttons)
+        # This is crucial because document.readyState='complete' doesn't mean Vue components are ready
+        # Use auto_reload_page_interval * 2 as max wait, minimum 6 seconds, maximum 15 seconds
+        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
+        max_vue_wait = max(6.0, min(15.0, auto_reload_interval * 2))
+        vue_check_interval = 0.15  # Check every 150ms for faster response
+        vue_wait_start = time.time()
+        vue_elements_found = False
+        last_log_time = 0
+
+        while time.time() - vue_wait_start < max_vue_wait:
+            # Check pause status
+            if await check_and_handle_pause(config_dict):
+                return False
+
+            try:
+                vue_check = await tab.evaluate('''
+                    (function() {
+                        const panels = document.querySelectorAll('.v-expansion-panel').length;
+                        const countBtn = document.querySelectorAll('.count-button .mdi-plus').length;
+                        const rowTickets = document.querySelectorAll('.row.py-1.py-md-4').length;
+                        return {
+                            panels: panels,
+                            countBtn: countBtn,
+                            rowTickets: rowTickets,
+                            hasElements: panels > 0 || countBtn > 0 || rowTickets > 0
+                        };
+                    })();
+                ''')
+
+                # Parse NoDriver result format
+                if isinstance(vue_check, list):
+                    vue_check = {item[0]: item[1].get('value') if isinstance(item[1], dict) else item[1] for item in vue_check}
+
+                # Log every 1 second to reduce noise
+                elapsed = time.time() - vue_wait_start
+                if show_debug_message and elapsed - last_log_time >= 1.0:
+                    print(f"[VUE WAIT] {elapsed:.1f}s - panels:{vue_check.get('panels', 0)}, countBtn:{vue_check.get('countBtn', 0)}, rowTickets:{vue_check.get('rowTickets', 0)}")
+                    last_log_time = elapsed
+
+                if vue_check.get('hasElements', False):
+                    vue_elements_found = True
+                    if show_debug_message:
+                        print(f"[VUE WAIT] Vue elements found after {elapsed:.1f}s")
+                    # Small delay to ensure Vue fully rendered
+                    await asyncio.sleep(0.1)
+                    break
+
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[VUE WAIT] Check error: {e}")
+
+            await asyncio.sleep(vue_check_interval)
+
+        if not vue_elements_found:
+            if show_debug_message:
+                print(f"[VUE WAIT] Timeout after {max_vue_wait:.1f}s, Vue elements not found")
+            # Return early - no point continuing if no elements found
+            return False
+
+        # 統一的結構化判斷與選擇邏輯 (同步版本，避免 NoDriver async 問題)
         js_result = await tab.evaluate(f'''
-            (async function() {{
+            (function() {{
                 const keyword = '{area_keyword}';
                 const ticketNumber = {ticket_number};
                 const autoSelectMode = '{auto_select_mode}';
@@ -6986,403 +7046,159 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 const excludeKeywords = {exclude_keywords};
 
                 console.log('Unified selector execution - keyword:', keyword, 'tickets:', ticketNumber, 'mode:', autoSelectMode, 'fallback:', areaAutoFallback);
-                console.log('排除關鍵字:', excludeKeywords);
 
                 // 檢查是否售罄
                 function isSoldOut(element) {{
                     const text = element.textContent || '';
-                    console.log('檢查售罄狀態:', text.replace(/\s+/g, ' ').trim());
-
-                    // 更精準的售罄檢查
-                    const soldOutPatterns = [
-                        /剩餘\s*0(?!\d)/,  // "剩餘 0" 或 "剩餘0" 但不包括 "剩餘 10"
-                        /剩餘\s*:\s*0(?!\d)/, // "剩餘: 0" 格式
-                        /sold\s*out/i,
-                        /售完/,
-                        /已售完/,
-                        /售罄/,
-                        /無庫存/,
-                        /not\s*available/i
-                    ];
+                    const soldOutPatterns = [/剩餘\s*0(?!\d)/, /剩餘\s*:\s*0(?!\d)/, /sold\s*out/i, /售完/, /已售完/, /售罄/, /無庫存/];
+                    const availablePatterns = [/熱賣中/, /熱賣/, /熱售/, /可購買/, /available/i, /剩餘\s*[1-9]\d*/];
 
                     for (let pattern of soldOutPatterns) {{
                         if (pattern.test(text)) {{
-                            console.log('檢測到售罄標記:', pattern.toString());
+                            for (let avail of availablePatterns) {{
+                                if (avail.test(text)) return false;
+                            }}
                             return true;
                         }}
                     }}
-
-                    // 檢查是否明確有票
-                    const availablePatterns = [
-                        /熱賣中/,
-                        /熱賣/,
-                        /熱售/,
-                        /可購買/,
-                        /available/i,
-                        /剩餘\s*[1-9]\d*/  // 剩餘大於0的數字
-                    ];
-
-                    for (let pattern of availablePatterns) {{
-                        if (pattern.test(text)) {{
-                            console.log('檢測到有票標記:', pattern.toString());
-                            return false;
-                        }}
-                    }}
-
-                    console.log('無法確定售罄狀態，預設為可用');
                     return false;
                 }}
 
                 // 檢查是否包含排除關鍵字
                 function containsExcludeKeywords(name) {{
                     if (!excludeKeywords || excludeKeywords.length === 0) return false;
-
-                    for (let excludeKeyword of excludeKeywords) {{
-                        if (excludeKeyword && name.includes(excludeKeyword)) {{
-                            console.log('發現排除關鍵字:', excludeKeyword, '於:', name);
-                            return true;
-                        }}
+                    for (let kw of excludeKeywords) {{
+                        if (kw && name.includes(kw)) return true;
                     }}
                     return false;
                 }}
 
-                // 計算目標索引的輔助函數
+                // 計算目標索引
                 function getTargetIndex(items, mode) {{
                     const count = items.length;
                     if (count === 0) return -1;
-
                     switch(mode) {{
-                        case 'from top to bottom':
-                            return 0;
-                        case 'from bottom to top':
-                            return count - 1;
-                        case 'center':
-                            return Math.floor((count - 1) / 2);
-                        case 'random':
-                            return Math.floor(Math.random() * count);
-                        default:
-                            return 0;
+                        case 'from top to bottom': return 0;
+                        case 'from bottom to top': return count - 1;
+                        case 'center': return Math.floor((count - 1) / 2);
+                        case 'random': return Math.floor(Math.random() * count);
+                        default: return 0;
                     }}
-                }}
-
-                // 等待函數
-                function sleep(ms) {{
-                    return new Promise(resolve => setTimeout(resolve, ms));
                 }}
 
                 // 結構化判斷頁面類型
                 const hasExpansionPanel = document.querySelector('.v-expansion-panel');
                 const hasCountButton = document.querySelector('.count-button .mdi-plus');
 
-                // 增加診斷日誌
-                console.log('=== Page Type Detection Debug ===');
-                console.log('hasExpansionPanel:', hasExpansionPanel ? 'YES' : 'NO');
-                console.log('hasCountButton:', hasCountButton ? 'YES' : 'NO');
+                console.log('hasExpansionPanel:', !!hasExpansionPanel, 'hasCountButton:', !!hasCountButton);
 
-                // 優先檢查展開面板（更特定的結構）
+                // 類型1: 展開面板型
                 if (hasExpansionPanel) {{
-                    // 類型B: 票區選擇頁面（有展開面板）
-                    console.log('[DETECTED] Expansion Panel Layout (Page4) - Area Selection');
-                    console.log('[SELECTOR] Using: .v-expansion-panel');
                     const panels = document.querySelectorAll('.v-expansion-panel');
-
-                    // 過濾掉售罄和排除關鍵字的選項
                     const validPanels = [];
-                    console.log('共找到 ' + panels.length + ' 個展開面板');
 
                     for (let i = 0; i < panels.length; i++) {{
                         const panel = panels[i];
-
-                        // 嘗試多種 selector 來獲取展開面板的名稱/價格
-                        let nameElement = panel.querySelector('h4');  // 價格群組標題（如"4800 區"）
-                        if (!nameElement) {{
-                            nameElement = panel.querySelector('.d-flex.align-center:not(:has(.area-color))');  // 具體票區
-                        }}
-                        if (!nameElement) {{
-                            nameElement = panel.querySelector('.v-expansion-panel-header');  // 回退：直接取 header
-                        }}
-
-                        if (nameElement) {{
-                            const areaName = nameElement.textContent.trim();
-                            console.log('檢查票區 ' + (i + 1) + ': "' + areaName + '"');
-
-                            // 檢查是否售罄
-                            if (isSoldOut(panel)) {{
-                                console.log('跳過售罄票區:', areaName);
-                                continue;
-                            }}
-
-                            // 檢查是否包含排除關鍵字
-                            if (containsExcludeKeywords(areaName)) {{
-                                console.log('跳過排除關鍵字票區:', areaName);
-                                continue;
-                            }}
-
-                            validPanels.push({{ panel: panel, name: areaName, index: i }});
-                            console.log('可選票區:', areaName);
-                        }} else {{
-                            console.log('票區 ' + (i + 1) + ' 找不到名稱元素');
-                        }}
-                    }}
-
-                    console.log('有效票區數量: ' + validPanels.length + '/' + panels.length);
-                    if (validPanels.length > 0) {{
-                        console.log('有效票區清單:', validPanels.map(p => p.name));
-                    }}
-
-                    let targetPanel = null;
-                    let targetAreaName = '';
-
-                    // 先嘗試關鍵字比對（僅在有效選項中）
-                    if (keyword1) {{
-                        for (let item of validPanels) {{
-                            if (item.name.includes(keyword1)) {{
-                                if (!keyword2 || item.name.includes(keyword2)) {{
-                                    console.log('找到符合關鍵字的票區:', item.name);
-                                    targetPanel = item.panel;
-                                    targetAreaName = item.name;
-                                    break;
-                                }}
+                        const nameEl = panel.querySelector('.v-expansion-panel-header');
+                        if (nameEl) {{
+                            const name = nameEl.textContent.trim().replace(/\s+/g, ' ');
+                            if (!isSoldOut(panel) && !containsExcludeKeywords(name)) {{
+                                validPanels.push({{ panel, name, index: i }});
                             }}
                         }}
                     }}
 
-                    // T022-T024: Conditional fallback based on area_auto_fallback switch
-                    if (!targetPanel && keyword1 && keyword1.trim() !== '') {{
-                        if (areaAutoFallback) {{
-                            // T022: Fallback enabled
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                            const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                            if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                                const targetItem = validPanels[targetIndex];
-                                targetPanel = targetItem.panel;
-                                targetAreaName = targetItem.name;
-                                console.log('自動選擇票區:', targetAreaName);
-                            }}
-                        }} else {{
-                            // T023: Fallback disabled - strict mode
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                            return {{
-                                success: false,
-                                error: 'No keyword matches and fallback is disabled',
-                                strict_mode: true
-                            }};
-                        }}
-                    }} else if (!targetPanel && validPanels.length > 0) {{
-                        // No keyword specified, select based on mode
-                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
-                        const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                        if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                            const targetItem = validPanels[targetIndex];
-                            targetPanel = targetItem.panel;
-                            targetAreaName = targetItem.name;
-                            console.log('自動選擇票區:', targetAreaName);
-                        }}
-                    }}
-
+                    console.log('Valid panels:', validPanels.length);
                     if (validPanels.length === 0) {{
-                        console.log('沒有可選的票區（全部售完或被排除）');
-                        return {{ success: false, message: '沒有可選的票區（全部售完或被排除）' }};
+                        return {{ success: false, message: 'No valid panels' }};
                     }}
 
-                    if (targetPanel) {{
-                        const header = targetPanel.querySelector('.v-expansion-panel-header');
-                        if (header) {{
-                            console.log('點擊展開面板:', targetAreaName);
-                            header.click();
+                    // 選擇目標面板
+                    let target = null;
+                    if (keyword1) {{
+                        target = validPanels.find(p => p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2)));
+                    }}
+                    if (!target && keyword1 && !areaAutoFallback) {{
+                        return {{ success: false, strict_mode: true }};
+                    }}
+                    if (!target) {{
+                        const idx = getTargetIndex(validPanels, autoSelectMode);
+                        target = validPanels[idx];
+                    }}
 
-                            // 等待面板展開並找到操作按鈕的異步函數
-                            const waitAndFindAction = async () => {{
-                                return new Promise((resolve) => {{
-                                    let attempts = 0;
-                                    const maxAttempts = 10; // 最多嘗試1秒 (100ms * 10)
+                    if (!target) {{
+                        return {{ success: false, message: 'No target panel' }};
+                    }}
 
-                                    const findAction = () => {{
-                                        attempts++;
-                                        console.log('第 ' + attempts + ' 次尋找操作按鈕...');
+                    // 展開面板
+                    const header = target.panel.querySelector('.v-expansion-panel-header');
+                    const isExpanded = target.panel.classList.contains('v-expansion-panel--active');
+                    if (!isExpanded && header) {{
+                        console.log('Clicking to expand:', target.name);
+                        header.click();
+                    }}
 
-                                        // 先嘗試找加號按鈕
-                                        let plusButton = targetPanel.querySelector('.mdi-plus');
-                                        if (plusButton) {{
-                                            console.log('找到加號按鈕，開始設定票數');
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusButton.click();
-                                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'plus_button' }});
-                                            return;
-                                        }}
+                    // 立即嘗試找加號按鈕（面板可能已經展開或很快展開）
+                    let plusBtn = target.panel.querySelector('.mdi-plus') ||
+                                  target.panel.querySelector('.count-button .mdi-plus');
 
-                                        // 再嘗試找 count-button 結構
-                                        const countButtons = targetPanel.querySelectorAll('.count-button .mdi-plus');
-                                        if (countButtons.length > 0) {{
-                                            console.log('找到count-button加號');
-                                            const plusBtn = countButtons[0];
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusBtn.click();
-                                                console.log('點擊count-button加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'count_button' }});
-                                            return;
-                                        }}
-
-                                        // 尋找其他選擇按鈕
-                                        const allButtons = targetPanel.querySelectorAll('button:not(.v-expansion-panel-header)');
-                                        console.log('找到 ' + allButtons.length + ' 個按鈕');
-
-                                        for (let btn of allButtons) {{
-                                            const btnText = btn.textContent.toLowerCase().trim();
-                                            console.log('[CHECK] 檢查按鈕:', btnText);
-
-                                            if (btnText.includes('選擇') || btnText.includes('select') ||
-                                                btn.classList.contains('select-btn') ||
-                                                btn.classList.contains('v-btn--has-bg')) {{
-                                                console.log('[TARGET] 找到選擇按鈕，點擊:', btnText);
-                                                btn.click();
-                                                resolve({{ success: true, action: 'select_button', text: btnText }});
-                                                return;
-                                            }}
-                                        }}
-
-                                        // 如果還沒找到且未超過最大嘗試次數，繼續尋找
-                                        if (attempts < maxAttempts) {{
-                                            setTimeout(findAction, 100);
-                                        }} else {{
-                                            console.log('[WARNING] 達到最大嘗試次數，未找到操作按鈕');
-                                            resolve({{ success: false, action: 'none' }});
-                                        }}
-                                    }};
-
-                                    // 立即開始第一次嘗試
-                                    findAction();
-                                }});
-                            }};
-
-                            // 使用 await 等待操作完成
-                            const result = await waitAndFindAction();
-                            console.log('[RESULT] 面板操作結果:', result);
-                            return {{
-                                success: true,
-                                type: 'area_select',
-                                selected: targetAreaName,
-                                action_found: result.success,
-                                action_type: result.action
-                            }};
-                        }} else {{
-                            console.log('[ERROR] 找不到展開面板 header');
-                            return {{ success: false, message: '找不到展開面板 header' }};
+                    if (plusBtn) {{
+                        console.log('Found plus button, clicking', ticketNumber, 'times');
+                        for (let j = 0; j < ticketNumber; j++) {{
+                            plusBtn.click();
                         }}
-                    }} else {{
-                        console.log('[ERROR] 沒有找到目標展開面板');
-                        return {{ success: false, message: '沒有找到目標展開面板' }};
+                        return {{ success: true, type: 'expansion_panel', selected: target.name, clicked: true }};
                     }}
+
+                    // 沒找到加號，返回需要重試的狀態
+                    return {{ success: true, type: 'expansion_panel', selected: target.name, clicked: false, needRetry: true }};
 
                 }} else if (hasCountButton) {{
-                    // 類型A: 票種選擇頁面（有加減按鈕）
-                    console.log('[DETECTED] Count Button Layout (Page2/3) - Ticket Type Selection');
-                    console.log('[SELECTOR] Using: .row.py-1.py-md-4:has(.count-button)');
-                    const rows = document.querySelectorAll('.row.py-1.py-md-4:has(.count-button)');
-
-                    // 過濾掉售罄和排除關鍵字的選項
+                    // 類型2: 直接有加減按鈕
+                    const rows = document.querySelectorAll('.row.py-1.py-md-4');
                     const validRows = [];
-                    for (let i = 0; i < rows.length; i++) {{
-                        const row = rows[i];
-                        const nameElement = row.querySelector('.font-weight-medium');
 
-                        if (nameElement) {{
-                            const ticketName = nameElement.textContent.trim();
+                    for (let row of rows) {{
+                        const plusBtn = row.querySelector('.count-button .mdi-plus');
+                        if (!plusBtn) continue;
 
-                            // 檢查是否售罄
-                            if (isSoldOut(row)) {{
-                                console.log('跳過售罄票種:', ticketName);
-                                continue;
-                            }}
-
-                            // 檢查是否包含排除關鍵字
-                            if (containsExcludeKeywords(ticketName)) {{
-                                console.log('跳過排除關鍵字票種:', ticketName);
-                                continue;
-                            }}
-
-                            validRows.push({{ row: row, name: ticketName, index: i }});
-                            console.log('可選票種:', ticketName);
-                        }}
-                    }}
-
-                    let targetRow = null;
-                    let targetTicketName = '';
-
-                    // 先嘗試關鍵字比對（僅在有效選項中）
-                    if (keyword1) {{
-                        for (let item of validRows) {{
-                            if (item.name.includes(keyword1)) {{
-                                if (!keyword2 || item.name.includes(keyword2)) {{
-                                    console.log('找到符合關鍵字的票種:', item.name);
-                                    targetRow = item.row;
-                                    targetTicketName = item.name;
-                                    break;
-                                }}
+                        const nameEl = row.querySelector('.font-weight-medium');
+                        if (nameEl) {{
+                            const name = nameEl.textContent.trim();
+                            if (!isSoldOut(row) && !containsExcludeKeywords(name)) {{
+                                validRows.push({{ row, name, plusBtn }});
                             }}
                         }}
                     }}
 
-                    // T022-T024: Conditional fallback based on area_auto_fallback switch
-                    if (!targetRow && keyword1 && keyword1.trim() !== '') {{
-                        if (areaAutoFallback) {{
-                            // T022: Fallback enabled
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                            const targetIndex = getTargetIndex(validRows, autoSelectMode);
-                            if (targetIndex >= 0 && targetIndex < validRows.length) {{
-                                const targetItem = validRows[targetIndex];
-                                targetRow = targetItem.row;
-                                targetTicketName = targetItem.name;
-                                console.log('自動選擇票種:', targetTicketName);
-                            }}
-                        }} else {{
-                            // T023: Fallback disabled - strict mode
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                            return {{
-                                success: false,
-                                error: 'No keyword matches and fallback is disabled',
-                                strict_mode: true
-                            }};
-                        }}
-                    }} else if (!targetRow && validRows.length > 0) {{
-                        // No keyword specified, select based on mode
-                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
-                        const targetIndex = getTargetIndex(validRows, autoSelectMode);
-                        if (targetIndex >= 0 && targetIndex < validRows.length) {{
-                            const targetItem = validRows[targetIndex];
-                            targetRow = targetItem.row;
-                            targetTicketName = targetItem.name;
-                            console.log('自動選擇票種:', targetTicketName);
-                        }}
-                    }}
-
+                    console.log('Valid rows:', validRows.length);
                     if (validRows.length === 0) {{
-                        console.log('沒有可選的票種（全部售完或被排除）');
-                        return {{ success: false, message: '沒有可選的票種（全部售完或被排除）' }};
+                        return {{ success: false, message: 'No valid rows' }};
                     }}
 
-                    if (targetRow) {{
-                        const plusButton = targetRow.querySelector('.mdi-plus');
-                        if (plusButton) {{
-                            console.log('開始點擊加號按鈕');
-                            for (let j = 0; j < ticketNumber; j++) {{
-                                plusButton.click();
-                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
-                            }}
-                            return {{ success: true, type: 'ticket_type', selected: targetTicketName }};
-                        }} else {{
-                            console.log('找不到加號按鈕');
+                    // 選擇目標
+                    let target = null;
+                    if (keyword1) {{
+                        target = validRows.find(r => r.name.includes(keyword1) && (!keyword2 || r.name.includes(keyword2)));
+                    }}
+                    if (!target && keyword1 && !areaAutoFallback) {{
+                        return {{ success: false, strict_mode: true }};
+                    }}
+                    if (!target) {{
+                        const idx = getTargetIndex(validRows, autoSelectMode);
+                        target = validRows[idx];
+                    }}
+
+                    if (target && target.plusBtn) {{
+                        console.log('Clicking plus button for:', target.name);
+                        for (let j = 0; j < ticketNumber; j++) {{
+                            target.plusBtn.click();
                         }}
+                        return {{ success: true, type: 'count_button', selected: target.name, clicked: true }};
                     }}
                 }}
 
-                console.log('[ERROR] 未找到任何可選的選項');
-                return {{ success: false, message: '未找到可選的選項' }};
+                return {{ success: false, message: 'No selectable elements found' }};
             }})();
         ''')
 
@@ -7398,7 +7214,47 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
             print(f"[DEBUG] Parsed result value: {result}")
 
         if isinstance(result, dict):
-            is_selected = result.get('success', False)
+            is_selected = result.get('success', False) and result.get('clicked', False)
+
+            # 處理需要重試的情況（展開面板後等待加號按鈕出現）
+            if result.get('needRetry', False):
+                if show_debug_message:
+                    print(f"[RETRY] Panel expanded but plus button not found, retrying...")
+
+                # 等待面板展開動畫完成
+                await asyncio.sleep(0.3)
+
+                # 重試點擊加號按鈕
+                for retry in range(5):  # 最多重試 5 次
+                    retry_result = await tab.evaluate(f'''
+                        (function() {{
+                            const panels = document.querySelectorAll('.v-expansion-panel');
+                            for (let panel of panels) {{
+                                if (panel.classList.contains('v-expansion-panel--active')) {{
+                                    const plusBtn = panel.querySelector('.mdi-plus') ||
+                                                   panel.querySelector('.count-button .mdi-plus');
+                                    if (plusBtn) {{
+                                        console.log('Retry: Found plus button');
+                                        for (let j = 0; j < {ticket_number}; j++) {{
+                                            plusBtn.click();
+                                        }}
+                                        return {{ success: true, clicked: true }};
+                                    }}
+                                }}
+                            }}
+                            return {{ success: false, clicked: false }};
+                        }})();
+                    ''')
+
+                    retry_parsed = util.parse_nodriver_result(retry_result)
+                    if isinstance(retry_parsed, dict) and retry_parsed.get('clicked', False):
+                        if show_debug_message:
+                            print(f"[RETRY] Success on attempt {retry + 1}")
+                        is_selected = True
+                        break
+
+                    await asyncio.sleep(0.2)
+
             if show_debug_message:
                 if is_selected:
                     selected_type = result.get('type', '')
@@ -7715,11 +7571,13 @@ async def evaluate_with_pause_check(tab, javascript_code, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return None  # 暫停中，返回 None
     try:
-        return await tab.evaluate(javascript_code)
+        result = await tab.evaluate(javascript_code)
+        return result
     except Exception as exc:
-        show_debug = config_dict and config_dict["advanced"].get("verbose", False)
-        if show_debug:
-            print(f"JavaScript 執行失敗: {exc}")
+        # Always print JS execution errors for debugging
+        print(f"[JS ERROR] JavaScript execution failed: {exc}")
+        import traceback
+        traceback.print_exc()
         return None
 
 async def with_pause_check(task_func, config_dict, *args, **kwargs):
@@ -8298,6 +8156,10 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
+            # 重置確認頁標記（用戶可能取消購票回到活動頁重新刷票）
+            ticketplus_dict["is_popup_confirm"] = False
+            ticketplus_dict["order_page_visited"] = False  # 同時重置訂票頁訪問標記
+
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             if config_dict["advanced"].get("verbose", False):
                 print("Realname Card:", is_button_pressed)
@@ -8322,12 +8184,12 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             # Unified dynamic detection: longer wait for first visit, shorter for reload
             is_first_visit = not ticketplus_dict.get("order_page_visited", False)
             if is_first_visit:
-                max_wait = 1200  # First visit: max 1.2s (cold start, more init needed)
-                fallback_delay = 0.3  # Fallback delay if detection times out
+                max_wait = 2000  # First visit: max 2.0s (cold start, more init needed)
+                fallback_delay = 0.5  # Fallback delay if detection times out
                 ticketplus_dict["order_page_visited"] = True
             else:
-                max_wait = 600   # Reload: max 0.6s (warm start, faster)
-                fallback_delay = 0.2  # Shorter fallback for reload
+                max_wait = 1000  # Reload: max 1.0s (warm start, faster)
+                fallback_delay = 0.3  # Shorter fallback for reload
 
             if show_debug_message:
                 visit_type = "First visit" if is_first_visit else "Reload"
@@ -8366,17 +8228,19 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
         if is_event_page:
             ticketplus_dict["is_ticket_assigned"] = True
 
-            if ticketplus_dict["start_time"]:
-                ticketplus_dict["done_time"] = time.time()
-                ticketplus_dict["elapsed_time"] = ticketplus_dict["done_time"] - ticketplus_dict["start_time"]
-                if config_dict["advanced"].get("verbose", False):
-                    print(f"NoDriver TicketPlus booking time: {ticketplus_dict['elapsed_time']:.3f} seconds")
-
-            if config_dict["advanced"].get("verbose", False):
-                print("Entered confirmation page, booking successful")
-
             if not ticketplus_dict["is_popup_confirm"]:
                 ticketplus_dict["is_popup_confirm"] = True
+
+                # 記錄訂票時間（只在首次進入時計算）
+                if ticketplus_dict["start_time"]:
+                    ticketplus_dict["done_time"] = time.time()
+                    ticketplus_dict["elapsed_time"] = ticketplus_dict["done_time"] - ticketplus_dict["start_time"]
+                    if config_dict["advanced"].get("verbose", False):
+                        print(f"NoDriver TicketPlus booking time: {ticketplus_dict['elapsed_time']:.3f} seconds")
+
+                if config_dict["advanced"].get("verbose", False):
+                    print("Entered confirmation page, booking successful")
+
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
                 send_discord_notification(config_dict, "order", "TicketPlus")
@@ -25137,8 +25001,10 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
 
         # Check if already filled
         if captcha_info.get('filled'):
-            if show_debug_message:
+            # Only print once to reduce repetitive messages
+            if show_debug_message and not funone_dict.get("captcha_filled_printed"):
                 print("[FUNONE] Captcha already filled")
+                funone_dict["captcha_filled_printed"] = True
             return True
 
         # Play sound once to alert user
@@ -25657,7 +25523,8 @@ async def nodriver_funone_main(tab, url, config_dict):
             "qty_selector_notfound": False,
             "submit_notfound": False,
             "last_captcha_type": None,
-            "waiting_captcha_printed": False
+            "waiting_captcha_printed": False,
+            "captcha_filled_printed": False
         }
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -25756,6 +25623,15 @@ async def nodriver_funone_main(tab, url, config_dict):
 
             elif step >= 3:
                 # Step 3+: Form filling, payment, etc.
+                # Check if we're on the fill form page - this means ticket secured!
+                if 'purchase_fill_form' in url:
+                    if not funone_dict.get("played_sound_order", False):
+                        if config_dict["advanced"]["play_sound"]["order"]:
+                            play_sound_while_ordering(config_dict)
+                        send_discord_notification(config_dict, "order", "FunOne")
+                        funone_dict["played_sound_order"] = True
+                        print("[FUNONE] Reached fill form page - order notification sent!")
+
                 # Handle captcha if present
                 await nodriver_funone_captcha_handler(tab, config_dict)
 
