@@ -92,12 +92,13 @@ specs/            - 功能規格和設計文件
 
 **完全忽略 Pattern**（不提交到任何地方）：
 ```
-settings.json     - 使用者設定
-*.log             - 日誌檔案
-__pycache__/      - Python 快取
-node_modules/     - Node 依賴
-.env              - 環境變數
-chrome_profile/   - 瀏覽器資料
+settings.json              - 使用者設定
+*.log                      - 日誌檔案
+__pycache__/               - Python 快取
+node_modules/              - Node 依賴
+.env                       - 環境變數
+chrome_profile/            - 瀏覽器資料
+.temp/chrome-debug-profile/ - MCP 除錯用 Chrome profile
 ```
 
 **分組策略**：
