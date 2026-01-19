@@ -25652,8 +25652,10 @@ async def nodriver_funone_main(tab, url, config_dict):
         # Member page - verify login status
         await nodriver_funone_verify_login(tab, config_dict)
 
-    # Auto reload check
-    await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
+    # Auto reload check - only for ACTIVITY_DETAIL page
+    # "Coming soon" detection should only apply to activity pages, not homepage
+    if page_type == "ACTIVITY_DETAIL":
+        await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
 
     return tab
 
