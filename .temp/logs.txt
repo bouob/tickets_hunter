@@ -4,141 +4,379 @@ goto url: http://127.0.0.1:16888/settings.html
 run button pressed.
 execute in shell mode.
 try python
-https://ticket.com.tw/application/utk13/utk1306_.aspx
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK1306
-[CAPTCHA] Screenshot: 2657 bytes
-OCR elapsed time: 1.083s
-OCR answer: B4KM
-[TICKET LOGIN] Login button clicked
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] IMG not found, searching for CANVAS element...
-[CAPTCHA] Neither IMG nor CANVAS found
-OCR elapsed time: 0.867s
-OCR answer is None
-previous_answer: None
-https://ticket.com.tw/application/UTK01/UTK0101_.aspx
-[KHAM LOGIN] Redirecting to target: https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P14I5PJC
-https://ticket.com.tw/application/UTK02/UTK0201_.aspx?PRODUCT_ID=P14I5PJC
-Starting captcha processing for purchase page...
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK1306
-[CAPTCHA] DOM API error: Could not compute box model. [code: -32000]
-OCR elapsed time: 0.832s
-OCR answer is None
-previous_answer: None
-https://ticket.com.tw/application/UTK02/UTK0201_00.aspx?PRODUCT_ID=P14I5PJC
-date_keyword: "21"
-auto_reload_coming_soon_page_enable: True
-Valid date rows count: 1
-First row text sample: 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160
-date_keyword array: ['21']
-[KHAM DATE KEYWORD] Checking keyword #1: 21
-[KHAM DATE KEYWORD] Keyword #1 matched: '21'
-[KHAM DATE SELECT] Selected date: 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160 (keyword match)
-After keyword match, found count: 1
-Target row selected (mode: from top to bottom): 星期六 2026 - 03 21 18:00 &nbsp; 臺北流行音樂中心表演廳 5800、5200、4600、3800、3200、2800、2200、160
-Date buy button clicked successfully
-https://ticket.com.tw/application/UTK02/UTK0204_.aspx?PERFORMANCE_ID=P14NI0R1&PRODUCT_ID=P14I5PJC
-area_keyword: "3樓","2200"
-Valid area rows count: 34
-First row text sample: &nbsp;1樓B1區5200 剩位35
-[KHAM AREA KEYWORD] Keyword matched (table): &nbsp;3樓3C區2200 剩位2
-Matched area blocks: 1
-Target area row selected (mode: random)
-Clicking target area row...
-Area row clicked successfully
-[KHAM PERFORMANCE] Keyword matched: '3樓'
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205
-[CAPTCHA] Screenshot: 2693 bytes
-OCR elapsed time: 1.008s
-OCR answer: GXnn
-[ALLOW NOT ADJACENT] Checkbox checked: False
-[SUBMIT] Searching for ticket.com.tw submit button...
-[SUBMIT] Add shopping cart button not found
-https://ticket.com.tw/application/UTK02/UTK0205_.aspx?PERFORMANCE_ID=P14NI0R1&GROUP_ID=86&PERFORMANCE_PRICE_AREA_ID=P14NKB0T
-Detected ticket.com.tw UTK0205 seat selection page
-[TICKET SEAT] Already selected seats: 0
-[TICKET SEAT TYPE] Capturing DOM snapshot...
-[TICKET SEAT TYPE] Total nodes in snapshot: 1758
-[TICKET SEAT TYPE] Extracted text from node 735: '原價-NT$2,200'
-[TICKET SEAT TYPE] Found button #1: text='原價-NT$2,200', disabled=False
-[TICKET SEAT TYPE] Extracted text from node 741: '身心障礙者-NT$1,100'
-[TICKET SEAT TYPE] Found button #2: text='身心障礙者-NT$1,100', disabled=False
-[TICKET SEAT TYPE] Extracted text from node 747: '身障陪同者-NT$1,100'
-[TICKET SEAT TYPE] Found button #3: text='身障陪同者-NT$1,100', disabled=False
-[TICKET SEAT TYPE] Found 3 ticket type button(s)
-[TICKET SEAT TYPE] Found 3 enabled button(s)
-[TICKET SEAT TYPE] Excluded by keyword_exclude: 身心障礙者-NT$1,100
-[TICKET SEAT TYPE] Excluded by keyword_exclude: 身障陪同者-NT$1,100
-[TICKET SEAT TYPE] No keyword match, using first button: 原價-NT$2,200
-[TICKET SEAT TYPE] Button node_id: NodeId(48469)
-[TICKET SEAT TYPE] Resolved button object_id: 2732724451135518688.8.4
-[TICKET SEAT TYPE] Button clicked, result: (RemoteObject(type_='boolean', subtype=None, class_name=None, value=True, unserializable_value=None, description=None, deep_serialized_value=None, object_id=None, preview=None, custom_preview=None), None)
-[TICKET SEAT TYPE] Successfully clicked: 原價-NT$2,200
-[TICKET SEAT TYPE] Seats loaded: table found, 2 available seats
-[TICKET SEAT TYPE] Assignment result: True
-[TICKET SEAT] Stage direction: up
-[TICKET SEAT] Found 2 available seats
-[TICKET SEAT] Finding best seats: tickets=2, stage=up, adjacent=False, available=2
-[TICKET SEAT] _find_best_seats result: {'success': True, 'selectedSeats': [{'title': '3樓3C區-5排-8號'}, {'title': '3樓3C區-8排-6號'}], 'count': 2}
-[TICKET SEAT] _execute input: type=<class 'dict'>, value={'success': True, 'selectedSeats': [{'title': '3樓3C區-5排-8號'}, {'title': '3樓3C區-8排-6號'}], 'count': 2}
-[TICKET SEAT] Using algorithm selected seats: ['3樓3C區-5排-8號', '3樓3C區-8排-6號']
-[TICKET SEAT] Selected 2 seats successfully
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205
-[CAPTCHA] Screenshot: 2618 bytes
-OCR elapsed time: 1.025s
-OCR answer: GXnn
-Captcha text already inputed: GXnn target answer: GXnn
-[TICKET SUBMIT] Order submitted successfully
-[TICKET SUBMIT] Success dialog found, closing...
-[TICKET SUBMIT] Dialog closed successfully
-[TICKET SEAT MAIN] Type:True Seat:True Submit:True
-Seat selection result: True
-Detected UTK0202/UTK0205 ticket number selection page, model: UTK0205
-[CAPTCHA] Already filled: GXnn
-[ALLOW NOT ADJACENT] Checkbox checked: False
-[TICKET DIALOG] Closed on attempt 1/5
-Ticket number set to: 2
-[SUBMIT] Searching for ticket.com.tw submit button...
-[SUBMIT] Add shopping cart button not found
-Dialog message: 提醒您 !! 您與稍早選的座位是不同排 !! 您上次選的座位是第 5排
-Detected ticket.com.tw UTK0205 seat selection page
-[TICKET SEAT] Already selected seats: 2
-[TICKET SEAT] Already have 2 seats (need 2), skipping to submit
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] Found IMG: /pic.aspx?TYPE=UTK0205&ts=1767968918836
-[CAPTCHA] Screenshot: 345 bytes
-OCR elapsed time: 0.989s
-OCR answer: 一
-[TICKET SEAT MAIN] Type:True Seat:True Submit:False
-Seat selection result: False
-Detected UTK0202/UTK0205 ticket number selection page, model: UTK0205
-Dialog message: 加入購物車完成, 請於 10 分鐘內完成結帳!
-[ALLOW NOT ADJACENT] Checkbox checked: False
-[TICKET DIALOG] Closed on attempt 1/5
-Starting Kham OCR processing...
-away_from_keyboard_enable: False
-previous_answer: None
-[CAPTCHA] IMG not found, searching for CANVAS element...
-[CAPTCHA] Neither IMG nor CANVAS found
-OCR elapsed time: 0.791s
-OCR answer is None
-previous_answer: None
-Ticket number set to: 2
-https://ticket.com.tw/application/UTK02/UTK0206_.aspx
-[SUCCESS] Reached checkout page - ticket purchase successful!
+https://ticketplus.com.tw/
+nodriver_ticketplus_account_sign_in
+nodriver_ticketplus_account_sign_in
+country_code +886
+Entering password...
+press enter
+https://ticketplus.com.tw/activity/52410b78c32c9bd54bdb353c5d5ca74b
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 0
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 0
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 0
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 1
+Date selection and click successful: button_clicked
+   目標文字:                  163braces【海螺記】造船計劃 台北站               日期2026-01-30(五)時間19:00地點                     Zepp New Taipei
+https://ticketplus.com.tw/order/52410b78c32c9bd54bdb353c5d5ca74b/731318d185b0f735062de813f4e2423b
+[VUE INIT] First visit, dynamic detection (max 2000ms)...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 0 - Unknown
+Layout detection details: Button found=False, Button status=禁用
+Layout detection debug: No layout detected
+Next button status: Disabled
+[TicketPlus] Parsed keywords: []
+[TicketPlus] Total keyword groups: 0
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode
+Unified selector started - keyword: , tickets: 2
+[VUE WAIT] 1.2s - panels:0, countBtn:0, rowTickets:0
+[VUE WAIT] 2.3s - panels:0, countBtn:0, rowTickets:0
+[VUE WAIT] 3.4s - panels:0, countBtn:0, rowTickets:0
+[VUE WAIT] Vue elements found after 4.3s
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 5 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload, dynamic detection (max 1000ms)...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 0 - Unknown
+Layout detection details: Button found=False, Button status=禁用
+Layout detection debug: No layout detected
+Next button status: Disabled
+[TicketPlus] Parsed keywords: []
+[TicketPlus] Total keyword groups: 0
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode
+Unified selector started - keyword: , tickets: 2
+[VUE WAIT] 1.1s - panels:0, countBtn:0, rowTickets:0
+[VUE WAIT] 2.2s - panels:0, countBtn:0, rowTickets:0
+[VUE WAIT] Vue elements found after 3.0s
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 5 seconds before reload...
+[AUTO RELOAD] Reloading page...
+[AUTO RELOAD] Reload failed: [WinError 1225] 遠端電腦拒絕網路連線。
+=== TicketPlus Simplified Booking Ended ===
+[WinError 1225] 遠端電腦拒絕網路連線。
+successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_4s4ugzuz
+run button pressed.
+execute in shell mode.
+try python
+https://ticketplus.com.tw/
+nodriver_ticketplus_account_sign_in
+country_code +886
+Entering password...
+press enter
+https://ticketplus.com.tw/activity/52410b78c32c9bd54bdb353c5d5ca74b
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 1
+Date selection and click successful: button_clicked
+   目標文字:                  163braces【海螺記】造船計劃 台北站               日期2026-01-30(五)時間19:00地點                     Zepp New Taipei
+https://ticketplus.com.tw/order/52410b78c32c9bd54bdb353c5d5ca74b/731318d185b0f735062de813f4e2423b
+[VUE INIT] First visit, dynamic detection (max 2000ms)...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: []
+[TicketPlus] Total keyword groups: 0
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode
+Unified selector started - keyword: , tickets: 2
+[VUE WAIT] Vue elements found after 0.0s
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 5 seconds before reload...
+[AUTO RELOAD] Reloading page...
+=== TicketPlus Simplified Booking Ended ===
+[VUE INIT] Reload, dynamic detection (max 1000ms)...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 0 - Unknown
+Layout detection details: Button found=False, Button status=禁用
+Layout detection debug: No layout detected
+Next button status: Disabled
+[TicketPlus] Parsed keywords: []
+[TicketPlus] Total keyword groups: 0
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode
+Unified selector started - keyword: , tickets: 2
+[VUE WAIT] Vue elements found after 0.3s
+[DEBUG] Raw JS result type: <class 'NoneType'>
+[DEBUG] Raw JS result value: None
+[DEBUG] Parsed result type: <class 'NoneType'>
+[DEBUG] Parsed result value: None
+Unified selector returned invalid result: None
+Checking page status to decide whether to continue...
+[STATUS] Page state: Has tickets=False, Button enabled=False
+Ticket selection failed, cannot continue
+[AUTO RELOAD] Waiting 5 seconds before reload...
+[AUTO RELOAD] Reloading page...
+[AUTO RELOAD] Reload failed: [WinError 1225] 遠端電腦拒絕網路連線。
+=== TicketPlus Simplified Booking Ended ===
+[WinError 1225] 遠端電腦拒絕網路連線。
+successfully removed temp profile C:\Users\victo\AppData\Local\Temp\uc_z1jq6f5_
+run button pressed.
+execute in shell mode.
+try python
+https://ticketplus.com.tw/
+nodriver_ticketplus_account_sign_in
+nodriver_ticketplus_account_sign_in
+nodriver_ticketplus_account_sign_in
+country_code +886
+Entering password...
+press enter
+https://ticketplus.com.tw/activity/52410b78c32c9bd54bdb353c5d5ca74b
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date date-time-position is None or empty
+Vue.js not ready, skip clicking
+Realname Card: False
+Other Activity: False
+date_auto_select_mode: from top to bottom
+date_keyword:
+date_list_count: 1
+formated_area_list count: 1
+Date selection and click successful: button_clicked
+   目標文字:                  163braces【海螺記】造船計劃 台北站               日期2026-01-30(五)時間19:00地點                     Zepp New Taipei
+https://ticketplus.com.tw/order/52410b78c32c9bd54bdb353c5d5ca74b/731318d185b0f735062de813f4e2423b
+[VUE INIT] First visit, dynamic detection (max 2000ms)...
+[VUE INIT] Vue.js ready: False
+=== TicketPlus Auto Layout Detection Started ===
+Detected layout style: 1 - 展開面板型 (Page4)
+Layout detection details: Button found=True, Button status=禁用
+Layout detection debug: Expansion panel layout
+Next button status: Disabled
+[TicketPlus] Parsed keywords: []
+[TicketPlus] Total keyword groups: 0
+Ticket selection is always required (TicketPlus quirk)
+[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode
+Unified selector started - keyword: , tickets: 2
+[VUE WAIT] Vue elements found after 0.0s
+[DEBUG] Raw JS result type: <class 'list'>
+[DEBUG] Raw JS result value: [['success', {'type': 'boolean', 'value': True}], ['type', {'type': 'string', 'value': 'expansion_panel'}], ['selected', {'type': 'string', 'value': '1F站席-單人票 熱賣中NT.1,380'}], ['clicked', {'type': 'boolean', 'value': False}], ['needRetry', {'type': 'boolean', 'value': True}]]
+[DEBUG] Parsed result type: <class 'dict'>
+[DEBUG] Parsed result value: {'success': True, 'type': 'expansion_panel', 'selected': '1F站席-單人票 熱賣中NT.1,380', 'clicked': False, 'needRetry': True}
+[RETRY] Panel expanded but plus button not found, retrying...
+[RETRY] Success on attempt 1
+Selection successful - type: expansion_panel, item: 1F站席-單人票 熱賣中NT.1,380
+Ticket selection successful, processing discount code and submit
+[DISCOUNT CODE] No discount code configured, skipping
+Unified next button clicker started
+[SUCCESS] Next button clicked successfully - Button text: 下一步
+Entered queue monitoring (check every 5 seconds, display only on status change)
+Page status update - URL: https://ticketplus.com.tw/order/52410b78c32c9bd54bdb353c5d5ca74b/731318d185b0f735062de813f4e2423b
+Detected entry to confirmation page, exiting queue monitoring
+Form submission: Success
+=== TicketPlus Simplified Booking Ended ===
+https://ticketplus.com.tw/confirm/52410b78c32c9bd54bdb353c5d5ca74b/731318d185b0f735062de813f4e2423b
+Entered confirmation page, booking successful
+Confirmation page processing completed
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
+Entered confirmation page, booking successful
