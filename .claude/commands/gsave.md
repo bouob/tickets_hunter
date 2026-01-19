@@ -60,16 +60,27 @@ body (optional)
 
 ## 執行步驟
 
-### 1. 檢查 .gitignore 並排除忽略檔案
+### 1. 取得所有變更檔案
 
-- 讀取 `.gitignore` 檔案內容
-- 執行 `git status --porcelain` 取得所有變更檔案
-- 過濾掉 `.gitignore` 中的忽略檔案（settings.json、*.log 等）
-- 如果所有變更都被忽略，提示無檔案需要提交
+```bash
+# 取得 tracked 檔案的變更
+git diff --name-only HEAD
 
-### 2. 分離公開與機敏檔案
+# 取得 untracked 檔案（包含被 .gitignore 忽略的）
+git status --porcelain --ignored
+```
 
-**機敏檔案清單**：
+### 2. 三分類檔案
+
+將所有變更檔案分為三類：
+
+| 類型 | 判斷條件 | 處理方式 |
+|------|----------|----------|
+| **公開檔案** | 不在機敏清單、不在忽略清單 | 標準 `git add` |
+| **機敏檔案** | 符合機敏檔案 pattern | `git add -f`（強制添加） |
+| **完全忽略** | 在忽略清單且非機敏檔案 | 跳過不處理 |
+
+**機敏檔案 Pattern**（提交到私人庫）：
 ```
 .claude/          - Claude 自動化設定
 CLAUDE.md         - 專案開發規範
@@ -79,14 +90,21 @@ specs/            - 功能規格和設計文件
 .temp/            - 臨時測試資料
 ```
 
-**分離規則**：
-- **公開檔案**：src/, README.md, CHANGELOG.md, .github/, guide/, build_scripts/ 等
-- **機敏檔案**：上述清單中的檔案
+**完全忽略 Pattern**（不提交到任何地方）：
+```
+settings.json     - 使用者設定
+*.log             - 日誌檔案
+__pycache__/      - Python 快取
+node_modules/     - Node 依賴
+.env              - 環境變數
+chrome_profile/   - 瀏覽器資料
+```
 
 **分組策略**：
 - 同時有公開和機敏檔案 → 建立 2 個 commits
 - 只有公開檔案 → 建立 1 個 commit
 - 只有機敏檔案 → 建立 1 個 commit（PRIVATE 標記）
+- 所有檔案都是「完全忽略」→ 提示無檔案需要提交
 
 ### 3. 產生 commit 訊息
 

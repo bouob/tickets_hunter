@@ -6,5 +6,45 @@
     ],
     "deny": [],
     "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit(**/util.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/util-protection.ps1"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(**/nodriver_util.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/util-protection.ps1"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit(**/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/emoji-check.ps1"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/git-commit-block.ps1"
+          }
+        ]
+      }
+    ]
   }
 }

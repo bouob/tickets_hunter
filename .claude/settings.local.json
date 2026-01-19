@@ -36,7 +36,9 @@
       "SlashCommand(/speckit.analyze)",
       "Skill(discord-skill)",
       "Skill(mcpstart)",
-      "Skill(ui-ux-pro-max)"
+      "Skill(ui-ux-pro-max)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:gist.github.com)"
     ],
     "deny": [],
     "ask": []
