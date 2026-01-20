@@ -33,7 +33,7 @@ def get_resource_path(relative_path):
         return relative_path
     return os.path.join(SCRIPT_DIR, relative_path)
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.09)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.20)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"

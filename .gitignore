@@ -49,3 +49,4 @@ specs/
 
 # OCR models (large binary files)
 /src/assets/model/
+tmpclaude-*-cwd
