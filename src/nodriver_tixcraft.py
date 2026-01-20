@@ -25350,17 +25350,18 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
         else:
             base64_content = base64_data
 
-        # Decode base64 to image bytes
-        import base64 as b64
-        img_bytes = b64.b64decode(base64_content)
+        # Decode base64 to image bytes (use module-level import)
+        img_bytes = base64.b64decode(base64_content)
 
         if show_debug_message:
             print(f"[FUNONE OCR] Image size: {len(img_bytes)} bytes")
 
-        # Initialize ddddocr with beta mode (best for FunOne captcha)
-        # FunOne captcha requires beta mode and uppercase conversion
-        ocr = ddddocr.DdddOcr(show_ad=False, beta=True)
-        ocr_answer = ocr.classification(img_bytes)
+        # Use cached OCR instance or create new one (beta mode best for FunOne)
+        # Cache in funone_dict to avoid recreating on every call
+        if "ocr_instance" not in funone_dict:
+            funone_dict["ocr_instance"] = ddddocr.DdddOcr(show_ad=False, beta=True)
+        ocr_instance = funone_dict["ocr_instance"]
+        ocr_answer = ocr_instance.classification(img_bytes)
 
         if ocr_answer:
             # FunOne captcha is case-sensitive and uses uppercase letters
