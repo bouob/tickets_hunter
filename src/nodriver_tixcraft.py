@@ -24386,6 +24386,31 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
+    # Wait for page to fully load before selecting session
+    # Check for key elements: next button or activity info
+    wait_js = '''
+    (function() {
+        const buttons = document.querySelectorAll('button');
+        for (const btn of buttons) {
+            const text = btn.textContent || '';
+            if (text.includes('下一步') || text.includes('Next')) {
+                return true;
+            }
+        }
+        // Also check for activity title
+        const body = document.body.textContent || '';
+        if (body.includes('活動場次') || body.includes('活動時間')) {
+            return true;
+        }
+        return false;
+    })()
+    '''
+    page_ready = await tab.evaluate(wait_js)
+    page_ready = util.parse_nodriver_result(page_ready)
+    if not page_ready:
+        # Page not ready, return False to retry next iteration
+        return False
+
     # Get date keyword from config
     date_keyword = config_dict.get("date_auto_select", {}).get("date_keyword", "")
     auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "random")
@@ -24778,21 +24803,41 @@ async def nodriver_funone_check_sold_out(tab, config_dict):
             let hasPurchaseButton = false;
             let purchaseButtonDisabled = true;
 
-            // Find all ticket rows - look for elements containing remaining count
-            // FunOne shows "remaining X" pattern in ticket rows
-            const allElements = document.querySelectorAll('*');
+            // Use TreeWalker to find text nodes containing remaining count
+            // This avoids duplicate counting from nested elements
+            const pattern = /(?:剩餘|remaining)\\s*(\\d+)/i;
+            const processedRows = new Set();
 
-            for (const el of allElements) {{
-                const text = el.textContent || '';
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
 
-                // Look for remaining count pattern (Chinese: remaining X)
-                const remainingMatch = text.match(/remaining\\s*(\\d+)/i);
+            let node;
+            while (node = walker.nextNode()) {{
+                const text = node.textContent || '';
+                const remainingMatch = text.match(pattern);
+
                 if (remainingMatch) {{
                     const remaining = parseInt(remainingMatch[1]);
 
-                    // Get the row context to find ticket name
-                    let container = el.closest('div[class*="ticket"], div[class*="row"], tr, li') || el.parentElement;
-                    let rowText = container ? container.textContent : text;
+                    // Find the ticket row container to get context
+                    let container = node.parentElement;
+                    if (container) {{
+                        container = container.closest('div[class*="ticket"], div[class*="row"], tr, li') || container.parentElement;
+                    }}
+
+                    // Use container reference to avoid duplicate processing
+                    if (container && processedRows.has(container)) {{
+                        continue;
+                    }}
+                    if (container) {{
+                        processedRows.add(container);
+                    }}
+
+                    const rowText = container ? container.textContent : text;
 
                     // Check if this matches any keyword
                     let matched = keywords.length === 0;
@@ -24821,41 +24866,51 @@ async def nodriver_funone_check_sold_out(tab, config_dict):
             }}
 
             // Check +/- buttons status
+            // FUNONE uses SVG icons for +/- buttons, need to check btn-tertiary class
             const buttons = document.querySelectorAll('button');
             let allButtonsDisabled = true;
+
             for (const btn of buttons) {{
                 const btnText = btn.textContent.trim();
-                if (btnText === '+') {{
-                    if (!btn.disabled) {{
-                        allButtonsDisabled = false;
+                const classList = Array.from(btn.classList);
+
+                // Check for +/- buttons (btn-tertiary, but not refresh button)
+                if (classList.includes('btn-tertiary') && !classList.includes('round_info_refresh')) {{
+                    // Check if this is a plus button by examining SVG path
+                    const svg = btn.querySelector('svg');
+                    if (svg) {{
+                        const path = svg.querySelector('path');
+                        if (path) {{
+                            const d = path.getAttribute('d') || '';
+                            // Plus button path starts with 'M11 13H' (has vertical line)
+                            // Minus button path starts with 'M6 13C' (only horizontal line)
+                            if (d.startsWith('M11')) {{
+                                // This is a plus button
+                                if (!btn.disabled) {{
+                                    allButtonsDisabled = false;
+                                }}
+                            }}
+                        }}
                     }}
                 }}
-                // Check for purchase/submit button
-                if (btnText.includes('Purchase') || btnText.includes('purchasing') ||
-                    btnText.includes('Confirm') || btnText.includes('confirm') ||
-                    btnText.includes('submit') || btnText.includes('Submit')) {{
+
+                // Check for purchase/submit button (Chinese and English)
+                if (btnText.includes('立即購買') || btnText.includes('Purchase') ||
+                    btnText.includes('Confirm') || btnText.includes('submit')) {{
                     hasPurchaseButton = true;
                     purchaseButtonDisabled = btn.disabled;
                 }}
             }}
 
-            // If no remaining info found, try alternative detection
+            // If no remaining info found, try alternative detection via buttons
             if (ticketInfo.length === 0) {{
-                // Check for quantity inputs with max attribute
                 const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
                 for (const input of inputs) {{
-                    const max = parseInt(input.max) || 0;
-                    const val = parseInt(input.value) || 0;
-                    if (max > 0 || val >= 0) {{
-                        // This is likely a quantity input
-                        const parent = input.parentElement;
-                        if (parent) {{
-                            const plusBtn = parent.querySelector('button:not(:disabled)');
-                            if (!plusBtn) {{
-                                // + button is disabled, might be sold out
-                            }} else {{
-                                allSoldOut = false;
-                            }}
+                    const parent = input.parentElement;
+                    if (parent) {{
+                        const plusBtn = parent.querySelector('button:not(:disabled)');
+                        if (plusBtn) {{
+                            allSoldOut = false;
                         }}
                     }}
                 }}
@@ -24887,8 +24942,6 @@ async def nodriver_funone_check_sold_out(tab, config_dict):
             if show_debug_message:
                 if is_sold_out:
                     print("[FUNONE] All tickets sold out")
-                elif remaining < ticket_number:
-                    print(f"[FUNONE] Remaining tickets: {remaining}, needed: {ticket_number}")
 
             return (is_sold_out, remaining, ticket_info)
 
@@ -25248,9 +25301,20 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
 
         # Try OCR if enabled and we have base64 data
         if ocr_enabled and captcha_info.get('type') == 'base64' and captcha_info.get('base64Data'):
-            ocr_result = await nodriver_funone_ocr_captcha(tab, config_dict, captcha_info.get('base64Data'))
-            if ocr_result:
-                return True
+            # Use first 100 chars of base64 as fingerprint to detect image change
+            current_captcha_fingerprint = captcha_info.get('base64Data', '')[:100]
+            last_fingerprint = funone_dict.get("last_captcha_fingerprint", "")
+
+            # Reset OCR failed flag if captcha image changed
+            if current_captcha_fingerprint != last_fingerprint:
+                funone_dict["last_captcha_fingerprint"] = current_captcha_fingerprint
+                funone_dict["ocr_failed"] = False
+
+            # Only attempt OCR if not already failed for this captcha
+            if not funone_dict.get("ocr_failed", False):
+                ocr_result = await nodriver_funone_ocr_captcha(tab, config_dict, captcha_info.get('base64Data'))
+                if ocr_result:
+                    return True
 
         # Only print waiting message once
         if show_debug_message and not funone_dict.get("waiting_captcha_printed"):
@@ -25276,6 +25340,7 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
     Returns:
         bool: True if OCR succeeded and input was filled
     """
+    global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     try:
@@ -25307,7 +25372,9 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
             # FunOne captcha requires exactly 5 characters
             if len(ocr_answer) != 5:
                 if show_debug_message:
-                    print(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - skipping")
+                    print(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - please enter manually")
+                # Set failed flag to prevent retry loop
+                funone_dict["ocr_failed"] = True
                 return False
 
             # Fill the captcha input
@@ -25865,6 +25932,32 @@ async def nodriver_funone_main(tab, url, config_dict):
 
                 # Check if on purchase_choose_ticket_no_map page - apply sold-out detection
                 if '/purchase_choose_ticket_no_map/' in url:
+                    # Wait for page to fully load before checking sold-out status
+                    # Check for key elements: purchase button or ticket price
+                    wait_js = '''
+                    (function() {
+                        const purchaseBtn = document.querySelector('button');
+                        if (purchaseBtn) {
+                            const text = purchaseBtn.textContent || '';
+                            if (text.includes('立即購買') || text.includes('Purchase')) {
+                                return true;
+                            }
+                        }
+                        // Also check for ticket price (TWD)
+                        const body = document.body.textContent || '';
+                        if (body.includes('TWD') || body.includes('票種')) {
+                            return true;
+                        }
+                        return false;
+                    })()
+                    '''
+                    page_ready = await tab.evaluate(wait_js)
+                    page_ready = util.parse_nodriver_result(page_ready)
+                    if not page_ready:
+                        # Page not ready, wait and retry next iteration
+                        await tab.sleep(0.3)
+                        return tab
+
                     # Check sold-out status first
                     is_sold_out, remaining, ticket_info = await nodriver_funone_check_sold_out(tab, config_dict)
                     ticket_number = config_dict.get("ticket_number", 2)
@@ -25872,50 +25965,43 @@ async def nodriver_funone_main(tab, url, config_dict):
 
                     # Handle sold-out or insufficient tickets
                     if is_sold_out or (remaining > 0 and remaining < ticket_number):
-                        # Increment retry counter
+                        # Increment retry counter (no limit - keep refreshing until tickets available)
                         funone_dict["refresh_retry_count"] = funone_dict.get("refresh_retry_count", 0) + 1
-
-                        # Check retry limit (30 retries = ~1 minute with 2s interval)
-                        max_retries = 30
-                        if funone_dict["refresh_retry_count"] > max_retries:
-                            if not funone_dict.get("max_retry_logged", False):
-                                print(f"[FUNONE] Max refresh retries ({max_retries}) reached, waiting for manual action...")
-                                funone_dict["max_retry_logged"] = True
-                            return tab
 
                         # Log status (only once per state)
                         if is_sold_out:
                             if not funone_dict.get("last_sold_out_logged", False):
-                                print(f"[FUNONE] Sold out, clicking refresh button... (retry {funone_dict['refresh_retry_count']}/{max_retries})")
+                                print(f"[FUNONE] Sold out, clicking refresh button...")
                                 funone_dict["last_sold_out_logged"] = True
                         else:
-                            print(f"[FUNONE] Remaining {remaining} < needed {ticket_number}, refreshing... (retry {funone_dict['refresh_retry_count']}/{max_retries})")
+                            print(f"[FUNONE] Remaining {remaining} < needed {ticket_number}, refreshing...")
 
                         # Click refresh button to trigger WebSocket update
                         refresh_clicked = await nodriver_funone_click_refresh_button(tab, config_dict)
 
                         if refresh_clicked:
-                            # Wait for WebSocket response
-                            await tab.sleep(auto_reload_interval)
+                            # Wait for WebSocket response - use asyncio.sleep for reliable timing
+                            if show_debug_message:
+                                print(f"[FUNONE] Waiting {auto_reload_interval} seconds...")
+                            await asyncio.sleep(auto_reload_interval)
                         else:
                             # Fallback: reload page if refresh button not found
                             if show_debug_message:
                                 print("[FUNONE] Refresh button not found, reloading page...")
                             await tab.reload()
-                            await tab.sleep(auto_reload_interval)
+                            await asyncio.sleep(auto_reload_interval)
 
                         return tab  # Next iteration will re-check status
 
                     # Tickets available - reset retry counter and proceed
                     funone_dict["refresh_retry_count"] = 0
                     funone_dict["last_sold_out_logged"] = False
-                    funone_dict["max_retry_logged"] = False
 
                 # Try area selection first (for zone_box pages)
                 area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
 
                 # If no area selected (no zone_box elements), this is a quantity selection page
-                # Proceed to set quantity, agreements, and captcha
+                # Proceed to set quantity, agreements, and submit
                 if not area_selected:
                     # Set ticket number
                     qty_set = await nodriver_funone_assign_ticket_number(tab, config_dict)
@@ -25925,11 +26011,10 @@ async def nodriver_funone_main(tab, url, config_dict):
                     await nodriver_funone_ticket_agree(tab)
                     await tab.sleep(0.2)
 
-                    # Handle captcha
-                    captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
-
-                    if captcha_done and qty_set:
-                        print("[FUNONE] Captcha filled, waiting for manual submit")
+                    # Step 1 (purchase_choose_ticket_no_map) has no captcha
+                    # Directly click purchase button if quantity is set
+                    if qty_set:
+                        await nodriver_funone_order_submit(tab, config_dict, funone_dict)
                 else:
                     await tab.sleep(0.5)
                     # Page should navigate to step 2 after area selection
