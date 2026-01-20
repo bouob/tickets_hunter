@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.09)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.20)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -171,7 +171,7 @@ def get_config_dict(args):
             is_headless_enable_ocr = False
             if config_dict["advanced"]["headless"]:
                 # for tixcraft headless.
-                if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+                if len(config_dict["accounts"]["tixcraft_sid"]) > 1:
                     is_headless_enable_ocr = True
 
             if is_headless_enable_ocr:
@@ -529,10 +529,10 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     # for like human.
     await asyncio.sleep(random.uniform(1, 3))
 
-    kktix_account = config_dict["advanced"]["kktix_account"]
+    kktix_account = config_dict["accounts"]["kktix_account"]
     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
     if kktix_password == "":
-        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
 
     has_redirected = False
     if len(kktix_account) > 4:
@@ -630,36 +630,36 @@ async def nodriver_goto_homepage(driver, config_dict):
             pass
         
 
-        if len(config_dict["advanced"]["kktix_account"])>0:
+        if len(config_dict["accounts"]["kktix_account"])>0:
             if not 'https://kktix.com/users/sign_in?' in homepage:
                 homepage = CONST_KKTIX_SIGN_IN_URL % (homepage)
 
     if 'famiticket.com' in homepage:
-        if len(config_dict["advanced"]["fami_account"])>0:
+        if len(config_dict["accounts"]["fami_account"])>0:
             homepage = CONST_FAMI_SIGN_IN_URL
 
     if 'kham.com' in homepage:
-        if len(config_dict["advanced"]["kham_account"])>0:
+        if len(config_dict["accounts"]["kham_account"])>0:
             homepage = CONST_KHAM_SIGN_IN_URL
 
     if 'ticket.com.tw' in homepage:
-        if len(config_dict["advanced"]["ticket_account"])>0:
+        if len(config_dict["accounts"]["ticket_account"])>0:
             homepage = CONST_TICKET_SIGN_IN_URL
 
     if 'udnfunlife.com' in homepage:
-        if len(config_dict["advanced"]["udn_account"])>0:
+        if len(config_dict["accounts"]["udn_account"])>0:
             homepage = CONST_UDN_SIGN_IN_URL
 
     if 'urbtix.hk' in homepage:
-        if len(config_dict["advanced"]["urbtix_account"])>0:
+        if len(config_dict["accounts"]["urbtix_account"])>0:
             homepage = CONST_URBTIX_SIGN_IN_URL
 
     if 'cityline.com' in homepage:
-        if len(config_dict["advanced"]["cityline_account"])>0:
+        if len(config_dict["accounts"]["cityline_account"])>0:
             homepage = CONST_CITYLINE_SIGN_IN_URL
 
     if 'hkticketing.com' in homepage:
-        if len(config_dict["advanced"]["hkticketing_account"])>0:
+        if len(config_dict["accounts"]["hkticketing_account"])>0:
             if 'hkt.hkticketing.com' in homepage:
                 # Type02: hkt.hkticketing.com SPA
                 homepage = CONST_HKTICKETING_TYPE02_SIGN_IN_URL
@@ -669,7 +669,7 @@ async def nodriver_goto_homepage(driver, config_dict):
 
     # https://ticketplus.com.tw/*
     if 'ticketplus.com.tw' in homepage:
-        if len(config_dict["advanced"]["ticketplus_account"]) > 1:
+        if len(config_dict["accounts"]["ticketplus_account"]) > 1:
             homepage = "https://ticketplus.com.tw/"
 
     try:
@@ -704,7 +704,7 @@ async def nodriver_goto_homepage(driver, config_dict):
             cookie_domain = ".tixcraft.com"
             cookie_name = "TIXUISID"
 
-        tixcraft_sid = config_dict["advanced"]["tixcraft_sid"]
+        tixcraft_sid = config_dict["accounts"]["tixcraft_sid"]
         if len(tixcraft_sid) > 1:
             if util.get_debug_mode(config_dict):
                 print(f"Setting tixcraft {cookie_name} cookie, length: {len(tixcraft_sid)}")
@@ -832,6 +832,49 @@ async def nodriver_goto_homepage(driver, config_dict):
 
         # 不管成功與否，都繼續後續處理，讓使用者手動處理登入問題
         # 這樣可以避免完全中斷搶票流程
+
+    # FunOne cookie injection (same pattern as TixCraft/iBon)
+    if 'tickets.funone.io' in homepage:
+        funone_cookie = config_dict["accounts"].get("funone_session_cookie", "").strip()
+        if len(funone_cookie) > 1:
+            if util.get_debug_mode(config_dict):
+                print(f"[FUNONE] Setting ticket_session cookie, length: {len(funone_cookie)}")
+
+            try:
+                from nodriver import cdp
+
+                # Set ticket_session cookie using CDP
+                await tab.send(cdp.network.set_cookie(
+                    name="ticket_session",
+                    value=funone_cookie,
+                    domain="tickets.funone.io",
+                    path="/",
+                    secure=False,
+                    http_only=True
+                ))
+
+                if util.get_debug_mode(config_dict):
+                    print("[FUNONE] ticket_session cookie set successfully")
+
+                # Verify cookie was set
+                updated_cookies = await driver.cookies.get_all()
+                funone_cookies = [c for c in updated_cookies if c.name == 'ticket_session']
+                if funone_cookies:
+                    if util.get_debug_mode(config_dict):
+                        print(f"[FUNONE] Verified cookie: domain={funone_cookies[0].domain}, value length={len(funone_cookies[0].value)}")
+
+                    # Reload page to apply cookie
+                    if util.get_debug_mode(config_dict):
+                        print("[FUNONE] Reloading page to apply cookie...")
+                    await tab.reload()
+                    await asyncio.sleep(1.5)
+                else:
+                    if util.get_debug_mode(config_dict):
+                        print("[FUNONE] Warning: ticket_session cookie not found after setting")
+
+            except Exception as e:
+                if util.get_debug_mode(config_dict):
+                    print(f"[FUNONE] Error setting cookie: {str(e)}")
 
     return tab
 
@@ -2793,10 +2836,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
             if config_dict["advanced"]["headless"]:
                 if not kktix_dict["is_popup_checkout"]:
-                    kktix_account = config_dict["advanced"]["kktix_account"]
+                    kktix_account = config_dict["accounts"]["kktix_account"]
                     kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
                     if kktix_password == "":
-                        kktix_password = util.decryptMe(config_dict["advanced"]["kktix_password"])
+                        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
 
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
@@ -6439,10 +6482,10 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     is_filled_form = False
     is_submited = False
 
-    ticketplus_account = config_dict["advanced"]["ticketplus_account"]
-    ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
+    ticketplus_account = config_dict["accounts"]["ticketplus_account"]
+    ticketplus_password = config_dict["advanced"].get("ticketplus_password_plaintext", "").strip()
     if ticketplus_password == "":
-        ticketplus_password = util.decryptMe(config_dict["advanced"]["ticketplus_password"])
+        ticketplus_password = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
 
     # manually keyin verify code.
     country_code = ""
@@ -6518,7 +6561,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
 
     # auto fill account info.
     is_user_signin = False
-    if len(config_dict["advanced"]["ticketplus_account"]) > 0:
+    if len(config_dict["accounts"]["ticketplus_account"]) > 0:
         is_user_signin = await nodriver_ticketplus_is_signin(tab)
         #print("is_user_signin:", is_user_signin)
         if not is_user_signin:
@@ -6930,9 +6973,69 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                     # Single keyword
                     exclude_keywords = [keyword_exclude.strip()] if keyword_exclude.strip() else []
 
-        # 統一的結構化判斷與選擇邏輯
+        # [FIX] Wait for Vue.js elements to render (expansion panels or count buttons)
+        # This is crucial because document.readyState='complete' doesn't mean Vue components are ready
+        # Use auto_reload_page_interval * 2 as max wait, minimum 6 seconds, maximum 15 seconds
+        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
+        max_vue_wait = max(6.0, min(15.0, auto_reload_interval * 2))
+        vue_check_interval = 0.15  # Check every 150ms for faster response
+        vue_wait_start = time.time()
+        vue_elements_found = False
+        last_log_time = 0
+
+        while time.time() - vue_wait_start < max_vue_wait:
+            # Check pause status
+            if await check_and_handle_pause(config_dict):
+                return False
+
+            try:
+                vue_check = await tab.evaluate('''
+                    (function() {
+                        const panels = document.querySelectorAll('.v-expansion-panel').length;
+                        const countBtn = document.querySelectorAll('.count-button .mdi-plus').length;
+                        const rowTickets = document.querySelectorAll('.row.py-1.py-md-4').length;
+                        return {
+                            panels: panels,
+                            countBtn: countBtn,
+                            rowTickets: rowTickets,
+                            hasElements: panels > 0 || countBtn > 0 || rowTickets > 0
+                        };
+                    })();
+                ''')
+
+                # Parse NoDriver result format
+                if isinstance(vue_check, list):
+                    vue_check = {item[0]: item[1].get('value') if isinstance(item[1], dict) else item[1] for item in vue_check}
+
+                # Log every 1 second to reduce noise
+                elapsed = time.time() - vue_wait_start
+                if show_debug_message and elapsed - last_log_time >= 1.0:
+                    print(f"[VUE WAIT] {elapsed:.1f}s - panels:{vue_check.get('panels', 0)}, countBtn:{vue_check.get('countBtn', 0)}, rowTickets:{vue_check.get('rowTickets', 0)}")
+                    last_log_time = elapsed
+
+                if vue_check.get('hasElements', False):
+                    vue_elements_found = True
+                    if show_debug_message:
+                        print(f"[VUE WAIT] Vue elements found after {elapsed:.1f}s")
+                    # Small delay to ensure Vue fully rendered
+                    await asyncio.sleep(0.1)
+                    break
+
+            except Exception as e:
+                if show_debug_message:
+                    print(f"[VUE WAIT] Check error: {e}")
+
+            await asyncio.sleep(vue_check_interval)
+
+        if not vue_elements_found:
+            if show_debug_message:
+                print(f"[VUE WAIT] Timeout after {max_vue_wait:.1f}s, Vue elements not found")
+            # Return early - no point continuing if no elements found
+            return False
+
+        # 統一的結構化判斷與選擇邏輯 (同步版本，避免 NoDriver async 問題)
         js_result = await tab.evaluate(f'''
-            (async function() {{
+            (function() {{
                 const keyword = '{area_keyword}';
                 const ticketNumber = {ticket_number};
                 const autoSelectMode = '{auto_select_mode}';
@@ -6943,403 +7046,159 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 const excludeKeywords = {exclude_keywords};
 
                 console.log('Unified selector execution - keyword:', keyword, 'tickets:', ticketNumber, 'mode:', autoSelectMode, 'fallback:', areaAutoFallback);
-                console.log('排除關鍵字:', excludeKeywords);
 
                 // 檢查是否售罄
                 function isSoldOut(element) {{
                     const text = element.textContent || '';
-                    console.log('檢查售罄狀態:', text.replace(/\s+/g, ' ').trim());
-
-                    // 更精準的售罄檢查
-                    const soldOutPatterns = [
-                        /剩餘\s*0(?!\d)/,  // "剩餘 0" 或 "剩餘0" 但不包括 "剩餘 10"
-                        /剩餘\s*:\s*0(?!\d)/, // "剩餘: 0" 格式
-                        /sold\s*out/i,
-                        /售完/,
-                        /已售完/,
-                        /售罄/,
-                        /無庫存/,
-                        /not\s*available/i
-                    ];
+                    const soldOutPatterns = [/剩餘\s*0(?!\d)/, /剩餘\s*:\s*0(?!\d)/, /sold\s*out/i, /售完/, /已售完/, /售罄/, /無庫存/];
+                    const availablePatterns = [/熱賣中/, /熱賣/, /熱售/, /可購買/, /available/i, /剩餘\s*[1-9]\d*/];
 
                     for (let pattern of soldOutPatterns) {{
                         if (pattern.test(text)) {{
-                            console.log('檢測到售罄標記:', pattern.toString());
+                            for (let avail of availablePatterns) {{
+                                if (avail.test(text)) return false;
+                            }}
                             return true;
                         }}
                     }}
-
-                    // 檢查是否明確有票
-                    const availablePatterns = [
-                        /熱賣中/,
-                        /熱賣/,
-                        /熱售/,
-                        /可購買/,
-                        /available/i,
-                        /剩餘\s*[1-9]\d*/  // 剩餘大於0的數字
-                    ];
-
-                    for (let pattern of availablePatterns) {{
-                        if (pattern.test(text)) {{
-                            console.log('檢測到有票標記:', pattern.toString());
-                            return false;
-                        }}
-                    }}
-
-                    console.log('無法確定售罄狀態，預設為可用');
                     return false;
                 }}
 
                 // 檢查是否包含排除關鍵字
                 function containsExcludeKeywords(name) {{
                     if (!excludeKeywords || excludeKeywords.length === 0) return false;
-
-                    for (let excludeKeyword of excludeKeywords) {{
-                        if (excludeKeyword && name.includes(excludeKeyword)) {{
-                            console.log('發現排除關鍵字:', excludeKeyword, '於:', name);
-                            return true;
-                        }}
+                    for (let kw of excludeKeywords) {{
+                        if (kw && name.includes(kw)) return true;
                     }}
                     return false;
                 }}
 
-                // 計算目標索引的輔助函數
+                // 計算目標索引
                 function getTargetIndex(items, mode) {{
                     const count = items.length;
                     if (count === 0) return -1;
-
                     switch(mode) {{
-                        case 'from top to bottom':
-                            return 0;
-                        case 'from bottom to top':
-                            return count - 1;
-                        case 'center':
-                            return Math.floor((count - 1) / 2);
-                        case 'random':
-                            return Math.floor(Math.random() * count);
-                        default:
-                            return 0;
+                        case 'from top to bottom': return 0;
+                        case 'from bottom to top': return count - 1;
+                        case 'center': return Math.floor((count - 1) / 2);
+                        case 'random': return Math.floor(Math.random() * count);
+                        default: return 0;
                     }}
-                }}
-
-                // 等待函數
-                function sleep(ms) {{
-                    return new Promise(resolve => setTimeout(resolve, ms));
                 }}
 
                 // 結構化判斷頁面類型
                 const hasExpansionPanel = document.querySelector('.v-expansion-panel');
                 const hasCountButton = document.querySelector('.count-button .mdi-plus');
 
-                // 增加診斷日誌
-                console.log('=== Page Type Detection Debug ===');
-                console.log('hasExpansionPanel:', hasExpansionPanel ? 'YES' : 'NO');
-                console.log('hasCountButton:', hasCountButton ? 'YES' : 'NO');
+                console.log('hasExpansionPanel:', !!hasExpansionPanel, 'hasCountButton:', !!hasCountButton);
 
-                // 優先檢查展開面板（更特定的結構）
+                // 類型1: 展開面板型
                 if (hasExpansionPanel) {{
-                    // 類型B: 票區選擇頁面（有展開面板）
-                    console.log('[DETECTED] Expansion Panel Layout (Page4) - Area Selection');
-                    console.log('[SELECTOR] Using: .v-expansion-panel');
                     const panels = document.querySelectorAll('.v-expansion-panel');
-
-                    // 過濾掉售罄和排除關鍵字的選項
                     const validPanels = [];
-                    console.log('共找到 ' + panels.length + ' 個展開面板');
 
                     for (let i = 0; i < panels.length; i++) {{
                         const panel = panels[i];
-
-                        // 嘗試多種 selector 來獲取展開面板的名稱/價格
-                        let nameElement = panel.querySelector('h4');  // 價格群組標題（如"4800 區"）
-                        if (!nameElement) {{
-                            nameElement = panel.querySelector('.d-flex.align-center:not(:has(.area-color))');  // 具體票區
-                        }}
-                        if (!nameElement) {{
-                            nameElement = panel.querySelector('.v-expansion-panel-header');  // 回退：直接取 header
-                        }}
-
-                        if (nameElement) {{
-                            const areaName = nameElement.textContent.trim();
-                            console.log('檢查票區 ' + (i + 1) + ': "' + areaName + '"');
-
-                            // 檢查是否售罄
-                            if (isSoldOut(panel)) {{
-                                console.log('跳過售罄票區:', areaName);
-                                continue;
-                            }}
-
-                            // 檢查是否包含排除關鍵字
-                            if (containsExcludeKeywords(areaName)) {{
-                                console.log('跳過排除關鍵字票區:', areaName);
-                                continue;
-                            }}
-
-                            validPanels.push({{ panel: panel, name: areaName, index: i }});
-                            console.log('可選票區:', areaName);
-                        }} else {{
-                            console.log('票區 ' + (i + 1) + ' 找不到名稱元素');
-                        }}
-                    }}
-
-                    console.log('有效票區數量: ' + validPanels.length + '/' + panels.length);
-                    if (validPanels.length > 0) {{
-                        console.log('有效票區清單:', validPanels.map(p => p.name));
-                    }}
-
-                    let targetPanel = null;
-                    let targetAreaName = '';
-
-                    // 先嘗試關鍵字比對（僅在有效選項中）
-                    if (keyword1) {{
-                        for (let item of validPanels) {{
-                            if (item.name.includes(keyword1)) {{
-                                if (!keyword2 || item.name.includes(keyword2)) {{
-                                    console.log('找到符合關鍵字的票區:', item.name);
-                                    targetPanel = item.panel;
-                                    targetAreaName = item.name;
-                                    break;
-                                }}
+                        const nameEl = panel.querySelector('.v-expansion-panel-header');
+                        if (nameEl) {{
+                            const name = nameEl.textContent.trim().replace(/\s+/g, ' ');
+                            if (!isSoldOut(panel) && !containsExcludeKeywords(name)) {{
+                                validPanels.push({{ panel, name, index: i }});
                             }}
                         }}
                     }}
 
-                    // T022-T024: Conditional fallback based on area_auto_fallback switch
-                    if (!targetPanel && keyword1 && keyword1.trim() !== '') {{
-                        if (areaAutoFallback) {{
-                            // T022: Fallback enabled
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                            const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                            if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                                const targetItem = validPanels[targetIndex];
-                                targetPanel = targetItem.panel;
-                                targetAreaName = targetItem.name;
-                                console.log('自動選擇票區:', targetAreaName);
-                            }}
-                        }} else {{
-                            // T023: Fallback disabled - strict mode
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                            return {{
-                                success: false,
-                                error: 'No keyword matches and fallback is disabled',
-                                strict_mode: true
-                            }};
-                        }}
-                    }} else if (!targetPanel && validPanels.length > 0) {{
-                        // No keyword specified, select based on mode
-                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
-                        const targetIndex = getTargetIndex(validPanels, autoSelectMode);
-                        if (targetIndex >= 0 && targetIndex < validPanels.length) {{
-                            const targetItem = validPanels[targetIndex];
-                            targetPanel = targetItem.panel;
-                            targetAreaName = targetItem.name;
-                            console.log('自動選擇票區:', targetAreaName);
-                        }}
-                    }}
-
+                    console.log('Valid panels:', validPanels.length);
                     if (validPanels.length === 0) {{
-                        console.log('沒有可選的票區（全部售完或被排除）');
-                        return {{ success: false, message: '沒有可選的票區（全部售完或被排除）' }};
+                        return {{ success: false, message: 'No valid panels' }};
                     }}
 
-                    if (targetPanel) {{
-                        const header = targetPanel.querySelector('.v-expansion-panel-header');
-                        if (header) {{
-                            console.log('點擊展開面板:', targetAreaName);
-                            header.click();
+                    // 選擇目標面板
+                    let target = null;
+                    if (keyword1) {{
+                        target = validPanels.find(p => p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2)));
+                    }}
+                    if (!target && keyword1 && !areaAutoFallback) {{
+                        return {{ success: false, strict_mode: true }};
+                    }}
+                    if (!target) {{
+                        const idx = getTargetIndex(validPanels, autoSelectMode);
+                        target = validPanels[idx];
+                    }}
 
-                            // 等待面板展開並找到操作按鈕的異步函數
-                            const waitAndFindAction = async () => {{
-                                return new Promise((resolve) => {{
-                                    let attempts = 0;
-                                    const maxAttempts = 10; // 最多嘗試1秒 (100ms * 10)
+                    if (!target) {{
+                        return {{ success: false, message: 'No target panel' }};
+                    }}
 
-                                    const findAction = () => {{
-                                        attempts++;
-                                        console.log('第 ' + attempts + ' 次尋找操作按鈕...');
+                    // 展開面板
+                    const header = target.panel.querySelector('.v-expansion-panel-header');
+                    const isExpanded = target.panel.classList.contains('v-expansion-panel--active');
+                    if (!isExpanded && header) {{
+                        console.log('Clicking to expand:', target.name);
+                        header.click();
+                    }}
 
-                                        // 先嘗試找加號按鈕
-                                        let plusButton = targetPanel.querySelector('.mdi-plus');
-                                        if (plusButton) {{
-                                            console.log('找到加號按鈕，開始設定票數');
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusButton.click();
-                                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'plus_button' }});
-                                            return;
-                                        }}
+                    // 立即嘗試找加號按鈕（面板可能已經展開或很快展開）
+                    let plusBtn = target.panel.querySelector('.mdi-plus') ||
+                                  target.panel.querySelector('.count-button .mdi-plus');
 
-                                        // 再嘗試找 count-button 結構
-                                        const countButtons = targetPanel.querySelectorAll('.count-button .mdi-plus');
-                                        if (countButtons.length > 0) {{
-                                            console.log('找到count-button加號');
-                                            const plusBtn = countButtons[0];
-                                            for (let j = 0; j < ticketNumber; j++) {{
-                                                plusBtn.click();
-                                                console.log('點擊count-button加號 ' + (j + 1) + '/' + ticketNumber);
-                                            }}
-                                            resolve({{ success: true, action: 'count_button' }});
-                                            return;
-                                        }}
-
-                                        // 尋找其他選擇按鈕
-                                        const allButtons = targetPanel.querySelectorAll('button:not(.v-expansion-panel-header)');
-                                        console.log('找到 ' + allButtons.length + ' 個按鈕');
-
-                                        for (let btn of allButtons) {{
-                                            const btnText = btn.textContent.toLowerCase().trim();
-                                            console.log('[CHECK] 檢查按鈕:', btnText);
-
-                                            if (btnText.includes('選擇') || btnText.includes('select') ||
-                                                btn.classList.contains('select-btn') ||
-                                                btn.classList.contains('v-btn--has-bg')) {{
-                                                console.log('[TARGET] 找到選擇按鈕，點擊:', btnText);
-                                                btn.click();
-                                                resolve({{ success: true, action: 'select_button', text: btnText }});
-                                                return;
-                                            }}
-                                        }}
-
-                                        // 如果還沒找到且未超過最大嘗試次數，繼續尋找
-                                        if (attempts < maxAttempts) {{
-                                            setTimeout(findAction, 100);
-                                        }} else {{
-                                            console.log('[WARNING] 達到最大嘗試次數，未找到操作按鈕');
-                                            resolve({{ success: false, action: 'none' }});
-                                        }}
-                                    }};
-
-                                    // 立即開始第一次嘗試
-                                    findAction();
-                                }});
-                            }};
-
-                            // 使用 await 等待操作完成
-                            const result = await waitAndFindAction();
-                            console.log('[RESULT] 面板操作結果:', result);
-                            return {{
-                                success: true,
-                                type: 'area_select',
-                                selected: targetAreaName,
-                                action_found: result.success,
-                                action_type: result.action
-                            }};
-                        }} else {{
-                            console.log('[ERROR] 找不到展開面板 header');
-                            return {{ success: false, message: '找不到展開面板 header' }};
+                    if (plusBtn) {{
+                        console.log('Found plus button, clicking', ticketNumber, 'times');
+                        for (let j = 0; j < ticketNumber; j++) {{
+                            plusBtn.click();
                         }}
-                    }} else {{
-                        console.log('[ERROR] 沒有找到目標展開面板');
-                        return {{ success: false, message: '沒有找到目標展開面板' }};
+                        return {{ success: true, type: 'expansion_panel', selected: target.name, clicked: true }};
                     }}
+
+                    // 沒找到加號，返回需要重試的狀態
+                    return {{ success: true, type: 'expansion_panel', selected: target.name, clicked: false, needRetry: true }};
 
                 }} else if (hasCountButton) {{
-                    // 類型A: 票種選擇頁面（有加減按鈕）
-                    console.log('[DETECTED] Count Button Layout (Page2/3) - Ticket Type Selection');
-                    console.log('[SELECTOR] Using: .row.py-1.py-md-4:has(.count-button)');
-                    const rows = document.querySelectorAll('.row.py-1.py-md-4:has(.count-button)');
-
-                    // 過濾掉售罄和排除關鍵字的選項
+                    // 類型2: 直接有加減按鈕
+                    const rows = document.querySelectorAll('.row.py-1.py-md-4');
                     const validRows = [];
-                    for (let i = 0; i < rows.length; i++) {{
-                        const row = rows[i];
-                        const nameElement = row.querySelector('.font-weight-medium');
 
-                        if (nameElement) {{
-                            const ticketName = nameElement.textContent.trim();
+                    for (let row of rows) {{
+                        const plusBtn = row.querySelector('.count-button .mdi-plus');
+                        if (!plusBtn) continue;
 
-                            // 檢查是否售罄
-                            if (isSoldOut(row)) {{
-                                console.log('跳過售罄票種:', ticketName);
-                                continue;
-                            }}
-
-                            // 檢查是否包含排除關鍵字
-                            if (containsExcludeKeywords(ticketName)) {{
-                                console.log('跳過排除關鍵字票種:', ticketName);
-                                continue;
-                            }}
-
-                            validRows.push({{ row: row, name: ticketName, index: i }});
-                            console.log('可選票種:', ticketName);
-                        }}
-                    }}
-
-                    let targetRow = null;
-                    let targetTicketName = '';
-
-                    // 先嘗試關鍵字比對（僅在有效選項中）
-                    if (keyword1) {{
-                        for (let item of validRows) {{
-                            if (item.name.includes(keyword1)) {{
-                                if (!keyword2 || item.name.includes(keyword2)) {{
-                                    console.log('找到符合關鍵字的票種:', item.name);
-                                    targetRow = item.row;
-                                    targetTicketName = item.name;
-                                    break;
-                                }}
+                        const nameEl = row.querySelector('.font-weight-medium');
+                        if (nameEl) {{
+                            const name = nameEl.textContent.trim();
+                            if (!isSoldOut(row) && !containsExcludeKeywords(name)) {{
+                                validRows.push({{ row, name, plusBtn }});
                             }}
                         }}
                     }}
 
-                    // T022-T024: Conditional fallback based on area_auto_fallback switch
-                    if (!targetRow && keyword1 && keyword1.trim() !== '') {{
-                        if (areaAutoFallback) {{
-                            // T022: Fallback enabled
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=true, triggering auto fallback');
-                            const targetIndex = getTargetIndex(validRows, autoSelectMode);
-                            if (targetIndex >= 0 && targetIndex < validRows.length) {{
-                                const targetItem = validRows[targetIndex];
-                                targetRow = targetItem.row;
-                                targetTicketName = targetItem.name;
-                                console.log('自動選擇票種:', targetTicketName);
-                            }}
-                        }} else {{
-                            // T023: Fallback disabled - strict mode
-                            console.log('[TicketPlus AREA FALLBACK] area_auto_fallback=false, fallback is disabled');
-                            console.log('[TicketPlus AREA SELECT] Waiting for manual intervention');
-                            return {{
-                                success: false,
-                                error: 'No keyword matches and fallback is disabled',
-                                strict_mode: true
-                            }};
-                        }}
-                    }} else if (!targetRow && validRows.length > 0) {{
-                        // No keyword specified, select based on mode
-                        console.log('無關鍵字，使用自動選擇模式:', autoSelectMode);
-                        const targetIndex = getTargetIndex(validRows, autoSelectMode);
-                        if (targetIndex >= 0 && targetIndex < validRows.length) {{
-                            const targetItem = validRows[targetIndex];
-                            targetRow = targetItem.row;
-                            targetTicketName = targetItem.name;
-                            console.log('自動選擇票種:', targetTicketName);
-                        }}
-                    }}
-
+                    console.log('Valid rows:', validRows.length);
                     if (validRows.length === 0) {{
-                        console.log('沒有可選的票種（全部售完或被排除）');
-                        return {{ success: false, message: '沒有可選的票種（全部售完或被排除）' }};
+                        return {{ success: false, message: 'No valid rows' }};
                     }}
 
-                    if (targetRow) {{
-                        const plusButton = targetRow.querySelector('.mdi-plus');
-                        if (plusButton) {{
-                            console.log('開始點擊加號按鈕');
-                            for (let j = 0; j < ticketNumber; j++) {{
-                                plusButton.click();
-                                console.log('點擊加號 ' + (j + 1) + '/' + ticketNumber);
-                            }}
-                            return {{ success: true, type: 'ticket_type', selected: targetTicketName }};
-                        }} else {{
-                            console.log('找不到加號按鈕');
+                    // 選擇目標
+                    let target = null;
+                    if (keyword1) {{
+                        target = validRows.find(r => r.name.includes(keyword1) && (!keyword2 || r.name.includes(keyword2)));
+                    }}
+                    if (!target && keyword1 && !areaAutoFallback) {{
+                        return {{ success: false, strict_mode: true }};
+                    }}
+                    if (!target) {{
+                        const idx = getTargetIndex(validRows, autoSelectMode);
+                        target = validRows[idx];
+                    }}
+
+                    if (target && target.plusBtn) {{
+                        console.log('Clicking plus button for:', target.name);
+                        for (let j = 0; j < ticketNumber; j++) {{
+                            target.plusBtn.click();
                         }}
+                        return {{ success: true, type: 'count_button', selected: target.name, clicked: true }};
                     }}
                 }}
 
-                console.log('[ERROR] 未找到任何可選的選項');
-                return {{ success: false, message: '未找到可選的選項' }};
+                return {{ success: false, message: 'No selectable elements found' }};
             }})();
         ''')
 
@@ -7355,7 +7214,47 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
             print(f"[DEBUG] Parsed result value: {result}")
 
         if isinstance(result, dict):
-            is_selected = result.get('success', False)
+            is_selected = result.get('success', False) and result.get('clicked', False)
+
+            # 處理需要重試的情況（展開面板後等待加號按鈕出現）
+            if result.get('needRetry', False):
+                if show_debug_message:
+                    print(f"[RETRY] Panel expanded but plus button not found, retrying...")
+
+                # 等待面板展開動畫完成
+                await asyncio.sleep(0.3)
+
+                # 重試點擊加號按鈕
+                for retry in range(5):  # 最多重試 5 次
+                    retry_result = await tab.evaluate(f'''
+                        (function() {{
+                            const panels = document.querySelectorAll('.v-expansion-panel');
+                            for (let panel of panels) {{
+                                if (panel.classList.contains('v-expansion-panel--active')) {{
+                                    const plusBtn = panel.querySelector('.mdi-plus') ||
+                                                   panel.querySelector('.count-button .mdi-plus');
+                                    if (plusBtn) {{
+                                        console.log('Retry: Found plus button');
+                                        for (let j = 0; j < {ticket_number}; j++) {{
+                                            plusBtn.click();
+                                        }}
+                                        return {{ success: true, clicked: true }};
+                                    }}
+                                }}
+                            }}
+                            return {{ success: false, clicked: false }};
+                        }})();
+                    ''')
+
+                    retry_parsed = util.parse_nodriver_result(retry_result)
+                    if isinstance(retry_parsed, dict) and retry_parsed.get('clicked', False):
+                        if show_debug_message:
+                            print(f"[RETRY] Success on attempt {retry + 1}")
+                        is_selected = True
+                        break
+
+                    await asyncio.sleep(0.2)
+
             if show_debug_message:
                 if is_selected:
                     selected_type = result.get('type', '')
@@ -7672,11 +7571,13 @@ async def evaluate_with_pause_check(tab, javascript_code, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return None  # 暫停中，返回 None
     try:
-        return await tab.evaluate(javascript_code)
+        result = await tab.evaluate(javascript_code)
+        return result
     except Exception as exc:
-        show_debug = config_dict and config_dict["advanced"].get("verbose", False)
-        if show_debug:
-            print(f"JavaScript 執行失敗: {exc}")
+        # Always print JS execution errors for debugging
+        print(f"[JS ERROR] JavaScript execution failed: {exc}")
+        import traceback
+        traceback.print_exc()
         return None
 
 async def with_pause_check(task_func, config_dict, *args, **kwargs):
@@ -8255,6 +8156,10 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             is_event_page = True
 
         if is_event_page:
+            # 重置確認頁標記（用戶可能取消購票回到活動頁重新刷票）
+            ticketplus_dict["is_popup_confirm"] = False
+            ticketplus_dict["order_page_visited"] = False  # 同時重置訂票頁訪問標記
+
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
             if config_dict["advanced"].get("verbose", False):
                 print("Realname Card:", is_button_pressed)
@@ -8279,12 +8184,12 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
             # Unified dynamic detection: longer wait for first visit, shorter for reload
             is_first_visit = not ticketplus_dict.get("order_page_visited", False)
             if is_first_visit:
-                max_wait = 1200  # First visit: max 1.2s (cold start, more init needed)
-                fallback_delay = 0.3  # Fallback delay if detection times out
+                max_wait = 2000  # First visit: max 2.0s (cold start, more init needed)
+                fallback_delay = 0.5  # Fallback delay if detection times out
                 ticketplus_dict["order_page_visited"] = True
             else:
-                max_wait = 600   # Reload: max 0.6s (warm start, faster)
-                fallback_delay = 0.2  # Shorter fallback for reload
+                max_wait = 1000  # Reload: max 1.0s (warm start, faster)
+                fallback_delay = 0.3  # Shorter fallback for reload
 
             if show_debug_message:
                 visit_type = "First visit" if is_first_visit else "Reload"
@@ -8323,17 +8228,19 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
         if is_event_page:
             ticketplus_dict["is_ticket_assigned"] = True
 
-            if ticketplus_dict["start_time"]:
-                ticketplus_dict["done_time"] = time.time()
-                ticketplus_dict["elapsed_time"] = ticketplus_dict["done_time"] - ticketplus_dict["start_time"]
-                if config_dict["advanced"].get("verbose", False):
-                    print(f"NoDriver TicketPlus booking time: {ticketplus_dict['elapsed_time']:.3f} seconds")
-
-            if config_dict["advanced"].get("verbose", False):
-                print("Entered confirmation page, booking successful")
-
             if not ticketplus_dict["is_popup_confirm"]:
                 ticketplus_dict["is_popup_confirm"] = True
+
+                # 記錄訂票時間（只在首次進入時計算）
+                if ticketplus_dict["start_time"]:
+                    ticketplus_dict["done_time"] = time.time()
+                    ticketplus_dict["elapsed_time"] = ticketplus_dict["done_time"] - ticketplus_dict["start_time"]
+                    if config_dict["advanced"].get("verbose", False):
+                        print(f"NoDriver TicketPlus booking time: {ticketplus_dict['elapsed_time']:.3f} seconds")
+
+                if config_dict["advanced"].get("verbose", False):
+                    print("Entered confirmation page, booking successful")
+
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
                 send_discord_notification(config_dict, "order", "TicketPlus")
@@ -8362,7 +8269,7 @@ async def nodriver_ibon_login(tab, config_dict, driver):
         print("=== ibon Auto-Login Started ===")
 
     # 檢查是否有 ibon cookie 設定
-    ibonqware = config_dict["advanced"]["ibonqware"]
+    ibonqware = config_dict["accounts"]["ibonqware"]
     if len(ibonqware) <= 1:
         if show_debug_message:
             print("No ibon cookie configured, skipping auto-login")
@@ -15131,7 +15038,7 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
     # Login page
     if 'cityline.com/Login.html' in url:
-        cityline_account = config_dict["advanced"]["cityline_account"]
+        cityline_account = config_dict["accounts"]["cityline_account"]
         if len(cityline_account) > 4:
             # Auto-fill email and monitor login button (will auto-click when enabled)
             await nodriver_cityline_login(tab, cityline_account)
@@ -15227,10 +15134,10 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
 
 async def nodriver_facebook_main(tab, config_dict):
-    facebook_account = config_dict["advanced"]["facebook_account"].strip()
+    facebook_account = config_dict["accounts"]["facebook_account"].strip()
     facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
     if facebook_password == "":
-        facebook_password = util.decryptMe(config_dict["advanced"]["facebook_password"])
+        facebook_password = util.decryptMe(config_dict["accounts"]["facebook_password"])
     if len(facebook_account) > 4:
         await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
@@ -16686,10 +16593,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # For UDN login page: execute login first, then redirect after login completes
             # This prevents the infinite redirect loop between login page and event page
             if 'udnfunlife.com' in url.lower():
-                udn_account = config_dict["advanced"]["udn_account"]
+                udn_account = config_dict["accounts"]["udn_account"]
                 udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
                 if udn_password == "":
-                    udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                    udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
 
                 if len(udn_account) > 4:
                     # Check if already logged in by looking for logout button or user menu
@@ -16988,10 +16895,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         # UDN homepage login (popup dialog with reCAPTCHA)
         # UDN uses a popup login dialog on homepage, not UTK1306 page
         if 'utk01/utk0101_.aspx' in url.lower():
-            udn_account = config_dict["advanced"]["udn_account"]
+            udn_account = config_dict["accounts"]["udn_account"]
             udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
             if udn_password == "":
-                udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
             if len(udn_account) > 4:
                 # Check if already logged in
                 # Detection method: Check if "登入/註冊" menu item is hidden
@@ -18221,28 +18128,28 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                 # UDN login (Feature 010: uses same UTK backend as KHAM)
                 if 'udnfunlife' in domain_name:
-                    udn_account = config_dict["advanced"]["udn_account"]
+                    udn_account = config_dict["accounts"]["udn_account"]
                     udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
                     if udn_password == "":
-                        udn_password = util.decryptMe(config_dict["advanced"]["udn_password"])
+                        udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
                     if len(udn_account) > 4:
                         if show_debug_message:
                             print(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
                         await nodriver_kham_login(tab, udn_account, udn_password, ocr)
 
                 # Kham login
-                kham_account = config_dict["advanced"]["kham_account"]
+                kham_account = config_dict["accounts"]["kham_account"]
                 kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
                 if kham_password == "":
-                    kham_password = util.decryptMe(config_dict["advanced"]["kham_password"])
+                    kham_password = util.decryptMe(config_dict["accounts"]["kham_password"])
                 if len(kham_account) > 4:
                     await nodriver_kham_login(tab, kham_account, kham_password, ocr)
 
                 # Ticket.com.tw login
-                ticket_account = config_dict["advanced"]["ticket_account"]
+                ticket_account = config_dict["accounts"]["ticket_account"]
                 ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
                 if ticket_password == "":
-                    ticket_password = util.decryptMe(config_dict["advanced"]["ticket_password"])
+                    ticket_password = util.decryptMe(config_dict["accounts"]["ticket_password"])
                 if len(ticket_account) > 4:
                     # Use dedicated ticket login function (different selectors)
                     await nodriver_ticket_login(tab, ticket_account, ticket_password, config_dict)
@@ -21340,6 +21247,10 @@ async def nodrver_block_urls(tab, config_dict):
         '*googleadservices.com/*',  # Ad conversion tracking
         '*adtrafficquality.google/*',  # Ad quality detection
 
+        # Facebook Pixel tracking (does not affect FB login)
+        '*connect.facebook.net/*/fbevents.js',
+        '*connect.facebook.net/signals/*',
+
         # Social media and video
         '*.twitter.com/i/*',
         '*platform.twitter.com/*',
@@ -24242,7 +24153,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         is_hkticketing_sign_in_page = True
 
     if is_hkticketing_sign_in_page:
-        hkticketing_account = config_dict["advanced"]["hkticketing_account"].strip()
+        hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
         # Password is encrypted in settings.json, need to decrypt
         hkticketing_password = util.decryptMe(config_dict["advanced"].get("hkticketing_password", ""))
         if len(hkticketing_account) > 4:
@@ -24322,6 +24233,1861 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
     return tab
 
 
+# =============================================================================
+# FunOne Tickets Platform Support
+# URL: https://tickets.funone.io
+# Features: Cookie login, session selection, ticket selection, order submit
+# =============================================================================
+
+# Global state dictionary for FunOne
+funone_dict = {}
+
+async def nodriver_funone_inject_cookie(tab, config_dict):
+    """
+    Inject FunOne session cookie using CDP network.set_cookie
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if injection successful
+    """
+    import nodriver.cdp as cdp
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    funone_session_cookie = config_dict["accounts"].get("funone_session_cookie", "").strip()
+
+    if len(funone_session_cookie) == 0:
+        if show_debug_message:
+            print("[FUNONE] No session cookie configured")
+        return False
+
+    try:
+        # Inject ticket_session cookie
+        await tab.send(cdp.network.set_cookie(
+            name="ticket_session",
+            value=funone_session_cookie,
+            domain="tickets.funone.io",
+            path="/",
+            secure=False,
+            http_only=True
+        ))
+
+        if show_debug_message:
+            print("[FUNONE] Session cookie injected successfully")
+        return True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Cookie injection failed: {exc}")
+        return False
+
+
+async def nodriver_funone_check_login_status(tab):
+    """
+    Check if user is logged in by verifying ticket_session cookie exists
+
+    Returns:
+        bool: True if logged in (cookie exists and valid)
+    """
+    try:
+        # Cookie verification - check if ticket_session cookie exists
+        cookies = await tab.browser.cookies.get_all()
+        session_cookie = next((c for c in cookies if c.name == 'ticket_session'), None)
+        if session_cookie and len(session_cookie.value) > 10:
+            return True
+        return False
+
+    except Exception as exc:
+        return False
+
+
+async def nodriver_funone_verify_login(tab, config_dict):
+    """
+    Verify login status (cookie is already injected in goto_homepage)
+
+    Returns:
+        bool: True if logged in
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    is_logged_in = await nodriver_funone_check_login_status(tab)
+
+    # Only print when login status changes (reduce repetitive messages)
+    if is_logged_in:
+        if show_debug_message and funone_dict.get("last_login_status") != True:
+            print("[FUNONE] Login status verified - logged in")
+            funone_dict["last_login_status"] = True
+        return True
+
+    if show_debug_message and funone_dict.get("last_login_status") != False:
+        print("[FUNONE] Not logged in - waiting for manual OTP login")
+        funone_dict["last_login_status"] = False
+    return False
+
+
+async def nodriver_funone_close_popup(tab):
+    """
+    Close cookie consent and announcement popups
+
+    Returns:
+        bool: True if any popup was closed
+    """
+    closed_any = False
+
+    try:
+        # Close common popups
+        close_popup_js = '''
+        (function() {
+            let closed = 0;
+
+            // Close cookie consent
+            const cookieButtons = document.querySelectorAll('button, a');
+            for (const btn of cookieButtons) {
+                const text = (btn.textContent || '').toLowerCase();
+                if (text.includes('accept') || text.includes('got it') || text.includes('ok') || text.includes('close')) {
+                    if (btn.closest('.cookie') || btn.closest('[class*="consent"]') || btn.closest('[class*="popup"]')) {
+                        btn.click();
+                        closed++;
+                    }
+                }
+            }
+
+            // Close modal dialogs with close button
+            const closeIcons = document.querySelectorAll('[class*="close"], [aria-label="close"], .modal button');
+            for (const icon of closeIcons) {
+                const style = window.getComputedStyle(icon);
+                if (style.display !== 'none' && style.visibility !== 'hidden') {
+                    icon.click();
+                    closed++;
+                }
+            }
+
+            return closed;
+        })()
+        '''
+        result = await tab.evaluate(close_popup_js)
+        closed_any = result > 0
+
+    except Exception as exc:
+        pass
+
+    return closed_any
+
+
+async def nodriver_funone_date_auto_select(tab, url, config_dict):
+    """
+    Auto-select session/date on activity detail page
+
+    Returns:
+        bool: True if session selected and next button clicked
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Wait for page to fully load before selecting session
+    # Check for key elements: next button or activity info
+    wait_js = '''
+    (function() {
+        const buttons = document.querySelectorAll('button');
+        for (const btn of buttons) {
+            const text = btn.textContent || '';
+            if (text.includes('下一步') || text.includes('Next')) {
+                return true;
+            }
+        }
+        // Also check for activity title
+        const body = document.body.textContent || '';
+        if (body.includes('活動場次') || body.includes('活動時間')) {
+            return true;
+        }
+        return false;
+    })()
+    '''
+    page_ready = await tab.evaluate(wait_js)
+    page_ready = util.parse_nodriver_result(page_ready)
+    if not page_ready:
+        # Page not ready, return False to retry next iteration
+        return False
+
+    # Get date keyword from config
+    date_keyword = config_dict.get("date_auto_select", {}).get("date_keyword", "")
+    auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "random")
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)
+
+    if show_debug_message:
+        print(f"[FUNONE] Date selection - keyword: '{date_keyword}', mode: {auto_select_mode}")
+
+    try:
+        # Get all session options
+        get_sessions_js = '''
+        (function() {
+            const sessions = [];
+            // Look for session buttons/options
+            const buttons = document.querySelectorAll('button, [role="button"], .session-item, [class*="session"], [class*="date"]');
+
+            for (const btn of buttons) {
+                const text = btn.textContent || '';
+                const isDisabled = btn.disabled || btn.classList.contains('disabled') || btn.classList.contains('sold-out');
+
+                // Filter out non-session buttons
+                if (text.length > 3 && text.length < 200 && !isDisabled) {
+                    // Check if it looks like a date/session
+                    if (/\\d{4}|\\d{1,2}[/.-]\\d{1,2}|\\d{1,2}:\\d{2}/.test(text) ||
+                        text.includes('場') || text.includes('場次')) {
+                        sessions.push({
+                            text: text.trim(),
+                            index: sessions.length
+                        });
+                    }
+                }
+            }
+            return sessions;
+        })()
+        '''
+        sessions = await tab.evaluate(get_sessions_js)
+
+        if not sessions or len(sessions) == 0:
+            if show_debug_message:
+                print("[FUNONE] No sessions found")
+            return False
+
+        if show_debug_message:
+            print(f"[FUNONE] Found {len(sessions)} sessions")
+
+        # Find matching session by keyword
+        target_index = -1
+
+        if date_keyword and len(date_keyword) > 0:
+            keywords = util.parse_keyword_string_to_array(date_keyword)
+
+            for i, session in enumerate(sessions):
+                session_text = session.get('text', '')
+                for kw in keywords:
+                    if kw.lower() in session_text.lower():
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[FUNONE] Keyword '{kw}' matched session: {session_text}")
+                        break
+                if target_index >= 0:
+                    break
+
+        # Fallback selection if no keyword match
+        if target_index < 0:
+            if date_keyword and len(date_keyword) > 0 and not date_auto_fallback:
+                if show_debug_message:
+                    print("[FUNONE] No keyword match, date_auto_fallback=False, stopping")
+                return False
+
+            # Use auto_select_mode for fallback
+            target_index = util.get_target_index_by_mode(len(sessions), auto_select_mode)
+            if show_debug_message:
+                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+
+        if target_index < 0 or target_index >= len(sessions):
+            target_index = 0
+
+        # Click the selected session
+        click_session_js = f'''
+        (function() {{
+            const sessions = [];
+            const buttons = document.querySelectorAll('button, [role="button"], .session-item, [class*="session"], [class*="date"]');
+
+            for (const btn of buttons) {{
+                const text = btn.textContent || '';
+                const isDisabled = btn.disabled || btn.classList.contains('disabled') || btn.classList.contains('sold-out');
+
+                if (text.length > 3 && text.length < 200 && !isDisabled) {{
+                    if (/\\d{{4}}|\\d{{1,2}}[/.-]\\d{{1,2}}|\\d{{1,2}}:\\d{{2}}/.test(text) ||
+                        text.includes('場') || text.includes('場次')) {{
+                        sessions.push(btn);
+                    }}
+                }}
+            }}
+
+            if (sessions.length > {target_index}) {{
+                sessions[{target_index}].click();
+                return true;
+            }}
+            return false;
+        }})()
+        '''
+        clicked = await tab.evaluate(click_session_js)
+
+        if clicked:
+            if show_debug_message:
+                print(f"[FUNONE] Session {target_index} clicked")
+            await tab.sleep(0.5)
+
+            # Click next button
+            click_next_js = '''
+            (function() {
+                const buttons = document.querySelectorAll('button, a');
+                for (const btn of buttons) {
+                    const text = (btn.textContent || '').trim();
+                    if (text === '下一步' || text === 'Next' || text.includes('下一步')) {
+                        btn.click();
+                        return true;
+                    }
+                }
+                return false;
+            })()
+            '''
+            next_clicked = await tab.evaluate(click_next_js)
+
+            if next_clicked and show_debug_message:
+                print("[FUNONE] Next button clicked")
+
+            return next_clicked
+
+        return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Date selection error: {exc}")
+        return False
+
+
+async def nodriver_funone_area_auto_select(tab, url, config_dict):
+    """
+    Auto-select ticket type on ticket selection page
+
+    Returns:
+        bool: True if ticket type selected
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Get area keyword from config
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+    auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "random")
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+    area_auto_fallback = config_dict.get("area_auto_fallback", False)
+
+    # Only print area selection config once
+    area_config_key = f"{area_keyword}_{auto_select_mode}"
+    if show_debug_message and funone_dict.get("last_area_config") != area_config_key:
+        print(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
+        funone_dict["last_area_config"] = area_config_key
+
+    try:
+        # Get all ticket areas (FunOne uses div.zone_box elements)
+        # IMPORTANT: Only look for .zone_box elements, do NOT fallback to generic buttons
+        # Generic button search would incorrectly match ticket type names on quantity selection pages
+        get_tickets_js = '''
+        (function() {
+            const tickets = [];
+
+            // Only FunOne-specific zone_box elements (area selection page)
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                for (const box of zoneBoxes) {
+                    // Use innerText for more reliable text extraction (rendered text)
+                    const fullText = (box.innerText || box.textContent || '').trim().replace(/\\s+/g, ' ');
+                    const isDisabled = box.classList.contains('disabled');
+
+                    // Get zone name - try multiple methods
+                    let name = '';
+                    const zoneName = box.querySelector('.zone_name');
+                    if (zoneName) {
+                        name = (zoneName.innerText || zoneName.textContent || '').trim();
+                    }
+                    // Fallback: use first line of fullText
+                    if (!name && fullText) {
+                        name = fullText.split(/[\\n\\r]|\\u70ed|\\u5df2/)[0].trim();
+                    }
+
+                    tickets.push({
+                        text: name,
+                        fullText: fullText,
+                        index: tickets.length,
+                        disabled: isDisabled,
+                        type: 'zone_box'
+                    });
+                }
+            }
+
+            // No fallback - if no zone_box found, return empty array
+            // This page is likely a ticket quantity selection page, not area selection
+            return tickets;
+        })()
+        '''
+        tickets = await tab.evaluate(get_tickets_js)
+
+        # Convert CDP format to Python dict if needed
+        # NoDriver may return CDP format: {'type': 'object', 'value': [['key', {'type': 'string', 'value': 'val'}], ...]}
+        def parse_cdp_value(item):
+            if isinstance(item, dict) and 'type' in item and 'value' in item:
+                if item['type'] == 'object' and isinstance(item['value'], list):
+                    # Convert [['key', {'type': 'string', 'value': 'val'}], ...] to {'key': 'val', ...}
+                    result = {}
+                    for pair in item['value']:
+                        if isinstance(pair, list) and len(pair) == 2:
+                            key, val_obj = pair
+                            if isinstance(val_obj, dict) and 'value' in val_obj:
+                                result[key] = val_obj['value']
+                            else:
+                                result[key] = val_obj
+                    return result
+                else:
+                    return item['value']
+            return item
+
+        if tickets:
+            tickets = [parse_cdp_value(t) for t in tickets]
+
+        if not tickets or len(tickets) == 0:
+            # Only print "No ticket types found" if we previously found some
+            if show_debug_message and funone_dict.get("last_area_count", -1) != 0:
+                print("[FUNONE] No ticket types found")
+                funone_dict["last_area_count"] = 0
+            return False
+
+        # Only print ticket count when it changes
+        if show_debug_message and funone_dict.get("last_area_count") != len(tickets):
+            print(f"[FUNONE] Found {len(tickets)} ticket types")
+            funone_dict["last_area_count"] = len(tickets)
+
+        # Filter out disabled (sold out) tickets first
+        available_tickets = [t for t in tickets if not t.get('disabled', False)]
+        if show_debug_message and len(available_tickets) != len(tickets):
+            sold_out_count = len(tickets) - len(available_tickets)
+            print(f"[FUNONE] {sold_out_count} ticket types sold out, {len(available_tickets)} available")
+
+        if len(available_tickets) == 0:
+            if show_debug_message:
+                print("[FUNONE] All ticket types are sold out")
+            return False
+
+        tickets = available_tickets
+
+        # Apply exclude keywords first (using standard util function)
+        if keyword_exclude and len(keyword_exclude) > 0:
+            filtered_tickets = []
+            for ticket in tickets:
+                # Use text first, fallback to fullText for keyword matching
+                ticket_text = ticket.get('text', '') or ticket.get('fullText', '')
+                if ticket_text and util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_text):
+                    if show_debug_message:
+                        print(f"[FUNONE] Excluding ticket '{ticket_text[:50]}'")
+                else:
+                    filtered_tickets.append(ticket)
+            tickets = filtered_tickets
+
+        if len(tickets) == 0:
+            if show_debug_message:
+                print("[FUNONE] All tickets filtered out by exclude keywords")
+            return False
+
+        # Find matching ticket by keyword
+        target_index = -1
+
+        if area_keyword and len(area_keyword) > 0:
+            keywords = util.parse_keyword_string_to_array(area_keyword)
+
+            for i, ticket in enumerate(tickets):
+                # Use text first, fallback to fullText for keyword matching
+                ticket_text = ticket.get('text', '') or ticket.get('fullText', '')
+                if not ticket_text:
+                    continue
+                for kw in keywords:
+                    if kw.lower() in ticket_text.lower():
+                        target_index = i
+                        if show_debug_message:
+                            print(f"[FUNONE] Keyword '{kw}' matched ticket: {ticket_text[:50]}")
+                        break
+                if target_index >= 0:
+                    break
+
+        # Fallback selection if no keyword match
+        if target_index < 0:
+            if area_keyword and len(area_keyword) > 0 and not area_auto_fallback:
+                if show_debug_message:
+                    print("[FUNONE] No keyword match, area_auto_fallback=False, stopping")
+                return False
+
+            target_index = util.get_target_index_by_mode(len(tickets), auto_select_mode)
+            if show_debug_message:
+                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+
+        if target_index < 0 or target_index >= len(tickets):
+            target_index = 0
+
+        # Click the selected ticket type
+        original_index = tickets[target_index].get('index', target_index)
+        ticket_type = tickets[target_index].get('type', 'button')
+        ticket_name = tickets[target_index].get('text', '') or tickets[target_index].get('fullText', '')
+
+        if show_debug_message:
+            print(f"[FUNONE] Clicking area '{ticket_name}' (index: {original_index}, type: {ticket_type})")
+
+        click_ticket_js = f'''
+        (function() {{
+            // First try FunOne-specific zone_box elements
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {{
+                const availableBoxes = [];
+                for (const box of zoneBoxes) {{
+                    if (!box.classList.contains('disabled')) {{
+                        availableBoxes.push(box);
+                    }}
+                }}
+                if (availableBoxes.length > {original_index}) {{
+                    availableBoxes[{original_index}].click();
+                    return true;
+                }}
+            }}
+
+            // Fallback to generic button search
+            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
+            const tickets = [];
+
+            for (const item of items) {{
+                const text = item.textContent || '';
+                const isDisabled = item.disabled || item.classList.contains('disabled') || item.classList.contains('sold-out');
+
+                if (text.length > 2 && text.length < 300 && !isDisabled) {{
+                    if (/\\$|NT|TWD|\\d+元|區|票/.test(text) || text.includes('票種')) {{
+                        tickets.push(item);
+                    }}
+                }}
+            }}
+
+            if (tickets.length > {original_index}) {{
+                tickets[{original_index}].click();
+                return true;
+            }}
+            return false;
+        }})()
+        '''
+        clicked = await tab.evaluate(click_ticket_js)
+
+        if clicked and show_debug_message:
+            print(f"[FUNONE] Ticket type {target_index} clicked")
+
+        return clicked
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Area selection error: {exc}")
+        return False
+
+
+async def nodriver_funone_check_sold_out(tab, config_dict):
+    """
+    Check if all tickets are sold out on purchase_choose_ticket_no_map page
+
+    Returns:
+        tuple: (is_sold_out: bool, remaining_count: int, ticket_info: list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 2)
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+
+    # Parse keywords
+    keywords = []
+    if area_keyword:
+        clean_keyword = area_keyword.replace('"', '').replace("'", '')
+        keywords = [k.strip() for k in clean_keyword.split(',') if k.strip()]
+
+    try:
+        check_sold_out_js = f'''
+        (function() {{
+            const keywords = {keywords};
+            const ticketInfo = [];
+            let totalRemaining = 0;
+            let matchedRemaining = 0;
+            let hasMatchedTicket = false;
+            let allSoldOut = true;
+            let hasPurchaseButton = false;
+            let purchaseButtonDisabled = true;
+
+            // Use TreeWalker to find text nodes containing remaining count
+            // This avoids duplicate counting from nested elements
+            const pattern = /(?:剩餘|remaining)\\s*(\\d+)/i;
+            const processedRows = new Set();
+
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            let node;
+            while (node = walker.nextNode()) {{
+                const text = node.textContent || '';
+                const remainingMatch = text.match(pattern);
+
+                if (remainingMatch) {{
+                    const remaining = parseInt(remainingMatch[1]);
+
+                    // Find the ticket row container to get context
+                    let container = node.parentElement;
+                    if (container) {{
+                        container = container.closest('div[class*="ticket"], div[class*="row"], tr, li') || container.parentElement;
+                    }}
+
+                    // Use container reference to avoid duplicate processing
+                    if (container && processedRows.has(container)) {{
+                        continue;
+                    }}
+                    if (container) {{
+                        processedRows.add(container);
+                    }}
+
+                    const rowText = container ? container.textContent : text;
+
+                    // Check if this matches any keyword
+                    let matched = keywords.length === 0;
+                    for (const kw of keywords) {{
+                        if (kw && rowText.toLowerCase().includes(kw.toLowerCase())) {{
+                            matched = true;
+                            break;
+                        }}
+                    }}
+
+                    ticketInfo.push({{
+                        remaining: remaining,
+                        text: rowText.substring(0, 100),
+                        matched: matched
+                    }});
+
+                    totalRemaining += remaining;
+                    if (matched) {{
+                        matchedRemaining += remaining;
+                        hasMatchedTicket = true;
+                    }}
+                    if (remaining > 0) {{
+                        allSoldOut = false;
+                    }}
+                }}
+            }}
+
+            // Check +/- buttons status
+            // FUNONE uses SVG icons for +/- buttons, need to check btn-tertiary class
+            const buttons = document.querySelectorAll('button');
+            let allButtonsDisabled = true;
+
+            for (const btn of buttons) {{
+                const btnText = btn.textContent.trim();
+                const classList = Array.from(btn.classList);
+
+                // Check for +/- buttons (btn-tertiary, but not refresh button)
+                if (classList.includes('btn-tertiary') && !classList.includes('round_info_refresh')) {{
+                    // Check if this is a plus button by examining SVG path
+                    const svg = btn.querySelector('svg');
+                    if (svg) {{
+                        const path = svg.querySelector('path');
+                        if (path) {{
+                            const d = path.getAttribute('d') || '';
+                            // Plus button path starts with 'M11 13H' (has vertical line)
+                            // Minus button path starts with 'M6 13C' (only horizontal line)
+                            if (d.startsWith('M11')) {{
+                                // This is a plus button
+                                if (!btn.disabled) {{
+                                    allButtonsDisabled = false;
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+
+                // Check for purchase/submit button (Chinese and English)
+                if (btnText.includes('立即購買') || btnText.includes('Purchase') ||
+                    btnText.includes('Confirm') || btnText.includes('submit')) {{
+                    hasPurchaseButton = true;
+                    purchaseButtonDisabled = btn.disabled;
+                }}
+            }}
+
+            // If no remaining info found, try alternative detection via buttons
+            if (ticketInfo.length === 0) {{
+                const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+                for (const input of inputs) {{
+                    const parent = input.parentElement;
+                    if (parent) {{
+                        const plusBtn = parent.querySelector('button:not(:disabled)');
+                        if (plusBtn) {{
+                            allSoldOut = false;
+                        }}
+                    }}
+                }}
+            }}
+
+            // Determine if sold out
+            const isSoldOut = (ticketInfo.length > 0 && allSoldOut) ||
+                              (allButtonsDisabled && hasPurchaseButton && purchaseButtonDisabled);
+
+            return {{
+                isSoldOut: isSoldOut,
+                totalRemaining: totalRemaining,
+                matchedRemaining: hasMatchedTicket ? matchedRemaining : totalRemaining,
+                hasMatchedTicket: hasMatchedTicket,
+                ticketInfo: ticketInfo,
+                allButtonsDisabled: allButtonsDisabled,
+                purchaseButtonDisabled: purchaseButtonDisabled
+            }};
+        }})()
+        '''
+        result = await tab.evaluate(check_sold_out_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict):
+            is_sold_out = result.get('isSoldOut', False)
+            remaining = result.get('matchedRemaining', 0) if result.get('hasMatchedTicket') else result.get('totalRemaining', 0)
+            ticket_info = result.get('ticketInfo', [])
+
+            if show_debug_message:
+                if is_sold_out:
+                    print("[FUNONE] All tickets sold out")
+
+            return (is_sold_out, remaining, ticket_info)
+
+        return (False, 0, [])
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Check sold out error: {exc}")
+        return (False, 0, [])
+
+
+async def nodriver_funone_click_refresh_button(tab, config_dict):
+    """
+    Click the "instant ticket status update" button to refresh ticket status via WebSocket
+
+    Returns:
+        bool: True if button clicked successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        click_refresh_js = '''
+        (function() {
+            // Find the refresh button - look for text containing "instant update" or similar
+            const buttons = document.querySelectorAll('button, div[role="button"], a[role="button"]');
+
+            for (const btn of buttons) {
+                const text = btn.textContent || '';
+                // Match various refresh button patterns
+                if (text.includes('instant') || text.includes('Instant') ||
+                    text.includes('update') || text.includes('Update') ||
+                    text.includes('refresh') || text.includes('Refresh') ||
+                    text.includes('reload') || text.includes('Reload')) {
+                    if (!btn.disabled) {
+                        btn.click();
+                        return { success: true, buttonText: text.substring(0, 50) };
+                    }
+                }
+            }
+
+            // Fallback: look for button with refresh icon (SVG with certain classes)
+            const iconButtons = document.querySelectorAll('button svg, button i[class*="refresh"], button i[class*="sync"]');
+            for (const icon of iconButtons) {
+                const btn = icon.closest('button');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return { success: true, buttonText: 'icon_button' };
+                }
+            }
+
+            return { success: false, reason: 'no_refresh_button_found' };
+        })()
+        '''
+        result = await tab.evaluate(click_refresh_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict) and result.get('success'):
+            if show_debug_message:
+                print(f"[FUNONE] Clicked refresh button: {result.get('buttonText', 'unknown')}")
+            return True
+        else:
+            if show_debug_message:
+                print("[FUNONE] Refresh button not found")
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Click refresh button error: {exc}")
+        return False
+
+
+async def nodriver_funone_assign_ticket_number(tab, config_dict):
+    """
+    Set ticket quantity for the ticket type matching keyword
+
+    Returns:
+        bool: True if quantity set successfully
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 2)
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+
+    # Parse keywords
+    keywords = []
+    if area_keyword:
+        # Remove quotes and split by comma
+        clean_keyword = area_keyword.replace('"', '').replace("'", '')
+        keywords = [k.strip() for k in clean_keyword.split(',') if k.strip()]
+
+    exclude_keywords = []
+    if keyword_exclude:
+        clean_exclude = keyword_exclude.replace('"', '').replace("'", '')
+        exclude_keywords = [k.strip() for k in clean_exclude.split(',') if k.strip()]
+
+    # Only print setting message once
+    if show_debug_message and funone_dict.get("last_ticket_qty") != ticket_number:
+        print(f"[FUNONE] Setting ticket quantity to {ticket_number}")
+        funone_dict["last_ticket_qty"] = ticket_number
+
+    try:
+        # FunOne-specific: Find ticket row by keyword and click its + button
+        set_quantity_js = f'''
+        (function() {{
+            const targetQty = {ticket_number};
+            const keywords = {keywords};
+            const excludeKeywords = {exclude_keywords};
+
+            // FunOne ticket selection page structure:
+            // Each ticket row has: [ticket name] [price] [- button] [textbox] [+ button]
+            // We need to find the row matching keyword and click its + button
+
+            // Get all input elements (quantity boxes)
+            const inputs = document.querySelectorAll('input');
+            let targetInput = null;
+            let targetPlusBtn = null;
+            let matchedName = '';
+
+            for (const input of inputs) {{
+                // Check if this looks like a quantity input
+                const val = parseInt(input.value);
+                if (isNaN(val) || val < 0 || val > 100) continue;
+
+                // Find the ticket row container (traverse up to find text context)
+                let container = input.parentElement;
+                let depth = 0;
+                let rowText = '';
+
+                // Go up a few levels to find the row containing ticket name
+                while (container && depth < 5) {{
+                    rowText = container.textContent || '';
+                    // Check if this container has ticket info (price pattern)
+                    if (/TWD|NT\$|\d+元/.test(rowText)) {{
+                        break;
+                    }}
+                    container = container.parentElement;
+                    depth++;
+                }}
+
+                if (!rowText) continue;
+
+                // Check exclude keywords first
+                let excluded = false;
+                for (const exc of excludeKeywords) {{
+                    if (exc && rowText.toLowerCase().includes(exc.toLowerCase())) {{
+                        excluded = true;
+                        break;
+                    }}
+                }}
+                if (excluded) continue;
+
+                // Check if this row matches any keyword
+                let matched = keywords.length === 0; // If no keyword, match first valid row
+                for (const kw of keywords) {{
+                    if (kw && rowText.toLowerCase().includes(kw.toLowerCase())) {{
+                        matched = true;
+                        matchedName = kw;
+                        break;
+                    }}
+                }}
+
+                if (matched) {{
+                    targetInput = input;
+                    // Find the + button near this input
+                    const parent = input.parentElement;
+                    if (parent) {{
+                        const children = Array.from(parent.children);
+                        const inputIndex = children.indexOf(input);
+
+                        // Find button after the input (+ button)
+                        for (let i = inputIndex + 1; i < children.length; i++) {{
+                            if (children[i].tagName === 'BUTTON' && !children[i].disabled) {{
+                                targetPlusBtn = children[i];
+                                break;
+                            }}
+                        }}
+
+                        // If not found, try sibling buttons
+                        if (!targetPlusBtn) {{
+                            const buttons = parent.querySelectorAll('button:not([disabled])');
+                            for (const btn of buttons) {{
+                                // The + button is typically after the input or has no text (icon-based)
+                                const btnText = btn.textContent.trim();
+                                if (btnText === '+' || btnText === '') {{
+                                    // Check position relative to input
+                                    const btnIndex = children.indexOf(btn);
+                                    if (btnIndex > inputIndex) {{
+                                        targetPlusBtn = btn;
+                                        break;
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }}
+
+                    if (targetPlusBtn) break;
+                }}
+            }}
+
+            // Click the + button to set quantity
+            if (targetPlusBtn && targetInput) {{
+                const currentVal = parseInt(targetInput.value) || 0;
+                const clicksNeeded = targetQty - currentVal;
+
+                if (clicksNeeded > 0) {{
+                    for (let i = 0; i < clicksNeeded; i++) {{
+                        targetPlusBtn.click();
+                    }}
+                    return {{ success: true, type: 'keyword_match', value: targetQty, clicks: clicksNeeded, keyword: matchedName }};
+                }} else if (clicksNeeded === 0) {{
+                    return {{ success: true, type: 'already_set', value: targetQty, keyword: matchedName }};
+                }}
+            }}
+
+            // Fallback: Try first available quantity control
+            for (const input of inputs) {{
+                const val = parseInt(input.value);
+                if (isNaN(val) || val < 0 || val > 100) continue;
+
+                const parent = input.parentElement;
+                if (!parent) continue;
+
+                const children = Array.from(parent.children);
+                const inputIndex = children.indexOf(input);
+
+                for (let i = inputIndex + 1; i < children.length; i++) {{
+                    if (children[i].tagName === 'BUTTON' && !children[i].disabled) {{
+                        const currentVal = parseInt(input.value) || 0;
+                        const clicksNeeded = targetQty - currentVal;
+                        if (clicksNeeded > 0) {{
+                            for (let j = 0; j < clicksNeeded; j++) {{
+                                children[i].click();
+                            }}
+                            return {{ success: true, type: 'fallback', value: targetQty, clicks: clicksNeeded }};
+                        }}
+                        break;
+                    }}
+                }}
+            }}
+
+            return {{ success: false, reason: 'no_quantity_control_found' }};
+        }})()
+        '''
+        result = await tab.evaluate(set_quantity_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict) and result.get('success'):
+            if show_debug_message:
+                print(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
+            funone_dict["qty_selector_notfound"] = False  # Reset flag on success
+            return True
+        else:
+            # Only print once when quantity selector not found
+            if show_debug_message and not funone_dict.get("qty_selector_notfound"):
+                print("[FUNONE] Could not find quantity selector")
+                funone_dict["qty_selector_notfound"] = True
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Set quantity error: {exc}")
+        return False
+
+
+async def nodriver_funone_captcha_handler(tab, config_dict):
+    """
+    Handle captcha - detect and auto-fill using OCR
+
+    Returns:
+        bool: True if captcha is filled or no captcha exists
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ocr_enabled = config_dict.get("ocr_captcha", {}).get("enable", False)
+
+    try:
+        # Check for captcha image and input
+        # FunOne uses img[alt="vCode"] with base64 data URI
+        check_captcha_js = '''
+        (function() {
+            // Look for FunOne captcha image (alt="vCode" with base64 src)
+            const captchaImg = document.querySelector('img[alt="vCode"]');
+            if (captchaImg) {
+                const src = captchaImg.src || '';
+                // FunOne captcha is embedded as base64
+                if (src.startsWith('data:image')) {
+                    // Find the corresponding input field
+                    const inputs = document.querySelectorAll('input[type="text"]');
+                    let captchaInput = null;
+                    for (const input of inputs) {
+                        const placeholder = (input.placeholder || '').toLowerCase();
+                        if (placeholder.includes('驗證') || placeholder.includes('captcha')) {
+                            captchaInput = input;
+                            break;
+                        }
+                    }
+                    return {
+                        hasCaptcha: true,
+                        type: 'base64',
+                        base64Data: src,
+                        filled: captchaInput ? captchaInput.value.length > 0 : false
+                    };
+                }
+            }
+
+            // Fallback: Look for any captcha-related image
+            const imgs = document.querySelectorAll('img');
+            for (const img of imgs) {
+                const src = img.src || '';
+                const alt = img.alt || '';
+                if (src.includes('captcha') || alt.includes('captcha') || alt.includes('驗證')) {
+                    return { hasCaptcha: true, type: 'image', filled: false };
+                }
+            }
+
+            // Look for captcha input to check if filled
+            const inputs = document.querySelectorAll('input');
+            for (const input of inputs) {
+                const name = (input.name || '').toLowerCase();
+                const placeholder = (input.placeholder || '').toLowerCase();
+                if (name.includes('captcha') || placeholder.includes('驗證') || placeholder.includes('captcha')) {
+                    const value = input.value || '';
+                    return { hasCaptcha: true, type: 'input', filled: value.length > 0 };
+                }
+            }
+
+            return { hasCaptcha: false };
+        })()
+        '''
+        captcha_info = await tab.evaluate(check_captcha_js)
+        captcha_info = util.parse_nodriver_result(captcha_info)
+
+        if not captcha_info or not isinstance(captcha_info, dict) or not captcha_info.get('hasCaptcha'):
+            # No captcha found
+            return True
+
+        # Only print captcha type once
+        captcha_type = captcha_info.get('type')
+        if show_debug_message and funone_dict.get("last_captcha_type") != captcha_type:
+            print(f"[FUNONE] Captcha detected - type: {captcha_type}")
+            funone_dict["last_captcha_type"] = captcha_type
+
+        # Check if already filled
+        if captcha_info.get('filled'):
+            # Only print once to reduce repetitive messages
+            if show_debug_message and not funone_dict.get("captcha_filled_printed"):
+                print("[FUNONE] Captcha already filled")
+                funone_dict["captcha_filled_printed"] = True
+            return True
+
+        # Play sound once to alert user
+        if not funone_dict.get("played_sound_ticket", False):
+            if config_dict["advanced"]["play_sound"]["ticket"]:
+                play_sound_while_ordering(config_dict)
+            funone_dict["played_sound_ticket"] = True
+
+        # Try OCR if enabled and we have base64 data
+        if ocr_enabled and captcha_info.get('type') == 'base64' and captcha_info.get('base64Data'):
+            # Use first 100 chars of base64 as fingerprint to detect image change
+            current_captcha_fingerprint = captcha_info.get('base64Data', '')[:100]
+            last_fingerprint = funone_dict.get("last_captcha_fingerprint", "")
+
+            # Reset OCR failed flag if captcha image changed
+            if current_captcha_fingerprint != last_fingerprint:
+                funone_dict["last_captcha_fingerprint"] = current_captcha_fingerprint
+                funone_dict["ocr_failed"] = False
+
+            # Only attempt OCR if not already failed for this captcha
+            if not funone_dict.get("ocr_failed", False):
+                ocr_result = await nodriver_funone_ocr_captcha(tab, config_dict, captcha_info.get('base64Data'))
+                if ocr_result:
+                    return True
+
+        # Only print waiting message once
+        if show_debug_message and not funone_dict.get("waiting_captcha_printed"):
+            print("[FUNONE] Waiting for manual captcha input...")
+            funone_dict["waiting_captcha_printed"] = True
+        return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Captcha check error: {exc}")
+        return False
+
+
+async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
+    """
+    Perform OCR on FunOne captcha image and fill the input
+
+    Args:
+        tab: Browser tab
+        config_dict: Configuration dictionary
+        base64_data: Base64 encoded image data (data:image/png;base64,...)
+
+    Returns:
+        bool: True if OCR succeeded and input was filled
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Extract base64 content (remove data:image/...;base64, prefix)
+        if ',' in base64_data:
+            base64_content = base64_data.split(',')[1]
+        else:
+            base64_content = base64_data
+
+        # Decode base64 to image bytes (use module-level import)
+        img_bytes = base64.b64decode(base64_content)
+
+        if show_debug_message:
+            print(f"[FUNONE OCR] Image size: {len(img_bytes)} bytes")
+
+        # Use cached OCR instance or create new one (beta mode best for FunOne)
+        # Cache in funone_dict to avoid recreating on every call
+        if "ocr_instance" not in funone_dict:
+            funone_dict["ocr_instance"] = ddddocr.DdddOcr(show_ad=False, beta=True)
+        ocr_instance = funone_dict["ocr_instance"]
+        ocr_answer = ocr_instance.classification(img_bytes)
+
+        if ocr_answer:
+            # FunOne captcha is case-sensitive and uses uppercase letters
+            ocr_answer = ocr_answer.upper()
+
+            if show_debug_message:
+                print(f"[FUNONE OCR] Result: {ocr_answer} (length: {len(ocr_answer)})")
+
+            # FunOne captcha requires exactly 5 characters
+            if len(ocr_answer) != 5:
+                if show_debug_message:
+                    print(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - please enter manually")
+                # Set failed flag to prevent retry loop
+                funone_dict["ocr_failed"] = True
+                return False
+
+            # Fill the captcha input
+            fill_captcha_js = f'''
+            (function() {{
+                const inputs = document.querySelectorAll('input[type="text"]');
+                for (const input of inputs) {{
+                    const placeholder = (input.placeholder || '').toLowerCase();
+                    if (placeholder.includes('驗證') || placeholder.includes('captcha')) {{
+                        input.value = '{ocr_answer}';
+                        input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        return {{ success: true, value: '{ocr_answer}' }};
+                    }}
+                }}
+                return {{ success: false }};
+            }})()
+            '''
+            fill_result = await tab.evaluate(fill_captcha_js)
+            fill_result = util.parse_nodriver_result(fill_result)
+
+            if fill_result and isinstance(fill_result, dict) and fill_result.get('success'):
+                if show_debug_message:
+                    print(f"[FUNONE OCR] Captcha filled: {ocr_answer}")
+                return True
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE OCR] Error: {exc}")
+
+    return False
+
+
+async def nodriver_funone_detect_step(tab):
+    """
+    Detect which step of the ticket flow we're on.
+
+    Returns:
+        int: Step number (1=Area, 2=Quantity, 3=Form, 4=Payment, 5=Complete, 0=Unknown)
+    """
+    try:
+        detect_step_js = '''
+        (function() {
+            const url = window.location.href;
+            const bodyText = document.body.textContent || '';
+
+            // Priority 1: Check URL patterns (most reliable)
+            if (url.includes('purchase_choose_ticket_no_map') || url.includes('purchase_choose_ticket')) {
+                // Ticket type/quantity selection page
+                return 1;
+            }
+            if (url.includes('purchase_fill_form')) {
+                // Form filling page
+                return 3;
+            }
+
+            // Priority 2: Check URL for step parameter
+            const stepMatch = url.match(/[?&]step=(\d+)/);
+            if (stepMatch) {
+                return parseInt(stepMatch[1]);
+            }
+
+            // Priority 3: Check for specific DOM patterns
+            // Step 1: Area/Ticket selection
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                return 1;
+            }
+
+            // Step 1/2: Ticket type selection - has +/- buttons for quantity
+            // Look for ticket price/type layout with quantity controls
+            const plusBtns = document.querySelectorAll('button');
+            let hasPlusMinusBtn = false;
+            for (const btn of plusBtns) {
+                const text = btn.textContent.trim();
+                if (text === '+' || text === '-') {
+                    hasPlusMinusBtn = true;
+                    break;
+                }
+            }
+            // Check for ticket selection page (has textbox for quantity input)
+            const qtyInputs = document.querySelectorAll('input[type="text"][value="0"]');
+            if (hasPlusMinusBtn && qtyInputs.length > 0) {
+                // This is ticket selection page, not form filling
+                return 1;
+            }
+            if (hasPlusMinusBtn && (bodyText.includes('張數') || bodyText.includes('票種'))) {
+                return 2;
+            }
+
+            // Step 3: Form filling - must have actual form inputs (not just quantity inputs)
+            const formInputs = document.querySelectorAll('input[type="text"]:not([value="0"]), input[type="email"], input[type="tel"]');
+            if (formInputs.length >= 3 && bodyText.includes('填寫')) {
+                return 3;
+            }
+
+            // Step 4: Payment page - must have specific payment elements
+            const hasPaymentForm = document.querySelector('input[name*="credit"], input[name*="card"], select[name*="payment"]');
+            if (hasPaymentForm || (bodyText.includes('付款方式') && bodyText.includes('信用卡'))) {
+                return 4;
+            }
+
+            // Step 5: Complete
+            if (bodyText.includes('購票完成') || bodyText.includes('訂單成功')) {
+                return 5;
+            }
+
+            return 0; // Unknown
+        })()
+        '''
+        step = await tab.evaluate(detect_step_js)
+        step = util.parse_nodriver_result(step)
+        return int(step) if step else 0
+
+    except Exception as exc:
+        return 0
+
+
+async def nodriver_funone_ticket_agree(tab):
+    """
+    Check agreement checkboxes
+
+    Returns:
+        bool: True if agreements checked
+    """
+    try:
+        check_agree_js = '''
+        (function() {
+            let checked = 0;
+
+            // FunOne-specific: custom div.checkbox elements
+            // Structure: <div class="checkbox_block active"> <div class="checkbox"><svg>...</svg></div> </div>
+            // The parent checkbox_block gets 'active' class when checked
+            const customCheckboxes = document.querySelectorAll('.checkbox_block .checkbox, div.checkbox');
+            for (const cb of customCheckboxes) {
+                // Check if not already checked
+                // FunOne: parent element gets 'active' class when checked
+                const parent = cb.parentElement;
+                const parentActive = parent && parent.classList.contains('active');
+                const selfChecked = cb.classList.contains('checked') || cb.classList.contains('active');
+
+                if (!parentActive && !selfChecked) {
+                    cb.click();
+                    checked++;
+                }
+            }
+
+            if (checked > 0) {
+                return checked;
+            }
+
+            // Standard input checkboxes
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+            for (const cb of checkboxes) {
+                if (!cb.checked) {
+                    // Try multiple ways to find the associated text
+                    const label = cb.closest('label') || document.querySelector(`label[for="${cb.id}"]`);
+                    let text = label ? label.textContent : '';
+
+                    // If no label text, check parent/sibling elements
+                    if (!text && cb.parentElement) {
+                        text = cb.parentElement.textContent || '';
+                    }
+
+                    // FunOne specific: check for nearby text about terms/agreement
+                    const nearbyText = cb.closest('div')?.textContent || '';
+
+                    // Check if it's an agreement checkbox
+                    if (text.includes('同意') || text.includes('agree') || text.includes('條款') ||
+                        text.includes('terms') || text.includes('規則') || text.includes('閱讀') ||
+                        nearbyText.includes('同意') || nearbyText.includes('服務條款')) {
+                        cb.click(); // Use click instead of just setting checked for better event handling
+                        checked++;
+                    }
+                }
+            }
+
+            // If no checkbox found with text, just click any unchecked checkbox
+            if (checked === 0) {
+                for (const cb of checkboxes) {
+                    if (!cb.checked) {
+                        cb.click();
+                        checked++;
+                        break; // Only click first unchecked checkbox
+                    }
+                }
+            }
+
+            return checked;
+        })()
+        '''
+        result = await tab.evaluate(check_agree_js)
+        return result >= 0
+
+    except Exception as exc:
+        return False
+
+
+async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
+    """
+    Submit order - click submit button
+
+    Returns:
+        bool: True if order submitted
+    """
+    global funone_dict
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Find and click submit button
+        submit_js = '''
+        (function() {
+            const buttons = document.querySelectorAll('button, input[type="submit"]');
+
+            for (const btn of buttons) {
+                const text = (btn.textContent || btn.value || '').trim();
+
+                // Submit button patterns - FunOne uses "立即購買"
+                if (text.includes('立即購買') || text.includes('確認') || text.includes('送出') ||
+                    text.includes('提交') || text.includes('Submit') || text.includes('Confirm') ||
+                    text.includes('購買') || text === '確定' || text === '下一步') {
+
+                    // Check if button is visible and enabled
+                    const style = window.getComputedStyle(btn);
+                    if (style.display !== 'none' && !btn.disabled) {
+                        btn.click();
+                        return { clicked: true, buttonText: text };
+                    }
+                }
+            }
+
+            return { clicked: false };
+        })()
+        '''
+        result = await tab.evaluate(submit_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict) and result.get('clicked'):
+            if show_debug_message:
+                print(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
+            funone_dict["submit_notfound"] = False  # Reset flag on success
+            return True
+        else:
+            # Only print once when submit button not found
+            if show_debug_message and not funone_dict.get("submit_notfound"):
+                print("[FUNONE] Submit button not found or not clickable")
+                funone_dict["submit_notfound"] = True
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Order submit error: {exc}")
+        return False
+
+
+async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
+    """
+    Auto reload page for error handling and coming soon detection
+
+    Returns:
+        bool: True if page was reloaded
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Skip auto-reload for non-activity pages (safety check)
+    try:
+        current_url = tab.url
+        if '/purchase_waiting_jump/' in current_url or '/purchase_fill_form/' in current_url:
+            return False
+    except:
+        pass
+
+    try:
+        # Check for error pages or coming soon
+        check_status_js = '''
+        (function() {
+            const bodyText = document.body.textContent || '';
+            const title = document.title || '';
+
+            // Error page patterns
+            if (bodyText.includes('503') || bodyText.includes('502') || bodyText.includes('500') ||
+                title.includes('Error') || bodyText.includes('Service Unavailable')) {
+                return { status: 'error', reason: 'server_error' };
+            }
+
+            // Coming soon / not yet available
+            if (bodyText.includes('即將開賣') || bodyText.includes('尚未開放') ||
+                bodyText.includes('Coming Soon') || bodyText.includes('Not Available')) {
+                return { status: 'coming_soon', reason: 'not_available' };
+            }
+
+            // Sold out detection - be smart about it
+            // On FunOne area selection page, "已售完" appears next to disabled areas
+            // Only trigger sold out if ALL available areas are sold out
+
+            // Check if we're on area selection page (has zone_box elements)
+            const zoneBoxes = document.querySelectorAll('.zone_box');
+            if (zoneBoxes.length > 0) {
+                // On area selection page - check if any area is available
+                let hasAvailable = false;
+                for (const box of zoneBoxes) {
+                    if (!box.classList.contains('disabled')) {
+                        hasAvailable = true;
+                        break;
+                    }
+                }
+                if (!hasAvailable) {
+                    return { status: 'sold_out', reason: 'all_areas_sold_out' };
+                }
+                // Some areas available, not sold out
+                return { status: 'ok' };
+            }
+
+            // Check if we're on quantity selection page (Step 2)
+            // Has ticket info table but may show "熱賣中" etc - not sold out
+            const step2Indicators = document.querySelectorAll('.ticket_info, [class*="step2"], [class*="quantity"]');
+            if (step2Indicators.length > 0 || bodyText.includes('張數') || bodyText.includes('票種')) {
+                // On quantity page, don't trigger sold out unless specific message
+                if (bodyText.includes('已無票券') || bodyText.includes('No tickets available')) {
+                    return { status: 'sold_out', reason: 'no_tickets_message' };
+                }
+                return { status: 'ok' };
+            }
+
+            // For other pages, check for actual sold out indicators
+            // Only if the page seems to be a final "sold out" page
+            const soldOutPatterns = ['已售完', 'Sold Out', 'sold out'];
+            let hasSoldOutText = false;
+            for (const pattern of soldOutPatterns) {
+                if (bodyText.includes(pattern)) {
+                    hasSoldOutText = true;
+                    break;
+                }
+            }
+
+            // Only report sold out if the entire page seems to be about sold out
+            // Not just a label next to some areas
+            if (hasSoldOutText) {
+                // Check if there are any actionable buttons (if yes, not sold out page)
+                const actionButtons = document.querySelectorAll('button:not(:disabled)');
+                let hasActionButton = false;
+                for (const btn of actionButtons) {
+                    const text = btn.textContent || '';
+                    if (text.includes('購買') || text.includes('下一步') || text.includes('確認') ||
+                        text.includes('選') || text.includes('+')) {
+                        hasActionButton = true;
+                        break;
+                    }
+                }
+                if (!hasActionButton) {
+                    return { status: 'sold_out', reason: 'no_tickets' };
+                }
+            }
+
+            return { status: 'ok' };
+        })()
+        '''
+        status = await tab.evaluate(check_status_js)
+        status = util.parse_nodriver_result(status)
+
+        if status and isinstance(status, dict):
+            page_status = status.get('status')
+            reason = status.get('reason', '')
+
+            if page_status == 'error':
+                if show_debug_message:
+                    print(f"[FUNONE] Error page detected: {reason}, reloading...")
+                await tab.reload()
+                return True
+
+            elif page_status == 'coming_soon':
+                auto_reload_coming_soon = config_dict.get("tixcraft", {}).get("auto_reload_coming_soon_page", True)
+                if auto_reload_coming_soon:
+                    if show_debug_message:
+                        print("[FUNONE] Coming soon page, auto-reloading...")
+                    await tab.sleep(1)
+                    await tab.reload()
+                    return True
+
+            elif page_status == 'sold_out':
+                if show_debug_message:
+                    print("[FUNONE] Sold out detected")
+                return False
+
+        return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Auto reload error: {exc}")
+        return False
+
+
+async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_local):
+    """
+    Handle various error types
+
+    Returns:
+        bool: True if error was handled
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    error_str = str(error).lower()
+
+    if 'timeout' in error_str:
+        if show_debug_message:
+            print("[FUNONE] Timeout error, reloading page...")
+        try:
+            await tab.reload()
+            return True
+        except:
+            pass
+
+    if 'network' in error_str or 'connection' in error_str:
+        if show_debug_message:
+            print("[FUNONE] Network error, waiting and retrying...")
+        await tab.sleep(2)
+        try:
+            await tab.reload()
+            return True
+        except:
+            pass
+
+    return False
+
+
+async def nodriver_funone_main(tab, url, config_dict):
+    """
+    Main control function for FunOne Tickets platform
+
+    Args:
+        tab: NoDriver tab
+        url: Current page URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        tab: Updated NoDriver tab
+    """
+    global funone_dict
+
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return tab
+
+    # Initialize state dictionary
+    if 'is_session_selecting' not in funone_dict:
+        funone_dict = {
+            "is_session_selecting": False,
+            "is_ticket_selecting": False,
+            "played_sound_ticket": False,
+            "played_sound_order": False,
+            "fail_list": [],
+            "reload_count": 0,
+            # State tracking for log deduplication
+            "last_page_type": None,
+            "last_step": None,
+            "last_login_status": None,
+            "last_area_count": None,
+            "last_area_config": None,
+            "last_ticket_qty": None,
+            "qty_selector_notfound": False,
+            "submit_notfound": False,
+            "last_captcha_type": None,
+            "waiting_captcha_printed": False,
+            "captcha_filled_printed": False,
+            "next_button_clicked": False,
+            # Sold-out refresh tracking
+            "refresh_retry_count": 0,
+            "last_sold_out_logged": False,
+            "max_retry_logged": False
+        }
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Determine page type
+    page_type = "UNKNOWN"
+
+    if 'tickets.funone.io' in url:
+        if '/activity/activity_detail/' in url:
+            page_type = "ACTIVITY_DETAIL"
+        elif '/login' in url:
+            page_type = "LOGIN"
+        elif '/member' in url:
+            page_type = "MEMBER"
+        elif url.rstrip('/') == 'https://tickets.funone.io':
+            page_type = "HOME"
+        elif '/purchase_waiting_jump/' in url:
+            page_type = "WAITING"
+        else:
+            # Check for ticket selection or order pages dynamically
+            page_type = "TICKET_FLOW"
+
+    # Only print when page type changes (reduce repetitive messages)
+    if funone_dict.get("last_page_type") != page_type:
+        if show_debug_message:
+            print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
+        funone_dict["last_page_type"] = page_type
+        # Reset flags when page type changes
+        funone_dict["waiting_page_logged"] = False
+        funone_dict["next_button_clicked"] = False
+        # Reset sold-out refresh tracking
+        funone_dict["refresh_retry_count"] = 0
+        funone_dict["last_sold_out_logged"] = False
+        funone_dict["max_retry_logged"] = False
+
+    # Close popups first
+    await nodriver_funone_close_popup(tab)
+
+    # Handle different page types
+    if page_type == "HOME":
+        # On homepage, just ensure logged in
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    elif page_type == "ACTIVITY_DETAIL":
+        # Activity detail page - select session and click next
+        is_logged_in = await nodriver_funone_verify_login(tab, config_dict)
+
+        if is_logged_in:
+            if not funone_dict.get("is_session_selecting", False):
+                funone_dict["is_session_selecting"] = True
+                success = await nodriver_funone_date_auto_select(tab, url, config_dict)
+                funone_dict["is_session_selecting"] = False
+                # Mark if navigation was triggered (next button clicked)
+                # This prevents auto_reload from running during page transition
+                if success:
+                    funone_dict["next_button_clicked"] = True
+
+    elif page_type == "LOGIN":
+        # Login page - try cookie injection
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    elif page_type == "WAITING":
+        # Waiting/queue page - do nothing, just wait for auto-redirect
+        if show_debug_message and not funone_dict.get("waiting_page_logged", False):
+            print("[FUNONE] Waiting page detected, waiting for auto-redirect...")
+            funone_dict["waiting_page_logged"] = True
+        # Don't take any action - page will redirect automatically when it's user's turn
+
+    elif page_type == "TICKET_FLOW":
+        # Ticket selection flow
+        is_logged_in = await nodriver_funone_verify_login(tab, config_dict)
+
+        if is_logged_in:
+            # Detect which step we're on
+            step = await nodriver_funone_detect_step(tab)
+
+            # Only print when step changes (reduce repetitive messages)
+            if show_debug_message and funone_dict.get("last_step") != step:
+                print(f"[FUNONE] Detected step: {step}")
+                funone_dict["last_step"] = step
+
+            if step == 1:
+                # Step 1: Ticket type/quantity selection
+                # FunOne: purchase_choose_ticket_no_map is a combined ticket selection + quantity page
+
+                # Check if on purchase_choose_ticket_no_map page - apply sold-out detection
+                if '/purchase_choose_ticket_no_map/' in url:
+                    # Wait for page to fully load before checking sold-out status
+                    # Check for key elements: purchase button or ticket price
+                    wait_js = '''
+                    (function() {
+                        const purchaseBtn = document.querySelector('button');
+                        if (purchaseBtn) {
+                            const text = purchaseBtn.textContent || '';
+                            if (text.includes('立即購買') || text.includes('Purchase')) {
+                                return true;
+                            }
+                        }
+                        // Also check for ticket price (TWD)
+                        const body = document.body.textContent || '';
+                        if (body.includes('TWD') || body.includes('票種')) {
+                            return true;
+                        }
+                        return false;
+                    })()
+                    '''
+                    page_ready = await tab.evaluate(wait_js)
+                    page_ready = util.parse_nodriver_result(page_ready)
+                    if not page_ready:
+                        # Page not ready, wait and retry next iteration
+                        await tab.sleep(0.3)
+                        return tab
+
+                    # Check sold-out status first
+                    is_sold_out, remaining, ticket_info = await nodriver_funone_check_sold_out(tab, config_dict)
+                    ticket_number = config_dict.get("ticket_number", 2)
+                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 2)
+
+                    # Handle sold-out or insufficient tickets
+                    if is_sold_out or (remaining > 0 and remaining < ticket_number):
+                        # Increment retry counter (no limit - keep refreshing until tickets available)
+                        funone_dict["refresh_retry_count"] = funone_dict.get("refresh_retry_count", 0) + 1
+
+                        # Log status (only once per state)
+                        if is_sold_out:
+                            if not funone_dict.get("last_sold_out_logged", False):
+                                print(f"[FUNONE] Sold out, clicking refresh button...")
+                                funone_dict["last_sold_out_logged"] = True
+                        else:
+                            print(f"[FUNONE] Remaining {remaining} < needed {ticket_number}, refreshing...")
+
+                        # Click refresh button to trigger WebSocket update
+                        refresh_clicked = await nodriver_funone_click_refresh_button(tab, config_dict)
+
+                        if refresh_clicked:
+                            # Wait for WebSocket response - use asyncio.sleep for reliable timing
+                            if show_debug_message:
+                                print(f"[FUNONE] Waiting {auto_reload_interval} seconds...")
+                            await asyncio.sleep(auto_reload_interval)
+                        else:
+                            # Fallback: reload page if refresh button not found
+                            if show_debug_message:
+                                print("[FUNONE] Refresh button not found, reloading page...")
+                            await tab.reload()
+                            await asyncio.sleep(auto_reload_interval)
+
+                        return tab  # Next iteration will re-check status
+
+                    # Tickets available - reset retry counter and proceed
+                    funone_dict["refresh_retry_count"] = 0
+                    funone_dict["last_sold_out_logged"] = False
+
+                # Try area selection first (for zone_box pages)
+                area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+
+                # If no area selected (no zone_box elements), this is a quantity selection page
+                # Proceed to set quantity, agreements, and submit
+                if not area_selected:
+                    # Set ticket number
+                    qty_set = await nodriver_funone_assign_ticket_number(tab, config_dict)
+                    await tab.sleep(0.3)
+
+                    # Check agreements
+                    await nodriver_funone_ticket_agree(tab)
+                    await tab.sleep(0.2)
+
+                    # Step 1 (purchase_choose_ticket_no_map) has no captcha
+                    # Directly click purchase button if quantity is set
+                    if qty_set:
+                        await nodriver_funone_order_submit(tab, config_dict, funone_dict)
+                else:
+                    await tab.sleep(0.5)
+                    # Page should navigate to step 2 after area selection
+
+            elif step == 2:
+                # Step 2: Quantity selection
+                # Set ticket number
+                qty_set = await nodriver_funone_assign_ticket_number(tab, config_dict)
+                await tab.sleep(0.3)
+
+                # Check agreements
+                await nodriver_funone_ticket_agree(tab)
+                await tab.sleep(0.2)
+
+                # Handle captcha
+                captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
+
+                if captcha_done and qty_set:
+                    # FunOne: Do not auto-submit, let user manually review and submit
+                    print("[FUNONE] Captcha filled, waiting for manual submit")
+                    submit_result = False
+
+                    if submit_result:
+                        # Play order success sound
+                        if not funone_dict.get("played_sound_order", False):
+                            if config_dict["advanced"]["play_sound"]["order"]:
+                                play_sound_while_ordering(config_dict)
+                            send_discord_notification(config_dict, "order", "FunOne")
+                            funone_dict["played_sound_order"] = True
+                        print("[FUNONE] Order submitted successfully!")
+
+            elif step >= 3:
+                # Step 3+: Form filling, payment, etc.
+                # Check if we're on the fill form page - this means ticket secured!
+                if 'purchase_fill_form' in url:
+                    if not funone_dict.get("played_sound_order", False):
+                        if config_dict["advanced"]["play_sound"]["order"]:
+                            play_sound_while_ordering(config_dict)
+                        send_discord_notification(config_dict, "order", "FunOne")
+                        funone_dict["played_sound_order"] = True
+                        print("[FUNONE] Reached fill form page - order notification sent!")
+
+                # Handle captcha if present
+                await nodriver_funone_captcha_handler(tab, config_dict)
+
+            else:
+                # Unknown step - try area selection first, then quantity
+                area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
+
+                if not area_selected:
+                    # Maybe we're already past area selection, try quantity
+                    await nodriver_funone_assign_ticket_number(tab, config_dict)
+                    await tab.sleep(0.3)
+                    await nodriver_funone_ticket_agree(tab)
+                    captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
+                    if captcha_done:
+                        # FunOne: Do not auto-submit, let user manually review and submit
+                        print("[FUNONE] Captcha filled, waiting for manual submit")
+
+    elif page_type == "MEMBER":
+        # Member page - verify login status
+        await nodriver_funone_verify_login(tab, config_dict)
+
+    # Auto reload check - only for ACTIVITY_DETAIL page
+    # Skip if next button was clicked (page is navigating to waiting page)
+    if page_type == "ACTIVITY_DETAIL":
+        if not funone_dict.get("next_button_clicked", False):
+            await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
+
+    return tab
+
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -24383,7 +26149,7 @@ async def main(args):
             ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
             ocr.set_ranges(1)  # Restrict to lowercase letters only (a-z) for TixCraft captchas
             Captcha_Browser = NonBrowser()
-            if len(config_dict["advanced"]["tixcraft_sid"]) > 1:
+            if len(config_dict["accounts"]["tixcraft_sid"]) > 1:
                 #set_non_browser_cookies(driver, config_dict["homepage"], Captcha_Browser)
                 pass
     except Exception as exc:
@@ -24525,6 +26291,10 @@ async def main(args):
             softix_family = True
         if softix_family:
             tab = await nodriver_hkticketing_main(tab, url, config_dict)
+
+        # FunOne Tickets
+        if 'tickets.funone.io' in url:
+            tab = await nodriver_funone_main(tab, url, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'

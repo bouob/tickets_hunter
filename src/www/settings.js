@@ -223,30 +223,31 @@ function load_settins_to_form(settings)
             credit_card_prefix.value = settings.contact.credit_card_prefix || '';
         }
 
-        // auto fill
-        tixcraft_sid.value = settings.advanced.tixcraft_sid;
-        ibonqware.value = settings.advanced.ibonqware;
-        facebook_account.value = settings.advanced.facebook_account;
-        kktix_account.value = settings.advanced.kktix_account;
-        fami_account.value = settings.advanced.fami_account;
-        kham_account.value = settings.advanced.kham_account;
-        ticket_account.value = settings.advanced.ticket_account;
-        udn_account.value = settings.advanced.udn_account;
-        ticketplus_account.value = settings.advanced.ticketplus_account;
-        cityline_account.value = settings.advanced.cityline_account;
-        urbtix_account.value = settings.advanced.urbtix_account;
-        hkticketing_account.value = settings.advanced.hkticketing_account;
+        // auto fill (accounts section)
+        tixcraft_sid.value = settings.accounts.tixcraft_sid;
+        ibonqware.value = settings.accounts.ibonqware;
+        funone_session_cookie.value = settings.accounts.funone_session_cookie || '';
+        facebook_account.value = settings.accounts.facebook_account;
+        kktix_account.value = settings.accounts.kktix_account;
+        fami_account.value = settings.accounts.fami_account;
+        kham_account.value = settings.accounts.kham_account;
+        ticket_account.value = settings.accounts.ticket_account;
+        udn_account.value = settings.accounts.udn_account;
+        ticketplus_account.value = settings.accounts.ticketplus_account;
+        cityline_account.value = settings.accounts.cityline_account;
+        urbtix_account.value = settings.accounts.urbtix_account;
+        hkticketing_account.value = settings.accounts.hkticketing_account;
 
-        facebook_password.value = settings.advanced.facebook_password;
-        kktix_password.value = settings.advanced.kktix_password;
-        fami_password.value = settings.advanced.fami_password;
-        kham_password.value = settings.advanced.kham_password;
-        ticket_password.value = settings.advanced.ticket_password;
-        udn_password.value = settings.advanced.udn_password;
-        ticketplus_password.value = settings.advanced.ticketplus_password;
-        discount_code.value = settings.advanced.discount_code || '';
-        urbtix_password.value = settings.advanced.urbtix_password;
-        hkticketing_password.value = settings.advanced.hkticketing_password;
+        facebook_password.value = settings.accounts.facebook_password;
+        kktix_password.value = settings.accounts.kktix_password;
+        fami_password.value = settings.accounts.fami_password;
+        kham_password.value = settings.accounts.kham_password;
+        ticket_password.value = settings.accounts.ticket_password;
+        udn_password.value = settings.accounts.udn_password;
+        ticketplus_password.value = settings.accounts.ticketplus_password;
+        discount_code.value = settings.accounts.discount_code || '';
+        urbtix_password.value = settings.accounts.urbtix_password;
+        hkticketing_password.value = settings.accounts.hkticketing_password;
 
         // runtime
         idle_keyword.value = settings.advanced.idle_keyword;
@@ -466,30 +467,31 @@ function save_changes_to_dict(silent_flag)
             settings.contact.phone = phone.value;
             settings.contact.credit_card_prefix = credit_card_prefix.value;
 
-            // auto fill
-            settings.advanced.tixcraft_sid = tixcraft_sid.value;
-            settings.advanced.ibonqware = ibonqware.value;
-            settings.advanced.facebook_account = facebook_account.value;
-            settings.advanced.kktix_account = kktix_account.value;
-            settings.advanced.fami_account = fami_account.value;
-            settings.advanced.kham_account = kham_account.value;
-            settings.advanced.ticket_account = ticket_account.value;
-            settings.advanced.udn_account = udn_account.value;
-            settings.advanced.ticketplus_account = ticketplus_account.value;
-            settings.advanced.cityline_account = cityline_account.value;
-            settings.advanced.urbtix_account = urbtix_account.value;
-            settings.advanced.hkticketing_account = hkticketing_account.value;
+            // auto fill (accounts section)
+            settings.accounts.tixcraft_sid = tixcraft_sid.value;
+            settings.accounts.ibonqware = ibonqware.value;
+            settings.accounts.funone_session_cookie = funone_session_cookie.value;
+            settings.accounts.facebook_account = facebook_account.value;
+            settings.accounts.kktix_account = kktix_account.value;
+            settings.accounts.fami_account = fami_account.value;
+            settings.accounts.kham_account = kham_account.value;
+            settings.accounts.ticket_account = ticket_account.value;
+            settings.accounts.udn_account = udn_account.value;
+            settings.accounts.ticketplus_account = ticketplus_account.value;
+            settings.accounts.cityline_account = cityline_account.value;
+            settings.accounts.urbtix_account = urbtix_account.value;
+            settings.accounts.hkticketing_account = hkticketing_account.value;
 
-            settings.advanced.facebook_password = facebook_password.value;
-            settings.advanced.kktix_password = kktix_password.value;
-            settings.advanced.fami_password = fami_password.value;
-            settings.advanced.kham_password = kham_password.value;
-            settings.advanced.ticket_password = ticket_password.value;
-            settings.advanced.udn_password = udn_password.value;
-            settings.advanced.ticketplus_password = ticketplus_password.value;
-            settings.advanced.discount_code = discount_code.value;
-            settings.advanced.urbtix_password = urbtix_password.value;
-            settings.advanced.hkticketing_password = hkticketing_password.value;
+            settings.accounts.facebook_password = facebook_password.value;
+            settings.accounts.kktix_password = kktix_password.value;
+            settings.accounts.fami_password = fami_password.value;
+            settings.accounts.kham_password = kham_password.value;
+            settings.accounts.ticket_password = ticket_password.value;
+            settings.accounts.udn_password = udn_password.value;
+            settings.accounts.ticketplus_password = ticketplus_password.value;
+            settings.accounts.discount_code = discount_code.value;
+            settings.accounts.urbtix_password = urbtix_password.value;
+            settings.accounts.hkticketing_password = hkticketing_password.value;
 
             // runtime
             settings.advanced.idle_keyword = idle_keyword.value;
@@ -586,9 +588,10 @@ function check_unsaved_fields()
                 $("#"+f).removeClass("is-invalid");
             }
         });
-        const field_list_advance = [
+        const field_list_accounts = [
             "tixcraft_sid",
             "ibonqware",
+            "funone_session_cookie",
             "facebook_account",
             "kktix_account",
             "fami_account",
@@ -608,7 +611,33 @@ function check_unsaved_fields()
             "ticket_password",
             "udn_password",
             "ticketplus_password",
-            "discount_code",
+            "discount_code"
+        ];
+        field_list_accounts.forEach(f => {
+            const field = document.querySelector('#'+f);
+            let formated_input = field.value;
+            let formated_saved_value = settings["accounts"][f];
+            if(typeof formated_saved_value == "string") {
+                if(formated_input=='')
+                    formated_input='""';
+                if(formated_saved_value=='')
+                    formated_saved_value='""';
+                if(formated_saved_value.indexOf('"') > -1) {
+                    if(formated_input.length) {
+                        if(formated_input != '""') {
+                            formated_input = '"' + formated_input + '"';
+                        }
+                    }
+                }
+            }
+            let is_not_match = (formated_input != formated_saved_value);
+            if(is_not_match) {
+                $("#"+f).addClass("is-invalid");
+            } else {
+                $("#"+f).removeClass("is-invalid");
+            }
+        });
+        const field_list_advance = [
             "user_guess_string",
             "remote_url",
             "auto_reload_page_interval",
