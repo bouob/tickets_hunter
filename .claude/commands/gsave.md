@@ -87,18 +87,19 @@ CLAUDE.md         - 專案開發規範
 docs/             - 技術文件和指南
 .specify/         - 規格模板和指令碼
 specs/            - 功能規格和設計文件
-.temp/            - 臨時測試資料
+.temp/            - 臨時測試資料（排除 chrome-debug-profile/ 和 logs.txt）
 ```
 
 **完全忽略 Pattern**（不提交到任何地方）：
 ```
-settings.json              - 使用者設定
-*.log                      - 日誌檔案
-__pycache__/               - Python 快取
-node_modules/              - Node 依賴
-.env                       - 環境變數
-chrome_profile/            - 瀏覽器資料
+settings.json               - 使用者設定
+*.log                       - 日誌檔案
+__pycache__/                - Python 快取
+node_modules/               - Node 依賴
+.env                        - 環境變數
+chrome_profile/             - 瀏覽器資料
 .temp/chrome-debug-profile/ - MCP 除錯用 Chrome profile
+.temp/logs.txt              - 臨時日誌檔案
 ```
 
 **分組策略**：
@@ -143,7 +144,9 @@ git commit -m "[標準訊息]"
 
 **4.2 後提交機敏檔案**（如果有）：
 ```bash
-git add -f .claude/ CLAUDE.md docs/ .specify/ specs/ .temp/
+# 注意：.temp/ 要排除 chrome-debug-profile/ 和 logs.txt
+git add -f .claude/ CLAUDE.md docs/ .specify/ specs/
+git add -f .temp/ -- ':!.temp/chrome-debug-profile' ':!.temp/logs.txt'
 git commit -m "[PRIVATE 標記訊息]"
 ```
 
