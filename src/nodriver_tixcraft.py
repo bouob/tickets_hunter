@@ -24749,6 +24749,217 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         return False
 
 
+async def nodriver_funone_check_sold_out(tab, config_dict):
+    """
+    Check if all tickets are sold out on purchase_choose_ticket_no_map page
+
+    Returns:
+        tuple: (is_sold_out: bool, remaining_count: int, ticket_info: list)
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    ticket_number = config_dict.get("ticket_number", 2)
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+
+    # Parse keywords
+    keywords = []
+    if area_keyword:
+        clean_keyword = area_keyword.replace('"', '').replace("'", '')
+        keywords = [k.strip() for k in clean_keyword.split(',') if k.strip()]
+
+    try:
+        check_sold_out_js = f'''
+        (function() {{
+            const keywords = {keywords};
+            const ticketInfo = [];
+            let totalRemaining = 0;
+            let matchedRemaining = 0;
+            let hasMatchedTicket = false;
+            let allSoldOut = true;
+            let hasPurchaseButton = false;
+            let purchaseButtonDisabled = true;
+
+            // Find all ticket rows - look for elements containing remaining count
+            // FunOne shows "remaining X" pattern in ticket rows
+            const allElements = document.querySelectorAll('*');
+
+            for (const el of allElements) {{
+                const text = el.textContent || '';
+
+                // Look for remaining count pattern (Chinese: remaining X)
+                const remainingMatch = text.match(/remaining\\s*(\\d+)/i);
+                if (remainingMatch) {{
+                    const remaining = parseInt(remainingMatch[1]);
+
+                    // Get the row context to find ticket name
+                    let container = el.closest('div[class*="ticket"], div[class*="row"], tr, li') || el.parentElement;
+                    let rowText = container ? container.textContent : text;
+
+                    // Check if this matches any keyword
+                    let matched = keywords.length === 0;
+                    for (const kw of keywords) {{
+                        if (kw && rowText.toLowerCase().includes(kw.toLowerCase())) {{
+                            matched = true;
+                            break;
+                        }}
+                    }}
+
+                    ticketInfo.push({{
+                        remaining: remaining,
+                        text: rowText.substring(0, 100),
+                        matched: matched
+                    }});
+
+                    totalRemaining += remaining;
+                    if (matched) {{
+                        matchedRemaining += remaining;
+                        hasMatchedTicket = true;
+                    }}
+                    if (remaining > 0) {{
+                        allSoldOut = false;
+                    }}
+                }}
+            }}
+
+            // Check +/- buttons status
+            const buttons = document.querySelectorAll('button');
+            let allButtonsDisabled = true;
+            for (const btn of buttons) {{
+                const btnText = btn.textContent.trim();
+                if (btnText === '+') {{
+                    if (!btn.disabled) {{
+                        allButtonsDisabled = false;
+                    }}
+                }}
+                // Check for purchase/submit button
+                if (btnText.includes('Purchase') || btnText.includes('purchasing') ||
+                    btnText.includes('Confirm') || btnText.includes('confirm') ||
+                    btnText.includes('submit') || btnText.includes('Submit')) {{
+                    hasPurchaseButton = true;
+                    purchaseButtonDisabled = btn.disabled;
+                }}
+            }}
+
+            // If no remaining info found, try alternative detection
+            if (ticketInfo.length === 0) {{
+                // Check for quantity inputs with max attribute
+                const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+                for (const input of inputs) {{
+                    const max = parseInt(input.max) || 0;
+                    const val = parseInt(input.value) || 0;
+                    if (max > 0 || val >= 0) {{
+                        // This is likely a quantity input
+                        const parent = input.parentElement;
+                        if (parent) {{
+                            const plusBtn = parent.querySelector('button:not(:disabled)');
+                            if (!plusBtn) {{
+                                // + button is disabled, might be sold out
+                            }} else {{
+                                allSoldOut = false;
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+
+            // Determine if sold out
+            const isSoldOut = (ticketInfo.length > 0 && allSoldOut) ||
+                              (allButtonsDisabled && hasPurchaseButton && purchaseButtonDisabled);
+
+            return {{
+                isSoldOut: isSoldOut,
+                totalRemaining: totalRemaining,
+                matchedRemaining: hasMatchedTicket ? matchedRemaining : totalRemaining,
+                hasMatchedTicket: hasMatchedTicket,
+                ticketInfo: ticketInfo,
+                allButtonsDisabled: allButtonsDisabled,
+                purchaseButtonDisabled: purchaseButtonDisabled
+            }};
+        }})()
+        '''
+        result = await tab.evaluate(check_sold_out_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict):
+            is_sold_out = result.get('isSoldOut', False)
+            remaining = result.get('matchedRemaining', 0) if result.get('hasMatchedTicket') else result.get('totalRemaining', 0)
+            ticket_info = result.get('ticketInfo', [])
+
+            if show_debug_message:
+                if is_sold_out:
+                    print("[FUNONE] All tickets sold out")
+                elif remaining < ticket_number:
+                    print(f"[FUNONE] Remaining tickets: {remaining}, needed: {ticket_number}")
+
+            return (is_sold_out, remaining, ticket_info)
+
+        return (False, 0, [])
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Check sold out error: {exc}")
+        return (False, 0, [])
+
+
+async def nodriver_funone_click_refresh_button(tab, config_dict):
+    """
+    Click the "instant ticket status update" button to refresh ticket status via WebSocket
+
+    Returns:
+        bool: True if button clicked successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        click_refresh_js = '''
+        (function() {
+            // Find the refresh button - look for text containing "instant update" or similar
+            const buttons = document.querySelectorAll('button, div[role="button"], a[role="button"]');
+
+            for (const btn of buttons) {
+                const text = btn.textContent || '';
+                // Match various refresh button patterns
+                if (text.includes('instant') || text.includes('Instant') ||
+                    text.includes('update') || text.includes('Update') ||
+                    text.includes('refresh') || text.includes('Refresh') ||
+                    text.includes('reload') || text.includes('Reload')) {
+                    if (!btn.disabled) {
+                        btn.click();
+                        return { success: true, buttonText: text.substring(0, 50) };
+                    }
+                }
+            }
+
+            // Fallback: look for button with refresh icon (SVG with certain classes)
+            const iconButtons = document.querySelectorAll('button svg, button i[class*="refresh"], button i[class*="sync"]');
+            for (const icon of iconButtons) {
+                const btn = icon.closest('button');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return { success: true, buttonText: 'icon_button' };
+                }
+            }
+
+            return { success: false, reason: 'no_refresh_button_found' };
+        })()
+        '''
+        result = await tab.evaluate(click_refresh_js)
+        result = util.parse_nodriver_result(result)
+
+        if result and isinstance(result, dict) and result.get('success'):
+            if show_debug_message:
+                print(f"[FUNONE] Clicked refresh button: {result.get('buttonText', 'unknown')}")
+            return True
+        else:
+            if show_debug_message:
+                print("[FUNONE] Refresh button not found")
+            return False
+
+    except Exception as exc:
+        if show_debug_message:
+            print(f"[FUNONE] Click refresh button error: {exc}")
+        return False
+
+
 async def nodriver_funone_assign_ticket_number(tab, config_dict):
     """
     Set ticket quantity for the ticket type matching keyword
@@ -25562,7 +25773,11 @@ async def nodriver_funone_main(tab, url, config_dict):
             "last_captcha_type": None,
             "waiting_captcha_printed": False,
             "captcha_filled_printed": False,
-            "next_button_clicked": False
+            "next_button_clicked": False,
+            # Sold-out refresh tracking
+            "refresh_retry_count": 0,
+            "last_sold_out_logged": False,
+            "max_retry_logged": False
         }
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -25593,6 +25808,10 @@ async def nodriver_funone_main(tab, url, config_dict):
         # Reset flags when page type changes
         funone_dict["waiting_page_logged"] = False
         funone_dict["next_button_clicked"] = False
+        # Reset sold-out refresh tracking
+        funone_dict["refresh_retry_count"] = 0
+        funone_dict["last_sold_out_logged"] = False
+        funone_dict["max_retry_logged"] = False
 
     # Close popups first
     await nodriver_funone_close_popup(tab)
@@ -25643,6 +25862,55 @@ async def nodriver_funone_main(tab, url, config_dict):
             if step == 1:
                 # Step 1: Ticket type/quantity selection
                 # FunOne: purchase_choose_ticket_no_map is a combined ticket selection + quantity page
+
+                # Check if on purchase_choose_ticket_no_map page - apply sold-out detection
+                if '/purchase_choose_ticket_no_map/' in url:
+                    # Check sold-out status first
+                    is_sold_out, remaining, ticket_info = await nodriver_funone_check_sold_out(tab, config_dict)
+                    ticket_number = config_dict.get("ticket_number", 2)
+                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 2)
+
+                    # Handle sold-out or insufficient tickets
+                    if is_sold_out or (remaining > 0 and remaining < ticket_number):
+                        # Increment retry counter
+                        funone_dict["refresh_retry_count"] = funone_dict.get("refresh_retry_count", 0) + 1
+
+                        # Check retry limit (30 retries = ~1 minute with 2s interval)
+                        max_retries = 30
+                        if funone_dict["refresh_retry_count"] > max_retries:
+                            if not funone_dict.get("max_retry_logged", False):
+                                print(f"[FUNONE] Max refresh retries ({max_retries}) reached, waiting for manual action...")
+                                funone_dict["max_retry_logged"] = True
+                            return tab
+
+                        # Log status (only once per state)
+                        if is_sold_out:
+                            if not funone_dict.get("last_sold_out_logged", False):
+                                print(f"[FUNONE] Sold out, clicking refresh button... (retry {funone_dict['refresh_retry_count']}/{max_retries})")
+                                funone_dict["last_sold_out_logged"] = True
+                        else:
+                            print(f"[FUNONE] Remaining {remaining} < needed {ticket_number}, refreshing... (retry {funone_dict['refresh_retry_count']}/{max_retries})")
+
+                        # Click refresh button to trigger WebSocket update
+                        refresh_clicked = await nodriver_funone_click_refresh_button(tab, config_dict)
+
+                        if refresh_clicked:
+                            # Wait for WebSocket response
+                            await tab.sleep(auto_reload_interval)
+                        else:
+                            # Fallback: reload page if refresh button not found
+                            if show_debug_message:
+                                print("[FUNONE] Refresh button not found, reloading page...")
+                            await tab.reload()
+                            await tab.sleep(auto_reload_interval)
+
+                        return tab  # Next iteration will re-check status
+
+                    # Tickets available - reset retry counter and proceed
+                    funone_dict["refresh_retry_count"] = 0
+                    funone_dict["last_sold_out_logged"] = False
+                    funone_dict["max_retry_logged"] = False
+
                 # Try area selection first (for zone_box pages)
                 area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
 
