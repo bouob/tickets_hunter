@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.09)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.20)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -140,47 +140,48 @@ def get_default_config():
     config_dict["tixcraft"]["auto_reload_coming_soon_page"] = True
 
 
+    # Contact information
+    config_dict['contact']={}
+    config_dict["contact"]["real_name"] = ""
+    config_dict["contact"]["phone"] = ""
+    config_dict["contact"]["credit_card_prefix"] = ""
+
+    # Accounts section (cookies, accounts, passwords)
+    config_dict['accounts']={}
+    config_dict["accounts"]["tixcraft_sid"] = ""
+    config_dict["accounts"]["ibonqware"] = ""
+    config_dict["accounts"]["funone_session_cookie"] = ""
+    config_dict["accounts"]["facebook_account"] = ""
+    config_dict["accounts"]["kktix_account"] = ""
+    config_dict["accounts"]["fami_account"] = ""
+    config_dict["accounts"]["cityline_account"] = ""
+    config_dict["accounts"]["urbtix_account"] = ""
+    config_dict["accounts"]["hkticketing_account"] = ""
+    config_dict["accounts"]["kham_account"] = ""
+    config_dict["accounts"]["ticket_account"] = ""
+    config_dict["accounts"]["udn_account"] = ""
+    config_dict["accounts"]["ticketplus_account"] = ""
+
+    config_dict["accounts"]["facebook_password"] = ""
+    config_dict["accounts"]["kktix_password"] = ""
+    config_dict["accounts"]["fami_password"] = ""
+    config_dict["accounts"]["urbtix_password"] = ""
+    config_dict["accounts"]["cityline_password"] = ""
+    config_dict["accounts"]["hkticketing_password"] = ""
+    config_dict["accounts"]["kham_password"] = ""
+    config_dict["accounts"]["ticket_password"] = ""
+    config_dict["accounts"]["udn_password"] = ""
+    config_dict["accounts"]["ticketplus_password"] = ""
+
+    config_dict["accounts"]["discount_code"] = ""
+
+    # Advanced settings (non-credential settings only)
     config_dict['advanced']={}
 
     config_dict['advanced']['play_sound']={}
     config_dict["advanced"]["play_sound"]["ticket"] = True
     config_dict["advanced"]["play_sound"]["order"] = True
     config_dict["advanced"]["play_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
-
-    config_dict["advanced"]["tixcraft_sid"] = ""
-    config_dict["advanced"]["ibonqware"] = ""
-    config_dict["advanced"]["facebook_account"] = ""
-    config_dict["advanced"]["kktix_account"] = ""
-    config_dict["advanced"]["fami_account"] = ""
-    config_dict["advanced"]["cityline_account"] = ""
-    config_dict["advanced"]["urbtix_account"] = ""
-    config_dict["advanced"]["hkticketing_account"] = ""
-    config_dict["advanced"]["kham_account"] = ""
-    config_dict["advanced"]["ticket_account"] = ""
-    config_dict["advanced"]["udn_account"] = ""
-    config_dict["advanced"]["ticketplus_account"] = ""
-
-    config_dict["advanced"]["facebook_password"] = ""
-    config_dict["advanced"]["kktix_password"] = ""
-    config_dict["advanced"]["fami_password"] = ""
-    config_dict["advanced"]["urbtix_password"] = ""
-    config_dict["advanced"]["cityline_password"] = ""
-    config_dict["advanced"]["hkticketing_password"] = ""
-    config_dict["advanced"]["kham_password"] = ""
-    config_dict["advanced"]["ticket_password"] = ""
-    config_dict["advanced"]["udn_password"] = ""
-    config_dict["advanced"]["ticketplus_password"] = ""
-
-    config_dict["advanced"]["facebook_password_plaintext"] = ""
-    config_dict["advanced"]["kktix_password_plaintext"] = ""
-    config_dict["advanced"]["fami_password_plaintext"] = ""
-    config_dict["advanced"]["urbtix_password_plaintext"] = ""
-    config_dict["advanced"]["cityline_password_plaintext"] = ""
-    config_dict["advanced"]["hkticketing_password_plaintext"] = ""
-    config_dict["advanced"]["kham_password_plaintext"] = ""
-    config_dict["advanced"]["ticket_password_plaintext"] = ""
-    config_dict["advanced"]["udn_password_plaintext"] = ""
-    config_dict["advanced"]["ticketplus_password_plaintext"] = ""
 
     config_dict["advanced"]["chrome_extension"] = True
     config_dict["advanced"]["disable_adjacent_seat"] = False
@@ -286,29 +287,29 @@ def reset_json():
     return config_filepath, config_dict
 
 def decrypt_password(config_dict):
-    config_dict["advanced"]["facebook_password"] = util.decryptMe(config_dict["advanced"]["facebook_password"])
-    config_dict["advanced"]["kktix_password"] = util.decryptMe(config_dict["advanced"]["kktix_password"])
-    config_dict["advanced"]["fami_password"] = util.decryptMe(config_dict["advanced"]["fami_password"])
-    config_dict["advanced"]["cityline_password"] = util.decryptMe(config_dict["advanced"]["cityline_password"])
-    config_dict["advanced"]["urbtix_password"] = util.decryptMe(config_dict["advanced"]["urbtix_password"])
-    config_dict["advanced"]["hkticketing_password"] = util.decryptMe(config_dict["advanced"]["hkticketing_password"])
-    config_dict["advanced"]["kham_password"] = util.decryptMe(config_dict["advanced"]["kham_password"])
-    config_dict["advanced"]["ticket_password"] = util.decryptMe(config_dict["advanced"]["ticket_password"])
-    config_dict["advanced"]["udn_password"] = util.decryptMe(config_dict["advanced"]["udn_password"])
-    config_dict["advanced"]["ticketplus_password"] = util.decryptMe(config_dict["advanced"]["ticketplus_password"])
+    config_dict["accounts"]["facebook_password"] = util.decryptMe(config_dict["accounts"]["facebook_password"])
+    config_dict["accounts"]["kktix_password"] = util.decryptMe(config_dict["accounts"]["kktix_password"])
+    config_dict["accounts"]["fami_password"] = util.decryptMe(config_dict["accounts"]["fami_password"])
+    config_dict["accounts"]["cityline_password"] = util.decryptMe(config_dict["accounts"]["cityline_password"])
+    config_dict["accounts"]["urbtix_password"] = util.decryptMe(config_dict["accounts"]["urbtix_password"])
+    config_dict["accounts"]["hkticketing_password"] = util.decryptMe(config_dict["accounts"]["hkticketing_password"])
+    config_dict["accounts"]["kham_password"] = util.decryptMe(config_dict["accounts"]["kham_password"])
+    config_dict["accounts"]["ticket_password"] = util.decryptMe(config_dict["accounts"]["ticket_password"])
+    config_dict["accounts"]["udn_password"] = util.decryptMe(config_dict["accounts"]["udn_password"])
+    config_dict["accounts"]["ticketplus_password"] = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
     return config_dict
 
 def encrypt_password(config_dict):
-    config_dict["advanced"]["facebook_password"] = util.encryptMe(config_dict["advanced"]["facebook_password"])
-    config_dict["advanced"]["kktix_password"] = util.encryptMe(config_dict["advanced"]["kktix_password"])
-    config_dict["advanced"]["fami_password"] = util.encryptMe(config_dict["advanced"]["fami_password"])
-    config_dict["advanced"]["cityline_password"] = util.encryptMe(config_dict["advanced"]["cityline_password"])
-    config_dict["advanced"]["urbtix_password"] = util.encryptMe(config_dict["advanced"]["urbtix_password"])
-    config_dict["advanced"]["hkticketing_password"] = util.encryptMe(config_dict["advanced"]["hkticketing_password"])
-    config_dict["advanced"]["kham_password"] = util.encryptMe(config_dict["advanced"]["kham_password"])
-    config_dict["advanced"]["ticket_password"] = util.encryptMe(config_dict["advanced"]["ticket_password"])
-    config_dict["advanced"]["udn_password"] = util.encryptMe(config_dict["advanced"]["udn_password"])
-    config_dict["advanced"]["ticketplus_password"] = util.encryptMe(config_dict["advanced"]["ticketplus_password"])
+    config_dict["accounts"]["facebook_password"] = util.encryptMe(config_dict["accounts"]["facebook_password"])
+    config_dict["accounts"]["kktix_password"] = util.encryptMe(config_dict["accounts"]["kktix_password"])
+    config_dict["accounts"]["fami_password"] = util.encryptMe(config_dict["accounts"]["fami_password"])
+    config_dict["accounts"]["cityline_password"] = util.encryptMe(config_dict["accounts"]["cityline_password"])
+    config_dict["accounts"]["urbtix_password"] = util.encryptMe(config_dict["accounts"]["urbtix_password"])
+    config_dict["accounts"]["hkticketing_password"] = util.encryptMe(config_dict["accounts"]["hkticketing_password"])
+    config_dict["accounts"]["kham_password"] = util.encryptMe(config_dict["accounts"]["kham_password"])
+    config_dict["accounts"]["ticket_password"] = util.encryptMe(config_dict["accounts"]["ticket_password"])
+    config_dict["accounts"]["udn_password"] = util.encryptMe(config_dict["accounts"]["udn_password"])
+    config_dict["accounts"]["ticketplus_password"] = util.encryptMe(config_dict["accounts"]["ticketplus_password"])
     return config_dict
 
 def maxbot_idle():

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.01.20
+
+- 新增 FunOne Tickets 全功能平台支援
+- 修復 遠大售票渲染區域選擇問題
+- 修復 TixCraft Cookie 網域對應 (iNDIEVOX、Ticketmaster SG)
+
 ## 2026.01.09
 
 - 修復 KHAM/ticket.com.tw 座位選擇對話框處理與跨排座位支援
