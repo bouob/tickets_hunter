@@ -21247,6 +21247,10 @@ async def nodrver_block_urls(tab, config_dict):
         '*googleadservices.com/*',  # Ad conversion tracking
         '*adtrafficquality.google/*',  # Ad quality detection
 
+        # Facebook Pixel tracking (does not affect FB login)
+        '*connect.facebook.net/*/fbevents.js',
+        '*connect.facebook.net/signals/*',
+
         # Social media and video
         '*.twitter.com/i/*',
         '*platform.twitter.com/*',
@@ -24282,39 +24286,18 @@ async def nodriver_funone_inject_cookie(tab, config_dict):
 
 async def nodriver_funone_check_login_status(tab):
     """
-    Check if user is logged in by detecting login button presence
+    Check if user is logged in by verifying ticket_session cookie exists
 
     Returns:
-        bool: True if logged in (no login button found)
+        bool: True if logged in (cookie exists and valid)
     """
     try:
-        # Check for login button text
-        login_button_js = '''
-        (function() {
-            const links = document.querySelectorAll('a, button');
-            for (const link of links) {
-                const text = link.textContent || '';
-                if (text.includes('登入') || text.includes('註冊') || text.includes('Login')) {
-                    return true;  // Login button found = not logged in
-                }
-            }
-            return false;  // No login button = logged in
-        })()
-        '''
-        has_login_button = await tab.evaluate(login_button_js)
-
-        # Handle NoDriver return format (may return list instead of direct value)
-        if isinstance(has_login_button, list):
-            if len(has_login_button) > 0:
-                has_login_button = has_login_button[0]
-                if isinstance(has_login_button, list) and len(has_login_button) > 0:
-                    has_login_button = has_login_button[0]
-
-        # Convert to boolean
-        if has_login_button is True or has_login_button == 'true':
-            return False  # Login button found = not logged in
-        else:
-            return True   # No login button = logged in
+        # Cookie verification - check if ticket_session cookie exists
+        cookies = await tab.browser.cookies.get_all()
+        session_cookie = next((c for c in cookies if c.name == 'ticket_session'), None)
+        if session_cookie and len(session_cookie.value) > 10:
+            return True
+        return False
 
     except Exception as exc:
         return False
@@ -24565,55 +24548,69 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
     try:
         # Get all ticket areas (FunOne uses div.zone_box elements)
+        # IMPORTANT: Only look for .zone_box elements, do NOT fallback to generic buttons
+        # Generic button search would incorrectly match ticket type names on quantity selection pages
         get_tickets_js = '''
         (function() {
             const tickets = [];
 
-            // First try FunOne-specific zone_box elements
+            // Only FunOne-specific zone_box elements (area selection page)
             const zoneBoxes = document.querySelectorAll('.zone_box');
             if (zoneBoxes.length > 0) {
                 for (const box of zoneBoxes) {
-                    const text = box.textContent || '';
+                    // Use innerText for more reliable text extraction (rendered text)
+                    const fullText = (box.innerText || box.textContent || '').trim().replace(/\\s+/g, ' ');
                     const isDisabled = box.classList.contains('disabled');
 
-                    // Get zone name
+                    // Get zone name - try multiple methods
+                    let name = '';
                     const zoneName = box.querySelector('.zone_name');
-                    const name = zoneName ? zoneName.textContent.trim() : text.trim();
+                    if (zoneName) {
+                        name = (zoneName.innerText || zoneName.textContent || '').trim();
+                    }
+                    // Fallback: use first line of fullText
+                    if (!name && fullText) {
+                        name = fullText.split(/[\\n\\r]|\\u70ed|\\u5df2/)[0].trim();
+                    }
 
                     tickets.push({
                         text: name,
-                        fullText: text.trim().replace(/\\s+/g, ' '),
+                        fullText: fullText,
                         index: tickets.length,
                         disabled: isDisabled,
                         type: 'zone_box'
                     });
                 }
-                return tickets;
             }
 
-            // Fallback to generic button search
-            const items = document.querySelectorAll('button, [role="button"], .ticket-type, [class*="ticket"], [class*="area"]');
-            for (const item of items) {
-                const text = item.textContent || '';
-                const isDisabled = item.disabled || item.classList.contains('disabled') || item.classList.contains('sold-out');
-
-                // Filter ticket type buttons
-                if (text.length > 2 && text.length < 300) {
-                    // Check if it looks like a ticket type (contains price or zone info)
-                    if (/\\$|NT|TWD|\\d+元|區|票/.test(text) || text.includes('票種')) {
-                        tickets.push({
-                            text: text.trim().replace(/\\s+/g, ' '),
-                            index: tickets.length,
-                            disabled: isDisabled,
-                            type: 'button'
-                        });
-                    }
-                }
-            }
+            // No fallback - if no zone_box found, return empty array
+            // This page is likely a ticket quantity selection page, not area selection
             return tickets;
         })()
         '''
         tickets = await tab.evaluate(get_tickets_js)
+
+        # Convert CDP format to Python dict if needed
+        # NoDriver may return CDP format: {'type': 'object', 'value': [['key', {'type': 'string', 'value': 'val'}], ...]}
+        def parse_cdp_value(item):
+            if isinstance(item, dict) and 'type' in item and 'value' in item:
+                if item['type'] == 'object' and isinstance(item['value'], list):
+                    # Convert [['key', {'type': 'string', 'value': 'val'}], ...] to {'key': 'val', ...}
+                    result = {}
+                    for pair in item['value']:
+                        if isinstance(pair, list) and len(pair) == 2:
+                            key, val_obj = pair
+                            if isinstance(val_obj, dict) and 'value' in val_obj:
+                                result[key] = val_obj['value']
+                            else:
+                                result[key] = val_obj
+                    return result
+                else:
+                    return item['value']
+            return item
+
+        if tickets:
+            tickets = [parse_cdp_value(t) for t in tickets]
 
         if not tickets or len(tickets) == 0:
             # Only print "No ticket types found" if we previously found some
@@ -24640,25 +24637,17 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
         tickets = available_tickets
 
-        # Apply exclude keywords first
+        # Apply exclude keywords first (using standard util function)
         if keyword_exclude and len(keyword_exclude) > 0:
-            exclude_keywords = util.parse_keyword_string_to_array(keyword_exclude)
             filtered_tickets = []
-
             for ticket in tickets:
-                ticket_text = ticket.get('text', '')
-                excluded = False
-
-                for ex_kw in exclude_keywords:
-                    if ex_kw.lower() in ticket_text.lower():
-                        if show_debug_message:
-                            print(f"[FUNONE] Excluding ticket '{ticket_text[:50]}' (matched '{ex_kw}')")
-                        excluded = True
-                        break
-
-                if not excluded:
+                # Use text first, fallback to fullText for keyword matching
+                ticket_text = ticket.get('text', '') or ticket.get('fullText', '')
+                if ticket_text and util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_text):
+                    if show_debug_message:
+                        print(f"[FUNONE] Excluding ticket '{ticket_text[:50]}'")
+                else:
                     filtered_tickets.append(ticket)
-
             tickets = filtered_tickets
 
         if len(tickets) == 0:
@@ -24673,7 +24662,10 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
             keywords = util.parse_keyword_string_to_array(area_keyword)
 
             for i, ticket in enumerate(tickets):
-                ticket_text = ticket.get('text', '')
+                # Use text first, fallback to fullText for keyword matching
+                ticket_text = ticket.get('text', '') or ticket.get('fullText', '')
+                if not ticket_text:
+                    continue
                 for kw in keywords:
                     if kw.lower() in ticket_text.lower():
                         target_index = i
@@ -24700,7 +24692,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         # Click the selected ticket type
         original_index = tickets[target_index].get('index', target_index)
         ticket_type = tickets[target_index].get('type', 'button')
-        ticket_name = tickets[target_index].get('text', '')
+        ticket_name = tickets[target_index].get('text', '') or tickets[target_index].get('fullText', '')
 
         if show_debug_message:
             print(f"[FUNONE] Clicking area '{ticket_name}' (index: {original_index}, type: {ticket_type})")
@@ -24759,7 +24751,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
 async def nodriver_funone_assign_ticket_number(tab, config_dict):
     """
-    Set ticket quantity
+    Set ticket quantity for the ticket type matching keyword
 
     Returns:
         bool: True if quantity set successfully
@@ -24767,6 +24759,20 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
     global funone_dict
     show_debug_message = config_dict["advanced"].get("verbose", False)
     ticket_number = config_dict.get("ticket_number", 2)
+    area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+
+    # Parse keywords
+    keywords = []
+    if area_keyword:
+        # Remove quotes and split by comma
+        clean_keyword = area_keyword.replace('"', '').replace("'", '')
+        keywords = [k.strip() for k in clean_keyword.split(',') if k.strip()]
+
+    exclude_keywords = []
+    if keyword_exclude:
+        clean_exclude = keyword_exclude.replace('"', '').replace("'", '')
+        exclude_keywords = [k.strip() for k in clean_exclude.split(',') if k.strip()]
 
     # Only print setting message once
     if show_debug_message and funone_dict.get("last_ticket_qty") != ticket_number:
@@ -24774,130 +24780,146 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         funone_dict["last_ticket_qty"] = ticket_number
 
     try:
-        # Try to set ticket number via dropdown, input, or +/- buttons
+        # FunOne-specific: Find ticket row by keyword and click its + button
         set_quantity_js = f'''
         (function() {{
             const targetQty = {ticket_number};
+            const keywords = {keywords};
+            const excludeKeywords = {exclude_keywords};
 
-            // FunOne-specific: Look for quantity control with +/- buttons and textbox
-            // The structure is typically: [- button] [textbox] [+ button]
-            // Note: FunOne buttons may not have text content (use icons instead)
-            const allButtons = document.querySelectorAll('button');
-            let plusBtn = null;
-            let minusBtn = null;
-            let qtyInput = null;
+            // FunOne ticket selection page structure:
+            // Each ticket row has: [ticket name] [price] [- button] [textbox] [+ button]
+            // We need to find the row matching keyword and click its + button
 
-            // Find the quantity input textbox (usually near +/- buttons)
-            const textInputs = document.querySelectorAll('input[type="text"], input[type="number"]');
-            for (const input of textInputs) {{
-                const currentVal = parseInt(input.value);
-                // Check if this looks like a quantity input (value is a small number)
-                if (!isNaN(currentVal) && currentVal >= 0 && currentVal <= 10) {{
-                    // Find adjacent +/- buttons
+            // Get all input elements (quantity boxes)
+            const inputs = document.querySelectorAll('input');
+            let targetInput = null;
+            let targetPlusBtn = null;
+            let matchedName = '';
+
+            for (const input of inputs) {{
+                // Check if this looks like a quantity input
+                const val = parseInt(input.value);
+                if (isNaN(val) || val < 0 || val > 100) continue;
+
+                // Find the ticket row container (traverse up to find text context)
+                let container = input.parentElement;
+                let depth = 0;
+                let rowText = '';
+
+                // Go up a few levels to find the row containing ticket name
+                while (container && depth < 5) {{
+                    rowText = container.textContent || '';
+                    // Check if this container has ticket info (price pattern)
+                    if (/TWD|NT\$|\d+元/.test(rowText)) {{
+                        break;
+                    }}
+                    container = container.parentElement;
+                    depth++;
+                }}
+
+                if (!rowText) continue;
+
+                // Check exclude keywords first
+                let excluded = false;
+                for (const exc of excludeKeywords) {{
+                    if (exc && rowText.toLowerCase().includes(exc.toLowerCase())) {{
+                        excluded = true;
+                        break;
+                    }}
+                }}
+                if (excluded) continue;
+
+                // Check if this row matches any keyword
+                let matched = keywords.length === 0; // If no keyword, match first valid row
+                for (const kw of keywords) {{
+                    if (kw && rowText.toLowerCase().includes(kw.toLowerCase())) {{
+                        matched = true;
+                        matchedName = kw;
+                        break;
+                    }}
+                }}
+
+                if (matched) {{
+                    targetInput = input;
+                    // Find the + button near this input
                     const parent = input.parentElement;
                     if (parent) {{
-                        const siblings = parent.querySelectorAll('button');
+                        const children = Array.from(parent.children);
+                        const inputIndex = children.indexOf(input);
 
-                        // First try: Look for buttons with +/- text
-                        for (const btn of siblings) {{
-                            const text = btn.textContent.trim();
-                            if (text === '+') plusBtn = btn;
-                            if (text === '-') minusBtn = btn;
+                        // Find button after the input (+ button)
+                        for (let i = inputIndex + 1; i < children.length; i++) {{
+                            if (children[i].tagName === 'BUTTON' && !children[i].disabled) {{
+                                targetPlusBtn = children[i];
+                                break;
+                            }}
                         }}
 
-                        // Second try: FunOne style - buttons without text
-                        // Structure: [button1 (minus)] [textbox] [button2 (plus)]
-                        if (!plusBtn && siblings.length >= 2) {{
-                            // Get all children in order to determine position
-                            const children = Array.from(parent.children);
-                            const inputIndex = children.indexOf(input);
-
-                            // Find buttons before and after the input
-                            for (let i = 0; i < children.length; i++) {{
-                                if (children[i].tagName === 'BUTTON') {{
-                                    if (i < inputIndex) {{
-                                        minusBtn = children[i];
-                                    }} else if (i > inputIndex) {{
-                                        plusBtn = children[i];
+                        // If not found, try sibling buttons
+                        if (!targetPlusBtn) {{
+                            const buttons = parent.querySelectorAll('button:not([disabled])');
+                            for (const btn of buttons) {{
+                                // The + button is typically after the input or has no text (icon-based)
+                                const btnText = btn.textContent.trim();
+                                if (btnText === '+' || btnText === '') {{
+                                    // Check position relative to input
+                                    const btnIndex = children.indexOf(btn);
+                                    if (btnIndex > inputIndex) {{
+                                        targetPlusBtn = btn;
                                         break;
                                     }}
                                 }}
                             }}
                         }}
                     }}
-                    if (plusBtn) {{
-                        qtyInput = input;
+
+                    if (targetPlusBtn) break;
+                }}
+            }}
+
+            // Click the + button to set quantity
+            if (targetPlusBtn && targetInput) {{
+                const currentVal = parseInt(targetInput.value) || 0;
+                const clicksNeeded = targetQty - currentVal;
+
+                if (clicksNeeded > 0) {{
+                    for (let i = 0; i < clicksNeeded; i++) {{
+                        targetPlusBtn.click();
+                    }}
+                    return {{ success: true, type: 'keyword_match', value: targetQty, clicks: clicksNeeded, keyword: matchedName }};
+                }} else if (clicksNeeded === 0) {{
+                    return {{ success: true, type: 'already_set', value: targetQty, keyword: matchedName }};
+                }}
+            }}
+
+            // Fallback: Try first available quantity control
+            for (const input of inputs) {{
+                const val = parseInt(input.value);
+                if (isNaN(val) || val < 0 || val > 100) continue;
+
+                const parent = input.parentElement;
+                if (!parent) continue;
+
+                const children = Array.from(parent.children);
+                const inputIndex = children.indexOf(input);
+
+                for (let i = inputIndex + 1; i < children.length; i++) {{
+                    if (children[i].tagName === 'BUTTON' && !children[i].disabled) {{
+                        const currentVal = parseInt(input.value) || 0;
+                        const clicksNeeded = targetQty - currentVal;
+                        if (clicksNeeded > 0) {{
+                            for (let j = 0; j < clicksNeeded; j++) {{
+                                children[i].click();
+                            }}
+                            return {{ success: true, type: 'fallback', value: targetQty, clicks: clicksNeeded }};
+                        }}
                         break;
                     }}
                 }}
             }}
 
-            // If found FunOne-style quantity control
-            if (plusBtn && qtyInput) {{
-                const currentVal = parseInt(qtyInput.value) || 0;
-                const clicksNeeded = targetQty - currentVal;
-
-                if (clicksNeeded > 0) {{
-                    for (let i = 0; i < clicksNeeded; i++) {{
-                        plusBtn.click();
-                    }}
-                    return {{ success: true, type: 'plus_button', value: targetQty, clicks: clicksNeeded }};
-                }} else if (clicksNeeded === 0) {{
-                    return {{ success: true, type: 'already_set', value: targetQty }};
-                }}
-            }}
-
-            // Try select/dropdown
-            const selects = document.querySelectorAll('select');
-            for (const sel of selects) {{
-                const options = sel.querySelectorAll('option');
-                if (options.length > 1) {{
-                    for (const opt of options) {{
-                        if (opt.value == targetQty || opt.textContent.trim() == targetQty.toString()) {{
-                            sel.value = opt.value;
-                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            return {{ success: true, type: 'select', value: targetQty }};
-                        }}
-                    }}
-                    // If exact match not found, select closest available
-                    for (const opt of options) {{
-                        const val = parseInt(opt.value);
-                        if (!isNaN(val) && val > 0 && val <= targetQty) {{
-                            sel.value = opt.value;
-                            sel.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            return {{ success: true, type: 'select', value: val }};
-                        }}
-                    }}
-                }}
-            }}
-
-            // Try direct input with value setting
-            const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
-            for (const input of inputs) {{
-                const placeholder = input.placeholder || '';
-                const name = input.name || '';
-                if (placeholder.includes('數量') || placeholder.includes('張') ||
-                    name.includes('qty') || name.includes('quantity') || name.includes('num')) {{
-                    input.value = targetQty;
-                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                    return {{ success: true, type: 'input', value: targetQty }};
-                }}
-            }}
-
-            // Fallback: Try any plus button
-            for (const btn of allButtons) {{
-                const text = btn.textContent.trim();
-                if (text === '+' || btn.classList.contains('plus') || btn.classList.contains('add')) {{
-                    // Click plus button targetQty times (assuming starting from 0)
-                    for (let i = 0; i < targetQty; i++) {{
-                        btn.click();
-                    }}
-                    return {{ success: true, type: 'button_fallback', value: targetQty }};
-                }}
-            }}
-
-            return {{ success: false }};
+            return {{ success: false, reason: 'no_quantity_control_found' }};
         }})()
         '''
         result = await tab.evaluate(set_quantity_js)
@@ -25121,20 +25143,31 @@ async def nodriver_funone_detect_step(tab):
             const url = window.location.href;
             const bodyText = document.body.textContent || '';
 
-            // Check URL for step parameter
+            // Priority 1: Check URL patterns (most reliable)
+            if (url.includes('purchase_choose_ticket_no_map') || url.includes('purchase_choose_ticket')) {
+                // Ticket type/quantity selection page
+                return 1;
+            }
+            if (url.includes('purchase_fill_form')) {
+                // Form filling page
+                return 3;
+            }
+
+            // Priority 2: Check URL for step parameter
             const stepMatch = url.match(/[?&]step=(\d+)/);
             if (stepMatch) {
                 return parseInt(stepMatch[1]);
             }
 
-            // Check for step indicators in the DOM
-            // Step 1: Area selection - has zone_box elements
+            // Priority 3: Check for specific DOM patterns
+            // Step 1: Area/Ticket selection
             const zoneBoxes = document.querySelectorAll('.zone_box');
             if (zoneBoxes.length > 0) {
                 return 1;
             }
 
-            // Step 2: Quantity selection - has +/- buttons and ticket info
+            // Step 1/2: Ticket type selection - has +/- buttons for quantity
+            // Look for ticket price/type layout with quantity controls
             const plusBtns = document.querySelectorAll('button');
             let hasPlusMinusBtn = false;
             for (const btn of plusBtns) {
@@ -25144,35 +25177,31 @@ async def nodriver_funone_detect_step(tab):
                     break;
                 }
             }
+            // Check for ticket selection page (has textbox for quantity input)
+            const qtyInputs = document.querySelectorAll('input[type="text"][value="0"]');
+            if (hasPlusMinusBtn && qtyInputs.length > 0) {
+                // This is ticket selection page, not form filling
+                return 1;
+            }
             if (hasPlusMinusBtn && (bodyText.includes('張數') || bodyText.includes('票種'))) {
                 return 2;
             }
 
-            // Step 3: Form filling
-            const formInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]');
-            if (formInputs.length >= 3 && (bodyText.includes('填寫') || bodyText.includes('表單'))) {
+            // Step 3: Form filling - must have actual form inputs (not just quantity inputs)
+            const formInputs = document.querySelectorAll('input[type="text"]:not([value="0"]), input[type="email"], input[type="tel"]');
+            if (formInputs.length >= 3 && bodyText.includes('填寫')) {
                 return 3;
             }
 
-            // Step 4: Payment
-            if (bodyText.includes('付款') || bodyText.includes('結帳') || bodyText.includes('信用卡')) {
+            // Step 4: Payment page - must have specific payment elements
+            const hasPaymentForm = document.querySelector('input[name*="credit"], input[name*="card"], select[name*="payment"]');
+            if (hasPaymentForm || (bodyText.includes('付款方式') && bodyText.includes('信用卡'))) {
                 return 4;
             }
 
             // Step 5: Complete
             if (bodyText.includes('購票完成') || bodyText.includes('訂單成功')) {
                 return 5;
-            }
-
-            // Check active step indicator
-            const activeSteps = document.querySelectorAll('.step.active, .active-step, [class*="step"][class*="active"]');
-            if (activeSteps.length > 0) {
-                const stepText = activeSteps[0].textContent || '';
-                if (stepText.includes('1') || stepText.includes('區域')) return 1;
-                if (stepText.includes('2') || stepText.includes('張數')) return 2;
-                if (stepText.includes('3') || stepText.includes('表單')) return 3;
-                if (stepText.includes('4') || stepText.includes('結帳')) return 4;
-                if (stepText.includes('5') || stepText.includes('完成')) return 5;
             }
 
             return 0; // Unknown
@@ -25332,6 +25361,14 @@ async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
         bool: True if page was reloaded
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Skip auto-reload for non-activity pages (safety check)
+    try:
+        current_url = tab.url
+        if '/purchase_waiting_jump/' in current_url or '/purchase_fill_form/' in current_url:
+            return False
+    except:
+        pass
 
     try:
         # Check for error pages or coming soon
@@ -25524,7 +25561,8 @@ async def nodriver_funone_main(tab, url, config_dict):
             "submit_notfound": False,
             "last_captcha_type": None,
             "waiting_captcha_printed": False,
-            "captcha_filled_printed": False
+            "captcha_filled_printed": False,
+            "next_button_clicked": False
         }
 
     show_debug_message = config_dict["advanced"].get("verbose", False)
@@ -25541,14 +25579,20 @@ async def nodriver_funone_main(tab, url, config_dict):
             page_type = "MEMBER"
         elif url.rstrip('/') == 'https://tickets.funone.io':
             page_type = "HOME"
+        elif '/purchase_waiting_jump/' in url:
+            page_type = "WAITING"
         else:
             # Check for ticket selection or order pages dynamically
             page_type = "TICKET_FLOW"
 
     # Only print when page type changes (reduce repetitive messages)
-    if show_debug_message and funone_dict.get("last_page_type") != page_type:
-        print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
+    if funone_dict.get("last_page_type") != page_type:
+        if show_debug_message:
+            print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
         funone_dict["last_page_type"] = page_type
+        # Reset flags when page type changes
+        funone_dict["waiting_page_logged"] = False
+        funone_dict["next_button_clicked"] = False
 
     # Close popups first
     await nodriver_funone_close_popup(tab)
@@ -25566,14 +25610,22 @@ async def nodriver_funone_main(tab, url, config_dict):
             if not funone_dict.get("is_session_selecting", False):
                 funone_dict["is_session_selecting"] = True
                 success = await nodriver_funone_date_auto_select(tab, url, config_dict)
+                funone_dict["is_session_selecting"] = False
+                # Mark if navigation was triggered (next button clicked)
+                # This prevents auto_reload from running during page transition
                 if success:
-                    funone_dict["is_session_selecting"] = False
-                else:
-                    funone_dict["is_session_selecting"] = False
+                    funone_dict["next_button_clicked"] = True
 
     elif page_type == "LOGIN":
         # Login page - try cookie injection
         await nodriver_funone_verify_login(tab, config_dict)
+
+    elif page_type == "WAITING":
+        # Waiting/queue page - do nothing, just wait for auto-redirect
+        if show_debug_message and not funone_dict.get("waiting_page_logged", False):
+            print("[FUNONE] Waiting page detected, waiting for auto-redirect...")
+            funone_dict["waiting_page_logged"] = True
+        # Don't take any action - page will redirect automatically when it's user's turn
 
     elif page_type == "TICKET_FLOW":
         # Ticket selection flow
@@ -25589,9 +25641,28 @@ async def nodriver_funone_main(tab, url, config_dict):
                 funone_dict["last_step"] = step
 
             if step == 1:
-                # Step 1: Area selection
+                # Step 1: Ticket type/quantity selection
+                # FunOne: purchase_choose_ticket_no_map is a combined ticket selection + quantity page
+                # Try area selection first (for zone_box pages)
                 area_selected = await nodriver_funone_area_auto_select(tab, url, config_dict)
-                if area_selected:
+
+                # If no area selected (no zone_box elements), this is a quantity selection page
+                # Proceed to set quantity, agreements, and captcha
+                if not area_selected:
+                    # Set ticket number
+                    qty_set = await nodriver_funone_assign_ticket_number(tab, config_dict)
+                    await tab.sleep(0.3)
+
+                    # Check agreements
+                    await nodriver_funone_ticket_agree(tab)
+                    await tab.sleep(0.2)
+
+                    # Handle captcha
+                    captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
+
+                    if captcha_done and qty_set:
+                        print("[FUNONE] Captcha filled, waiting for manual submit")
+                else:
                     await tab.sleep(0.5)
                     # Page should navigate to step 2 after area selection
 
@@ -25609,8 +25680,9 @@ async def nodriver_funone_main(tab, url, config_dict):
                 captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
 
                 if captcha_done and qty_set:
-                    # Try to submit
-                    submit_result = await nodriver_funone_order_submit(tab, config_dict, funone_dict)
+                    # FunOne: Do not auto-submit, let user manually review and submit
+                    print("[FUNONE] Captcha filled, waiting for manual submit")
+                    submit_result = False
 
                     if submit_result:
                         # Play order success sound
@@ -25646,16 +25718,18 @@ async def nodriver_funone_main(tab, url, config_dict):
                     await nodriver_funone_ticket_agree(tab)
                     captcha_done = await nodriver_funone_captcha_handler(tab, config_dict)
                     if captcha_done:
-                        await nodriver_funone_order_submit(tab, config_dict, funone_dict)
+                        # FunOne: Do not auto-submit, let user manually review and submit
+                        print("[FUNONE] Captcha filled, waiting for manual submit")
 
     elif page_type == "MEMBER":
         # Member page - verify login status
         await nodriver_funone_verify_login(tab, config_dict)
 
     # Auto reload check - only for ACTIVITY_DETAIL page
-    # "Coming soon" detection should only apply to activity pages, not homepage
+    # Skip if next button was clicked (page is navigating to waiting page)
     if page_type == "ACTIVITY_DETAIL":
-        await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
+        if not funone_dict.get("next_button_clicked", False):
+            await nodriver_funone_auto_reload(tab, config_dict, funone_dict)
 
     return tab
 
