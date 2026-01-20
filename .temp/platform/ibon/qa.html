@@ -1,0 +1,625 @@
+<body>
+    <!------------------------------------------ HEADER ------------------------------------------>
+<style>
+    .goog-te-gadget span {
+        display: inline-flex;
+    }
+
+    .goog-te-gadget div {
+        display: inline;
+    }
+</style>
+
+<!-- Mobile Sidebar  -->
+<nav id="mobileSidebar">
+    <div id="dismiss">
+        <i class="fas fa-times"></i>
+    </div>
+
+    <div class="sidebar-header">
+        <img src="https://ticket.ibon.com.tw/logo.png" alt="" srcset="">
+    </div>
+
+    <ul class="list-unstyled">
+            <li>
+                <select name="ctl00$mob_Lang" id="ctl00_mob_Lang" class="form-control lang" onchange="javascript:mob_languageChanged();">
+	<option selected="selected" value="zh-TW">繁體中文</option>
+	<option value="en">English</option>
+	<option value="ja">日本語</option>
+	<option value="ko">한국어</option>
+</select>
+            </li>
+
+        <li>
+            <a id="btnheader-ordersmob" class="nav-link" href="https://ticket.ibon.com.tw/Web/Orders" target="_blank">訂單查詢</a>
+        </li>
+        <li>
+            <a class="nav-link" href="http://ticket.ibon.com.tw/Web/NewsInfo/Details/2067" target="_blank">退票查詢</a>
+        </li>
+        <hr>
+        <li>
+            <a class="nav-link" href="#">辦活動</a>
+        </li>
+        <li>
+                <a class="nav-link" href="https://huiwan.ibon.com.tw/Huiwan/LoginHuiwan/UserLogin.aspx?taxid=775995263&amp;targeturl=https://ticket.ibon.com.tw" target="_blank">訂閱電子報</a>
+        </li>
+        <li>
+            <a class="nav-link" href="http://www.ibon.com.tw/0000/sponsor.aspx" target="_blank">合作提案</a>
+        </li>
+
+    </ul>
+</nav>
+<div class="overlay"></div>
+<!-- Mobile Sidebar  End-->
+<!-- Header -->
+<header id="header">
+    <!-- Top Menu -->
+    <div id="google_translate_element" style="display: none;"></div>
+    <div class="top-menu"><div id="clockdownspace"></div>
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-auto">
+                    <button type="button" id="sidebarCollapse" class="btn d-block d-md-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+
+                <div class="logo col col-md-auto">
+                    <a href="https://ticket.ibon.com.tw/">ibon 售票系統</a>
+                </div>
+
+                <!-- Mobile -->
+                <div class="col-auto d-inline-block d-md-none">
+                    <button class="btn btn-menu btn-search-list collapsed" type="button" data-toggle="collapse" data-target="#searchList">
+                        <i class="fas fa-search"></i>
+                    </button>
+                        <!--手機版HeaderTemplate社群登入連結位置-->
+                        
+                                <button onclick="__doPostBack('ctl00$MobileLoigout','')" id="MobileLoigout" class="btn btn-menu" type="button">
+	                                <i class="fas fa-sign-out-alt"></i>
+                                </button> 
+                    <div class="num-top">
+                          <div id="Mobileclockdown" style="font-size: 1.5rem; line-height: 3.25rem; font-weight: bolder; text-align: center; color: #343a40; height: 50px; background: rgba(235,210,225,1); display:none;">
+                                 <span><i class="fas fa-clock"></i></span>
+                            <span id="Mobilecountdown" style="font-size:20px"></span>
+                            <button class="btn btn-cart" data-toggle="dropdown" onclick="shoppingcartToPage();">
+                                 <i class="fas fa-cart-plus fa-2x"></i>
+                                <span class="badge badge-pill badge-danger">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- Mobile End -->
+
+                <div class="col d-none d-md-inline-block">
+                    <div class="search-wrap">
+                        <div class="btn d-none d-md-block btn-search-list" data-toggle="collapse" data-target="#searchList">
+                            <i class="fas fa-search"></i> 詳細搜尋
+                            <i class="fas fa-caret-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-auto function-menu ml-auto">
+                    <nav class="navbar navbar-expand-md">
+                        <div id="navUserContent" class="flex-column align-items-end d-none d-md-block">
+                                <!--社群登入連結位置-->
+                                <div class="member" style="" id="LogoutAreaMenu"><a href="https://ticket.ibon.com.tw/Home/HuiwanEdit" id="HuiwanEdit">資料修改</a>&nbsp;|&nbsp;<a href="https://tour.ibon.com.tw/login/merchant-login-check" target="_blank">辦活動</a>&nbsp;|&nbsp;<a href="javascript:HuiwanLogoutClick();" id="Huiwanlogout">登出</a></div>
+                            <ul class="sidebar nav navbar-nav flex-row justify-content-around">
+                                <li>
+                                    <a href="http://www.ibon.com.tw/0000/sponsor.aspx" target="_blank">
+                                        <i class="fas fa-handshake"></i>合作提案
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="https://ticket.ibon.com.tw/Web/NewsInfo/Details/2067" target="_blank">
+                                        <i class="fas fa-file-invoice-dollar"></i>退票查詢
+                                    </a>
+                                </li>
+                                <li>
+                                    <a id="btnheader-orders" href="https://ticket.ibon.com.tw/Web/Orders">
+                                        <i class="fas fa-file-alt"></i>訂單查詢
+                                    </a>
+                                </li>
+                                    <li>
+                                        <select name="ctl00$Lang" id="ctl00_Lang" class="form-control lang" onchange="javascript:languageChanged();">
+	<option selected="selected" value="zh-TW">繁體中文</option>
+	<option value="en">English</option>
+	<option value="ja">日本語</option>
+	<option value="ko">한국어</option>
+</select>
+                                    </li>
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>    
+    <!-- Navbar -->
+    <nav class="navbar navbar-pink">
+        <div class="container">
+            <div id="navbarNav">
+                <ul class="navbar-nav nav-fill">
+                    
+    <li class="nav-item ">
+            <a class="nav-link" href="#" onclick="goToYo()">訂房</a>
+    </li>
+    <li class="nav-item ">
+                    <a class="nav-link" href="https://ticket.ibon.com.tw/Index/Traffic"> 高鐵聯票</a>
+    </li>
+    <li class="nav-item ">
+                <a class="nav-link" href="https://tour.ibon.com.tw/home/drama">旅遊</a>
+    </li>
+    <li class="nav-item ">
+                <a class="nav-link" href="https://tour.ibon.com.tw/home/exhibition">展覽</a>
+    </li>
+    <li class="nav-item ">
+                    <a class="nav-link" href="https://ticket.ibon.com.tw/Index/Sport"> 運動</a>
+    </li>
+    <li class="nav-item ">
+                    <a class="nav-link" href="https://ticket.ibon.com.tw/Index/entertainment"> 娛樂</a>
+    </li>
+
+                </ul>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search">
+            <div id="searchList" class="search-list collapse">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <ul class="nav nav-pills nav-fill" id="searchTab" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="ticket-tab" data-toggle="tab" href="#ticket" role="tab" aria-controls="ticket">找票券</a>
+                                </li>                               
+                            </ul>
+                            <div class="tab-content" id="searchTabContent">
+                                <!-- 票券搜索 -->
+                                <div class="tab-pane fade show active" id="ticket" role="tabpanel" aria-labelledby="ticket-tab">
+                                    <div class="hot">
+                                        <ul>
+                                            <li><span>熱門</span></li>
+                                        </ul>
+                                    </div>
+
+                                    <form action="javascript:void(0);">
+                                        <div class="col-12">
+                                            <div class="input-group mb-2">
+                                                    <input type="search" tabindex="0" id="txtKeyWord_ticket" name="txtKeyWord" placeholder="輸入「關鍵字」找票券" class="form-control ui-autocomplete-input" aria-describedby="button-search" autocomplete="off">
+                                            </div>
+                                            <div class="category-wrap">
+                                                <div class="category">
+                                                    <h3><i class="fas fa-map-marker-alt"></i> 地區：</h3>
+                                                    <div class="list TWarea">
+                                                        <a class="Lall all on" data="all">全部</a>
+                                                    </div>
+                                                    <div class="list TWarea">
+                                                        <a class="LA" data="north">北部</a>
+                                                        <a class="LAC" data="taipei">台北</a>
+                                                        <a class="LAC" data="keelung">基隆</a>
+                                                        <a class="LAC" data="newnorth">新北</a>
+                                                        <a class="LAC" data="ilan">宜蘭</a>
+                                                        <a class="LAC" data="hsinchu">新竹</a>
+                                                        <a class="LAC" data="Taoyuan">桃園</a>
+                                                    </div>
+                                                    <div class="list TWarea">
+                                                        <a class="LB" data="central">中部</a>
+                                                        <a class="LBC" data="miaoli">苗栗</a>
+                                                        <a class="LBC" data="taichung">台中</a>
+                                                        <a class="LBC" data="changhua">彰化</a>
+                                                        <a class="LBC" data="nantou">南投</a>
+                                                        <a class="LBC" data="yunlin">雲林</a>
+                                                    </div>
+                                                    <div class="list TWarea">
+                                                        <a class="LC" data="south">南部</a>
+                                                        <a class="LCC" data="chiayi">嘉義</a>
+                                                        <a class="LCC" data="tainan">台南</a>
+                                                        <a class="LCC" data="kaohsiung">高雄</a>
+                                                        <a class="LCC" data="pingtung">屏東</a>
+                                                    </div>
+                                                    <div class="list TWarea">
+                                                        <a class="LD" data="east">東部</a>
+                                                        <a class="LDC" data="taitung">台東</a>
+                                                        <a class="LDC" data="hualien">花蓮</a>
+                                                    </div>
+                                                    <div class="list TWarea">
+                                                        <a class="LE" data="outerislands">外島</a>
+                                                        <a class="LEC" data="penghu">澎湖</a>
+                                                        <a class="LEC" data="kinmen">金門</a>
+                                                        <a class="LEC" data="lianjiang">連江</a>
+                                                    </div>
+                                                </div>
+                                                <div class="category">
+                                                    <h3><i class="fas fa-calendar-alt"></i> 活動日期：</h3>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-5 col-md-4 col-lg-3">
+                                                            <div role="wrapper" class="gj-datepicker gj-datepicker-bootstrap gj-unselectable input-group"><input type="text" id="startDate" class="form-control datepick seach-date" placeholder="年/月/日" readonly="readonly" data-type="datepicker" data-guid="7d0c7b72-06c9-b88a-c845-dc7f074bc818" data-datepicker="true" role="input"><span class="input-group-append" role="right-icon"><button class="btn btn-outline-secondary border-left-0" type="button"><i class="fa fa-calendar" aria-hidden="true"></i></button></span></div>
+                                                        </div>
+                                                        至
+                                                        <div class="col-sm-5 col-md-4 col-lg-3">
+                                                            <div role="wrapper" class="gj-datepicker gj-datepicker-bootstrap gj-unselectable input-group"><input type="text" id="endDate" class="form-control datepick seach-date" placeholder="年/月/日" readonly="readonly" data-type="datepicker" data-guid="5d04cc4e-54da-b0fb-4bfc-02cc9d5241e7" data-datepicker="true" role="input"><span class="input-group-append" role="right-icon"><button class="btn btn-outline-secondary border-left-0" type="button"><i class="fa fa-calendar" aria-hidden="true"></i></button></span></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <hr>
+                                                <a id="btnSearch_ticket" class="btn btn-primary float-right" onclick="CallSearchByParameters_ticket()" href="#">查詢</a>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+<div id="clockdown" style=" font-size:1.5rem; line-height: 3.25rem; font-weight: bolder; text-align: center; color: #343a40; height: 50px; background: rgba(235,210,225,1); display:none;"><span><i class="fas fa-clock"></i></span><span id="countdown"></span><button class="btn btn-cart" data-toggle="dropdown" onclick="shoppingcartToPage();"> <i class="fas fa-cart-plus fa-2x"></i><span class="badge badge-pill badge-danger">0</span></button></div><div style="display: none;"><span id="ctl00_hiddenValue"></span></div></header>
+
+<!------------------------------------------ HEADER ------------------------------------------>
+
+    <form method="post" action="./UTK0201_0.aspx?rn=349168454&amp;PERFORMANCE_ID=B0AJVAM3&amp;PRODUCT_ID=B0AJKPPD&amp;SHOW_PLACE_MAP=True" id="aspnetForm">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="">
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="QQBOz49QfU/fFHyQwClMJ2Dk6DpWCSQw+aeIgVFiQfWJCA5xuXFRH40ZkRUl5yAPmrF/QDiUt+lTr1uMMCW8wVEcinM=">
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+
+<script src="../UTK01/script/MicrosoftAjax.js" type="text/javascript"></script>
+<script src="../UTK01/script/MicrosoftAjaxWebForms.js" type="text/javascript"></script>
+<script src="../UTK01/script/WebForms.js" type="text/javascript"></script>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="EDC5642B">
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="GxXDWufsPhEJmI5z6Xub4wlFWZgL0zci/V+wsBcEZmBZqD1xHUytGfdAM5n6uOEaDanwhMVFVwSYRmL8CQf5l2/JQ36Awg5dGk91epIZInqudtfbvvwFG4Ga4PzVToMtvZCq8Mplq/Sb1EIg2av2hvPpB7nl8xhwRfiGP9/U/JMEZBrbAoj6uN1pRxA/TSXhXLFaGo17n8dhL+Rq9CSsgpHsqJN6NF6Xku8SmPJmyUjuDOUJGbnPG+6FUEcPNbax71jSxd9yVlWytEjmqomIH3wL94I+qbq+hbsxMCMFPYROLoPeUxRu25h5XWs757nhW9ZgB4JxgrtFnWGLw06HOFUVK7W6smRrc4y3KZIZeo+k/OuFKEhweq5wDp8MinD0rgnt8EOQ4O+AzIe4f3214jpBgjc=">
+</div>
+        <div class="bg" style="margin-bottom: 120px;">
+            <div id="container" style="padding-bottom: 3px; padding-top: 5px">
+                <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager1', 'aspnetForm', ['tctl00$ContentPlaceHolder1$AjaxPanel',''], [], [], 300, 'ctl00');
+//]]>
+</script>
+
+
+                <table>
+                    <tbody><tr>
+                        <td width="250px">
+                            <!--<div class="cart_end"><a href="#">購物車</a> 保留時間1:20</div>-->
+                        </td>
+                        <td>
+                            <div id="ctl00_LOGIN" class="loginout">
+                                
+                                <!--<span class="text-danger">victorz.zhj@gmail.com</span> 你好!! <a href="#" onclick="doLogout()">登出</a>-->
+                            </div>
+                        </td>
+                    </tr>
+                </tbody></table>
+                <div style="clear: both;"></div>
+                
+                <input type="hidden" name="ctl00$HidLang" id="ctl00_HidLang" value="zh-TW">
+                <a id="ctl00_LinkButton1" href="javascript:__doPostBack('ctl00$LinkButton1','')"></a>
+                <a id="ctl00_LinkButton2" href="javascript:__doPostBack('ctl00$LinkButton2','')"></a>
+                
+            </div>
+            
+
+
+    <div id="ctl00_ContentPlaceHolder1_AjaxPanel">
+	
+
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$PRODUCT_ID" id="ctl00_ContentPlaceHolder1_PRODUCT_ID" value="B0AJKPPD">
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$PERFORMANCE_ID" id="ctl00_ContentPlaceHolder1_PERFORMANCE_ID" value="B0AJVAM3">
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$SHOW_PLACE_MAP" id="ctl00_ContentPlaceHolder1_SHOW_PLACE_MAP" value="True">
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$memberTypeID" id="ctl00_ContentPlaceHolder1_memberTypeID" value="B07ZV3EJ">
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$memberTypeNO" id="ctl00_ContentPlaceHolder1_memberTypeNO">
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$memberTypeCount" id="ctl00_ContentPlaceHolder1_memberTypeCount" value="1">
+            
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$EntranceVerifyID" id="ctl00_ContentPlaceHolder1_EntranceVerifyID" value="B0AJS57L">
+            <section id="content">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-12 col-lg-6">
+                            <div class="editor-box text-center">
+                                    <div id="ctl00_ContentPlaceHolder1_table1">
+                                        <h5><label id="ctl00_ContentPlaceHolder1_lbl_WEB_Purpose1" style="font-size: 16pt;">高雄櫻花季中信卡友優先購</label></h5>
+                                    <div class="form-group">
+                                    <span style="font-size: medium;">請輸入中國信託信用卡號前<span style="font-size: x-large; color: #ff0000;">6</span>碼</span>
+                                    <input name="ctl00$ContentPlaceHolder1$Txt_id_name" type="text" id="ctl00_ContentPlaceHolder1_Txt_id_name" class="form-control">
+                                    </div>
+                                    
+                                    <a class="btn btn-primary btn-block" onclick="showProcess();setMemberTypeNO('0');" href="javascript:__doPostBack('ctl00$ContentPlaceHolder1$ctl01','')">送出</a>
+
+                                    </div>
+                                    
+                                    
+
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section></div>
+            
+
+
+
+            </div>
+        
+
+
+    <script type="text/javascript">
+
+        //底圖長度
+        function page_init() {
+            var div_height = 240 * parseInt($('#ctl00_ContentPlaceHolder1_memberTypeCount').val());
+            $('#div_background').css("height", div_height + "px");
+        }
+
+        function setMemberTypeNO(NO) {
+            $('#ctl00_ContentPlaceHolder1_memberTypeNO').val(NO);
+        }
+
+        $(document).ready(function () {
+            page_init();
+
+            //POSTBACK後重新綁並，否則jquery會失效
+            var prm = Sys.WebForms.PageRequestManager.getInstance();
+            prm.add_endRequest(function () {
+                page_init();
+            })
+
+        });
+
+    </script>
+
+
+            
+        
+        <!-- IE8菜單 -->
+        <script type="text/javascript">
+            $(function () {
+                chkMenu();
+            });
+
+            var loadTimes = 0;
+            function chkMenu() {
+                if (typeof (Spry) == 'undefined') {
+                    loadTimes++;
+                    if (loadTimes <= 50)
+                        window.setTimeout('chkMenu()', 200);
+                }
+                else
+                    initMenu();
+            }
+
+            function initMenu() {
+                var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", { imgDown:"https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/SpryAssets/SpryMenuBarRightHover.gif" });
+            }
+
+			function HuiwanOnClick() {
+                location.href = _qw;
+            }
+
+			function HuiwanLogoutClick() {
+                document.getElementById('ctl00_LinkButton1').click();
+            }
+
+            function mob_languageChanged() {
+                document.getElementById('ctl00_HidLang').value = document.getElementById('ctl00_mob_Lang').value;
+                document.getElementById('ctl00_LinkButton2').click();
+            }
+
+            function languageChanged() {
+                document.getElementById('ctl00_HidLang').value = document.getElementById('ctl00_Lang').value;
+                document.getElementById('ctl00_LinkButton2').click();
+            }     
+			
+			function skipTime()
+			{
+				if (pauseTimer)
+					return;
+
+				//$(".cart_end").html("<a href='../UTK02/UTK0206_.aspx'>購物車</a>&nbsp;&nbsp;保留時間 " + ((lastTime - (lastTime % 60)) / 60) + ":" + fillData((lastTime % 60), 2));
+				lastTime--;
+
+				if (lastTime <= -1)
+				{
+					alert('已超過您的購物車保留時間, 系統將自動清除您的購物車資訊');
+					$.ajax({
+						type: "POST",
+						url: _vr + "Application/UTK01/UTK0101_02.aspx",
+						data:	"temp=2" +
+							"&sender=jquery",
+						async:   false,
+						success: function(data, text)
+						{
+											if (data.indexOf("Exception") != -1)
+								_ev(data);
+							else	
+							{
+								if (self.location.href.toUpperCase().indexOf("UTK0206_") != -1)
+									self.location.href	=	'http://ticket.ibon.com.tw/';
+								//20101128 Kevin Lin Add:
+								if (self.location.href.toUpperCase().indexOf("UTK0207_") != -1)
+									self.location.href	=	'http://ticket.ibon.com.tw/';
+								else if(self.location.href.toUpperCase().indexOf("UTK0205_") != -1)
+									//self.location.href	=	'../UTK01/UTK0101_.aspx';
+									self.location.href	=	'http://ticket.ibon.com.tw/';
+								//$(".cart_end").hide();
+							}
+						},
+						error: function(xhr, desc, err) {alert(xhr.responseText + "\r\nDesc: " + desc + "\r\nErr:" + err);}
+					});
+				}
+				else
+					timerId	=	setTimeout("skipTime()", 1000);
+			}
+			var masterworker = new Worker('/application/UTK01/script/workertimer.js');
+			$(document).ready(function () 
+			{
+                if (self.location.href.toUpperCase().indexOf("UTK0208_") != -1 || self.location.href.toUpperCase().indexOf("UTK0207_04") != -1){
+                    var selectElement = document.getElementById('ctl00_Lang');
+                    var MobselectElement = document.getElementById('ctl00_mob_Lang');
+                    selectElement.style.display = 'none';
+                    selectElement.disabled = true;
+                    MobselectElement.style.display = 'none';
+                    MobselectElement.disabled = true;
+                }
+
+				showInfo();
+    
+				$.ajax({
+					type: "POST",
+					url: _vr + "Application/UTK01/UTK0101_02.aspx",
+					data: "temp=1" +
+						"&sender=jquery",
+					async: false,
+					success: function (data, text) {
+						if (data.indexOf("Exception") != -1)
+							_ev(data);
+						else {
+							if (data == -99999) {
+								//$(".cart_end").hide();
+							}
+							else if (data == -88888) {
+								if (self.location.href.toUpperCase().indexOf("UTK0207_") != -1) {
+									alert('已超過您的購物車保留時間, 系統將自動清除您的購物車資訊');
+									self.location.href = 'http://ticket.ibon.com.tw/'
+								}
+								//$(".cart_end").hide();
+							}
+							else {
+								//$(".cart_end").show();
+								lastTime = data;
+								//skipTime();
+
+								//重新抓取結束時間
+								var now = new Date();
+								var nowMilliseconds = now.getTime();
+								var targetMilliseconds = nowMilliseconds + (lastTime * 1000);
+								endTimer = new Date(targetMilliseconds);
+
+								masterworker.postMessage({ page: 'master', lastTime: lastTime, endTimer: endTimer });
+							}
+						}
+					},
+					error: function (xhr, desc, err) { alert(xhr.responseText + "\r\nDesc: " + desc + "\r\nErr:" + err); }
+				});
+
+				if (self.location.href.toUpperCase().indexOf("UTK0101_") == -1 &&
+					self.location.href.toUpperCase().indexOf("UTK0201_") == -1 &&
+					self.location.href.toUpperCase().indexOf("UTK0204_") == -1 &&
+					self.location.href.toUpperCase().indexOf("UTK0205_") == -1
+					)
+					document.body.style.display = '';
+			});
+			masterworker.onmessage = function (event) {
+				var masterstatus = event.data;
+				if (masterstatus == 'end') {
+					alert('已超過您的購物車保留時間, 系統將自動清除您的購物車資訊');
+					$.ajax({
+						type: "POST",
+						url: _vr + "Application/UTK01/UTK0101_02.aspx",
+						data: "temp=2" +
+							"&sender=jquery",
+						async: false,
+						success: function (data, text) {
+							if (data.indexOf("Exception") != -1)
+								_ev(data);
+							else {
+								if (self.location.href.toUpperCase().indexOf("UTK0206_") != -1)
+									self.location.href = 'http://ticket.ibon.com.tw/';
+								//20101128 Kevin Lin Add:
+								if (self.location.href.toUpperCase().indexOf("UTK0207_") != -1)
+									self.location.href = 'http://ticket.ibon.com.tw/';
+								else if (self.location.href.toUpperCase().indexOf("UTK0205_") != -1)
+									//self.location.href	=	'../UTK01/UTK0101_.aspx';
+									self.location.href = 'http://ticket.ibon.com.tw/';
+								else if (self.location.href.toUpperCase().indexOf("UTK0201_000") != -1)
+									location.reload();
+								else if (self.location.href.toUpperCase().indexOf("UTK0201_001") != -1)
+									location.reload();
+								else if (self.location.href.toUpperCase().indexOf("UTK0202") != -1)
+									location.reload();
+								else if (self.location.href.toUpperCase().indexOf("UTK0200") != -1)
+									location.reload();
+								//$(".cart_end").hide();
+							}
+						},
+						error: function (xhr, desc, err) { alert(xhr.responseText + "\r\nDesc: " + desc + "\r\nErr:" + err); }
+					});
+				}
+    
+			};
+			</script>
+        <!-- IE8菜單end -->
+    
+
+<script type="text/javascript">
+//<![CDATA[
+document.body.style.display = '';;try{$(_d()).ready(Grid.setGridEvent);$(_d()).ready(iniGridClickColor);$(_d()).ready(SortTable.sortables_init);}catch(ex){};try{reSize();}catch(ex){};try{switchLabel();}catch(ex){};var	proj	=	'售票平台';try{$(_d()).ready(function(){try{gridOuterHTML=_('DataGrid').outerHTML;setColumnHide()}catch(ex){}})}catch(ex){};try{Form.iniFormColor();}catch(ex){};;//]]>
+</script>
+</form>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b2593ef5e074a8c',t:'MTc2NjQ2ODk4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe><script defer="" src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon="{&quot;rayId&quot;:&quot;9b2593ef5e074a8c&quot;,&quot;serverTiming&quot;:{&quot;name&quot;:{&quot;cfExtPri&quot;:true,&quot;cfEdge&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfL4&quot;:true,&quot;cfSpeedBrain&quot;:true,&quot;cfCacheStatus&quot;:true}},&quot;version&quot;:&quot;2025.9.1&quot;,&quot;token&quot;:&quot;93d7c9c63ccb4322bf72e9b554d06a7b&quot;}" crossorigin="anonymous"></script>
+
+<footer>
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12 d-xl-inline-flex justify-content-between">
+                <ul class="footer-menu">                    
+                        <li><a href="https://ticket.ibon.com.tw/NewsInfo/Details/2528" target="_self">營業人資訊</a></li>
+                        <li><a href="https://ticket.ibon.com.tw/NewsInfo/Details/348" target="_self">服務條款</a></li>
+                        <li><a href="https://ticket.ibon.com.tw/NewsInfo/Details/349" target="_self">隱私權政策</a></li>
+                        <li><a href="https://ticket.ibon.com.tw/Home/Question" target="_self">常見問題</a></li>
+                        <li><a href="https://www.ibon.com.tw/#gsc.tab=0" target="_blank">ibon官網</a></li>
+                        <li><a href="https://www.7-11.com.tw/" target="_blank">7-ELEVEN</a></li>
+                        <li><a href="https://ticket.ibon.com.tw/Home/Partner" target="_self">合作夥伴</a></li>
+                        <li><a href="https://www.ibon.com.tw/retail_inquiry.aspx#gsc.tab=0" target="_blank">門市查詢</a></li>
+                        <li><a href="https://165.npa.gov.tw/#/" target="_blank">反詐騙165</a></li>
+                        <li><a href="https://tour.ibon.com.tw/ticket/trust" target="_blank">信託票券查詢</a></li>
+                </ul>
+
+                <ul class="social">
+                    <li><a href="https://twitter.com/711_ibon" target="_blank" class="fab fa-twitter"></a></li>
+                    <li><a href="https://line.me/ti/p/%40gpk2354t" target="_blank" class="fab fa-line"></a></li>
+                    <li><a href="https://www.instagram.com/ibontw/" target="_blank" class="fab fa-instagram"></a></li>
+                    <li><a href="https://www.facebook.com/711.ibon/" target="_blank" class="fab fa-facebook-square"></a></li>
+                </ul>
+            </div>
+            <div class="col-12 d-lg-inline-flex justify-content-between">
+                <p>票務客服專線： 0800-016-138、(02)2659-9900(24小時)｜<a href="https://ticket.ibon.com.tw/Home/Contact" target="_blank">聯絡我們</a></p>
+                <p>©2019 President Chain Store Corporation. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+    <div class="top"></div>
+</footer>
+
+
+<div role="calendar" type="month" class="gj-picker gj-picker-bootstrap datepicker gj-unselectable" guid="7d0c7b72-06c9-b88a-c845-dc7f074bc818" month="11" year="2025" style="display: none;"><div role="body"></div></div><div role="calendar" type="month" class="gj-picker gj-picker-bootstrap datepicker gj-unselectable" guid="5d04cc4e-54da-b0fb-4bfc-02cc9d5241e7" month="11" year="2025" style="display: none;"><div role="body"></div></div><ul id="ui-id-1" tabindex="0" class="ui-menu ui-widget ui-widget-content ui-autocomplete ui-front" unselectable="on" style="display: none;"></ul><div role="status" aria-live="assertive" aria-relevant="additions" class="ui-helper-hidden-accessible"></div></body>
