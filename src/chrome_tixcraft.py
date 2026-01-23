@@ -184,7 +184,7 @@ def get_config_dict(args):
             if args.kktix_account:
                 config_dict["accounts"]["kktix_account"] = args.kktix_account
             if args.kktix_password:
-                config_dict["advanced"]["kktix_password_plaintext"] = args.kktix_password
+                config_dict["accounts"]["kktix_password"] = args.kktix_password
 
             if args.proxy_server:
                 config_dict["advanced"]["proxy_server_port"] = args.proxy_server
@@ -6151,9 +6151,7 @@ def kktix_paused_main(driver, url, config_dict):
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         kktix_account = config_dict["accounts"]["kktix_account"]
-        kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-        if kktix_password == "":
-            kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
+        kktix_password = config_dict["accounts"]["kktix_password"].strip()
         if len(kktix_account) > 4:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
@@ -6195,9 +6193,7 @@ def kktix_main(driver, url, config_dict):
     # fix https://kktix.com/users/sign_in?back_to=https://kktix.com/events/xxxx and registerStatus: SOLD_OUT cause page refresh.
     if '/users/sign_in?' in url:
         kktix_account = config_dict["accounts"]["kktix_account"]
-        kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-        if kktix_password == "":
-            kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
+        kktix_password = config_dict["accounts"]["kktix_password"].strip()
         if len(kktix_account) > 0:
             kktix_login(driver, kktix_account, kktix_password)
         is_url_contain_sign_in = True
@@ -6273,9 +6269,7 @@ def kktix_main(driver, url, config_dict):
         if config_dict["advanced"]["headless"]:
             if not kktix_dict["is_popup_checkout"]:
                 kktix_account = config_dict["accounts"]["kktix_account"]
-                kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-                if kktix_password == "":
-                    kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
+                kktix_password = config_dict["accounts"]["kktix_password"].strip()
 
                 print("基本資料(或實名制)網址:", url)
                 if len(kktix_account) > 0:
@@ -6321,9 +6315,7 @@ def famiticket_main(driver, url, config_dict):
 
     if '/Home/User/SignIn' in url:
         fami_account = config_dict["accounts"]["fami_account"]
-        fami_password = config_dict["advanced"]["fami_password_plaintext"].strip()
-        if fami_password == "":
-            fami_password = util.decryptMe(config_dict["accounts"]["fami_password"])
+        fami_password = config_dict["accounts"]["fami_password"].strip()
         if len(fami_account) > 4:
             fami_login(driver, fami_account, fami_password)
 
@@ -6680,9 +6672,7 @@ def urbtix_main(driver, url, config_dict):
 
     if '.hk/member-login' in url:
         urbtix_account = config_dict["accounts"]["urbtix_account"]
-        urbtix_password = config_dict["advanced"]["urbtix_password_plaintext"].strip()
-        if urbtix_password == "":
-            urbtix_password = util.decryptMe(config_dict["accounts"]["urbtix_password"])
+        urbtix_password = config_dict["accounts"]["urbtix_password"].strip()
         if len(urbtix_account) > 4:
             urbtix_login(driver, urbtix_account, urbtix_password)
 
@@ -6860,9 +6850,7 @@ def cityline_main(driver, url, config_dict):
     # ignore url redirect
     if 'cityline.com/Login.html' in url:
         cityline_account = config_dict["accounts"]["cityline_account"]
-        cityline_password = config_dict["advanced"]["cityline_password_plaintext"].strip()
-        if cityline_password == "":
-            cityline_password = util.decryptMe(config_dict["accounts"]["cityline_password"])
+        cityline_password = config_dict["accounts"]["cityline_password"].strip()
         if len(cityline_account) > 4:
             cityline_login(driver, cityline_account, cityline_password)
         return
@@ -8405,9 +8393,7 @@ def softix_powerweb_main(driver, url, config_dict):
         is_hkticketing_sign_in_page = True
     if is_hkticketing_sign_in_page:
         hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
-        hkticketing_password = config_dict["advanced"]["hkticketing_password_plaintext"].strip()
-        if hkticketing_password == "":
-            hkticketing_password = util.decryptMe(config_dict["accounts"]["hkticketing_password"])
+        hkticketing_password = config_dict["accounts"]["hkticketing_password"].strip()
         if len(hkticketing_account) > 4:
             hkticketing_login(driver, hkticketing_account, hkticketing_password)
 
@@ -9784,9 +9770,7 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
         # udn sign in.
         if 'https://tickets.udnfunlife.com/application/utk01/utk0101_.aspx' == url.lower():
             udn_account = config_dict["accounts"]["udn_account"]
-            udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
-            if udn_password == "":
-                udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
+            udn_password = config_dict["accounts"]["udn_password"].strip()
             if len(udn_account) > 4:
                 udn_login(driver, udn_account, udn_password)
 
@@ -9967,17 +9951,13 @@ def kham_main(driver, url, config_dict, ocr, Captcha_Browser):
                 kham_captcha(driver, config_dict, ocr, Captcha_Browser, model_name)
 
                 kham_account = config_dict["accounts"]["kham_account"]
-                kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
-                if kham_password == "":
-                    kham_password = util.decryptMe(config_dict["accounts"]["kham_password"])
+                kham_password = config_dict["accounts"]["kham_password"].strip()
                 if len(kham_account) > 4:
                     kham_login(driver, kham_account, kham_password)
 
 
                 ticket_account = config_dict["accounts"]["ticket_account"]
-                ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
-                if ticket_password == "":
-                    ticket_password = util.decryptMe(config_dict["accounts"]["ticket_password"])
+                ticket_password = config_dict["accounts"]["ticket_password"].strip()
                 if len(ticket_account) > 4:
                     ticket_login(driver, ticket_account, ticket_password)
 
@@ -11300,9 +11280,7 @@ def ticketplus_account_sign_in(driver, config_dict):
                 if el_pass.is_enabled():
                     inputed_text = el_pass.get_attribute('value')
                     if not inputed_text is None:
-                        ticketplus_password = config_dict["advanced"]["ticketplus_password_plaintext"].strip()
-                        if ticketplus_password == "":
-                            ticketplus_password = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
+                        ticketplus_password = config_dict["accounts"]["ticketplus_password"].strip()
 
                         if len(inputed_text) == 0:
                             el_pass.click()
@@ -11474,9 +11452,7 @@ def ticketplus_main(driver, url, config_dict, ocr, Captcha_Browser):
 
 def facebook_main(driver, config_dict):
     facebook_account = config_dict["accounts"]["facebook_account"].strip()
-    facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
-    if facebook_password == "":
-        facebook_password = util.decryptMe(config_dict["accounts"]["facebook_password"])
+    facebook_password = config_dict["accounts"]["facebook_password"].strip()
     if len(facebook_account) > 4:
         facebook_login(driver, facebook_account, facebook_password)
         time.sleep(2)
