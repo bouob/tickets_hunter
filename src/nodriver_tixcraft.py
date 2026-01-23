@@ -41,7 +41,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.20)"
+CONST_APP_VERSION = "TicketsHunter (2026.01.24)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -530,9 +530,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     await asyncio.sleep(random.uniform(1, 3))
 
     kktix_account = config_dict["accounts"]["kktix_account"]
-    kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-    if kktix_password == "":
-        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
+    kktix_password = config_dict["accounts"]["kktix_password"].strip()
 
     has_redirected = False
     if len(kktix_account) > 4:
@@ -2837,9 +2835,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
             if config_dict["advanced"]["headless"]:
                 if not kktix_dict["is_popup_checkout"]:
                     kktix_account = config_dict["accounts"]["kktix_account"]
-                    kktix_password = config_dict["advanced"]["kktix_password_plaintext"].strip()
-                    if kktix_password == "":
-                        kktix_password = util.decryptMe(config_dict["accounts"]["kktix_password"])
+                    kktix_password = config_dict["accounts"]["kktix_password"].strip()
 
                     print("基本資料(或實名制)網址:", url)
                     if len(kktix_account) > 0:
@@ -6483,9 +6479,7 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
     is_submited = False
 
     ticketplus_account = config_dict["accounts"]["ticketplus_account"]
-    ticketplus_password = config_dict["advanced"].get("ticketplus_password_plaintext", "").strip()
-    if ticketplus_password == "":
-        ticketplus_password = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
+    ticketplus_password = config_dict["accounts"]["ticketplus_password"].strip()
 
     # manually keyin verify code.
     country_code = ""
@@ -8343,10 +8337,8 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
         show_debug_message = True
 
     # 讀取帳號密碼（優先使用明碼，若為空則解密）
-    fami_account = config_dict["advanced"].get("fami_account", "").strip()
-    fami_password = config_dict["advanced"].get("fami_password_plaintext", "").strip()
-    if fami_password == "":
-        fami_password = util.decryptMe(config_dict["advanced"].get("fami_password", ""))
+    fami_account = config_dict["accounts"]["fami_account"].strip()
+    fami_password = config_dict["accounts"]["fami_password"].strip()
 
     if len(fami_account) < 4:
         if show_debug_message:
@@ -15135,9 +15127,7 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
 async def nodriver_facebook_main(tab, config_dict):
     facebook_account = config_dict["accounts"]["facebook_account"].strip()
-    facebook_password = config_dict["advanced"]["facebook_password_plaintext"].strip()
-    if facebook_password == "":
-        facebook_password = util.decryptMe(config_dict["accounts"]["facebook_password"])
+    facebook_password = config_dict["accounts"]["facebook_password"].strip()
     if len(facebook_account) > 4:
         await nodriver_facebook_login(tab, facebook_account, facebook_password)
 
@@ -16594,9 +16584,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             # This prevents the infinite redirect loop between login page and event page
             if 'udnfunlife.com' in url.lower():
                 udn_account = config_dict["accounts"]["udn_account"]
-                udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
-                if udn_password == "":
-                    udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
+                udn_password = config_dict["accounts"]["udn_password"].strip()
 
                 if len(udn_account) > 4:
                     # Check if already logged in by looking for logout button or user menu
@@ -16896,9 +16884,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         # UDN uses a popup login dialog on homepage, not UTK1306 page
         if 'utk01/utk0101_.aspx' in url.lower():
             udn_account = config_dict["accounts"]["udn_account"]
-            udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
-            if udn_password == "":
-                udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
+            udn_password = config_dict["accounts"]["udn_password"].strip()
             if len(udn_account) > 4:
                 # Check if already logged in
                 # Detection method: Check if "登入/註冊" menu item is hidden
@@ -18129,9 +18115,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 # UDN login (Feature 010: uses same UTK backend as KHAM)
                 if 'udnfunlife' in domain_name:
                     udn_account = config_dict["accounts"]["udn_account"]
-                    udn_password = config_dict["advanced"]["udn_password_plaintext"].strip()
-                    if udn_password == "":
-                        udn_password = util.decryptMe(config_dict["accounts"]["udn_password"])
+                    udn_password = config_dict["accounts"]["udn_password"].strip()
                     if len(udn_account) > 4:
                         if show_debug_message:
                             print(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
@@ -18139,17 +18123,13 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                 # Kham login
                 kham_account = config_dict["accounts"]["kham_account"]
-                kham_password = config_dict["advanced"]["kham_password_plaintext"].strip()
-                if kham_password == "":
-                    kham_password = util.decryptMe(config_dict["accounts"]["kham_password"])
+                kham_password = config_dict["accounts"]["kham_password"].strip()
                 if len(kham_account) > 4:
                     await nodriver_kham_login(tab, kham_account, kham_password, ocr)
 
                 # Ticket.com.tw login
                 ticket_account = config_dict["accounts"]["ticket_account"]
-                ticket_password = config_dict["advanced"]["ticket_password_plaintext"].strip()
-                if ticket_password == "":
-                    ticket_password = util.decryptMe(config_dict["accounts"]["ticket_password"])
+                ticket_password = config_dict["accounts"]["ticket_password"].strip()
                 if len(ticket_account) > 4:
                     # Use dedicated ticket login function (different selectors)
                     await nodriver_ticket_login(tab, ticket_account, ticket_password, config_dict)
