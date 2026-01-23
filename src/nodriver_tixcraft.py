@@ -22673,9 +22673,9 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
-    # Get account credentials (password is encrypted in settings.json)
-    hkticketing_account = config_dict.get("advanced", {}).get("hkticketing_account", "").strip()
-    hkticketing_password = util.decryptMe(config_dict.get("advanced", {}).get("hkticketing_password", ""))
+    # Get account credentials (password already decrypted in settings.py)
+    hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
+    hkticketing_password = config_dict["accounts"]["hkticketing_password"].strip()
 
     if not hkticketing_account or not hkticketing_password:
         print("[HKTICKETING TYPE02] No account/password configured, please login manually")
@@ -24134,8 +24134,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
 
     if is_hkticketing_sign_in_page:
         hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
-        # Password is encrypted in settings.json, need to decrypt
-        hkticketing_password = util.decryptMe(config_dict["advanced"].get("hkticketing_password", ""))
+        hkticketing_password = config_dict["accounts"]["hkticketing_password"].strip()
         if len(hkticketing_account) > 4:
             login_success = await nodriver_hkticketing_login(tab, hkticketing_account, hkticketing_password)
 
