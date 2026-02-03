@@ -500,6 +500,8 @@ class RunHandler(tornado.web.RequestHandler):
 class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = load_json()
+        # Decrypt passwords for Web UI display (migration: decrypt old encrypted passwords)
+        config_dict = decrypt_password(config_dict)
 
         # Dynamically generate remote_url based on server_port (Issue #156)
         server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
