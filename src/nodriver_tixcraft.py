@@ -33,6 +33,7 @@ import urllib.parse
 
 import util
 import settings
+import chrome_downloader
 from NonBrowser import NonBrowser
 
 try:
@@ -21184,8 +21185,18 @@ def get_extension_config(config_dict, args=None):
         mcp_debug_enabled = True
         print("[MCP DEBUG] Mode enabled (via settings.json) - actual port will be shown after browser starts")
 
+    # Ensure Chrome is available (download if needed)
+    # This fixes Issue #236: NoDriver fails when Chrome is not installed
+    app_root = util.get_app_root()
+    webdriver_dir = os.path.join(app_root, "webdriver")
+    chrome_path = chrome_downloader.ensure_chrome_available(download_dir=webdriver_dir)
+    if not chrome_path:
+        print("[ERROR] Chrome not found and download failed.")
+        print("[ERROR] Please install Chrome manually or check your internet connection.")
+        raise FileNotFoundError("Could not find or download Chrome browser")
+
     # Normal mode: auto-detect (host=None, port=None) to let NoDriver start the browser
-    conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"])
+    conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"], browser_executable_path=chrome_path)
     if config_dict["advanced"]["chrome_extension"]:
         ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
         if len(ext) > 0:
