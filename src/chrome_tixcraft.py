@@ -51,7 +51,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.24)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -11616,7 +11616,11 @@ def reload_config(config_dict, last_mtime):
                 new_config = json.load(json_data)
 
                 # Update fields
-                fields = ["ticket_number", "date_auto_select", "area_auto_select", "keyword_exclude", "ocr_captcha", "tixcraft", "kktix", "cityline"]
+                fields = [
+                    "ticket_number", "date_auto_select", "area_auto_select", "keyword_exclude",
+                    "ocr_captcha", "tixcraft", "kktix", "cityline",
+                    "refresh_datetime", "contact", "date_auto_fallback", "area_auto_fallback"
+                ]
                 for field in fields:
                     if field in new_config:
                         config_dict[field] = new_config[field]
@@ -11624,7 +11628,13 @@ def reload_config(config_dict, last_mtime):
                 if "advanced" in new_config:
                     if "advanced" not in config_dict:
                         config_dict["advanced"] = {}
-                    adv_fields = ["play_sound", "disable_adjacent_seat", "hide_some_image", "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose"]
+                    adv_fields = [
+                        "play_sound", "disable_adjacent_seat", "hide_some_image",
+                        "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose",
+                        "auto_reload_overheat_count", "auto_reload_overheat_cd",
+                        "idle_keyword", "resume_keyword", "idle_keyword_second", "resume_keyword_second",
+                        "discord_webhook_url", "discount_code"
+                    ]
                     for field in adv_fields:
                         if field in new_config["advanced"]:
                             config_dict["advanced"][field] = new_config["advanced"][field]

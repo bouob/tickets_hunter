@@ -22,7 +22,22 @@
     "host_permissions": [
         "http://maxbot.dropboxlike.com:16888/*",
         "http://127.0.0.1:16888/*",
-        "http://127.0.0.1:17000/*"
+        "http://127.0.0.1:17000/*",
+        "*://tixcraft.com/*",
+        "*://www.indievox.com/*",
+        "*://indievox.com/*",
+        "*://ticketmaster.sg/*",
+        "*://ticket.com.tw/*",
+        "*://kham.com.tw/*",
+        "*://ticket.ibon.com.tw/*",
+        "*://orders.ibon.com.tw/*",
+        "*://*.hkticketing.com/*",
+        "*://*.cityline.com/*",
+        "*://ticketplus.com.tw/*",
+        "*://*.kktix.cc/*",
+        "*://kktix.com/*",
+        "*://netbank.hncb.com.tw/*",
+        "*://fantopia.io/*"
     ],
     "web_accessible_resources": [
         {
