@@ -245,7 +245,7 @@ function load_settins_to_form(settings)
         ticket_password.value = settings.accounts.ticket_password;
         udn_password.value = settings.accounts.udn_password;
         ticketplus_password.value = settings.accounts.ticketplus_password;
-        discount_code.value = settings.accounts.discount_code || '';
+        discount_code.value = settings.advanced.discount_code || '';
         urbtix_password.value = settings.accounts.urbtix_password;
         hkticketing_password.value = settings.accounts.hkticketing_password;
 
@@ -489,7 +489,7 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.ticket_password = ticket_password.value;
             settings.accounts.udn_password = udn_password.value;
             settings.accounts.ticketplus_password = ticketplus_password.value;
-            settings.accounts.discount_code = discount_code.value;
+            settings.advanced.discount_code = discount_code.value;
             settings.accounts.urbtix_password = urbtix_password.value;
             settings.accounts.hkticketing_password = hkticketing_password.value;
 
@@ -610,8 +610,7 @@ function check_unsaved_fields()
             "kham_password",
             "ticket_password",
             "udn_password",
-            "ticketplus_password",
-            "discount_code"
+            "ticketplus_password"
         ];
         field_list_accounts.forEach(f => {
             const field = document.querySelector('#'+f);
@@ -647,7 +646,8 @@ function check_unsaved_fields()
             "idle_keyword",
             "resume_keyword",
             "idle_keyword_second",
-            "resume_keyword_second"
+            "resume_keyword_second",
+            "discount_code"
         ];
         field_list_advance.forEach(f => {
             const field = document.querySelector('#'+f);

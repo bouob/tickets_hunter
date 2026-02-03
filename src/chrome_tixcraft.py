@@ -11633,17 +11633,11 @@ def reload_config(config_dict, last_mtime):
                         "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose",
                         "auto_reload_overheat_count", "auto_reload_overheat_cd",
                         "idle_keyword", "resume_keyword", "idle_keyword_second", "resume_keyword_second",
-                        "discord_webhook_url"
+                        "discord_webhook_url", "discount_code"
                     ]
                     for field in adv_fields:
                         if field in new_config["advanced"]:
                             config_dict["advanced"][field] = new_config["advanced"][field]
-
-                # Update accounts.discount_code only
-                if "accounts" in new_config and "discount_code" in new_config["accounts"]:
-                    if "accounts" not in config_dict:
-                        config_dict["accounts"] = {}
-                    config_dict["accounts"]["discount_code"] = new_config["accounts"]["discount_code"]
 
                 print("Configuration reloaded from settings.json")
                 return config_dict, current_mtime

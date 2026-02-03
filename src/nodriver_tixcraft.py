@@ -6924,8 +6924,33 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
             if show_debug_message:
                 print("JavaScript date selection click failed:", exc)
     else:
+        # Provide accurate error message based on actual condition
         if show_debug_message:
-            print("Vue.js not ready, skip clicking")
+            if not is_vue_ready:
+                print("[TicketPlus DATE] Vue.js not ready, waiting for page to load...")
+            elif not formated_area_list or len(formated_area_list) == 0:
+                print("[TicketPlus DATE] No available tickets (all sold out), waiting for refresh...")
+            else:
+                print("[TicketPlus DATE] Unknown condition, skip clicking")
+
+        # Auto reload when no available tickets and auto_reload_coming_soon_page is enabled
+        if auto_reload_coming_soon_page_enable and is_vue_ready and (not formated_area_list or len(formated_area_list) == 0):
+            try:
+                reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                if reload_interval > 0:
+                    if show_debug_message:
+                        print(f"[TicketPlus DATE] Waiting {reload_interval}s before auto-reload...")
+                    await asyncio.sleep(reload_interval)
+                else:
+                    await asyncio.sleep(1.0)  # Default 1 second delay
+
+                await tab.reload()
+                if show_debug_message:
+                    print("[TicketPlus DATE] Page reloaded, waiting for content...")
+                await asyncio.sleep(0.5)
+            except Exception as exc:
+                if show_debug_message:
+                    print(f"[TicketPlus DATE] Auto reload failed: {exc}")
 
     return is_date_clicked
 
@@ -21455,17 +21480,11 @@ async def reload_config(config_dict, last_mtime):
                         "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose",
                         "auto_reload_overheat_count", "auto_reload_overheat_cd",
                         "idle_keyword", "resume_keyword", "idle_keyword_second", "resume_keyword_second",
-                        "discord_webhook_url"
+                        "discord_webhook_url", "discount_code"
                     ]
                     for field in adv_fields:
                         if field in new_config["advanced"]:
                             config_dict["advanced"][field] = new_config["advanced"][field]
-
-                # Update accounts.discount_code only
-                if "accounts" in new_config and "discount_code" in new_config["accounts"]:
-                    if "accounts" not in config_dict:
-                        config_dict["accounts"] = {}
-                    config_dict["accounts"]["discount_code"] = new_config["accounts"]["discount_code"]
 
                 print("Configuration reloaded from settings.json")
                 return config_dict, current_mtime

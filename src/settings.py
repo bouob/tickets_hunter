@@ -173,8 +173,6 @@ def get_default_config():
     config_dict["accounts"]["udn_password"] = ""
     config_dict["accounts"]["ticketplus_password"] = ""
 
-    config_dict["accounts"]["discount_code"] = ""
-
     # Advanced settings (non-credential settings only)
     config_dict['advanced']={}
 
@@ -192,6 +190,7 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
+    config_dict["advanced"]["discount_code"] = ""
 
     # Server port for settings web interface (Issue #156)
     config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
