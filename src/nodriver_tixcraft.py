@@ -21412,6 +21412,41 @@ async def check_refresh_datetime_occur(tab, target_time):
 
     return is_refresh_datetime_sent
 
+async def reload_config(config_dict, last_mtime):
+    app_root = util.get_app_root()
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
+
+    if not os.path.exists(config_filepath):
+        return config_dict, last_mtime
+
+    try:
+        current_mtime = os.path.getmtime(config_filepath)
+        if current_mtime > last_mtime:
+            await asyncio.sleep(0.1)
+            with open(config_filepath, 'r', encoding='utf-8') as json_data:
+                new_config = json.load(json_data)
+
+                # Update fields
+                fields = ["ticket_number", "date_auto_select", "area_auto_select", "keyword_exclude", "ocr_captcha", "tixcraft", "kktix", "cityline"]
+                for field in fields:
+                    if field in new_config:
+                        config_dict[field] = new_config[field]
+
+                if "advanced" in new_config:
+                    if "advanced" not in config_dict:
+                        config_dict["advanced"] = {}
+                    adv_fields = ["play_sound", "disable_adjacent_seat", "hide_some_image", "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose"]
+                    for field in adv_fields:
+                        if field in new_config["advanced"]:
+                            config_dict["advanced"][field] = new_config["advanced"][field]
+
+                print("Configuration reloaded from settings.json")
+                return config_dict, current_mtime
+    except Exception:
+        pass
+
+    return config_dict, last_mtime
+
 # ====================================================================================
 # HKTicketing Platform (hkticketing.com / galaxymacau.com / ticketek.com.au)
 # ====================================================================================
@@ -26139,8 +26174,17 @@ async def main(args):
     is_quit_bot = False
     is_refresh_datetime_sent = False
 
+    # Initialize config mtime
+    app_root = util.get_app_root()
+    config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
+    config_mtime = 0
+    if os.path.exists(config_filepath):
+        config_mtime = os.path.getmtime(config_filepath)
+
     while True:
         await asyncio.sleep(0.05)
+
+        config_dict, config_mtime = await reload_config(config_dict, config_mtime)
 
         # pass if driver not loaded.
         if driver is None:
