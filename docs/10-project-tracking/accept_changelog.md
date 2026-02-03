@@ -14,6 +14,76 @@
 
 ## 2026.02.03
 
+### chore(deps): ddddocr 1.6.0 升級測試 - 官方 bug 暫緩升級
+
+**變更摘要**：
+測試升級 OCR 驗證碼辨識套件 ddddocr 至 1.6.0 版本，發現官方打包問題，暫緩升級。
+
+**問題描述**：
+ddddocr 1.6.0 存在模組匯入衝突 bug（[Issue #293](https://github.com/sml2h3/ddddocr/issues/293)）：
+- 同時存在 `core/` 目錄和 `core.py` 檔案
+- 同時存在 `utils/` 目錄和 `utils.py` 檔案
+- Python 優先匯入目錄，導致 `ImportError`
+
+**錯誤訊息**：
+```
+ImportError: cannot import name 'DdddOcr' from 'ddddocr.core'
+```
+
+**修復狀態**：
+- [PR #294](https://github.com/sml2h3/ddddocr/pull/294) 已提交修復
+- 從 PR 作者 fork 安裝可正常運作：`pip install git+https://github.com/JokerYF/ddddocr.git@master`
+- 但官方尚未合併
+
+**決定**：
+維持 ddddocr==1.5.6，理由：
+1. API 相同，1.6.0 新功能對本專案無迫切需求
+2. 搶票工具需要穩定性
+3. 依賴第三方 fork 有風險
+
+**後續追蹤**：
+- 監控 PR #294 合併狀態
+- 待官方發布修復版本（1.6.1+）後再升級
+
+---
+
+### fix(ticketplus,kktix): 修復售完自動刷新和 discount_code 位置問題 (Issue #224)
+
+**變更摘要**：
+修復 TicketPlus 在所有場次售完時的錯誤訊息和自動刷新功能，以及 KKTIX 會員碼無法自動輸入的問題。
+
+**問題背景**：
+1. TicketPlus 當所有場次顯示「銷售一空」時，會誤報 "Vue.js not ready" 訊息
+2. TicketPlus 售完時不會自動刷新頁面等待票券釋出
+3. KKTIX 會員碼 (Membership ID) 無法自動輸入（v2026.01.21 迴歸）
+
+**根本原因分析**：
+- `discount_code` 在 `settings.py` 定義於 `accounts` 區段
+- 但 `nodriver_tixcraft.py` 讀取的是 `advanced` 區段
+- 導致程式讀取不到使用者設定的優惠碼/會員碼
+
+**實作內容**：
+
+1. **TicketPlus 售完處理改進** (`nodriver_tixcraft.py`)
+   - 區分錯誤訊息：「Vue.js 未載入」vs「無可購買票券」
+   - 當 `auto_reload_coming_soon_page=true` 且無可購票項目時自動刷新
+   - 使用 `auto_reload_page_interval` 控制刷新間隔
+
+2. **discount_code 位置統一** (從 `accounts` 移到 `advanced`)
+   - `settings.py` - 預設值定義位置修正
+   - `settings.js` - Web UI 讀取/儲存路徑修正
+   - `chrome_tixcraft.py` - 熱重載邏輯修正
+   - `nodriver_tixcraft.py` - 熱重載邏輯修正
+
+**影響範圍**：
+- TicketPlus 平台售完頁面行為
+- KKTIX 會員碼自動填入
+- 所有平台的折扣碼/優惠碼功能
+
+**相關 Issue**：Fixes #224 (partial)
+
+---
+
 ### feat(nodriver): 自動下載 Chrome for Testing (Issue #236)
 
 **變更摘要**：
@@ -62,8 +132,7 @@
    - 基本設定：`ticket_number`, `date_auto_select`, `area_auto_select`, `keyword_exclude`, `refresh_datetime`, `contact`, `date_auto_fallback`, `area_auto_fallback`
    - OCR 設定：`ocr_captcha`
    - 平台設定：`tixcraft`, `kktix`, `cityline`
-   - 帳號設定：`accounts.discount_code`
-   - 進階設定：`play_sound`, `disable_adjacent_seat`, `hide_some_image`, `auto_guess_options`, `user_guess_string`, `auto_reload_page_interval`, `verbose`, `auto_reload_overheat_count`, `auto_reload_overheat_cd`, `idle_keyword`, `resume_keyword`, `idle_keyword_second`, `resume_keyword_second`, `discord_webhook_url`
+   - 進階設定：`play_sound`, `disable_adjacent_seat`, `hide_some_image`, `auto_guess_options`, `user_guess_string`, `auto_reload_page_interval`, `verbose`, `auto_reload_overheat_count`, `auto_reload_overheat_cd`, `idle_keyword`, `resume_keyword`, `idle_keyword_second`, `resume_keyword_second`, `discord_webhook_url`, `discount_code`
 
 3. **運作機制**
    - 監控 `settings.json` 的修改時間 (mtime)
