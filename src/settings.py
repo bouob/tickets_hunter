@@ -335,8 +335,7 @@ def launch_maxbot():
         launch_counter = 0
 
     config_filepath, config_dict = load_json()
-    config_dict = decrypt_password(config_dict)
-    
+
     script_name = "chrome_tixcraft"
     if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
         script_name = "nodriver_tixcraft"
@@ -501,7 +500,6 @@ class RunHandler(tornado.web.RequestHandler):
 class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = load_json()
-        config_dict = decrypt_password(config_dict)
 
         # Dynamically generate remote_url based on server_port (Issue #156)
         server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
@@ -537,7 +535,7 @@ class SaveJsonHandler(tornado.web.RequestHandler):
         if is_pass_check:
             app_root = util.get_app_root()
             config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
-            config_dict = encrypt_password(_body)
+            config_dict = _body
 
             if config_dict["kktix"]["max_dwell_time"] > 0:
                 if config_dict["kktix"]["max_dwell_time"] < 15:
