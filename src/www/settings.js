@@ -145,6 +145,39 @@ function updateCitylineHintVisibility() {
     }
 }
 
+// Check if URL is Tixcraft family (tixcraft.com, teamear.com, indievox.com)
+function isTixcraftFamily(url) {
+    if (!url) return false;
+    const tixcraftDomains = ['tixcraft.com', 'teamear.com', 'indievox.com'];
+    return tixcraftDomains.some(domain => url.includes(domain));
+}
+
+// Toggle Tixcraft refresh rate warning visibility
+function updateTixcraftRefreshWarning() {
+    const warningElement = document.getElementById('tixcraft-refresh-warning');
+    if (!warningElement) return;
+
+    const url = homepage.value;
+    const interval = parseFloat(auto_reload_page_interval.value);
+
+    // Show warning if: Tixcraft family site AND refresh interval < 8 seconds
+    const shouldShowWarning = isTixcraftFamily(url) && !isNaN(interval) && interval > 0 && interval < 8;
+
+    if (shouldShowWarning) {
+        warningElement.style.display = 'block';
+        setTimeout(() => {
+            warningElement.classList.add('show');
+        }, 10);
+    } else {
+        if (warningElement.classList.contains('show')) {
+            warningElement.classList.remove('show');
+            setTimeout(() => {
+                warningElement.style.display = 'none';
+            }, 150);
+        }
+    }
+}
+
 function load_settins_to_form(settings)
 {
     if (settings)
@@ -275,6 +308,9 @@ function load_settins_to_form(settings)
 
         // Update Cityline hint visibility after loading settings
         updateCitylineHintVisibility();
+
+        // Update Tixcraft refresh warning after loading settings
+        updateTixcraftRefreshWarning();
     } else {
         console.log('no settings found');
     }
@@ -937,6 +973,16 @@ startQuestionPolling();
 // Cityline login hint visibility control
 if (cityline_account) {
     cityline_account.addEventListener('input', updateCitylineHintVisibility);
+}
+
+// Tixcraft refresh warning visibility control
+if (homepage) {
+    homepage.addEventListener('input', updateTixcraftRefreshWarning);
+    homepage.addEventListener('change', updateTixcraftRefreshWarning);
+}
+if (auto_reload_page_interval) {
+    auto_reload_page_interval.addEventListener('input', updateTixcraftRefreshWarning);
+    auto_reload_page_interval.addEventListener('change', updateTixcraftRefreshWarning);
 }
 
 // Also check when verification tab is clicked

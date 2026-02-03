@@ -249,6 +249,19 @@ def migrate_config(config_dict):
         if "server_port" not in config_dict["advanced"]:
             config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
 
+    # Migrate discount_code from accounts to advanced
+    if "accounts" in config_dict and "discount_code" in config_dict["accounts"]:
+        if "advanced" not in config_dict:
+            config_dict["advanced"] = {}
+        # Only migrate if advanced.discount_code doesn't exist or is empty
+        if "discount_code" not in config_dict["advanced"] or not config_dict["advanced"]["discount_code"]:
+            config_dict["advanced"]["discount_code"] = config_dict["accounts"]["discount_code"]
+        del config_dict["accounts"]["discount_code"]
+
+    # Ensure advanced.discount_code exists
+    if "advanced" in config_dict and "discount_code" not in config_dict["advanced"]:
+        config_dict["advanced"]["discount_code"] = ""
+
     return config_dict
 
 def load_json():
