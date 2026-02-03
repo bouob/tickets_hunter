@@ -28,6 +28,11 @@ user_data/
 /src/webdriver/geckodriver*
 /src/webdriver/msedgedriver*
 
+# Chrome for Testing (auto-downloaded)
+/src/webdriver/chrome-win64/
+/src/webdriver/chrome-linux64/
+/src/webdriver/chrome-mac-*/
+
 # Logs and temp files
 *.log
 *.tmp
