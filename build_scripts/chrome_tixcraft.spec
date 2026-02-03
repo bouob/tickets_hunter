@@ -22,10 +22,13 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        (os.path.join(project_root, 'src', 'webdriver'), 'webdriver'),
+        # Only include extension directories, not auto-downloaded Chrome
+        (os.path.join(project_root, 'src', 'webdriver', 'Maxbotplus_1.0.0'), os.path.join('webdriver', 'Maxbotplus_1.0.0')),
+        (os.path.join(project_root, 'src', 'webdriver', 'Maxblockplus_1.0.0'), os.path.join('webdriver', 'Maxblockplus_1.0.0')),
         (os.path.join(project_root, 'src', 'assets'), 'assets'),
         (os.path.join(project_root, 'src', 'www'), 'www'),
         # settings.json excluded - program generates it automatically
+        # chrome-win64/ excluded - auto-downloaded at runtime if needed
     ] + ddddocr_datas,
     hiddenimports=[
         # Core dependencies

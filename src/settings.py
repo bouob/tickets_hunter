@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.01.24)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.03)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -173,8 +173,6 @@ def get_default_config():
     config_dict["accounts"]["udn_password"] = ""
     config_dict["accounts"]["ticketplus_password"] = ""
 
-    config_dict["accounts"]["discount_code"] = ""
-
     # Advanced settings (non-credential settings only)
     config_dict['advanced']={}
 
@@ -192,6 +190,7 @@ def get_default_config():
     config_dict["advanced"]["verbose"] = False
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
+    config_dict["advanced"]["discount_code"] = ""
 
     # Server port for settings web interface (Issue #156)
     config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
@@ -249,6 +248,19 @@ def migrate_config(config_dict):
     if "advanced" in config_dict:
         if "server_port" not in config_dict["advanced"]:
             config_dict["advanced"]["server_port"] = CONST_SERVER_PORT
+
+    # Migrate discount_code from accounts to advanced
+    if "accounts" in config_dict and "discount_code" in config_dict["accounts"]:
+        if "advanced" not in config_dict:
+            config_dict["advanced"] = {}
+        # Only migrate if advanced.discount_code doesn't exist or is empty
+        if "discount_code" not in config_dict["advanced"] or not config_dict["advanced"]["discount_code"]:
+            config_dict["advanced"]["discount_code"] = config_dict["accounts"]["discount_code"]
+        del config_dict["accounts"]["discount_code"]
+
+    # Ensure advanced.discount_code exists
+    if "advanced" in config_dict and "discount_code" not in config_dict["advanced"]:
+        config_dict["advanced"]["discount_code"] = ""
 
     return config_dict
 
@@ -335,8 +347,7 @@ def launch_maxbot():
         launch_counter = 0
 
     config_filepath, config_dict = load_json()
-    config_dict = decrypt_password(config_dict)
-    
+
     script_name = "chrome_tixcraft"
     if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
         script_name = "nodriver_tixcraft"
@@ -501,6 +512,7 @@ class RunHandler(tornado.web.RequestHandler):
 class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = load_json()
+        # Decrypt passwords for Web UI display (migration: decrypt old encrypted passwords)
         config_dict = decrypt_password(config_dict)
 
         # Dynamically generate remote_url based on server_port (Issue #156)
@@ -537,7 +549,7 @@ class SaveJsonHandler(tornado.web.RequestHandler):
         if is_pass_check:
             app_root = util.get_app_root()
             config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
-            config_dict = encrypt_password(_body)
+            config_dict = _body
 
             if config_dict["kktix"]["max_dwell_time"] > 0:
                 if config_dict["kktix"]["max_dwell_time"] < 15:
