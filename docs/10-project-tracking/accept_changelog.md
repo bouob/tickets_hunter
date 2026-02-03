@@ -12,6 +12,41 @@
 
 ---
 
+## 2026.02.03
+
+### feat(config): 新增設定檔 Hot Reload 功能 (PR #231)
+
+**貢獻者**：[@Yurains](https://github.com/Yurains) (JunYanWu)
+
+**變更摘要**：
+新增設定檔即時重載機制，讓使用者在搶票過程中可直接修改設定並即時生效，無需重新啟動程式。
+
+**實作內容**：
+
+1. **新增 `reload_config` 函數**
+   - `chrome_tixcraft.py` - 同步版本
+   - `nodriver_tixcraft.py` - 非同步版本
+
+2. **支援熱重載的設定項**
+   - 基本設定：`ticket_number`, `date_auto_select`, `area_auto_select`, `keyword_exclude`, `refresh_datetime`, `contact`, `date_auto_fallback`, `area_auto_fallback`
+   - OCR 設定：`ocr_captcha`
+   - 平台設定：`tixcraft`, `kktix`, `cityline`
+   - 帳號設定：`accounts.discount_code`
+   - 進階設定：`play_sound`, `disable_adjacent_seat`, `hide_some_image`, `auto_guess_options`, `user_guess_string`, `auto_reload_page_interval`, `verbose`, `auto_reload_overheat_count`, `auto_reload_overheat_cd`, `idle_keyword`, `resume_keyword`, `idle_keyword_second`, `resume_keyword_second`, `discord_webhook_url`
+
+3. **運作機制**
+   - 監控 `settings.json` 的修改時間 (mtime)
+   - 檔案變更時等待 0.1 秒確保寫入完成
+   - 重載後輸出 "Configuration reloaded from settings.json"
+
+**影響範圍**：
+- Chrome/Selenium 版本
+- NoDriver 版本
+
+**相關 Issue**：Closes #230
+
+---
+
 ## 2025.11.21
 
 ### feat(famiticket): 完成 FamiTicket NoDriver 遷移
