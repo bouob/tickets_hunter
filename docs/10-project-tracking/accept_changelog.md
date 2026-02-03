@@ -14,6 +14,37 @@
 
 ## 2026.02.03
 
+### feat(nodriver): 自動下載 Chrome for Testing (Issue #236)
+
+**變更摘要**：
+當系統未安裝 Chrome 時，NoDriver 引擎現在會自動從 Chrome for Testing API 下載 portable 版本的 Chrome 瀏覽器。
+
+**問題背景**：
+- NoDriver 直接連接 Chrome（不需要 ChromeDriver）
+- 但當系統沒有 Chrome 時會報錯：`could not find a valid chrome browser binary`
+- 原有的 ChromeDriver 自動下載功能對 NoDriver 無效（NoDriver 不使用 ChromeDriver）
+
+**實作內容**：
+
+1. **新增 `chrome_downloader.py` 模組**
+   - `find_system_chrome()` - 搜尋系統已安裝的 Chrome
+   - `get_chrome_download_info()` - 從 Chrome for Testing API 取得下載連結
+   - `download_chrome()` - 下載並解壓縮 Chrome
+   - `ensure_chrome_available()` - 主要入口，確保 Chrome 可用
+
+2. **修改 `nodriver_tixcraft.py`**
+   - 在 `get_extension_config()` 中整合自動下載邏輯
+   - 下載的 Chrome 存放於 `webdriver/chrome-win64/` 目錄
+   - 使用 `browser_executable_path` 參數指定 Chrome 路徑
+
+**下載來源**：
+- API: `https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json`
+- 支援平台：win64, win32, linux64, mac-x64, mac-arm64
+
+**相關 Issue**：Closes #236
+
+---
+
 ### feat(config): 新增設定檔 Hot Reload 功能 (PR #231)
 
 **貢獻者**：[@Yurains](https://github.com/Yurains) (JunYanWu)
