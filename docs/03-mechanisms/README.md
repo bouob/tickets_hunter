@@ -24,7 +24,9 @@ docs/03-mechanisms/
 ├── 11-queue-payment.md          Stage 11: 排隊付款
 ├── 12-error-handling.md         Stage 12: 錯誤處理
 │
-└── 13-active-polling-pattern.md 跨階段: Active Polling 主動輪詢機制 ✅ NEW
+├── 13-active-polling-pattern.md 跨階段: Active Polling 主動輪詢機制 ✅
+│
+└── 14-hot-reload.md             跨階段: 設定檔 Hot Reload 即時修改 ✅ NEW
 
 ✅ = 已完成詳細文件化
 ```
@@ -69,7 +71,7 @@ docs/03-mechanisms/
 
 ---
 
-## 已完成的機制文件（3/12）
+## 已完成的機制文件（4/12 + 2 跨階段）
 
 ### ✅ Stage 4: 日期選擇機制
 
@@ -345,7 +347,26 @@ docs/03-mechanisms/
 
 ---
 
-### 4. 設定驅動開發
+### 4. Hot Reload 即時設定修改
+
+**核心理念**：搶票中可修改設定，程式自動偵測並套用，無需重啟。
+
+**支援範圍**：
+- 基本設定：張數、關鍵字、遞補模式、刷新時間
+- 進階設定：刷新間隔、除錯訊息、音效、Discord 通知
+- 驗證碼設定：OCR 開關、模型路徑
+- 平台設定：拓元、KKTIX、Cityline 專用選項
+
+**不支援**（需重啟）：
+- 瀏覽器類型、WebDriver 類別、視窗大小
+- 帳號登入資訊（Cookie、帳號密碼）
+- 網路設定（Port、Proxy）
+
+**詳細說明**：[14-hot-reload.md](./14-hot-reload.md)
+
+---
+
+### 5. 設定驅動開發
 
 **核心理念**：所有行為由 `settings.json` 控制,使用者友善。
 
@@ -366,7 +387,7 @@ docs/03-mechanisms/
 
 ---
 
-### 5. Selection Mode Standard（選擇模式標準）
+### 6. Selection Mode Standard（選擇模式標準）
 
 **核心理念**：統一使用共用函式計算選擇目標，禁止手寫 if/elif 邏輯。
 
@@ -466,6 +487,7 @@ else:
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v2.1 | 2026-02-03 | 新增 Hot Reload 機制文件 |
 | v2.0 | 2025-11-27 | 新增 v2.0 子功能說明 |
 | | | 🆕 Stage 3: 版面自動偵測（TicketPlus）|
 | | | 🆕 Stage 7: 自動答題機制（KKTIX）|
@@ -516,5 +538,5 @@ else:
 
 ---
 
-**最後更新**：2025-12-18（v2.1）
+**最後更新**：2026-02-03（v2.2）
 **維護者**：Tickets Hunter 開發團隊
