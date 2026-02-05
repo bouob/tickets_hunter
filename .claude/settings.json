@@ -45,6 +45,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit(**/*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/py-syntax-check.ps1"
+          }
+        ]
+      }
     ]
   }
 }

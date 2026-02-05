@@ -1,7 +1,7 @@
 # CLAUDE.md v4.0
 
 **專案**：Tickets Hunter - 多平台搶票自動化系統
-**最後更新**：2026-01-19
+**最後更新**：2026-02-05
 
 ---
 
@@ -48,10 +48,13 @@
 
 ### Git 工作流程
 
+**完整發布流程**（依序執行）：
 ```bash
 /gsave          # 1. 提交變更（自動過濾機敏檔案）
-/gpush          # 2. 推送到私人庫
-/publicpr       # 3. 建立 PR 到公開庫
+/gchange        # 2. 產生 changelog
+/gupdate        # 3. 更新版本號
+/gpush          # 4. 推送到私人庫
+/publicpr       # 5. 建立 PR 到公開庫
 ```
 
 | 操作 | 允許 | 禁止 |
@@ -62,6 +65,14 @@
 **Repo 位址**：
 - 私人庫：`private` → `bouob/private-tickets-hunter`
 - 公開庫：`origin` → `bouob/tickets_hunter`
+
+### Issue 管理
+
+關閉 GitHub Issue 時，**必須**在關閉留言中包含修復版本號：
+
+```
+Fixed in version 2026.02.05
+```
 
 ### speckit 完整流程
 
