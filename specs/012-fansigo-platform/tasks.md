@@ -53,9 +53,9 @@ def get_fansigo_page_type(url: str) -> str:
 ```
 
 **驗收標準**：
-- [ ] URL 模式正確識別所有 FANSI GO 頁面類型
-- [ ] `is_fansigo_url()` 正確回傳 True/False
-- [ ] `get_fansigo_page_type()` 正確回傳頁面類型
+- [x] URL 模式正確識別所有 FANSI GO 頁面類型
+- [x] `is_fansigo_url()` 正確回傳 True/False
+- [x] `get_fansigo_page_type()` 正確回傳頁面類型
 
 ---
 
@@ -81,10 +81,10 @@ def get_fansigo_page_type(url: str) -> str:
 ```
 
 **驗收標準**：
-- [ ] 設定項正確讀取和寫入
-- [ ] 空值時不影響其他功能
-- [ ] 設定檔向後相容
-- [ ] 設定路徑與其他平台 cookie 一致（accounts 區塊）
+- [x] 設定項正確讀取和寫入
+- [x] 空值時不影響其他功能
+- [x] 設定檔向後相容
+- [x] 設定路徑與其他平台 cookie 一致（accounts 區塊）
 
 ---
 
@@ -126,10 +126,10 @@ settings.accounts.fansigo_cookie = fansigo_cookie.value;
 ```
 
 **驗收標準**：
-- [ ] UI 欄位正確顯示於設定頁面
-- [ ] 輸入值正確儲存到 settings.json
-- [ ] 頁面載入時正確顯示已儲存的值
-- [ ] 欄位標籤使用「FANSI GO cookie (FansiAuthInfo)」
+- [x] UI 欄位正確顯示於設定頁面
+- [x] 輸入值正確儲存到 settings.json
+- [x] 頁面載入時正確顯示已儲存的值
+- [x] 欄位標籤使用「FANSI GO cookie (FansiAuthInfo)」
 
 ---
 
@@ -185,10 +185,10 @@ async def fansigo_ticket_main(driver, url: str, config_dict: dict) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確識別頁面類型並執行對應流程
-- [ ] 活動頁自動導向購票頁
-- [ ] 購票頁正確執行票種選擇和數量設定
-- [ ] 付款頁面停止自動化並播放音效
+- [x] 正確識別頁面類型並執行對應流程
+- [x] 活動頁自動導向購票頁
+- [x] 購票頁正確執行票種選擇和數量設定
+- [x] 付款頁面停止自動化並播放音效
 
 ---
 
@@ -262,11 +262,11 @@ STATUS_ENDED = "ended"             # ☹︎ 你已太晚
 ```
 
 **驗收標準**：
-- [ ] 正確取得所有票種選項
-- [ ] 過濾非可購買狀態（未開賣、已結束、售完）
-- [ ] 關鍵字匹配支援多關鍵字（分號分隔）
-- [ ] 排除關鍵字正確運作
-- [ ] 遞補策略依 mode 設定執行
+- [x] 正確取得所有票種選項
+- [x] 過濾非可購買狀態（未開賣、已結束、售完）
+- [x] 關鍵字匹配支援多關鍵字（分號分隔）
+- [x] 排除關鍵字正確運作
+- [x] 遞補策略依 mode 設定執行
 
 ---
 
@@ -306,9 +306,9 @@ async def fansigo_assign_ticket_number(driver, config_dict: dict) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確點擊 + 按鈕設定數量
-- [ ] 驗證最終數量與設定一致
-- [ ] 處理剩餘票數不足的情況
+- [x] 正確點擊 + 按鈕設定數量
+- [x] 驗證最終數量與設定一致
+- [x] 處理剩餘票數不足的情況
 
 ---
 
@@ -345,9 +345,9 @@ async def stop_at_checkout(driver, config_dict: dict) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確偵測付款頁面 URL
-- [ ] 播放成功音效通知使用者
-- [ ] 不進行任何付款操作
+- [x] 正確偵測付款頁面 URL
+- [x] 播放成功音效通知使用者
+- [x] 不進行任何付款操作
 
 ---
 
@@ -407,10 +407,10 @@ def detect_error_type(error: Exception) -> str:
 ```
 
 **驗收標準**：
-- [ ] 正確偵測各類錯誤
-- [ ] Cloudflare 驗證時等待使用者介入
-- [ ] 網路錯誤時自動重試
-- [ ] 售完時停止並通知
+- [x] 正確偵測各類錯誤
+- [x] Cloudflare 驗證時等待使用者介入
+- [x] 網路錯誤時自動重試
+- [x] 售完時停止並通知
 
 ---
 
@@ -474,10 +474,10 @@ async def fansigo_date_auto_select(driver, url: str, config_dict: dict) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確取得所有場次選項
-- [ ] 單一場次時直接選擇
-- [ ] 多場次時使用關鍵字匹配
-- [ ] 遞補策略正確執行
+- [x] 正確取得所有場次選項
+- [x] 單一場次時直接選擇
+- [x] 多場次時使用關鍵字匹配
+- [x] 遞補策略正確執行
 
 ---
 
@@ -542,9 +542,9 @@ def parse_show_venue(text: str) -> str:
 ```
 
 **驗收標準**：
-- [ ] 正確解析場次名稱
-- [ ] 正確解析日期時間
-- [ ] 正確解析場地名稱
+- [x] 正確解析場次名稱
+- [x] 正確解析日期時間
+- [x] 正確解析場地名稱
 
 ---
 
@@ -593,10 +593,10 @@ def match_fuzzy(text: str, keyword: str) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 支援城市名稱匹配（「高雄」「台北」）
-- [ ] 支援日期匹配（「02/07」「2026/02/08」）
-- [ ] 支援場地名稱匹配（「WAREHOUSE」「Pipe」）
-- [ ] 多關鍵字依序優先匹配
+- [x] 支援城市名稱匹配（「高雄」「台北」）
+- [x] 支援日期匹配（「02/07」「2026/02/08」）
+- [x] 支援場地名稱匹配（「WAREHOUSE」「Pipe」）
+- [x] 多關鍵字依序優先匹配
 
 ---
 
@@ -637,9 +637,9 @@ async def fansigo_login(driver, config_dict: dict) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確注入 FansiAuthInfo Cookie
-- [ ] 驗證登入狀態
-- [ ] 無 Cookie 時以訪客身份繼續
+- [x] 正確注入 FansiAuthInfo Cookie
+- [x] 驗證登入狀態
+- [x] 無 Cookie 時以訪客身份繼續
 
 ---
 
@@ -677,8 +677,8 @@ async def inject_fansigo_cookie(driver, cookie_value: str) -> bool:
 ```
 
 **驗收標準**：
-- [ ] Cookie 正確設定到 go.fansi.me 域名
-- [ ] 處理注入失敗的情況
+- [x] Cookie 正確設定到 go.fansi.me 域名
+- [x] 處理注入失敗的情況
 
 ---
 
@@ -711,9 +711,9 @@ async def check_login_status(driver) -> bool:
 ```
 
 **驗收標準**：
-- [ ] 正確偵測「我的票劵」元素
-- [ ] 登入成功返回 True
-- [ ] 未登入返回 False
+- [x] 正確偵測「我的票劵」元素
+- [x] 登入成功返回 True
+- [x] 未登入返回 False
 
 ---
 
@@ -759,9 +759,9 @@ FANSIGO_ALLOW_DOMAINS = [
 ```
 
 **驗收標準**：
-- [ ] 封鎖清單包含所有追蹤器域名
-- [ ] 不封鎖清單包含必要服務
-- [ ] Cloudflare 相關域名不被封鎖
+- [x] 封鎖清單包含所有追蹤器域名
+- [x] 不封鎖清單包含必要服務
+- [x] Cloudflare 相關域名不被封鎖
 
 ---
 
@@ -824,6 +824,8 @@ async def setup_fansigo_request_interception(driver) -> bool:
 - [ ] 不影響正常頁面載入
 - [ ] 不封鎖付款相關請求
 
+> **注意**：T4.2 請求攔截功能延後至後續版本優化，目前已定義封鎖清單常數供未來使用。
+
 ---
 
 ## Phase 5: 整合與測試
@@ -863,9 +865,9 @@ async def main_loop(driver, config_dict):
 ```
 
 **驗收標準**：
-- [ ] FANSI GO 網址正確進入專屬流程
-- [ ] 不影響其他平台功能
-- [ ] 狀態正確管理（登入、攔截設定）
+- [x] FANSI GO 網址正確進入專屬流程
+- [x] 不影響其他平台功能
+- [x] 狀態正確管理（登入、攔截設定）
 
 ---
 
