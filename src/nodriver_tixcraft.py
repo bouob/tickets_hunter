@@ -15737,6 +15737,8 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
     # Find captcha input with multiple selectors
     form_verifyCode = None
     selectors = [
+        'input#CHK',
+        '#ctl00_ContentPlaceHolder1_CHK',
         'input[value="驗證碼"]',
         'input[placeholder="驗證碼"]',
         'input[placeholder="請輸入圖片上符號"]',
@@ -15761,7 +15763,9 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
                         const input = document.querySelector('{selectors[0]}') ||
                                     document.querySelector('{selectors[1]}') ||
                                     document.querySelector('{selectors[2]}') ||
-                                    document.querySelector('{selectors[3]}');
+                                    document.querySelector('{selectors[3]}') ||
+                                    document.querySelector('{selectors[4]}') ||
+                                    document.querySelector('{selectors[5]}');
                         return input ? input.value : null;
                     }})();
                 ''')
@@ -18958,11 +18962,15 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         try:
             # Find captcha input field
             captcha_input = await tab.query_selector('input#CHK')
+            if show_debug:
+                print(f"[KHAM SEAT] Captcha input found: {captcha_input is not None}")
             if captcha_input:
                 model_name = "UTK0205"
                 is_captcha_sent = await nodriver_kham_captcha(
                     tab, config_dict, ocr, model_name
                 )
+                if show_debug:
+                    print(f"[KHAM SEAT] is_captcha_sent: {is_captcha_sent}")
         except Exception as exc:
             if show_debug:
                 print(f"[ERROR] KHAM captcha processing error: {exc}")
@@ -18971,9 +18979,27 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
-            # 4.1: Click submit button - [Optimized] use class selector
+            # 4.1: Click submit button - UTK0205 uses addShoppingCart() function
             result = await tab.evaluate('''
                 (function() {
+                    // Method 1: Try calling addShoppingCart() directly (most reliable)
+                    if (typeof addShoppingCart === 'function') {
+                        addShoppingCart();
+                        return true;
+                    }
+                    // Method 2: Find button by id="addcart" link
+                    const addcartLink = document.querySelector('a#addcart button');
+                    if (addcartLink && !addcartLink.disabled) {
+                        addcartLink.click();
+                        return true;
+                    }
+                    // Method 3: Find button with onclick containing addShoppingCart
+                    const btnWithOnclick = document.querySelector('button[onclick*="addShoppingCart"]');
+                    if (btnWithOnclick && !btnWithOnclick.disabled) {
+                        btnWithOnclick.click();
+                        return true;
+                    }
+                    // Method 4: Legacy selector for other KHAM pages
                     const button = document.querySelector('button.sumitButton');
                     if (button && !button.disabled) {
                         button.click();
