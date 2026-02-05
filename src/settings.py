@@ -151,6 +151,7 @@ def get_default_config():
     config_dict["accounts"]["tixcraft_sid"] = ""
     config_dict["accounts"]["ibonqware"] = ""
     config_dict["accounts"]["funone_session_cookie"] = ""
+    config_dict["accounts"]["fansigo_cookie"] = ""
     config_dict["accounts"]["facebook_account"] = ""
     config_dict["accounts"]["kktix_account"] = ""
     config_dict["accounts"]["fami_account"] = ""

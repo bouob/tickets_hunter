@@ -26077,6 +26077,635 @@ async def nodriver_funone_main(tab, url, config_dict):
     return tab
 
 
+# =============================================================================
+# FANSI GO Platform Support
+# URL: https://go.fansi.me
+# Features: Multi-show selection, multi-section selection, Cookie login
+# =============================================================================
+
+# Global state dictionary for FANSI GO
+fansigo_dict = {}
+
+# FANSI GO URL patterns
+FANSIGO_URL_PATTERNS = {
+    "domain": r"go\.fansi\.me",
+    "event_page": r"go\.fansi\.me/events/(\d+)",
+    "show_page": r"go\.fansi\.me/tickets/show/(\d+)",
+    "checkout_page": r"go\.fansi\.me/tickets/payment/checkout/",
+    "order_result": r"go\.fansi\.me/tickets/payment/orderresult/",
+}
+
+# FANSI GO tracker block domains
+FANSIGO_BLOCK_DOMAINS = [
+    "googletagmanager.com",
+    "analytics.google.com",
+    "stats.g.doubleclick.net",
+    "google.com.tw/ads",
+    "google.com/ads",
+    "smartlook.com",
+    "web-sdk.smartlook.com",
+]
+
+# FANSI GO allow domains (must not block)
+FANSIGO_ALLOW_DOMAINS = [
+    "go.fansi.me",
+    "api.fansi.me",
+    "checkout.payments.91app.com",
+    "cdn-cgi",
+    "challenges.cloudflare.com",
+]
+
+
+def is_fansigo_url(url: str) -> bool:
+    """Check if URL is a FANSI GO URL"""
+    import re
+    if url is None:
+        return False
+    return bool(re.search(FANSIGO_URL_PATTERNS["domain"], url))
+
+
+def get_fansigo_page_type(url: str) -> str:
+    """Get FANSI GO page type from URL
+
+    Returns:
+        str: "event", "show", "checkout", "order_result", or "unknown"
+    """
+    import re
+    if url is None:
+        return "unknown"
+
+    if re.search(FANSIGO_URL_PATTERNS["checkout_page"], url):
+        return "checkout"
+    if re.search(FANSIGO_URL_PATTERNS["order_result"], url):
+        return "order_result"
+    if re.search(FANSIGO_URL_PATTERNS["event_page"], url):
+        return "event"
+    if re.search(FANSIGO_URL_PATTERNS["show_page"], url):
+        return "show"
+
+    return "unknown"
+
+
+async def nodriver_fansigo_inject_cookie(tab, config_dict):
+    """Inject FansiAuthInfo cookie for FANSI GO login
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if injection successful or no cookie configured
+    """
+    import nodriver.cdp as cdp
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    fansigo_cookie = config_dict["accounts"].get("fansigo_cookie", "").strip()
+
+    if len(fansigo_cookie) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No cookie configured, continuing as guest")
+        return True
+
+    try:
+        # Set FansiAuthInfo cookie
+        await tab.send(cdp.network.set_cookie(
+            name="FansiAuthInfo",
+            value=fansigo_cookie,
+            domain="go.fansi.me",
+            path="/",
+        ))
+
+        if show_debug_message:
+            print("[FANSIGO] Cookie injected successfully")
+        return True
+
+    except Exception as e:
+        print(f"[FANSIGO] Cookie injection failed: {e}")
+        return False
+
+
+async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
+    """Get all available shows from event page
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        list: List of show dictionaries with element, text, name, datetime, venue
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    shows = []
+
+    try:
+        # Find all show links on event page
+        # Show links contain show name, datetime, venue info
+        show_elements = await tab.query_selector_all('a[href*="/tickets/show/"]')
+
+        for elem in show_elements:
+            try:
+                text = await elem.get_text()
+                if text and len(text.strip()) > 0:
+                    text = text.strip()
+                    # Parse show information from text
+                    # Example: "Kaohsiung 2026/02/07 19:00 LIVE WAREHOUSE"
+                    name = text
+                    datetime_str = ""
+                    venue = ""
+
+                    # Try to extract datetime
+                    datetime_match = re.search(r"(\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2})", text)
+                    if datetime_match:
+                        datetime_str = datetime_match.group(1)
+                        # Name is before datetime
+                        name_match = re.match(r"^(.+?)\s+\d{4}/", text)
+                        if name_match:
+                            name = name_match.group(1).strip()
+                        # Venue is after datetime
+                        venue_match = re.search(r"\d{2}:\d{2}\s+(.+?)(?:\s+\d{3}|$)", text)
+                        if venue_match:
+                            venue = venue_match.group(1).strip()
+
+                    shows.append({
+                        "element": elem,
+                        "text": text,
+                        "name": name,
+                        "datetime": datetime_str,
+                        "venue": venue,
+                    })
+            except Exception:
+                pass
+
+        if show_debug_message:
+            print(f"[FANSIGO] Found {len(shows)} shows")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[FANSIGO] Error getting shows: {e}")
+
+    return shows
+
+
+def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "text") -> dict:
+    """Match item by keyword string
+
+    Args:
+        items: List of item dictionaries
+        keyword_string: Keyword string (semicolon separated for multiple)
+        text_key: Key to use for text matching
+
+    Returns:
+        dict: Matched item or None
+    """
+    if not keyword_string or len(keyword_string.strip()) == 0:
+        return None
+
+    # Use util.format_keyword_string for consistent keyword handling
+    formatted_keyword = util.format_keyword_string(keyword_string)
+    keywords = [k.strip() for k in formatted_keyword.split(";") if k.strip()]
+
+    for keyword in keywords:
+        for item in items:
+            item_text = item.get(text_key, "")
+            if util.is_text_match_keyword(item_text, keyword):
+                return item
+
+    return None
+
+
+async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
+    """Auto select show/date on event page
+
+    Args:
+        tab: NoDriver tab
+        url: Current URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if show selected or not on event page
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check if date auto select is enabled
+    date_auto_select = config_dict.get("date_auto_select", {})
+    if not date_auto_select.get("enable", True):
+        return True
+
+    # Only process event pages
+    if not re.search(FANSIGO_URL_PATTERNS["event_page"], url):
+        return True
+
+    # Get all shows
+    shows = await nodriver_fansigo_get_shows(tab, config_dict)
+
+    if len(shows) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No shows found on event page")
+        return False
+
+    # Single show - click directly
+    if len(shows) == 1:
+        if show_debug_message:
+            print(f"[FANSIGO] Single show found, selecting: {shows[0]['name']}")
+        try:
+            await shows[0]["element"].click()
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking show: {e}")
+            return False
+
+    # Multiple shows - use keyword matching
+    date_keyword = date_auto_select.get("date_keyword", "")
+    matched = fansigo_match_by_keyword(shows, date_keyword)
+
+    if matched:
+        if show_debug_message:
+            print(f"[FANSIGO] Show matched by keyword: {matched['name']}")
+        try:
+            await matched["element"].click()
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking matched show: {e}")
+            return False
+
+    # Fallback strategy
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)
+    if date_auto_fallback:
+        mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        if mode == CONST_FROM_BOTTOM_TO_TOP:
+            target = shows[-1]
+        elif mode == CONST_RANDOM:
+            import random
+            target = random.choice(shows)
+        else:  # from top to bottom
+            target = shows[0]
+
+        if show_debug_message:
+            print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
+        try:
+            await target["element"].click()
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking fallback show: {e}")
+            return False
+
+    if show_debug_message:
+        print("[FANSIGO] No matching show found and fallback disabled")
+    return False
+
+
+async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
+    """Get all available ticket sections from show page
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        list: List of section dictionaries with element, name, price, status
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    sections = []
+
+    try:
+        # Find ticket section items
+        # Each section is in a list item with heading (name) and price info
+        section_elements = await tab.query_selector_all('li[class*="chakra-wrap__listitem"]')
+
+        for elem in section_elements:
+            try:
+                # Get section name from heading
+                heading = await elem.query_selector('h3')
+                if not heading:
+                    continue
+
+                name = await heading.get_text()
+                if not name:
+                    continue
+                name = name.strip()
+
+                # Get price
+                price_elem = await elem.query_selector('p[class*="chakra-text"]')
+                price = 0
+                if price_elem:
+                    price_text = await price_elem.get_text()
+                    if price_text:
+                        # Extract number from "NT$ 2,000"
+                        import re
+                        price_match = re.search(r"[\d,]+", price_text.replace(",", ""))
+                        if price_match:
+                            try:
+                                price = int(price_match.group().replace(",", ""))
+                            except:
+                                pass
+
+                # Determine status - check if section is clickable/available
+                # Available sections have quantity selectors
+                qty_selector = await elem.query_selector('button')
+                status = "on_sale" if qty_selector else "unavailable"
+
+                # Check for "sold out" or "coming soon" indicators
+                elem_text = await elem.get_text()
+                if elem_text:
+                    elem_text_lower = elem_text.lower()
+                    if "sold" in elem_text_lower or "out" in elem_text_lower:
+                        status = "sold_out"
+                    elif "coming" in elem_text_lower or "soon" in elem_text_lower:
+                        status = "coming_soon"
+
+                sections.append({
+                    "element": elem,
+                    "name": name,
+                    "price": price,
+                    "status": status,
+                })
+
+            except Exception:
+                pass
+
+        if show_debug_message:
+            available = [s for s in sections if s["status"] == "on_sale"]
+            print(f"[FANSIGO] Found {len(sections)} sections, {len(available)} available")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[FANSIGO] Error getting sections: {e}")
+
+    return sections
+
+
+async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
+    """Auto select ticket section/area on show page
+
+    Args:
+        tab: NoDriver tab
+        url: Current URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if section selected successfully
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check if area auto select is enabled
+    area_auto_select = config_dict.get("area_auto_select", {})
+    if not area_auto_select.get("enable", True):
+        return True
+
+    # Only process show pages
+    if not re.search(FANSIGO_URL_PATTERNS["show_page"], url):
+        return True
+
+    # Get all sections
+    sections = await nodriver_fansigo_get_sections(tab, config_dict)
+
+    # Filter to available sections only
+    available_sections = [s for s in sections if s["status"] == "on_sale"]
+
+    if len(available_sections) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No available sections found")
+        return False
+
+    # Apply exclude keywords
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+    if keyword_exclude:
+        exclude_keywords = [k.strip() for k in keyword_exclude.split(";") if k.strip()]
+        filtered_sections = []
+        for section in available_sections:
+            excluded = False
+            for exclude_kw in exclude_keywords:
+                if exclude_kw.lower() in section["name"].lower():
+                    excluded = True
+                    break
+            if not excluded:
+                filtered_sections.append(section)
+        available_sections = filtered_sections
+
+    if len(available_sections) == 0:
+        if show_debug_message:
+            print("[FANSIGO] All sections excluded by keyword_exclude")
+        return False
+
+    # Use keyword matching
+    area_keyword = area_auto_select.get("area_keyword", "")
+    matched = fansigo_match_by_keyword(available_sections, area_keyword, "name")
+
+    target_section = None
+
+    if matched:
+        target_section = matched
+        if show_debug_message:
+            print(f"[FANSIGO] Section matched by keyword: {matched['name']}")
+    else:
+        # Fallback strategy
+        area_auto_fallback = config_dict.get("area_auto_fallback", False)
+        if area_auto_fallback:
+            mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+            if mode == CONST_FROM_BOTTOM_TO_TOP:
+                target_section = available_sections[-1]
+            elif mode == CONST_RANDOM:
+                import random
+                target_section = random.choice(available_sections)
+            else:  # from top to bottom
+                target_section = available_sections[0]
+
+            if show_debug_message:
+                print(f"[FANSIGO] Using fallback, selecting: {target_section['name']}")
+        else:
+            if show_debug_message:
+                print("[FANSIGO] No matching section found and fallback disabled")
+            return False
+
+    # Click the section to select it (this usually expands quantity selector)
+    if target_section:
+        try:
+            await target_section["element"].click()
+            await asyncio.sleep(0.3)
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking section: {e}")
+            return False
+
+    return False
+
+
+async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
+    """Set ticket quantity on show page
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if quantity set successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    target_count = config_dict.get("ticket_number", 1)
+
+    if target_count < 1:
+        target_count = 1
+
+    try:
+        # Find plus button for quantity
+        # FANSI GO uses +/- buttons for quantity selection
+        plus_buttons = await tab.query_selector_all('button')
+
+        plus_button = None
+        for btn in plus_buttons:
+            btn_text = await btn.get_text()
+            if btn_text and '+' in btn_text:
+                plus_button = btn
+                break
+
+        if not plus_button:
+            if show_debug_message:
+                print("[FANSIGO] Plus button not found")
+            return False
+
+        # Click plus button (target_count) times
+        # Initial count is usually 0, so click target_count times
+        for i in range(target_count):
+            try:
+                await plus_button.click()
+                await asyncio.sleep(0.1)
+            except Exception:
+                break
+
+        if show_debug_message:
+            print(f"[FANSIGO] Set ticket quantity to {target_count}")
+
+        return True
+
+    except Exception as e:
+        print(f"[FANSIGO] Error setting ticket quantity: {e}")
+        return False
+
+
+async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
+    """Click checkout/submit button on show page
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if checkout button clicked
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Find checkout/submit button
+        # Common button texts: "Checkout", "Submit", "Buy"
+        buttons = await tab.query_selector_all('button')
+
+        checkout_keywords = ["checkout", "submit", "buy", "next", "continue"]
+
+        for btn in buttons:
+            try:
+                btn_text = await btn.get_text()
+                if btn_text:
+                    btn_text_lower = btn_text.lower()
+                    for kw in checkout_keywords:
+                        if kw in btn_text_lower:
+                            await btn.click()
+                            if show_debug_message:
+                                print(f"[FANSIGO] Clicked checkout button: {btn_text}")
+                            return True
+            except Exception:
+                pass
+
+        if show_debug_message:
+            print("[FANSIGO] Checkout button not found")
+        return False
+
+    except Exception as e:
+        print(f"[FANSIGO] Error clicking checkout: {e}")
+        return False
+
+
+async def nodriver_fansigo_main(tab, url, config_dict):
+    """Main control function for FANSI GO platform
+
+    Args:
+        tab: NoDriver tab
+        url: Current page URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        tab: Updated NoDriver tab
+    """
+    global fansigo_dict
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return tab
+
+    # Initialize state dictionary
+    if 'is_cookie_injected' not in fansigo_dict:
+        fansigo_dict = {
+            "is_cookie_injected": False,
+            "played_sound_ticket": False,
+            "last_page_type": None,
+        }
+
+    # Get page type
+    page_type = get_fansigo_page_type(url)
+
+    # Log page type change
+    if page_type != fansigo_dict.get("last_page_type"):
+        if show_debug_message:
+            print(f"[FANSIGO] Page type: {page_type}")
+        fansigo_dict["last_page_type"] = page_type
+
+    # Inject cookie (once)
+    if not fansigo_dict["is_cookie_injected"]:
+        await nodriver_fansigo_inject_cookie(tab, config_dict)
+        fansigo_dict["is_cookie_injected"] = True
+
+    # Handle checkout page - stop automation
+    if page_type == "checkout" or page_type == "order_result":
+        if not fansigo_dict["played_sound_ticket"]:
+            print("[FANSIGO] Checkout page reached, automation stopped")
+            play_mp3 = config_dict.get("advanced", {}).get("play_ticket_sound", True)
+            if play_mp3:
+                util.play_mp3_async(config_dict)
+            fansigo_dict["played_sound_ticket"] = True
+        return tab
+
+    # Handle event page - select show
+    if page_type == "event":
+        await nodriver_fansigo_date_auto_select(tab, url, config_dict)
+        return tab
+
+    # Handle show page - select section, set quantity, checkout
+    if page_type == "show":
+        # Select section
+        section_selected = await nodriver_fansigo_area_auto_select(tab, url, config_dict)
+
+        if section_selected:
+            # Set ticket quantity
+            await asyncio.sleep(0.3)
+            qty_set = await nodriver_fansigo_assign_ticket_number(tab, config_dict)
+
+            if qty_set:
+                # Click checkout
+                await asyncio.sleep(0.3)
+                await nodriver_fansigo_click_checkout(tab, config_dict)
+
+        return tab
+
+    return tab
+
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -26293,6 +26922,10 @@ async def main(args):
         # FunOne Tickets
         if 'tickets.funone.io' in url:
             tab = await nodriver_funone_main(tab, url, config_dict)
+
+        # FANSI GO
+        if 'go.fansi.me' in url:
+            tab = await nodriver_fansigo_main(tab, url, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'

@@ -260,6 +260,7 @@ function load_settins_to_form(settings)
         tixcraft_sid.value = settings.accounts.tixcraft_sid;
         ibonqware.value = settings.accounts.ibonqware;
         funone_session_cookie.value = settings.accounts.funone_session_cookie || '';
+        fansigo_cookie.value = settings.accounts.fansigo_cookie || '';
         facebook_account.value = settings.accounts.facebook_account;
         kktix_account.value = settings.accounts.kktix_account;
         fami_account.value = settings.accounts.fami_account;
@@ -507,6 +508,7 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.tixcraft_sid = tixcraft_sid.value;
             settings.accounts.ibonqware = ibonqware.value;
             settings.accounts.funone_session_cookie = funone_session_cookie.value;
+            settings.accounts.fansigo_cookie = fansigo_cookie.value;
             settings.accounts.facebook_account = facebook_account.value;
             settings.accounts.kktix_account = kktix_account.value;
             settings.accounts.fami_account = fami_account.value;
@@ -628,6 +630,7 @@ function check_unsaved_fields()
             "tixcraft_sid",
             "ibonqware",
             "funone_session_cookie",
+            "fansigo_cookie",
             "facebook_account",
             "kktix_account",
             "fami_account",
