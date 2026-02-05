@@ -126,9 +126,66 @@ go.fansi.me/cdn-cgi/challenge-platform/h/b/scripts/jsd/*/main.js
 - 搜尋框：`textbox "搜尋活動"`
 - 活動卡片：包含活動標題、日期、場地
 
-#### 活動頁面 (`/events/{eventId}`)
-- 場次連結：`link` 元素，包含場次資訊
-- URL 格式：`/tickets/show/{showId}`
+#### 活動頁面 (`/events/{eventId}`) - 多場次選擇
+
+**場次選擇器結構**：
+```
+main
+├── image "banner"
+├── StaticText "主辦單位"
+├── heading level="2" "活動名稱"
+├── StaticText "請選擇活動場次進行購買"
+├── link "場次1"                      ← 場次連結
+│   ├── StaticText "場次名稱"         ← 如 "高雄場 KAOHSIUNG"
+│   ├── StaticText "日期時間"         ← 如 "2026/02/07 19:00"
+│   ├── StaticText "場地名稱"         ← 如 "LIVE WAREHOUSE"
+│   └── StaticText "地址"
+├── link "場次2"                      ← 其他場次...
+│   ├── StaticText "台北場 TAIPEI"
+│   ├── StaticText "2026/02/08 19:00"
+│   └── ...
+└── ...
+```
+
+**多場次範例** (普通隊長 - eventId: 590002)：
+| 場次名稱 | 日期 | 場地 | showId |
+|----------|------|------|--------|
+| 高雄場 KAOHSIUNG | 2026/02/07 | LIVE WAREHOUSE | 590003 |
+| 台北場 TAIPEI | 2026/02/08 | Pipe Live Music | 590004 |
+
+**關鍵字匹配策略** (場次選擇)：
+```python
+def find_show_by_keyword(shows: list, keyword: str) -> dict:
+    """
+    根據關鍵字找到匹配的場次
+
+    關鍵字範例：
+    - "高雄" -> 匹配 "高雄場 KAOHSIUNG"
+    - "台北" -> 匹配 "台北場 TAIPEI"
+    - "02/07" -> 匹配日期
+    - "WAREHOUSE" -> 匹配場地名稱
+    """
+    for show in shows:
+        # 搜尋場次名稱、日期、場地
+        searchable = f"{show['name']} {show['date']} {show['venue']}"
+        if keyword.lower() in searchable.lower():
+            return show
+    return None
+```
+
+**NoDriver 選擇器範例** (場次)：
+```python
+# 找所有場次連結
+show_links = await page.query_selector_all('main link')
+
+# 根據場次名稱關鍵字選擇
+keyword = "高雄"
+for link in show_links:
+    text = await link.get_text()
+    if keyword in text:
+        await link.click()
+        break
+```
 
 #### 購票頁面 (`/tickets/show/{showId}`) - 詳細元素結構
 
