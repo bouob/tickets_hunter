@@ -4890,34 +4890,19 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     # Auto refresh if no date was selected (for strict mode or sold out scenarios)
     if not is_date_clicked:
+        # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            if show_debug_message:
+                print(f"[DATE SELECT] Waiting {interval}s before reload...")
+            await asyncio.sleep(interval)
+
         if show_debug_message:
             print(f"[DATE SELECT] No date selected, reloading page...")
         try:
             await tab.reload()
         except:
             pass
-
-        # Active polling during cooldown period (same pattern as area selection)
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-        if interval > 0:
-            if show_debug_message:
-                print(f"[DATE SELECT] Waiting up to {interval}s with active polling...")
-            # Poll every 0.2s during the wait period
-            poll_count = int(interval * 5)
-            for poll_idx in range(poll_count):
-                await asyncio.sleep(0.2)
-                try:
-                    # Check for date list elements (TixCraft uses .btn-group within .auto-continue-info or .btn-primary)
-                    el = await tab.wait_for('.btn-group .btn-primary, .auto-continue-info a, .btn-group button', timeout=0.1)
-                    if el:
-                        if show_debug_message:
-                            print(f"[DATE DELAYED] Date links detected after {(poll_idx + 1) * 0.2:.1f}s")
-                        # Re-run the date selection logic
-                        return await nodriver_tixcraft_date_auto_select(tab, url, config_dict)
-                except:
-                    pass
-            if show_debug_message:
-                print(f"[DATE DELAYED] No date links detected during {interval}s polling")
 
     return is_date_clicked
 
@@ -5037,102 +5022,20 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             except:
                 pass
 
-    # Auto refresh if needed
+    # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
     if is_need_refresh:
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            if show_debug_message:
+                print(f"[AREA SELECT] Waiting {interval}s before reload...")
+            await asyncio.sleep(interval)
+
+        if show_debug_message:
+            print(f"[AREA SELECT] Page reloading...")
         try:
             await tab.reload()
         except:
             pass
-
-        # Unified Retry Strategy: check immediately after reload, then after interval delay
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-        retry_phases = [
-            {"name": "IMMEDIATE", "wait_timeout": 3, "delay_before": 0},
-        ]
-        if interval > 0:
-            retry_phases.append({"name": "DELAYED", "wait_timeout": 2, "delay_before": interval})
-
-        for phase in retry_phases:
-            el = None
-
-            # Wait before this phase with active polling (0 for immediate, interval for delayed)
-            if phase["delay_before"] > 0:
-                if show_debug_message:
-                    print(f"[AREA SELECT] Waiting up to {phase['delay_before']}s with active polling...")
-                # Poll every 0.2s during the wait period
-                poll_count = int(phase["delay_before"] * 5)
-                for poll_idx in range(poll_count):
-                    await asyncio.sleep(0.2)
-                    try:
-                        el = await tab.wait_for('.zone a', timeout=0.1)
-                        if el:
-                            if show_debug_message:
-                                print(f"[AREA {phase['name']}] Area links detected after {(poll_idx + 1) * 0.2:.1f}s")
-                            break
-                    except:
-                        pass
-                if el:
-                    pass  # Found element during polling, proceed to keyword check
-                else:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] No area links detected during {phase['delay_before']}s polling")
-                    continue
-            else:
-                # Immediate phase: wait for area links to appear
-                try:
-                    el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Area links detected")
-                except:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Timeout waiting for area links")
-                    continue
-
-            if not el:
-                continue
-
-            # Check keywords (reusing main function's logic)
-            retry_is_need_refresh = False
-            retry_matched_blocks = None
-
-            if area_keyword:
-                for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-                    if not retry_is_need_refresh:
-                        if show_debug_message:
-                            print(f"[AREA {phase['name']}] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
-                        break
-
-                # Fallback logic
-                if retry_is_need_refresh and retry_matched_blocks is None and area_auto_fallback:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Triggering fallback selection")
-                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-            else:
-                retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-
-            # Select and click target area
-            if retry_matched_blocks and len(retry_matched_blocks) > 0:
-                retry_target = util.get_target_item_from_matched_list(retry_matched_blocks, auto_select_mode)
-                if retry_target:
-                    if show_debug_message:
-                        try:
-                            area_text = await retry_target.text
-                            if not area_text:
-                                area_text = await retry_target.inner_text
-                            area_text = area_text.strip()[:80] if area_text else "Unknown"
-                            print(f"[AREA {phase['name']}] Selected: {area_text}")
-                        except:
-                            pass
-                    try:
-                        await retry_target.click()
-                        return  # Successfully clicked, exit function
-                    except:
-                        try:
-                            await retry_target.evaluate('el => el.click()')
-                            return  # Successfully clicked, exit function
-                        except:
-                            pass
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
