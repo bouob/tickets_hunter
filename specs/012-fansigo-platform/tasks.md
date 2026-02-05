@@ -10,14 +10,14 @@
 
 | 階段 | 任務數 | 優先級 | 預估複雜度 |
 |------|--------|--------|------------|
-| Phase 0: 設定與常數 | 2 | P0 | 低 |
+| Phase 0: 設定與常數 | 3 | P0 | 低 |
 | Phase 1: US1 基礎自動化 | 5 | P1 | 中 |
 | Phase 2: US2 多場次選擇 | 3 | P1 | 中 |
 | Phase 3: US3 Cookie 登入 | 3 | P2 | 低 |
 | Phase 4: US4 追蹤器封鎖 | 2 | P3 | 低 |
 | Phase 5: 整合與測試 | 3 | P1 | 中 |
 
-**總任務數**：18
+**總任務數**：19
 
 ---
 
@@ -59,19 +59,22 @@ def get_fansigo_page_type(url: str) -> str:
 
 ---
 
-### T0.2: 新增 fansigo_cookie 設定項
+### T0.2: 新增 fansigo_cookie 設定項（後端）
 
 **優先級**：P0（前置任務）
 **預估複雜度**：低
 **相依性**：無
+**對應需求**：FR-010
 
 **描述**：
 在 `settings.py` 新增 `fansigo_cookie` 設定項，支援 FansiAuthInfo Cookie 值。
 
+**重要**：與其他平台 cookie 設定保持一致，放在 `accounts` 區塊（非 `advanced`）。
+
 **實作細節**：
 ```python
-# 在 advanced 區塊新增預設值
-"advanced": {
+# 在 accounts 區塊新增預設值（與 ibonqware, funone_session_cookie 同層級）
+"accounts": {
     ...
     "fansigo_cookie": "",  # FansiAuthInfo Cookie 值
 }
@@ -81,6 +84,52 @@ def get_fansigo_page_type(url: str) -> str:
 - [ ] 設定項正確讀取和寫入
 - [ ] 空值時不影響其他功能
 - [ ] 設定檔向後相容
+- [ ] 設定路徑與其他平台 cookie 一致（accounts 區塊）
+
+---
+
+### T0.3: 新增 fansigo_cookie 前端 UI
+
+**優先級**：P0（前置任務）
+**預估複雜度**：低
+**相依性**：T0.2
+**對應需求**：FR-010
+
+**描述**：
+在 `settings.html` 和 `settings.js` 新增 FANSI GO Cookie 輸入欄位。
+
+**實作細節**：
+
+**settings.html**（在 FunOne cookie 區塊後新增）：
+```html
+<div class="row mb-3">
+  <label for="fansigo_cookie" class="col-sm-2 col-form-label">FANSI GO cookie (FansiAuthInfo)</label>
+  <div class="col-sm-10 col-lg-8 col-xl-6">
+    <input class="form-control" id="fansigo_cookie" value="" />
+  </div>
+</div>
+```
+
+**settings.js**：
+```javascript
+// 1. 宣告 DOM 元素（約第 65 行附近）
+const fansigo_cookie = document.querySelector('#fansigo_cookie');
+
+// 2. 載入設定值（約第 262 行附近）
+fansigo_cookie.value = settings.accounts.fansigo_cookie || '';
+
+// 3. 儲存設定值（約第 509 行附近）
+settings.accounts.fansigo_cookie = fansigo_cookie.value;
+
+// 4. 註冊欄位名稱（約第 630 行附近）
+"fansigo_cookie",
+```
+
+**驗收標準**：
+- [ ] UI 欄位正確顯示於設定頁面
+- [ ] 輸入值正確儲存到 settings.json
+- [ ] 頁面載入時正確顯示已儲存的值
+- [ ] 欄位標籤使用「FANSI GO cookie (FansiAuthInfo)」
 
 ---
 
@@ -569,9 +618,9 @@ async def fansigo_login(driver, config_dict: dict) -> bool:
     """FANSI GO Cookie 登入
 
     設定來源：
-    - config_dict["advanced"]["fansigo_cookie"]
+    - config_dict["accounts"]["fansigo_cookie"]
     """
-    cookie_value = config_dict.get("advanced", {}).get("fansigo_cookie", "")
+    cookie_value = config_dict.get("accounts", {}).get("fansigo_cookie", "")
 
     if not cookie_value:
         print("[FANSI GO] 未設定 Cookie，以訪客身份繼續")
