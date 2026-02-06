@@ -1,4 +1,4 @@
-# CLAUDE.md v4.0
+﻿# CLAUDE.md v4.0
 
 **專案**：Tickets Hunter - 多平台搶票自動化系統
 **最後更新**：2026-02-05
