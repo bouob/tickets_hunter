@@ -4901,7 +4901,7 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
             print(f"[DATE SELECT] No date selected, reloading page...")
         try:
             await tab.reload()
-        except:
+        except Exception:
             pass
 
     return is_date_clicked
@@ -5034,7 +5034,7 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             print(f"[AREA SELECT] Page reloading...")
         try:
             await tab.reload()
-        except:
+        except Exception:
             pass
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
@@ -5909,6 +5909,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
         current_url, _ = await nodriver_current_url(tab)
         fail_count = 0  # Track consecutive failures
         total_fail_count = 0  # Track total failures
+        is_form_submitted = False
 
         for redo_ocr in range(5):
             is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
@@ -5965,8 +5966,8 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if show_debug_message:
                 print(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
 
-        # Mark OCR completed for this URL (non-force_submit mode only)
-        if not away_from_keyboard_enable:
+        # Mark OCR completed for this URL only when form was actually submitted
+        if is_form_submitted:
             tixcraft_dict["ocr_completed_url"] = current_url
 
 
@@ -19000,10 +19001,10 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                         addShoppingCart();
                         return true;
                     }
-                    // Method 2: Find button by id="addcart" link
-                    const addcartLink = document.querySelector('a#addcart button');
-                    if (addcartLink && !addcartLink.disabled) {
-                        addcartLink.click();
+                    // Method 2: Find button inside the addcart anchor
+                    const addcartBtn = document.querySelector('a#addcart button');
+                    if (addcartBtn && !addcartBtn.disabled) {
+                        addcartBtn.click();
                         return true;
                     }
                     // Method 3: Find button with onclick containing addShoppingCart
@@ -26167,6 +26168,8 @@ async def nodriver_fansigo_inject_cookie(tab, config_dict):
             value=fansigo_cookie,
             domain="go.fansi.me",
             path="/",
+            secure=True,
+            http_only=True,
         ))
 
         if show_debug_message:
@@ -26431,7 +26434,7 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
         config_dict: Configuration dictionary
 
     Returns:
-        list: List of section dictionaries with index, name, price, status
+        list: List of section dictionaries with index, name, status, text
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
     sections = []
@@ -26500,7 +26503,7 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
     return sections
 
 
-async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
+async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
     """Auto select ticket section/area on show page
 
     Args:
@@ -26509,7 +26512,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
         config_dict: Configuration dictionary
 
     Returns:
-        bool: True if section selected successfully
+        int: Selected section index, or -1 if no section selected
     """
     import re
 
@@ -26518,11 +26521,11 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
     # Check if area auto select is enabled
     area_auto_select = config_dict.get("area_auto_select", {})
     if not area_auto_select.get("enable", True):
-        return True
+        return 0
 
     # Only process show pages
     if not re.search(FANSIGO_URL_PATTERNS["show_page"], url):
-        return True
+        return 0
 
     # Get all sections
     sections = await nodriver_fansigo_get_sections(tab, config_dict)
@@ -26533,7 +26536,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
     if len(available_sections) == 0:
         if show_debug_message:
             print("[FANSIGO] No available sections found")
-        return False
+        return -1
 
     # Apply exclude keywords
     keyword_exclude = config_dict.get("keyword_exclude", "")
@@ -26553,7 +26556,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
     if len(available_sections) == 0:
         if show_debug_message:
             print("[FANSIGO] All sections excluded by keyword_exclude")
-        return False
+        return -1
 
     # Use keyword matching
     area_keyword = area_auto_select.get("area_keyword", "")
@@ -26586,9 +26589,9 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
         else:
             if show_debug_message:
                 print("[FANSIGO] No matching section found and fallback disabled")
-            return False
+            return -1
 
-    # Click the section to select it (this usually expands quantity selector)
+    # Click the section to select it
     if target_section:
         try:
             section_index = target_section["index"]
@@ -26599,20 +26602,21 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
                 })()
             ''' % (section_index, section_index))
             await asyncio.sleep(0.3)
-            return True
+            return section_index
         except Exception as e:
             print(f"[FANSIGO] Error clicking section: {e}")
-            return False
+            return -1
 
-    return False
+    return -1
 
 
-async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
+async def nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index=0) -> bool:
     """Set ticket quantity on show page using tab.evaluate()
 
     Args:
         tab: NoDriver tab
         config_dict: Configuration dictionary
+        section_index: Target section index from area_auto_select
 
     Returns:
         bool: True if quantity set successfully
@@ -26630,23 +26634,29 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
         js_click_once = '''
         (function() {
             var sections = document.querySelectorAll('li.list-none');
-            for (var i = 0; i < sections.length; i++) {
-                var btns = sections[i].querySelectorAll('button');
-                if (btns.length >= 2) {
-                    btns[1].click();
-                    return true;
-                }
+            var target = sections[%d];
+            if (!target) return {success: false, error: 'section_not_found'};
+            var btns = target.querySelectorAll('button');
+            if (btns.length >= 2) {
+                btns[1].click();
+                return {success: true};
             }
-            return false;
+            return {success: false, error: 'button_not_found'};
         })()
-        '''
+        ''' % section_index
+
         for i in range(target_count):
-            await tab.evaluate(js_click_once)
+            result = await tab.evaluate(js_click_once)
+            result = util.parse_nodriver_result(result)
+            if not (isinstance(result, dict) and result.get('success')):
+                error_msg = result.get('error', 'unknown') if isinstance(result, dict) else 'no_result'
+                print(f"[FANSIGO] Failed to click + button: {error_msg}")
+                return False
             if i < target_count - 1:
                 await asyncio.sleep(0.2)
 
         if show_debug_message:
-            print(f"[FANSIGO] Set ticket quantity to {target_count}")
+            print(f"[FANSIGO] Set ticket quantity to {target_count} for section {section_index}")
 
         return True
 
@@ -26730,6 +26740,7 @@ async def nodriver_fansigo_main(tab, url, config_dict):
             "is_cookie_injected": False,
             "played_sound_ticket": False,
             "last_page_type": None,
+            "qty_set_url": None,
         }
 
     # Get page type
@@ -26743,8 +26754,7 @@ async def nodriver_fansigo_main(tab, url, config_dict):
 
     # Inject cookie (once)
     if not fansigo_dict["is_cookie_injected"]:
-        await nodriver_fansigo_inject_cookie(tab, config_dict)
-        fansigo_dict["is_cookie_injected"] = True
+        fansigo_dict["is_cookie_injected"] = await nodriver_fansigo_inject_cookie(tab, config_dict)
 
     # Handle checkout page - stop automation
     if page_type == "checkout" or page_type == "order_result":
@@ -26758,20 +26768,28 @@ async def nodriver_fansigo_main(tab, url, config_dict):
 
     # Handle event page - select show
     if page_type == "event":
+        fansigo_dict["qty_set_url"] = None
         await nodriver_fansigo_date_auto_select(tab, url, config_dict)
         return tab
 
     # Handle show page - select section, set quantity, checkout
     if page_type == "show":
-        # Select section
-        section_selected = await nodriver_fansigo_area_auto_select(tab, url, config_dict)
-
-        if section_selected:
-            # Set ticket quantity
+        # If quantity already set for this URL, skip to checkout only
+        if fansigo_dict.get("qty_set_url") == url:
             await asyncio.sleep(0.3)
-            qty_set = await nodriver_fansigo_assign_ticket_number(tab, config_dict)
+            await nodriver_fansigo_click_checkout(tab, config_dict)
+            return tab
+
+        # Select section (returns index, or -1 if failed)
+        section_index = await nodriver_fansigo_area_auto_select(tab, url, config_dict)
+
+        if section_index >= 0:
+            # Set ticket quantity for the selected section
+            await asyncio.sleep(0.3)
+            qty_set = await nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index)
 
             if qty_set:
+                fansigo_dict["qty_set_url"] = url
                 # Click checkout
                 await asyncio.sleep(0.3)
                 await nodriver_fansigo_click_checkout(tab, config_dict)
