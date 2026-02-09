@@ -43,7 +43,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.03)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -151,6 +151,7 @@ def get_default_config():
     config_dict["accounts"]["tixcraft_sid"] = ""
     config_dict["accounts"]["ibonqware"] = ""
     config_dict["accounts"]["funone_session_cookie"] = ""
+    config_dict["accounts"]["fansigo_cookie"] = ""
     config_dict["accounts"]["facebook_account"] = ""
     config_dict["accounts"]["kktix_account"] = ""
     config_dict["accounts"]["fami_account"] = ""
