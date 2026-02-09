@@ -12,20 +12,10 @@
 | 任務特徵 | 建議路徑 | 說明 |
 |----------|----------|------|
 | 單一 Bug 修復 | 直接修復 | 參考 `workflows/bug-fix.md` |
-| 跨模組功能 | `/speckit.specify` | 完整規格流程 |
-| 新平台開發 | `/speckit.specify` | 參考 `workflows/new-platform.md` |
+| 跨模組功能 | 直接實作 | 參考 `workflows/new-feature.md` |
+| 新平台開發 | 直接實作 | 參考 `workflows/new-platform.md` |
 | 簡單功能新增 | 直接實作 | 影響 < 3 檔案 |
 | UI/UX 改進 | `/mcpstart` | MCP 即時除錯 |
-
-### speckit 決策矩陣
-
-| 條件 | 使用 speckit? |
-|------|---------------|
-| 影響 > 3 個檔案 | ✅ 是 |
-| 涉及多平台 | ✅ 是 |
-| 新增 API/協議 | ✅ 是 |
-| 單檔 Bug 修復 | ❌ 否 |
-| 設定項調整 | ❌ 否 |
 
 ### 8 大行為紅線（索引）
 
@@ -39,8 +29,6 @@
 | **VI. 測試驗證** | SHOULD | 核心修改應有測試 |
 | **VII. 文件同步** | SHOULD | 程式碼變更同步文件 |
 | **VIII. 測試紀律** | MUST/SHOULD | 測試失敗必修正 |
-
-**詳細規範**：`.specify/memory/constitution.md`
 
 ---
 
@@ -73,20 +61,6 @@
 ```
 Fixed in version 2026.02.05
 ```
-
-### speckit 完整流程
-
-```
-/speckit.specify → /speckit.plan → /speckit.tasks → /speckit.implement → /speckit.analyze
-```
-
-| 階段 | 產出 | 用途 |
-|------|------|------|
-| specify | spec.md | 功能規格 |
-| plan | plan.md | 設計方案 |
-| tasks | tasks.md | 執行任務 |
-| implement | 程式碼 | 實作 |
-| analyze | 報告 | 一致性檢查 |
 
 ### 使用者溝通規範
 
@@ -125,7 +99,6 @@ timeout 30 python -u src/nodriver_tixcraft.py --input src/settings.json
 | 推送代碼 | `/gpush` |
 | 發布 PR | `/publicpr` |
 | MCP 除錯 | `/mcpstart` / `/mcpstop` |
-| 規格分析 | `/speckit.analyze` |
 
 ### 核心文件
 

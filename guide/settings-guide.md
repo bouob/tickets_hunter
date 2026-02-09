@@ -103,11 +103,11 @@ python settings.py
 **平台支援狀態**：
 - **TixCraft / KKTIX / TicketPlus / KHAM / 年代**：NoDriver ✅ 完全支援
 - **FamiTicket 全家**：NoDriver ✅ 完全支援（v2025.11.24 新增）
+- **FANSI GO**：NoDriver ✅ 完全支援（v2026.02.09 新增）
 - **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
 - **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
 - **Ticketmaster**：NoDriver ✅ 完全支援
 - **HKTicketing**：NoDriver ✅ 完全支援（半自動登入模式）
-- **Urbtix**：建議使用 Chrome 版本，等待重構
 
 ---
 
@@ -958,7 +958,6 @@ iBon 的 Cookie qware，用於快速登入。
 | KHAM | kham_account | kham_password | 寬宏 帳號 / 寬宏 密碼 |
 | Cityline | cityline_account | cityline_password | cityline 帳號 / cityline 密碼 |
 | 年代 | ticket_account | ticket_password | 年代 帳號 / 年代 密碼 |
-| Urbtix | urbtix_account | urbtix_password | URBTIX 帳號 / URBTIX 密碼 |
 | HKTicketing | hkticketing_account | hkticketing_password | HKTICKETING 帳號 / HKTICKETING 密碼 |
 | FamiTicket | fami_account | fami_password | FamiTicket 帳號 / FamiTicket 密碼 |
 | Facebook | facebook_account | facebook_password | Facebook 帳號 / Facebook 密碼 |
