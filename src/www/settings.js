@@ -63,6 +63,8 @@ const credit_card_prefix = document.querySelector('#credit_card_prefix');
 // auto fill
 const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
+const funone_session_cookie = document.querySelector('#funone_session_cookie');
+const fansigo_cookie = document.querySelector('#fansigo_cookie');
 const facebook_account = document.querySelector('#facebook_account');
 const kktix_account = document.querySelector('#kktix_account');
 const fami_account = document.querySelector('#fami_account');
@@ -260,6 +262,7 @@ function load_settins_to_form(settings)
         tixcraft_sid.value = settings.accounts.tixcraft_sid;
         ibonqware.value = settings.accounts.ibonqware;
         funone_session_cookie.value = settings.accounts.funone_session_cookie || '';
+        fansigo_cookie.value = settings.accounts.fansigo_cookie || '';
         facebook_account.value = settings.accounts.facebook_account;
         kktix_account.value = settings.accounts.kktix_account;
         fami_account.value = settings.accounts.fami_account;
@@ -507,6 +510,7 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.tixcraft_sid = tixcraft_sid.value;
             settings.accounts.ibonqware = ibonqware.value;
             settings.accounts.funone_session_cookie = funone_session_cookie.value;
+            settings.accounts.fansigo_cookie = fansigo_cookie.value;
             settings.accounts.facebook_account = facebook_account.value;
             settings.accounts.kktix_account = kktix_account.value;
             settings.accounts.fami_account = fami_account.value;
@@ -628,6 +632,7 @@ function check_unsaved_fields()
             "tixcraft_sid",
             "ibonqware",
             "funone_session_cookie",
+            "fansigo_cookie",
             "facebook_account",
             "kktix_account",
             "fami_account",

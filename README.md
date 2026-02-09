@@ -27,13 +27,7 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 ### 🎪 平台支援狀態
 
-✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、HKTicketing 快達票、KHAM、FamiTicket
-
-**尚未支援 NoDriver 的平台**：
-
-| 平台 | Chrome/Selenium | NoDriver | 說明 |
-|------|:---------------:|:--------:|------|
-| **🏟️ Urbtix 城市** | ✅ 支援 | ❌ 未支援 | 僅提供 Chrome/Selenium 版本 |
+✅ **NoDriver 完全支援**：TixCraft、Teamear、TicketMaster、Indievox、KKTIX、TicketPlus、iBon、年代售票、寬宏售票、Cityline 買飛、HKTicketing 快達票、KHAM、FamiTicket、FANSI GO
 
 > **📢 策略**：建議優先使用 NoDriver 版本，Chrome/Selenium 已進入維護模式（視情況修復錯誤）
 

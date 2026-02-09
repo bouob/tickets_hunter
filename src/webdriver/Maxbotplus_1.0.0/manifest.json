@@ -37,7 +37,8 @@
         "*://*.kktix.cc/*",
         "*://kktix.com/*",
         "*://netbank.hncb.com.tw/*",
-        "*://fantopia.io/*"
+        "*://fantopia.io/*",
+        "*"
     ],
     "web_accessible_resources": [
         {

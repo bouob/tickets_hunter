@@ -1,26 +1,5 @@
 # Code Owners for Tickets Hunter Project
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Global ownership - all files require review from project maintainer
+# All files require review from project maintainer
 * @bouob
-
-# Core Python modules - require extra scrutiny
-*.py @bouob
-
-# Configuration files - critical for project functionality
-settings.json @bouob
-config_launcher.json @bouob
-requirement.txt @bouob
-
-# Documentation - maintain consistency
-*.md @bouob
-docs/ @bouob
-
-# Web interface - UI/UX consistency
-www/ @bouob
-
-# WebDriver extensions - security critical
-webdriver/ @bouob
-
-# GitHub workflows and settings
-.github/ @bouob

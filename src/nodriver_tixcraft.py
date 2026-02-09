@@ -42,7 +42,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.03)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -4890,34 +4890,19 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     # Auto refresh if no date was selected (for strict mode or sold out scenarios)
     if not is_date_clicked:
+        # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            if show_debug_message:
+                print(f"[DATE SELECT] Waiting {interval}s before reload...")
+            await asyncio.sleep(interval)
+
         if show_debug_message:
             print(f"[DATE SELECT] No date selected, reloading page...")
         try:
             await tab.reload()
-        except:
+        except Exception:
             pass
-
-        # Active polling during cooldown period (same pattern as area selection)
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-        if interval > 0:
-            if show_debug_message:
-                print(f"[DATE SELECT] Waiting up to {interval}s with active polling...")
-            # Poll every 0.2s during the wait period
-            poll_count = int(interval * 5)
-            for poll_idx in range(poll_count):
-                await asyncio.sleep(0.2)
-                try:
-                    # Check for date list elements (TixCraft uses .btn-group within .auto-continue-info or .btn-primary)
-                    el = await tab.wait_for('.btn-group .btn-primary, .auto-continue-info a, .btn-group button', timeout=0.1)
-                    if el:
-                        if show_debug_message:
-                            print(f"[DATE DELAYED] Date links detected after {(poll_idx + 1) * 0.2:.1f}s")
-                        # Re-run the date selection logic
-                        return await nodriver_tixcraft_date_auto_select(tab, url, config_dict)
-                except:
-                    pass
-            if show_debug_message:
-                print(f"[DATE DELAYED] No date links detected during {interval}s polling")
 
     return is_date_clicked
 
@@ -5037,102 +5022,20 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
             except:
                 pass
 
-    # Auto refresh if needed
+    # Auto refresh if needed (simple wait mode, consistent with TicketPlus/iBon/FamiTicket)
     if is_need_refresh:
+        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+        if interval > 0:
+            if show_debug_message:
+                print(f"[AREA SELECT] Waiting {interval}s before reload...")
+            await asyncio.sleep(interval)
+
+        if show_debug_message:
+            print(f"[AREA SELECT] Page reloading...")
         try:
             await tab.reload()
-        except:
+        except Exception:
             pass
-
-        # Unified Retry Strategy: check immediately after reload, then after interval delay
-        interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-        retry_phases = [
-            {"name": "IMMEDIATE", "wait_timeout": 3, "delay_before": 0},
-        ]
-        if interval > 0:
-            retry_phases.append({"name": "DELAYED", "wait_timeout": 2, "delay_before": interval})
-
-        for phase in retry_phases:
-            el = None
-
-            # Wait before this phase with active polling (0 for immediate, interval for delayed)
-            if phase["delay_before"] > 0:
-                if show_debug_message:
-                    print(f"[AREA SELECT] Waiting up to {phase['delay_before']}s with active polling...")
-                # Poll every 0.2s during the wait period
-                poll_count = int(phase["delay_before"] * 5)
-                for poll_idx in range(poll_count):
-                    await asyncio.sleep(0.2)
-                    try:
-                        el = await tab.wait_for('.zone a', timeout=0.1)
-                        if el:
-                            if show_debug_message:
-                                print(f"[AREA {phase['name']}] Area links detected after {(poll_idx + 1) * 0.2:.1f}s")
-                            break
-                    except:
-                        pass
-                if el:
-                    pass  # Found element during polling, proceed to keyword check
-                else:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] No area links detected during {phase['delay_before']}s polling")
-                    continue
-            else:
-                # Immediate phase: wait for area links to appear
-                try:
-                    el = await tab.wait_for('.zone a', timeout=phase["wait_timeout"])
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Area links detected")
-                except:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Timeout waiting for area links")
-                    continue
-
-            if not el:
-                continue
-
-            # Check keywords (reusing main function's logic)
-            retry_is_need_refresh = False
-            retry_matched_blocks = None
-
-            if area_keyword:
-                for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
-                    if not retry_is_need_refresh:
-                        if show_debug_message:
-                            print(f"[AREA {phase['name']}] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
-                        break
-
-                # Fallback logic
-                if retry_is_need_refresh and retry_matched_blocks is None and area_auto_fallback:
-                    if show_debug_message:
-                        print(f"[AREA {phase['name']}] Triggering fallback selection")
-                    retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-            else:
-                retry_is_need_refresh, retry_matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
-
-            # Select and click target area
-            if retry_matched_blocks and len(retry_matched_blocks) > 0:
-                retry_target = util.get_target_item_from_matched_list(retry_matched_blocks, auto_select_mode)
-                if retry_target:
-                    if show_debug_message:
-                        try:
-                            area_text = await retry_target.text
-                            if not area_text:
-                                area_text = await retry_target.inner_text
-                            area_text = area_text.strip()[:80] if area_text else "Unknown"
-                            print(f"[AREA {phase['name']}] Selected: {area_text}")
-                        except:
-                            pass
-                    try:
-                        await retry_target.click()
-                        return  # Successfully clicked, exit function
-                    except:
-                        try:
-                            await retry_target.evaluate('el => el.click()')
-                            return  # Successfully clicked, exit function
-                        except:
-                            pass
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -5652,7 +5555,15 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         # Ensure agreement checkbox is checked (even if ticket number already set)
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
-        await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
+        # Reset OCR state if captcha alert detected (wrong answer submitted)
+        if tixcraft_dict.get("captcha_alert_detected", False):
+            tixcraft_dict["ocr_completed_url"] = ""
+            tixcraft_dict["captcha_alert_detected"] = False
+
+        # Skip OCR if already completed on this URL (non-force_submit mode only)
+        is_force_submit = config_dict["ocr_captcha"]["force_submit"]
+        if is_force_submit or tixcraft_dict.get("ocr_completed_url", "") != current_url:
+            await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
         return
 
     # Always check agreement checkbox in NoDriver mode
@@ -5998,6 +5909,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
         current_url, _ = await nodriver_current_url(tab)
         fail_count = 0  # Track consecutive failures
         total_fail_count = 0  # Track total failures
+        is_form_submitted = False
 
         for redo_ocr in range(5):
             is_need_redo_ocr, previous_answer, is_form_submitted = await nodriver_tixcraft_auto_ocr(
@@ -6053,6 +5965,10 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
 
             if show_debug_message:
                 print(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
+
+        # Mark OCR completed for this URL only when form was actually submitted
+        if is_form_submitted:
+            tixcraft_dict["ocr_completed_url"] = current_url
 
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
@@ -6151,6 +6067,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
         tixcraft_dict["captcha_alert_detected"] = False
+        tixcraft_dict["ocr_completed_url"] = ""
         tixcraft_dict["last_homepage_redirect_time"] = 0
         tixcraft_dict["sold_out_cooldown_until"] = 0  # Issue #188: Cooldown timestamp
 
@@ -15834,6 +15751,8 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
     # Find captcha input with multiple selectors
     form_verifyCode = None
     selectors = [
+        'input#CHK',
+        '#ctl00_ContentPlaceHolder1_CHK',
         'input[value="驗證碼"]',
         'input[placeholder="驗證碼"]',
         'input[placeholder="請輸入圖片上符號"]',
@@ -15858,7 +15777,9 @@ async def nodriver_kham_keyin_captcha_code(tab, answer="", auto_submit=False):
                         const input = document.querySelector('{selectors[0]}') ||
                                     document.querySelector('{selectors[1]}') ||
                                     document.querySelector('{selectors[2]}') ||
-                                    document.querySelector('{selectors[3]}');
+                                    document.querySelector('{selectors[3]}') ||
+                                    document.querySelector('{selectors[4]}') ||
+                                    document.querySelector('{selectors[5]}');
                         return input ? input.value : null;
                     }})();
                 ''')
@@ -19055,11 +18976,15 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         try:
             # Find captcha input field
             captcha_input = await tab.query_selector('input#CHK')
+            if show_debug:
+                print(f"[KHAM SEAT] Captcha input found: {captcha_input is not None}")
             if captcha_input:
                 model_name = "UTK0205"
                 is_captcha_sent = await nodriver_kham_captcha(
                     tab, config_dict, ocr, model_name
                 )
+                if show_debug:
+                    print(f"[KHAM SEAT] is_captcha_sent: {is_captcha_sent}")
         except Exception as exc:
             if show_debug:
                 print(f"[ERROR] KHAM captcha processing error: {exc}")
@@ -19068,9 +18993,27 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     is_submit_success = False
     if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
         try:
-            # 4.1: Click submit button - [Optimized] use class selector
+            # 4.1: Click submit button - UTK0205 uses addShoppingCart() function
             result = await tab.evaluate('''
                 (function() {
+                    // Method 1: Try calling addShoppingCart() directly (most reliable)
+                    if (typeof addShoppingCart === 'function') {
+                        addShoppingCart();
+                        return true;
+                    }
+                    // Method 2: Find button inside the addcart anchor
+                    const addcartBtn = document.querySelector('a#addcart button');
+                    if (addcartBtn && !addcartBtn.disabled) {
+                        addcartBtn.click();
+                        return true;
+                    }
+                    // Method 3: Find button with onclick containing addShoppingCart
+                    const btnWithOnclick = document.querySelector('button[onclick*="addShoppingCart"]');
+                    if (btnWithOnclick && !btnWithOnclick.disabled) {
+                        btnWithOnclick.click();
+                        return true;
+                    }
+                    // Method 4: Legacy selector for other KHAM pages
                     const button = document.querySelector('button.sumitButton');
                     if (button && !button.disabled) {
                         button.click();
@@ -21250,6 +21193,7 @@ async def nodrver_block_urls(tab, config_dict):
         '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
         '*.lndata.com/*',
         '*.rollbar.com/*',
+        '*.smartlook.com/*',
         '*anymind360.com/*',  # Block Anymind360 tracking (loaded by cityline others.min.js)
         '*cdn.cookielaw.org/*',
         '*e2elog.fetnet.net*',
@@ -26148,6 +26092,713 @@ async def nodriver_funone_main(tab, url, config_dict):
     return tab
 
 
+# =============================================================================
+# FANSI GO Platform Support
+# URL: https://go.fansi.me
+# Features: Multi-show selection, multi-section selection, Cookie login
+# =============================================================================
+
+# Global state dictionary for FANSI GO
+fansigo_dict = {}
+
+# FANSI GO URL patterns
+FANSIGO_URL_PATTERNS = {
+    "domain": r"go\.fansi\.me",
+    "event_page": r"go\.fansi\.me/events/(\d+)",
+    "show_page": r"go\.fansi\.me/tickets/show/(\d+)",
+    "checkout_page": r"go\.fansi\.me/tickets/payment/checkout/",
+    "order_result": r"go\.fansi\.me/tickets/payment/orderresult/",
+}
+
+
+def is_fansigo_url(url: str) -> bool:
+    """Check if URL is a FANSI GO URL"""
+    import re
+    if url is None:
+        return False
+    return bool(re.search(FANSIGO_URL_PATTERNS["domain"], url))
+
+
+def get_fansigo_page_type(url: str) -> str:
+    """Get FANSI GO page type from URL
+
+    Returns:
+        str: "event", "show", "checkout", "order_result", or "unknown"
+    """
+    import re
+    if url is None:
+        return "unknown"
+
+    if re.search(FANSIGO_URL_PATTERNS["checkout_page"], url):
+        return "checkout"
+    if re.search(FANSIGO_URL_PATTERNS["order_result"], url):
+        return "order_result"
+    if re.search(FANSIGO_URL_PATTERNS["event_page"], url):
+        return "event"
+    if re.search(FANSIGO_URL_PATTERNS["show_page"], url):
+        return "show"
+
+    return "unknown"
+
+
+async def nodriver_fansigo_inject_cookie(tab, config_dict):
+    """Inject FansiAuthInfo cookie for FANSI GO login
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if injection successful or no cookie configured
+    """
+    import nodriver.cdp as cdp
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    fansigo_cookie = config_dict["accounts"].get("fansigo_cookie", "").strip()
+
+    if len(fansigo_cookie) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No cookie configured, continuing as guest")
+        return True
+
+    try:
+        # Set FansiAuthInfo cookie
+        await tab.send(cdp.network.set_cookie(
+            name="FansiAuthInfo",
+            value=fansigo_cookie,
+            domain="go.fansi.me",
+            path="/",
+            secure=True,
+            http_only=True,
+        ))
+
+        if show_debug_message:
+            print("[FANSIGO] Cookie injected successfully")
+        return True
+
+    except Exception as e:
+        print(f"[FANSIGO] Cookie injection failed: {e}")
+        return False
+
+
+async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
+    """Get all available shows from event page using tab.evaluate()
+
+    NoDriver's query_selector_all() fails on Next.js SPA pages,
+    but tab.evaluate() (direct JS execution) works reliably.
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        list: List of show dictionaries with href, text, name, datetime, venue
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    shows = []
+
+    try:
+        # Wait for Next.js SPA to render content
+        try:
+            await tab.find("請選擇活動場次進行購買", timeout=5)
+        except Exception:
+            if show_debug_message:
+                print("[FANSIGO] Waiting for event page to render...")
+            return shows
+
+        # Extract show data via JavaScript
+        # Wrap array in object for util.parse_nodriver_result() compatibility
+        js_raw = await tab.evaluate('''
+            (function() {
+                var links = document.querySelectorAll('a[href*="/tickets/show/"]');
+                var items = [];
+                for (var i = 0; i < links.length; i++) {
+                    items.push({
+                        href: links[i].href,
+                        text: links[i].textContent.trim()
+                    });
+                }
+                return {items: items, count: items.length};
+            })()
+        ''')
+        js_parsed = util.parse_nodriver_result(js_raw)
+        js_result = js_parsed.get('items', []) if isinstance(js_parsed, dict) else []
+
+        if not js_result or len(js_result) == 0:
+            return shows
+
+        for item in js_result:
+            href = item.get("href", "")
+            text = item.get("text", "")
+            if not text:
+                continue
+
+            # Normalize whitespace
+            normalized_text = re.sub(r'\s+', ' ', text).strip()
+
+            name = normalized_text
+            datetime_str = ""
+            venue = ""
+
+            # Extract datetime
+            datetime_match = re.search(r"(\d{4}/\d{2}/\d{2})\s*(\d{2}:\d{2})", normalized_text)
+            if datetime_match:
+                datetime_str = datetime_match.group(1) + " " + datetime_match.group(2)
+                name_end = datetime_match.start()
+                if name_end > 0:
+                    name = normalized_text[:name_end].strip()
+                after_time = normalized_text[datetime_match.end():].strip()
+                venue_match = re.match(r"(.+?)(?:\s+\d{3}|$)", after_time)
+                if venue_match:
+                    venue = venue_match.group(1).strip()
+
+            if show_debug_message:
+                print(f"[FANSIGO] Show: name={name}, date={datetime_str}, venue={venue}")
+
+            shows.append({
+                "href": href,
+                "text": normalized_text,
+                "name": name,
+                "datetime": datetime_str,
+                "venue": venue,
+            })
+
+        if show_debug_message:
+            print(f"[FANSIGO] Found {len(shows)} shows")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[FANSIGO] Error getting shows: {e}")
+
+    return shows
+
+
+async def nodriver_fansigo_click_show(tab, show_dict, config_dict):
+    """Navigate to show page directly using href
+
+    Uses tab.get() for direct navigation instead of click(),
+    which avoids Next.js opening new tabs.
+
+    Args:
+        tab: NoDriver tab
+        show_dict: Show dictionary with href
+        config_dict: Configuration dictionary
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    href = show_dict.get("href", "")
+
+    if not href:
+        raise Exception("No href in show_dict")
+
+    # Build full URL if relative
+    if href.startswith("/"):
+        href = "https://go.fansi.me" + href
+
+    if show_debug_message:
+        print(f"[FANSIGO] Navigating to show: {href}")
+
+    await tab.get(href)
+
+
+def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "text") -> dict:
+    """Match item by keyword string
+
+    Args:
+        items: List of item dictionaries
+        keyword_string: Keyword string (semicolon separated for multiple)
+        text_key: Key to use for text matching
+
+    Returns:
+        dict: Matched item or None
+    """
+    if not keyword_string or len(keyword_string.strip()) == 0:
+        return None
+
+    for item in items:
+        item_text = item.get(text_key, "")
+        if util.is_text_match_keyword(keyword_string, item_text):
+            return item
+
+    return None
+
+
+async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
+    """Auto select show/date on event page
+
+    Args:
+        tab: NoDriver tab
+        url: Current URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if show selected or not on event page
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check if date auto select is enabled
+    date_auto_select = config_dict.get("date_auto_select", {})
+    if not date_auto_select.get("enable", True):
+        return True
+
+    # Only process event pages
+    if not re.search(FANSIGO_URL_PATTERNS["event_page"], url):
+        return True
+
+    # Get all shows
+    shows = await nodriver_fansigo_get_shows(tab, config_dict)
+
+    if len(shows) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No shows found on event page")
+        return False
+
+    # Single show - click directly
+    if len(shows) == 1:
+        if show_debug_message:
+            print(f"[FANSIGO] Single show found, selecting: {shows[0]['name']}")
+        try:
+            await nodriver_fansigo_click_show(tab, shows[0], config_dict)
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking show: {e}")
+            return False
+
+    # Multiple shows - use keyword matching
+    date_keyword = date_auto_select.get("date_keyword", "")
+
+    if show_debug_message:
+        print(f"[FANSIGO] Matching with date_keyword: {date_keyword}")
+        for show in shows:
+            print(f"[FANSIGO]   Show text: {show['text'][:80]}")
+
+    if date_keyword:
+        matched = fansigo_match_by_keyword(shows, date_keyword)
+    else:
+        matched = None
+
+    if matched:
+        if show_debug_message:
+            print(f"[FANSIGO] Show matched by keyword: {matched['name']}")
+        try:
+            await nodriver_fansigo_click_show(tab, matched, config_dict)
+            return True
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking matched show: {e}")
+            return False
+
+    if not date_keyword:
+        # No keyword set = accept all, select by mode
+        mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        target = util.get_target_item_from_matched_list(shows, mode)
+        if target:
+            if show_debug_message:
+                print(f"[FANSIGO] No keyword set, selecting by mode: {target['name']}")
+            try:
+                await nodriver_fansigo_click_show(tab, target, config_dict)
+                return True
+            except Exception as e:
+                print(f"[FANSIGO] Error clicking show: {e}")
+                return False
+        return False
+
+    # Keyword set but no match - check fallback
+    date_auto_fallback = config_dict.get("date_auto_fallback", False)
+    if date_auto_fallback:
+        mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        target = util.get_target_item_from_matched_list(shows, mode)
+        if target:
+            if show_debug_message:
+                print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
+            try:
+                await nodriver_fansigo_click_show(tab, target, config_dict)
+                return True
+            except Exception as e:
+                print(f"[FANSIGO] Error clicking fallback show: {e}")
+                return False
+        return False
+
+    if show_debug_message:
+        print("[FANSIGO] No matching show found and fallback disabled")
+    return False
+
+
+async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
+    """Get all available ticket sections from show page using tab.evaluate()
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        list: List of section dictionaries with index, name, status, text
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    sections = []
+
+    try:
+        # Wait for Next.js SPA to render ticket sections
+        try:
+            await tab.find("選擇票券種類", timeout=5)
+        except Exception:
+            if show_debug_message:
+                print("[FANSIGO] Waiting for show page to render...")
+            return sections
+
+        # Extract section data via JavaScript
+        # Wrap array in object for util.parse_nodriver_result() compatibility
+        js_raw = await tab.evaluate('''
+            (function() {
+                var elems = document.querySelectorAll('li.list-none');
+                var items = [];
+                for (var i = 0; i < elems.length; i++) {
+                    var text = elems[i].textContent.trim();
+                    var h3 = elems[i].querySelector('h3');
+                    var name = h3 ? h3.textContent.trim() : '';
+                    if (!name) {
+                        var p = elems[i].querySelector('p');
+                        name = p ? p.textContent.trim() : '';
+                    }
+                    var hasButton = elems[i].querySelectorAll('button').length > 0;
+                    var status = 'unavailable';
+                    if (text.indexOf('尚未開賣') >= 0) status = 'coming_soon';
+                    else if (text.indexOf('已售完') >= 0 || text.indexOf('你已太晚') >= 0) status = 'sold_out';
+                    else if (hasButton) status = 'on_sale';
+                    items.push({index: i, name: name, text: text, status: status});
+                }
+                return {items: items, count: items.length};
+            })()
+        ''')
+        js_parsed = util.parse_nodriver_result(js_raw)
+        js_result = js_parsed.get('items', []) if isinstance(js_parsed, dict) else []
+
+        if not js_result:
+            return sections
+
+        for item in js_result:
+            if not item.get("name"):
+                continue
+
+            if show_debug_message:
+                print(f"[FANSIGO] Section: {item['name']}, status={item['status']}")
+
+            sections.append({
+                "index": item["index"],
+                "name": item["name"],
+                "status": item["status"],
+                "text": item.get("text", ""),
+            })
+
+        if show_debug_message:
+            available = [s for s in sections if s["status"] == "on_sale"]
+            print(f"[FANSIGO] Found {len(sections)} sections, {len(available)} available")
+
+    except Exception as e:
+        if show_debug_message:
+            print(f"[FANSIGO] Error getting sections: {e}")
+
+    return sections
+
+
+async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
+    """Auto select ticket section/area on show page
+
+    Args:
+        tab: NoDriver tab
+        url: Current URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        int: Selected section index, or -1 if no section selected
+    """
+    import re
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check if area auto select is enabled
+    area_auto_select = config_dict.get("area_auto_select", {})
+    if not area_auto_select.get("enable", True):
+        return 0
+
+    # Only process show pages
+    if not re.search(FANSIGO_URL_PATTERNS["show_page"], url):
+        return 0
+
+    # Get all sections
+    sections = await nodriver_fansigo_get_sections(tab, config_dict)
+
+    # Filter to available sections only
+    available_sections = [s for s in sections if s["status"] == "on_sale"]
+
+    if len(available_sections) == 0:
+        if show_debug_message:
+            print("[FANSIGO] No available sections found")
+        return -1
+
+    # Apply exclude keywords
+    keyword_exclude = config_dict.get("keyword_exclude", "")
+    if keyword_exclude:
+        exclude_keywords = [k.strip() for k in keyword_exclude.split(";") if k.strip()]
+        filtered_sections = []
+        for section in available_sections:
+            excluded = False
+            for exclude_kw in exclude_keywords:
+                if exclude_kw.lower() in section["name"].lower():
+                    excluded = True
+                    break
+            if not excluded:
+                filtered_sections.append(section)
+        available_sections = filtered_sections
+
+    if len(available_sections) == 0:
+        if show_debug_message:
+            print("[FANSIGO] All sections excluded by keyword_exclude")
+        return -1
+
+    # Use keyword matching
+    area_keyword = area_auto_select.get("area_keyword", "")
+
+    if area_keyword:
+        matched = fansigo_match_by_keyword(available_sections, area_keyword, "name")
+    else:
+        matched = None
+
+    target_section = None
+
+    if matched:
+        target_section = matched
+        if show_debug_message:
+            print(f"[FANSIGO] Section matched by keyword: {matched['name']}")
+    elif not area_keyword:
+        # No keyword set = accept all, select by mode
+        mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        target_section = util.get_target_item_from_matched_list(available_sections, mode)
+        if show_debug_message and target_section:
+            print(f"[FANSIGO] No keyword set, selecting by mode: {target_section['name']}")
+    else:
+        # Keyword set but no match - check fallback
+        area_auto_fallback = config_dict.get("area_auto_fallback", False)
+        if area_auto_fallback:
+            mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+            target_section = util.get_target_item_from_matched_list(available_sections, mode)
+            if show_debug_message and target_section:
+                print(f"[FANSIGO] Using fallback, selecting: {target_section['name']}")
+        else:
+            if show_debug_message:
+                print("[FANSIGO] No matching section found and fallback disabled")
+            return -1
+
+    # Click the section to select it
+    if target_section:
+        try:
+            section_index = target_section["index"]
+            await tab.evaluate('''
+                (function() {
+                    var items = document.querySelectorAll('li.list-none');
+                    if (items[%d]) { items[%d].click(); }
+                })()
+            ''' % (section_index, section_index))
+            await asyncio.sleep(0.3)
+            return section_index
+        except Exception as e:
+            print(f"[FANSIGO] Error clicking section: {e}")
+            return -1
+
+    return -1
+
+
+async def nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index=0) -> bool:
+    """Set ticket quantity on show page using tab.evaluate()
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+        section_index: Target section index from area_auto_select
+
+    Returns:
+        bool: True if quantity set successfully
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    target_count = config_dict.get("ticket_number", 1)
+
+    if target_count < 1:
+        target_count = 1
+
+    try:
+        # Click + button one at a time with delay for React state updates
+        # React 18 batches synchronous state updates, so clicking N times
+        # in a single JS execution only registers as 1 click.
+        js_click_once = '''
+        (function() {
+            var sections = document.querySelectorAll('li.list-none');
+            var target = sections[%d];
+            if (!target) return {success: false, error: 'section_not_found'};
+            var btns = target.querySelectorAll('button');
+            if (btns.length >= 2) {
+                btns[1].click();
+                return {success: true};
+            }
+            return {success: false, error: 'button_not_found'};
+        })()
+        ''' % section_index
+
+        for i in range(target_count):
+            result = await tab.evaluate(js_click_once)
+            result = util.parse_nodriver_result(result)
+            if not (isinstance(result, dict) and result.get('success')):
+                error_msg = result.get('error', 'unknown') if isinstance(result, dict) else 'no_result'
+                print(f"[FANSIGO] Failed to click + button: {error_msg}")
+                return False
+            if i < target_count - 1:
+                await asyncio.sleep(0.2)
+
+        if show_debug_message:
+            print(f"[FANSIGO] Set ticket quantity to {target_count} for section {section_index}")
+
+        return True
+
+    except Exception as e:
+        print(f"[FANSIGO] Error setting ticket quantity: {e}")
+        return False
+
+
+async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
+    """Click checkout/submit button on show page using JavaScript
+
+    Args:
+        tab: NoDriver tab
+        config_dict: Configuration dictionary
+
+    Returns:
+        bool: True if checkout button clicked
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    try:
+        # Find and click checkout button via JavaScript
+        checkout_keywords_js = '["checkout","submit","buy","next","continue","取得訂單","結帳","購買","下一步"]'
+
+        js_click_checkout = '''
+        (function() {
+            var keywords = %s;
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                var text = (buttons[i].textContent || '').trim().toLowerCase();
+                for (var j = 0; j < keywords.length; j++) {
+                    if (text.indexOf(keywords[j]) >= 0) {
+                        buttons[i].click();
+                        return {clicked: true, text: buttons[i].textContent.trim()};
+                    }
+                }
+            }
+            return {clicked: false};
+        })()
+        ''' % checkout_keywords_js
+
+        result = await tab.evaluate(js_click_checkout)
+        result = util.parse_nodriver_result(result)
+
+        if isinstance(result, dict) and result.get('clicked'):
+            if show_debug_message:
+                print(f"[FANSIGO] Clicked checkout button: {result.get('text', '')}")
+            return True
+
+        if show_debug_message:
+            print("[FANSIGO] Checkout button not found")
+        return False
+
+    except Exception as e:
+        print(f"[FANSIGO] Error clicking checkout: {e}")
+        return False
+
+
+async def nodriver_fansigo_main(tab, url, config_dict):
+    """Main control function for FANSI GO platform
+
+    Args:
+        tab: NoDriver tab
+        url: Current page URL
+        config_dict: Configuration dictionary
+
+    Returns:
+        tab: Updated NoDriver tab
+    """
+    global fansigo_dict
+
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+
+    # Check pause state
+    if await check_and_handle_pause(config_dict):
+        return tab
+
+    # Initialize state dictionary
+    if 'is_cookie_injected' not in fansigo_dict:
+        fansigo_dict = {
+            "is_cookie_injected": False,
+            "played_sound_ticket": False,
+            "last_page_type": None,
+            "qty_set_url": None,
+        }
+
+    # Get page type
+    page_type = get_fansigo_page_type(url)
+
+    # Log page type change
+    if page_type != fansigo_dict.get("last_page_type"):
+        if show_debug_message:
+            print(f"[FANSIGO] Page type: {page_type}")
+        fansigo_dict["last_page_type"] = page_type
+
+    # Inject cookie (once)
+    if not fansigo_dict["is_cookie_injected"]:
+        fansigo_dict["is_cookie_injected"] = await nodriver_fansigo_inject_cookie(tab, config_dict)
+
+    # Handle checkout page - stop automation
+    if page_type == "checkout" or page_type == "order_result":
+        if not fansigo_dict["played_sound_ticket"]:
+            print("[FANSIGO] Checkout page reached, automation stopped")
+            play_mp3 = config_dict.get("advanced", {}).get("play_ticket_sound", True)
+            if play_mp3:
+                util.play_mp3_async(config_dict)
+            fansigo_dict["played_sound_ticket"] = True
+        return tab
+
+    # Handle event page - select show
+    if page_type == "event":
+        fansigo_dict["qty_set_url"] = None
+        await nodriver_fansigo_date_auto_select(tab, url, config_dict)
+        return tab
+
+    # Handle show page - select section, set quantity, checkout
+    if page_type == "show":
+        # If quantity already set for this URL, skip to checkout only
+        if fansigo_dict.get("qty_set_url") == url:
+            await asyncio.sleep(0.3)
+            await nodriver_fansigo_click_checkout(tab, config_dict)
+            return tab
+
+        # Select section (returns index, or -1 if failed)
+        section_index = await nodriver_fansigo_area_auto_select(tab, url, config_dict)
+
+        if section_index >= 0:
+            # Set ticket quantity for the selected section
+            await asyncio.sleep(0.3)
+            qty_set = await nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index)
+
+            if qty_set:
+                fansigo_dict["qty_set_url"] = url
+                # Click checkout
+                await asyncio.sleep(0.3)
+                await nodriver_fansigo_click_checkout(tab, config_dict)
+
+        return tab
+
+    return tab
+
+
 async def main(args):
     config_dict = get_config_dict(args)
 
@@ -26364,6 +27015,10 @@ async def main(args):
         # FunOne Tickets
         if 'tickets.funone.io' in url:
             tab = await nodriver_funone_main(tab, url, config_dict)
+
+        # FANSI GO
+        if 'go.fansi.me' in url:
+            tab = await nodriver_fansigo_main(tab, url, config_dict)
 
         # for facebook
         facebook_login_url = 'https://www.facebook.com/login.php?'
