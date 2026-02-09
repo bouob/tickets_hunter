@@ -42,7 +42,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.03)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
 
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
@@ -5555,7 +5555,15 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         # Ensure agreement checkbox is checked (even if ticket number already set)
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
 
-        await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
+        # Reset OCR state if captcha alert detected (wrong answer submitted)
+        if tixcraft_dict.get("captcha_alert_detected", False):
+            tixcraft_dict["ocr_completed_url"] = ""
+            tixcraft_dict["captcha_alert_detected"] = False
+
+        # Skip OCR if already completed on this URL (non-force_submit mode only)
+        is_force_submit = config_dict["ocr_captcha"]["force_submit"]
+        if is_force_submit or tixcraft_dict.get("ocr_completed_url", "") != current_url:
+            await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
         return
 
     # Always check agreement checkbox in NoDriver mode
@@ -5957,6 +5965,10 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if show_debug_message:
                 print(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
 
+        # Mark OCR completed for this URL (non-force_submit mode only)
+        if not away_from_keyboard_enable:
+            tixcraft_dict["ocr_completed_url"] = current_url
+
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
@@ -6054,6 +6066,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_order"] = False
         tixcraft_dict["alert_handler_registered"] = False
         tixcraft_dict["captcha_alert_detected"] = False
+        tixcraft_dict["ocr_completed_url"] = ""
         tixcraft_dict["last_homepage_redirect_time"] = 0
         tixcraft_dict["sold_out_cooldown_until"] = 0  # Issue #188: Cooldown timestamp
 
@@ -26359,7 +26372,10 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         for show in shows:
             print(f"[FANSIGO]   Show text: {show['text'][:80]}")
 
-    matched = fansigo_match_by_keyword(shows, date_keyword)
+    if date_keyword:
+        matched = fansigo_match_by_keyword(shows, date_keyword)
+    else:
+        matched = None
 
     if matched:
         if show_debug_message:
@@ -26371,26 +26387,36 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
             print(f"[FANSIGO] Error clicking matched show: {e}")
             return False
 
-    # Fallback strategy
+    if not date_keyword:
+        # No keyword set = accept all, select by mode
+        mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        target = util.get_target_item_from_matched_list(shows, mode)
+        if target:
+            if show_debug_message:
+                print(f"[FANSIGO] No keyword set, selecting by mode: {target['name']}")
+            try:
+                await nodriver_fansigo_click_show(tab, target, config_dict)
+                return True
+            except Exception as e:
+                print(f"[FANSIGO] Error clicking show: {e}")
+                return False
+        return False
+
+    # Keyword set but no match - check fallback
     date_auto_fallback = config_dict.get("date_auto_fallback", False)
     if date_auto_fallback:
         mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
-        if mode == CONST_FROM_BOTTOM_TO_TOP:
-            target = shows[-1]
-        elif mode == CONST_RANDOM:
-            import random
-            target = random.choice(shows)
-        else:  # from top to bottom
-            target = shows[0]
-
-        if show_debug_message:
-            print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
-        try:
-            await nodriver_fansigo_click_show(tab, target, config_dict)
-            return True
-        except Exception as e:
-            print(f"[FANSIGO] Error clicking fallback show: {e}")
-            return False
+        target = util.get_target_item_from_matched_list(shows, mode)
+        if target:
+            if show_debug_message:
+                print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
+            try:
+                await nodriver_fansigo_click_show(tab, target, config_dict)
+                return True
+            except Exception as e:
+                print(f"[FANSIGO] Error clicking fallback show: {e}")
+                return False
+        return False
 
     if show_debug_message:
         print("[FANSIGO] No matching show found and fallback disabled")
@@ -26531,7 +26557,11 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
 
     # Use keyword matching
     area_keyword = area_auto_select.get("area_keyword", "")
-    matched = fansigo_match_by_keyword(available_sections, area_keyword, "name")
+
+    if area_keyword:
+        matched = fansigo_match_by_keyword(available_sections, area_keyword, "name")
+    else:
+        matched = None
 
     target_section = None
 
@@ -26539,20 +26569,19 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
         target_section = matched
         if show_debug_message:
             print(f"[FANSIGO] Section matched by keyword: {matched['name']}")
+    elif not area_keyword:
+        # No keyword set = accept all, select by mode
+        mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
+        target_section = util.get_target_item_from_matched_list(available_sections, mode)
+        if show_debug_message and target_section:
+            print(f"[FANSIGO] No keyword set, selecting by mode: {target_section['name']}")
     else:
-        # Fallback strategy
+        # Keyword set but no match - check fallback
         area_auto_fallback = config_dict.get("area_auto_fallback", False)
         if area_auto_fallback:
             mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
-            if mode == CONST_FROM_BOTTOM_TO_TOP:
-                target_section = available_sections[-1]
-            elif mode == CONST_RANDOM:
-                import random
-                target_section = random.choice(available_sections)
-            else:  # from top to bottom
-                target_section = available_sections[0]
-
-            if show_debug_message:
+            target_section = util.get_target_item_from_matched_list(available_sections, mode)
+            if show_debug_message and target_section:
                 print(f"[FANSIGO] Using fallback, selecting: {target_section['name']}")
         else:
             if show_debug_message:
@@ -26595,26 +26624,26 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
         target_count = 1
 
     try:
-        # Click plus button target_count times using JS
-        # The + button is rendered via CSS (no text), second button in each section
-        js_click_n = '''
+        # Click + button one at a time with delay for React state updates
+        # React 18 batches synchronous state updates, so clicking N times
+        # in a single JS execution only registers as 1 click.
+        js_click_once = '''
         (function() {
             var sections = document.querySelectorAll('li.list-none');
             for (var i = 0; i < sections.length; i++) {
                 var btns = sections[i].querySelectorAll('button');
                 if (btns.length >= 2) {
-                    var plusBtn = btns[1];
-                    for (var j = 0; j < %d; j++) {
-                        plusBtn.click();
-                    }
+                    btns[1].click();
                     return true;
                 }
             }
             return false;
         })()
-        ''' % target_count
-
-        await tab.evaluate(js_click_n)
+        '''
+        for i in range(target_count):
+            await tab.evaluate(js_click_once)
+            if i < target_count - 1:
+                await asyncio.sleep(0.2)
 
         if show_debug_message:
             print(f"[FANSIGO] Set ticket quantity to {target_count}")
@@ -26660,8 +26689,9 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
         ''' % checkout_keywords_js
 
         result = await tab.evaluate(js_click_checkout)
+        result = util.parse_nodriver_result(result)
 
-        if result and result.get('clicked'):
+        if isinstance(result, dict) and result.get('clicked'):
             if show_debug_message:
                 print(f"[FANSIGO] Clicked checkout button: {result.get('text', '')}")
             return True
