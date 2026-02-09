@@ -1,4 +1,4 @@
-# Python Version: 3.10.11
+# Python Version: 3.11.9
 certifi==2025.10.5
 chardet==5.2.0
 chromedriver-autoinstaller-max==1.0.6
