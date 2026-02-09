@@ -21179,6 +21179,7 @@ async def nodrver_block_urls(tab, config_dict):
         '*.doubleclick.net/*',  # Covers securepubads.g.doubleclick.net
         '*.lndata.com/*',
         '*.rollbar.com/*',
+        '*.smartlook.com/*',
         '*anymind360.com/*',  # Block Anymind360 tracking (loaded by cityline others.min.js)
         '*cdn.cookielaw.org/*',
         '*e2elog.fetnet.net*',
@@ -26095,26 +26096,6 @@ FANSIGO_URL_PATTERNS = {
     "order_result": r"go\.fansi\.me/tickets/payment/orderresult/",
 }
 
-# FANSI GO tracker block domains
-FANSIGO_BLOCK_DOMAINS = [
-    "googletagmanager.com",
-    "analytics.google.com",
-    "stats.g.doubleclick.net",
-    "google.com.tw/ads",
-    "google.com/ads",
-    "smartlook.com",
-    "web-sdk.smartlook.com",
-]
-
-# FANSI GO allow domains (must not block)
-FANSIGO_ALLOW_DOMAINS = [
-    "go.fansi.me",
-    "api.fansi.me",
-    "checkout.payments.91app.com",
-    "cdn-cgi",
-    "challenges.cloudflare.com",
-]
-
 
 def is_fansigo_url(url: str) -> bool:
     """Check if URL is a FANSI GO URL"""
@@ -26185,14 +26166,17 @@ async def nodriver_fansigo_inject_cookie(tab, config_dict):
 
 
 async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
-    """Get all available shows from event page
+    """Get all available shows from event page using tab.evaluate()
+
+    NoDriver's query_selector_all() fails on Next.js SPA pages,
+    but tab.evaluate() (direct JS execution) works reliably.
 
     Args:
         tab: NoDriver tab
         config_dict: Configuration dictionary
 
     Returns:
-        list: List of show dictionaries with element, text, name, datetime, venue
+        list: List of show dictionaries with href, text, name, datetime, venue
     """
     import re
 
@@ -26200,43 +26184,70 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
     shows = []
 
     try:
-        # Find all show links on event page
-        # Show links contain show name, datetime, venue info
-        show_elements = await tab.query_selector_all('a[href*="/tickets/show/"]')
+        # Wait for Next.js SPA to render content
+        try:
+            await tab.find("請選擇活動場次進行購買", timeout=5)
+        except Exception:
+            if show_debug_message:
+                print("[FANSIGO] Waiting for event page to render...")
+            return shows
 
-        for elem in show_elements:
-            try:
-                text = await elem.get_text()
-                if text and len(text.strip()) > 0:
-                    text = text.strip()
-                    # Parse show information from text
-                    # Example: "Kaohsiung 2026/02/07 19:00 LIVE WAREHOUSE"
-                    name = text
-                    datetime_str = ""
-                    venue = ""
+        # Extract show data via JavaScript
+        # Wrap array in object for util.parse_nodriver_result() compatibility
+        js_raw = await tab.evaluate('''
+            (function() {
+                var links = document.querySelectorAll('a[href*="/tickets/show/"]');
+                var items = [];
+                for (var i = 0; i < links.length; i++) {
+                    items.push({
+                        href: links[i].href,
+                        text: links[i].textContent.trim()
+                    });
+                }
+                return {items: items, count: items.length};
+            })()
+        ''')
+        js_parsed = util.parse_nodriver_result(js_raw)
+        js_result = js_parsed.get('items', []) if isinstance(js_parsed, dict) else []
 
-                    # Try to extract datetime
-                    datetime_match = re.search(r"(\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2})", text)
-                    if datetime_match:
-                        datetime_str = datetime_match.group(1)
-                        # Name is before datetime
-                        name_match = re.match(r"^(.+?)\s+\d{4}/", text)
-                        if name_match:
-                            name = name_match.group(1).strip()
-                        # Venue is after datetime
-                        venue_match = re.search(r"\d{2}:\d{2}\s+(.+?)(?:\s+\d{3}|$)", text)
-                        if venue_match:
-                            venue = venue_match.group(1).strip()
+        if not js_result or len(js_result) == 0:
+            return shows
 
-                    shows.append({
-                        "element": elem,
-                        "text": text,
-                        "name": name,
-                        "datetime": datetime_str,
-                        "venue": venue,
-                    })
-            except Exception:
-                pass
+        for item in js_result:
+            href = item.get("href", "")
+            text = item.get("text", "")
+            if not text:
+                continue
+
+            # Normalize whitespace
+            normalized_text = re.sub(r'\s+', ' ', text).strip()
+
+            name = normalized_text
+            datetime_str = ""
+            venue = ""
+
+            # Extract datetime
+            datetime_match = re.search(r"(\d{4}/\d{2}/\d{2})\s*(\d{2}:\d{2})", normalized_text)
+            if datetime_match:
+                datetime_str = datetime_match.group(1) + " " + datetime_match.group(2)
+                name_end = datetime_match.start()
+                if name_end > 0:
+                    name = normalized_text[:name_end].strip()
+                after_time = normalized_text[datetime_match.end():].strip()
+                venue_match = re.match(r"(.+?)(?:\s+\d{3}|$)", after_time)
+                if venue_match:
+                    venue = venue_match.group(1).strip()
+
+            if show_debug_message:
+                print(f"[FANSIGO] Show: name={name}, date={datetime_str}, venue={venue}")
+
+            shows.append({
+                "href": href,
+                "text": normalized_text,
+                "name": name,
+                "datetime": datetime_str,
+                "venue": venue,
+            })
 
         if show_debug_message:
             print(f"[FANSIGO] Found {len(shows)} shows")
@@ -26246,6 +26257,33 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
             print(f"[FANSIGO] Error getting shows: {e}")
 
     return shows
+
+
+async def nodriver_fansigo_click_show(tab, show_dict, config_dict):
+    """Navigate to show page directly using href
+
+    Uses tab.get() for direct navigation instead of click(),
+    which avoids Next.js opening new tabs.
+
+    Args:
+        tab: NoDriver tab
+        show_dict: Show dictionary with href
+        config_dict: Configuration dictionary
+    """
+    show_debug_message = config_dict["advanced"].get("verbose", False)
+    href = show_dict.get("href", "")
+
+    if not href:
+        raise Exception("No href in show_dict")
+
+    # Build full URL if relative
+    if href.startswith("/"):
+        href = "https://go.fansi.me" + href
+
+    if show_debug_message:
+        print(f"[FANSIGO] Navigating to show: {href}")
+
+    await tab.get(href)
 
 
 def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "text") -> dict:
@@ -26262,15 +26300,10 @@ def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "
     if not keyword_string or len(keyword_string.strip()) == 0:
         return None
 
-    # Use util.format_keyword_string for consistent keyword handling
-    formatted_keyword = util.format_keyword_string(keyword_string)
-    keywords = [k.strip() for k in formatted_keyword.split(";") if k.strip()]
-
-    for keyword in keywords:
-        for item in items:
-            item_text = item.get(text_key, "")
-            if util.is_text_match_keyword(item_text, keyword):
-                return item
+    for item in items:
+        item_text = item.get(text_key, "")
+        if util.is_text_match_keyword(keyword_string, item_text):
+            return item
 
     return None
 
@@ -26312,7 +26345,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         if show_debug_message:
             print(f"[FANSIGO] Single show found, selecting: {shows[0]['name']}")
         try:
-            await shows[0]["element"].click()
+            await nodriver_fansigo_click_show(tab, shows[0], config_dict)
             return True
         except Exception as e:
             print(f"[FANSIGO] Error clicking show: {e}")
@@ -26320,13 +26353,19 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
 
     # Multiple shows - use keyword matching
     date_keyword = date_auto_select.get("date_keyword", "")
+
+    if show_debug_message:
+        print(f"[FANSIGO] Matching with date_keyword: {date_keyword}")
+        for show in shows:
+            print(f"[FANSIGO]   Show text: {show['text'][:80]}")
+
     matched = fansigo_match_by_keyword(shows, date_keyword)
 
     if matched:
         if show_debug_message:
             print(f"[FANSIGO] Show matched by keyword: {matched['name']}")
         try:
-            await matched["element"].click()
+            await nodriver_fansigo_click_show(tab, matched, config_dict)
             return True
         except Exception as e:
             print(f"[FANSIGO] Error clicking matched show: {e}")
@@ -26347,7 +26386,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         if show_debug_message:
             print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
         try:
-            await target["element"].click()
+            await nodriver_fansigo_click_show(tab, target, config_dict)
             return True
         except Exception as e:
             print(f"[FANSIGO] Error clicking fallback show: {e}")
@@ -26359,73 +26398,70 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
 
 
 async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
-    """Get all available ticket sections from show page
+    """Get all available ticket sections from show page using tab.evaluate()
 
     Args:
         tab: NoDriver tab
         config_dict: Configuration dictionary
 
     Returns:
-        list: List of section dictionaries with element, name, price, status
+        list: List of section dictionaries with index, name, price, status
     """
     show_debug_message = config_dict["advanced"].get("verbose", False)
     sections = []
 
     try:
-        # Find ticket section items
-        # Each section is in a list item with heading (name) and price info
-        section_elements = await tab.query_selector_all('li[class*="chakra-wrap__listitem"]')
+        # Wait for Next.js SPA to render ticket sections
+        try:
+            await tab.find("選擇票券種類", timeout=5)
+        except Exception:
+            if show_debug_message:
+                print("[FANSIGO] Waiting for show page to render...")
+            return sections
 
-        for elem in section_elements:
-            try:
-                # Get section name from heading
-                heading = await elem.query_selector('h3')
-                if not heading:
-                    continue
+        # Extract section data via JavaScript
+        # Wrap array in object for util.parse_nodriver_result() compatibility
+        js_raw = await tab.evaluate('''
+            (function() {
+                var elems = document.querySelectorAll('li.list-none');
+                var items = [];
+                for (var i = 0; i < elems.length; i++) {
+                    var text = elems[i].textContent.trim();
+                    var h3 = elems[i].querySelector('h3');
+                    var name = h3 ? h3.textContent.trim() : '';
+                    if (!name) {
+                        var p = elems[i].querySelector('p');
+                        name = p ? p.textContent.trim() : '';
+                    }
+                    var hasButton = elems[i].querySelectorAll('button').length > 0;
+                    var status = 'unavailable';
+                    if (text.indexOf('尚未開賣') >= 0) status = 'coming_soon';
+                    else if (text.indexOf('已售完') >= 0 || text.indexOf('你已太晚') >= 0) status = 'sold_out';
+                    else if (hasButton) status = 'on_sale';
+                    items.push({index: i, name: name, text: text, status: status});
+                }
+                return {items: items, count: items.length};
+            })()
+        ''')
+        js_parsed = util.parse_nodriver_result(js_raw)
+        js_result = js_parsed.get('items', []) if isinstance(js_parsed, dict) else []
 
-                name = await heading.get_text()
-                if not name:
-                    continue
-                name = name.strip()
+        if not js_result:
+            return sections
 
-                # Get price
-                price_elem = await elem.query_selector('p[class*="chakra-text"]')
-                price = 0
-                if price_elem:
-                    price_text = await price_elem.get_text()
-                    if price_text:
-                        # Extract number from "NT$ 2,000"
-                        import re
-                        price_match = re.search(r"[\d,]+", price_text.replace(",", ""))
-                        if price_match:
-                            try:
-                                price = int(price_match.group().replace(",", ""))
-                            except:
-                                pass
+        for item in js_result:
+            if not item.get("name"):
+                continue
 
-                # Determine status - check if section is clickable/available
-                # Available sections have quantity selectors
-                qty_selector = await elem.query_selector('button')
-                status = "on_sale" if qty_selector else "unavailable"
+            if show_debug_message:
+                print(f"[FANSIGO] Section: {item['name']}, status={item['status']}")
 
-                # Check for "sold out" or "coming soon" indicators
-                elem_text = await elem.get_text()
-                if elem_text:
-                    elem_text_lower = elem_text.lower()
-                    if "sold" in elem_text_lower or "out" in elem_text_lower:
-                        status = "sold_out"
-                    elif "coming" in elem_text_lower or "soon" in elem_text_lower:
-                        status = "coming_soon"
-
-                sections.append({
-                    "element": elem,
-                    "name": name,
-                    "price": price,
-                    "status": status,
-                })
-
-            except Exception:
-                pass
+            sections.append({
+                "index": item["index"],
+                "name": item["name"],
+                "status": item["status"],
+                "text": item.get("text", ""),
+            })
 
         if show_debug_message:
             available = [s for s in sections if s["status"] == "on_sale"]
@@ -26526,7 +26562,13 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
     # Click the section to select it (this usually expands quantity selector)
     if target_section:
         try:
-            await target_section["element"].click()
+            section_index = target_section["index"]
+            await tab.evaluate('''
+                (function() {
+                    var items = document.querySelectorAll('li.list-none');
+                    if (items[%d]) { items[%d].click(); }
+                })()
+            ''' % (section_index, section_index))
             await asyncio.sleep(0.3)
             return True
         except Exception as e:
@@ -26537,7 +26579,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> bool:
 
 
 async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
-    """Set ticket quantity on show page
+    """Set ticket quantity on show page using tab.evaluate()
 
     Args:
         tab: NoDriver tab
@@ -26553,30 +26595,26 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
         target_count = 1
 
     try:
-        # Find plus button for quantity
-        # FANSI GO uses +/- buttons for quantity selection
-        plus_buttons = await tab.query_selector_all('button')
+        # Click plus button target_count times using JS
+        # The + button is rendered via CSS (no text), second button in each section
+        js_click_n = '''
+        (function() {
+            var sections = document.querySelectorAll('li.list-none');
+            for (var i = 0; i < sections.length; i++) {
+                var btns = sections[i].querySelectorAll('button');
+                if (btns.length >= 2) {
+                    var plusBtn = btns[1];
+                    for (var j = 0; j < %d; j++) {
+                        plusBtn.click();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        })()
+        ''' % target_count
 
-        plus_button = None
-        for btn in plus_buttons:
-            btn_text = await btn.get_text()
-            if btn_text and '+' in btn_text:
-                plus_button = btn
-                break
-
-        if not plus_button:
-            if show_debug_message:
-                print("[FANSIGO] Plus button not found")
-            return False
-
-        # Click plus button (target_count) times
-        # Initial count is usually 0, so click target_count times
-        for i in range(target_count):
-            try:
-                await plus_button.click()
-                await asyncio.sleep(0.1)
-            except Exception:
-                break
+        await tab.evaluate(js_click_n)
 
         if show_debug_message:
             print(f"[FANSIGO] Set ticket quantity to {target_count}")
@@ -26589,7 +26627,7 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict) -> bool:
 
 
 async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
-    """Click checkout/submit button on show page
+    """Click checkout/submit button on show page using JavaScript
 
     Args:
         tab: NoDriver tab
@@ -26601,25 +26639,32 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     try:
-        # Find checkout/submit button
-        # Common button texts: "Checkout", "Submit", "Buy"
-        buttons = await tab.query_selector_all('button')
+        # Find and click checkout button via JavaScript
+        checkout_keywords_js = '["checkout","submit","buy","next","continue","取得訂單","結帳","購買","下一步"]'
 
-        checkout_keywords = ["checkout", "submit", "buy", "next", "continue"]
+        js_click_checkout = '''
+        (function() {
+            var keywords = %s;
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                var text = (buttons[i].textContent || '').trim().toLowerCase();
+                for (var j = 0; j < keywords.length; j++) {
+                    if (text.indexOf(keywords[j]) >= 0) {
+                        buttons[i].click();
+                        return {clicked: true, text: buttons[i].textContent.trim()};
+                    }
+                }
+            }
+            return {clicked: false};
+        })()
+        ''' % checkout_keywords_js
 
-        for btn in buttons:
-            try:
-                btn_text = await btn.get_text()
-                if btn_text:
-                    btn_text_lower = btn_text.lower()
-                    for kw in checkout_keywords:
-                        if kw in btn_text_lower:
-                            await btn.click()
-                            if show_debug_message:
-                                print(f"[FANSIGO] Clicked checkout button: {btn_text}")
-                            return True
-            except Exception:
-                pass
+        result = await tab.evaluate(js_click_checkout)
+
+        if result and result.get('clicked'):
+            if show_debug_message:
+                print(f"[FANSIGO] Clicked checkout button: {result.get('text', '')}")
+            return True
 
         if show_debug_message:
             print("[FANSIGO] Checkout button not found")

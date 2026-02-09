@@ -63,6 +63,8 @@ const credit_card_prefix = document.querySelector('#credit_card_prefix');
 // auto fill
 const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
+const funone_session_cookie = document.querySelector('#funone_session_cookie');
+const fansigo_cookie = document.querySelector('#fansigo_cookie');
 const facebook_account = document.querySelector('#facebook_account');
 const kktix_account = document.querySelector('#kktix_account');
 const fami_account = document.querySelector('#fami_account');
