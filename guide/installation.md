@@ -52,14 +52,9 @@
 ```
 tickets_hunter/
 ├── nodriver_tixcraft.exe       # NoDriver 搶票引擎
-├── chrome_tixcraft.exe          # Chrome 搶票引擎
 ├── settings.exe                 # 設定編輯器（主要入口）
 │
 ├── _internal/                   # 依賴函式庫（請勿刪除！）
-├── webdriver/                   # WebDriver 與擴充套件
-│   ├── Maxbotplus_1.0.0/
-│   └── Maxblockplus_1.0.0/
-│
 ├── assets/                      # 資源檔案
 │   ├── icons/                   # 圖示
 │   └── sounds/                  # 音效檔案
@@ -103,9 +98,6 @@ tickets_hunter/
 - **區域自動遞補**：當找不到區域關鍵字時的行為（開啟/關閉）
 
 #### ⚙️ 進階設定頁籤
-- **WebDriver類別（webdriver_type）**：選擇搶票引擎
-  - **nodriver**：推薦，反偵測能力最強（預設）
-  - **undetected_chrome**：傳統方案，穩定性高
 - **驗證碼設定**：OCR 自動辨識選項
 - **優惠代碼**：特定活動需要的會員序號或優惠代碼（KKTIX、TicketPlus）⭐ 新增功能
 - **音效設定**：成功時播放提示音
@@ -190,9 +182,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 ### 3.4 啟動搶票
 
 1. 確認設定無誤後，點擊頁面底部的 **「搶票」** 按鈕
-2. 系統會自動根據您的 `webdriver_type` 設定啟動對應的搶票引擎：
-   - **nodriver** → 自動啟動 `nodriver_tixcraft.exe`
-   - **undetected_chrome** → 自動啟動 `chrome_tixcraft.exe`
+2. 系統會自動啟動 `nodriver_tixcraft.exe` 搶票引擎
 3. 搶票程式會顯示執行進度與 log
 4. 成功進入購票頁面時會發出音效提示（如有設定）
 
@@ -288,18 +278,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 
 **解決方案**：耐心等待下載完成，後續執行會變快
 
-### Q4: Chrome 版本出現「chromedriver.exe 不相容」錯誤？
-
-**原因**：系統 Chrome 版本與 chromedriver.exe 版本不符
-
-**解決方案**：
-1. 前往 [ChromeDriver 下載頁面](https://chromedriver.chromium.org/)
-2. 下載與您的 Chrome 版本相符的 chromedriver.exe
-3. 放到 `webdriver/` 目錄中，覆蓋舊檔案
-
-**建議**：改用 NoDriver 引擎，無需手動管理 chromedriver
-
-### Q5: 設定介面無法開啟（瀏覽器沒有自動開啟）？
+### Q4: 設定介面無法開啟（瀏覽器沒有自動開啟）？
 
 **可能原因**：
 - Port 16888 被其他程式佔用或被系統阻擋（Hyper-V、WSL、Docker 等）
@@ -319,7 +298,7 @@ https://ticket.ibon.com.tw/ActivityInfo/Details/25EXAMPLE
 netsh interface ipv4 show excludedportrange protocol=tcp
 ```
 
-### Q6: 可以在不同電腦上使用嗎？
+### Q5: 可以在不同電腦上使用嗎？
 
 **可以！** 直接複製整個 `tickets_hunter/` 資料夾到其他電腦即可。
 
@@ -327,7 +306,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 - Windows 版本限定 Windows 10/11（64-bit）
 - 首次執行 NoDriver 時仍需下載 Chrome
 
-### Q7: 如何更新到新版本？
+### Q6: 如何更新到新版本？
 
 **步驟**：
 1. 從 [GitHub Releases](https://github.com/bouob/tickets_hunter/releases) 下載最新 ZIP

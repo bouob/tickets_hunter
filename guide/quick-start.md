@@ -107,21 +107,7 @@ https://kktix.com/events/example-event
 
 ---
 
-#### 2.3 搶票引擎 (webdriver_type)
-選擇使用哪種搶票引擎。
-
-**在圖形介面中顯示為**：`WebDriver類別`
-
-**推薦設定**：nodriver
-
-**可選值**：
-- nodriver - **推薦**，反偵測能力最強
-- undetected_chromedriver - 舊版回退
-- selenium - 標準模式（較容易被偵測）
-
----
-
-#### 2.4 日期關鍵字
+#### 2.3 日期關鍵字
 
 填寫想選擇的日期文字，例如：`11/16;11/17;週六`
 
@@ -132,7 +118,7 @@ https://kktix.com/events/example-event
 
 ---
 
-#### 2.5 區域關鍵字
+#### 2.4 區域關鍵字
 
 填寫想選擇的區域文字，例如：`搖滾A;VIP;3,280`
 
@@ -143,7 +129,7 @@ https://kktix.com/events/example-event
 
 ---
 
-#### 2.6 排除關鍵字
+#### 2.5 排除關鍵字
 
 排除不想選的區域：`輪椅;身障;視線不良`
 

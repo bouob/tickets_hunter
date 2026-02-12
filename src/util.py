@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 import pathlib
@@ -9,6 +8,7 @@ import socket
 import subprocess
 import sys
 import threading
+from datetime import datetime
 from typing import Optional
 
 import requests
@@ -21,7 +21,6 @@ CONST_RANDOM = "random"
 
 # Keyword delimiter constants (Issue #23)
 CONST_KEYWORD_DELIMITER = ';'  # New delimiter (semicolon)
-CONST_KEYWORD_DELIMITER_OLD = ','  # Old delimiter (comma) for backward compatibility detection
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
@@ -90,22 +89,6 @@ def find_between( s, first, last ):
     except ValueError:
         pass
     return ret
-
-def sx(s1):
-    key=18
-    return ''.join(chr(ord(a) ^ key) for a in s1)
-
-def decryptMe(b):
-    s=""
-    if(len(b)>0):
-        s=sx(base64.b64decode(b).decode("UTF-8"))
-    return s
-
-def encryptMe(s):
-    data=""
-    if(len(s)>0):
-        data=base64.b64encode(sx(s).encode('UTF-8')).decode("UTF-8")
-    return data
 
 def is_arm():
     ret = False
@@ -319,44 +302,6 @@ def force_remove_file(filepath):
             pass
 
 
-def clean_uc_exe_cache():
-    exe_name = "chromedriver%s"
-
-    platform = sys.platform
-    if platform.endswith("win32"):
-        exe_name %= ".exe"
-    if platform.endswith(("linux", "linux2")):
-        exe_name %= ""
-    if platform.endswith("darwin"):
-        exe_name %= ""
-
-    d = ""
-    if platform.endswith("win32"):
-        d = "~/appdata/roaming/undetected_chromedriver"
-    elif "LAMBDA_TASK_ROOT" in os.environ:
-        d = "/tmp/undetected_chromedriver"
-    elif platform.startswith(("linux", "linux2")):
-        d = "~/.local/share/undetected_chromedriver"
-    elif platform.endswith("darwin"):
-        d = "~/Library/Application Support/undetected_chromedriver"
-    else:
-        d = "~/.undetected_chromedriver"
-    data_path = os.path.abspath(os.path.expanduser(d))
-
-    is_cache_exist = False
-    p = pathlib.Path(data_path)
-    files = list(p.rglob("*chromedriver*?"))
-    for file in files:
-        if os.path.exists(str(file)):
-            is_cache_exist = True
-            try:
-                os.unlink(str(file))
-            except Exception as exc2:
-                print(exc2)
-                pass
-
-    return is_cache_exist
-
 def t_or_f(arg):
     ret = False
     ua = str(arg).upper()
@@ -524,89 +469,6 @@ def get_brave_bin_path():
     return brave_path
 
 
-def dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE):
-    # sync config.
-    target_path = ext
-    target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
-    #print("save as to:", target_path)
-    if os.path.isfile(target_path):
-        try:
-            #print("remove file:", target_path)
-            os.unlink(target_path)
-        except Exception as exc:
-            pass
-
-    try:
-        with open(target_path, 'w') as outfile:
-            json.dump(config_dict, outfile)
-    except Exception as e:
-        pass
-
-    # add host_permissions
-    target_path = ext
-    target_path = os.path.join(target_path, "manifest.json")
-
-    manifest_dict = None
-    if os.path.isfile(target_path):
-        try:
-            with open(target_path) as json_data:
-                manifest_dict = json.load(json_data)
-        except Exception as e:
-            pass
-
-    local_remote_url_array = []
-    local_remote_url = config_dict["advanced"]["remote_url"]
-    if len(local_remote_url) > 0:
-        try:
-            temp_remote_url_array = json.loads("["+ local_remote_url +"]")
-            for remote_url in temp_remote_url_array:
-                remote_url_final = remote_url + "*"
-                local_remote_url_array.append(remote_url_final)
-        except Exception as exc:
-            pass
-
-    if len(local_remote_url_array) > 0:
-        is_manifest_changed = False
-        if 'host_permissions' in manifest_dict:
-            for remote_url_final in local_remote_url_array:
-                if not remote_url_final in manifest_dict["host_permissions"]:
-                    #print("local remote_url not in manifest:", remote_url_final)
-                    manifest_dict["host_permissions"].append(remote_url_final)
-                    is_manifest_changed = True
-
-        if is_manifest_changed:
-            json_str = json.dumps(manifest_dict, indent=4)
-            try:
-                with open(target_path, 'w') as outfile:
-                    outfile.write(json_str)
-            except Exception as e:
-                pass
-
-
-def dump_settings_to_maxblock_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE, CONST_MAXBLOCK_EXTENSION_FILTER):
-    # sync config.
-    target_path = ext
-    target_path = os.path.join(target_path, "data")
-    # special case, due to data folder is empty, sometime will be removed.
-    if not os.path.exists(target_path):
-        os.mkdir(target_path)
-    target_path = os.path.join(target_path, CONST_MAXBOT_CONFIG_FILE)
-    #print("save as to:", target_path)
-    if os.path.isfile(target_path):
-        try:
-            #print("remove file:", target_path)
-            os.unlink(target_path)
-        except Exception as exc:
-            pass
-
-    try:
-        with open(target_path, 'w') as outfile:
-            config_dict["domain_filter"]=CONST_MAXBLOCK_EXTENSION_FILTER
-            json.dump(config_dict, outfile)
-    except Exception as e:
-        pass
-
 # convert web string to reg pattern
 def convert_string_to_pattern(my_str, dynamic_length=True):
     my_hint_anwser_length = len(my_str)
@@ -650,9 +512,8 @@ def convert_string_to_pattern(my_str, dynamic_length=True):
             my_formated = my_formated.replace(r"[\d]",r"[\d]+")
     return my_formated
 
-def guess_answer_list_from_multi_options(tmp_text):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
+def guess_answer_list_from_multi_options(tmp_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     options_list = []
     matched_pattern = ""
@@ -747,20 +608,17 @@ def guess_answer_list_from_multi_options(tmp_text):
 
                     matched_pattern = pattern
 
-    if show_debug_message:
-        print("matched pattern:", matched_pattern)
+    debug.log("matched pattern:", matched_pattern)
 
     # default remove quota
     is_trim_quota = not check_answer_keep_symbol(tmp_text)
-    if show_debug_message:
-        print("is_trim_quota:", is_trim_quota)
+    debug.log("is_trim_quota:", is_trim_quota)
 
     return_list = []
     if len(options_list) > 0:
         options_list_length = len(options_list)
-        if show_debug_message:
-            print("options_list_length:", options_list_length)
-            print("options_list:", options_list)
+        debug.log("options_list_length:", options_list_length)
+        debug.log("options_list:", options_list)
         if options_list_length > 2:
             is_all_options_same_length = True
             options_length_count = {}
@@ -774,8 +632,7 @@ def guess_answer_list_from_multi_options(tmp_text):
                 else:
                     options_length_count[current_option_length] = 1
 
-            if show_debug_message:
-                print("is_all_options_same_length:", is_all_options_same_length)
+            debug.log("is_all_options_same_length:", is_all_options_same_length)
 
             if is_all_options_same_length:
                 return_list = []
@@ -857,9 +714,8 @@ def guess_answer_list_from_symbols(captcha_text_div_text):
             break
     return return_list
 
-def get_offical_hint_string_from_symbol(symbol, tmp_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def get_offical_hint_string_from_symbol(symbol, tmp_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     offical_hint_string = ""
     if symbol in tmp_text:
@@ -868,8 +724,7 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
             if '【' in tmp_text and '】' in tmp_text:
                 hint_list = re.findall('【.*?】', tmp_text)
                 if not hint_list is None:
-                    if show_debug_message:
-                        print("【.*?】hint_list:", hint_list)
+                    debug.log("hint_list:", hint_list)
                     for hint in hint_list:
                         if symbol in hint:
                             offical_hint_string = hint[1:-1]
@@ -878,8 +733,7 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
             if '(' in tmp_text and ')' in tmp_text:
                 hint_list = re.findall(r'\(.*?\)', tmp_text)
                 if not hint_list is None:
-                    if show_debug_message:
-                        print(r"\(.*?\)hint_list:", hint_list)
+                    debug.log(r"\(.*?\)hint_list:", hint_list)
                     for hint in hint_list:
                         if symbol in hint:
                             offical_hint_string = hint[1:-1]
@@ -888,8 +742,7 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
             if '[' in tmp_text and ']' in tmp_text:
                 hint_list = re.findall('[.*?]', tmp_text)
                 if not hint_list is None:
-                    if show_debug_message:
-                        print("[.*?]hint_list:", hint_list)
+                    debug.log("[.*?]hint_list:", hint_list)
                     for hint in hint_list:
                         if symbol in hint:
                             offical_hint_string = hint[1:-1]
@@ -899,9 +752,8 @@ def get_offical_hint_string_from_symbol(symbol, tmp_text):
     return offical_hint_string
 
 
-def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
@@ -929,7 +781,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     if offical_hint_string == "":
         # for: 若你覺得答案為 a，請輸入 a
         if '答案' in tmp_text and CONST_INPUT_SYMBOL in tmp_text:
-            offical_hint_string = get_offical_hint_string_from_symbol(CONST_INPUT_SYMBOL, tmp_text)
+            offical_hint_string = get_offical_hint_string_from_symbol(CONST_INPUT_SYMBOL, tmp_text, config_dict)
         if len(offical_hint_string) > 0:
             right_part = offical_hint_string.split(CONST_INPUT_SYMBOL)[1]
             #print("right_part:", right_part)
@@ -944,7 +796,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
 
     if offical_hint_string == "":
-        offical_hint_string = get_offical_hint_string_from_symbol(CONST_EXAMPLE_SYMBOL, tmp_text)
+        offical_hint_string = get_offical_hint_string_from_symbol(CONST_EXAMPLE_SYMBOL, tmp_text, config_dict)
         if len(offical_hint_string) > 0:
             right_part = offical_hint_string.split(CONST_EXAMPLE_SYMBOL)[1]
             if len(offical_hint_string) == len(tmp_text):
@@ -960,8 +812,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
     if len(offical_hint_string_anwser) > 0:
         offical_hint_string = offical_hint_string.split(offical_hint_string_anwser)[0]
 
-    if show_debug_message:
-        print("offical_hint_string:", offical_hint_string)
+    debug.log("offical_hint_string:", offical_hint_string)
 
     # try rule4:
     # get hint from rule 3: without '(' & '), but use "*"
@@ -1071,8 +922,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             offical_hint_string = tmp_text[star_index: space_index]
 
     if len(offical_hint_string) > 0:
-        if show_debug_message:
-            print("offical_hint_string_anwser:", offical_hint_string_anwser)
+        debug.log("offical_hint_string_anwser:", offical_hint_string_anwser)
         my_anwser_formated = convert_string_to_pattern(offical_hint_string_anwser)
 
     my_options = tmp_text
@@ -1091,9 +941,8 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                 star_index = tmp_text_org.find(target_symbol)
                 my_options = tmp_text_org[star_index-1:]
 
-    if show_debug_message:
-        print("tmp_text:", tmp_text)
-        print("my_options:", my_options)
+    debug.log("tmp_text:", tmp_text)
+    debug.log("my_options:", my_options)
 
     if len(my_anwser_formated) > 0:
         allow_delimitor_symbols = ")].: }"
@@ -1107,13 +956,11 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             if maybe_delimitor in allow_delimitor_symbols:
                 my_answer_delimitor = maybe_delimitor
 
-    if show_debug_message:
-        print("my_answer_delimitor:", my_answer_delimitor)
+    debug.log("my_answer_delimitor:", my_answer_delimitor)
 
     # default remove quota
     is_trim_quota = not check_answer_keep_symbol(tmp_text)
-    if show_debug_message:
-        print("is_trim_quota:", is_trim_quota)
+    debug.log("is_trim_quota:", is_trim_quota)
 
     return_list = []
     if len(my_anwser_formated) > 0:
@@ -1122,10 +969,9 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             new_pattern = my_anwser_formated + '\\' + my_answer_delimitor
 
         return_list = re.findall(new_pattern, my_options)
-        if show_debug_message:
-            print("my_anwser_formated:", my_anwser_formated)
-            print("new_pattern:", new_pattern)
-            print("return_list:" , return_list)
+        debug.log("my_anwser_formated:", my_anwser_formated)
+        debug.log("new_pattern:", new_pattern)
+        debug.log("return_list:" , return_list)
 
         if not return_list is None:
             if len(return_list) == 1:
@@ -1144,8 +990,7 @@ def guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     if len(my_answer_delimitor) > 0:
                         for idx in range(return_list_length):
                             return_list[idx]=return_list[idx].replace(my_answer_delimitor,'')
-                if show_debug_message:
-                    print("cleaned return_list:" , return_list)
+                debug.log("cleaned return_list:" , return_list)
 
         if return_list is None:
             return_list = []
@@ -1224,9 +1069,8 @@ def permutations(iterable, r=None):
         else:
             return
 
-def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
+def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     return_list = []
 
@@ -1234,20 +1078,19 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
 
     # guess answer list from multi-options: 【】() []
     if len(return_list)==0:
-        return_list = guess_answer_list_from_multi_options(tmp_text)
-    if show_debug_message:
-        print("captcha_text_div_text:", captcha_text_div_text)
-        if len(return_list) > 0:
-            print("found, guess_answer_list_from_multi_options:", return_list)
+        return_list = guess_answer_list_from_multi_options(tmp_text, config_dict)
+    debug.log("captcha_text_div_text:", captcha_text_div_text)
+    if len(return_list) > 0:
+        debug.log("found, guess_answer_list_from_multi_options:", return_list)
 
     offical_hint_string_anwser = ""
     if len(return_list)==0:
-        return_list, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+        return_list, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text, config_dict)
     else:
         is_match_factorial = False
         mutiple = 0
 
-        return_list_2, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
+        return_list_2, offical_hint_string_anwser = guess_answer_list_from_hint(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text, config_dict)
         if return_list_2 is None:
             if len(offical_hint_string_anwser) >=3:
                 if len(return_list) >=3:
@@ -1255,9 +1098,8 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
                     if mutiple >=3 :
                         is_match_factorial = True
 
-        if show_debug_message:
-            print("mutiple:", mutiple)
-            print("is_match_factorial:", is_match_factorial)
+        debug.log("mutiple:", mutiple)
+        debug.log("is_match_factorial:", is_match_factorial)
         if is_match_factorial:
             is_match_factorial = False
             order_string_list = ['排列','排序','依序','順序','遞增','遞減','升冪','降冪','新到舊','舊到新','小到大','大到小','高到低','低到高']
@@ -1273,25 +1115,19 @@ def get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captch
             for item_tuple in new_array:
                 return_list.append(''.join(item_tuple))
 
-        if show_debug_message:
-            if len(return_list) > 0:
-                print("found, guess_answer_list_from_hint:", return_list)
+        if len(return_list) > 0:
+            debug.log("found, guess_answer_list_from_hint:", return_list)
 
     if len(return_list)==0:
         return_list = guess_answer_list_from_symbols(captcha_text_div_text)
-        if show_debug_message:
-            if len(return_list) > 0:
-                print("found, guess_answer_list_from_symbols:", return_list)
+        if len(return_list) > 0:
+            debug.log("found, guess_answer_list_from_symbols:", return_list)
 
     return return_list
 
 
 def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keyword_item_set, formated_area_list):
-    show_debug_message = True    # debug.
-    show_debug_message = False   # online
-
-    if config_dict["advanced"]["verbose"]:
-        show_debug_message = True
+    debug = create_debug_logger(config_dict)
 
     matched_blocks = []
     for row in formated_area_list:
@@ -1302,8 +1138,7 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
             row_html = row.get_attribute('innerHTML')
             row_text = remove_html_tags(row_html)
         except Exception as exc:
-            if show_debug_message:
-                print(exc)
+            debug.log(exc)
             # error, exit loop
             break
 
@@ -1314,8 +1149,7 @@ def get_matched_blocks_by_keyword_item_set(config_dict, auto_select_mode, keywor
         if len(row_text) > 0:
             # start to compare, normalize all.
             row_text = format_keyword_string(row_text)
-            if show_debug_message:
-                print("row_text:", row_text)
+            debug.log("row_text:", row_text)
 
             is_match_all = False
             if ' ' in keyword_item_set:
@@ -1436,6 +1270,29 @@ def get_debug_mode(config_dict):
         return False
 
 
+class DebugLogger:
+    """Unified debug output. Timestamp controlled by show_timestamp setting."""
+
+    def __init__(self, config_dict=None, enabled=None):
+        if enabled is not None:
+            self.enabled = enabled
+        elif config_dict:
+            self.enabled = get_debug_mode(config_dict)
+        else:
+            self.enabled = False
+
+    def log(self, *args):
+        if not self.enabled or not args:
+            return
+        text = " ".join(str(a) for a in args)
+        print(text)
+
+
+def create_debug_logger(config_dict=None, enabled=None):
+    """Create DebugLogger instance."""
+    return DebugLogger(config_dict, enabled)
+
+
 def parse_keyword_string_to_array(keyword_string):
     """
     Parse keyword string to array using JSON format.
@@ -1524,9 +1381,8 @@ def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
     return is_row_match_keyword(area_keyword_exclude, row_text)
 
 
-def guess_tixcraft_question(driver, question_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def guess_tixcraft_question(driver, question_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     answer_list = []
 
@@ -1537,24 +1393,19 @@ def guess_tixcraft_question(driver, question_text):
         formated_html_text = format_quota_string(formated_html_text)
 
         if '【' in formated_html_text and '】' in formated_html_text:
-            # PS: 這個太容易沖突，因為問題類型太多，不能直接使用。
-            #inferred_answer_string = find_between(formated_html_text, "【", "】")
             pass
 
-    if show_debug_message:
-        print("formated_html_text:", formated_html_text)
+    debug.log("formated_html_text:", formated_html_text)
 
     # start to guess answer
     inferred_answer_string = None
 
-    # 請輸入"YES"，代表您已詳閱且瞭解並同意。
     if inferred_answer_string is None:
         if '輸入"YES"' in formated_html_text:
             if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
                 if '同意' in formated_html_text:
                     inferred_answer_string = 'YES'
 
-    # 購票前請詳閱注意事項，並於驗證碼欄位輸入【同意】繼續購票流程。
     if inferred_answer_string is None:
         if '驗證碼' in formated_html_text or '驗證欄位' in formated_html_text:
             if '已詳閱' in formated_html_text or '請詳閱' in formated_html_text:
@@ -1563,7 +1414,7 @@ def guess_tixcraft_question(driver, question_text):
 
     if inferred_answer_string is None:
         if len(question_text) > 0:
-            answer_list = get_answer_list_from_question_string(None, question_text)
+            answer_list = get_answer_list_from_question_string(None, question_text, config_dict)
     else:
         answer_list = [answer_list]
 
@@ -1694,10 +1545,8 @@ def check_answer_keep_symbol(captcha_text_div_text):
 
     return is_need_keep_symbol
 
-#PS: this is for selenium webdriver.
-def kktix_get_web_datetime(registrationsNewApp_div):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def kktix_get_web_datetime(registrationsNewApp_div, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     web_datetime = None
 
@@ -1708,9 +1557,8 @@ def kktix_get_web_datetime(registrationsNewApp_div):
         try:
             el_web_datetime_list = registrationsNewApp_div.find_elements(By.TAG_NAME, 'td')
         except Exception as exc:
-            if show_debug_message:
-                print("find td.ng-binding Exception")
-                print(exc)
+            debug.log("find td.ng-binding Exception")
+            debug.log(exc)
             pass
         #print("is_found_web_datetime", is_found_web_datetime)
 
@@ -1722,12 +1570,10 @@ def kktix_get_web_datetime(registrationsNewApp_div):
                 el_web_datetime_text = None
                 try:
                     el_web_datetime_text = el_web_datetime.text
-                    if show_debug_message:
-                        print("el_web_datetime_text:", el_web_datetime_text)
+                    debug.log("el_web_datetime_text:", el_web_datetime_text)
                 except Exception as exc:
-                    if show_debug_message:
-                        print('parse web datetime fail:')
-                        print(exc)
+                    debug.log('parse web datetime fail:')
+                    debug.log(exc)
                     pass
 
                 if not el_web_datetime_text is None:
@@ -1746,15 +1592,13 @@ def kktix_get_web_datetime(registrationsNewApp_div):
     else:
         print("find td.ng-binding fail")
 
-    if show_debug_message:
-        print('is_found_web_datetime:', is_found_web_datetime)
-        print('web_datetime:', web_datetime)
+    debug.log('is_found_web_datetime:', is_found_web_datetime)
+    debug.log('web_datetime:', web_datetime)
 
     return web_datetime
 
-def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     inferred_answer_string = None
 
@@ -1778,18 +1622,15 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
     if 'the date of the show you purchased' in captcha_text_div_text:
         is_need_parse_web_datetime = True
 
-    if show_debug_message:
-        print("is_need_parse_web_datetime:", is_need_parse_web_datetime)
+    debug.log("is_need_parse_web_datetime:", is_need_parse_web_datetime)
 
     if is_need_parse_web_datetime:
-        web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
+        web_datetime = kktix_get_web_datetime(registrationsNewApp_div, config_dict)
         if not web_datetime is None:
-            if show_debug_message:
-                print("web_datetime:", web_datetime)
+            debug.log("web_datetime:", web_datetime)
 
             captcha_text_formatted = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-            if show_debug_message:
-                print("captcha_text_formatted", captcha_text_formatted)
+            debug.log("captcha_text_formatted", captcha_text_formatted)
 
             my_datetime_foramted = None
 
@@ -1815,8 +1656,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                         my_datetime_foramted = "%m%d"
                     #print("my_datetime_foramted:", my_datetime_foramted)
 
-            if show_debug_message:
-                print("my_datetime_foramted", my_datetime_foramted)
+            debug.log("my_datetime_foramted", my_datetime_foramted)
 
             if my_datetime_foramted is None:
                 now = datetime.now()
@@ -1858,10 +1698,9 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                         if my_anwser_formated == "[\\d][\\d][\\d][\\d]/[\\d][\\d]/[\\d][\\d]":
                             my_datetime_foramted = "%Y/%m/%d"
 
-                        if show_debug_message:
-                            print("my_hint_anwser:", my_hint_anwser)
-                            print("my_anwser_formated:", my_anwser_formated)
-                            print("my_datetime_foramted:", my_datetime_foramted)
+                        debug.log("my_hint_anwser:", my_hint_anwser)
+                        debug.log("my_anwser_formated:", my_anwser_formated)
+                        debug.log("my_datetime_foramted:", my_datetime_foramted)
                         break
 
             if not my_datetime_foramted is None:
@@ -1869,8 +1708,7 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                 if my_delimitor_symbol in web_datetime:
                     web_datetime = web_datetime[:web_datetime.find(my_delimitor_symbol)]
                 date_time = datetime.strptime(web_datetime,"%Y/%m/%d")
-                if show_debug_message:
-                    print("our web date_time:", date_time)
+                debug.log("our web date_time:", date_time)
                 ans = None
                 try:
                     if not date_time is None:
@@ -1878,14 +1716,12 @@ def get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
                 except Exception as exc:
                     pass
                 inferred_answer_string = ans
-                if show_debug_message:
-                    print("web date_time anwser:", ans)
+                debug.log("web date_time anwser:", ans)
 
     return inferred_answer_string
 
-def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     inferred_answer_string = None
 
@@ -1911,7 +1747,7 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
     if is_need_parse_web_time:
         web_datetime = None
         if not registrationsNewApp_div is None:
-            web_datetime = kktix_get_web_datetime(registrationsNewApp_div)
+            web_datetime = kktix_get_web_datetime(registrationsNewApp_div, config_dict)
         if not web_datetime is None:
             tmp_text = format_question_string(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
 
@@ -1970,9 +1806,8 @@ def get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, re
 
     return inferred_answer_string
 
-def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_div_text):
-    show_debug_message = True       # debug.
-    show_debug_message = False      # online
+def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_div_text, config_dict=None):
+    debug = create_debug_logger(config_dict)
 
     inferred_answer_string = None
     answer_list = []
@@ -2071,7 +1906,7 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
         is_match_input_quota_text = False
         if len(formated_html_text) <= 30:
-            print("formated_html_text:", formated_html_text)
+            debug.log("formated_html_text:", formated_html_text)
             if not '\n' in formated_html_text:
                 if '【' in formated_html_text and '】' in formated_html_text:
                     is_match_input_quota_text = True
@@ -2107,11 +1942,11 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
 
     # parse '演出日期'
     if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
+        inferred_answer_string = get_answer_string_from_web_date(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text, config_dict)
 
     # parse '演出時間'
     if inferred_answer_string is None:
-        inferred_answer_string = get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text)
+        inferred_answer_string = get_answer_string_from_web_time(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, registrationsNewApp_div, captcha_text_div_text, config_dict)
 
     # name of event.
     if inferred_answer_string is None:
@@ -2152,16 +1987,13 @@ def get_answer_list_from_question_string(registrationsNewApp_div, captcha_text_d
     # still no answer.
     if inferred_answer_string is None:
         if not is_combine_two_question:
-            answer_list = get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text)
-            if show_debug_message:
-                print("guess answer list:", answer_list)
+            answer_list = get_answer_list_by_question(CONST_EXAMPLE_SYMBOL, CONST_INPUT_SYMBOL, captcha_text_div_text, config_dict)
+            debug.log("guess answer list:", answer_list)
         else:
-            if show_debug_message:
-                print("skip to guess answer because of combine question...")
+            debug.log("skip to guess answer because of combine question...")
 
     else:
-        if show_debug_message:
-            print("got an inferred_answer_string:", inferred_answer_string)
+        debug.log("got an inferred_answer_string:", inferred_answer_string)
         answer_list = [inferred_answer_string]
 
     return answer_list
@@ -2215,17 +2047,7 @@ def kktix_get_event_code(url):
     #print('event_code:',event_code)
     return event_code
 
-def get_kktix_status_by_url(url):
-    registerStatus = ""
-    if len(url) > 0:
-        event_code = kktix_get_event_code(url)
-        #print(event_code)
-        if len(event_code) > 0:
-            registerStatus = kktix_get_registerStatus(event_code)
-            #print(registerStatus)
-    return registerStatus
-
-def launch_maxbot(script_name="chrome_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size="", headless=""):
+def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kktix_account = "", kktix_password="", window_size="", headless=""):
     cmd_argument = []
     if len(filename) > 0:
         cmd_argument.append('--input=' + filename)

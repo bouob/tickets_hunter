@@ -87,28 +87,6 @@ python settings.py
 
 ---
 
-### WebDriver類別（webdriver_type）
-**重要** | 類型：字串 | 預設：nodriver
-
-選擇搶票引擎類型。
-
-
-**可選值**：
-
-- Nodriver - **推薦（需 Python 3.9+）**
-- Undetected Chromedriver - 舊版回退選項
-- Selenium
-
-
-**平台支援狀態**：
-- **TixCraft / KKTIX / TicketPlus / KHAM / 年代**：NoDriver ✅ 完全支援
-- **FamiTicket 全家**：NoDriver ✅ 完全支援（v2025.11.24 新增）
-- **FANSI GO**：NoDriver ✅ 完全支援（v2026.02.09 新增）
-- **iBon**：僅 NoDriver 支援（Chrome 版本不修復）
-- **Cityline**：NoDriver ✅ 完全支援（半自動登入模式）
-- **Ticketmaster**：NoDriver ✅ 完全支援
-- **HKTicketing**：NoDriver ✅ 完全支援（半自動登入模式）
-
 ---
 
 ### 語言（language）
@@ -810,18 +788,6 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 ---
 
-### Chrome 瀏覽器擴充功能（chrome_extension）
-類型：布林值 | 預設：停用
-
-是否載入 Chrome 擴充功能
-
-
-**說明**：
-- 啟用 - 載入擴充功能
-- 停用 - 不載入
-
----
-
 ### 自動刷新頁面間隔(秒)（auto_reload_page_interval）
 類型：浮點數 | 預設：5.0
 
@@ -1028,7 +994,6 @@ FANCLUB999
 ## 💡 設定建議
 
 ### 建議 1：新手推薦設定
-- **WebDriver類別**：nodriver
 - **日期排序方式**：正序（選最早場次）
 - **區域排序方式**：正序（選最好位置）
 - **排除關鍵字**：務必設定（避免誤選輪椅席）
@@ -1074,9 +1039,8 @@ FANCLUB999
 
 **需要重新啟動的設定**：
 - 售票網站網址
-- 瀏覽器、WebDriver 類別
+- 瀏覽器
 - 無圖形界面模式、視窗大小
-- Chrome 擴充功能
 - 設定介面 Port、Proxy
 - 所有帳號密碼和 Cookie
 

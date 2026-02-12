@@ -27,14 +27,9 @@
 3. 在網頁介面進行設定
    - 設定票務平台網址（homepage）
    - 設定購票張數、日期/區域關鍵字
-   - 選擇搶票引擎（webdriver_type）：
-     * nodriver - 推薦，反偵測效果最佳
-     * undetected_chrome - 回退方案
 
 4. 點擊網頁上的「搶票」按鈕
-   系統會自動根據您的設定啟動對應的搶票引擎：
-   - nodriver → 自動啟動 nodriver_tixcraft.exe
-   - undetected_chrome → 自動啟動 chrome_tixcraft.exe
+   系統會自動啟動 nodriver_tixcraft.exe 搶票引擎。
 
 ================================================================================
                         系統架構說明
@@ -47,22 +42,16 @@
     - 圖形化設定編輯器（無需了解 JSON 格式）
     - 即時預覽設定結果
     - 整合搶票功能（點擊「搶票」按鈕自動啟動引擎）
-    - 自動管理搶票引擎的啟動與切換
 
   執行方式：
     雙擊 settings.exe → 瀏覽器自動開啟設定頁面
 
-  設定引擎選項：
-    - nodriver：反偵測能力最強，推薦使用
-      （首次執行會自動下載 Chrome 瀏覽器，約 100-200MB）
-    - undetected_chrome：傳統方案，穩定性高
-      （需要 webdriver/chromedriver.exe）
+  注意：首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）
 
 【搶票引擎（自動啟動，無需手動執行）】
   - nodriver_tixcraft.exe：NoDriver 引擎
-  - chrome_tixcraft.exe：Chrome/Selenium 引擎
 
-  這兩個執行檔會由 settings.exe 根據您的設定自動啟動，
+  此執行檔會由 settings.exe 自動啟動，
   一般使用者無需手動執行。
 
 ================================================================================
@@ -70,14 +59,10 @@
 ================================================================================
 
 tickets_hunter/
-├── nodriver_tixcraft.exe       主要搶票程式（NoDriver）
-├── chrome_tixcraft.exe          傳統搶票程式（Chrome）
+├── nodriver_tixcraft.exe       搶票程式（NoDriver）
 ├── settings.exe                 設定編輯器（Tornado Web）
 │
 ├── _internal/                   依賴函式庫目錄（請勿刪除！）
-├── webdriver/                   WebDriver 與瀏覽器擴充套件
-│   ├── Maxbotplus_1.0.0/        MaxBot 瀏覽器擴充套件
-│   └── Maxblockplus_1.0.0/      MaxBlock 瀏覽器擴充套件
 │
 ├── assets/                      資源檔案
 │   ├── icons/                   圖示檔案
@@ -93,7 +78,7 @@ tickets_hunter/
 └── CHANGELOG.md                 版本更新記錄
 
 【重要提醒】
-  _internal/ 資料夾包含所有 3 個執行檔共用的依賴函式庫。
+  _internal/ 資料夾包含所有執行檔共用的依賴函式庫。
   請勿刪除或移動此資料夾，否則執行檔將無法運作！
 
 ================================================================================
@@ -106,13 +91,12 @@ Step 1: 執行 settings.exe
 Step 2: 在網頁介面設定關鍵參數
   - homepage：票務平台網址（例如：https://tixcraft.com）
   - ticket_number：購票張數
-  - webdriver_type：搶票引擎（nodriver / undetected_chrome）
   - tixcraft.date_auto_select_mode：日期選擇模式
   - tixcraft.area_auto_select_mode：區域選擇模式
   - tixcraft.keyword：日期/區域關鍵字（支援多組 AND/OR 邏輯）
 
 Step 3: 點擊網頁上的「搶票」按鈕
-  系統會自動啟動對應的搶票引擎（nodriver 或 chrome）。
+  系統會自動啟動搶票引擎。
 
 Step 4: 監控執行
   - 搶票程式會顯示執行進度與 log
@@ -122,7 +106,6 @@ Step 4: 監控執行
 【進階使用者】
   如需直接執行搶票引擎（不透過網頁介面）：
     nodriver_tixcraft.exe --input settings.json
-    chrome_tixcraft.exe --input settings.json
 
 【需要更詳細的教學？】
   本文件為快速參考手冊，更詳細的圖文教學請參閱：
@@ -148,33 +131,29 @@ Q3: NoDriver 版本首次執行很慢？
 A3: 正常現象，NoDriver 首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）。
     下載完成後後續執行會變快。
 
-Q4: Chrome 版本出現「chromedriver.exe 不相容」錯誤？
-A4: 請到 https://chromedriver.chromium.org/ 下載與您的 Chrome 版本相符的
-    chromedriver.exe，並放到 webdriver/ 目錄中。
+Q4: 驗證碼辨識失敗？
+A4: ddddocr 驗證碼辨識準確率約 80-90%，失敗時請手動輸入。
 
-Q5: 驗證碼辨識失敗？
-A5: ddddocr 驗證碼辨識準確率約 80-90%，失敗時請手動輸入。
+Q5: 我需要手動執行 nodriver_tixcraft.exe 嗎？
+A5: 一般不需要！只要執行 settings.exe，在網頁介面點擊「搶票」按鈕，
+    系統會自動啟動搶票引擎。手動執行僅適合進階使用者。
 
-Q6: 我需要手動執行 nodriver_tixcraft.exe 或 chrome_tixcraft.exe 嗎？
-A6: 一般不需要！只要執行 settings.exe，在網頁介面點擊「搶票」按鈕，
-    系統會自動啟動對應的搶票引擎。手動執行僅適合進階使用者。
-
-Q7: settings.json 格式錯誤導致程式無法執行？
-A7: 請使用 settings.exe（網頁版編輯器）編輯設定檔，可避免 JSON 格式錯誤。
+Q6: settings.json 格式錯誤導致程式無法執行？
+A6: 請使用 settings.exe（網頁版編輯器）編輯設定檔，可避免 JSON 格式錯誤。
     或者刪除 settings.json，程式會自動重新建立範本。
 
-Q9: 如何更新到新版本？
-A9: 從 GitHub Releases 下載最新 ZIP 檔案，解壓縮後覆蓋舊版本即可。
+Q7: 如何更新到新版本？
+A7: 從 GitHub Releases 下載最新 ZIP 檔案，解壓縮後覆蓋舊版本即可。
     設定檔 settings.json 可保留繼續使用。
 
-Q10: Windows Defender 提示「威脅已阻止」？
-A10: 這是 Windows Defender SmartScreen 的誤判（因為執行檔沒有數位簽章）。
+Q8: Windows Defender 提示「威脅已阻止」？
+A8: 這是 Windows Defender SmartScreen 的誤判（因為執行檔沒有數位簽章）。
      解決方案：
      - 點擊「詳細資訊」→「仍要執行」
      - 或將資料夾加入 Windows Defender 排除清單
 
-Q11: 執行時出現防火牆提示？
-A11: settings.exe 需要開啟網頁伺服器，搶票引擎需要網路連線。
+Q9: 執行時出現防火牆提示？
+A9: settings.exe 需要開啟網頁伺服器，搶票引擎需要網路連線。
      請允許防火牆存取。
 
 ================================================================================

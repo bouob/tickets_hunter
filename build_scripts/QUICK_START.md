@@ -23,7 +23,7 @@ build_scripts\build_and_test.bat
 - 自動安裝 PyInstaller
 
 ✅ **完整打包流程**
-- 打包 4 個 exe（nodriver_tixcraft, chrome_tixcraft, settings, config_launcher）
+- 打包 3 個 exe（nodriver_tixcraft, settings, config_launcher）
 - 自動整合 `_internal/` 依賴目錄（共用依賴，減少總大小）
 - 複製共用資源（webdriver/, assets/, www/）
 
@@ -54,7 +54,7 @@ build_scripts\build_and_test.bat
 ```batch
 1. 啟動 Windows Sandbox
 2. 複製 ZIP 到 Sandbox 桌面
-3. 解壓縮並測試 4 個 exe
+3. 解壓縮並測試 3 個 exe
 ```
 
 ### 方法 B：開發機快速測試
@@ -71,12 +71,10 @@ settings.exe              # 測試網頁介面
 
 ### Step 1: 更新版本號
 
-編輯 5 個檔案的 `CONST_APP_VERSION`：
+編輯 3 個檔案的 `CONST_APP_VERSION`：
 - `src/nodriver_tixcraft.py`
-- `src/chrome_tixcraft.py`
 - `src/config_launcher.py`
 - `src/settings.py`
-- `src/settings_old.py`
 
 ### Step 2: 更新 CHANGELOG.md
 
@@ -111,7 +109,7 @@ tickets_hunter/
 ├── src/                        原始碼
 ├── build_scripts/              打包腳本
 │   ├── build_and_test.bat      ← 一鍵打包測試
-│   ├── *.spec                  ← PyInstaller 配置（4 個）
+│   ├── *.spec                  ← PyInstaller 配置（3 個）
 │   ├── README_Build.md         ← 開發者指南
 │   ├── README_Release.txt      ← 使用者說明
 │   └── QUICK_START.md          ← 本文件
@@ -124,11 +122,9 @@ tickets_hunter/
 dist/
 ├── tickets_hunter/             整合目錄
 │   ├── nodriver_tixcraft.exe
-│   ├── chrome_tixcraft.exe
 │   ├── settings.exe
 │   ├── config_launcher.exe
-│   ├── _internal/              共用依賴（4 個 exe 共用）
-│   ├── webdriver/
+│   ├── _internal/              共用依賴（3 個 exe 共用）
 │   ├── assets/
 │   ├── www/
 │   └── settings.json
@@ -176,7 +172,7 @@ dist/
 | 目標 | 使用方法 | 時間 | 輸出 |
 |------|---------|------|------|
 | 本地打包與測試 | `build_and_test.bat` | 10-20 分鐘 | ZIP + 測試輸出 |
-| 更新版本號 | `/gupdate` 指令 | < 1 分鐘 | 更新 7 個檔案 |
+| 更新版本號 | `/gupdate` 指令 | < 1 分鐘 | 更新 3 個檔案 |
 | GitHub 自動發布 | 推送 tag | 15-25 分鐘 | GitHub Release |
 
 ---
