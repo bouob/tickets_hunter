@@ -21,7 +21,6 @@ const keyword_exclude = document.querySelector('#keyword_exclude');
 
 // advance
 const browser = document.querySelector('#browser');
-const webdriver_type = document.querySelector('#webdriver_type');
 const play_ticket_sound = document.querySelector('#play_ticket_sound');
 const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
@@ -35,13 +34,13 @@ const reset_browser_interval = document.querySelector('#reset_browser_interval')
 const server_port = document.querySelector('#server_port');
 const proxy_server_port = document.querySelector('#proxy_server_port');
 const window_size = document.querySelector('#window_size');
-const chrome_extension = document.querySelector('#chrome_extension');
 const disable_adjacent_seat = document.querySelector('#disable_adjacent_seat');
 
 const hide_some_image = document.querySelector('#hide_some_image');
 const block_facebook_network = document.querySelector('#block_facebook_network');
 const headless = document.querySelector('#headless');
 const verbose = document.querySelector('#verbose');
+const show_timestamp = document.querySelector('#show_timestamp');
 
 
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
@@ -201,8 +200,7 @@ function load_settins_to_form(settings)
         
         // advanced
         browser.value = settings.browser;
-        webdriver_type.value = settings.webdriver_type;
-        
+
         play_ticket_sound.checked = settings.advanced.play_sound.ticket;
         play_order_sound.checked = settings.advanced.play_sound.order;
         play_sound_filename.value = settings.advanced.play_sound.filename;
@@ -217,13 +215,13 @@ function load_settins_to_form(settings)
         proxy_server_port.value  = settings.advanced.proxy_server_port;
         window_size.value  = settings.advanced.window_size;
 
-        chrome_extension.checked = settings.advanced.chrome_extension;
         disable_adjacent_seat.checked = settings.advanced.disable_adjacent_seat;
 
         hide_some_image.checked = settings.advanced.hide_some_image;
         block_facebook_network.checked = settings.advanced.block_facebook_network;
         headless.checked = settings.advanced.headless;
         verbose.checked = settings.advanced.verbose;
+        show_timestamp.checked = settings.advanced.show_timestamp;
 
 
         ocr_captcha_enable.checked = settings.ocr_captcha.enable;
@@ -451,8 +449,7 @@ function save_changes_to_dict(silent_flag)
 
             // advanced
             settings.browser = browser.value;
-            settings.webdriver_type = webdriver_type.value;
-        
+
             settings.advanced.play_sound.ticket = play_ticket_sound.checked;
             settings.advanced.play_sound.order = play_order_sound.checked;
             settings.advanced.play_sound.filename = play_sound_filename.value;
@@ -467,13 +464,13 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.proxy_server_port = proxy_server_port.value;
             settings.advanced.window_size = window_size.value;
 
-            settings.advanced.chrome_extension = chrome_extension.checked;
             settings.advanced.disable_adjacent_seat = disable_adjacent_seat.checked;
 
             settings.advanced.hide_some_image = hide_some_image.checked;
             settings.advanced.block_facebook_network = block_facebook_network.checked;
             settings.advanced.headless = headless.checked;
             settings.advanced.verbose = verbose.checked;
+            settings.advanced.show_timestamp = show_timestamp.checked;
 
 
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
@@ -619,7 +616,7 @@ function maxbot_save()
 function check_unsaved_fields()
 {
     if(settings) {
-        const field_list_basic = ["homepage","ticket_number","refresh_datetime","browser","webdriver_type"];
+        const field_list_basic = ["homepage","ticket_number","refresh_datetime","browser"];
         field_list_basic.forEach(f => {
             const field = document.querySelector('#'+f);
             if(field.value != settings[f]) {
@@ -737,10 +734,6 @@ function check_unsaved_fields()
             $('div[data-under]').addClass("disappear");
             if(special_site.length) {
                 $('div[data-under="'+ special_site +'"]').removeClass("disappear");
-            }
-            // for cityline.
-            if(homepage.value.indexOf("cityline.com") > 0) {
-                $("#webdriver_type").val("nodriver");
             }
         }
     }

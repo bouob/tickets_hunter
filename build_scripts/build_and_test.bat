@@ -31,7 +31,7 @@ echo Working directory: %CD%
 echo.
 echo This script will:
 echo   [1] Check environment and install dependencies
-echo   [2] Build 4 executables with PyInstaller
+echo   [2] Build 3 executables with PyInstaller
 echo   [3] Create unified ZIP package
 echo   [4] Run automated tests
 echo   [5] Generate test report
@@ -121,7 +121,7 @@ echo [OK] PyInstaller installed
 echo.
 
 echo [2.3] Verifying core packages...
-python -c "import ddddocr; import nodriver; import selenium; import tornado; print('[OK] All core packages verified')"
+python -c "import ddddocr; import nodriver; import tornado; print('[OK] All core packages verified')"
 if %errorlevel% neq 0 (
     echo [ERROR] Core packages verification failed
     goto :error_exit
@@ -158,19 +158,8 @@ if %errorlevel% neq 0 (
 echo [OK] nodriver_tixcraft.exe built
 echo.
 
-REM Build chrome_tixcraft.exe
-echo [3.3] Building chrome_tixcraft.exe...
-if exist "build" rmdir /s /q "build" >nul 2>&1
-python -m PyInstaller build_scripts\chrome_tixcraft.spec --noconfirm >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to build chrome_tixcraft.exe
-    goto :error_exit
-)
-echo [OK] chrome_tixcraft.exe built
-echo.
-
 REM Build settings.exe
-echo [3.4] Building settings.exe...
+echo [3.3] Building settings.exe...
 if exist "build" rmdir /s /q "build" >nul 2>&1
 python -m PyInstaller build_scripts\settings.spec --noconfirm >nul 2>&1
 if %errorlevel% neq 0 (
@@ -181,7 +170,7 @@ echo [OK] settings.exe built
 echo.
 
 REM Build config_launcher.exe
-echo [3.5] Building config_launcher.exe...
+echo [3.4] Building config_launcher.exe...
 if exist "build" rmdir /s /q "build" >nul 2>&1
 python -m PyInstaller build_scripts\config_launcher.spec --noconfirm >nul 2>&1
 if %errorlevel% neq 0 (
@@ -209,15 +198,13 @@ echo.
 
 echo [4.2] Copying executables...
 xcopy /Y dist\nodriver_tixcraft\nodriver_tixcraft.exe dist\tickets_hunter\ >nul
-xcopy /Y dist\chrome_tixcraft\chrome_tixcraft.exe dist\tickets_hunter\ >nul
 xcopy /Y dist\settings\settings.exe dist\tickets_hunter\ >nul
 xcopy /Y dist\config_launcher\config_launcher.exe dist\tickets_hunter\ >nul
-echo [OK] 4 executables copied
+echo [OK] 3 executables copied
 echo.
 
 echo [4.3] Merging _internal directories...
 xcopy /E /I /Y dist\nodriver_tixcraft\_internal dist\tickets_hunter\_internal >nul
-xcopy /E /I /Y dist\chrome_tixcraft\_internal\* dist\tickets_hunter\_internal >nul
 xcopy /E /I /Y dist\settings\_internal\* dist\tickets_hunter\_internal >nul
 xcopy /E /I /Y dist\config_launcher\_internal\* dist\tickets_hunter\_internal >nul
 echo [OK] _internal merged
@@ -225,10 +212,6 @@ echo.
 
 echo [4.4] Copying shared resources...
 REM Copy resources directly from src/ (more reliable than PyInstaller datas)
-echo   Copying webdriver extensions from src...
-REM Only copy browser extension directories (chromedriver.exe excluded - settings.exe auto-downloads it)
-xcopy /E /I /Y src\webdriver\Maxbotplus_1.0.0 dist\tickets_hunter\webdriver\Maxbotplus_1.0.0 >nul 2>&1
-xcopy /E /I /Y src\webdriver\Maxblockplus_1.0.0 dist\tickets_hunter\webdriver\Maxblockplus_1.0.0 >nul 2>&1
 echo   Copying assets/ from src...
 xcopy /E /I /Y src\assets dist\tickets_hunter\assets >nul 2>&1
 echo   Copying www/ from src...
@@ -279,29 +262,23 @@ echo ----------------------------------------
 echo.
 
 REM Test 1: Executables exist
-echo Test 1/15: Checking executables exist...
+echo Test 1/12: Checking executables exist...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\nodriver_tixcraft.exe" (
-    if exist "%TEST_DIR%\chrome_tixcraft.exe" (
-        if exist "%TEST_DIR%\settings.exe" (
-            if exist "%TEST_DIR%\config_launcher.exe" (
-                echo [PASS] All 4 executables exist
-                set /a TEST_PASSED+=1
-                set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 1: All executables exist%LF%"
-            ) else (
-                echo [FAIL] config_launcher.exe missing
-                set /a TEST_FAILED+=1
-                set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: config_launcher.exe missing%LF%"
-            )
+    if exist "%TEST_DIR%\settings.exe" (
+        if exist "%TEST_DIR%\config_launcher.exe" (
+            echo [PASS] All 3 executables exist
+            set /a TEST_PASSED+=1
+            set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 1: All executables exist%LF%"
         ) else (
-            echo [FAIL] settings.exe missing
+            echo [FAIL] config_launcher.exe missing
             set /a TEST_FAILED+=1
-            set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: settings.exe missing%LF%"
+            set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: config_launcher.exe missing%LF%"
         )
     ) else (
-        echo [FAIL] chrome_tixcraft.exe missing
+        echo [FAIL] settings.exe missing
         set /a TEST_FAILED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: chrome_tixcraft.exe missing%LF%"
+        set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: settings.exe missing%LF%"
     )
 ) else (
     echo [FAIL] nodriver_tixcraft.exe missing
@@ -311,7 +288,7 @@ if exist "%TEST_DIR%\nodriver_tixcraft.exe" (
 echo.
 
 REM Test 2: _internal directory exists
-echo Test 2/15: Checking _internal directory...
+echo Test 2/12: Checking _internal directory...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\_internal" (
     echo [PASS] _internal directory exists
@@ -325,7 +302,7 @@ if exist "%TEST_DIR%\_internal" (
 echo.
 
 REM Test 3: python310.dll exists
-echo Test 3/15: Checking python310.dll...
+echo Test 3/12: Checking python310.dll...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\_internal\python310.dll" (
     echo [PASS] python310.dll exists
@@ -338,8 +315,8 @@ if exist "%TEST_DIR%\_internal\python310.dll" (
 )
 echo.
 
-REM Test 4-6: Core modules exist
-echo Test 4/13: Checking ddddocr module...
+REM Test 4-5: Core modules exist
+echo Test 4/12: Checking ddddocr module...
 set /a TEST_COUNT+=1
 dir "%TEST_DIR%\_internal" | findstr /I "ddddocr" >nul
 if %errorlevel% equ 0 (
@@ -353,114 +330,100 @@ if %errorlevel% equ 0 (
 )
 echo.
 
-echo Test 5/13: Checking selenium module...
-set /a TEST_COUNT+=1
-dir "%TEST_DIR%\_internal" | findstr /I "selenium" >nul
-if %errorlevel% equ 0 (
-    echo [PASS] selenium module found
-    set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 5: selenium exists%LF%"
-) else (
-    echo [FAIL] selenium module missing
-    set /a TEST_FAILED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 5: selenium missing%LF%"
-)
-echo.
-
-echo Test 6/13: Checking onnxruntime module...
+echo Test 5/12: Checking onnxruntime module...
 set /a TEST_COUNT+=1
 dir "%TEST_DIR%\_internal" | findstr /I "onnxruntime" >nul
 if %errorlevel% equ 0 (
     echo [PASS] onnxruntime module found
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 6: onnxruntime exists%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 5: onnxruntime exists%LF%"
 ) else (
     echo [FAIL] onnxruntime module missing
     set /a TEST_FAILED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 6: onnxruntime missing%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 5: onnxruntime missing%LF%"
 )
 echo.
 
-REM Test 7-10: Resource directories
-echo Test 7/13: Checking webdriver directory...
+REM Test 6-9: Resource directories
+echo Test 6/12: Checking webdriver directory...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\webdriver" (
     echo [PASS] webdriver directory exists
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 7: webdriver exists%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 6: webdriver exists%LF%"
 ) else (
     echo [WARN] webdriver directory missing ^(may be OK^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 7: webdriver missing%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 6: webdriver missing%LF%"
 )
 echo.
 
-echo Test 8/13: Checking assets directory...
+echo Test 7/12: Checking assets directory...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\assets" (
     echo [PASS] assets directory exists
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 8: assets exists%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 7: assets exists%LF%"
 ) else (
     echo [WARN] assets directory missing ^(may be OK^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 8: assets missing%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 7: assets missing%LF%"
 )
 echo.
 
-echo Test 9/13: Checking www directory...
+echo Test 8/12: Checking www directory...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\www" (
     echo [PASS] www directory exists
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 9: www exists%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 8: www exists%LF%"
 ) else (
     echo [WARN] www directory missing ^(may be OK^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 9: www missing%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 8: www missing%LF%"
 )
 echo.
 
-echo Test 10/13: Checking settings.json ^(should be excluded^)...
+echo Test 9/12: Checking settings.json ^(should be excluded^)...
 set /a TEST_COUNT+=1
 if not exist "%TEST_DIR%\settings.json" (
     echo [PASS] settings.json correctly excluded ^(program auto-generates it^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 10: settings.json excluded%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 9: settings.json excluded%LF%"
 ) else (
     echo [WARN] settings.json exists ^(should be auto-generated, not packaged^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 10: settings.json present%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 9: settings.json present%LF%"
 )
 echo.
 
-REM Test 11: ZIP file exists
-echo Test 11/13: Checking ZIP file...
+REM Test 10: ZIP file exists
+echo Test 10/12: Checking ZIP file...
 set /a TEST_COUNT+=1
 if exist "dist\release\%ZIP_NAME%" (
     for %%A in ("dist\release\%ZIP_NAME%") do set ZIP_SIZE=%%~zA
     echo [PASS] ZIP file exists ^(Size: !ZIP_SIZE! bytes^)
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 11: ZIP exists (!ZIP_SIZE! bytes)%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 10: ZIP exists (!ZIP_SIZE! bytes)%LF%"
 ) else (
     echo [FAIL] ZIP file missing
     set /a TEST_FAILED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 11: ZIP missing%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 10: ZIP missing%LF%"
 )
 echo.
 
-REM Test 12-13: Quick launch tests (with timeout)
+REM Test 11-12: Quick launch tests (with timeout)
 echo [5.2] Executable Launch Tests
 echo ----------------------------------------
 echo.
 
-echo Test 12/13: Testing config_launcher.exe launch...
+echo Test 11/12: Testing config_launcher.exe launch...
 echo       ^(Will auto-close in 3 seconds^)
 set /a TEST_COUNT+=1
 if not exist "%TEST_DIR%\config_launcher.exe" (
     echo [SKIP] config_launcher.exe not found, skipping launch test
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![SKIP] Test 12: config_launcher not found%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![SKIP] Test 11: config_launcher not found%LF%"
 ) else (
     start "" "%TEST_DIR_ABS%\config_launcher.exe" 2>nul
     timeout /t 3 /nobreak >nul
@@ -469,22 +432,22 @@ if not exist "%TEST_DIR%\config_launcher.exe" (
         echo [PASS] config_launcher.exe launched successfully
         taskkill /F /IM config_launcher.exe >nul 2>&1
         set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 12: config_launcher launches%LF%"
+        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 11: config_launcher launches%LF%"
     ) else (
         echo [WARN] config_launcher.exe did not launch ^(may need GUI^)
         set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 12: config_launcher no launch%LF%"
+        set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 11: config_launcher no launch%LF%"
     )
 )
 echo.
 
-echo Test 13/13: Testing settings.exe launch...
+echo Test 12/12: Testing settings.exe launch...
 echo       ^(Will auto-close in 3 seconds^)
 set /a TEST_COUNT+=1
 if not exist "%TEST_DIR%\settings.exe" (
     echo [SKIP] settings.exe not found, skipping launch test
     set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![SKIP] Test 13: settings not found%LF%"
+    set "TEST_RESULTS=!TEST_RESULTS![SKIP] Test 12: settings not found%LF%"
 ) else (
     start "" "%TEST_DIR_ABS%\settings.exe" 2>nul
     timeout /t 3 /nobreak >nul
@@ -493,11 +456,11 @@ if not exist "%TEST_DIR%\settings.exe" (
         echo [PASS] settings.exe launched successfully
         taskkill /F /IM settings.exe >nul 2>&1
         set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 13: settings launches%LF%"
+        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 12: settings launches%LF%"
     ) else (
         echo [WARN] settings.exe did not launch ^(may need network^)
         set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 13: settings no launch%LF%"
+        set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 12: settings no launch%LF%"
     )
 )
 echo.
@@ -559,9 +522,6 @@ echo Generating test report: test_report_%VERSION%.txt
     echo Executables:
     if exist "%TEST_DIR%\nodriver_tixcraft.exe" (
         for %%A in ("%TEST_DIR%\nodriver_tixcraft.exe") do echo   - nodriver_tixcraft.exe (%%~zA bytes^)
-    )
-    if exist "%TEST_DIR%\chrome_tixcraft.exe" (
-        for %%A in ("%TEST_DIR%\chrome_tixcraft.exe") do echo   - chrome_tixcraft.exe (%%~zA bytes^)
     )
     if exist "%TEST_DIR%\settings.exe" (
         for %%A in ("%TEST_DIR%\settings.exe") do echo   - settings.exe (%%~zA bytes^)

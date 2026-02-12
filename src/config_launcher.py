@@ -33,7 +33,7 @@ def get_resource_path(relative_path):
         return relative_path
     return os.path.join(SCRIPT_DIR, relative_path)
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.12)"
 
 CONST_MAXBOT_LAUNCHER_FILE = "config_launcher.json"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -255,7 +255,7 @@ def btn_items_run_event(event):
     global widgets
     if "widgets" in globals():
         filename=widgets['txt_file_name_value'][btn_index-1].get().strip()
-        script_name = "chrome_tixcraft"
+        script_name = "nodriver_tixcraft"
         threading.Thread(target=util.launch_maxbot, args=(script_name,filename,)).start()
 
 def ConfigListTab(root, config_dict, language_code, UI_PADDING_X):

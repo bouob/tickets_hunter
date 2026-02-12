@@ -11,11 +11,7 @@
 
 ## 開發策略
 
-本專案採用 **NoDriver First** 策略：
-
-- **新功能**：請優先實作 NoDriver 版本
-- **Bug 修復**：優先處理 NoDriver 版本
-- **Chrome Driver (UC/Selenium)**：僅接受嚴重錯誤修復，不接受新功能
+本專案使用 **NoDriver** 作為唯一搶票引擎。
 
 ## 貢獻流程
 

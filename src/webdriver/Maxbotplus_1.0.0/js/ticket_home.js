@@ -1,2 +1,0 @@
-$("#footer").remove();
-$("footer").remove();
