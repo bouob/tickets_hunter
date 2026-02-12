@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.02.09) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.02.12) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -288,13 +288,6 @@
           <label for="max_dwell_time" class="col-sm-2 col-form-label">KKTIX購票最長停留(秒)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="max_dwell_time" value="" />
-          </div>
-        </div>
-
-        <div class="row mb-3 bd-callout bd-callout-info disappear" data-under="cityline">
-          <div class="col">
-              <strong>備註：</strong>
-                Cityline 只能使用 <code>chrome 瀏覽器</code> + <code>nodriver</code>。
           </div>
         </div>
 
@@ -501,18 +494,6 @@
         </div>
 
         <div class="row mb-3">
-          <label for="webdriver_type" class="col-sm-2 col-form-label">WebDriver類別</label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <select id="webdriver_type" class="form-select" aria-label="Default select">
-              <option value="selenium">Selenium</option>
-              <option value="undetected_chromedriver">Undetected Chromedriver</option>
-              <option value="nodriver">Nodriver ★</option>
-              <!-- option value="DrissionPage">DrissionPage</option -->
-            </select>
-          </div>
-        </div>
-
-        <div class="row mb-3">
           <label class="col-sm-2 col-form-label">有票時播放音效</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -592,15 +573,6 @@
         </div>
 
         <div class="row mb-3">
-          <label class="col-sm-2 col-form-label">Chrome 瀏覽器擴充功能</label>
-          <div class="col-sm-10 col-lg-8 col-xl-6">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="chrome_extension">
-              <label class="form-check-label" for="chrome_extension">啟用</label>
-            </div>
-          </div>
-        </div>
-        <div class="row mb-3">
           <label class="col-sm-2 col-form-label">允許不連續座位</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -642,6 +614,15 @@
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" id="verbose">
               <label class="form-check-label" for="verbose">啟用</label>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">顯示時間戳記</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="show_timestamp">
+              <label class="form-check-label" for="show_timestamp">啟用</label>
             </div>
           </div>
         </div>
@@ -1167,6 +1148,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2026020916"></script>
+  <script src="settings.js?v=2026021223"></script>
 </body>
 </html>

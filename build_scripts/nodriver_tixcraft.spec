@@ -22,9 +22,6 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        # Only include extension directories, not auto-downloaded Chrome
-        (os.path.join(project_root, 'src', 'webdriver', 'Maxbotplus_1.0.0'), os.path.join('webdriver', 'Maxbotplus_1.0.0')),
-        (os.path.join(project_root, 'src', 'webdriver', 'Maxblockplus_1.0.0'), os.path.join('webdriver', 'Maxblockplus_1.0.0')),
         (os.path.join(project_root, 'src', 'assets'), 'assets'),
         (os.path.join(project_root, 'src', 'www'), 'www'),
         # settings.json excluded - program generates it automatically
@@ -49,10 +46,6 @@ a = Analysis(
         'PIL.Image',
         'cv2',
         'numpy',
-        # Web automation
-        'selenium',
-        'selenium.webdriver',
-        'selenium.webdriver.common.by',
         # Network
         'urllib3',
         'certifi',

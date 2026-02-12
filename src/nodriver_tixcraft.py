@@ -42,55 +42,13 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
-
+CONST_APP_VERSION = "TicketsHunter (2026.02.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
-CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
-CONST_MAXBLOCK_EXTENSION_NAME = "Maxblockplus_1.0.0"
-CONST_MAXBLOCK_EXTENSION_FILTER =[
-"*.doubleclick.net/*",
-"*.googlesyndication.com/*",
-"*.ssp.hinet.net/*",
-"*a.amnet.tw/*",
-"*anymind360.com/*",
-"*.appier.net/*",
-"*.c.appier.net/*",
-"*cdn.cookielaw.org/*",
-"*cdnjs.cloudflare.com/ajax/libs/clipboard.js/*",
-"*clarity.ms/*",
-"*cloudfront.com/*",
-"*cms.analytics.yahoo.com/*",
-"*e2elog.fetnet.net/*",
-"*fundingchoicesmessages.google.com/*",
-"*ghtinc.com/*",
-"*google-analytics.com/*",
-"*googletagmanager.com/*",
-"*googletagservices.com/*",
-"*img.uniicreative.com/*",
-"*lndata.com/*",
-"*match.adsrvr.org/*",
-"*onead.onevision.com.tw/*",
-"*play.google.com/log?*",
-"*popin.cc/*",
-"*rollbar.com/*",
-"*sb.scorecardresearch.com/*",
-"*tagtoo.co/*",
-"*ticketmaster.sg/js/adblock*",
-"*ticketmaster.sg/js/adblock.js*",
-"*ticketmaster.sg/js/ads.js*",
-"*ticketmaster.sg/epsf/asset/eps.js*",
-"*tixcraft.com/js/analytics.js*",
-"*tixcraft.com/js/common.js*",
-"*tixcraft.com/js/custom.js*",
-"*treasuredata.com/*",
-"*www.youtube.com/youtubei/v1/player/heartbeat*",
-]
-
 CONST_CITYLINE_SIGN_IN_URL = "https://www.cityline.com/Login.html?targetUrl=https%3A%2F%2Fwww.cityline.com%2FEvents.html"
 CONST_FAMI_SIGN_IN_URL = "https://www.famiticket.com.tw/Home/User/SignIn"
 CONST_HKTICKETING_SIGN_IN_URL = "https://premier.hkticketing.com/Secure/ShowLogin.aspx"
@@ -105,10 +63,6 @@ CONST_FROM_TOP_TO_BOTTOM = "from top to bottom"
 CONST_FROM_BOTTOM_TO_TOP = "from bottom to top"
 CONST_CENTER = "center"
 CONST_RANDOM = "random"
-CONST_SELECT_ORDER_DEFAULT = CONST_FROM_TOP_TO_BOTTOM
-
-CONT_STRING_1_SEATS_REMAINING = ['@1 seat(s) remaining','剩餘 1@','@1 席残り']
-
 CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
@@ -132,7 +86,6 @@ ssl._create_default_https_context = ssl._create_unverified_context
 logging.basicConfig()
 logger = logging.getLogger('logger')
 
-
 def get_config_dict(args):
     app_root = util.get_app_root()
     config_filepath = os.path.join(app_root, CONST_MAXBOT_CONFIG_FILE)
@@ -142,9 +95,16 @@ def get_config_dict(args):
 
     config_dict = None
     if os.path.isfile(config_filepath):
-        with open(config_filepath, encoding='utf-8') as json_data:
-            config_dict = json.load(json_data)
+        try:
+            with open(config_filepath, encoding='utf-8') as json_data:
+                config_dict = json.load(json_data)
+                config_dict = settings.migrate_config(config_dict)
+        except Exception as e:
+            print(f"[ERROR] Failed to load settings: {config_filepath}")
+            print(f"[ERROR] {e}")
+            config_dict = None
 
+        if config_dict is not None:
             # Define a dictionary to map argument names to their paths in the config_dict
             arg_to_path = {
                 "headless": ["advanced", "headless"],
@@ -190,12 +150,6 @@ def write_last_url_to_file(url):
     working_dir = os.path.dirname(os.path.realpath(__file__))
     target_path = os.path.join(working_dir, CONST_MAXBOT_LAST_URL_FILE)
     util.write_string_to_file(target_path, url)
-
-def read_last_url_from_file():
-    ret = ""
-    with open(CONST_MAXBOT_LAST_URL_FILE, "r") as text_file:
-        ret = text_file.readline()
-    return ret
 
 def play_sound_while_ordering(config_dict):
     app_root = util.get_app_root()
@@ -318,13 +272,13 @@ async def nodriver_force_check_checkbox(tab, checkbox_element):
 
     return is_finish_checkbox_click
 
-async def nodriver_check_checkbox_enhanced(tab, select_query, show_debug_message=False):
+async def nodriver_check_checkbox_enhanced(tab, select_query, config_dict=None):
     """增強版勾選函式，直接使用 JavaScript 操作"""
+    debug = util.create_debug_logger(config_dict)
     is_checkbox_checked = False
 
     try:
-        if show_debug_message:
-            print(f"Checking checkbox: {select_query}")
+        debug.log(f"Checking checkbox: {select_query}")
 
         # 直接使用 JavaScript 查找並勾選
         result = await tab.evaluate(f'''
@@ -346,12 +300,10 @@ async def nodriver_check_checkbox_enhanced(tab, select_query, show_debug_message
 
         is_checkbox_checked = bool(result)
 
-        if show_debug_message:
-            print(f"Checkbox result: {is_checkbox_checked}")
+        debug.log(f"Checkbox result: {is_checkbox_checked}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"Checkbox error: {exc}")
+        debug.log(f"Checkbox error: {exc}")
 
     return is_checkbox_checked
 
@@ -377,7 +329,6 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
             print(e)
             pass
 
-
 async def detect_cloudflare_challenge(tab, show_debug=False):
     """
     偵測是否遇到 Cloudflare 挑戰頁面
@@ -385,6 +336,7 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
     Returns:
         bool: True 如果偵測到 Cloudflare 挑戰頁面
     """
+    debug = util.create_debug_logger(enabled=show_debug)
     try:
         html_content = await tab.get_content()
         if not html_content:
@@ -416,10 +368,8 @@ async def detect_cloudflare_challenge(tab, show_debug=False):
         return detected
 
     except Exception as exc:
-        if show_debug:
-            print(f"Cloudflare detection error: {exc}")
+        debug.log(f"Cloudflare detection error: {exc}")
         return False
-
 
 async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
     """
@@ -437,26 +387,26 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
     max_retry = max_retry or CLOUDFLARE_MAX_RETRY
 
     # 根據模式決定是否顯示訊息
-    show_debug_message = (config_dict["advanced"]["verbose"] or
-                         CLOUDFLARE_BYPASS_MODE == "debug")
+    cf_debug = (config_dict.get("advanced", {}).get("verbose", False) or
+                CLOUDFLARE_BYPASS_MODE == "debug")
 
     # 自動模式下靜默執行
     if CLOUDFLARE_BYPASS_MODE == "auto":
-        show_debug_message = False
+        cf_debug = False
 
-    if show_debug_message:
-        print("[CLOUDFLARE] Starting to handle Cloudflare challenge...")
+    debug = util.create_debug_logger(enabled=cf_debug)
+
+    debug.log("[CLOUDFLARE] Starting to handle Cloudflare challenge...")
 
     for retry_count in range(max_retry):
         try:
             if retry_count > 0:
-                if show_debug_message:
-                    print(f"[CLOUDFLARE] Retry attempt {retry_count}...")
+                debug.log(f"[CLOUDFLARE] Retry attempt {retry_count}...")
                 # Increase retry interval
                 await tab.sleep(3 + retry_count)
 
             # Method 1: Use verify_cf with multiple templates
-            verify_success = await util.verify_cf_with_templates(tab, show_debug=show_debug_message)
+            verify_success = await util.verify_cf_with_templates(tab, show_debug=cf_debug)
 
             # Method 2: Fallback - try clicking verification box directly
             if not verify_success:
@@ -464,8 +414,7 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
                     verify_box = await tab.query_selector('input[type="checkbox"]')
                     if verify_box:
                         await verify_box.click()
-                        if show_debug_message:
-                            print("[CLOUDFLARE] Clicked verification checkbox directly")
+                        debug.log("[CLOUDFLARE] Clicked verification checkbox directly")
                 except Exception:
                     pass
 
@@ -474,47 +423,38 @@ async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
             await tab.sleep(wait_time)
 
             # Check if successfully bypassed
-            if not await detect_cloudflare_challenge(tab, show_debug_message):
-                if show_debug_message:
-                    print("[CLOUDFLARE] Cloudflare challenge bypassed successfully")
+            if not await detect_cloudflare_challenge(tab, cf_debug):
+                debug.log("[CLOUDFLARE] Cloudflare challenge bypassed successfully")
                 return True
             else:
-                if show_debug_message:
-                    print(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
+                debug.log(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
 
                 # Last attempt: Refresh page
                 if retry_count == max_retry - 1:
                     try:
-                        if show_debug_message:
-                            print("[CLOUDFLARE] Last attempt: Refreshing page")
+                        debug.log("[CLOUDFLARE] Last attempt: Refreshing page")
                         await tab.reload()
                         await tab.sleep(5)
-                        if not await detect_cloudflare_challenge(tab, show_debug_message):
+                        if not await detect_cloudflare_challenge(tab, cf_debug):
                             return True
                     except Exception:
                         pass
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[CLOUDFLARE] Error during processing: {exc}")
+            debug.log(f"[CLOUDFLARE] Error during processing: {exc}")
 
-    if show_debug_message:
-        print("[CLOUDFLARE] Cloudflare challenge handling failed, max retries reached")
-        print("[CLOUDFLARE] Suggestion: Check network connection or try again later")
+    debug.log("[CLOUDFLARE] Cloudflare challenge handling failed, max retries reached")
+    debug.log("[CLOUDFLARE] Suggestion: Check network connection or try again later")
     return False
-
-
-
 
 async def nodriver_kktix_signin(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("nodriver_kktix_signin:", url)
+    debug.log("nodriver_kktix_signin:", url)
 
     # 解析 back_to 參數取得真正的目標頁面
     import urllib.parse
@@ -570,19 +510,17 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                     # Detect if left sign_in page (login completed)
                     if '/users/sign_in' not in current_url:
                         login_completed = True
-                        if show_debug_message:
-                            print(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
+                        debug.log(f"[KKTIX SIGNIN] Login completed after {attempt * check_interval:.1f}s, redirected to: {current_url}")
                         break
                 except Exception as exc:
-                    if show_debug_message and attempt == max_attempts - 1:
-                        print(f"[KKTIX SIGNIN] Error checking URL: {exc}")
+                    if attempt == max_attempts - 1:
+                        debug.log(f"[KKTIX SIGNIN] Error checking URL: {exc}")
 
                 if attempt < max_attempts - 1:
                     await asyncio.sleep(check_interval)
 
             if not login_completed:
-                if show_debug_message:
-                    print(f"[KKTIX SIGNIN] Login timeout after {max_wait}s")
+                debug.log(f"[KKTIX SIGNIN] Login timeout after {max_wait}s")
 
             # Check if need to manually redirect to back_to URL
             try:
@@ -590,13 +528,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
                 if current_url and ('kktix.com/' in current_url or 'kktix.cc/' in current_url):
                     # If on homepage or user page, manually redirect to back_to URL
                     if (current_url.endswith('/') or '/users/' in current_url) and target_url != current_url:
-                        if show_debug_message:
-                            print(f"[KKTIX SIGNIN] Currently on homepage/user page, redirecting to: {target_url}")
+                        debug.log(f"[KKTIX SIGNIN] Currently on homepage/user page, redirecting to: {target_url}")
                         await tab.get(target_url)
                         await asyncio.sleep(random.uniform(1.2, 2.3))
                         has_redirected = True
-                    elif show_debug_message:
-                        print(f"[KKTIX SIGNIN] Already on target page: {current_url}")
+                    else:
+                        debug.log(f"[KKTIX SIGNIN] Already on target page: {current_url}")
             except Exception as redirect_error:
                 print(f"跳轉失敗: {redirect_error}")
 
@@ -607,7 +544,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     return has_redirected
 
 async def nodriver_kktix_paused_main(tab, url, config_dict):
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -619,6 +556,7 @@ async def nodriver_kktix_paused_main(tab, url, config_dict):
     return False
 
 async def nodriver_goto_homepage(driver, config_dict):
+    tab = None
     homepage = config_dict["homepage"]
     if 'kktix.c' in homepage:
         # for like human.
@@ -626,8 +564,7 @@ async def nodriver_goto_homepage(driver, config_dict):
             tab = await driver.get(homepage)
             await asyncio.sleep(random.uniform(1.0, 2.5))
         except Exception as e:
-            pass
-        
+            print(f"[ERROR] Failed to navigate to kktix homepage: {e}")
 
         if len(config_dict["accounts"]["kktix_account"])>0:
             if not 'https://kktix.com/users/sign_in?' in homepage:
@@ -675,7 +612,7 @@ async def nodriver_goto_homepage(driver, config_dict):
         tab = await driver.get(homepage)
         await asyncio.sleep(random.uniform(1.0, 2.5))
     except Exception as e:
-        pass
+        print(f"[ERROR] Failed to navigate to homepage: {e}")
 
     tixcraft_family = False
     if 'tixcraft.com' in homepage:
@@ -882,7 +819,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     if await check_and_handle_pause(config_dict):
         return True, False, None
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     ticket_number = config_dict["ticket_number"]
 
@@ -907,8 +844,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
     price_list_count = 0
     if not ticket_price_list is None:
         price_list_count = len(ticket_price_list)
-        if show_debug_message:
-            print("found price count:", price_list_count)
+        debug.log("found price count:", price_list_count)
     else:
         is_dom_ready = False
         print("find ticket-price fail")
@@ -924,8 +860,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
         # Clean stop words for all keywords
         kktix_area_keyword_array = [util.format_keyword_string(kw) for kw in kktix_area_keyword_array]
 
-        if show_debug_message:
-            print(f'[KKTIX AREA] Keywords (AND logic): {kktix_area_keyword_array}')
+        debug.log(f'[KKTIX AREA] Keywords (AND logic): {kktix_area_keyword_array}')
 
         for i, row in enumerate(ticket_price_list):
             row_text = ""
@@ -966,8 +901,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                         row_input = input_index  # 儲存有效 input 的索引
             except Exception as exc:
                 is_dom_ready = False
-                if show_debug_message:
-                    print(f"Error in nodriver_kktix_travel_price_list: {exc}")
+                debug.log(f"Error in nodriver_kktix_travel_price_list: {exc}")
                 # error, exit loop
                 break
 
@@ -981,8 +915,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
                 if is_sold_out:
                     row_text = ""
-                    if show_debug_message:
-                        print(f"  -> Filtered: sold out")
+                    debug.log(f"  -> Filtered: sold out")
 
                 # Multi-language "not yet open" check (preserve these tickets for keyword matching)
                 not_yet_open_keywords = [
@@ -992,18 +925,16 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                 ]
                 has_not_yet_open_status = any(kw in row_text for kw in not_yet_open_keywords)
 
-                if has_not_yet_open_status and show_debug_message:
-                    print(f"  -> Preserved ticket with 'not yet open' status for keyword matching")
+                if has_not_yet_open_status:
+                    debug.log(f"  -> Preserved ticket with 'not yet open' status for keyword matching")
 
                 # Filter tickets without input field, EXCEPT "not yet open" tickets
                 if len(row_text) > 0 and not('<input type=' in row_html):
                     if not has_not_yet_open_status:
                         row_text = ""
-                        if show_debug_message:
-                            print(f"  -> Filtered: no input field and not 'not yet open'")
+                        debug.log(f"  -> Filtered: no input field and not 'not yet open'")
                     else:
-                        if show_debug_message:
-                            print(f"  -> Kept 'not yet open' ticket for keyword matching (no input yet)")
+                        debug.log(f"  -> Kept 'not yet open' ticket for keyword matching (no input yet)")
 
             if len(row_text) > 0:
                 if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -1026,8 +957,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                             tmp_ticket_count = tmp_array[0].strip()
                             if tmp_ticket_count.isdigit():
                                 ticket_count = int(tmp_ticket_count)
-                                if show_debug_message:
-                                    print("found ticket 剩:", tmp_ticket_count)
+                                debug.log("found ticket 剩:", tmp_ticket_count)
                     # for ja.
                     if ' danger' in row_html and '残り' in row_text and '枚' in row_text:
                         tmp_array = row_html.split('残り')
@@ -1036,8 +966,7 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                             tmp_ticket_count = tmp_array[0].strip()
                             if tmp_ticket_count.isdigit():
                                 ticket_count = int(tmp_ticket_count)
-                                if show_debug_message:
-                                    print("found ticket 残り:", tmp_ticket_count)
+                                debug.log("found ticket 残り:", tmp_ticket_count)
                     # for en.
                     if ' danger' in row_html and ' Left ' in row_html:
                         tmp_array = row_html.split(' Left ')
@@ -1045,14 +974,12 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                         if len(tmp_array) > 0:
                             tmp_ticket_count = tmp_array[len(tmp_array)-1].strip()
                             if tmp_ticket_count.isdigit():
-                                if show_debug_message:
-                                    print("found ticket left:", tmp_ticket_count)
+                                debug.log("found ticket left:", tmp_ticket_count)
                                 ticket_count = int(tmp_ticket_count)
 
                     if ticket_count < ticket_number:
                         # skip this row, due to no ticket remaining.
-                        if show_debug_message:
-                            print("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
+                        debug.log("found ticket left:", tmp_ticket_count, ",but target ticket:", ticket_number)
                         row_text = ""
 
             # Keyword matching for ALL preserved tickets (including "not yet open")
@@ -1072,34 +999,31 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                     # Check if all keywords match (AND logic)
                     is_match_area = all(kw in row_text for kw in kktix_area_keyword_array)
 
-                if show_debug_message:
+                if debug.enabled:
                     original_text = util.remove_html_tags(result.get('html', '')) if result else ""
                     original_text = ' '.join(original_text.split())  # Remove extra whitespace and newlines
-                    print(f"[KKTIX] Ticket index {i}: {original_text[:60]}")
-                    print(f"  -> Keyword match: {is_match_area}")
+                    debug.log(f"[KKTIX] Ticket index {i}: {original_text[:60]}")
+                    debug.log(f"  -> Keyword match: {is_match_area}")
 
                 # Handle matched tickets based on input field availability
                 if is_match_area:
                     if row_input is not None:
                         # Has input field (purchasable) - add to selection list
                         areas.append(row_input)
-                        if show_debug_message:
-                            print(f"  -> Matched and added to selection list (input index: {row_input})")
+                        debug.log(f"  -> Matched and added to selection list (input index: {row_input})")
 
                         # From top to bottom mode: match first then break
                         if kktix_area_auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
-                            if show_debug_message:
-                                print(f"[KKTIX AREA] Mode is '{kktix_area_auto_select_mode}', stopping at first match")
+                            debug.log(f"[KKTIX AREA] Mode is '{kktix_area_auto_select_mode}', stopping at first match")
                             break
                     else:
                         # No input field (not yet open) - track as pending
                         pending_tickets.append({
                             'index': i,
-                            'text': original_text[:60] if show_debug_message else row_text[:60],
+                            'text': original_text[:60] if debug.enabled else row_text[:60],
                             'keywords': kktix_area_keyword_array
                         })
-                        if show_debug_message:
-                            print(f"  -> Matched but waiting for ticket to open (keywords: {', '.join(kktix_area_keyword_array)})")
+                        debug.log(f"  -> Matched but waiting for ticket to open (keywords: {', '.join(kktix_area_keyword_array)})")
 
             # Increment input index if this row has an input field
             if row_input is not None:
@@ -1109,39 +1033,38 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
                 # DOM not ready, break the loop
                 break
     else:
-        if show_debug_message:
-            print("[KKTIX] No price list found")
+        debug.log("[KKTIX] No price list found")
         pass
 
     # Match result summary
-    if show_debug_message:
+    if debug.enabled:
         total_checked = len(ticket_price_list) if ticket_price_list else 0
         total_matched_with_input = len(areas) if areas else 0
         total_matched_pending = len(pending_tickets) if pending_tickets else 0
         total_matched_all = total_matched_with_input + total_matched_pending
 
-        print(f"[KKTIX AREA] ========================================")
-        print(f"[KKTIX AREA] Match Summary:")
-        print(f"[KKTIX AREA]   Total ticket types checked: {total_checked}")
-        print(f"[KKTIX AREA]   Tickets matched (with input): {total_matched_with_input}")
-        print(f"[KKTIX AREA]   Tickets matched (waiting for open): {total_matched_pending}")
+        debug.log(f"[KKTIX AREA] ========================================")
+        debug.log(f"[KKTIX AREA] Match Summary:")
+        debug.log(f"[KKTIX AREA]   Total ticket types checked: {total_checked}")
+        debug.log(f"[KKTIX AREA]   Tickets matched (with input): {total_matched_with_input}")
+        debug.log(f"[KKTIX AREA]   Tickets matched (waiting for open): {total_matched_pending}")
 
         if total_matched_pending > 0:
-            print(f"[KKTIX AREA]")
-            print(f"[KKTIX AREA]   Waiting for these tickets to open:")
+            debug.log(f"[KKTIX AREA]")
+            debug.log(f"[KKTIX AREA]   Waiting for these tickets to open:")
             for pending in pending_tickets[:5]:  # Show max 5 pending tickets
                 keywords_str = ', '.join(pending['keywords'])
-                print(f"[KKTIX AREA]     - {pending['text']} (keywords: {keywords_str})")
+                debug.log(f"[KKTIX AREA]     - {pending['text']} (keywords: {keywords_str})")
             if total_matched_pending > 5:
-                print(f"[KKTIX AREA]     ... and {total_matched_pending - 5} more")
+                debug.log(f"[KKTIX AREA]     ... and {total_matched_pending - 5} more")
 
         if total_checked > 0 and total_matched_all > 0:
             match_rate = total_matched_all / total_checked * 100
-            print(f"[KKTIX AREA]   Overall match rate: {match_rate:.1f}%")
+            debug.log(f"[KKTIX AREA]   Overall match rate: {match_rate:.1f}%")
         elif total_matched_all == 0:
-            print(f"[KKTIX AREA]   No ticket types matched")
+            debug.log(f"[KKTIX AREA]   No ticket types matched")
 
-        print(f"[KKTIX AREA] ========================================")
+        debug.log(f"[KKTIX AREA] ========================================")
 
     # Check pause after traversal
     if await check_and_handle_pause(config_dict):
@@ -1149,13 +1072,12 @@ async def nodriver_kktix_travel_price_list(tab, config_dict, kktix_area_auto_sel
 
     return is_dom_ready, is_ticket_number_assigned, areas
 
-
 async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keyword):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return True, False, False
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     ticket_number_str = str(config_dict["ticket_number"])
     auto_select_mode = config_dict["area_auto_select"]["mode"]
@@ -1177,21 +1099,19 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
         if not matched_blocks is None:
             if len(matched_blocks) == 0:
                 is_need_refresh = True
-                if show_debug_message:
-                    print("matched_blocks is empty, is_need_refresh")
+                debug.log("matched_blocks is empty, is_need_refresh")
 
     if not target_area is None:
         # 顯示選中目標訊息
-        if show_debug_message:
+        if debug.enabled:
             try:
-                print(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
-                print(f"[KKTIX AREA] Selected target: #{target_area + 1}/{len(matched_blocks)}")
+                debug.log(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[KKTIX AREA] Selected target: #{target_area + 1}/{len(matched_blocks)}")
             except:
-                print(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[KKTIX AREA] Auto-select mode: {auto_select_mode}")
 
         current_ticket_number = ""
-        if show_debug_message:
-            print("try to set input box value.")
+        debug.log("try to set input box value.")
 
         try:
             # target_area 現在是索引，直接使用
@@ -1273,24 +1193,21 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
                     print("assign ticket number:%s to [%s]" % (ticket_number_str, clean_ticket_name))
                     is_ticket_number_assigned = True
                 elif assign_result.get('alreadySet'):
-                    if show_debug_message:
-                        print("value already assigned to [%s]" % ticket_name)
+                    debug.log("value already assigned to [%s]" % ticket_name)
                     is_ticket_number_assigned = True
 
-                if show_debug_message:
-                    print(f"[TICKET] current_ticket_number: {current_ticket_number}")
-                    print(f"[TICKET] selected_ticket_name: {ticket_name}")
+                debug.log(f"[TICKET] current_ticket_number: {current_ticket_number}")
+                debug.log(f"[TICKET] selected_ticket_name: {ticket_name}")
 
-                if is_ticket_number_assigned and show_debug_message:
-                    print("KKTIX ticket number input completed, skipping verification")
+                if is_ticket_number_assigned:
+                    debug.log("KKTIX ticket number input completed, skipping verification")
             else:
-                if show_debug_message:
+                if debug.enabled:
                     error_msg = assign_result.get('error', 'Unknown error') if assign_result else 'No result'
-                    print(f"Error in nodriver_kktix_assign_ticket_number: {error_msg}")
+                    debug.log(f"Error in nodriver_kktix_assign_ticket_number: {error_msg}")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"Error in nodriver_kktix_assign_ticket_number: {exc}")
+            debug.log(f"Error in nodriver_kktix_assign_ticket_number: {exc}")
 
     # 票數分配後檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -1298,10 +1215,9 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, kktix_area_keywo
 
     return is_dom_ready, is_ticket_number_assigned, is_need_refresh
 
-
 async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div):
     """增強版驗證碼處理，包含重試機制和人類化延遲"""
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     answer_list = []
     success = False  # 初始化按鈕點擊狀態
@@ -1330,7 +1246,7 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
             answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
             if len(answer_list)==0:
                 if config_dict["advanced"]["auto_guess_options"]:
-                    answer_list = util.get_answer_list_from_question_string(None, question_text)
+                    answer_list = util.get_answer_list_from_question_string(None, question_text, config_dict)
 
             inferred_answer_string = ""
             for answer_item in answer_list:
@@ -1341,11 +1257,10 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
             if len(answer_list) > 0:
                 answer_list = list(dict.fromkeys(answer_list))
 
-            if show_debug_message:
-                print("inferred_answer_string:", inferred_answer_string)
-                print("question_text:", question_text)
-                print("answer_list:", answer_list)
-                print("fail_list:", fail_list)
+            debug.log("inferred_answer_string:", inferred_answer_string)
+            debug.log("question_text:", question_text)
+            debug.log("answer_list:", answer_list)
+            debug.log("fail_list:", fail_list)
 
             # 增強版答案填寫流程，包含重試機制
             if len(inferred_answer_string) > 0 and elements_check.get('hasInput'):
@@ -1353,8 +1268,8 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                 max_retries = 3
 
                 for retry_count in range(max_retries):
-                    if show_debug_message and retry_count > 0:
-                        print(f"Captcha filling retry {retry_count}/{max_retries}")
+                    if retry_count > 0:
+                        debug.log(f"Captcha filling retry {retry_count}/{max_retries}")
 
                     try:
                         # 人類化延遲：0.3-1秒隨機延遲
@@ -1398,8 +1313,7 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                         fill_result = util.parse_nodriver_result(fill_result)
 
                         if fill_result and fill_result.get('success'):
-                            if show_debug_message:
-                                print(f"Captcha answer filled successfully: {inferred_answer_string}")
+                            debug.log(f"Captcha answer filled successfully: {inferred_answer_string}")
 
                             # 短暫延遲後點擊按鈕
                             button_delay = random.uniform(0.5, 1.2)
@@ -1417,29 +1331,27 @@ async def nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsN
                                 fail_list.append(inferred_answer_string)
                                 break
                             else:
-                                if show_debug_message:
-                                    print("Button click failed, retrying...")
+                                debug.log("Button click failed, retrying...")
                         else:
                             error_msg = fill_result.get('error', 'Unknown error') if fill_result else 'No result'
-                            if show_debug_message:
-                                print(f"Input filling failed: {error_msg}")
+                            debug.log(f"Input filling failed: {error_msg}")
 
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"Captcha retry {retry_count + 1} failed: {exc}")
+                        debug.log(f"Captcha retry {retry_count + 1} failed: {exc}")
 
                     # 重試前的等待
                     if not success and retry_count < max_retries - 1:
                         retry_delay = random.uniform(0.8, 1.5)
                         await tab.sleep(retry_delay)
 
-                if not success and show_debug_message:
-                    print("All captcha filling attempts failed")
+                if not success:
+                    debug.log("All captcha filling attempts failed")
 
     return fail_list, is_question_popup, success
 
 async def debug_kktix_page_state(tab, show_debug=True):
     """收集 KKTIX 頁面狀態供除錯，參考 NoDriver API 指南"""
+    debug = util.create_debug_logger(enabled=show_debug)
     try:
         state = await tab.evaluate('''
             (function() {
@@ -1517,22 +1429,22 @@ async def debug_kktix_page_state(tab, show_debug=True):
         # 解析結果
         state = util.parse_nodriver_result(state)
 
-        if show_debug and state:
-            print("=== KKTIX Page Debug State ===")
-            print(f"URL: {state.get('basic', {}).get('url', 'N/A')}")
-            print(f"Ready State: {state.get('basic', {}).get('readyState', 'N/A')}")
-            print(f"Registration Div: {state.get('kktix', {}).get('hasRegistrationDiv', False)}")
-            print(f"Ticket Areas: {state.get('kktix', {}).get('hasTicketAreas', 0)}")
-            print(f"Captcha Question: {state.get('captcha', {}).get('hasQuestion', False)}")
+        if state:
+            debug.log("=== KKTIX Page Debug State ===")
+            debug.log(f"URL: {state.get('basic', {}).get('url', 'N/A')}")
+            debug.log(f"Ready State: {state.get('basic', {}).get('readyState', 'N/A')}")
+            debug.log(f"Registration Div: {state.get('kktix', {}).get('hasRegistrationDiv', False)}")
+            debug.log(f"Ticket Areas: {state.get('kktix', {}).get('hasTicketAreas', 0)}")
+            debug.log(f"Captcha Question: {state.get('captcha', {}).get('hasQuestion', False)}")
             if state.get('captcha', {}).get('questionText'):
-                print(f"Question Text: {state.get('captcha', {}).get('questionText', '')[:50]}...")
-            print(f"Next Buttons: {state.get('forms', {}).get('nextButtons', 0)}")
-            print(f"Error Messages: {state.get('errors', {}).get('hasErrorMessages', False)}")
+                debug.log(f"Question Text: {state.get('captcha', {}).get('questionText', '')[:50]}...")
+            debug.log(f"Next Buttons: {state.get('forms', {}).get('nextButtons', 0)}")
+            debug.log(f"Error Messages: {state.get('errors', {}).get('hasErrorMessages', False)}")
             if state.get('errors', {}).get('soldOut'):
-                print("[SOLD OUT] Sold Out detected")
+                debug.log("[SOLD OUT] Sold Out detected")
             if state.get('errors', {}).get('notYetOpen'):
-                print("Not yet open detected")
-            print("=" * 30)
+                debug.log("Not yet open detected")
+            debug.log("=" * 30)
 
         return state
 
@@ -1542,8 +1454,7 @@ async def debug_kktix_page_state(tab, show_debug=True):
             'error': f'Exception in debug_kktix_page_state: {exc}',
             'timestamp': datetime.now().isoformat()
         }
-        if show_debug:
-            print(f"Debug failed: {exc}")
+        debug.log(f"Debug failed: {exc}")
         return error_state
 
 async def nodriver_kktix_date_auto_select(tab, config_dict):
@@ -1552,12 +1463,11 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # T003: Check main switch (defensive programming)
     if not config_dict["date_auto_select"]["enable"]:
-        if show_debug_message:
-            print("[KKTIX DATE SELECT] Main switch is disabled, skipping date selection")
+        debug.log("[KKTIX DATE SELECT] Main switch is disabled, skipping date selection")
         return False
 
     # Read config
@@ -1575,23 +1485,20 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
         try:
             session_list = await tab.query_selector_all('div.event-list ul.clearfix > li')
             if session_list and len(session_list) > 0:
-                if show_debug_message:
-                    print(f"[KKTIX DATE] Found {len(session_list)} sessions after {attempt * check_interval:.1f}s")
+                debug.log(f"[KKTIX DATE] Found {len(session_list)} sessions after {attempt * check_interval:.1f}s")
                 break
         except Exception as exc:
-            if show_debug_message and attempt == max_attempts - 1:
-                print(f"[KKTIX DATE] Error querying session list: {exc}")
+            if attempt == max_attempts - 1:
+                debug.log(f"[KKTIX DATE] Error querying session list: {exc}")
 
         if attempt < max_attempts - 1:
             await tab.sleep(check_interval)
 
     if not session_list or len(session_list) == 0:
-        if show_debug_message:
-            print(f"[KKTIX DATE] Timeout after {max_wait}s waiting for session list")
+        debug.log(f"[KKTIX DATE] Timeout after {max_wait}s waiting for session list")
         return False
 
-    if show_debug_message:
-        print(f"[KKTIX DATE] Found {len(session_list)} sessions on page")
+    debug.log(f"[KKTIX DATE] Found {len(session_list)} sessions on page")
 
     # Extract session info (text + button element)
     formated_session_list = []
@@ -1628,16 +1535,13 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
                 if not util.reset_row_text_if_match_keyword_exclude(config_dict, date_text):
                     formated_session_list.append(button_elem)
                     formated_session_list_text.append(date_text)
-                    if show_debug_message:
-                        print(f"[KKTIX DATE] Available session: {date_text}")
+                    debug.log(f"[KKTIX DATE] Available session: {date_text}")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[KKTIX DATE] Error processing session: {exc}")
+            debug.log(f"[KKTIX DATE] Error processing session: {exc}")
             continue
 
     if len(formated_session_list) == 0:
-        if show_debug_message:
-            print("[KKTIX DATE] No available sessions found after filtering")
+        debug.log("[KKTIX DATE] No available sessions found after filtering")
         return False
 
     # T004-T008: NEW LOGIC - Early return pattern (Feature 003)
@@ -1646,8 +1550,7 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
 
     if not date_keyword:
         matched_blocks = formated_session_list
-        if show_debug_message:
-            print(f"[KKTIX DATE KEYWORD] No keyword specified, using all {len(formated_session_list)} sessions")
+        debug.log(f"[KKTIX DATE KEYWORD] No keyword specified, using all {len(formated_session_list)} sessions")
     else:
         # NEW: Early return pattern - iterate keywords in order
         matched_blocks = []
@@ -1660,15 +1563,13 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             keyword_array = json.loads("[" + date_keyword + "]")
 
             # T005: Start checking keywords log
-            if show_debug_message:
-                print(f"[KKTIX DATE KEYWORD] Start checking keywords in order: {keyword_array}")
-                print(f"[KKTIX DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
-                print(f"[KKTIX DATE KEYWORD] Checking against {len(formated_session_list_text)} available sessions...")
+            debug.log(f"[KKTIX DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+            debug.log(f"[KKTIX DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+            debug.log(f"[KKTIX DATE KEYWORD] Checking against {len(formated_session_list_text)} available sessions...")
 
             # NEW: Iterate keywords in priority order (early return)
             for keyword_index, keyword_item_set in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[KKTIX DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+                debug.log(f"[KKTIX DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
                 # Check all rows for this keyword
                 for i, session_text in enumerate(formated_session_list_text):
@@ -1690,9 +1591,8 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
                         matched_blocks = [formated_session_list[i]]
                         target_row_found = True
                         keyword_matched_index = keyword_index
-                        if show_debug_message:
-                            print(f"[KKTIX DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
-                            print(f"[KKTIX DATE SELECT] Selected session: {session_text[:80]} (keyword match)")
+                        debug.log(f"[KKTIX DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                        debug.log(f"[KKTIX DATE SELECT] Selected session: {session_text[:80]} (keyword match)")
                         break
 
                 if target_row_found:
@@ -1701,75 +1601,68 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
 
             # T007: All keywords failed log
             if not target_row_found:
-                if show_debug_message:
-                    print(f"[KKTIX DATE KEYWORD] All keywords failed to match")
+                debug.log(f"[KKTIX DATE KEYWORD] All keywords failed to match")
 
         except Exception as e:
-            if show_debug_message:
-                print(f"[KKTIX DATE KEYWORD] Parsing error: {e}")
+            debug.log(f"[KKTIX DATE KEYWORD] Parsing error: {e}")
             # On error, use mode selection
             matched_blocks = []
 
     # Match result summary
-    if show_debug_message:
-        print(f"[KKTIX DATE KEYWORD] ========================================")
-        print(f"[KKTIX DATE KEYWORD] Match Summary:")
-        print(f"[KKTIX DATE KEYWORD]   Total sessions available: {len(formated_session_list)}")
-        print(f"[KKTIX DATE KEYWORD]   Total sessions matched: {len(matched_blocks)}")
+    if debug.enabled:
+        debug.log(f"[KKTIX DATE KEYWORD] ========================================")
+        debug.log(f"[KKTIX DATE KEYWORD] Match Summary:")
+        debug.log(f"[KKTIX DATE KEYWORD]   Total sessions available: {len(formated_session_list)}")
+        debug.log(f"[KKTIX DATE KEYWORD]   Total sessions matched: {len(matched_blocks)}")
         if matched_blocks and len(matched_blocks) > 0:
-            print(f"[KKTIX DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_session_list)*100:.1f}%")
-            print(f"[KKTIX DATE KEYWORD] ========================================")
+            debug.log(f"[KKTIX DATE KEYWORD]   Match rate: {len(matched_blocks)/len(formated_session_list)*100:.1f}%")
+            debug.log(f"[KKTIX DATE KEYWORD] ========================================")
         elif not matched_blocks or len(matched_blocks) == 0:
-            print(f"[KKTIX DATE KEYWORD]   No sessions matched any keywords")
-            print(f"[KKTIX DATE KEYWORD] ========================================")
+            debug.log(f"[KKTIX DATE KEYWORD]   No sessions matched any keywords")
+            debug.log(f"[KKTIX DATE KEYWORD] ========================================")
 
     # T018-T020: NEW - Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and len(formated_session_list) > 0:
         if date_auto_fallback:
             # T018: Fallback enabled - use auto_select_mode
-            if show_debug_message:
-                print(f"[KKTIX DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
-                print(f"[KKTIX DATE FALLBACK] Selecting available session based on date_select_order='{auto_select_mode}'")
+            debug.log(f"[KKTIX DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[KKTIX DATE FALLBACK] Selecting available session based on date_select_order='{auto_select_mode}'")
             matched_blocks = formated_session_list
         else:
             # T019: Fallback disabled - strict mode (no selection, but continue to check for reload)
-            if show_debug_message:
-                print(f"[KKTIX DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[KKTIX DATE SELECT] No date selected, will check if reload needed")
+            debug.log(f"[KKTIX DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            debug.log(f"[KKTIX DATE SELECT] No date selected, will check if reload needed")
             # Don't return - let the function continue to check if selection succeeded
             # matched_blocks remains empty (no selection will be made)
 
     # Select target using auto_select_mode
     target_button = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
-    if show_debug_message:
+    if debug.enabled:
         if target_button and matched_blocks:
             try:
                 target_index = matched_blocks.index(target_button) if target_button in matched_blocks else -1
-                print(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
-                print(f"[KKTIX DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
+                debug.log(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[KKTIX DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
             except:
-                print(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
-                print(f"[KKTIX DATE SELECT] Target selected from {len(matched_blocks)} matched sessions")
+                debug.log(f"[KKTIX DATE SELECT] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[KKTIX DATE SELECT] Target selected from {len(matched_blocks)} matched sessions")
         elif not matched_blocks or len(matched_blocks) == 0:
-            print(f"[KKTIX DATE SELECT] No target selected (matched_blocks is empty)")
+            debug.log(f"[KKTIX DATE SELECT] No target selected (matched_blocks is empty)")
 
     # Click selected button
     is_date_clicked = False
     if target_button:
         try:
-            if show_debug_message:
-                print("[KKTIX DATE SELECT] Clicking selected session button...")
+            debug.log("[KKTIX DATE SELECT] Clicking selected session button...")
             await target_button.click()
             is_date_clicked = True
-            if show_debug_message:
-                print(f"[KKTIX DATE SELECT] ========================================")
-                print(f"[KKTIX DATE SELECT] Session selection completed successfully")
-                print(f"[KKTIX DATE SELECT] ========================================")
+            debug.log(f"[KKTIX DATE SELECT] ========================================")
+            debug.log(f"[KKTIX DATE SELECT] Session selection completed successfully")
+            debug.log(f"[KKTIX DATE SELECT] ========================================")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[KKTIX DATE SELECT] Click error: {exc}")
-                print(f"[KKTIX DATE SELECT] ========================================")
+            debug.log(f"[KKTIX DATE SELECT] Click error: {exc}")
+            debug.log(f"[KKTIX DATE SELECT] ========================================")
 
     return is_date_clicked
 
@@ -1780,7 +1673,7 @@ async def nodriver_kktix_events_press_next_button(tab, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = util.get_debug_mode(config_dict) if config_dict else False
+    debug = util.create_debug_logger(config_dict)
     try:
         result = await tab.evaluate('''
             (function() {
@@ -1816,7 +1709,7 @@ async def nodriver_kktix_check_guest_modal(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_modal_handled = False
 
     # Track if we've already checked for guest modal (skip wait on subsequent checks)
@@ -1847,8 +1740,7 @@ async def nodriver_kktix_check_guest_modal(tab, config_dict):
         ''')
 
         if modal_visible:
-            if show_debug_message:
-                print("[KKTIX GUEST MODAL] Guest modal detected, clicking dismiss button...")
+            debug.log("[KKTIX GUEST MODAL] Guest modal detected, clicking dismiss button...")
 
             # Click the dismiss button (暫時不要)
             click_result = await tab.evaluate('''
@@ -1866,18 +1758,15 @@ async def nodriver_kktix_check_guest_modal(tab, config_dict):
             click_result = util.parse_nodriver_result(click_result)
 
             if click_result and click_result.get('clicked'):
-                if show_debug_message:
-                    print("[KKTIX GUEST MODAL] Successfully dismissed guest modal")
+                debug.log("[KKTIX GUEST MODAL] Successfully dismissed guest modal")
                 # Wait for modal to close
                 await asyncio.sleep(random.uniform(0.3, 0.5))
                 is_modal_handled = True
         else:
-            if show_debug_message:
-                print("[KKTIX GUEST MODAL] No guest modal detected")
+            debug.log("[KKTIX GUEST MODAL] No guest modal detected")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] Guest modal check failed: {exc}")
+        debug.log(f"[ERROR] Guest modal check failed: {exc}")
 
     return is_modal_handled
 
@@ -1887,7 +1776,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = util.get_debug_mode(config_dict) if config_dict else False
+    debug = util.create_debug_logger(config_dict)
 
     # 重試機制：最多嘗試 3 次
     for retry_count in range(3):
@@ -1895,8 +1784,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
             # 如果不是第一次嘗試，等待一下
             if retry_count > 0:
                 await asyncio.sleep(0.5)
-                if show_debug_message:
-                    print(f"KKTIX 按鈕點擊重試 {retry_count + 1}/3")
+                debug.log(f"KKTIX 按鈕點擊重試 {retry_count + 1}/3")
 
             result = await tab.evaluate('''
                 (function() {
@@ -1967,8 +1855,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
 
                 # 檢查是否是處理中狀態
                 if result.get('processing'):
-                    if show_debug_message:
-                        print(f"KKTIX processing: [{button_text}]")
+                    debug.log(f"KKTIX processing: [{button_text}]")
 
                     # 等待較長時間給 KKTIX 處理
                     await asyncio.sleep(1.5)
@@ -1976,8 +1863,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                     # 主動檢查並關閉 alert（備援機制）
                     try:
                         await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                        if show_debug_message:
-                            print("[KKTIX] Alert dismissed after processing")
+                        debug.log("[KKTIX] Alert dismissed after processing")
                     except:
                         pass  # 沒有 alert 就忽略
 
@@ -1985,8 +1871,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         # 檢查是否已跳轉到訂單頁面
                         current_url = await tab.evaluate('window.location.href')
                         if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                            if show_debug_message:
-                                print(f"Processing completed, redirected to order page")
+                            debug.log(f"Processing completed, redirected to order page")
                             return True
                     except Exception:
                         pass
@@ -1995,8 +1880,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                     return True
                 else:
                     # 正常的按鈕點擊成功
-                    if show_debug_message:
-                        print(f"KKTIX button click successful: [{button_text}]")
+                    debug.log(f"KKTIX button click successful: [{button_text}]")
 
                     # 等待頁面處理並檢查是否跳轉
                     await asyncio.sleep(0.3)  # 給 KKTIX 伺服器時間處理
@@ -2004,8 +1888,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                     # 主動檢查並關閉 alert（備援機制，避免 CDP event handler 未觸發）
                     try:
                         await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                        if show_debug_message:
-                            print("[KKTIX] Alert dismissed after button click")
+                        debug.log("[KKTIX] Alert dismissed after button click")
                     except:
                         pass  # 沒有 alert 就忽略
 
@@ -2013,8 +1896,7 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                         # 檢查是否已跳轉到訂單頁面
                         current_url = await tab.evaluate('window.location.href')
                         if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                            if show_debug_message:
-                                print(f"Button click completed, redirected to order page")
+                            debug.log(f"Button click completed, redirected to order page")
                             return True
                     except Exception:
                         pass
@@ -2025,16 +1907,14 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
             else:
                 error_msg = result.get('error', 'Unknown error') if result else 'No result'
                 button_text = result.get('buttonText', '') if result else ''
-                if show_debug_message:
-                    print(f"KKTIX button click failed: {error_msg} [{button_text}]")
+                debug.log(f"KKTIX button click failed: {error_msg} [{button_text}]")
 
                 # 如果是按鈕被禁用或處理中，檢查是否已跳轉
                 if 'disabled' in error_msg.lower() or 'processing' in error_msg.lower():
                     try:
                         current_url = await tab.evaluate('window.location.href')
                         if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                            if show_debug_message:
-                                print(f"System processing but already redirected to order page, considered successful")
+                            debug.log(f"System processing but already redirected to order page, considered successful")
                             return True
                     except Exception:
                         pass
@@ -2047,16 +1927,13 @@ async def nodriver_kktix_press_next_button(tab, config_dict=None):
                     continue
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"KKTIX 按鈕點擊例外 (重試 {retry_count + 1}/3): {exc}")
+            debug.log(f"KKTIX 按鈕點擊例外 (重試 {retry_count + 1}/3): {exc}")
 
     # 所有重試都失敗
-    if show_debug_message:
-        print("KKTIX button click finally failed after 3 retries")
+    debug.log("KKTIX button click finally failed after 3 retries")
     return False
 
-
-async def nodriver_kktix_check_ticket_page_status(tab, show_debug_message=False):
+async def nodriver_kktix_check_ticket_page_status(tab, config_dict=None):
     """
     Check KKTIX ticket page status
     Improved: Distinguish "all not yet open" vs "partially not yet open", with multi-language support
@@ -2069,6 +1946,7 @@ async def nodriver_kktix_check_ticket_page_status(tab, show_debug_message=False)
     Returns:
         bool: True means need to reload page (all tickets sold out or not yet open)
     """
+    debug = util.create_debug_logger(config_dict)
     is_need_refresh = False
 
     try:
@@ -2157,19 +2035,18 @@ async def nodriver_kktix_check_ticket_page_status(tab, show_debug_message=False)
         if page_state:
             if page_state.get('allNotYetOpen') or page_state.get('allSoldOut'):
                 is_need_refresh = True
-                if show_debug_message:
+                if debug.enabled:
                     status = "All Sold Out" if page_state.get('allSoldOut') else "All Not Yet Open"
                     stats = page_state.get('stats', {})
-                    print(f"[KKTIX STATUS] {status}, will reload page")
-                    print(f"  Ticket stats: total={stats.get('total')}, notYetOpen={stats.get('notYetOpen')}, soldOut={stats.get('soldOut')}, available={stats.get('available')}")
-            elif show_debug_message and (page_state.get('notYetOpen') or page_state.get('soldOut')):
+                    debug.log(f"[KKTIX STATUS] {status}, will reload page")
+                    debug.log(f"  Ticket stats: total={stats.get('total')}, notYetOpen={stats.get('notYetOpen')}, soldOut={stats.get('soldOut')}, available={stats.get('available')}")
+            elif page_state.get('notYetOpen') or page_state.get('soldOut'):
                 stats = page_state.get('stats', {})
                 print(f"[KKTIX STATUS] Partial tickets not yet open/sold out, continue matching")
                 print(f"  Ticket stats: total={stats.get('total')}, notYetOpen={stats.get('notYetOpen')}, soldOut={stats.get('soldOut')}, available={stats.get('available')}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"Check page status failed: {exc}")
+        debug.log(f"Check page status failed: {exc}")
 
     return is_need_refresh
 
@@ -2178,19 +2055,17 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
     if await check_and_handle_pause(config_dict):
         return fail_list, played_sound_ticket
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     # 增加執行計數器，防止無限迴圈
     global kktix_dict
     if 'kktix_dict' in globals():
         kktix_dict["reg_execution_count"] = kktix_dict.get("reg_execution_count", 0) + 1
-        if show_debug_message:
-            print(f"[KKTIX REG] Execution count: {kktix_dict['reg_execution_count']}")
+        debug.log(f"[KKTIX REG] Execution count: {kktix_dict['reg_execution_count']}")
 
     # T010: Check main switch (defensive programming)
     if not config_dict["area_auto_select"]["enable"]:
-        if show_debug_message:
-            print("[KKTIX AREA SELECT] Main switch is disabled, skipping area selection")
+        debug.log("[KKTIX AREA SELECT] Main switch is disabled, skipping area selection")
         return fail_list, played_sound_ticket
 
     # read config.
@@ -2212,7 +2087,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
         is_dom_ready = True
 
         # 檢查頁面狀態，如果偵測到售罄或未開賣，設定重新載入標記
-        is_need_refresh = await nodriver_kktix_check_ticket_page_status(tab, show_debug_message)
+        is_need_refresh = await nodriver_kktix_check_ticket_page_status(tab, config_dict)
 
         if len(area_keyword) > 0:
             area_keyword_array = []
@@ -2239,8 +2114,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if is_ticket_number_assigned:
                     break
                 else:
-                    if show_debug_message:
-                        print("is_need_refresh for keyword:", area_keyword_item)
+                    debug.log("is_need_refresh for keyword:", area_keyword_item)
 
             # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
             if not is_ticket_number_assigned:
@@ -2248,23 +2122,20 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 if is_need_refresh_final:
                     if area_auto_fallback:
                         # T022: Fallback enabled - use auto_select_mode without keyword
-                        if show_debug_message:
-                            print(f"[KKTIX AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
-                            print(f"[KKTIX AREA FALLBACK] Selecting available ticket based on area_select_order='{auto_select_mode}'")
+                        debug.log(f"[KKTIX AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                        debug.log(f"[KKTIX AREA FALLBACK] Selecting available ticket based on area_select_order='{auto_select_mode}'")
                         is_dom_ready, is_ticket_number_assigned, is_need_refresh = await nodriver_kktix_assign_ticket_number(tab, config_dict, "")
                     else:
                         # T023: Fallback disabled - strict mode (no selection, but still reload)
-                        if show_debug_message:
-                            print(f"[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                            print(f"[KKTIX AREA SELECT] No area selected, will reload page and retry")
+                        debug.log(f"[KKTIX AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                        debug.log(f"[KKTIX AREA SELECT] No area selected, will reload page and retry")
                         # Don't return - let reload logic execute below
                         # is_ticket_number_assigned remains False (no selection made)
                         # Continue to line 2261 where is_need_refresh check happens
                 else:
                     # T024: is_need_refresh_final=False but no ticket assigned (all options sold out or excluded)
-                    if show_debug_message:
-                        print(f"[KKTIX AREA FALLBACK] No available options after exclusion")
-                        print(f"[KKTIX AREA SELECT] Will reload page and retry")
+                    debug.log(f"[KKTIX AREA FALLBACK] No available options after exclusion")
+                    debug.log(f"[KKTIX AREA SELECT] Will reload page and retry")
 
                 # If fallback still failed (or was attempted), then refresh
                 if not is_ticket_number_assigned:
@@ -2293,8 +2164,8 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                 played_sound_ticket = True
 
                 # 收集除錯資訊（僅在 debug 模式下）
-                if show_debug_message:
-                    debug_state = await debug_kktix_page_state(tab, show_debug_message)
+
+                debug_state = await debug_kktix_page_state(tab, debug.enabled)
 
                 # whole event question.
                 fail_list, is_question_popup, button_clicked_in_captcha = await nodriver_kktix_reg_captcha(tab, config_dict, fail_list, registrationsNewApp_div)
@@ -2311,8 +2182,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
                     # no captcha text popup, goto next page.
                     control_text = await nodriver_get_text_by_selector(tab, 'div > div.code-input > div.control-group > label.control-label', 'innerText')
-                    if show_debug_message:
-                        print("control_text:", control_text)
+                    debug.log("control_text:", control_text)
 
                     # 防止無限迴圈：當執行超過 2 次且欄位已填寫時，強制清空 control_text
                     if 'kktix_dict' in globals() and kktix_dict.get("reg_execution_count", 0) > 2:
@@ -2347,12 +2217,10 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                     }
                                 ''')
                                 if all_fields_filled:
-                                    if show_debug_message:
-                                        print(f"[KKTIX FORCE CLEAR] Execution count {kktix_dict['reg_execution_count']}, all fields filled, clearing control_text to break loop")
+                                    debug.log(f"[KKTIX FORCE CLEAR] Execution count {kktix_dict['reg_execution_count']}, all fields filled, clearing control_text to break loop")
                                     control_text = ""
                             except Exception as exc:
-                                if show_debug_message:
-                                    print(f"[KKTIX FORCE CLEAR] Check failed: {exc}")
+                                debug.log(f"[KKTIX FORCE CLEAR] Check failed: {exc}")
 
                     if len(control_text) > 0:
                         input_text_css = 'div > div.code-input > div.control-group > div.controls > label[ng-if] > input[type="text"]'
@@ -2374,8 +2242,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                 try:
                                     radio_element = await tab.query_selector(radio_css)
                                     if radio_element:
-                                        if show_debug_message:
-                                            print(f"[KKTIX RADIO] Found radio with selector: {radio_css}")
+                                        debug.log(f"[KKTIX RADIO] Found radio with selector: {radio_css}")
                                         break
                                 except Exception:
                                     pass
@@ -2395,13 +2262,11 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                             # 檢查 radio 是否被禁用
                                             is_disabled = await radio_element.get_attribute('disabled')
                                             if not is_disabled:
-                                                if show_debug_message:
-                                                    print("[KKTIX RADIO] Clicking radio qualification option")
+                                                debug.log("[KKTIX RADIO] Clicking radio qualification option")
                                                 await radio_element.click()
                                                 await tab.sleep(0.3)  # 短暫等待 AngularJS 更新
                                         except Exception as click_exc:
-                                            if show_debug_message:
-                                                print(f"[KKTIX RADIO ERROR] {click_exc}")
+                                            debug.log(f"[KKTIX RADIO ERROR] {click_exc}")
                             except Exception as exc:
                                 print(exc)
                                 pass
@@ -2409,8 +2274,7 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                             # 如果既沒有輸入框也沒有 radio，清空 control_text 以便點擊按鈕
                             # 這種情況下 label 可能只是購票資格說明而非實際輸入欄位
                             if radio_element is None:
-                                if show_debug_message:
-                                    print(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
+                                debug.log(f"[KKTIX] Found label '{control_text}' but no input/radio, proceeding to click button")
                                 control_text = ""
                             else:
                                 # 有 radio 元素：檢查所有必填欄位是否已填寫
@@ -2462,49 +2326,30 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                                     all_inputs_filled = util.parse_nodriver_result(all_inputs_filled_result)
 
                                     if all_inputs_filled:
-                                        if show_debug_message:
-                                            print(f"[KKTIX] All required fields filled (tickets + member code), clearing control_text to proceed")
+                                        debug.log(f"[KKTIX] All required fields filled (tickets + member code), clearing control_text to proceed")
                                         control_text = ""
                                     else:
-                                        if show_debug_message:
-                                            print(f"[KKTIX] Some required fields not filled yet, keeping control_text")
+                                        debug.log(f"[KKTIX] Some required fields not filled yet, keeping control_text")
                                 except Exception as exc:
-                                    if show_debug_message:
-                                        print(f"[KKTIX] Input fields check failed: {exc}")
+                                    debug.log(f"[KKTIX] Input fields check failed: {exc}")
 
                     if len(control_text) == 0:
                         # 檢查是否在驗證碼處理時已經點擊過按鈕
                         if button_clicked_in_captcha:
-                            if show_debug_message:
-                                print("Button already clicked during captcha processing, skipping duplicate click")
+                            debug.log("Button already clicked during captcha processing, skipping duplicate click")
                         else:
                             # 檢查是否已經跳轉到成功頁面，避免重複點擊
                             try:
                                 current_url = await tab.evaluate('window.location.href')
                                 if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                                    if show_debug_message:
-                                        print("Already redirected to order page, skipping button click")
+                                    debug.log("Already redirected to order page, skipping button click")
                                 else:
                                     click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
                             except Exception as exc:
                                 # 如果檢查失敗，還是嘗試點擊
                                 click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
                     else:
-                        # input by maxbox plus extension.
-                        is_fill_at_webdriver = False
-
-                        if not config_dict["browser"] in CONST_CHROME_FAMILY:
-                            is_fill_at_webdriver = True
-                        else:
-                            if not config_dict["advanced"]["chrome_extension"]:
-                                is_fill_at_webdriver = True
-
-                        # TODO: not implement in extension, so force to fill in webdriver.
-                        is_fill_at_webdriver = True
-                        if is_fill_at_webdriver:
-                            #TODO:
-                            #set_kktix_control_label_text(driver, config_dict)
-                            pass
+                        pass
             else:
                 # is_ticket_number_assigned is False
                 # 檢查票券是否已經在上一次填寫完成
@@ -2541,25 +2386,21 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                         all_fields_filled = util.parse_nodriver_result(all_fields_filled_result)
 
                         if all_fields_filled:
-                            if show_debug_message:
-                                print("[KKTIX] Tickets already filled but not assigned this round, attempting to click next button")
+                            debug.log("[KKTIX] Tickets already filled but not assigned this round, attempting to click next button")
 
                             # 檢查是否已經跳轉到成功頁面
                             try:
                                 current_url = await tab.evaluate('window.location.href')
                                 if '/registrations/' in current_url and '-' in current_url and '/new' not in current_url:
-                                    if show_debug_message:
-                                        print("[KKTIX] Already on order page, skipping button click")
+                                    debug.log("[KKTIX] Already on order page, skipping button click")
                                 else:
                                     # 嘗試點擊下一步按鈕
                                     if config_dict["kktix"]["auto_press_next_step_button"]:
                                         await nodriver_kktix_press_next_button(tab, config_dict)
                             except Exception as exc:
-                                if show_debug_message:
-                                    print(f"[KKTIX] Button click attempt failed: {exc}")
+                                debug.log(f"[KKTIX] Button click attempt failed: {exc}")
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[KKTIX] Filled fields check failed: {exc}")
+                        debug.log(f"[KKTIX] Filled fields check failed: {exc}")
 
                 if is_need_refresh:
                     # reset to play sound when ticket avaiable.
@@ -2577,13 +2418,12 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
 
     return fail_list, played_sound_ticket
 
-def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
+def check_kktix_got_ticket(url, config_dict):
     """檢查是否已成功取得 KKTIX 票券
 
     Args:
         url: 當前頁面 URL
         config_dict: 設定字典
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: True 表示已成功取得票券
@@ -2594,8 +2434,7 @@ def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
         if not '/registrations/new' in url:
             if not 'https://kktix.com/users/sign_in?' in url:
                 is_kktix_got_ticket = True
-                if show_debug_message:
-                    print(f"[KKTIX] Success page detected: {url}")
+                debug.log(f"[KKTIX] Success page detected: {url}")
 
     if is_kktix_got_ticket:
         if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
@@ -2604,14 +2443,13 @@ def check_kktix_got_ticket(url, config_dict, show_debug_message=False):
                     if url.split('/')[4] == config_dict["homepage"].split('/')[4]:
                         # 保留訊息輸出，但不改變返回值
                         # 重複動作保護已由 success_actions_done 標記處理
-                        if show_debug_message:
-                            print("重複進入相同活動的訂單頁面，跳過處理")
+                        debug.log("重複進入相同活動的訂單頁面，跳過處理")
 
     return is_kktix_got_ticket
 
 async def nodriver_kktix_main(tab, url, config_dict):
     global kktix_dict
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     if not 'kktix_dict' in globals():
         kktix_dict = {}
@@ -2630,39 +2468,33 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
     async def handle_kktix_alert(event):
-        if show_debug_message:
-            print(f"[KKTIX ALERT] Alert detected: '{event.message}'")
+        debug.log(f"[KKTIX ALERT] Alert detected: '{event.message}'")
 
         # Dismiss the alert - try multiple times with small delays
         for attempt in range(3):
             try:
                 await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                if show_debug_message:
-                    print(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
+                debug.log(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
                 error_msg = str(dismiss_exc)
                 # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
                 if "No dialog is showing" in error_msg or "-32602" in error_msg:
-                    if show_debug_message:
-                        print("[KKTIX ALERT] Dialog already dismissed")
+                    debug.log("[KKTIX ALERT] Dialog already dismissed")
                     break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)
                 else:
-                    if show_debug_message:
-                        print(f"[KKTIX ALERT] Failed to dismiss alert: {dismiss_exc}")
+                    debug.log(f"[KKTIX ALERT] Failed to dismiss alert: {dismiss_exc}")
 
     # Register global alert handler (only once per session)
     if not kktix_dict.get("alert_handler_registered", False):
         try:
             tab.add_handler(cdp.page.JavascriptDialogOpening, handle_kktix_alert)
             kktix_dict["alert_handler_registered"] = True
-            if show_debug_message:
-                print("[KKTIX ALERT] Global alert handler registered")
+            debug.log("[KKTIX ALERT] Global alert handler registered")
         except Exception as handler_exc:
-            if show_debug_message:
-                print(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
+            debug.log(f"[KKTIX ALERT] Failed to register alert handler: {handler_exc}")
 
     is_url_contain_sign_in = False
     if '/users/sign_in?' in url:
@@ -2674,8 +2506,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
             url = await tab.evaluate('window.location.href')
             is_url_contain_sign_in = False
         except Exception as exc:
-            if show_debug_message:
-                print(f"取得跳轉後 URL 失敗: {exc}")
+            debug.log(f"取得跳轉後 URL 失敗: {exc}")
 
     if not is_url_contain_sign_in:
         if '/registrations/new' in url:
@@ -2755,23 +2586,19 @@ async def nodriver_kktix_main(tab, url, config_dict):
                         elif isinstance(parsed_result, dict):
                             is_ticket_already_selected = parsed_result.get('hasTicket', False)
                         else:
-                            if show_debug_message:
-                                print(f"[KKTIX CHECK WARNING] parse_nodriver_result returned {type(parsed_result).__name__}: {parsed_result}, raw result: {result}")
+                            debug.log(f"[KKTIX CHECK WARNING] parse_nodriver_result returned {type(parsed_result).__name__}: {parsed_result}, raw result: {result}")
                             is_ticket_already_selected = False
 
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"[KKTIX CHECK ERROR] {exc}")
+                    debug.log(f"[KKTIX CHECK ERROR] {exc}")
                     is_ticket_already_selected = False
 
                 # Debug: show ticket selection status
-                if show_debug_message:
-                    print(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
+                debug.log(f"[KKTIX CHECK] is_ticket_already_selected: {is_ticket_already_selected}")
 
                 # check is able to buy (only if tickets not already selected)
                 if config_dict["kktix"]["auto_fill_ticket_number"] and not is_ticket_already_selected:
-                    if show_debug_message:
-                        print("[KKTIX] Executing ticket selection logic...")
+                    debug.log("[KKTIX] Executing ticket selection logic...")
                     kktix_dict["fail_list"], kktix_dict["played_sound_ticket"] = await nodriver_kktix_reg_new_main(tab, config_dict, kktix_dict["fail_list"], kktix_dict["played_sound_ticket"])
                     kktix_dict["done_time"] = time.time()
         else:
@@ -2784,8 +2611,6 @@ async def nodriver_kktix_main(tab, url, config_dict):
             if is_event_page:
                 # 檢查是否需要自動重載（Chrome 擴充功能未啟用時）
                 # DISABLED: API check causes access log and may be detected as bot behavior
-                # if not config_dict["advanced"]["chrome_extension"]:
-                #     await nodriver_kktix_reg_auto_reload(tab, config_dict)
 
                 # Try date selection first (multi-session pages)
                 is_date_selected = False
@@ -2805,7 +2630,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
     # 檢查是否已經偵測過成功頁面，避免重複偵測
     is_kktix_got_ticket = False
     if not kktix_dict["got_ticket_detected"]:
-        is_kktix_got_ticket = check_kktix_got_ticket(url, config_dict, show_debug_message)
+        is_kktix_got_ticket = check_kktix_got_ticket(url, config_dict)
         if is_kktix_got_ticket:
             kktix_dict["got_ticket_detected"] = True
     elif kktix_dict["got_ticket_detected"]:
@@ -2847,9 +2672,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                             masked_account = "***"
                         print("搶票成功, 帳號:", masked_account)
 
-                        script_name = "chrome_tixcraft"
-                        if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
-                            script_name = "nodriver_tixcraft"
+                        script_name = "nodriver_tixcraft"
 
                         threading.Thread(target=util.launch_maxbot, args=(script_name,"", url, kktix_account, kktix_password,"","false",)).start()
                         #driver.quit()
@@ -2883,7 +2706,7 @@ async def nodriver_kktix_confirm_order_button(tab, config_dict):
     KKTIX 訂單確認按鈕自動點擊功能
     對應 Chrome 版本的 kktix_confirm_order_button()
     """
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
     ret = False
 
     try:
@@ -2900,19 +2723,16 @@ async def nodriver_kktix_confirm_order_button(tab, config_dict):
             if is_enabled:
                 await confirm_button.click()
                 ret = True
-                if show_debug_message:
-                    print("KKTIX 訂單確認按鈕已點擊")
-            elif show_debug_message:
-                print("KKTIX 訂單確認按鈕存在但不可點擊")
-        elif show_debug_message:
-            print("未找到 KKTIX 訂單確認按鈕")
+                debug.log("KKTIX 訂單確認按鈕已點擊")
+            else:
+                debug.log("KKTIX 訂單確認按鈕存在但不可點擊")
+        else:
+            debug.log("未找到 KKTIX 訂單確認按鈕")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"KKTIX 訂單確認按鈕點擊失敗: {exc}")
+        debug.log(f"KKTIX 訂單確認按鈕點擊失敗: {exc}")
 
     return ret
-
 
 async def nodriver_tixcraft_home_close_window(tab):
     accept_all_cookies_btn = None
@@ -2982,7 +2802,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     Returns:
         bool: 是否成功填寫會員序號
     """
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
@@ -2993,12 +2813,10 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
 
     # 如果沒有設定會員序號，直接跳過
     if not member_code:
-        if show_debug_message:
-            print("[KKTIX MEMBER CODE] No member code configured, skipping")
+        debug.log("[KKTIX MEMBER CODE] No member code configured, skipping")
         return False
 
-    if show_debug_message:
-        print(f"[KKTIX MEMBER CODE] Attempting to fill member code: {member_code}")
+    debug.log(f"[KKTIX MEMBER CODE] Attempting to fill member code: {member_code}")
 
     try:
         # 轉義 JavaScript 字串，避免注入攻擊
@@ -3072,8 +2890,7 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
 
         if result and result.get('success'):
             filled_count = result.get('filledCount', 0)
-            if show_debug_message:
-                print(f"[KKTIX MEMBER CODE] Successfully filled {filled_count} member code field(s)")
+            debug.log(f"[KKTIX MEMBER CODE] Successfully filled {filled_count} member code field(s)")
 
             # 填寫完成後短暫延遲，確保 Angular 更新完成
             await tab.sleep(0.2)
@@ -3081,39 +2898,31 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
             # 檢查是否需要點擊下一步按鈕
             # 當會員序號填寫完成後，直接點擊下一步按鈕，避免 control_text 檢查邏輯干擾
             auto_press = config_dict["kktix"].get("auto_press_next_step_button", False)
-            if show_debug_message:
-                print(f"[KKTIX MEMBER CODE] auto_press_next_step_button: {auto_press}")
+            debug.log(f"[KKTIX MEMBER CODE] auto_press_next_step_button: {auto_press}")
 
             if auto_press:
                 # 簡化邏輯：會員序號成功填寫後，假設票券數量和同意條款都已完成
                 # 直接嘗試點擊下一步按鈕
                 try:
-                    if show_debug_message:
-                        print("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
+                    debug.log("[KKTIX MEMBER CODE] Member code filled successfully, attempting to click next button...")
 
                     # 點擊下一步按鈕
                     click_ret = await nodriver_kktix_press_next_button(tab, config_dict)
-                    if show_debug_message:
-                        print(f"[KKTIX MEMBER CODE] Click button result: {click_ret}")
+                    debug.log(f"[KKTIX MEMBER CODE] Click button result: {click_ret}")
                     if click_ret:
-                        if show_debug_message:
-                            print("[KKTIX MEMBER CODE] Successfully clicked next button after filling member code")
+                        debug.log("[KKTIX MEMBER CODE] Successfully clicked next button after filling member code")
                     else:
-                        if show_debug_message:
-                            print("[KKTIX MEMBER CODE] Button click returned False (button may not be enabled yet)")
+                        debug.log("[KKTIX MEMBER CODE] Button click returned False (button may not be enabled yet)")
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"[KKTIX MEMBER CODE] Failed to click next button: {exc}")
+                    debug.log(f"[KKTIX MEMBER CODE] Failed to click next button: {exc}")
 
             return True
         else:
-            if show_debug_message:
-                print("[KKTIX MEMBER CODE] No member code fields found on page")
+            debug.log("[KKTIX MEMBER CODE] No member code fields found on page")
             return False
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
+        debug.log(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
         return False
 
 # ============================================
@@ -3174,14 +2983,13 @@ def convert_remote_object(obj, depth=0):
     else:
         return obj
 
-
 # T004: Parse zone_info JSON from #mapSelectArea
 async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
     """
     Parse zone_info JavaScript variable from #mapSelectArea element.
     Returns: zone_info dict or None if parsing fails
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     zone_info = None
 
@@ -3200,18 +3008,17 @@ async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
 
                 import json
                 zone_info = json.loads(zone_string)
-                if show_debug_message:
-                    print(f"[TICKETMASTER ZONE] Parsed zone_info via string extraction ({len(zone_info)} zones)")
+                if debug.enabled:
+                    debug.log(f"[TICKETMASTER ZONE] Parsed zone_info via string extraction ({len(zone_info)} zones)")
                     if len(zone_info) > 0:
                         sample_id = list(zone_info.keys())[0]
                         sample = zone_info[sample_id]
                         if isinstance(sample, dict) and "groupName" in sample:
-                            print(f"[TICKETMASTER ZONE] Sample zone '{sample_id}' groupName: {sample['groupName']}")
+                            debug.log(f"[TICKETMASTER ZONE] Sample zone '{sample_id}' groupName: {sample['groupName']}")
                 return zone_info
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKETMASTER ZONE] String extraction failed: {exc}")
+        debug.log(f"[TICKETMASTER ZONE] String extraction failed: {exc}")
 
     # Try method 2: Direct JavaScript evaluation (fallback)
     try:
@@ -3252,10 +3059,10 @@ async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
             # Convert RemoteObject to standard Python types
             zone_info = convert_remote_object(result)
 
-            if show_debug_message:
+            if debug.enabled:
                 zone_type = "dict" if isinstance(zone_info, dict) else "list"
-                print(f"[TICKETMASTER ZONE] Successfully parsed zone_info ({len(zone_info)} zones, type: {zone_type})")
-                print(f"[TICKETMASTER ZONE] RemoteObject converted to standard format")
+                debug.log(f"[TICKETMASTER ZONE] Successfully parsed zone_info ({len(zone_info)} zones, type: {zone_type})")
+                debug.log(f"[TICKETMASTER ZONE] RemoteObject converted to standard format")
 
                 # Print detailed structure for debugging
                 if len(zone_info) > 0:
@@ -3266,67 +3073,65 @@ async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
                             sample_id = "index_0"
 
                             # Diagnostic for List format
-                            print(f"[TICKETMASTER ZONE] List first item type: {type(sample)}")
+                            debug.log(f"[TICKETMASTER ZONE] List first item type: {type(sample)}")
 
                             if isinstance(sample, dict):
                                 sample_keys = list(sample.keys())[:10]  # First 10 keys
-                                print(f"[TICKETMASTER ZONE] List item keys (first 10): {sample_keys}")
+                                debug.log(f"[TICKETMASTER ZONE] List item keys (first 10): {sample_keys}")
 
                                 # Check for zone_id fields
                                 zone_id_field = None
                                 for field in ["sectionCode", "id", "zoneId", "areaNo"]:
                                     if field in sample:
                                         zone_id_field = field
-                                        print(f"[TICKETMASTER ZONE] Found zone_id field: '{field}' = '{sample.get(field)}'")
+                                        debug.log(f"[TICKETMASTER ZONE] Found zone_id field: '{field}' = '{sample.get(field)}'")
                                         break
 
                                 if not zone_id_field:
-                                    print(f"[TICKETMASTER ZONE] WARNING: No zone_id field found (sectionCode, id, zoneId, areaNo)")
+                                    debug.log(f"[TICKETMASTER ZONE] WARNING: No zone_id field found (sectionCode, id, zoneId, areaNo)")
 
                             elif isinstance(sample, (list, tuple)):
-                                print(f"[TICKETMASTER ZONE] List item is tuple/list with {len(sample)} elements")
+                                debug.log(f"[TICKETMASTER ZONE] List item is tuple/list with {len(sample)} elements")
                                 if len(sample) > 0:
-                                    print(f"[TICKETMASTER ZONE] First element type: {type(sample[0])}")
+                                    debug.log(f"[TICKETMASTER ZONE] First element type: {type(sample[0])}")
                                     if isinstance(sample[0], str):
-                                        print(f"[TICKETMASTER ZONE] First element (zone_id): {sample[0]}")
+                                        debug.log(f"[TICKETMASTER ZONE] First element (zone_id): {sample[0]}")
                                 if len(sample) > 1:
-                                    print(f"[TICKETMASTER ZONE] Second element type: {type(sample[1])}")
+                                    debug.log(f"[TICKETMASTER ZONE] Second element type: {type(sample[1])}")
                                     zone_data = sample[1]
                                     if isinstance(zone_data, dict):
                                         # Check if conversion successful
                                         if "groupName" in zone_data:
-                                            print(f"[TICKETMASTER ZONE] ✓ groupName found: {zone_data.get('groupName')}")
+                                            debug.log(f"[TICKETMASTER ZONE] [OK] groupName found: {zone_data.get('groupName')}")
                                         elif "type" in zone_data and "value" in zone_data:
-                                            print(f"[TICKETMASTER ZONE] ✗ Still RemoteObject format (has 'type' and 'value' keys)")
+                                            debug.log(f"[TICKETMASTER ZONE] [FAIL] Still RemoteObject format (has 'type' and 'value' keys)")
                                             # Try to convert again
                                             zone_data = convert_remote_object(zone_data)
                                             # Update in the list
                                             sample[1] = zone_data
                                             zone_info[0] = sample
                                             if "groupName" in zone_data:
-                                                print(f"[TICKETMASTER ZONE] ✓ After re-conversion, groupName found: {zone_data.get('groupName')}")
+                                                debug.log(f"[TICKETMASTER ZONE] [OK] After re-conversion, groupName found: {zone_data.get('groupName')}")
                                         else:
-                                            print(f"[TICKETMASTER ZONE] zone_data keys: {list(zone_data.keys())[:10]}")
+                                            debug.log(f"[TICKETMASTER ZONE] zone_data keys: {list(zone_data.keys())[:10]}")
                             else:
-                                print(f"[TICKETMASTER ZONE] WARNING: Unknown list item format")
+                                debug.log(f"[TICKETMASTER ZONE] WARNING: Unknown list item format")
                         else:
                             # Dict format
                             sample_id = list(zone_info.keys())[0]
                             sample = zone_info[sample_id]
-                            print(f"[TICKETMASTER ZONE] Sample zone_id: {sample_id}")
+                            debug.log(f"[TICKETMASTER ZONE] Sample zone_id: {sample_id}")
 
                         sample_keys = list(sample.keys()) if isinstance(sample, dict) else []
                         if sample_keys:
-                            print(f"[TICKETMASTER ZONE] Sample structure keys: {sample_keys[:10]}")  # First 10 keys
+                            debug.log(f"[TICKETMASTER ZONE] Sample structure keys: {sample_keys[:10]}")  # First 10 keys
                     except Exception as diag_exc:
-                        print(f"[TICKETMASTER ZONE] Diagnostic logging failed: {diag_exc}")
+                        debug.log(f"[TICKETMASTER ZONE] Diagnostic logging failed: {diag_exc}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKETMASTER ZONE] JavaScript evaluation failed: {exc}")
+        debug.log(f"[TICKETMASTER ZONE] JavaScript evaluation failed: {exc}")
 
     return zone_info
-
 
 # T005: Get target area from zone_info (Pure function - no DOM access)
 def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
@@ -3334,7 +3139,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
     Match areas from zone_info based on keyword.
     Returns: (is_need_refresh, matched_blocks)
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     area_auto_select_mode = config_dict.get("area_auto_select", {}).get("mode", "from top to bottom")
 
@@ -3384,20 +3189,17 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
 
             else:
                 # Unknown format - fallback to old logic
-                if show_debug_message:
-                    print(f"[TICKETMASTER AREA] Unknown zone_info list format, first item type: {type(first_item)}")
+                debug.log(f"[TICKETMASTER AREA] Unknown zone_info list format, first item type: {type(first_item)}")
                 zone_items = [(None, z) for z in zone_info]
     else:
         # Unexpected type
-        if show_debug_message:
-            print(f"[TICKETMASTER AREA] Unexpected zone_info type: {type(zone_info)}")
+        debug.log(f"[TICKETMASTER AREA] Unexpected zone_info type: {type(zone_info)}")
         zone_items = []
 
     for zone_id, zone_data in zone_items:
         # Validate zone_data is dict-like (has .get() method)
         if not hasattr(zone_data, 'get'):
-            if show_debug_message:
-                print(f"[TICKETMASTER AREA] zone_data is not dict-like: {type(zone_data)}, skipping")
+            debug.log(f"[TICKETMASTER AREA] zone_data is not dict-like: {type(zone_data)}, skipping")
             continue
 
         # Fallback: extract zone_id if still None
@@ -3422,10 +3224,10 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
         except:
             pass
 
-        if show_debug_message:
+        if debug.enabled:
             # Show human-readable zone info instead of just zone_id
             display_name = f"{group_name} {description}".strip() if group_name or description else zone_id
-            print(f"[TICKETMASTER AREA] Processing zone: {zone_id} ({display_name})")
+            debug.log(f"[TICKETMASTER AREA] Processing zone: {zone_id} ({display_name})")
 
         if not row_text.strip():
             continue
@@ -3461,7 +3263,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                     return formatted_kw in text
 
             # Detailed AND logic matching with PASS/FAIL logs
-            if show_debug_message:
+            if debug.enabled:
                 keyword_results = []
                 for kw in area_keyword_array:
                     match_result = word_boundary_match(kw, row_text)
@@ -3473,7 +3275,7 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
                     for kw in area_keyword_array
                 )
                 overall_status = "MATCHED" if all_matched else "REJECTED"
-                print(f"[TICKETMASTER AREA] AND Match: {zone_id} [{', '.join(keyword_results)}] -> {overall_status}")
+                debug.log(f"[TICKETMASTER AREA] AND Match: {zone_id} [{', '.join(keyword_results)}] -> {overall_status}")
 
             is_append_this_row = all(
                 word_boundary_match(kw, row_text)
@@ -3494,11 +3296,10 @@ def get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info):
         matched_blocks = None
         is_need_refresh = True
 
-    if show_debug_message and matched_blocks:
-        print(f"[TICKETMASTER AREA] Matched {len(matched_blocks)} areas: {matched_blocks}")
+    if matched_blocks:
+        debug.log(f"[TICKETMASTER AREA] Matched {len(matched_blocks)} areas: {matched_blocks}")
 
     return is_need_refresh, matched_blocks
-
 
 # T006: Get ticket price list (wait for page load)
 async def nodriver_ticketmaster_get_ticketPriceList(tab, config_dict):
@@ -3512,7 +3313,7 @@ async def nodriver_ticketmaster_get_ticketPriceList(tab, config_dict):
     - Issue: tab.evaluate() returns None due to JavaScript Context failure
     - Solution: Use tab.wait_for() and tab.query_selector() instead
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         # Phase 1: Wait for mapContainer (basic page load)
@@ -3521,44 +3322,37 @@ async def nodriver_ticketmaster_get_ticketPriceList(tab, config_dict):
         # Ensure DOM references are synchronized (official recommendation)
         await tab
 
-        if show_debug_message:
-            print("[TICKETMASTER TICKET] mapContainer found")
+        debug.log("[TICKETMASTER TICKET] mapContainer found")
 
         # Phase 2: Wait for loading to finish (check if loadingmap disappears)
         max_wait = 10  # 10 seconds max
         for i in range(max_wait):
             loading = await tab.query_selector('#loadingmap')
             if not loading:
-                if show_debug_message and i > 0:
-                    print(f"[TICKETMASTER TICKET] Loading finished after {i}s")
+                if i > 0:
+                    debug.log(f"[TICKETMASTER TICKET] Loading finished after {i}s")
                 break
             await tab.sleep(1)
         else:
             # Timeout after 10 seconds
-            if show_debug_message:
-                print("[TICKETMASTER TICKET] Loading timeout after 10s")
+            debug.log("[TICKETMASTER TICKET] Loading timeout after 10s")
 
         # Phase 3: Try to find ticketPriceList
         table_element = await tab.query_selector('#ticketPriceList')
 
         if table_element:
-            if show_debug_message:
-                print("[TICKETMASTER TICKET] Found ticketPriceList table")
+            debug.log("[TICKETMASTER TICKET] Found ticketPriceList table")
             return table_element
         else:
-            if show_debug_message:
-                print("[TICKETMASTER TICKET] ticketPriceList not found, will use zone_info")
+            debug.log("[TICKETMASTER TICKET] ticketPriceList not found, will use zone_info")
             return None
 
     except asyncio.TimeoutError:
-        if show_debug_message:
-            print("[TICKETMASTER TICKET] Timeout waiting for mapContainer")
+        debug.log("[TICKETMASTER TICKET] Timeout waiting for mapContainer")
         return None
     except Exception as e:
-        if show_debug_message:
-            print(f"[TICKETMASTER TICKET] Error: {e}")
+        debug.log(f"[TICKETMASTER TICKET] Error: {e}")
         return None
-
 
 # T007: Check checkbox with retry (reusable helper)
 async def nodriver_check_checkbox(tab, selector, max_retries=2):
@@ -3600,7 +3394,6 @@ async def nodriver_check_checkbox(tab, selector, max_retries=2):
 
     return False
 
-
 # ============================================
 # User Story 1: Date Auto Select (T009)
 # ============================================
@@ -3610,7 +3403,7 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
     Automatically select event date on Ticketmaster artist page.
     Returns: True if date was clicked, False otherwise
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Read config
     auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "from top to bottom")
@@ -3630,30 +3423,26 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
         try:
             area_list = await tab.query_selector_all('#gameList tbody tr')
             if area_list and len(area_list) > 0:
-                if show_debug_message:
-                    print(f"[TICKETMASTER DATE] Found date list after {attempt * 0.5}s")
+                debug.log(f"[TICKETMASTER DATE] Found date list after {attempt * 0.5}s")
                 break
             await asyncio.sleep(0.5)
         except Exception as exc:
-            if show_debug_message and attempt == 0:
-                print(f"[TICKETMASTER DATE] Waiting for date list to load... ({exc})")
+            if attempt == 0:
+                debug.log(f"[TICKETMASTER DATE] Waiting for date list to load... ({exc})")
             await asyncio.sleep(0.5)
 
     if not area_list:
-        if show_debug_message:
-            print(f"[TICKETMASTER DATE] Failed to find date list after {max_attempts * 0.5}s")
+        debug.log(f"[TICKETMASTER DATE] Failed to find date list after {max_attempts * 0.5}s")
         return False
 
     matched_blocks = None
     formated_area_list = []
 
     if not area_list or len(area_list) == 0:
-        if show_debug_message:
-            print("[TICKETMASTER DATE] No dates found on page")
+        debug.log("[TICKETMASTER DATE] No dates found on page")
         return False
 
-    if show_debug_message:
-        print(f"[TICKETMASTER DATE] Found {len(area_list)} date blocks")
+    debug.log(f"[TICKETMASTER DATE] Found {len(area_list)} date blocks")
 
     # Filter date blocks
     for row in area_list:
@@ -3679,15 +3468,13 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             for sold_out_item in sold_out_text_list:
                 if sold_out_item in row_text:
                     row_is_enabled = False
-                    if show_debug_message:
-                        print(f"[TICKETMASTER DATE] Skipping sold out event: {row_text[:60]}...")
+                    debug.log(f"[TICKETMASTER DATE] Skipping sold out event: {row_text[:60]}...")
                     break
 
         if row_is_enabled:
             formated_area_list.append(row)
 
-    if show_debug_message:
-        print(f"[TICKETMASTER DATE] {len(formated_area_list)} available dates after filtering")
+    debug.log(f"[TICKETMASTER DATE] {len(formated_area_list)} available dates after filtering")
 
     # Get date_auto_fallback setting (default: False = strict mode)
     date_auto_fallback = config_dict.get('date_auto_fallback', False)
@@ -3705,8 +3492,7 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
     # T004-T008: Early return pattern (Feature 003)
     if not date_keyword:
         matched_blocks = formated_area_list
-        if show_debug_message:
-            print(f"[TICKETMASTER DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
+        debug.log(f"[TICKETMASTER DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
     else:
         # Early return pattern - iterate keywords in priority order
         matched_blocks = []
@@ -3719,15 +3505,13 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             keyword_array = json.loads("[" + date_keyword + "]")
 
             # T005: Start checking keywords log
-            if show_debug_message:
-                print(f"[TICKETMASTER DATE KEYWORD] Start checking keywords in order: {keyword_array}")
-                print(f"[TICKETMASTER DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
-                print(f"[TICKETMASTER DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
+            debug.log(f"[TICKETMASTER DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+            debug.log(f"[TICKETMASTER DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+            debug.log(f"[TICKETMASTER DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
 
             # Iterate keywords in priority order (early return)
             for keyword_index, keyword_item_set in enumerate(keyword_array):
-                if show_debug_message:
-                    print(f"[TICKETMASTER DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+                debug.log(f"[TICKETMASTER DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
                 # Check all rows for this keyword
                 for i, row_text in enumerate(formated_area_list_text):
@@ -3745,19 +3529,18 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
                         is_match = all(match_results)
 
                         # Detailed AND logic log
-                        if show_debug_message:
+                        if debug.enabled:
                             result_strs = [f"'{kw}':{('PASS' if r else 'FAIL')}" for kw, r in zip(keyword_item_set, match_results)]
                             overall = "MATCHED" if is_match else "REJECTED"
-                            print(f"[TICKETMASTER DATE KEYWORD] AND Match: [{', '.join(result_strs)}] -> {overall}")
+                            debug.log(f"[TICKETMASTER DATE KEYWORD] AND Match: [{', '.join(result_strs)}] -> {overall}")
 
                     if is_match:
                         # T006: Keyword matched - IMMEDIATELY select and stop
                         matched_blocks = [formated_area_list[i]]
                         target_row_found = True
                         keyword_matched_index = keyword_index
-                        if show_debug_message:
-                            print(f"[TICKETMASTER DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
-                            print(f"[TICKETMASTER DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
+                        debug.log(f"[TICKETMASTER DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                        debug.log(f"[TICKETMASTER DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
                         break  # Early Return - stop checking other rows
 
                 if target_row_found:
@@ -3766,35 +3549,30 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
 
             # T007: All keywords failed log
             if not target_row_found:
-                if show_debug_message:
-                    print(f"[TICKETMASTER DATE KEYWORD] All keywords failed to match")
+                debug.log(f"[TICKETMASTER DATE KEYWORD] All keywords failed to match")
 
         except Exception as e:
-            if show_debug_message:
-                print(f"[TICKETMASTER DATE KEYWORD] Parsing error: {e}")
+            debug.log(f"[TICKETMASTER DATE KEYWORD] Parsing error: {e}")
             matched_blocks = []
 
     # Match result summary
-    if show_debug_message:
-        print(f"[TICKETMASTER DATE KEYWORD] ========================================")
-        print(f"[TICKETMASTER DATE KEYWORD] Match Summary:")
-        print(f"[TICKETMASTER DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
-        print(f"[TICKETMASTER DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
-        print(f"[TICKETMASTER DATE KEYWORD] ========================================")
+    debug.log(f"[TICKETMASTER DATE KEYWORD] ========================================")
+    debug.log(f"[TICKETMASTER DATE KEYWORD] Match Summary:")
+    debug.log(f"[TICKETMASTER DATE KEYWORD]   Total dates available: {len(formated_area_list) if formated_area_list else 0}")
+    debug.log(f"[TICKETMASTER DATE KEYWORD]   Total dates matched: {len(matched_blocks) if matched_blocks else 0}")
+    debug.log(f"[TICKETMASTER DATE KEYWORD] ========================================")
 
     # T018-T020: Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
         if date_auto_fallback:
             # T018: Fallback enabled - use auto_select_mode
-            if show_debug_message:
-                print(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
-                print(f"[TICKETMASTER DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            debug.log(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[TICKETMASTER DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
             matched_blocks = formated_area_list
         else:
             # T019: Fallback disabled - strict mode
-            if show_debug_message:
-                print(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[TICKETMASTER DATE SELECT] No date selected, will reload page and retry")
+            debug.log(f"[TICKETMASTER DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            debug.log(f"[TICKETMASTER DATE SELECT] No date selected, will reload page and retry")
 
     # Select target
     if formated_area_list is None or len(formated_area_list) == 0:
@@ -3812,8 +3590,7 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             if link_element:
                 await link_element.click()
                 is_date_clicked = True
-                if show_debug_message:
-                    print("[TICKETMASTER DATE] Clicked 'See Tickets' link")
+                debug.log("[TICKETMASTER DATE] Clicked 'See Tickets' link")
 
                 # Handle new tab (close if opened)
                 await tab.sleep(0.3)
@@ -3824,13 +3601,11 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
                     await tab.sleep(0.2)
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[TICKETMASTER DATE] Failed to click link: {exc}")
+            debug.log(f"[TICKETMASTER DATE] Failed to click link: {exc}")
 
     # Auto reload if no match
     if auto_reload_coming_soon_page_enable and not is_date_clicked and len(formated_area_list) == 0:
-        if show_debug_message:
-            print("[TICKETMASTER DATE] No dates available, reloading page...")
+        debug.log("[TICKETMASTER DATE] No dates available, reloading page...")
         try:
             await tab.reload()
             await tab.sleep(0.3)
@@ -3838,7 +3613,6 @@ async def nodriver_ticketmaster_date_auto_select(tab, config_dict):
             pass
 
     return is_date_clicked
-
 
 # ============================================
 # User Story 2: Area Auto Select (T012)
@@ -3848,12 +3622,11 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
     """
     Automatically select seat area on Ticketmaster ticket page.
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "").strip()
 
-    if show_debug_message:
-        print(f"[TICKETMASTER AREA] area_keyword: {area_keyword}")
+    debug.log(f"[TICKETMASTER AREA] area_keyword: {area_keyword}")
 
     is_need_refresh = False
     matched_blocks = None
@@ -3864,33 +3637,28 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
     if area_keyword:
         area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
-        if show_debug_message:
-            print(f"[TICKETMASTER AREA] Parsed keyword groups: {area_keyword_array}")
+        debug.log(f"[TICKETMASTER AREA] Parsed keyword groups: {area_keyword_array}")
 
         # Early Return Pattern: Try each keyword group with priority
         for idx, area_keyword_item in enumerate(area_keyword_array):
-            if show_debug_message:
-                print(f"[TICKETMASTER AREA] Trying keyword group {idx + 1}/{len(area_keyword_array)}: '{area_keyword_item}'")
+            debug.log(f"[TICKETMASTER AREA] Trying keyword group {idx + 1}/{len(area_keyword_array)}: '{area_keyword_item}'")
 
             is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, area_keyword_item, zone_info)
 
             if not is_need_refresh and matched_blocks:
                 # Found match - Early Return
-                if show_debug_message:
-                    print(f"[TICKETMASTER AREA] Early Return: keyword group {idx + 1} matched {len(matched_blocks)} area(s)")
+                debug.log(f"[TICKETMASTER AREA] Early Return: keyword group {idx + 1} matched {len(matched_blocks)} area(s)")
                 break
-            elif show_debug_message:
-                print(f"[TICKETMASTER AREA] Keyword group {idx + 1} had no matches, trying next...")
+            else:
+                debug.log(f"[TICKETMASTER AREA] Keyword group {idx + 1} had no matches, trying next...")
 
         # Conditional fallback: only match all if area_auto_fallback is enabled
         if is_need_refresh:
             if area_auto_fallback:
-                if show_debug_message:
-                    print("[TICKETMASTER AREA] Fallback enabled: selecting from all available areas")
+                debug.log("[TICKETMASTER AREA] Fallback enabled: selecting from all available areas")
                 is_need_refresh, matched_blocks = get_ticketmaster_target_area(config_dict, "", zone_info)
             else:
-                if show_debug_message:
-                    print("[TICKETMASTER AREA] Strict mode: no keyword match, will refresh page")
+                debug.log("[TICKETMASTER AREA] Strict mode: no keyword match, will refresh page")
                 # Keep is_need_refresh = True, matched_blocks = None
     else:
         # Empty keyword = match all
@@ -3904,8 +3672,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
         try:
             # Execute JavaScript to select area
             click_area_javascript = f'areaTicket("{target_area}", "map");'
-            if show_debug_message:
-                print(f"[TICKETMASTER AREA] Executing: {click_area_javascript}")
+            debug.log(f"[TICKETMASTER AREA] Executing: {click_area_javascript}")
 
             await tab.evaluate(click_area_javascript)
 
@@ -3917,19 +3684,15 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
                 # Check if ticketPriceList has loaded
                 price_list = await tab.query_selector('#ticketPriceList')
                 if price_list:
-                    if show_debug_message:
-                        print(f"[TICKETMASTER AREA] ticketPriceList loaded after {i+1}s")
+                    debug.log(f"[TICKETMASTER AREA] ticketPriceList loaded after {i+1}s")
                     break
             else:
-                if show_debug_message:
-                    print("[TICKETMASTER AREA] Timeout waiting for ticketPriceList (5s)")
+                debug.log("[TICKETMASTER AREA] Timeout waiting for ticketPriceList (5s)")
 
-            if show_debug_message:
-                print(f"[TICKETMASTER AREA] Selected zone: {target_area}")
+            debug.log(f"[TICKETMASTER AREA] Selected zone: {target_area}")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[TICKETMASTER AREA] Failed to execute JavaScript: {exc}")
+            debug.log(f"[TICKETMASTER AREA] Failed to execute JavaScript: {exc}")
 
     # Auto refresh if needed (only when keyword is specified but no match)
     if is_need_refresh:
@@ -3938,8 +3701,7 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
 
         if area_keyword:
             # Keyword specified but no match → might need to wait for availability
-            if show_debug_message:
-                print("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
+            debug.log("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
             try:
                 await tab.reload()
                 if config_dict.get("advanced", {}).get("auto_reload_page_interval", 0) > 0:
@@ -3948,10 +3710,8 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
                 pass
         else:
             # No keyword but no areas → likely a data parsing issue, don't reload
-            if show_debug_message:
-                print("[TICKETMASTER AREA] No areas available (possible zone_info parsing issue)")
+            debug.log("[TICKETMASTER AREA] No areas available (possible zone_info parsing issue)")
             # Let next function (assign_ticket_number) handle it
-
 
 # ============================================
 # User Story 3: Ticket Number Assignment (T015-T016)
@@ -3961,7 +3721,7 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
     """
     Automatically set ticket number on Ticketmaster ticket page.
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Get ticket price list
     table_select = await nodriver_ticketmaster_get_ticketPriceList(tab, config_dict)
@@ -3978,13 +3738,11 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
     try:
         select_element = await table_select.query_selector('select')
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKETMASTER TICKET] Failed to find select: {exc}")
+        debug.log(f"[TICKETMASTER TICKET] Failed to find select: {exc}")
         return
 
     if not select_element:
-        if show_debug_message:
-            print("[TICKETMASTER TICKET] No select element found")
+        debug.log("[TICKETMASTER TICKET] No select element found")
         return
 
     # Update element to sync attributes
@@ -3998,12 +3756,10 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         select_attrs = select_element.attrs or {}
         is_disabled = 'disabled' in select_attrs
         if is_disabled:
-            if show_debug_message:
-                print("[TICKETMASTER TICKET] Select element is disabled")
+            debug.log("[TICKETMASTER TICKET] Select element is disabled")
             return
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKETMASTER TICKET] Failed to check disabled status: {exc}")
+        debug.log(f"[TICKETMASTER TICKET] Failed to check disabled status: {exc}")
         # Assume enabled if check fails
         pass
 
@@ -4029,15 +3785,13 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
             pass
 
     if current_value and current_value != "0" and current_value.isnumeric():
-        if show_debug_message:
-            print(f"[TICKETMASTER TICKET] Ticket number already set to: {current_value}")
+        debug.log(f"[TICKETMASTER TICKET] Ticket number already set to: {current_value}")
         # Already set, click autoMode button
         try:
             auto_mode_button = await tab.query_selector('#autoMode')
             if auto_mode_button:
                 await auto_mode_button.click()
-                if show_debug_message:
-                    print("[TICKETMASTER TICKET] Clicked #autoMode button")
+                debug.log("[TICKETMASTER TICKET] Clicked #autoMode button")
         except:
             pass
         return
@@ -4050,8 +3804,7 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         select_attrs = select_element.attrs or {}
         selector_id = select_attrs.get('id')
         if not selector_id:
-            if show_debug_message:
-                print("[TICKETMASTER TICKET] Select element has no id attribute")
+            debug.log("[TICKETMASTER TICKET] Select element has no id attribute")
             return
 
         # Use JavaScript to set select value (using element ID instead of passing Element object)
@@ -4077,8 +3830,7 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         result = util.parse_nodriver_result(result)
 
         if result and result.get('success'):
-            if show_debug_message:
-                print(f"[TICKETMASTER TICKET] Set ticket number to: {ticket_number}")
+            debug.log(f"[TICKETMASTER TICKET] Set ticket number to: {ticket_number}")
 
             # Click autoMode button
             await tab.sleep(0.1)
@@ -4086,18 +3838,14 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                 auto_mode_button = await tab.query_selector('#autoMode')
                 if auto_mode_button:
                     await auto_mode_button.click()
-                    if show_debug_message:
-                        print("[TICKETMASTER TICKET] Clicked #autoMode button")
+                    debug.log("[TICKETMASTER TICKET] Clicked #autoMode button")
             except:
                 pass
         else:
-            if show_debug_message:
-                print(f"[TICKETMASTER TICKET] Failed to set ticket number: {result.get('error')}")
+            debug.log(f"[TICKETMASTER TICKET] Failed to set ticket number: {result.get('error')}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKETMASTER TICKET] Exception setting ticket number: {exc}")
-
+        debug.log(f"[TICKETMASTER TICKET] Exception setting ticket number: {exc}")
 
 # ============================================
 # User Story 4: Captcha Handling (T019)
@@ -4108,7 +3856,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     Handle captcha on Ticketmaster check-captcha page.
     Returns: True if captcha was handled, False otherwise
     """
-    show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Check for custom OCR model path
     ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
@@ -4143,8 +3891,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     for _ in range(2):
         is_checked = await nodriver_check_checkbox(tab, '#TicketForm_agree')
         if is_checked:
-            if show_debug_message:
-                print("[TICKETMASTER CAPTCHA] Checked TicketForm_agree")
+            debug.log("[TICKETMASTER CAPTCHA] Checked TicketForm_agree")
             break
 
     # Alert state tracked by event handler
@@ -4153,13 +3900,11 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     async def on_captcha_alert(event: cdp.page.JavascriptDialogOpening):
         alert_state["detected"] = True
         alert_state["message"] = event.message
-        if show_debug_message:
-            print(f"[TICKETMASTER CAPTCHA] Alert event: '{event.message[:60]}'")
+        debug.log(f"[TICKETMASTER CAPTCHA] Alert event: '{event.message[:60]}'")
         # Dismiss the alert immediately to prevent blocking
         try:
             await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-            if show_debug_message:
-                print("[TICKETMASTER CAPTCHA] Alert auto-dismissed by handler")
+            debug.log("[TICKETMASTER CAPTCHA] Alert auto-dismissed by handler")
         except:
             pass
 
@@ -4195,8 +3940,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 )
 
                 if is_form_submitted:
-                    if show_debug_message:
-                        print("[TICKETMASTER CAPTCHA] Form submitted")
+                    debug.log("[TICKETMASTER CAPTCHA] Form submitted")
 
                     # Poll for alert event (max 2 seconds)
                     global tixcraft_dict
@@ -4205,15 +3949,13 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                         if alert_state["detected"]:
                             break
 
-                    if show_debug_message:
-                        print(f"[TICKETMASTER CAPTCHA] alert_state={alert_state}")
+                    debug.log(f"[TICKETMASTER CAPTCHA] alert_state={alert_state}")
 
                     error_detected = alert_state["detected"]
 
                     # If alert was detected (already dismissed by handler), retry OCR
                     if error_detected:
-                        if show_debug_message:
-                            print("[TICKETMASTER CAPTCHA] Captcha error detected, retrying...")
+                        debug.log("[TICKETMASTER CAPTCHA] Captcha error detected, retrying...")
 
                         await asyncio.sleep(0.3)
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
@@ -4277,8 +4019,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
 
                         if modal_content and isinstance(modal_content, dict) and modal_content.get('found'):
                             error_detected = True
-                            if show_debug_message:
-                                print(f"[TICKETMASTER CAPTCHA] Error modal detected")
+                            debug.log(f"[TICKETMASTER CAPTCHA] Error modal detected")
 
                             # Try to click confirm/OK button to dismiss modal
                             dismiss_result = await tab.evaluate('''
@@ -4309,11 +4050,11 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                             elif isinstance(dismiss_result, list) and len(dismiss_result) > 0:
                                 dismiss_success = dismiss_result[0] is True or dismiss_result[0] == True
 
-                            if show_debug_message:
+                            if debug.enabled:
                                 if dismiss_success:
-                                    print("[TICKETMASTER CAPTCHA] Error modal dismissed, will retry OCR")
+                                    debug.log("[TICKETMASTER CAPTCHA] Error modal dismissed, will retry OCR")
                                 else:
-                                    print("[TICKETMASTER CAPTCHA] Could not dismiss modal")
+                                    debug.log("[TICKETMASTER CAPTCHA] Could not dismiss modal")
 
                             # Reset state for retry
                             await asyncio.sleep(0.3)
@@ -4334,8 +4075,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                             continue  # Retry OCR
 
                     except Exception as modal_exc:
-                        if show_debug_message:
-                            print(f"[TICKETMASTER CAPTCHA] Error checking modal: {modal_exc}")
+                        debug.log(f"[TICKETMASTER CAPTCHA] Error checking modal: {modal_exc}")
 
                     # No error modal detected, form submitted successfully
                     if not error_detected:
@@ -4351,8 +4091,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 fail_count += 1
                 total_fail_count += 1
 
-                if show_debug_message:
-                    print(f"[TICKETMASTER CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
+                debug.log(f"[TICKETMASTER CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
 
                 # Check if total failures reached 15, switch to manual input mode
                 if total_fail_count >= 15:
@@ -4362,8 +4101,7 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
 
                 # Refresh captcha after 3 consecutive failures with same answer
                 if fail_count >= 3:
-                    if show_debug_message:
-                        print("[TICKETMASTER CAPTCHA] 3 consecutive failures, reloading captcha...")
+                    debug.log("[TICKETMASTER CAPTCHA] 3 consecutive failures, reloading captcha...")
                     await nodriver_tixcraft_reload_captcha(tab, domain_name)
                     fail_count = 0
                     previous_answer = None  # Reset to allow fresh OCR
@@ -4375,17 +4113,14 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
                 # Check if URL changed
                 new_url = tab.target.url
                 if new_url != current_url:
-                    if show_debug_message:
-                        print("[TICKETMASTER CAPTCHA] URL changed, stopping OCR loop")
+                    debug.log("[TICKETMASTER CAPTCHA] URL changed, stopping OCR loop")
                     break
 
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[TICKETMASTER CAPTCHA] OCR error: {exc}")
+                debug.log(f"[TICKETMASTER CAPTCHA] OCR error: {exc}")
                 break
 
         return True
-
 
 async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
     question_selector = '#promoBox'
@@ -4394,7 +4129,6 @@ async def nodriver_ticketmaster_promo(tab, config_dict, fail_list):
 async def nodriver_tixcraft_verify(tab, config_dict, fail_list):
     question_selector = '.zone-verify'
     return await nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector)
-
 
 async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fail_list, input_text_css, next_step_button_css, submit_by_enter, check_input_interval):
     """
@@ -4415,7 +4149,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
     Returns:
         tuple[bool, list]: (is_answer_sent, updated fail_list)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_answer_sent = False
 
@@ -4436,15 +4170,13 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
         input_info = util.parse_nodriver_result(input_info)
 
         if not input_info or not input_info.get('exists', False):
-            if show_debug_message:
-                print("[VERIFY FORM] Input field not found:", input_text_css)
+            debug.log("[VERIFY FORM] Input field not found:", input_text_css)
             return is_answer_sent, fail_list
 
         inputed_value = input_info.get('value', '')
 
-        if show_debug_message:
-            print(f"[VERIFY FORM] Current input value: '{inputed_value}'")
-            print(f"[VERIFY FORM] Answer to fill: '{inferred_answer_string}'")
+        debug.log(f"[VERIFY FORM] Current input value: '{inputed_value}'")
+        debug.log(f"[VERIFY FORM] Answer to fill: '{inferred_answer_string}'")
 
         if len(inferred_answer_string) > 0:
             # Fill the answer if different from current value
@@ -4462,8 +4194,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                     }})()
                 ''')
 
-                if show_debug_message:
-                    print(f"[VERIFY FORM] Filled answer: {inferred_answer_string}")
+                debug.log(f"[VERIFY FORM] Filled answer: {inferred_answer_string}")
 
             # Submit the form
             is_button_clicked = False
@@ -4492,8 +4223,7 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                     }})()
                 ''')
                 is_button_clicked = True
-                if show_debug_message:
-                    print("[VERIFY FORM] Submitted by Enter key")
+                debug.log("[VERIFY FORM] Submitted by Enter key")
             elif len(next_step_button_css) > 0:
                 # Click the submit button
                 try:
@@ -4501,17 +4231,14 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                     if btn:
                         await btn.click()
                         is_button_clicked = True
-                        if show_debug_message:
-                            print(f"[VERIFY FORM] Clicked submit button: {next_step_button_css}")
+                        debug.log(f"[VERIFY FORM] Clicked submit button: {next_step_button_css}")
                 except Exception as btn_exc:
-                    if show_debug_message:
-                        print(f"[VERIFY FORM] Failed to click button: {btn_exc}")
+                    debug.log(f"[VERIFY FORM] Failed to click button: {btn_exc}")
 
             if is_button_clicked:
                 is_answer_sent = True
                 fail_list.append(inferred_answer_string)
-                if show_debug_message:
-                    print(f"[VERIFY FORM] Answer sent, attempt #{len(fail_list)}")
+                debug.log(f"[VERIFY FORM] Answer sent, attempt #{len(fail_list)}")
 
                 # Wait and check for alert
                 await asyncio.sleep(0.3)
@@ -4527,18 +4254,15 @@ async def nodriver_fill_verify_form(tab, config_dict, inferred_answer_string, fa
                     }})()
                 ''')
                 await asyncio.sleep(check_input_interval)
-                if show_debug_message:
-                    print("[VERIFY FORM] No answer, focused input field")
+                debug.log("[VERIFY FORM] No answer, focused input field")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[VERIFY FORM] Error: {exc}")
+        debug.log(f"[VERIFY FORM] Error: {exc}")
 
     return is_answer_sent, fail_list
 
-
 async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, question_selector):
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     answer_list = []
 
@@ -4550,7 +4274,7 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
         if len(answer_list)==0:
             if config_dict["advanced"]["auto_guess_options"]:
                 # Note: guess_tixcraft_question() doesn't use the driver parameter
-                answer_list = util.guess_tixcraft_question(None, question_text)
+                answer_list = util.guess_tixcraft_question(None, question_text, config_dict)
 
         inferred_answer_string = ""
         for answer_item in answer_list:
@@ -4558,9 +4282,8 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
                 inferred_answer_string = answer_item
                 break
 
-        if show_debug_message:
-            print("inferred_answer_string:", inferred_answer_string)
-            print("answer_list:", answer_list)
+        debug.log("inferred_answer_string:", inferred_answer_string)
+        debug.log("answer_list:", answer_list)
 
         # PS: auto-focus() when empty inferred_answer_string with empty inputed text value.
         input_text_css = "input[name='checkCode']"
@@ -4572,21 +4295,19 @@ async def nodriver_tixcraft_input_check_code(tab, config_dict, fail_list, questi
     return fail_list
 
 async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name):
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Issue #188: Check sold out cooldown before proceeding
     global tixcraft_dict
     if 'tixcraft_dict' in globals() and tixcraft_dict.get("sold_out_cooldown_until", 0) > time.time():
         remaining = tixcraft_dict["sold_out_cooldown_until"] - time.time()
-        if show_debug_message:
-            print(f"[DATE SELECT] Sold out cooldown active, waiting {remaining:.1f}s...")
+        debug.log(f"[DATE SELECT] Sold out cooldown active, waiting {remaining:.1f}s...")
         await asyncio.sleep(remaining)
         tixcraft_dict["sold_out_cooldown_until"] = 0  # Reset after waiting
 
     # T003: Check main switch (defensive programming)
     if not config_dict["date_auto_select"]["enable"]:
-        if show_debug_message:
-            print("[DATE SELECT] Main switch is disabled, skipping date selection")
+        debug.log("[DATE SELECT] Main switch is disabled, skipping date selection")
         return False
 
     # read config
@@ -4658,11 +4379,9 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 # Check coming soon
                 if all(cond in row_text for cond in coming_soon_condictions_list):
                     is_coming_soon = True
-                    if show_debug_message:
-                        print(f"[DATE SELECT] Detected coming soon countdown")
+                    debug.log(f"[DATE SELECT] Detected coming soon countdown")
                     if auto_reload_coming_soon_page_enable:
-                        if show_debug_message:
-                            print(f"[DATE SELECT] auto_reload_coming_soon_page=true, will reload and retry")
+                        debug.log(f"[DATE SELECT] auto_reload_coming_soon_page=true, will reload and retry")
                         break
                     else:
                         # Skip this row (don't add to formated_area_list)
@@ -4688,8 +4407,7 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
         # Keyword priority matching: first match wins and stops immediately
         if not date_keyword:
             matched_blocks = formated_area_list
-            if show_debug_message:
-                print(f"[DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
+            debug.log(f"[DATE KEYWORD] No keyword specified, using all {len(formated_area_list)} dates")
         else:
             # NEW: Early return pattern - iterate keywords in order
             matched_blocks = []
@@ -4702,15 +4420,13 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 keyword_array = json.loads("[" + date_keyword + "]")
 
                 # T005: Start checking keywords log
-                if show_debug_message:
-                    print(f"[DATE KEYWORD] Start checking keywords in order: {keyword_array}")
-                    print(f"[DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
-                    print(f"[DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
+                debug.log(f"[DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+                debug.log(f"[DATE KEYWORD] Total keyword groups: {len(keyword_array)}")
+                debug.log(f"[DATE KEYWORD] Checking against {len(formated_area_list_text)} available dates...")
 
                 # NEW: Iterate keywords in priority order (early return)
                 for keyword_index, keyword_item_set in enumerate(keyword_array):
-                    if show_debug_message:
-                        print(f"[DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+                    debug.log(f"[DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
                     # Check all rows for this keyword
                     for i, row_text in enumerate(formated_area_list_text):
@@ -4732,9 +4448,8 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                             matched_blocks = [formated_area_list[i]]
                             target_row_found = True
                             keyword_matched_index = keyword_index
-                            if show_debug_message:
-                                print(f"[DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
-                                print(f"[DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
+                            debug.log(f"[DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                            debug.log(f"[DATE SELECT] Selected date: {row_text[:80]} (keyword match)")
                             break
 
                     if target_row_found:
@@ -4743,12 +4458,10 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
                 # T007: All keywords failed log
                 if not target_row_found:
-                    if show_debug_message:
-                        print(f"[DATE KEYWORD] All keywords failed to match")
+                    debug.log(f"[DATE KEYWORD] All keywords failed to match")
 
             except Exception as e:
-                if show_debug_message:
-                    print(f"[DATE KEYWORD] Parsing error: {e}")
+                debug.log(f"[DATE KEYWORD] Parsing error: {e}")
                 # On error, use mode selection
                 matched_blocks = []
 
@@ -4756,23 +4469,20 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     if matched_blocks is not None and len(matched_blocks) == 0 and date_keyword and formated_area_list is not None and len(formated_area_list) > 0:
         if date_auto_fallback:
             # T018: Fallback enabled - use auto_select_mode
-            if show_debug_message:
-                print(f"[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
-                print(f"[DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            debug.log(f"[DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
             matched_blocks = formated_area_list
         else:
             # T019: Fallback disabled - strict mode (no selection, but still reload)
-            if show_debug_message:
-                print(f"[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[DATE SELECT] No date selected, will reload page and retry")
+            debug.log(f"[DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            debug.log(f"[DATE SELECT] No date selected, will reload page and retry")
             # Don't return - let reload logic execute below
             # matched_blocks remains None (no selection will be made)
 
     # T020: Handle case when formated_area_list is empty or None (all options excluded or sold out)
     if formated_area_list is None or len(formated_area_list) == 0:
-        if show_debug_message:
-            print(f"[DATE FALLBACK] No available options after exclusion")
-            print(f"[DATE SELECT] Will reload page and retry")
+        debug.log(f"[DATE FALLBACK] No available options after exclusion")
+        debug.log(f"[DATE SELECT] Will reload page and retry")
         # Don't return - let reload logic execute at function end
         is_date_clicked = False
         target_area = None  # Skip selection when no options available
@@ -4783,18 +4493,18 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
     else:
         target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
-    if show_debug_message:
+    if debug.enabled:
         if target_area and matched_blocks:
             # Find which index was selected
             try:
                 target_index = matched_blocks.index(target_area) if target_area in matched_blocks else -1
-                print(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
-                print(f"[DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
+                debug.log(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[DATE SELECT] Selected target: #{target_index + 1}/{len(matched_blocks)}")
             except:
-                print(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
-                print(f"[DATE SELECT] Target selected from {len(matched_blocks)} matched dates")
+                debug.log(f"[DATE SELECT] Auto-select mode: {auto_select_mode}")
+                debug.log(f"[DATE SELECT] Target selected from {len(matched_blocks)} matched dates")
         elif not matched_blocks or len(matched_blocks) == 0:
-            print(f"[DATE SELECT] No target selected (matched_blocks is empty)")
+            debug.log(f"[DATE SELECT] No target selected (matched_blocks is empty)")
 
     is_date_clicked = False
 
@@ -4805,8 +4515,7 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
         # IMPORTANT: Search within target_area, not the whole page
         click_method_used = None
         try:
-            if show_debug_message:
-                print("[DATE SELECT] Trying button[data-href] method within target_area...")
+            debug.log("[DATE SELECT] Trying button[data-href] method within target_area...")
 
             # Method 1: button[data-href] within target_area (tixcraft/indievox specific)
             # 使用 NoDriver Element API 取得 data-href
@@ -4818,87 +4527,73 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
                 button_attrs = button_with_href.attrs or {}
                 data_href = button_attrs.get('data-href')
 
-                if show_debug_message:
+                if debug.enabled:
                     if data_href:
-                        print(f"[DATE SELECT] button[data-href] found in target_area: {data_href}")
+                        debug.log(f"[DATE SELECT] button[data-href] found in target_area: {data_href}")
                     else:
-                        print("[DATE SELECT] button[data-href] found but no href value")
+                        debug.log("[DATE SELECT] button[data-href] found but no href value")
 
                 if data_href:
-                    if show_debug_message:
-                        print("[DATE SELECT] Navigating via button[data-href]...")
+                    debug.log("[DATE SELECT] Navigating via button[data-href]...")
                     await tab.get(data_href)
                     is_date_clicked = True
                     click_method_used = "button[data-href]"
-                    if show_debug_message:
-                        print("[DATE SELECT] Successfully navigated via button[data-href]")
+                    debug.log("[DATE SELECT] Successfully navigated via button[data-href]")
             else:
-                if show_debug_message:
-                    print("[DATE SELECT] No button[data-href] in target_area, will try fallback methods")
+                debug.log("[DATE SELECT] No button[data-href] in target_area, will try fallback methods")
         except Exception as e:
-            if show_debug_message:
-                print(f"[DATE SELECT] button[data-href] method failed: {e}")
+            debug.log(f"[DATE SELECT] button[data-href] method failed: {e}")
 
         # Method 2: regular link or button click
         if not is_date_clicked:
             try:
-                if show_debug_message:
-                    print("[DATE SELECT] Trying link <a[href]> method within target_area...")
+                debug.log("[DATE SELECT] Trying link <a[href]> method within target_area...")
 
                 # Try link first (ticketmaster, etc)
                 link = await target_area.query_selector('a[href]')
                 if link:
-                    if show_debug_message:
-                        print("[DATE SELECT] Link found in target_area, clicking...")
+                    debug.log("[DATE SELECT] Link found in target_area, clicking...")
                     await link.click()
                     is_date_clicked = True
                     click_method_used = "link <a[href]>"
-                    if show_debug_message:
-                        print("[DATE SELECT] Successfully clicked via link")
+                    debug.log("[DATE SELECT] Successfully clicked via link")
                 else:
-                    if show_debug_message:
-                        print("[DATE SELECT] No link found, trying regular button within target_area...")
+                    debug.log("[DATE SELECT] No link found, trying regular button within target_area...")
 
                     # Try regular button
                     button = await target_area.query_selector('button')
                     if button:
-                        if show_debug_message:
-                            print("[DATE SELECT] Regular button found in target_area, clicking...")
+                        debug.log("[DATE SELECT] Regular button found in target_area, clicking...")
                         await button.click()
                         is_date_clicked = True
                         click_method_used = "regular button"
-                        if show_debug_message:
-                            print("[DATE SELECT] Successfully clicked via regular button")
+                        debug.log("[DATE SELECT] Successfully clicked via regular button")
                     else:
-                        if show_debug_message:
-                            print("[DATE SELECT] No clickable element found in target_area")
+                        debug.log("[DATE SELECT] No clickable element found in target_area")
             except Exception as e:
-                if show_debug_message:
-                    print(f"[DATE SELECT] Click error: {e}")
+                debug.log(f"[DATE SELECT] Click error: {e}")
 
         # Final summary
-        if show_debug_message:
+        if debug.enabled:
             if is_date_clicked and click_method_used:
-                print(f"[DATE SELECT] ========================================")
-                print(f"[DATE SELECT] Date selection completed successfully")
-                print(f"[DATE SELECT] Method used: {click_method_used}")
-                print(f"[DATE SELECT] ========================================")
+                debug.log(f"[DATE SELECT] ========================================")
+                debug.log(f"[DATE SELECT] Date selection completed successfully")
+                debug.log(f"[DATE SELECT] Method used: {click_method_used}")
+                debug.log(f"[DATE SELECT] ========================================")
             elif not is_date_clicked:
-                print(f"[DATE SELECT] ========================================")
-                print("[DATE SELECT] All click methods failed")
-                print(f"[DATE SELECT] ========================================")
+                debug.log(f"[DATE SELECT] ========================================")
+                debug.log("[DATE SELECT] All click methods failed")
+                debug.log(f"[DATE SELECT] ========================================")
 
     # Auto refresh if no date was selected (for strict mode or sold out scenarios)
     if not is_date_clicked:
         # Simple wait mode (consistent with TicketPlus/iBon/FamiTicket)
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
-            if show_debug_message:
-                print(f"[DATE SELECT] Waiting {interval}s before reload...")
+            debug.log(f"[DATE SELECT] Waiting {interval}s before reload...")
             await asyncio.sleep(interval)
 
-        if show_debug_message:
-            print(f"[DATE SELECT] No date selected, reloading page...")
+        debug.log(f"[DATE SELECT] No date selected, reloading page...")
         try:
             await tab.reload()
         except Exception:
@@ -4906,18 +4601,16 @@ async def nodriver_tixcraft_date_auto_select(tab, url, config_dict, domain_name)
 
     return is_date_clicked
 
-
 async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # T010: Check main switch (defensive programming)
     if not config_dict["area_auto_select"]["enable"]:
-        if show_debug_message:
-            print("[AREA SELECT] Main switch is disabled, skipping area selection")
+        debug.log("[AREA SELECT] Main switch is disabled, skipping area selection")
         return False
 
     import json
@@ -4944,44 +4637,39 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
 
         # T012: Start checking keywords log
-        if show_debug_message:
-            print(f"[AREA KEYWORD] Start checking keywords in order: {area_keyword_array}")
-            print(f"[AREA KEYWORD] Total keyword groups: {len(area_keyword_array)}")
+        debug.log(f"[AREA KEYWORD] Start checking keywords in order: {area_keyword_array}")
+        debug.log(f"[AREA KEYWORD] Total keyword groups: {len(area_keyword_array)}")
 
         # T011: Early return pattern - iterate keywords in priority order
         keyword_matched = False
         for keyword_index, area_keyword_item in enumerate(area_keyword_array):
-            if show_debug_message:
-                print(f"[AREA KEYWORD] Checking keyword #{keyword_index + 1}: {area_keyword_item}")
+            debug.log(f"[AREA KEYWORD] Checking keyword #{keyword_index + 1}: {area_keyword_item}")
 
             is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item)
 
             if not is_need_refresh:
                 # T013: Keyword matched log
                 keyword_matched = True
-                if show_debug_message:
-                    print(f"[AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
+                debug.log(f"[AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}'")
                 break
 
         # T014: All keywords failed log
-        if not keyword_matched and show_debug_message:
-            print(f"[AREA KEYWORD] All keywords failed to match")
+        if not keyword_matched:
+            debug.log(f"[AREA KEYWORD] All keywords failed to match")
 
         # T022-T024: NEW - Conditional fallback based on area_auto_fallback switch
         is_fallback_selection = False  # Track selection type for logging
         if is_need_refresh and matched_blocks is None:
             if area_auto_fallback:
                 # T022: Fallback enabled - use auto_select_mode without keyword
-                if show_debug_message:
-                    print(f"[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
-                    print(f"[AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+                debug.log(f"[AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+                debug.log(f"[AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
                 is_need_refresh, matched_blocks = await nodriver_get_tixcraft_target_area(el, config_dict, "")
                 is_fallback_selection = True  # Mark as fallback selection
             else:
                 # T023: Fallback disabled - strict mode (no selection, but still reload)
-                if show_debug_message:
-                    print(f"[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                    print(f"[AREA SELECT] No area selected, will reload page and retry")
+                debug.log(f"[AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+                debug.log(f"[AREA SELECT] No area selected, will reload page and retry")
                 # Don't return - let reload logic execute below
                 # matched_blocks remains None (no selection will be made)
                 # is_need_refresh remains True (will trigger reload)
@@ -4993,9 +4681,8 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
 
     # T024: Handle case when matched_blocks is empty or None (all options excluded or sold out)
     if matched_blocks is None or len(matched_blocks) == 0:
-        if show_debug_message:
-            print(f"[AREA FALLBACK] No available options after exclusion")
-            print(f"[AREA SELECT] Will reload page and retry")
+        debug.log(f"[AREA FALLBACK] No available options after exclusion")
+        debug.log(f"[AREA SELECT] Will reload page and retry")
         # Don't return - let reload logic execute below
         is_need_refresh = True  # Ensure reload will happen
         target_area = None  # Skip selection when no options available
@@ -5003,14 +4690,14 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
         target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if target_area:
         # T013: Log selected area with selection type
-        if show_debug_message:
+        if debug.enabled:
             try:
                 area_text = await target_area.text
                 if not area_text:
                     area_text = await target_area.inner_text
                 area_text = area_text.strip()[:80] if area_text else "Unknown"
                 selection_type = "fallback" if is_fallback_selection else "keyword match"
-                print(f"[AREA SELECT] Selected area: {area_text} ({selection_type})")
+                debug.log(f"[AREA SELECT] Selected area: {area_text} ({selection_type})")
             except:
                 pass  # If text extraction fails, skip logging
 
@@ -5026,12 +4713,10 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
     if is_need_refresh:
         interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if interval > 0:
-            if show_debug_message:
-                print(f"[AREA SELECT] Waiting {interval}s before reload...")
+            debug.log(f"[AREA SELECT] Waiting {interval}s before reload...")
             await asyncio.sleep(interval)
 
-        if show_debug_message:
-            print(f"[AREA SELECT] Page reloading...")
+        debug.log(f"[AREA SELECT] Page reloading...")
         try:
             await tab.reload()
         except Exception:
@@ -5039,43 +4724,39 @@ async def nodriver_tixcraft_area_auto_select(tab, url, config_dict):
 
 async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
     area_auto_select_mode = config_dict["area_auto_select"]["mode"]
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_need_refresh = False
     matched_blocks = None
 
     # Display keyword information
-    if show_debug_message:
-        print(f"[AREA KEYWORD] ========================================")
+    if debug.enabled:
+        debug.log(f"[AREA KEYWORD] ========================================")
         if area_keyword_item:
             keyword_parts = area_keyword_item.split(' ')
-            print(f"[AREA KEYWORD] Raw input: '{area_keyword_item}'")
-            print(f"[AREA KEYWORD] Parsed (AND logic): {keyword_parts}")
-            print(f"[AREA KEYWORD] Total sub-keywords: {len(keyword_parts)}")
-            print(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
+            debug.log(f"[AREA KEYWORD] Raw input: '{area_keyword_item}'")
+            debug.log(f"[AREA KEYWORD] Parsed (AND logic): {keyword_parts}")
+            debug.log(f"[AREA KEYWORD] Total sub-keywords: {len(keyword_parts)}")
+            debug.log(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
         else:
-            print(f"[AREA KEYWORD] No keyword specified, matching all areas")
-            print(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
+            debug.log(f"[AREA KEYWORD] No keyword specified, matching all areas")
+            debug.log(f"[AREA KEYWORD] Auto-select mode: {area_auto_select_mode}")
 
     if not el:
-        if show_debug_message:
-            print(f"[AREA KEYWORD] Element is None, cannot select area")
+        debug.log(f"[AREA KEYWORD] Element is None, cannot select area")
         return True, None
 
     try:
         area_list = await el.query_selector_all('a')
     except:
-        if show_debug_message:
-            print(f"[AREA KEYWORD] Failed to query area list")
+        debug.log(f"[AREA KEYWORD] Failed to query area list")
         return True, None
 
     if not area_list or len(area_list) == 0:
-        if show_debug_message:
-            print(f"[AREA KEYWORD] No areas found")
+        debug.log(f"[AREA KEYWORD] No areas found")
         return True, None
 
-    if show_debug_message:
-        print(f"[AREA KEYWORD] Found {len(area_list)} area(s) to check")
-        print(f"[AREA KEYWORD] ========================================")
+    debug.log(f"[AREA KEYWORD] Found {len(area_list)} area(s) to check")
+    debug.log(f"[AREA KEYWORD] ========================================")
 
     matched_blocks = []
     area_index = 0
@@ -5086,17 +4767,14 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
             row_html = await row.get_html()
             row_text = util.remove_html_tags(row_html)
         except:
-            if show_debug_message:
-                print(f"[AREA KEYWORD] [{area_index}] Failed to get row content")
+            debug.log(f"[AREA KEYWORD] [{area_index}] Failed to get row content")
             break
 
         if not row_text or util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-            if show_debug_message:
-                print(f"[AREA KEYWORD] [{area_index}] Excluded by keyword_exclude")
+            debug.log(f"[AREA KEYWORD] [{area_index}] Excluded by keyword_exclude")
             continue
 
-        if show_debug_message:
-            print(f"[AREA KEYWORD] [{area_index}/{len(area_list)}] Checking: {row_text[:80]}...")
+        debug.log(f"[AREA KEYWORD] [{area_index}/{len(area_list)}] Checking: {row_text[:80]}...")
 
         row_text = util.format_keyword_string(row_text)
 
@@ -5104,8 +4782,7 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
         if area_keyword_item:
             keyword_parts = area_keyword_item.split(' ')
 
-            if show_debug_message:
-                print(f"[AREA KEYWORD]   Matching AND keywords: {keyword_parts}")
+            debug.log(f"[AREA KEYWORD]   Matching AND keywords: {keyword_parts}")
 
             # Check each keyword individually for detailed feedback
             match_results = {}
@@ -5114,23 +4791,22 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
                 kw_match = formatted_kw in row_text
                 match_results[kw] = kw_match
 
-                if show_debug_message:
+                if debug.enabled:
                     status = "PASS" if kw_match else "FAIL"
-                    print(f"[AREA KEYWORD]     {status} '{kw}': {kw_match}")
+                    debug.log(f"[AREA KEYWORD]     {status} '{kw}': {kw_match}")
 
             is_match = all(match_results.values())
 
-            if show_debug_message:
+            if debug.enabled:
                 if is_match:
-                    print(f"[AREA KEYWORD]   All AND keywords matched")
+                    debug.log(f"[AREA KEYWORD]   All AND keywords matched")
                 else:
-                    print(f"[AREA KEYWORD]   AND logic failed")
+                    debug.log(f"[AREA KEYWORD]   AND logic failed")
 
             if not is_match:
                 continue
         else:
-            if show_debug_message:
-                print(f"[AREA KEYWORD]   No keyword filter, accepting this area")
+            debug.log(f"[AREA KEYWORD]   No keyword filter, accepting this area")
 
         # Check seat availability for multiple tickets
         if config_dict["ticket_number"] > 1:
@@ -5141,29 +4817,24 @@ async def nodriver_get_tixcraft_target_area(el, config_dict, area_keyword_item):
                     if font_text:
                         font_text = "@%s@" % font_text
 
-                        if show_debug_message:
-                            print(f"[AREA KEYWORD]   Checking seats: {font_text.strip('@')}")
+                        debug.log(f"[AREA KEYWORD]   Checking seats: {font_text.strip('@')}")
 
                         # Skip if only 1-9 seats remaining
                         SEATS_1_9 = ["@%d@" % i for i in range(1, 10)]
                         if any(seat in font_text for seat in SEATS_1_9):
-                            if show_debug_message:
-                                print(f"[AREA KEYWORD]   Insufficient seats (need {config_dict['ticket_number']}, only {font_text.strip('@')} available)")
+                            debug.log(f"[AREA KEYWORD]   Insufficient seats (need {config_dict['ticket_number']}, only {font_text.strip('@')} available)")
                             continue
                         else:
-                            if show_debug_message:
-                                print(f"[AREA KEYWORD]   Sufficient seats available")
+                            debug.log(f"[AREA KEYWORD]   Sufficient seats available")
             except:
                 pass
 
         matched_blocks.append(row)
 
-        if show_debug_message:
-            print(f"[AREA KEYWORD]   → Area added to matched list (total: {len(matched_blocks)})")
+        debug.log(f"[AREA KEYWORD]   → Area added to matched list (total: {len(matched_blocks)})")
 
         if area_auto_select_mode == util.CONST_FROM_TOP_TO_BOTTOM:
-            if show_debug_message:
-                print(f"[AREA KEYWORD]   Mode is '{area_auto_select_mode}', stopping at first match")
+            debug.log(f"[AREA KEYWORD]   Mode is '{area_auto_select_mode}', stopping at first match")
             break
 
     if not matched_blocks:
@@ -5253,7 +4924,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
     is_ticket_number_assigned = False
 
     # 等待票券選擇器出現（智慧等待，取代固定 0.5 秒延遲）
@@ -5267,21 +4938,19 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     try:
         form_select_list = await tab.query_selector_all('.mobile-select')
     except Exception as exc:
-        if show_debug_message:
-            print("Failed to find .mobile-select")
+        debug.log("Failed to find .mobile-select")
 
     # 如果沒找到 .mobile-select，嘗試其他選擇器
     if len(form_select_list) == 0:
         try:
             form_select_list = await tab.query_selector_all('select[id*="TicketForm_ticketPrice_"]')
         except Exception as exc:
-            if show_debug_message:
-                print("Failed to find ticket selector")
+            debug.log("Failed to find ticket selector")
 
     form_select_count = len(form_select_list)
 
-    if show_debug_message and form_select_count > 0:
-        print(f"[TICKET SELECT] Found {form_select_count} select element(s)")
+    if form_select_count > 0:
+        debug.log(f"[TICKET SELECT] Found {form_select_count} select element(s)")
 
     # Get area keyword configuration
     import json
@@ -5291,8 +4960,8 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
 
     # Parse keywords using JSON
     area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
-    if show_debug_message and area_keyword_array:
-        print(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
+    if area_keyword_array:
+        debug.log(f"[TICKET SELECT] Area keywords: {area_keyword_array}")
 
     # 過濾並收集票種資訊（包含票種名稱）
     valid_ticket_types = []
@@ -5310,8 +4979,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
             is_select_disabled = 'disabled' in select_attrs
 
             if is_select_disabled:
-                if show_debug_message:
-                    print(f"[TICKET SELECT] Skipping disabled select: {select_id}")
+                debug.log(f"[TICKET SELECT] Skipping disabled select: {select_id}")
                 continue
 
             # 檢查 option 元素
@@ -5337,13 +5005,11 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                         has_valid_option = True
 
                 except Exception as opt_exc:
-                    if show_debug_message:
-                        print(f"[TICKET SELECT] Error checking option: {opt_exc}")
+                    debug.log(f"[TICKET SELECT] Error checking option: {opt_exc}")
                     continue
 
             if not has_valid_option:
-                if show_debug_message:
-                    print(f"[TICKET SELECT] Skipping select (all options sold out or disabled): {select_id}")
+                debug.log(f"[TICKET SELECT] Skipping select (all options sold out or disabled): {select_id}")
                 continue
 
             # 嘗試獲取票種名稱（從父元素 <tr> 中的 <h4> 或 <td> 提取）
@@ -5370,8 +5036,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                     ticket_type_name = ticket_type_name.strip()
 
             except Exception as name_exc:
-                if show_debug_message:
-                    print(f"[TICKET SELECT] Failed to extract ticket type name: {name_exc}")
+                debug.log(f"[TICKET SELECT] Failed to extract ticket type name: {name_exc}")
 
             # 加入 valid_ticket_types
             valid_ticket_types.append({
@@ -5381,19 +5046,15 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                 'index': idx
             })
 
-            if show_debug_message:
-                print(f"[TICKET SELECT] Valid ticket type: {select_id} - '{ticket_type_name}'")
+            debug.log(f"[TICKET SELECT] Valid ticket type: {select_id} - '{ticket_type_name}'")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[TICKET SELECT] Error checking select element: {exc}")
+            debug.log(f"[TICKET SELECT] Error checking select element: {exc}")
 
-    if show_debug_message:
-        print(f"[TICKET SELECT] Valid ticket types: {len(valid_ticket_types)}/{form_select_count}")
+    debug.log(f"[TICKET SELECT] Valid ticket types: {len(valid_ticket_types)}/{form_select_count}")
 
     if len(valid_ticket_types) == 0:
-        if show_debug_message:
-            print("[TICKET SELECT] Warning: All ticket types are sold out or disabled")
+        debug.log("[TICKET SELECT] Warning: All ticket types are sold out or disabled")
         return False, None
 
     # Keyword matching logic (similar to area selection)
@@ -5401,12 +5062,10 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     is_keyword_matched = False
 
     if area_keyword_array:
-        if show_debug_message:
-            print(f"[TICKET SELECT] Starting keyword matching with {len(area_keyword_array)} keyword(s)")
+        debug.log(f"[TICKET SELECT] Starting keyword matching with {len(area_keyword_array)} keyword(s)")
 
         for keyword_index, keyword_item in enumerate(area_keyword_array):
-            if show_debug_message:
-                print(f"[TICKET SELECT] Checking keyword #{keyword_index + 1}: '{keyword_item}'")
+            debug.log(f"[TICKET SELECT] Checking keyword #{keyword_index + 1}: '{keyword_item}'")
 
             # Check each valid ticket type
             for ticket_info in valid_ticket_types:
@@ -5414,8 +5073,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
 
                 # Apply exclude keyword filter
                 if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
-                    if show_debug_message:
-                        print(f"[TICKET SELECT]   Excluded by keyword_exclude: {ticket_name}")
+                    debug.log(f"[TICKET SELECT]   Excluded by keyword_exclude: {ticket_name}")
                     continue
 
                 # Keyword matching (support space-separated AND logic)
@@ -5432,15 +5090,14 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                 if is_match:
                     matched_ticket = ticket_info
                     is_keyword_matched = True
-                    if show_debug_message:
-                        print(f"[TICKET SELECT]   ✓ Keyword matched: '{ticket_name}'")
+                    debug.log(f"[TICKET SELECT]   [OK] Keyword matched: '{ticket_name}'")
                     break
 
             if matched_ticket:
                 break  # Early return: first match wins
 
-        if not matched_ticket and show_debug_message:
-            print(f"[TICKET SELECT] All keywords failed to match")
+        if not matched_ticket:
+            debug.log(f"[TICKET SELECT] All keywords failed to match")
 
     # Single option auto-select: when only one valid ticket type exists, select it directly
     # (unless excluded by keyword_exclude)
@@ -5451,24 +5108,21 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         # Check if excluded by keyword_exclude
         if not util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
             matched_ticket = single_ticket
-            if show_debug_message:
-                print(f"[TICKET SELECT] Single option auto-select: '{ticket_name}'")
+            debug.log(f"[TICKET SELECT] Single option auto-select: '{ticket_name}'")
         else:
-            if show_debug_message:
-                print(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
+            debug.log(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
 
     # Fallback logic (similar to area selection)
     if not matched_ticket:
         if area_keyword_array and not area_auto_fallback:
             # Strict mode: no keyword match and fallback disabled
-            if show_debug_message:
-                print(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
-                print(f"[TICKET SELECT] No ticket type selected")
+            debug.log(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
+            debug.log(f"[TICKET SELECT] No ticket type selected")
             return False, None, None
         else:
             # Fallback enabled or no keyword specified
-            if area_keyword_array and show_debug_message:
-                print(f"[TICKET SELECT] area_auto_fallback=true, using fallback selection")
+            if area_keyword_array:
+                debug.log(f"[TICKET SELECT] area_auto_fallback=true, using fallback selection")
 
             # Select based on auto_select_mode
             matched_ticket = util.get_target_item_from_matched_list(
@@ -5481,7 +5135,7 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
                     matched_ticket = ticket_info
                     break
 
-            if show_debug_message and matched_ticket:
+            if matched_ticket:
                 selection_type = "fallback" if area_keyword_array else "mode-based"
                 print(f"[TICKET SELECT] Selected ticket type ({selection_type}): '{matched_ticket['name']}'")
 
@@ -5508,32 +5162,28 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
 
             if current_value and current_value != "0" and str(current_value).isnumeric():
                 is_ticket_number_assigned = True
-                if show_debug_message:
-                    print(f"Ticket number already set to: {current_value}")
+                debug.log(f"Ticket number already set to: {current_value}")
         except Exception as exc:
-            if show_debug_message:
-                print(f"Failed to check current selected value: {exc}")
+            debug.log(f"Failed to check current selected value: {exc}")
 
     # 回傳結果：select_obj 和 select_id 用於後續操作
     return is_ticket_number_assigned, select_obj, select_id
 
 async def nodriver_tixcraft_ticket_main_agree(tab, config_dict):
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("Starting to check agreement checkbox")
+    debug.log("Starting to check agreement checkbox")
 
     for i in range(3):
-        is_finish_checkbox_click = await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', show_debug_message)
+        is_finish_checkbox_click = await nodriver_check_checkbox_enhanced(tab, '#TicketForm_agree', config_dict)
         if is_finish_checkbox_click:
-            if show_debug_message:
-                print("Agreement checkbox checked successfully")
+            debug.log("Agreement checkbox checked successfully")
             break
-        elif show_debug_message:
-            print(f"Failed to check agreement, retry {i+1}/3")
+        else:
+            debug.log(f"Failed to check agreement, retry {i+1}/3")
 
-    if not is_finish_checkbox_click and show_debug_message:
-        print("Warning: Failed to check agreement checkbox")
+    if not is_finish_checkbox_click:
+        debug.log("Warning: Failed to check agreement checkbox")
 
 async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, domain_name):
     # 函數開始時檢查暫停
@@ -5541,7 +5191,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         return False
 
     global tixcraft_dict
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     # 檢查是否已經設定過票券數量（方案 B：狀態標記）
     current_url, _ = await nodriver_current_url(tab)
@@ -5549,8 +5199,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     ticket_state_key = f"ticket_assigned_{current_url}_{ticket_number}"
 
     if ticket_state_key in tixcraft_dict and tixcraft_dict[ticket_state_key]:
-        if show_debug_message:
-            print(f"Ticket number already set ({ticket_number}), skipping")
+        debug.log(f"Ticket number already set ({ticket_number}), skipping")
 
         # Ensure agreement checkbox is checked (even if ticket number already set)
         await nodriver_tixcraft_ticket_main_agree(tab, config_dict)
@@ -5576,15 +5225,13 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
     is_ticket_number_assigned, select_obj, select_id = await nodriver_tixcraft_assign_ticket_number(tab, config_dict)
 
     if not is_ticket_number_assigned:
-        if show_debug_message:
-            print(f"Setting ticket number: {ticket_number}")
+        debug.log(f"Setting ticket number: {ticket_number}")
         is_ticket_number_assigned = await nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, select_id)
 
     # Record state after successful setting
     if is_ticket_number_assigned:
         tixcraft_dict[ticket_state_key] = True
-        if show_debug_message:
-            print("Ticket number set successfully, starting OCR captcha processing")
+        debug.log("Ticket number set successfully, starting OCR captcha processing")
         await nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Browser, domain_name)
     else:
         # T026: Fix Issue #174 - reload page when ticket number cannot be set
@@ -5597,8 +5244,7 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
             if interval > 0:
                 await asyncio.sleep(interval)
         except Exception as reload_exc:
-            if show_debug_message:
-                print(f"[TICKET SELECT] Reload failed: {reload_exc}")
+            debug.log(f"[TICKET SELECT] Reload failed: {reload_exc}")
 
 async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False, config_dict=None):
     """輸入驗證碼到表單"""
@@ -5766,7 +5412,7 @@ async def nodriver_tixcraft_reload_captcha(tab, domain_name):
 
 async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
     """取得驗證碼圖片並進行 OCR 識別"""
-    show_debug_message = False
+    debug = util.create_debug_logger(enabled=False)  # OCR: intentionally silent
 
     ocr_answer = None
     if not ocr is None:
@@ -5807,16 +5453,14 @@ async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, C
                         img_base64 = base64.b64decode(Captcha_Browser.request_captcha())
 
             except Exception as exc:
-                if show_debug_message:
-                    print("Canvas processing error:", str(exc))
+                debug.log("Canvas processing error:", str(exc))
 
         # OCR 識別
         if not img_base64 is None:
             try:
                 ocr_answer = ocr.classification(img_base64)
             except Exception as exc:
-                if show_debug_message:
-                    print("OCR recognition failed:", exc)
+                debug.log("OCR recognition failed:", exc)
 
     return ocr_answer
 
@@ -5824,7 +5468,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                                      previous_answer, Captcha_Browser,
                                      ocr_captcha_image_source, domain_name):
     """OCR 自動識別主邏輯"""
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     is_need_redo_ocr = False
     is_form_submitted = False
@@ -5841,17 +5485,15 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
         print("[TIXCRAFT OCR] ddddocr component unavailable, you may be running on ARM")
 
     if is_input_box_exist:
-        if show_debug_message:
-            print("[TIXCRAFT OCR] away_from_keyboard_enable:", away_from_keyboard_enable)
-            print("[TIXCRAFT OCR] previous_answer:", previous_answer)
-            print("[TIXCRAFT OCR] ocr_captcha_image_source:", ocr_captcha_image_source)
+        debug.log("[TIXCRAFT OCR] away_from_keyboard_enable:", away_from_keyboard_enable)
+        debug.log("[TIXCRAFT OCR] previous_answer:", previous_answer)
+        debug.log("[TIXCRAFT OCR] ocr_captcha_image_source:", ocr_captcha_image_source)
 
         ocr_start_time = time.time()
         ocr_answer = await nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name)
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
-        if show_debug_message:
-            print("[TIXCRAFT OCR] Processing time:", "{:.3f}".format(ocr_elapsed_time))
+        debug.log("[TIXCRAFT OCR] Processing time:", "{:.3f}".format(ocr_elapsed_time))
 
         if ocr_answer is None:
             if away_from_keyboard_enable:
@@ -5863,8 +5505,7 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                 await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
         else:
             ocr_answer = ocr_answer.strip()
-            if show_debug_message:
-                print("[TIXCRAFT OCR] Result:", ocr_answer)
+            debug.log("[TIXCRAFT OCR] Result:", ocr_answer)
             if len(ocr_answer) == 4:
                 who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict)
             else:
@@ -5874,10 +5515,8 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
                     is_need_redo_ocr = True
                     if previous_answer != ocr_answer:
                         previous_answer = ocr_answer
-                        if show_debug_message:
-                            print("[TIXCRAFT OCR] Reloading captcha")
+                        debug.log("[TIXCRAFT OCR] Reloading captcha")
 
-                        # selenium 解決方案
                         await nodriver_tixcraft_reload_captcha(tab, domain_name)
 
                         if ocr_captcha_image_source == CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS:
@@ -5893,7 +5532,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
     if await check_and_handle_pause(config_dict):
         return False, "", False
 
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:
@@ -5918,8 +5557,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             )
 
             if is_form_submitted:
-                if show_debug_message:
-                    print("[TIXCRAFT OCR] Form submitted")
+                debug.log("[TIXCRAFT OCR] Form submitted")
                 break
 
             if not away_from_keyboard_enable:
@@ -5932,8 +5570,7 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if is_need_redo_ocr:
                 fail_count += 1
                 total_fail_count += 1
-                if show_debug_message:
-                    print(f"[TIXCRAFT OCR] Fail count: {fail_count}, Total fails: {total_fail_count}")
+                debug.log(f"[TIXCRAFT OCR] Fail count: {fail_count}, Total fails: {total_fail_count}")
 
                 # Check if total failures reached 5, switch to manual input mode
                 if total_fail_count >= 5:
@@ -5943,14 +5580,12 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
                     break
 
                 if fail_count >= 3:
-                    if show_debug_message:
-                        print("[TIXCRAFT OCR] 3 consecutive failures reached")
+                    debug.log("[TIXCRAFT OCR] 3 consecutive failures reached")
 
                     # Try to dismiss any existing alert before continuing
                     try:
                         await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                        if show_debug_message:
-                            print("[TIXCRAFT OCR] Dismissed existing alert")
+                        debug.log("[TIXCRAFT OCR] Dismissed existing alert")
                     except:
                         pass
 
@@ -5963,20 +5598,18 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
             if new_url != current_url:
                 break
 
-            if show_debug_message:
-                print(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
+            debug.log(f"[TIXCRAFT OCR] Retry {redo_ocr + 1}/5")
 
         # Mark OCR completed for this URL only when form was actually submitted
         if is_form_submitted:
             tixcraft_dict["ocr_completed_url"] = current_url
-
 
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Global alert handler - auto-dismiss all alerts (sold out, errors, etc.)
     # Handles alerts that appear after page navigation (e.g., area selection redirects)
@@ -5988,12 +5621,10 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         current_url = tab.target.url if hasattr(tab, 'target') and tab.target else ""
 
         if '/ticket/checkout' in current_url:
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Alert on checkout page, NOT auto-dismissing: '{event.message}'")
+            debug.log(f"[GLOBAL ALERT] Alert on checkout page, NOT auto-dismissing: '{event.message}'")
             return
 
-        if show_debug_message:
-            print(f"[GLOBAL ALERT] Alert detected: '{event.message}'")
+        debug.log(f"[GLOBAL ALERT] Alert detected: '{event.message}'")
 
         # Track captcha error alerts for retry logic
         is_captcha_error = False
@@ -6012,8 +5643,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_captcha_error:
             tixcraft_dict["captcha_alert_detected"] = True
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
+            debug.log(f"[GLOBAL ALERT] Captcha error detected, flagging for retry")
 
         # Issue #188: Detect sold out alerts to add cooldown delay
         sold_out_keywords = ['售完', '已售完', '選購一空', 'sold out', 'no tickets']
@@ -6025,22 +5655,19 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             try:
                 await tab.send(cdp.page.handle_java_script_dialog(accept=True))
                 dismiss_success = True
-                if show_debug_message:
-                    print(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
+                debug.log(f"[GLOBAL ALERT] Alert dismissed (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
                 error_msg = str(dismiss_exc)
                 # CDP -32602 means no dialog is showing (already dismissed by another handler or user)
                 if "No dialog is showing" in error_msg or "-32602" in error_msg:
                     dismiss_success = True  # Consider it handled
-                    if show_debug_message:
-                        print("[GLOBAL ALERT] Dialog already dismissed")
+                    debug.log("[GLOBAL ALERT] Dialog already dismissed")
                     break  # No need to retry
                 if attempt < 2:
                     await asyncio.sleep(0.1)  # Small delay before retry
                 else:
-                    if show_debug_message:
-                        print(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
+                    debug.log(f"[GLOBAL ALERT] Failed to dismiss alert: {dismiss_exc}")
 
         # Issue #188: Set cooldown timestamp instead of async sleep (event handler doesn't block main loop)
         if is_sold_out_alert and dismiss_success:
@@ -6048,8 +5675,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             if interval > 0:
                 cooldown_until = time.time() + interval
                 tixcraft_dict["sold_out_cooldown_until"] = cooldown_until
-                if show_debug_message:
-                    print(f"[GLOBAL ALERT] Sold out detected, setting cooldown for {interval}s")
+                debug.log(f"[GLOBAL ALERT] Sold out detected, setting cooldown for {interval}s")
 
     global tixcraft_dict
 
@@ -6077,11 +5703,9 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         try:
             tab.add_handler(cdp.page.JavascriptDialogOpening, handle_global_alert)
             tixcraft_dict["alert_handler_registered"] = True
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Global alert handler registered")
+            debug.log(f"[GLOBAL ALERT] Global alert handler registered")
         except Exception as handler_exc:
-            if show_debug_message:
-                print(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
+            debug.log(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
 
     await nodriver_tixcraft_home_close_window(tab)
 
@@ -6136,11 +5760,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             domain_name = url.split('/')[2]
             # Call Ticketmaster date auto select
             is_date_selected = await nodriver_ticketmaster_date_auto_select(tab, config_dict)
-            if show_debug_message:
+            if debug.enabled:
                 if is_date_selected:
-                    print("[TICKETMASTER] Date selection completed")
+                    debug.log("[TICKETMASTER] Date selection completed")
                 else:
-                    print("[TICKETMASTER] Date selection failed or no match")
+                    debug.log("[TICKETMASTER] Date selection failed or no match")
 
     # choose area
     if '/ticket/area/' in url:
@@ -6167,8 +5791,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                         # Reset after 10 retries to allow re-processing
                         tixcraft_dict["ticketmaster_area_processed_url"] = ""
                         tixcraft_dict["area_retry_count"] = 0
-                        if show_debug_message:
-                            print("[TICKETMASTER] Area page retry limit reached, resetting state")
+                        debug.log("[TICKETMASTER] Area page retry limit reached, resetting state")
                 else:
                     # Parse zone_info and auto-select area
                     zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
@@ -6259,7 +5882,6 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
         tixcraft_dict["played_sound_order"] = False
 
     return is_quit_bot
-
 
 async def nodriver_ticketplus_detect_layout_style(tab, config_dict=None):
     """偵測 TicketPlus 頁面佈局樣式
@@ -6446,7 +6068,6 @@ async def nodriver_ticketplus_account_sign_in(tab, config_dict):
             print(exc)
             pass
 
-
     return is_filled_form, is_submited
 
 async def nodriver_ticketplus_is_signin(tab):
@@ -6463,7 +6084,6 @@ async def nodriver_ticketplus_is_signin(tab):
         pass
 
     return is_user_signin
-
 
 async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
     global is_filled_ticketplus_singin_form
@@ -6519,7 +6139,7 @@ async def nodriver_ticketplus_account_auto_fill(tab, config_dict):
 
 async def nodriver_ticketplus_date_auto_select(tab, config_dict):
     """TicketPlus 日期自動選擇功能"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # 讀取設定
     auto_select_mode = config_dict["date_auto_select"]["mode"]
@@ -6528,21 +6148,18 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
     pass_date_is_sold_out_enable = config_dict["tixcraft"]["pass_date_is_sold_out"]
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-    if show_debug_message:
-        print("date_auto_select_mode:", auto_select_mode)
-        print("date_keyword:", date_keyword)
+    debug.log("date_auto_select_mode:", auto_select_mode)
+    debug.log("date_keyword:", date_keyword)
 
     # 查找日期區塊
     area_list = None
     try:
         area_list = await tab.query_selector_all('div#buyTicket > div.sesstion-item > div.row')
         if area_list and len(area_list) == 0:
-            if show_debug_message:
-                print("empty date item, need retry.")
+            debug.log("empty date item, need retry.")
             await tab.sleep(0.2)
     except Exception as exc:
-        if show_debug_message:
-            print("find #buyTicket fail:", exc)
+        debug.log("find #buyTicket fail:", exc)
 
     # 檢查可購買的選項（包含「尚未開賣」，點擊後在 order 頁面等待）
     find_ticket_text_list = ['>立即購', '尚未開賣']
@@ -6553,8 +6170,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
     is_vue_ready = True
 
     if area_list and len(area_list) > 0:
-        if show_debug_message:
-            print("date_list_count:", len(area_list))
+        debug.log("date_list_count:", len(area_list))
 
         formated_area_list = []
         for row in area_list:
@@ -6564,8 +6180,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                 row_html = await row.get_html()
                 row_text = util.remove_html_tags(row_html)
             except Exception as exc:
-                if show_debug_message:
-                    print("Date item processing failed:", exc)
+                debug.log("Date item processing failed:", exc)
                 break
 
             if len(row_text) > 0:
@@ -6590,15 +6205,13 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                     for sold_out_item in sold_out_text_list:
                         if sold_out_item in row_text:
                             row_is_enabled = False
-                            if show_debug_message:
-                                print(f"match sold out text: {sold_out_item}, skip this row.")
+                            debug.log(f"match sold out text: {sold_out_item}, skip this row.")
                             break
 
                 if row_is_enabled:
                     formated_area_list.append(row)
 
-        if show_debug_message:
-            print("formated_area_list count:", len(formated_area_list))
+        debug.log("formated_area_list count:", len(formated_area_list))
 
         # Keyword matching - Unified JSON array parsing with AND/OR logic
         # Format: "AA BB","CC","DD" -> (AA AND BB) OR (CC) OR (DD)
@@ -6612,8 +6225,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                 original_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
                 keyword_array = json.loads("[" + original_keyword + "]")
 
-                if show_debug_message:
-                    print(f"[TicketPlus DATE] Applying keyword filter: {keyword_array}")
+                debug.log(f"[TicketPlus DATE] Applying keyword filter: {keyword_array}")
 
                 # Match keyword groups (OR logic between groups)
                 for i, row in enumerate(formated_area_list):
@@ -6623,8 +6235,7 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
                         row_html = await row.get_html()
                         row_text = util.remove_html_tags(row_html).lower()
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[TicketPlus DATE] Failed to get row text: {exc}")
+                        debug.log(f"[TicketPlus DATE] Failed to get row text: {exc}")
                         continue
 
                     # Check if any keyword group matches (OR logic between groups)
@@ -6637,37 +6248,31 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
 
                         if is_match:
                             matched_blocks.append(row)
-                            if show_debug_message:
-                                print(f"[TicketPlus DATE] Keyword '{keyword_item}' matched row {i}")
+                            debug.log(f"[TicketPlus DATE] Keyword '{keyword_item}' matched row {i}")
                             break  # Stop checking other keyword groups for this row
 
             except json.JSONDecodeError as exc:
-                if show_debug_message:
-                    print(f"[TicketPlus DATE] Keyword parse error: {exc}")
-                    print(f"[TicketPlus DATE] Treating as 'all keywords failed'")
+                debug.log(f"[TicketPlus DATE] Keyword parse error: {exc}")
+                debug.log(f"[TicketPlus DATE] Treating as 'all keywords failed'")
                 matched_blocks = []  # Let Feature 003 fallback logic handle this
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[TicketPlus DATE] Keyword matching failed: {exc}")
+                debug.log(f"[TicketPlus DATE] Keyword matching failed: {exc}")
                 matched_blocks = []
 
         # T018-T020: Conditional fallback based on date_auto_fallback switch
         if len(matched_blocks) == 0 and date_keyword and len(date_keyword) > 0:
             if date_auto_fallback:
                 # T018: Fallback enabled
-                if show_debug_message:
-                    print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                debug.log(f"[TicketPlus DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
                 matched_blocks = formated_area_list
             else:
                 # T019: Fallback disabled - strict mode (no selection, but continue to JavaScript)
-                if show_debug_message:
-                    print(f"[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                    print(f"[TicketPlus DATE SELECT] No date selected, will check if reload needed")
+                debug.log(f"[TicketPlus DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                debug.log(f"[TicketPlus DATE SELECT] No date selected, will check if reload needed")
                 # Don't return - let JavaScript handle the logic and return is_date_clicked=False
                 # JavaScript will return {success: false, strict_mode: true}
     else:
-        if show_debug_message:
-            print("date date-time-position is None or empty")
+        debug.log("date date-time-position is None or empty")
 
     # 執行點擊 - 完全使用 JavaScript 避免元素物件操作
     is_date_clicked = False
@@ -6829,58 +6434,51 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
             parsed_result = util.parse_nodriver_result(click_result)
 
             if isinstance(parsed_result, dict) and parsed_result.get('success'):
-                if show_debug_message:
-                    print(f"Date selection and click successful: {parsed_result.get('action', 'unknown')}")
-                    print(f"   目標文字: {parsed_result.get('targetText', '')}")
+                debug.log(f"Date selection and click successful: {parsed_result.get('action', 'unknown')}")
+                debug.log(f"   目標文字: {parsed_result.get('targetText', '')}")
                 is_date_clicked = True
             else:
-                if show_debug_message:
-                    print(f"Date selection and click failed: {parsed_result.get('error', 'unknown') if isinstance(parsed_result, dict) else str(parsed_result)}")
+                debug.log(f"Date selection and click failed: {parsed_result.get('error', 'unknown') if isinstance(parsed_result, dict) else str(parsed_result)}")
 
         except Exception as exc:
-            if show_debug_message:
-                print("JavaScript date selection click failed:", exc)
+            debug.log("JavaScript date selection click failed:", exc)
     else:
         # Provide accurate error message based on actual condition
-        if show_debug_message:
+        if debug.enabled:
             if not is_vue_ready:
-                print("[TicketPlus DATE] Vue.js not ready, waiting for page to load...")
+                debug.log("[TicketPlus DATE] Vue.js not ready, waiting for page to load...")
             elif not formated_area_list or len(formated_area_list) == 0:
-                print("[TicketPlus DATE] No available tickets (all sold out), waiting for refresh...")
+                debug.log("[TicketPlus DATE] No available tickets (all sold out), waiting for refresh...")
             else:
-                print("[TicketPlus DATE] Unknown condition, skip clicking")
+                debug.log("[TicketPlus DATE] Unknown condition, skip clicking")
 
         # Auto reload when no available tickets and auto_reload_coming_soon_page is enabled
         if auto_reload_coming_soon_page_enable and is_vue_ready and (not formated_area_list or len(formated_area_list) == 0):
             try:
                 reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
                 if reload_interval > 0:
-                    if show_debug_message:
-                        print(f"[TicketPlus DATE] Waiting {reload_interval}s before auto-reload...")
+                    debug.log(f"[TicketPlus DATE] Waiting {reload_interval}s before auto-reload...")
                     await asyncio.sleep(reload_interval)
                 else:
                     await asyncio.sleep(1.0)  # Default 1 second delay
 
                 await tab.reload()
-                if show_debug_message:
-                    print("[TicketPlus DATE] Page reloaded, waiting for content...")
+                debug.log("[TicketPlus DATE] Page reloaded, waiting for content...")
                 await asyncio.sleep(0.5)
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[TicketPlus DATE] Auto reload failed: {exc}")
+                debug.log(f"[TicketPlus DATE] Auto reload failed: {exc}")
 
     return is_date_clicked
 
 async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
     """TicketPlus 統一選擇器 - 語言無關的票種/票區選擇"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
     keyword_exclude = config_dict.get("keyword_exclude", "")
 
-    if show_debug_message:
-        print(f"Unified selector started - keyword: {area_keyword}, tickets: {ticket_number}")
+    debug.log(f"Unified selector started - keyword: {area_keyword}, tickets: {ticket_number}")
 
     is_selected = False
 
@@ -6891,8 +6489,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
         # 等待頁面載入
         if await sleep_with_pause_check(tab, 0.6, config_dict):
-            if show_debug_message:
-                print("Pause check interrupted")
+            debug.log("Pause check interrupted")
             return False
 
         # 解析排除關鍵字
@@ -6946,27 +6543,24 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                 # Log every 1 second to reduce noise
                 elapsed = time.time() - vue_wait_start
-                if show_debug_message and elapsed - last_log_time >= 1.0:
-                    print(f"[VUE WAIT] {elapsed:.1f}s - panels:{vue_check.get('panels', 0)}, countBtn:{vue_check.get('countBtn', 0)}, rowTickets:{vue_check.get('rowTickets', 0)}")
+                if elapsed - last_log_time >= 1.0:
+                    debug.log(f"[VUE WAIT] {elapsed:.1f}s - panels:{vue_check.get('panels', 0)}, countBtn:{vue_check.get('countBtn', 0)}, rowTickets:{vue_check.get('rowTickets', 0)}")
                     last_log_time = elapsed
 
                 if vue_check.get('hasElements', False):
                     vue_elements_found = True
-                    if show_debug_message:
-                        print(f"[VUE WAIT] Vue elements found after {elapsed:.1f}s")
+                    debug.log(f"[VUE WAIT] Vue elements found after {elapsed:.1f}s")
                     # Small delay to ensure Vue fully rendered
                     await asyncio.sleep(0.1)
                     break
 
             except Exception as e:
-                if show_debug_message:
-                    print(f"[VUE WAIT] Check error: {e}")
+                debug.log(f"[VUE WAIT] Check error: {e}")
 
             await asyncio.sleep(vue_check_interval)
 
         if not vue_elements_found:
-            if show_debug_message:
-                print(f"[VUE WAIT] Timeout after {max_vue_wait:.1f}s, Vue elements not found")
+            debug.log(f"[VUE WAIT] Timeout after {max_vue_wait:.1f}s, Vue elements not found")
             # Return early - no point continuing if no elements found
             return False
 
@@ -7140,23 +6734,20 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
         ''')
 
         # 增加詳細除錯日誌
-        if show_debug_message:
-            print(f"[DEBUG] Raw JS result type: {type(js_result)}")
-            print(f"[DEBUG] Raw JS result value: {js_result}")
+        debug.log(f"[DEBUG] Raw JS result type: {type(js_result)}")
+        debug.log(f"[DEBUG] Raw JS result value: {js_result}")
 
         result = util.parse_nodriver_result(js_result)
 
-        if show_debug_message:
-            print(f"[DEBUG] Parsed result type: {type(result)}")
-            print(f"[DEBUG] Parsed result value: {result}")
+        debug.log(f"[DEBUG] Parsed result type: {type(result)}")
+        debug.log(f"[DEBUG] Parsed result value: {result}")
 
         if isinstance(result, dict):
             is_selected = result.get('success', False) and result.get('clicked', False)
 
             # 處理需要重試的情況（展開面板後等待加號按鈕出現）
             if result.get('needRetry', False):
-                if show_debug_message:
-                    print(f"[RETRY] Panel expanded but plus button not found, retrying...")
+                debug.log(f"[RETRY] Panel expanded but plus button not found, retrying...")
 
                 # 等待面板展開動畫完成
                 await asyncio.sleep(0.3)
@@ -7185,38 +6776,35 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                     retry_parsed = util.parse_nodriver_result(retry_result)
                     if isinstance(retry_parsed, dict) and retry_parsed.get('clicked', False):
-                        if show_debug_message:
-                            print(f"[RETRY] Success on attempt {retry + 1}")
+                        debug.log(f"[RETRY] Success on attempt {retry + 1}")
                         is_selected = True
                         break
 
                     await asyncio.sleep(0.2)
 
-            if show_debug_message:
+            if debug.enabled:
                 if is_selected:
                     selected_type = result.get('type', '')
                     selected_name = result.get('selected', '')
-                    print(f"Selection successful - type: {selected_type}, item: {selected_name}")
+                    debug.log(f"Selection successful - type: {selected_type}, item: {selected_name}")
                 else:
-                    print(f"Selection failed: {result.get('message', 'unknown error')}")
+                    debug.log(f"Selection failed: {result.get('message', 'unknown error')}")
         else:
-            if show_debug_message:
-                print(f"Unified selector returned invalid result: {result}")
+            debug.log(f"Unified selector returned invalid result: {result}")
             is_selected = False
 
     except Exception as exc:
-        if show_debug_message:
+        if debug.enabled:
             import traceback
-            print(f"Unified selector exception error: {exc}")
-            print(f"Exception type: {type(exc).__name__}")
-            print(f"Traceback: {traceback.format_exc()}")
+            debug.log(f"Unified selector exception error: {exc}")
+            debug.log(f"Exception type: {type(exc).__name__}")
+            debug.log(f"Traceback: {traceback.format_exc()}")
         is_selected = False
 
     # Fallback logic: if selector fails, check page status to decide whether to continue
     if not is_selected:
         try:
-            if show_debug_message:
-                print("Checking page status to decide whether to continue...")
+            debug.log("Checking page status to decide whether to continue...")
 
             # Check if ticket count is set and next button is enabled
             page_status = await tab.evaluate('''
@@ -7247,26 +6835,22 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
             status = util.parse_nodriver_result(page_status)
             if isinstance(status, dict):
-                if show_debug_message:
-                    print(f"[STATUS] Page state: Has tickets={status.get('hasTickets', False)}, Button enabled={status.get('buttonEnabled', False)}")
+                debug.log(f"[STATUS] Page state: Has tickets={status.get('hasTickets', False)}, Button enabled={status.get('buttonEnabled', False)}")
 
                 if status.get('canContinue', False):
-                    if show_debug_message:
-                        print("Page status is good, considered selection successful")
+                    debug.log("Page status is good, considered selection successful")
                     is_selected = True
 
         except Exception as backup_exc:
-            if show_debug_message:
-                print(f"Backup check failed: {backup_exc}")
+            debug.log(f"Backup check failed: {backup_exc}")
 
     return is_selected
 
 async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
     """TicketPlus 統一下一步按鈕點擊器 - 不依賴 layout_style"""
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("Unified next button clicker started")
+    debug.log("Unified next button clicker started")
 
     try:
         # 先等待較長時間讓按鈕狀態更新（特別是展開面板後）
@@ -7352,20 +6936,18 @@ async def nodriver_ticketplus_click_next_button_unified(tab, config_dict):
         result = util.parse_nodriver_result(js_result)
         if isinstance(result, dict):
             success = result.get('success', False)
-            if show_debug_message:
+            if debug.enabled:
                 if success:
                     button_text = result.get('buttonText', '')
-                    print(f"[SUCCESS] Next button clicked successfully - Button text: {button_text}")
+                    debug.log(f"[SUCCESS] Next button clicked successfully - Button text: {button_text}")
                 else:
-                    print(f"[ERROR] Next button click failed: {result.get('message', 'Unknown error')}")
+                    debug.log(f"[ERROR] Next button click failed: {result.get('message', 'Unknown error')}")
             return success
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"Unified next button click error: {exc}")
+        debug.log(f"Unified next button click error: {exc}")
 
     return False
-
 
 # NOTE: nodriver_ticketplus_order_expansion_auto_select and _set_expansion_panel_tickets
 # removed - functionality merged into nodriver_ticketplus_unified_select (line 6887)
@@ -7376,7 +6958,7 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_finish_checkbox_click = False
 
     # 查找同意條款 checkbox
@@ -7400,8 +6982,7 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
                     is_checked_after = await checkbox.evaluate('el => el.checked')
                     if is_checked_after:
                         is_finish_checkbox_click = True
-                        if show_debug_message:
-                            print("successfully checked agreement checkbox")
+                        debug.log("successfully checked agreement checkbox")
                     else:
                         # 如果直接點擊失敗，嘗試 JavaScript 方式
                         if checkbox:  # 再次確認 checkbox 不是 None
@@ -7417,21 +6998,17 @@ async def nodriver_ticketplus_ticket_agree(tab, config_dict):
                             final_check = await checkbox.evaluate('el => el.checked')
                             if final_check:
                                 is_finish_checkbox_click = True
-                                if show_debug_message:
-                                    print("successfully checked agreement checkbox via JS")
+                                debug.log("successfully checked agreement checkbox via JS")
                 else:
                     is_finish_checkbox_click = True
-                    if show_debug_message:
-                        print("agreement checkbox already checked")
+                    debug.log("agreement checkbox already checked")
 
             except Exception as exc:
-                if show_debug_message:
-                    print("process checkbox fail:", exc)
+                debug.log("process checkbox fail:", exc)
                 continue
 
     except Exception as exc:
-        if show_debug_message:
-            print("find agreement checkbox fail:", exc)
+        debug.log("find agreement checkbox fail:", exc)
 
     return is_finish_checkbox_click
 
@@ -7543,7 +7120,7 @@ async def with_pause_check(task_func, config_dict, *args, **kwargs):
 
 async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False):
     """檢查排隊狀態 - 優化版，避免重複輸出"""
-    show_debug_message = config_dict["advanced"].get("verbose", False) or force_show_debug
+    debug = util.create_debug_logger(enabled=(config_dict.get("advanced", {}).get("verbose", False) or force_show_debug))
 
     try:
         result = await tab.evaluate('''
@@ -7596,7 +7173,7 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
         if isinstance(result, dict):
             is_in_queue = result.get('inQueue', False)
             # Only output detailed info on forced display or first detection
-            if show_debug_message and is_in_queue and force_show_debug:
+            if is_in_queue and force_show_debug:
                 print(f"[QUEUE] Queue status detected")
                 if result.get('hasOverlay'):
                     print("   Overlay scrim found (v-overlay__scrim)")
@@ -7616,8 +7193,7 @@ async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_de
         return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"Queue status check error: {exc}")
+        debug.log(f"Queue status check error: {exc}")
         return False
 
 async def nodriver_ticketplus_confirm(tab, config_dict):
@@ -7653,23 +7229,20 @@ async def nodriver_ticketplus_confirm(tab, config_dict):
 async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, ticketplus_dict):
     """TicketPlus 訂單處理 - 支援三種佈局偵測"""
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # 檢查是否已經成功選票，避免重複執行
     if ticketplus_dict.get("is_ticket_assigned", False):
-        if show_debug_message:
-            print("Ticket selection completed, skipping duplicate execution")
+        debug.log("Ticket selection completed, skipping duplicate execution")
         return ticketplus_dict
 
-    if show_debug_message:
-        print("=== TicketPlus Auto Layout Detection Started ===")
+    debug.log("=== TicketPlus Auto Layout Detection Started ===")
 
     # Wait for page load to complete, with sufficient delay for Vue.js initialization
     # Reduced to 0.8-1.5s since initial delay (1.5-2.0s) has already been applied at order page entry
     # This prevents excessive waiting while maintaining stability
     if await sleep_with_pause_check(tab, random.uniform(0.8, 1.5), config_dict):
-        if show_debug_message:
-            print("Paused during page wait")
+        debug.log("Paused during page wait")
         return ticketplus_dict
 
     # 偵測頁面佈局樣式（包含暫停檢查）
@@ -7677,25 +7250,23 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
 
     # 檢查是否在佈局偵測時暫停
     if layout_info and layout_info.get('paused'):
-        if show_debug_message:
-            print("Paused during layout detection")
+        debug.log("Paused during layout detection")
         return ticketplus_dict
 
     current_layout_style = layout_info.get('style', 0) if isinstance(layout_info, dict) else 0
 
-    if show_debug_message:
+    if debug.enabled:
         layout_names = {1: "展開面板型 (Page4)", 2: "座位選擇型 (Page2)", 3: "簡化型 (Page1/Page3)"}
         button_status = "啟用" if layout_info.get('button_enabled', False) else "禁用"
-        print(f"Detected layout style: {current_layout_style} - {layout_names.get(current_layout_style, 'Unknown')}")
-        print(f"Layout detection details: Button found={layout_info.get('found', False)}, Button status={button_status}")
+        debug.log(f"Detected layout style: {current_layout_style} - {layout_names.get(current_layout_style, 'Unknown')}")
+        debug.log(f"Layout detection details: Button found={layout_info.get('found', False)}, Button status={button_status}")
         if layout_info.get('debug_info'):
-            print(f"Layout detection debug: {layout_info.get('debug_info')}")
+            debug.log(f"Layout detection debug: {layout_info.get('debug_info')}")
 
     # 檢查下一步按鈕是否啟用
     is_button_enabled = await nodriver_ticketplus_check_next_button(tab)
 
-    if show_debug_message:
-        print(f"Next button status: {'Enabled' if is_button_enabled else 'Disabled'}")
+    debug.log(f"Next button status: {'Enabled' if is_button_enabled else 'Disabled'}")
 
     # 檢查是否需要選票
     is_price_assign_by_bot = False
@@ -7708,15 +7279,13 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     # Multiple keywords use OR logic (try each one sequentially - Early Return Pattern)
     keyword_array = util.parse_keyword_string_to_array(area_keyword_raw)
 
-    if show_debug_message:
-        print(f"[TicketPlus] Parsed keywords: {keyword_array}")
-        print(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
+    debug.log(f"[TicketPlus] Parsed keywords: {keyword_array}")
+    debug.log(f"[TicketPlus] Total keyword groups: {len(keyword_array)}")
 
     # 總是執行票數選擇（TicketPlus 按鈕可以在票數為 0 時啟用）
     need_select_ticket = True
 
-    if show_debug_message:
-        print(f"Ticket selection is always required (TicketPlus quirk)")
+    debug.log(f"Ticket selection is always required (TicketPlus quirk)")
 
     # Early Return Pattern: Try each keyword in order until one succeeds
     is_price_assign_by_bot = False
@@ -7725,8 +7294,7 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
     if len(keyword_array) > 0:
         # Try each keyword sequentially (OR logic)
         for keyword_index, area_keyword_item in enumerate(keyword_array):
-            if show_debug_message:
-                print(f"[TicketPlus AREA KEYWORD] Trying keyword #{keyword_index + 1}/{len(keyword_array)}: '{area_keyword_item}'")
+            debug.log(f"[TicketPlus AREA KEYWORD] Trying keyword #{keyword_index + 1}/{len(keyword_array)}: '{area_keyword_item}'")
 
             # Try this keyword
             is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, area_keyword_item)
@@ -7734,21 +7302,18 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
             if is_price_assign_by_bot:
                 # Success! Stop trying other keywords (Early Return)
                 keyword_matched = True
-                if show_debug_message:
-                    print(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}' ✓")
+                debug.log(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} matched: '{area_keyword_item}' [OK]")
                 break  # Early return - stop trying subsequent keywords
 
             # This keyword failed, try next one
-            if show_debug_message:
-                print(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} failed, trying next...")
+            debug.log(f"[TicketPlus AREA KEYWORD] Keyword #{keyword_index + 1} failed, trying next...")
 
         # All keywords failed
-        if not keyword_matched and show_debug_message:
-            print(f"[TicketPlus AREA KEYWORD] All {len(keyword_array)} keywords failed to match")
+        if not keyword_matched:
+            debug.log(f"[TicketPlus AREA KEYWORD] All {len(keyword_array)} keywords failed to match")
     else:
         # No keyword specified, use auto select mode
-        if show_debug_message:
-            print(f"[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode")
+        debug.log(f"[TicketPlus AREA KEYWORD] No keyword specified, using auto select mode")
         is_price_assign_by_bot = await nodriver_ticketplus_unified_select(tab, config_dict, "")
 
     is_need_refresh = not is_price_assign_by_bot  # 如果選擇失敗則需要刷新
@@ -7759,16 +7324,14 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
         if await check_and_handle_pause(config_dict):
             return ticketplus_dict
 
-        if show_debug_message:
-            print("Ticket selection successful, processing discount code and submit")
+        debug.log("Ticket selection successful, processing discount code and submit")
 
         # 處理優惠碼
         is_answer_sent, ticketplus_dict["fail_list"], is_question_popup = await nodriver_ticketplus_order_exclusive_code(tab, config_dict, ticketplus_dict["fail_list"])
 
         # 提交表單（包含暫停檢查）
         if await sleep_with_pause_check(tab, 0.3, config_dict):
-            if show_debug_message:
-                print("Paused before form submission")
+            debug.log("Paused before form submission")
             return ticketplus_dict
         await nodriver_ticketplus_ticket_agree(tab, config_dict)
 
@@ -7784,8 +7347,7 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
             # 檢查是否進入排隊狀態
             is_in_queue = await nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False)
             if is_in_queue:
-                if show_debug_message:
-                    print("Entered queue monitoring (check every 5 seconds, display only on status change)")
+                debug.log("Entered queue monitoring (check every 5 seconds, display only on status change)")
 
                 # 進入排隊監控循環，每5秒檢查一次，無時間上限
                 last_url = ""
@@ -7800,14 +7362,13 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
 
                         # 檢查是否進入確認頁面，如果是則跳出排隊監控
                         if '/confirm/' in current_url.lower() or '/confirmseat/' in current_url.lower():
-                            if show_debug_message:
-                                print("Detected entry to confirmation page, exiting queue monitoring")
+                            debug.log("Detected entry to confirmation page, exiting queue monitoring")
                             # 不自動建立暫停檔案，讓程式繼續處理確認頁面
                             break
 
                         # 僅在 URL 變化時顯示狀態（移除重複的排隊檢查訊息）
-                        if show_debug_message and current_url != last_url:
-                            print(f"Page status update - URL: {current_url}")
+                        if current_url != last_url:
+                            debug.log(f"Page status update - URL: {current_url}")
                             last_url = current_url
 
                         # 檢查是否已經跳出排隊狀態（不顯示重複的偵測訊息）
@@ -7816,49 +7377,40 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser, tick
                         if not is_still_in_queue:
                             # 檢查是否進入確認頁面
                             if '/confirm/' in current_url.lower() or '/confirmseat/' in current_url.lower():
-                                if show_debug_message:
-                                    print("Queue ended, entered confirmation page")
+                                debug.log("Queue ended, entered confirmation page")
                                 # 不自動建立暫停檔案，讓程式繼續處理確認頁面
                                 break
                             else:
-                                if show_debug_message:
-                                    print("[QUEUE END] Queue ended, continuing page processing")
+                                debug.log("[QUEUE END] Queue ended, continuing page processing")
                                 break
 
                         # Random wait 5-10 seconds before next check (prevent fixed frequency detection)
                         await tab.sleep(random.uniform(5.0, 10.0))
 
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"Queue monitoring error: {exc}")
+                        debug.log(f"Queue monitoring error: {exc}")
                         break
 
                 # Queue monitoring completed (exited via other conditions)
 
-        if show_debug_message:
-            print(f"Form submission: {'Success' if is_form_submitted else 'Failed'}")
+        debug.log(f"Form submission: {'Success' if is_form_submitted else 'Failed'}")
     else:
-        if show_debug_message:
-            print("Ticket selection failed, cannot continue")
+        debug.log("Ticket selection failed, cannot continue")
 
         # 票選擇失敗時自動刷新頁面（等待票區有票）
         # interval=0: 立即刷新, interval>0: 等待N秒後刷新
         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
         if auto_reload_interval >= 0:
             if auto_reload_interval > 0:
-                if show_debug_message:
-                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before reload...")
+                debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before reload...")
                 await asyncio.sleep(auto_reload_interval)
-            if show_debug_message:
-                print("[AUTO RELOAD] Reloading page...")
+            debug.log("[AUTO RELOAD] Reloading page...")
             try:
                 await tab.reload()
             except Exception as reload_exc:
-                if show_debug_message:
-                    print(f"[AUTO RELOAD] Reload failed: {reload_exc}")
+                debug.log(f"[AUTO RELOAD] Reload failed: {reload_exc}")
 
-    if show_debug_message:
-        print("=== TicketPlus Simplified Booking Ended ===")
+    debug.log("=== TicketPlus Simplified Booking Ended ===")
 
     return ticketplus_dict
 
@@ -7963,12 +7515,9 @@ async def nodriver_ticketplus_check_next_button(tab):
     except Exception as exc:
         return False
 
-
-
-
 async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
     """處理活動專屬代碼（折價券/優惠序號）"""
-    show_debug_message = util.get_debug_mode(config_dict)
+    debug = util.create_debug_logger(config_dict)
 
     # 檢查暫停狀態
     if await check_and_handle_pause(config_dict):
@@ -7979,12 +7528,10 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
 
     # 如果沒有設定折價券代碼，直接跳過
     if not discount_code:
-        if show_debug_message:
-            print("[DISCOUNT CODE] No discount code configured, skipping")
+        debug.log("[DISCOUNT CODE] No discount code configured, skipping")
         return False, fail_list, False
 
-    if show_debug_message:
-        print(f"[DISCOUNT CODE] Attempting to fill discount code: {discount_code}")
+    debug.log(f"[DISCOUNT CODE] Attempting to fill discount code: {discount_code}")
 
     try:
         # 轉義 JavaScript 字串，避免注入攻擊
@@ -8031,23 +7578,19 @@ async def nodriver_ticketplus_order_exclusive_code(tab, config_dict, fail_list):
                 filled_count = result.get('filledCount', 0)
             else:
                 # 如果返回非 dict，記錄並假設成功
-                if show_debug_message:
-                    print(f"[DISCOUNT CODE] Unexpected result type: {type(result)}, value: {result}")
+                debug.log(f"[DISCOUNT CODE] Unexpected result type: {type(result)}, value: {result}")
                 success = True
                 filled_count = 1
 
             if success and filled_count > 0:
-                if show_debug_message:
-                    print(f"[DISCOUNT CODE] Successfully filled {filled_count} discount code field(s)")
+                debug.log(f"[DISCOUNT CODE] Successfully filled {filled_count} discount code field(s)")
                 return True, fail_list, False
 
-        if show_debug_message:
-            print("[DISCOUNT CODE] No matching discount code fields found on page")
+        debug.log("[DISCOUNT CODE] No matching discount code fields found on page")
         return False, fail_list, False
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[DISCOUNT CODE] Error filling discount code: {str(e)}")
+        debug.log(f"[DISCOUNT CODE] Error filling discount code: {str(e)}")
         return False, fail_list, False
 
 async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
@@ -8116,7 +7659,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_event_page:
             ticketplus_dict["start_time"] = time.time()
-            show_debug_message = config_dict["advanced"].get("verbose", False)
+            debug = util.create_debug_logger(config_dict)
 
             # Unified dynamic detection: longer wait for first visit, shorter for reload
             is_first_visit = not ticketplus_dict.get("order_page_visited", False)
@@ -8128,14 +7671,13 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 max_wait = 1000  # Reload: max 1.0s (warm start, faster)
                 fallback_delay = 0.3  # Shorter fallback for reload
 
-            if show_debug_message:
+            if debug.enabled:
                 visit_type = "First visit" if is_first_visit else "Reload"
-                print(f"[VUE INIT] {visit_type}, dynamic detection (max {max_wait}ms)...")
+                debug.log(f"[VUE INIT] {visit_type}, dynamic detection (max {max_wait}ms)...")
 
             is_ready = await nodriver_ticketplus_wait_for_vue_ready(tab, max_wait_ms=max_wait)
 
-            if show_debug_message:
-                print(f"[VUE INIT] Vue.js ready: {is_ready}")
+            debug.log(f"[VUE INIT] Vue.js ready: {is_ready}")
 
             # Add fallback delay if detection failed (timed out)
             if not is_ready:
@@ -8200,24 +7742,21 @@ async def nodriver_ibon_login(tab, config_dict, driver):
     """
     專門的 ibon 登入函數，整合 cookie 處理、頁面重新載入和登入狀態驗證
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("=== ibon Auto-Login Started ===")
+    debug.log("=== ibon Auto-Login Started ===")
 
     # 檢查是否有 ibon cookie 設定
     ibonqware = config_dict["accounts"]["ibonqware"]
     if len(ibonqware) <= 1:
-        if show_debug_message:
-            print("No ibon cookie configured, skipping auto-login")
+        debug.log("No ibon cookie configured, skipping auto-login")
         return {'success': False, 'reason': 'no_cookie_configured'}
 
-    if show_debug_message:
-        print(f"Setting ibon cookie (NoDriver) with length: {len(ibonqware)}")
-        print(f"Cookie contains mem_id: {'mem_id=' in ibonqware}")
-        print(f"Cookie contains mem_email: {'mem_email=' in ibonqware}")
-        print(f"Cookie contains huiwanTK: {'huiwanTK=' in ibonqware}")
-        print(f"Cookie contains ibonqwareverify: {'ibonqwareverify=' in ibonqware}")
+    debug.log(f"Setting ibon cookie (NoDriver) with length: {len(ibonqware)}")
+    debug.log(f"Cookie contains mem_id: {'mem_id=' in ibonqware}")
+    debug.log(f"Cookie contains mem_email: {'mem_email=' in ibonqware}")
+    debug.log(f"Cookie contains huiwanTK: {'huiwanTK=' in ibonqware}")
+    debug.log(f"Cookie contains ibonqwareverify: {'ibonqwareverify=' in ibonqware}")
 
     try:
         from nodriver import cdp
@@ -8232,23 +7771,20 @@ async def nodriver_ibon_login(tab, config_dict, driver):
             http_only=True
         ))
 
-        if show_debug_message:
-            print(f"CDP setCookie result: {cookie_result}")
-            print("ibon cookie set successfully (NoDriver)")
+        debug.log(f"CDP setCookie result: {cookie_result}")
+        debug.log("ibon cookie set successfully (NoDriver)")
 
         # 驗證 cookie 是否設定成功
         updated_cookies = await driver.cookies.get_all()
         ibon_cookies = [c for c in updated_cookies if c.name == 'ibonqware']
         if not ibon_cookies:
-            if show_debug_message:
-                print("Warning: ibon cookie not found after setting")
+            debug.log("Warning: ibon cookie not found after setting")
             return {'success': False, 'reason': 'cookie_not_set'}
 
-        if show_debug_message:
-            print(f"Verified: ibon cookie exists with value length: {len(ibon_cookies[0].value)}")
-            print(f"Cookie domain: {ibon_cookies[0].domain}")
-            print("[SUCCESS] ibon cookie set successfully")
-            print("[INFO] Cookie will be applied when navigating to event page")
+        debug.log(f"Verified: ibon cookie exists with value length: {len(ibon_cookies[0].value)}")
+        debug.log(f"Cookie domain: {ibon_cookies[0].domain}")
+        debug.log("[SUCCESS] ibon cookie set successfully")
+        debug.log("[INFO] Cookie will be applied when navigating to event page")
 
         # No page reload needed - cookie is set on homepage,
         # and navigation to event page will automatically apply the cookie
@@ -8256,12 +7792,12 @@ async def nodriver_ibon_login(tab, config_dict, driver):
 
     except Exception as cookie_error:
         print(f"Failed to set ibon cookie (NoDriver): {cookie_error}")
-        if show_debug_message:
+        if debug.enabled:
             import traceback
             traceback.print_exc()
         return {'success': False, 'reason': 'exception', 'error': str(cookie_error)}
 
-async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
+async def nodriver_fami_login(tab, config_dict):
     """
     FamiTicket 帳號密碼登入
 
@@ -8271,30 +7807,25 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
     Args:
         tab: NoDriver tab 物件
         config_dict: 設定字典
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 登入成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
     # 讀取帳號密碼（優先使用明碼，若為空則解密）
     fami_account = config_dict["accounts"]["fami_account"].strip()
     fami_password = config_dict["accounts"]["fami_password"].strip()
 
     if len(fami_account) < 4:
-        if show_debug_message:
-            print("[FAMI LOGIN] Account is empty or too short")
+        debug.log("[FAMI LOGIN] Account is empty or too short")
         return False
 
     if len(fami_password) == 0:
-        if show_debug_message:
-            print("[FAMI LOGIN] Password is empty")
+        debug.log("[FAMI LOGIN] Password is empty")
         return False
 
-    if show_debug_message:
-        print(f"[FAMI LOGIN] Attempting login with account: {fami_account[:3]}***")
+    debug.log(f"[FAMI LOGIN] Attempting login with account: {fami_account[:3]}***")
 
     is_login_success = False
 
@@ -8316,15 +7847,12 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
                 await account_elem.click()
                 await asyncio.sleep(random.uniform(0.1, 0.2))
                 await account_elem.send_keys(fami_account)
-                if show_debug_message:
-                    print("[FAMI LOGIN] Account filled")
+                debug.log("[FAMI LOGIN] Account filled")
                 await asyncio.sleep(random.uniform(0.3, 0.5))
         elif inputed_text == fami_account:
-            if show_debug_message:
-                print("[FAMI LOGIN] Account already correct")
+            debug.log("[FAMI LOGIN] Account already correct")
         else:
-            if show_debug_message:
-                print(f"[FAMI LOGIN] Account has different value: {inputed_text[:10]}...")
+            debug.log(f"[FAMI LOGIN] Account has different value: {inputed_text[:10]}...")
 
         # 檢查密碼欄位是否已有值
         inputed_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
@@ -8335,24 +7863,20 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
                 await password_elem.click()
                 await asyncio.sleep(random.uniform(0.1, 0.2))
                 await password_elem.send_keys(fami_password)
-                if show_debug_message:
-                    print(f"[FAMI LOGIN] Password filled (length: {len(fami_password)})")
+                debug.log(f"[FAMI LOGIN] Password filled (length: {len(fami_password)})")
                 await asyncio.sleep(random.uniform(0.3, 0.5))
 
                 # Debug: 檢查實際輸入的值
                 actual_pwd = await tab.evaluate('document.querySelector("#usr_pwd").value')
-                if show_debug_message:
-                    print(f"[FAMI LOGIN] Actual password length in field: {len(actual_pwd) if actual_pwd else 0}")
+                debug.log(f"[FAMI LOGIN] Actual password length in field: {len(actual_pwd) if actual_pwd else 0}")
         else:
-            if show_debug_message:
-                print("[FAMI LOGIN] Password already filled")
+            debug.log("[FAMI LOGIN] Password already filled")
 
         # 點擊登入按鈕
         login_btn = await tab.query_selector('button#btnLogin')
         if login_btn:
             await login_btn.click()
-            if show_debug_message:
-                print("[FAMI LOGIN] Login button clicked, waiting for URL change...")
+            debug.log("[FAMI LOGIN] Login button clicked, waiting for URL change...")
 
             # 等待 URL 變化（最多 10 秒）
             for _ in range(20):
@@ -8360,21 +7884,17 @@ async def nodriver_fami_login(tab, config_dict, show_debug_message=True):
                 current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
                 if current_url != original_url:
                     is_login_success = True
-                    if show_debug_message:
-                        print(f"[FAMI LOGIN] URL changed to: {current_url[:50]}...")
+                    debug.log(f"[FAMI LOGIN] URL changed to: {current_url[:50]}...")
                     break
             else:
-                if show_debug_message:
-                    print("[FAMI LOGIN] URL did not change after 10 seconds")
+                debug.log("[FAMI LOGIN] URL did not change after 10 seconds")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI LOGIN] Error: {str(exc)}")
+        debug.log(f"[FAMI LOGIN] Error: {str(exc)}")
 
     return is_login_success
 
-
-async def nodriver_fami_activity(tab, config_dict, show_debug_message=True):
+async def nodriver_fami_activity(tab, config_dict):
     """
     FamiTicket 活動頁面處理 - 點擊「購買」按鈕
 
@@ -8384,16 +7904,13 @@ async def nodriver_fami_activity(tab, config_dict, show_debug_message=True):
     Args:
         tab: NoDriver tab 物件
         config_dict: 設定字典
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 點擊成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[FAMI ACTIVITY] Looking for buy button (#buyWaiting)")
+    debug.log("[FAMI ACTIVITY] Looking for buy button (#buyWaiting)")
 
     is_button_clicked = False
 
@@ -8412,28 +7929,23 @@ async def nodriver_fami_activity(tab, config_dict, show_debug_message=True):
 
         if click_result:
             is_button_clicked = True
-            if show_debug_message:
-                print("[FAMI ACTIVITY] Buy button clicked via JS")
+            debug.log("[FAMI ACTIVITY] Buy button clicked via JS")
             # 等待頁面轉跳到 Sales 頁面
             for _ in range(10):
                 await asyncio.sleep(0.5)
                 current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
                 if '/Sales/' in current_url:
-                    if show_debug_message:
-                        print("[FAMI ACTIVITY] Redirected to Sales page")
+                    debug.log("[FAMI ACTIVITY] Redirected to Sales page")
                     break
         else:
-            if show_debug_message:
-                print("[FAMI ACTIVITY] Buy button not found or disabled")
+            debug.log("[FAMI ACTIVITY] Buy button not found or disabled")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI ACTIVITY] Error: {str(exc)}")
+        debug.log(f"[FAMI ACTIVITY] Error: {str(exc)}")
 
     return is_button_clicked
 
-
-async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_message=True):
+async def nodriver_fami_verify(tab, config_dict, fail_list=None):
     """
     FamiTicket 驗證問題處理
 
@@ -8443,7 +7955,6 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
         tab: NoDriver tab 物件
         config_dict: 設定字典
         fail_list: 錯誤答案清單
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         tuple[bool, list]: (成功與否, 更新後的 fail_list)
@@ -8451,8 +7962,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
     if fail_list is None:
         fail_list = []
 
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
     is_verify_success = False
 
@@ -8465,8 +7975,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
         ''')
 
         if has_verify_input:
-            if show_debug_message:
-                print("[FAMI VERIFY] Verification input found (#verifyPrefAnswer)")
+            debug.log("[FAMI VERIFY] Verification input found (#verifyPrefAnswer)")
 
             # 取得答案
             answer_string = config_dict["area_auto_select"].get("area_answer", "").strip()
@@ -8478,8 +7987,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
 
             # 自動猜測
             if auto_guess_enable and len(answer_list) == 0:
-                if show_debug_message:
-                    print("[FAMI VERIFY] Auto guess enabled but no implementation yet")
+                debug.log("[FAMI VERIFY] Auto guess enabled but no implementation yet")
                 # TODO: 實作 guess_tixcraft_question() 整合
 
             # 選擇未失敗的答案
@@ -8490,8 +7998,7 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
                     break
 
             if inferred_answer:
-                if show_debug_message:
-                    print(f"[FAMI VERIFY] Trying answer: {inferred_answer}")
+                debug.log(f"[FAMI VERIFY] Trying answer: {inferred_answer}")
 
                 # 使用 evaluate 填寫答案並提交
                 await tab.evaluate(f'''
@@ -8521,27 +8028,22 @@ async def nodriver_fami_verify(tab, config_dict, fail_list=None, show_debug_mess
                 ''')
                 if still_on_verify:
                     fail_list.append(inferred_answer)
-                    if show_debug_message:
-                        print(f"[FAMI VERIFY] Answer failed, added to fail_list: {fail_list}")
+                    debug.log(f"[FAMI VERIFY] Answer failed, added to fail_list: {fail_list}")
                 else:
                     is_verify_success = True
-                    if show_debug_message:
-                        print("[FAMI VERIFY] Verification successful")
+                    debug.log("[FAMI VERIFY] Verification successful")
             else:
-                if show_debug_message:
-                    print("[FAMI VERIFY] No valid answer available")
+                debug.log("[FAMI VERIFY] No valid answer available")
         else:
             # 無驗證輸入框，視為成功（不需要驗證）
             is_verify_success = True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI VERIFY] Error: {str(exc)}")
+        debug.log(f"[FAMI VERIFY] Error: {str(exc)}")
 
     return is_verify_success, fail_list
 
-
-async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, show_debug_message=True):
+async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url):
     """
     FamiTicket 日期自動選擇
 
@@ -8552,13 +8054,11 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
         tab: NoDriver tab 物件
         config_dict: 設定字典
         last_activity_url: 活動頁面 URL（用於自動補票）
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 選擇成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
     # 讀取設定
     auto_select_mode = config_dict["date_auto_select"].get("mode", "from_top_to_bottom")
@@ -8567,10 +8067,9 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"].get("auto_reload_coming_soon_page", False)
     auto_reload_page_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
 
-    if show_debug_message:
-        print(f"[FAMI DATE] date_keyword: {date_keyword}")
-        print(f"[FAMI DATE] auto_select_mode: {auto_select_mode}")
-        print(f"[FAMI DATE] date_auto_fallback: {date_auto_fallback}")
+    debug.log(f"[FAMI DATE] date_keyword: {date_keyword}")
+    debug.log(f"[FAMI DATE] auto_select_mode: {auto_select_mode}")
+    debug.log(f"[FAMI DATE] date_auto_fallback: {date_auto_fallback}")
 
     is_date_selected = False
     matched_rows = []
@@ -8604,8 +8103,7 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
             elif isinstance(formated_area_list_result, list):
                 formated_area_list = formated_area_list_result
 
-        if show_debug_message:
-            print(f"[FAMI DATE] Found {len(formated_area_list)} date rows with buy button")
+        debug.log(f"[FAMI DATE] Found {len(formated_area_list)} date rows with buy button")
 
         # 關鍵字匹配
         if len(formated_area_list) > 0:
@@ -8625,12 +8123,10 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
                         formatted_keyword = util.format_keyword_string(keyword)
                         if formatted_keyword in row_text:
                             matched_rows.append(item)
-                            if show_debug_message:
-                                print(f"[FAMI DATE KEYWORD] Matched keyword '{keyword}' in: {item_text[:50]}...")
+                            debug.log(f"[FAMI DATE KEYWORD] Matched keyword '{keyword}' in: {item_text[:50]}...")
                             break
 
-                if show_debug_message:
-                    print(f"[FAMI DATE] Matched dates: {len(matched_rows)}")
+                debug.log(f"[FAMI DATE] Matched dates: {len(matched_rows)}")
 
         # Feature 003: 條件回退機制
         if len(matched_rows) == 0 and len(formated_area_list) > 0:
@@ -8667,14 +8163,11 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
 
                 if click_result:
                     is_date_selected = True
-                    if show_debug_message:
-                        print(f"[FAMI DATE SELECT] Selected date: {target_text[:50]}...")
+                    debug.log(f"[FAMI DATE SELECT] Selected date: {target_text[:50]}...")
                 else:
-                    if show_debug_message:
-                        print("[FAMI DATE] Button not found in target row")
+                    debug.log("[FAMI DATE] Button not found in target row")
             except Exception as click_exc:
-                if show_debug_message:
-                    print(f"[FAMI DATE] Click error: {str(click_exc)}")
+                debug.log(f"[FAMI DATE] Click error: {str(click_exc)}")
 
         # 自動補票邏輯（日期列表為空時）
         if len(formated_area_list) == 0:
@@ -8692,14 +8185,12 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
 
             # 檢查是否為票種選擇頁面
             if page_type == 'ticket':
-                if show_debug_message:
-                    print("[FAMI DATE] No date rows, but found ticket selection page - delegating")
-                return await nodriver_fami_ticket_select(tab, config_dict, show_debug_message)
+                debug.log("[FAMI DATE] No date rows, but found ticket selection page - delegating")
+                return await nodriver_fami_ticket_select(tab, config_dict)
 
             # 檢查是否為購物車頁面
             if page_type == 'cart':
-                if show_debug_message:
-                    print("[FAMI DATE] No date rows, but found cart page - clicking next")
+                debug.log("[FAMI DATE] No date rows, but found cart page - clicking next")
                 next_result = await tab.evaluate('''
                     (function() {
                         var btn = document.querySelector('.purchase-detail__next');
@@ -8714,8 +8205,7 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
 
             # 確認是日期選擇頁面但無可用日期，才觸發 auto-reload
             if auto_reload_coming_soon_page_enable:
-                if show_debug_message:
-                    print("[FAMI DATE] Date list is empty, triggering auto-reload")
+                debug.log("[FAMI DATE] Date list is empty, triggering auto-reload")
 
                 if auto_reload_page_interval > 0:
                     await asyncio.sleep(auto_reload_page_interval)
@@ -8726,13 +8216,11 @@ async def nodriver_fami_date_auto_select(tab, config_dict, last_activity_url, sh
                     await asyncio.sleep(0.3)
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI DATE] Error: {str(exc)}")
+        debug.log(f"[FAMI DATE] Error: {str(exc)}")
 
     return is_date_selected
 
-
-async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, show_debug_message=True):
+async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item):
     """
     FamiTicket 區域自動選擇
 
@@ -8743,21 +8231,18 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
         tab: NoDriver tab 物件
         config_dict: 設定字典
         area_keyword_item: 區域關鍵字（空格分隔 = AND 邏輯）
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         tuple[bool, bool]: (is_need_refresh, is_area_selected)
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
     auto_select_mode = config_dict["area_auto_select"].get("mode", "from_top_to_bottom")
     area_auto_fallback = config_dict.get('area_auto_fallback', False)  # Feature 003: 條件回退
 
-    if show_debug_message:
-        print(f"[FAMI AREA] area_keyword_item: {area_keyword_item}")
-        print(f"[FAMI AREA] auto_select_mode: {auto_select_mode}")
-        print(f"[FAMI AREA] area_auto_fallback: {area_auto_fallback}")
+    debug.log(f"[FAMI AREA] area_keyword_item: {area_keyword_item}")
+    debug.log(f"[FAMI AREA] auto_select_mode: {auto_select_mode}")
+    debug.log(f"[FAMI AREA] area_auto_fallback: {area_auto_fallback}")
 
     is_area_selected = False
     is_need_refresh = False
@@ -8799,8 +8284,7 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
             elif isinstance(formated_area_list_result, list):
                 formated_area_list = formated_area_list_result
 
-        if show_debug_message:
-            print(f"[FAMI AREA] Found {len(formated_area_list)} available areas")
+        debug.log(f"[FAMI AREA] Found {len(formated_area_list)} available areas")
 
         # 關鍵字匹配（AND 邏輯）
         if len(formated_area_list) > 0:
@@ -8824,14 +8308,12 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
 
                     if is_match:
                         matched_areas.append(item)
-                        if show_debug_message:
-                            print(f"[FAMI AREA KEYWORD] AND logic matched: {keywords} in: {item_text[:50]}...")
+                        debug.log(f"[FAMI AREA KEYWORD] AND logic matched: {keywords} in: {item_text[:50]}...")
 
                         if auto_select_mode == "from_top_to_bottom":
                             break  # 找到第一個匹配就停止
 
-                if show_debug_message:
-                    print(f"[FAMI AREA] Matched areas: {len(matched_areas)}")
+                debug.log(f"[FAMI AREA] Matched areas: {len(matched_areas)}")
 
         # Feature 003: 條件回退機制
         if len(matched_areas) == 0 and len(formated_area_list) > 0:
@@ -8865,28 +8347,22 @@ async def nodriver_fami_area_auto_select(tab, config_dict, area_keyword_item, sh
 
                 if click_result:
                     is_area_selected = True
-                    if show_debug_message:
-                        print(f"[FAMI AREA SELECT] Selected area: {target_text[:50]}...")
+                    debug.log(f"[FAMI AREA SELECT] Selected area: {target_text[:50]}...")
                 else:
-                    if show_debug_message:
-                        print("[FAMI AREA] Area element not found")
+                    debug.log("[FAMI AREA] Area element not found")
             except Exception as click_exc:
-                if show_debug_message:
-                    print(f"[FAMI AREA] Click error: {str(click_exc)}")
+                debug.log(f"[FAMI AREA] Click error: {str(click_exc)}")
 
         if len(matched_areas) == 0:
             is_need_refresh = True
-            if show_debug_message:
-                print("[FAMI AREA] No matched areas, need refresh")
+            debug.log("[FAMI AREA] No matched areas, need refresh")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI AREA] Error: {str(exc)}")
+        debug.log(f"[FAMI AREA] Error: {str(exc)}")
 
     return is_need_refresh, is_area_selected
 
-
-async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message=True):
+async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url):
     """
     FamiTicket 日期/區域選擇協調器
 
@@ -8897,16 +8373,13 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
         tab: NoDriver tab 物件
         config_dict: 設定字典
         last_activity_url: 活動頁面 URL
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 操作成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[FAMI DATE TO AREA] Starting date to area flow")
+    debug.log("[FAMI DATE TO AREA] Starting date to area flow")
 
     # 讀取區域關鍵字
     area_keyword = config_dict["area_auto_select"].get("area_keyword", "").strip()
@@ -8938,23 +8411,21 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
     if len(keyword_groups) == 0:
         keyword_groups.append("")
 
-    if show_debug_message:
-        print(f"[FAMI DATE TO AREA] ========================================")
-        print(f"[FAMI DATE TO AREA] Raw area_keyword: '{area_keyword}'")
-        print(f"[FAMI DATE TO AREA] Raw area_keyword_and: {area_keyword_and}")
-        print(f"[FAMI DATE TO AREA] Parsed keyword_groups: {keyword_groups}")
-        print(f"[FAMI DATE TO AREA] Total groups to try: {len(keyword_groups)}")
-        print(f"[FAMI DATE TO AREA] ========================================")
+    debug.log(f"[FAMI DATE TO AREA] ========================================")
+    debug.log(f"[FAMI DATE TO AREA] Raw area_keyword: '{area_keyword}'")
+    debug.log(f"[FAMI DATE TO AREA] Raw area_keyword_and: {area_keyword_and}")
+    debug.log(f"[FAMI DATE TO AREA] Parsed keyword_groups: {keyword_groups}")
+    debug.log(f"[FAMI DATE TO AREA] Total groups to try: {len(keyword_groups)}")
+    debug.log(f"[FAMI DATE TO AREA] ========================================")
 
     is_area_selected = False
 
     # 嘗試每組關鍵字
     for keyword_item in keyword_groups:
-        if show_debug_message:
-            print(f"[FAMI DATE TO AREA] Trying keyword group: '{keyword_item}'")
+        debug.log(f"[FAMI DATE TO AREA] Trying keyword group: '{keyword_item}'")
 
         is_need_refresh, is_area_selected = await nodriver_fami_area_auto_select(
-            tab, config_dict, keyword_item, show_debug_message
+            tab, config_dict, keyword_item
         )
 
         if is_area_selected:
@@ -8962,8 +8433,7 @@ async def nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_d
 
     return is_area_selected
 
-
-async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True):
+async def nodriver_fami_ticket_select(tab, config_dict):
     """
     FamiTicket 票種選擇頁面處理
 
@@ -8976,16 +8446,13 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
     Args:
         tab: NoDriver tab 物件
         config_dict: 設定字典
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 操作成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[FAMI TICKET] Processing ticket selection page")
+    debug.log("[FAMI TICKET] Processing ticket selection page")
 
     result = False
 
@@ -8993,16 +8460,13 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
         # 1. 檢查是否有票種選擇頁面的特徵元素（使用 evaluate 避免 CBOR 問題）
         title_text = await tab.evaluate('document.querySelector(".ticket__title")?.innerText || ""')
         if not title_text:
-            if show_debug_message:
-                print("[FAMI TICKET] Not a ticket selection page (no .ticket__title)")
+            debug.log("[FAMI TICKET] Not a ticket selection page (no .ticket__title)")
             return False
-        if show_debug_message:
-            print(f"[FAMI TICKET] Found ticket: {title_text}")
+        debug.log(f"[FAMI TICKET] Found ticket: {title_text}")
 
         # 2. 選擇票券數量
         ticket_number = config_dict.get("ticket_number", 2)
-        if show_debug_message:
-            print(f"[FAMI TICKET] Selecting ticket number: {ticket_number}")
+        debug.log(f"[FAMI TICKET] Selecting ticket number: {ticket_number}")
 
         # 選擇下拉選單的值
         select_result = await tab.evaluate(f'''
@@ -9030,8 +8494,8 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
             }})()
         ''')
 
-        if select_result and show_debug_message:
-            print("[FAMI TICKET] Ticket number selected")
+        if select_result:
+            debug.log("[FAMI TICKET] Ticket number selected")
 
         await asyncio.sleep(0.3)
 
@@ -9050,8 +8514,7 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
             })()
         ''')
 
-        if show_debug_message:
-            print(f"[FAMI TICKET] Checked {checkbox_result} checkboxes")
+        debug.log(f"[FAMI TICKET] Checked {checkbox_result} checkboxes")
 
         await asyncio.sleep(0.3)
 
@@ -9068,8 +8531,7 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
         ''')
 
         if submit_result:
-            if show_debug_message:
-                print("[FAMI TICKET] Submit button clicked")
+            debug.log("[FAMI TICKET] Submit button clicked")
             result = True
 
             # 等待頁面轉跳
@@ -9077,21 +8539,17 @@ async def nodriver_fami_ticket_select(tab, config_dict, show_debug_message=True)
                 await asyncio.sleep(0.5)
                 current_url = tab.url if hasattr(tab, 'url') else str(tab.target.url)
                 if '/Order/' in current_url or '/Checkout/' in current_url:
-                    if show_debug_message:
-                        print("[FAMI TICKET] Redirected to order page")
+                    debug.log("[FAMI TICKET] Redirected to order page")
                     break
         else:
-            if show_debug_message:
-                print("[FAMI TICKET] Submit button not available or disabled")
+            debug.log("[FAMI TICKET] Submit button not available or disabled")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMI TICKET] Error: {str(exc)}")
+        debug.log(f"[FAMI TICKET] Error: {str(exc)}")
 
     return result
 
-
-async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, show_debug_message=True):
+async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url):
     """
     FamiTicket 首頁入口處理
 
@@ -9101,16 +8559,13 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
         tab: NoDriver tab 物件
         config_dict: 設定字典
         last_activity_url: 活動頁面 URL
-        show_debug_message: 是否顯示除錯訊息
 
     Returns:
         bool: 操作成功返回 True，失敗返回 False
     """
-    if config_dict["advanced"].get("verbose", False):
-        show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[FAMI HOME] Processing home/sales page")
+    debug.log("[FAMI HOME] Processing home/sales page")
 
     # 使用 evaluate 檢查頁面類型，避免大型 DOM 的 CBOR 序列化問題
     page_type = await tab.evaluate('''
@@ -9124,8 +8579,8 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
     ''')
 
     # Debug: 輸出頁面類型判斷結果
-    if show_debug_message:
-        print(f"[FAMI HOME DEBUG] Page type detected: '{page_type}'")
+    if debug.enabled:
+        debug.log(f"[FAMI HOME DEBUG] Page type detected: '{page_type}'")
         debug_selectors = await tab.evaluate('''
             (function() {
                 return {
@@ -9136,13 +8591,12 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
                 };
             })()
         ''')
-        print(f"[FAMI HOME DEBUG] Selector check: {debug_selectors}")
-        print(f"[FAMI HOME DEBUG] area_auto_select.enable: {config_dict['area_auto_select'].get('enable', True)}")
+        debug.log(f"[FAMI HOME DEBUG] Selector check: {debug_selectors}")
+        debug.log(f"[FAMI HOME DEBUG] area_auto_select.enable: {config_dict['area_auto_select'].get('enable', True)}")
 
     # 1. 購物車頁面
     if page_type == 'cart':
-        if show_debug_message:
-            print("[FAMI HOME] Detected cart/order page")
+        debug.log("[FAMI HOME] Detected cart/order page")
         # 點擊下一步按鈕
         next_result = await tab.evaluate('''
             (function() {
@@ -9155,34 +8609,29 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
             })()
         ''')
         if next_result:
-            if show_debug_message:
-                print("[FAMI HOME] Next button clicked on cart page")
+            debug.log("[FAMI HOME] Next button clicked on cart page")
             return True
         else:
-            if show_debug_message:
-                print("[FAMI HOME] Next button not found or disabled")
+            debug.log("[FAMI HOME] Next button not found or disabled")
             return False
 
     # 2. 票種選擇頁面
     if page_type == 'ticket':
-        if show_debug_message:
-            print("[FAMI HOME] Detected ticket selection page")
-        return await nodriver_fami_ticket_select(tab, config_dict, show_debug_message)
+        debug.log("[FAMI HOME] Detected ticket selection page")
+        return await nodriver_fami_ticket_select(tab, config_dict)
 
     # 3. 區域選擇頁面
     if page_type == 'area':
-        if show_debug_message:
-            print("[FAMI HOME] Detected area selection page")
+        debug.log("[FAMI HOME] Detected area selection page")
         if config_dict["area_auto_select"].get("enable", True):
-            is_area_selected = await nodriver_fami_date_to_area(tab, config_dict, last_activity_url, show_debug_message)
+            is_area_selected = await nodriver_fami_date_to_area(tab, config_dict, last_activity_url)
 
             # 參考 TixCraft 和 FamiTicket Chrome 版本的處理方式
             # 當未選中區域時,等待 auto_reload_page_interval 後重試
             if not is_area_selected:
                 auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 5)
                 if auto_reload_interval > 0:
-                    if show_debug_message:
-                        print(f"[FAMI HOME] No area selected, waiting {auto_reload_interval}s before retry...")
+                    debug.log(f"[FAMI HOME] No area selected, waiting {auto_reload_interval}s before retry...")
                     await tab.sleep(auto_reload_interval)
 
             return is_area_selected
@@ -9191,12 +8640,11 @@ async def nodriver_fami_home_auto_select(tab, config_dict, last_activity_url, sh
     # 4. 日期選擇頁面（預設）
     if config_dict["date_auto_select"].get("enable", True):
         is_date_selected = await nodriver_fami_date_auto_select(
-            tab, config_dict, last_activity_url, show_debug_message
+            tab, config_dict, last_activity_url
         )
         return is_date_selected
 
     return False
-
 
 async def nodriver_famiticket_main(tab, url, config_dict):
     """
@@ -9220,10 +8668,9 @@ async def nodriver_famiticket_main(tab, url, config_dict):
         fami_dict["last_activity"] = ""
         fami_dict["payment_logged"] = False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print(f"[FAMITICKET MAIN] Processing URL: {url[:80]}...")
+    debug.log(f"[FAMITICKET MAIN] Processing URL: {url[:80]}...")
 
     result = False
 
@@ -9241,23 +8688,23 @@ async def nodriver_famiticket_main(tab, url, config_dict):
             # 登入頁面（排除 SignInCheck 驗證頁面）
             fami_account = config_dict["advanced"].get("fami_account", "")
             if len(fami_account) > 4:
-                result = await nodriver_fami_login(tab, config_dict, show_debug_message)
+                result = await nodriver_fami_login(tab, config_dict)
 
         elif '/Home/Activity/Info/' in url:
             # 活動頁面
             fami_dict["last_activity"] = url
-            result = await nodriver_fami_activity(tab, config_dict, show_debug_message)
+            result = await nodriver_fami_activity(tab, config_dict)
 
             # 處理驗證問題
             is_verify_success, fami_dict["fail_list"] = await nodriver_fami_verify(
-                tab, config_dict, fami_dict["fail_list"], show_debug_message
+                tab, config_dict, fami_dict["fail_list"]
             )
 
         elif '/Sales/Home/Index/' in url:
             # 銷售首頁（日期/區域選擇）
             if config_dict["date_auto_select"].get("enable", True):
                 result = await nodriver_fami_home_auto_select(
-                    tab, config_dict, fami_dict["last_activity"], show_debug_message
+                    tab, config_dict, fami_dict["last_activity"]
                 )
 
         elif url.endswith('/Home/') or url.endswith('/Home'):
@@ -9265,27 +8712,22 @@ async def nodriver_famiticket_main(tab, url, config_dict):
             homepage = config_dict.get("homepage", "")
             if homepage and '/Home/Activity/Info/' in homepage:
                 # 設定的是活動頁面，需要轉跳
-                if show_debug_message:
-                    print(f"[FAMITICKET MAIN] Redirecting to activity: {homepage[:60]}...")
+                debug.log(f"[FAMITICKET MAIN] Redirecting to activity: {homepage[:60]}...")
                 await tab.get(homepage)
                 result = True
             else:
                 # 設定的就是首頁，不轉跳
-                if show_debug_message:
-                    print("[FAMITICKET MAIN] On homepage, no redirect needed")
+                debug.log("[FAMITICKET MAIN] On homepage, no redirect needed")
 
         else:
             # 其他頁面：清空 fail_list
-            if show_debug_message:
-                print(f"[FAMITICKET MAIN] Unknown URL pattern, clearing fail_list")
+            debug.log(f"[FAMITICKET MAIN] Unknown URL pattern, clearing fail_list")
             fami_dict["fail_list"] = []
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FAMITICKET MAIN] Error: {str(exc)}")
+        debug.log(f"[FAMITICKET MAIN] Error: {str(exc)}")
 
     return result
-
 
 async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     """
@@ -9300,19 +8742,17 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     import random
     import json
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field
 
-    if show_debug_message:
-        print("[IBON DATE PIERCE] Starting date selection with pierce=True")
-        print("date_keyword:", date_keyword)
-        print("auto_select_mode:", auto_select_mode)
+    debug.log("[IBON DATE PIERCE] Starting date selection with pierce=True")
+    debug.log("date_keyword:", date_keyword)
+    debug.log("auto_select_mode:", auto_select_mode)
 
     # Step 1: Auto-detect buttons (no fixed wait - responds immediately when ready)
-    if show_debug_message:
-        print("[IBON DATE PIERCE] Auto-detecting purchase buttons...")
+    debug.log("[IBON DATE PIERCE] Auto-detecting purchase buttons...")
 
     await tab  # Sync state
 
@@ -9346,15 +8786,14 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             if result_count > 0:
                 button_found = True
                 elapsed = time.time() - start_time
-                if show_debug_message:
-                    print(f"[IBON DATE PIERCE] Found {result_count} button(s) after {elapsed:.2f}s")
+                debug.log(f"[IBON DATE PIERCE] Found {result_count} button(s) after {elapsed:.2f}s")
                 break
         except:
             pass
 
         await tab.sleep(check_interval)
 
-    if not button_found and show_debug_message:
+    if not button_found:
         elapsed = time.time() - start_time
         print(f"[IBON DATE PIERCE] No buttons found after {elapsed:.1f}s, proceeding with search anyway...")
 
@@ -9363,11 +8802,9 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     try:
         doc_result = await tab.send(cdp.dom.get_document(depth=0, pierce=False))
         root_node_id = doc_result.node_id
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] Got document root: {root_node_id}")
+        debug.log(f"[IBON DATE PIERCE] Got document root: {root_node_id}")
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] Failed to get document: {e}")
+        debug.log(f"[IBON DATE PIERCE] Failed to get document: {e}")
         return False
 
     # Step 5: Use perform_search with pierce capability
@@ -9380,12 +8817,10 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             include_user_agent_shadow_dom=True
         ))
 
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] Found {result_count} button(s) via search")
+        debug.log(f"[IBON DATE PIERCE] Found {result_count} button(s) via search")
 
         if result_count == 0:
-            if show_debug_message:
-                print("[IBON DATE PIERCE] No purchase buttons found")
+            debug.log("[IBON DATE PIERCE] No purchase buttons found")
             # Cleanup search
             try:
                 await tab.send(cdp.dom.discard_search_results(search_id=search_id))
@@ -9407,8 +8842,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             pass
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] perform_search failed: {e}")
+        debug.log(f"[IBON DATE PIERCE] perform_search failed: {e}")
         return False
 
     # Step 5: Extract button data and date context
@@ -9497,24 +8931,20 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             })
 
         except Exception as e:
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE] Failed to process button: {e}")
+            debug.log(f"[IBON DATE PIERCE] Failed to process button: {e}")
             continue
 
     if len(purchase_buttons) == 0:
-        if show_debug_message:
-            print("[IBON DATE PIERCE] No valid buttons extracted")
+        debug.log("[IBON DATE PIERCE] No valid buttons extracted")
         return False
 
     # Step 6: Filter disabled buttons
     enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
 
-    if show_debug_message:
-        print(f"[IBON DATE PIERCE] {len(enabled_buttons)} enabled button(s)")
+    debug.log(f"[IBON DATE PIERCE] {len(enabled_buttons)} enabled button(s)")
 
     if len(enabled_buttons) == 0:
-        if show_debug_message:
-            print("[IBON DATE PIERCE] All buttons disabled")
+        debug.log("[IBON DATE PIERCE] All buttons disabled")
         return False
 
     # Step 7: Apply keyword matching with early return pattern (T004-T007)
@@ -9523,13 +8953,11 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
     if len(date_keyword) > 0 and enabled_buttons:
         keyword_array = util.parse_keyword_string_to_array(date_keyword)
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE KEYWORD] Start checking keywords in order: {keyword_array}")
+        debug.log(f"[IBON DATE PIERCE KEYWORD] Start checking keywords in order: {keyword_array}")
 
         # NEW: Iterate keywords in priority order (early return)
         for keyword_index, keyword_item in enumerate(keyword_array):
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            debug.log(f"[IBON DATE PIERCE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
 
             # Check all buttons for this keyword
             for button in enabled_buttons:
@@ -9541,9 +8969,8 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
                     # T006: Keyword matched log - IMMEDIATELY select and stop
                     matched_buttons = [button]
                     target_found = True
-                    if show_debug_message:
-                        print(f"[IBON DATE PIERCE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                        print(f"[IBON DATE PIERCE SELECT] Selected date: {date_context[:50]} (keyword match)")
+                    debug.log(f"[IBON DATE PIERCE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                    debug.log(f"[IBON DATE PIERCE SELECT] Selected date: {date_context[:50]} (keyword match)")
                     break
 
             if target_found:
@@ -9552,8 +8979,7 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
 
         # T007: All keywords failed log
         if not target_found:
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE KEYWORD] All keywords failed to match")
+            debug.log(f"[IBON DATE PIERCE KEYWORD] All keywords failed to match")
     else:
         matched_buttons = enabled_buttons
 
@@ -9561,24 +8987,22 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
         if date_auto_fallback:
             # T018: Fallback enabled
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=true, triggering auto fallback")
             matched_buttons = enabled_buttons
         else:
             # T019: Fallback disabled - strict mode (no selection, will reload)
-            if show_debug_message:
-                print(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[IBON DATE PIERCE SELECT] No date selected, will reload page and retry")
+            debug.log(f"[IBON DATE PIERCE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            debug.log(f"[IBON DATE PIERCE SELECT] No date selected, will reload page and retry")
             return False  # Return False to trigger reload logic in caller
 
     # Step 9: Select target based on mode
     target_button = util.get_target_item_from_matched_list(matched_buttons, auto_select_mode)
 
     # T013: Log selected date with selection type
-    if show_debug_message:
+    if debug.enabled:
         is_keyword_match = (len(date_keyword) > 0 and len(matched_buttons) < len(enabled_buttons))
         selection_type = "keyword match" if is_keyword_match else "fallback"
-        print(f"[IBON DATE PIERCE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
+        debug.log(f"[IBON DATE PIERCE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
 
     # Step 10: Click button using CDP
     try:
@@ -9603,16 +9027,14 @@ async def nodriver_ibon_date_auto_select_pierce(tab, config_dict):
             return_by_value=True
         ))
 
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] Click result: {result}")
-            print("[IBON DATE PIERCE] Button clicked successfully")
+        debug.log(f"[IBON DATE PIERCE] Click result: {result}")
+        debug.log("[IBON DATE PIERCE] Button clicked successfully")
 
         await tab.sleep(0.5)
         return True
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE PIERCE] Click failed: {e}")
+        debug.log(f"[IBON DATE PIERCE] Click failed: {e}")
         return False
 
 async def nodriver_ibon_date_auto_select(tab, config_dict):
@@ -9622,7 +9044,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
     優先使用 pierce=True 方法（更快、更簡潔）
     失敗時回退到 DOMSnapshot 方法（更穩定但較慢）
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Try pierce method first (faster)
     try:
@@ -9630,11 +9052,9 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
         if result:
             return True
         else:
-            if show_debug_message:
-                print("[IBON DATE] pierce method failed, trying DOMSnapshot fallback...")
+            debug.log("[IBON DATE] pierce method failed, trying DOMSnapshot fallback...")
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE] pierce method error: {e}, trying DOMSnapshot fallback...")
+        debug.log(f"[IBON DATE] pierce method error: {e}, trying DOMSnapshot fallback...")
 
     # Fallback to original DOMSnapshot method
     return await nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict)
@@ -9649,16 +9069,15 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     from nodriver.cdp import input_ as cdp_input
     import random
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_auto_fallback = config_dict.get('date_auto_fallback', False)  # T017: Safe access for new field
     auto_reload_coming_soon_page_enable = config_dict["tixcraft"]["auto_reload_coming_soon_page"]
 
-    if show_debug_message:
-        print("[IBON DATE] Starting date selection on ActivityInfo/Details page")
-        print("date_keyword:", date_keyword)
-        print("auto_select_mode:", auto_select_mode)
+    debug.log("[IBON DATE] Starting date selection on ActivityInfo/Details page")
+    debug.log("date_keyword:", date_keyword)
+    debug.log("auto_select_mode:", auto_select_mode)
 
     is_date_assigned = False
 
@@ -9675,8 +9094,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     start_time = time.time()
     content_appeared = False
 
-    if show_debug_message:
-        print("[IBON DATE] Auto-detecting purchase buttons...")
+    debug.log("[IBON DATE] Auto-detecting purchase buttons...")
 
     while (time.time() - start_time) < max_wait:
         try:
@@ -9695,20 +9113,18 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             if result_count > 0:
                 content_appeared = True
                 elapsed = time.time() - start_time
-                if show_debug_message:
-                    print(f"[IBON DATE] Found {result_count} purchase button(s) after {elapsed:.2f}s")
+                debug.log(f"[IBON DATE] Found {result_count} purchase button(s) after {elapsed:.2f}s")
                 break
         except:
             pass
         await tab.sleep(check_interval)
 
-    if not content_appeared and show_debug_message:
+    if not content_appeared:
         elapsed = time.time() - start_time
         print(f"[IBON DATE] No buttons found after {elapsed:.1f}s, proceeding with snapshot anyway...")
 
     # Capture DOM snapshot to penetrate closed Shadow DOM and search for purchase buttons
-    if show_debug_message:
-        print("[IBON DATE] Capturing DOM snapshot with CDP...")
+    debug.log("[IBON DATE] Capturing DOM snapshot with CDP...")
 
     try:
         documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
@@ -9716,15 +9132,13 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             include_dom_rects=True
         ))
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE] Error capturing snapshot: {e}")
+        debug.log(f"[IBON DATE] Error capturing snapshot: {e}")
         return False
 
     purchase_buttons = []
 
     if documents and len(documents) > 0:
-        if show_debug_message:
-            print(f"[IBON DATE] Analyzing {len(documents)} document(s)...")
+        debug.log(f"[IBON DATE] Analyzing {len(documents)} document(s)...")
 
         document_snapshot = documents[0]
         nodes = document_snapshot.nodes
@@ -9734,16 +9148,14 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
         attributes_list = nodes.attributes
         backend_node_ids = list(nodes.backend_node_id)
 
-        if show_debug_message:
-            print(f"[IBON DATE] Total nodes in snapshot: {len(node_names)}")
+        debug.log(f"[IBON DATE] Total nodes in snapshot: {len(node_names)}")
 
         # Step 1: Extract parent_index for tracking node relationships
         parent_indices = list(nodes.parent_index) if hasattr(nodes, 'parent_index') else []
 
         # Debug: Count all buttons found
         button_count = sum(1 for name in node_names if name.upper() == 'BUTTON')
-        if show_debug_message:
-            print(f"[IBON DATE] Total BUTTON nodes found: {button_count}")
+        debug.log(f"[IBON DATE] Total BUTTON nodes found: {button_count}")
 
         # Step 2: Search for purchase buttons and extract date context
         for i, node_name in enumerate(node_names):
@@ -9759,7 +9171,6 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
                 button_class = attrs.get('class', '')
                 button_disabled = 'disabled' in attrs
-
 
                 # ibon purchase buttons have 'btn-buy' or 'ng-tns-c57' in class
                 if 'btn-buy' in button_class or ('ng-tns-c57' in button_class and 'btn' in button_class):
@@ -9832,26 +9243,21 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                         'date_context': date_context
                     })
 
-                    if show_debug_message:
-                        print(f"[IBON DATE] Found button: class='{button_class[:50]}...', disabled={button_disabled}, text='{button_text}', date_context='{date_context}'")
+                    debug.log(f"[IBON DATE] Found button: class='{button_class[:50]}...', disabled={button_disabled}, text='{button_text}', date_context='{date_context}'")
 
-    if show_debug_message:
-        print(f"[IBON DATE] Found {len(purchase_buttons)} purchase button(s)")
+    debug.log(f"[IBON DATE] Found {len(purchase_buttons)} purchase button(s)")
 
     if len(purchase_buttons) == 0:
-        if show_debug_message:
-            print("[IBON DATE] No purchase buttons found in Shadow DOM")
+        debug.log("[IBON DATE] No purchase buttons found in Shadow DOM")
         return False
 
     # Step 5: Filter disabled buttons
     enabled_buttons = [btn for btn in purchase_buttons if not btn['disabled']]
 
-    if show_debug_message:
-        print(f"[IBON DATE] Found {len(enabled_buttons)} enabled button(s)")
+    debug.log(f"[IBON DATE] Found {len(enabled_buttons)} enabled button(s)")
 
     if len(enabled_buttons) == 0:
-        if show_debug_message:
-            print("[IBON DATE] All buttons are disabled")
+        debug.log("[IBON DATE] All buttons are disabled")
         return False
 
     # Step 6: Apply keyword matching with early return pattern (T004-T007)
@@ -9863,13 +9269,11 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     if len(date_keyword) > 0 and enabled_buttons:
         # Parse as JSON array (auto-removes quotes)
         keyword_array = util.parse_keyword_string_to_array(date_keyword)
-        if show_debug_message:
-            print(f"[IBON DATE KEYWORD] Start checking keywords in order: {keyword_array}")
+        debug.log(f"[IBON DATE KEYWORD] Start checking keywords in order: {keyword_array}")
 
         # NEW: Iterate keywords in priority order (early return)
         for keyword_index, keyword_item in enumerate(keyword_array):
-            if show_debug_message:
-                print(f"[IBON DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
+            debug.log(f"[IBON DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item}")
 
             # Check all buttons for this keyword
             for button in enabled_buttons:
@@ -9886,9 +9290,8 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
                     # T006: Keyword matched log - IMMEDIATELY select and stop
                     matched_buttons = [button]
                     target_found = True
-                    if show_debug_message:
-                        print(f"[IBON DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
-                        print(f"[IBON DATE SELECT] Selected date: {date_context[:50]} (keyword match)")
+                    debug.log(f"[IBON DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item}'")
+                    debug.log(f"[IBON DATE SELECT] Selected date: {date_context[:50]} (keyword match)")
                     break
 
             if target_found:
@@ -9897,8 +9300,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
 
         # T007: All keywords failed log
         if not target_found:
-            if show_debug_message:
-                print(f"[IBON DATE KEYWORD] All keywords failed to match")
+            debug.log(f"[IBON DATE KEYWORD] All keywords failed to match")
     else:
         matched_buttons = enabled_buttons
 
@@ -9906,15 +9308,13 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     if len(matched_buttons) == 0 and len(date_keyword) > 0:
         if date_auto_fallback:
             # T018: Fallback enabled - use auto_select_mode
-            if show_debug_message:
-                print(f"[IBON DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
-                print(f"[IBON DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+            debug.log(f"[IBON DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[IBON DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
             matched_buttons = enabled_buttons
         else:
             # T019: Fallback disabled - strict mode (no selection, will reload)
-            if show_debug_message:
-                print(f"[IBON DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                print(f"[IBON DATE SELECT] No date selected, will reload page and retry")
+            debug.log(f"[IBON DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+            debug.log(f"[IBON DATE SELECT] No date selected, will reload page and retry")
             return False  # Return False to trigger reload logic in caller
 
     # Step 8: Select target button based on mode
@@ -9925,9 +9325,8 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
     selection_type = "keyword match" if is_keyword_match else "fallback"
     selection_method = selection_type if is_keyword_match else f"mode '{auto_select_mode}'"
 
-    if show_debug_message:
-        print(f"[IBON DATE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
-        print(f"[IBON DATE] Selected target button ({selection_method}): date_context='{target_button.get('date_context', 'N/A')}'")
+    debug.log(f"[IBON DATE SELECT] Selected date: {target_button.get('date_context', 'N/A')} ({selection_type})")
+    debug.log(f"[IBON DATE] Selected target button ({selection_method}): date_context='{target_button.get('date_context', 'N/A')}'")
 
     try:
         await tab.send(cdp.dom.get_document())
@@ -9936,8 +9335,7 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
         result = await tab.send(cdp.dom.push_nodes_by_backend_ids_to_frontend([target_button['backend_node_id']]))
         node_id = result[0]
 
-        if show_debug_message:
-            print(f"[IBON DATE] Button node_id: {node_id}")
+        debug.log(f"[IBON DATE] Button node_id: {node_id}")
 
         # Scroll element into view
         await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
@@ -9957,14 +9355,12 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             remote_object_id = resolved.object_id
         else:
             # Debug: print the actual structure
-            if show_debug_message:
-                print(f"[IBON DATE] Resolved structure: {resolved}")
-                print(f"[IBON DATE] Resolved type: {type(resolved)}")
-                print(f"[IBON DATE] Resolved attributes: {dir(resolved)}")
+            debug.log(f"[IBON DATE] Resolved structure: {resolved}")
+            debug.log(f"[IBON DATE] Resolved type: {type(resolved)}")
+            debug.log(f"[IBON DATE] Resolved attributes: {dir(resolved)}")
             raise Exception("Could not find object_id in resolved node")
 
-        if show_debug_message:
-            print(f"[IBON DATE] Resolved button object_id: {remote_object_id}")
+        debug.log(f"[IBON DATE] Resolved button object_id: {remote_object_id}")
 
         result = await tab.send(runtime.call_function_on(
             function_declaration='function() { this.click(); return true; }',
@@ -9972,25 +9368,20 @@ async def nodriver_ibon_date_auto_select_domsnapshot(tab, config_dict):
             return_by_value=True
         ))
 
-        if show_debug_message:
-            print(f"[IBON DATE] Button clicked, result: {result}")
+        debug.log(f"[IBON DATE] Button clicked, result: {result}")
 
         if result:
-            if show_debug_message:
-                print("[IBON DATE] Purchase button clicked successfully")
+            debug.log("[IBON DATE] Purchase button clicked successfully")
             is_date_assigned = True
             await tab.sleep(0.5)
         else:
-            if show_debug_message:
-                print("[IBON DATE] Click failed")
+            debug.log("[IBON DATE] Click failed")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON DATE] Error clicking button: {e}")
+        debug.log(f"[IBON DATE] Error clicking button: {e}")
         is_date_assigned = False
 
     return is_date_assigned
-
 
 async def nodriver_ibon_ticket_agree(tab):
     for i in range(3):
@@ -10009,7 +9400,7 @@ async def nodriver_ibon_allow_not_adjacent_seat(tab, config_dict):
     Returns:
         bool: True if checkbox was clicked successfully, False otherwise
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_finish_checkbox_click = False
 
@@ -10020,12 +9411,10 @@ async def nodriver_ibon_allow_not_adjacent_seat(tab, config_dict):
         for i in range(3):
             is_finish_checkbox_click = await nodriver_check_checkbox(tab, checkbox_selector)
             if is_finish_checkbox_click:
-                if show_debug_message:
-                    print("[IBON] Non-adjacent seat checkbox clicked")
+                debug.log("[IBON] Non-adjacent seat checkbox clicked")
                 break
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON] Non-adjacent seat checkbox error: {e}")
+        debug.log(f"[IBON] Non-adjacent seat checkbox error: {e}")
 
     return is_finish_checkbox_click
 
@@ -10046,7 +9435,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
             - is_need_refresh: Whether page refresh is needed
             - is_price_assign_by_bot: Whether area selection succeeded
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
@@ -10054,8 +9443,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     is_price_assign_by_bot = False
     is_need_refresh = False
 
-    if show_debug_message:
-        print("[ibon] 區域選擇開始")
+    debug.log("[ibon] 區域選擇開始")
 
     # Optimized wait for Angular app to fully load (reduced from 2.3-2.7s to 1.0-1.4s)
     try:
@@ -10255,19 +9643,18 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                         area_index += 1
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[NEW EVENT ERROR] Failed to extract area data: {exc}")
+        if debug.enabled:
+            debug.log(f"[NEW EVENT ERROR] Failed to extract area data: {exc}")
             import traceback
             traceback.print_exc()
         return True, False
 
     if not areas_data or len(areas_data) == 0:
-        if show_debug_message:
-            print("[ibon] 頁面無區域")
+        debug.log("[ibon] 頁面無區域")
         return True, False
 
     # Debug extraction (disabled by default)
-    # if show_debug_message:
+    # if debug.enabled:
     #     print(f"[IBON EXTRACT DEBUG] Total extracted areas: {len(areas_data)}")
 
     # Phase 2: Filter areas (disabled, sold out, insufficient seats)
@@ -10276,8 +9663,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
     for area in areas_data:
         # Skip disabled areas
         if area['disabled']:
-            if show_debug_message:
-                print(f"[ibon] 跳過: {area['areaName']}")
+            debug.log(f"[ibon] 跳過: {area['areaName']}")
             continue
 
         # 同時檢查區域名稱、票價與內容
@@ -10285,14 +9671,12 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
-            if show_debug_message:
-                print(f"[ibon] 已售完: {area['areaName']}")
+            debug.log(f"[ibon] 已售完: {area['areaName']}")
             continue
 
         # Check exclude keywords
         if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-            if show_debug_message:
-                print(f"[ibon] 排除: {area['areaName']}")
+            debug.log(f"[ibon] 排除: {area['areaName']}")
             continue
 
         # Check remaining seat count
@@ -10300,14 +9684,12 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
         if seat_text.isdigit():
             remaining_seats = int(seat_text)
             if remaining_seats < ticket_number:
-                if show_debug_message:
-                    print(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
+                debug.log(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
                 continue
 
         valid_areas.append(area)
 
-    if show_debug_message:
-        print(f"[ibon] 有效區域: {len(valid_areas)}")
+    debug.log(f"[ibon] 有效區域: {len(valid_areas)}")
 
     # Phase 3: Keyword matching with early return pattern (T010-T016)
     matched_areas = []
@@ -10331,11 +9713,11 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
             # Treat the entire string as a single keyword
             keyword_item = area_keyword_clean
 
-            if show_debug_message:
-                print(f"[IBON EVENT AREA KEYWORD] Checking keyword: {keyword_item}")
-                print(f"[IBON EVENT AREA KEYWORD] Total valid areas: {len(valid_areas)}")
+            if debug.enabled:
+                debug.log(f"[IBON EVENT AREA KEYWORD] Checking keyword: {keyword_item}")
+                debug.log(f"[IBON EVENT AREA KEYWORD] Total valid areas: {len(valid_areas)}")
                 if len(valid_areas) > 0:
-                    print(f"[IBON EVENT AREA KEYWORD] First 5 areas: {[a['areaName'] for a in valid_areas[:5]]}")
+                    debug.log(f"[IBON EVENT AREA KEYWORD] First 5 areas: {[a['areaName'] for a in valid_areas[:5]]}")
 
             # Check all areas for this keyword
             for area in valid_areas:
@@ -10351,43 +9733,37 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                     # Keyword matched - IMMEDIATELY select and stop
                     matched_areas = [area]
                     target_found = True
-                    if show_debug_message:
-                        print(f"[IBON EVENT AREA KEYWORD] Keyword matched: '{keyword_item}'")
-                        print(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
+                    debug.log(f"[IBON EVENT AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                    debug.log(f"[IBON EVENT AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
             # All keywords failed log
             if not target_found:
-                if show_debug_message:
-                    print(f"[IBON EVENT AREA KEYWORD] Keyword '{keyword_item}' failed to match")
+                debug.log(f"[IBON EVENT AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
-            if show_debug_message:
-                print(f"[IBON EVENT AREA] Keyword parse error: {e}")
-                print(f"[IBON EVENT AREA] Treating as 'all keywords failed'")
+            debug.log(f"[IBON EVENT AREA] Keyword parse error: {e}")
+            debug.log(f"[IBON EVENT AREA] Treating as 'all keywords failed'")
             matched_areas = []  # Let Feature 003 fallback logic handle this
     else:
         matched_areas = valid_areas
 
-    if show_debug_message and not target_found:
-        print(f"[IBON EVENT AREA] Total matched areas: {len(matched_areas)}")
+    if not target_found:
+        debug.log(f"[IBON EVENT AREA] Total matched areas: {len(matched_areas)}")
 
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
         if area_auto_fallback:
             # T022: Fallback enabled - use all valid areas
-            if show_debug_message:
-                print(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
-                print(f"[IBON EVENT AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+            debug.log(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[IBON EVENT AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
             matched_areas = valid_areas
         else:
             # T023: Fallback disabled - strict mode (no selection, will reload)
-            if show_debug_message:
-                print(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                print(f"[IBON EVENT AREA SELECT] No area selected, will reload page and retry")
+            debug.log(f"[IBON EVENT AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+            debug.log(f"[IBON EVENT AREA SELECT] No area selected, will reload page and retry")
             # T024: No available options after keyword matching failed
             if len(valid_areas) == 0:
-                if show_debug_message:
-                    print(f"[IBON EVENT AREA FALLBACK] No available options after exclusion")
+                debug.log(f"[IBON EVENT AREA FALLBACK] No available options after exclusion")
             is_need_refresh = True
             return is_need_refresh, False
 
@@ -10396,35 +9772,29 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
 
     if not target_area:
         is_need_refresh = True
-        if show_debug_message:
-            print("[ibon] 選擇失敗")
+        debug.log("[ibon] 選擇失敗")
         return is_need_refresh, False
 
-    if show_debug_message:
-        print(f"[ibon] 已選: {target_area['areaName']}")
+    debug.log(f"[ibon] 已選: {target_area['areaName']}")
 
     # Phase 5: Click target area using CDP
     try:
         from nodriver import cdp
 
-        if show_debug_message:
-            print(f"[NEW EVENT CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
+        debug.log(f"[NEW EVENT CDP CLICK] Starting CDP click for area: {target_area['areaName']}")
 
         backend_node_id = target_area.get('backend_node_id')
 
         if not backend_node_id:
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] No backend_node_id available for TR")
+            debug.log(f"[NEW EVENT CDP CLICK] No backend_node_id available for TR")
             return is_need_refresh, is_price_assign_by_bot
 
         # Request document first
         try:
             document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Requested document with pierce=True")
+            debug.log(f"[NEW EVENT CDP CLICK] Requested document with pierce=True")
         except Exception as doc_exc:
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Document request failed: {doc_exc}")
+            debug.log(f"[NEW EVENT CDP CLICK] Document request failed: {doc_exc}")
             return is_need_refresh, is_price_assign_by_bot
 
         # Convert backend_node_id to node_id
@@ -10433,69 +9803,59 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
             node_ids = result if isinstance(result, list) else (result.node_ids if hasattr(result, 'node_ids') else [])
 
             if not node_ids or len(node_ids) == 0:
-                if show_debug_message:
-                    print(f"[NEW EVENT CDP CLICK] Failed to convert backend_node_id to node_id")
+                debug.log(f"[NEW EVENT CDP CLICK] Failed to convert backend_node_id to node_id")
                 return is_need_refresh, is_price_assign_by_bot
 
             node_id = node_ids[0]
 
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Node ID: {node_id}")
+            debug.log(f"[NEW EVENT CDP CLICK] Node ID: {node_id}")
 
             # Scroll into view
             try:
                 await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
-                if show_debug_message:
-                    print(f"[NEW EVENT CDP CLICK] Scrolled element into view")
+                debug.log(f"[NEW EVENT CDP CLICK] Scrolled element into view")
             except Exception as e:
-                if show_debug_message:
-                    print(f"[NEW EVENT CDP CLICK] Scroll warning: {e}")
+                debug.log(f"[NEW EVENT CDP CLICK] Scroll warning: {e}")
 
             # Focus element
             try:
                 await tab.send(cdp.dom.focus(node_id=node_id))
-                if show_debug_message:
-                    print(f"[NEW EVENT CDP CLICK] Focused element")
+                debug.log(f"[NEW EVENT CDP CLICK] Focused element")
             except Exception as e:
-                if show_debug_message:
-                    print(f"[NEW EVENT CDP CLICK] Focus warning: {e}")
+                debug.log(f"[NEW EVENT CDP CLICK] Focus warning: {e}")
 
             # Get box model
             box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Got box model")
+            debug.log(f"[NEW EVENT CDP CLICK] Got box model")
 
             # Calculate center point
             content_quad = box_model.content if hasattr(box_model, 'content') else box_model.model.content
             x = (content_quad[0] + content_quad[2]) / 2
             y = (content_quad[1] + content_quad[5]) / 2
 
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
+            debug.log(f"[NEW EVENT CDP CLICK] Click position: ({x:.1f}, {y:.1f})")
 
             # Execute mouse click
             await tab.mouse_click(x, y)
 
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Mouse click executed successfully")
+            debug.log(f"[NEW EVENT CDP CLICK] Mouse click executed successfully")
 
             # Wait for navigation
             await tab.sleep(1.5)
 
             is_price_assign_by_bot = True
 
-            if show_debug_message:
-                print(f"[NEW EVENT SUCCESS] Clicked area: {target_area['areaName']}")
+            debug.log(f"[NEW EVENT SUCCESS] Clicked area: {target_area['areaName']}")
 
         except Exception as resolve_exc:
-            if show_debug_message:
-                print(f"[NEW EVENT CDP CLICK] Resolve/click failed: {resolve_exc}")
+            if debug.enabled:
+                debug.log(f"[NEW EVENT CDP CLICK] Resolve/click failed: {resolve_exc}")
                 import traceback
                 traceback.print_exc()
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[NEW EVENT ERROR] Exception during click: {exc}")
+        if debug.enabled:
+            debug.log(f"[NEW EVENT ERROR] Exception during click: {exc}")
             import traceback
             traceback.print_exc()
 
@@ -10522,7 +9882,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     if await check_and_handle_pause(config_dict):
         return False, False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_auto_fallback = config_dict.get('area_auto_fallback', False)  # T021: Safe access for new field
     ticket_number = config_dict["ticket_number"]
@@ -10530,11 +9890,10 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     is_price_assign_by_bot = False
     is_need_refresh = False
 
-    if show_debug_message:
-        print("NoDriver ibon_area_auto_select started")
-        print(f"area_keyword_item: {area_keyword_item}")
-        print(f"auto_select_mode: {auto_select_mode}")
-        print(f"ticket_number: {ticket_number}")
+    debug.log("NoDriver ibon_area_auto_select started")
+    debug.log(f"area_keyword_item: {area_keyword_item}")
+    debug.log(f"auto_select_mode: {auto_select_mode}")
+    debug.log(f"ticket_number: {ticket_number}")
 
     # Wait for Shadow DOM to fully load (ibon orders page needs more time for TR elements to render)
     # Auto-detect TR elements (no fixed wait - responds immediately when ready)
@@ -10547,8 +9906,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         try:
             current_url = tab.target.url
             if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
-                if show_debug_message:
-                    print("[IBON AREA] Detected verification page URL, skipping area selection")
+                debug.log("[IBON AREA] Detected verification page URL, skipping area selection")
                 # Return (False, False) to skip reload and let main loop re-check URL
                 return False, False
         except:
@@ -10593,31 +9951,27 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 if page_type_result == "cloudflare":
                     if not cloudflare_detected_once:
                         cloudflare_detected_once = True
-                        if show_debug_message:
-                            print("[IBON AREA] Detected Cloudflare verification, waiting for completion...")
+                        debug.log("[IBON AREA] Detected Cloudflare verification, waiting for completion...")
                     # Continue waiting, check again
                     await tab.sleep(cloudflare_check_interval)
                     continue
                 elif page_type_result == "verify":
-                    if show_debug_message:
-                        print("[IBON AREA] Detected verification form, skipping area selection")
+                    debug.log("[IBON AREA] Detected verification form, skipping area selection")
                     return False, False
                 else:
                     # page_type_result == "area" - Cloudflare completed or not present
-                    if cloudflare_detected_once and show_debug_message:
+                    if cloudflare_detected_once:
                         elapsed = time_module.time() - cloudflare_start_time
                         print(f"[IBON AREA] Cloudflare verification completed after {elapsed:.1f}s")
                     break
 
             # If timeout while Cloudflare still active
             if cloudflare_detected_once and page_type_result == "cloudflare":
-                if show_debug_message:
-                    print("[IBON AREA] Cloudflare verification timeout, letting main loop retry")
+                debug.log("[IBON AREA] Cloudflare verification timeout, letting main loop retry")
                 return False, False
 
         except Exception as cf_exc:
-            if show_debug_message:
-                print(f"[IBON AREA] Cloudflare/page type check error: {cf_exc}")
+            debug.log(f"[IBON AREA] Cloudflare/page type check error: {cf_exc}")
             pass
 
         # Initialize CDP DOM state (required for perform_search to work)
@@ -10632,8 +9986,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         start_time = time.time()
         min_tr_count = 3  # Minimum TR elements to consider page loaded (header + at least 1 data row)
 
-        if show_debug_message:
-            print("[IBON AREA] Auto-detecting area table...")
+        debug.log("[IBON AREA] Auto-detecting area table...")
 
         last_tr_count = 0
         stable_count = 0  # Track if TR count is stable (page finished loading)
@@ -10643,8 +9996,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             try:
                 current_url = tab.target.url
                 if current_url and '/UTK02/UTK0201_0.' in current_url.upper() and 'rn=' in current_url.lower():
-                    if show_debug_message:
-                        print("[IBON AREA] URL changed to verification page, exiting area selection")
+                    debug.log("[IBON AREA] URL changed to verification page, exiting area selection")
                     # Return (False, False) to skip reload and let main loop re-check URL
                     return False, False
             except:
@@ -10673,8 +10025,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 # Page loaded: minimum TR count reached AND stable for 2 consecutive checks
                 if tr_count >= min_tr_count and stable_count >= 1:
                     elapsed = time.time() - start_time
-                    if show_debug_message:
-                        print(f"[IBON AREA] Found {tr_count} TR elements after {elapsed:.2f}s")
+                    debug.log(f"[IBON AREA] Found {tr_count} TR elements after {elapsed:.2f}s")
                     break
             except:
                 pass
@@ -10682,16 +10033,14 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             await tab.sleep(check_interval)
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON AREA] Error during auto-detect: {e}")
+        debug.log(f"[IBON AREA] Error during auto-detect: {e}")
         pass
 
     # Phase 1: Extract all area data using DOMSnapshot (to pierce closed Shadow DOM)
     try:
         # cdp already imported at function start (Line 10535)
 
-        if show_debug_message:
-            print("[DOMSNAPSHOT] Capturing page structure for area extraction...")
+        debug.log("[DOMSNAPSHOT] Capturing page structure for area extraction...")
 
         # Use DOMSnapshot to get flattened page structure (pierces Shadow DOM)
         documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
@@ -10727,9 +10076,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 if hasattr(nodes, 'backend_node_id'):
                     backend_node_ids = list(nodes.backend_node_id)
 
-            if show_debug_message:
-                print(f"[DOMSNAPSHOT] Extracted {len(node_names)} nodes, {len(strings)} strings")
-
+            debug.log(f"[DOMSNAPSHOT] Extracted {len(node_names)} nodes, {len(strings)} strings")
 
             # Build children map for traversal
             children_map = {}
@@ -10780,8 +10127,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                     # Check if it's inside a table (basic check)
                     tr_indices.append(i)
 
-            if show_debug_message:
-                print(f"[DOMSNAPSHOT] Found {len(tr_indices)} TR elements")
+            debug.log(f"[DOMSNAPSHOT] Found {len(tr_indices)} TR elements")
 
             # Extract data from each TR
             area_index = 0
@@ -10850,11 +10196,11 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                                     height = height_rect[0] if hasattr(height_rect, '__getitem__') else float(height_rect)
 
                                     layout_rect = {'x': x, 'y': y, 'width': width, 'height': height}
-                                    if show_debug_message and area_index < 3:  # Only show first 3 for debugging
+                                    if area_index < 3:  # Only show first 3 for debugging
                                         print(f"[DOMSNAPSHOT] TR #{area_index} (node {tr_idx}): layout_idx={layout_idx}, rect={layout_rect}")
                             else:
-                                if show_debug_message and area_index < 3:
-                                    print(f"[DOMSNAPSHOT] TR #{area_index} (node {tr_idx}): NOT in layout.node_index")
+                                if area_index < 3:
+                                    debug.log(f"[DOMSNAPSHOT] TR #{area_index} (node {tr_idx}): NOT in layout.node_index")
 
                     # Get backend_node_id for this TR
                     tr_backend_node_id = None
@@ -10877,19 +10223,17 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                     areas_data.append(area_data)
                     area_index += 1
 
-        if show_debug_message:
-            print(f"[AREA EXTRACT] Found {len(areas_data)} total areas")
+        debug.log(f"[AREA EXTRACT] Found {len(areas_data)} total areas")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] Failed to extract area data: {exc}")
+        if debug.enabled:
+            debug.log(f"[ERROR] Failed to extract area data: {exc}")
             import traceback
             traceback.print_exc()
         return True, False
 
     if not areas_data or len(areas_data) == 0:
-        if show_debug_message:
-            print("[AREA EXTRACT] No areas found on page")
+        debug.log("[AREA EXTRACT] No areas found on page")
         return True, False
 
     # Phase 2: Filter areas (disabled, sold out, insufficient seats)
@@ -10898,8 +10242,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
     for area in areas_data:
         # Skip disabled areas
         if area['disabled']:
-            if show_debug_message:
-                print(f"[ibon] 跳過: {area['areaName']}")
+            debug.log(f"[ibon] 跳過: {area['areaName']}")
             continue
 
         # 同時檢查區域名稱、票價與內容
@@ -10907,13 +10250,11 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
         # Skip sold out areas
         if '已售完' in area['seatText']:
-            if show_debug_message:
-                print(f"[ibon] 已售完: {area['areaName']}")
+            debug.log(f"[ibon] 已售完: {area['areaName']}")
             continue
 
         if 'disabled' in area['innerHTML'].lower() or 'sold-out' in area['innerHTML'].lower():
-            if show_debug_message:
-                print(f"[ibon] 跳過: {area['areaName']}")
+            debug.log(f"[ibon] 跳過: {area['areaName']}")
             continue
 
         # Skip description rows (not actual seat areas)
@@ -10922,8 +10263,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
         # Check exclude keywords
         if util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
-            if show_debug_message:
-                print(f"[ibon] 排除: {area['areaName']}")
+            debug.log(f"[ibon] 排除: {area['areaName']}")
             continue
 
         # Check remaining seat count
@@ -10931,14 +10271,12 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         if seat_text.isdigit():
             remaining_seats = int(seat_text)
             if remaining_seats < ticket_number:
-                if show_debug_message:
-                    print(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
+                debug.log(f"[ibon] 座位不足: {area['areaName']} ({remaining_seats}/{ticket_number})")
                 continue
 
         valid_areas.append(area)
 
-    if show_debug_message:
-        print(f"[ibon] 有效區域: {len(valid_areas)}")
+    debug.log(f"[ibon] 有效區域: {len(valid_areas)}")
 
     # Phase 3: Keyword matching with early return pattern (T010-T016)
     matched_areas = []
@@ -10962,8 +10300,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
             # Treat the entire string as a single keyword
             keyword_item = area_keyword_clean
 
-            if show_debug_message:
-                print(f"[IBON AREA KEYWORD] Checking keyword: {keyword_item}")
+            debug.log(f"[IBON AREA KEYWORD] Checking keyword: {keyword_item}")
 
             # Check all areas for this keyword
             for area in valid_areas:
@@ -10979,43 +10316,37 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                     # Keyword matched - IMMEDIATELY select and stop
                     matched_areas = [area]
                     target_found = True
-                    if show_debug_message:
-                        print(f"[IBON AREA KEYWORD] Keyword matched: '{keyword_item}'")
-                        print(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
+                    debug.log(f"[IBON AREA KEYWORD] Keyword matched: '{keyword_item}'")
+                    debug.log(f"[IBON AREA SELECT] Selected area: {area['areaName']} (keyword match)")
                     break
 
             # All keywords failed log
             if not target_found:
-                if show_debug_message:
-                    print(f"[IBON AREA KEYWORD] Keyword '{keyword_item}' failed to match")
+                debug.log(f"[IBON AREA KEYWORD] Keyword '{keyword_item}' failed to match")
         except Exception as e:
-            if show_debug_message:
-                print(f"[IBON AREA] Keyword parse error: {e}")
-                print(f"[IBON AREA] Treating as 'all keywords failed'")
+            debug.log(f"[IBON AREA] Keyword parse error: {e}")
+            debug.log(f"[IBON AREA] Treating as 'all keywords failed'")
             matched_areas = []  # Let Feature 003 fallback logic handle this
     else:
         matched_areas = valid_areas
 
-    if show_debug_message and not target_found:
-        print(f"[IBON AREA] Total matched areas: {len(matched_areas)}")
+    if not target_found:
+        debug.log(f"[IBON AREA] Total matched areas: {len(matched_areas)}")
 
     # T022-T024: Conditional fallback based on area_auto_fallback switch
     if len(matched_areas) == 0 and area_keyword_item and len(area_keyword_item) > 0:
         if area_auto_fallback:
             # T022: Fallback enabled - use all valid areas
-            if show_debug_message:
-                print(f"[IBON AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
-                print(f"[IBON AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
+            debug.log(f"[IBON AREA FALLBACK] area_auto_fallback=true, triggering auto fallback")
+            debug.log(f"[IBON AREA FALLBACK] Selecting available area based on area_select_order='{auto_select_mode}'")
             matched_areas = valid_areas
         else:
             # T023: Fallback disabled - strict mode (no selection, will reload)
-            if show_debug_message:
-                print(f"[IBON AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
-                print(f"[IBON AREA SELECT] No area selected, will reload page and retry")
+            debug.log(f"[IBON AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+            debug.log(f"[IBON AREA SELECT] No area selected, will reload page and retry")
             # T024: No available options after keyword matching failed
             if len(valid_areas) == 0:
-                if show_debug_message:
-                    print(f"[IBON AREA FALLBACK] No available options after exclusion")
+                debug.log(f"[IBON AREA FALLBACK] No available options after exclusion")
             is_need_refresh = True
             return is_need_refresh, False
 
@@ -11024,16 +10355,15 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
     if not target_area:
         is_need_refresh = True
-        if show_debug_message:
-            print("[RESULT] Failed to select target area, refresh needed")
+        debug.log("[RESULT] Failed to select target area, refresh needed")
         return is_need_refresh, False
 
     # T013 equivalent: Log selected area with selection type
-    if show_debug_message:
+    if debug.enabled:
         is_keyword_match = (area_keyword_item and len(area_keyword_item) > 0 and len(matched_areas) < len(valid_areas))
         selection_type = "keyword match" if is_keyword_match else "fallback"
-        print(f"[IBON AREA SELECT] Selected area: {target_area['areaName']} ({selection_type})")
-        print(f"[TARGET] Selected area: {target_area['areaName']} (index: {target_area['index']}, id: {target_area['id']})")
+        debug.log(f"[IBON AREA SELECT] Selected area: {target_area['areaName']} ({selection_type})")
+        debug.log(f"[TARGET] Selected area: {target_area['areaName']} (index: {target_area['index']}, id: {target_area['id']})")
 
     # Phase 5: Click target area using CDP real-time coordinates
     try:
@@ -11043,15 +10373,13 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
         backend_node_id = target_area.get('backend_node_id')
 
         if not backend_node_id:
-            if show_debug_message:
-                print(f"[CDP CLICK] No backend_node_id available for TR")
+            debug.log(f"[CDP CLICK] No backend_node_id available for TR")
         else:
             # Request document first (required for pushNodesByBackendIdsToFrontend)
             try:
                 document = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
             except Exception as doc_exc:
-                if show_debug_message:
-                    print(f"[CDP CLICK] Document request failed: {doc_exc}")
+                debug.log(f"[CDP CLICK] Document request failed: {doc_exc}")
                 return is_need_refresh, is_price_assign_by_bot
 
             # Convert backend_node_id to node_id using pushNodesByBackendIdsToFrontend
@@ -11060,8 +10388,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 node_ids = result if isinstance(result, list) else (result.node_ids if hasattr(result, 'node_ids') else [])
 
                 if not node_ids or len(node_ids) == 0:
-                    if show_debug_message:
-                        print(f"[CDP CLICK] Failed to convert backend_node_id to node_id")
+                    debug.log(f"[CDP CLICK] Failed to convert backend_node_id to node_id")
                     return is_need_refresh, is_price_assign_by_bot
 
                 node_id = node_ids[0]
@@ -11092,18 +10419,17 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
 
                 is_price_assign_by_bot = True
 
-                if show_debug_message:
-                    print(f"[CLICK SUCCESS] Clicked area: {target_area['areaName']} (id: {target_area['id']})")
+                debug.log(f"[CLICK SUCCESS] Clicked area: {target_area['areaName']} (id: {target_area['id']})")
 
             except Exception as resolve_exc:
-                if show_debug_message:
-                    print(f"[CDP CLICK] Resolve/click failed: {resolve_exc}")
+                if debug.enabled:
+                    debug.log(f"[CDP CLICK] Resolve/click failed: {resolve_exc}")
                     import traceback
                     traceback.print_exc()
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[CLICK ERROR] Exception during click: {exc}")
+        if debug.enabled:
+            debug.log(f"[CLICK ERROR] Exception during click: {exc}")
             import traceback
             traceback.print_exc()
 
@@ -11124,7 +10450,7 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = str(config_dict.get("ticket_number", 2))
     is_ticket_number_assigned = False
 
@@ -11161,7 +10487,7 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         ''')
 
         wait_parsed = util.parse_nodriver_result(wait_result)
-        if show_debug_message and isinstance(wait_parsed, dict):
+        if isinstance(wait_parsed, dict):
             if wait_parsed.get('ready'):
                 print(f"[TICKET DOM] SELECT element ready: {wait_parsed.get('selector_used')}")
             else:
@@ -11235,36 +10561,32 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         ticket_types_parsed = util.parse_nodriver_result(ticket_types_result)
 
         if not isinstance(ticket_types_parsed, dict):
-            if show_debug_message:
-                print(f"[TICKET] Failed to parse ticket types")
+            debug.log(f"[TICKET] Failed to parse ticket types")
             return False
 
         ticket_types = ticket_types_parsed.get('ticketTypes', [])
 
-        if show_debug_message:
-            print(f"[TICKET] Found {len(ticket_types)} ticket type(s)")
+        if debug.enabled:
+            debug.log(f"[TICKET] Found {len(ticket_types)} ticket type(s)")
             for tt in ticket_types:
                 status = "selected" if tt.get('isAlreadySelected') else ("available" if tt.get('hasValidOption') else "sold out")
-                print(f"  [{tt.get('index')}] {tt.get('name')} - {tt.get('price')} ({status})")
+                debug.log(f"  [{tt.get('index')}] {tt.get('name')} - {tt.get('price')} ({status})")
 
         if len(ticket_types) == 0:
-            if show_debug_message:
-                print(f"[TICKET] No ticket types found")
+            debug.log(f"[TICKET] No ticket types found")
             return False
 
         # Step 3: Check if any ticket type is already selected
         for tt in ticket_types:
             if tt.get('isAlreadySelected'):
-                if show_debug_message:
-                    print(f"[TICKET] Already assigned: {tt.get('name')} = {tt.get('currentValue')}")
+                debug.log(f"[TICKET] Already assigned: {tt.get('name')} = {tt.get('currentValue')}")
                 return True
 
         # Step 4: Filter valid ticket types (with available options)
         valid_tickets = [tt for tt in ticket_types if tt.get('hasValidOption')]
 
         if len(valid_tickets) == 0:
-            if show_debug_message:
-                print(f"[TICKET] All ticket types sold out")
+            debug.log(f"[TICKET] All ticket types sold out")
             return False
 
         # Step 5: Apply keyword_exclude filter
@@ -11273,14 +10595,12 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
             ticket_name = ticket.get('name', '')
             if keyword_exclude and len(keyword_exclude) > 0:
                 if util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_name):
-                    if show_debug_message:
-                        print(f"[TICKET] Excluded by keyword: {ticket_name}")
+                    debug.log(f"[TICKET] Excluded by keyword: {ticket_name}")
                     continue
             filtered_tickets.append(ticket)
 
         if len(filtered_tickets) == 0:
-            if show_debug_message:
-                print(f"[TICKET] All ticket types excluded by keyword_exclude")
+            debug.log(f"[TICKET] All ticket types excluded by keyword_exclude")
             # Fallback to valid_tickets if all excluded
             filtered_tickets = valid_tickets
 
@@ -11288,8 +10608,7 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
         # Fix (2026-01-07): If only 1 valid ticket type, select it directly
         if len(filtered_tickets) == 1:
             matched_ticket = filtered_tickets[0]
-            if show_debug_message:
-                print(f"[TICKET] Single ticket type, selecting directly: {matched_ticket.get('name')}")
+            debug.log(f"[TICKET] Single ticket type, selecting directly: {matched_ticket.get('name')}")
         else:
             # Step 6: Apply area_keyword matching (for multiple ticket types)
             matched_ticket = None
@@ -11320,15 +10639,14 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
 
                         if is_match:
                             matched_ticket = ticket
-                            if show_debug_message:
-                                print(f"[TICKET] Keyword matched: '{keyword_item}' -> {ticket_name}")
+                            debug.log(f"[TICKET] Keyword matched: '{keyword_item}' -> {ticket_name}")
                             break
 
                     if matched_ticket:
                         break
 
-                if not matched_ticket and show_debug_message:
-                    print(f"[TICKET] No ticket matched keyword: {area_keyword}")
+                if not matched_ticket:
+                    debug.log(f"[TICKET] No ticket matched keyword: {area_keyword}")
 
         # Step 7: Fallback selection if no keyword match
         if not matched_ticket:
@@ -11337,12 +10655,10 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 matched_ticket = util.get_target_item_from_matched_list(
                     filtered_tickets, auto_select_mode
                 )
-                if show_debug_message:
-                    print(f"[TICKET] Fallback selection: {matched_ticket.get('name') if matched_ticket else 'None'}")
+                debug.log(f"[TICKET] Fallback selection: {matched_ticket.get('name') if matched_ticket else 'None'}")
 
         if not matched_ticket:
-            if show_debug_message:
-                print(f"[TICKET] No suitable ticket type found")
+            debug.log(f"[TICKET] No suitable ticket type found")
             return False
 
         # Step 8: Set the ticket quantity for the matched ticket type
@@ -11402,18 +10718,17 @@ async def nodriver_ibon_ticket_number_auto_select(tab, config_dict):
                 is_ticket_number_assigned = True
                 ticket_name = result_parsed.get('ticket_name', '')
                 set_value = result_parsed.get('set_value', '')
-                if show_debug_message:
+                if debug.enabled:
                     if value_to_set != ticket_number:
-                        print(f"[TICKET] Set '{ticket_name}' to {set_value} (fallback, target {ticket_number} not available)")
+                        debug.log(f"[TICKET] Set '{ticket_name}' to {set_value} (fallback, target {ticket_number} not available)")
                     else:
-                        print(f"[TICKET] Set '{ticket_name}' to {set_value}")
+                        debug.log(f"[TICKET] Set '{ticket_name}' to {set_value}")
             else:
-                if show_debug_message:
-                    print(f"[TICKET] Failed: {result_parsed.get('error')}")
+                debug.log(f"[TICKET] Failed: {result_parsed.get('error')}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[TICKET ERROR] Exception: {exc}")
+        if debug.enabled:
+            debug.log(f"[TICKET ERROR] Exception: {exc}")
             import traceback
             traceback.print_exc()
 
@@ -11424,7 +10739,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
     Use DOMSnapshot to find captcha image inside Shadow DOM and get base64 data
     Returns: img_base64 (bytes) or None
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Wait for page to stabilize before capturing
     import random
@@ -11463,8 +10778,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             if hasattr(doc.nodes, 'backend_node_id') and idx < len(doc.nodes.backend_node_id):
                                 img_backend_node_id = doc.nodes.backend_node_id[idx]
 
-                            if show_debug_message:
-                                print(f"[CAPTCHA] Found IMG: {target_img_url}")
+                            debug.log(f"[CAPTCHA] Found IMG: {target_img_url}")
                             break
 
             if img_backend_node_id:
@@ -11472,8 +10786,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
 
         if not img_backend_node_id:
             # Try finding CANVAS element (new EventBuy format)
-            if show_debug_message:
-                print("[CAPTCHA] IMG not found, searching for CANVAS element...")
+            debug.log("[CAPTCHA] IMG not found, searching for CANVAS element...")
             
             for doc in documents:
                 node_names = [strings[i] for i in doc.nodes.node_name]
@@ -11484,18 +10797,15 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                         if hasattr(doc.nodes, 'backend_node_id') and idx < len(doc.nodes.backend_node_id):
                             img_backend_node_id = doc.nodes.backend_node_id[idx]
                             
-                            if show_debug_message:
-                                print(f"[CAPTCHA] Found CANVAS element")
+                            debug.log(f"[CAPTCHA] Found CANVAS element")
                             break
                 
                 if img_backend_node_id:
                     break
         
         if not img_backend_node_id:
-            if show_debug_message:
-                print("[CAPTCHA] Neither IMG nor CANVAS found")
+            debug.log("[CAPTCHA] Neither IMG nor CANVAS found")
             return None
-
 
         # Make URL absolute if needed
         if target_img_url and target_img_url.startswith('/'):
@@ -11537,7 +10847,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                             width = max(quad[0], quad[2], quad[4], quad[6]) - x
                             height = max(quad[1], quad[3], quad[5], quad[7]) - y
 
-
                             # Get device pixel ratio
                             device_pixel_ratio = await tab.evaluate('window.devicePixelRatio')
 
@@ -11554,7 +10863,6 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 full_img_bytes = base64.b64decode(full_screenshot)
                                 full_img = Image.open(io.BytesIO(full_img_bytes))
 
-
                                 # Crop using PIL (coordinates need to account for device pixel ratio)
                                 left = int(x * device_pixel_ratio)
                                 top = int(y * device_pixel_ratio)
@@ -11568,11 +10876,10 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                 cropped_img.save(img_buffer, format='PNG')
                                 img_base64 = img_buffer.getvalue()
 
-                                if show_debug_message:
-                                    print(f"[CAPTCHA] Screenshot: {len(img_base64)} bytes")
+                                debug.log(f"[CAPTCHA] Screenshot: {len(img_base64)} bytes")
 
                                 # Save for debugging (only in verbose mode)
-                                # if show_debug_message:
+                                # if debug.enabled:
                                     # try:
                                         # import os
                                         # from datetime import datetime
@@ -11586,27 +10893,23 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
                                     # except:
                                         # pass
                         else:
-                            if show_debug_message:
-                                print("[CAPTCHA] Failed to get box model")
+                            debug.log("[CAPTCHA] Failed to get box model")
                     else:
-                        if show_debug_message:
-                            print("[CAPTCHA] Failed to convert backend_node_id")
+                        debug.log("[CAPTCHA] Failed to convert backend_node_id")
                 except Exception as dom_exc:
-                    if show_debug_message:
-                        print(f"[CAPTCHA] DOM API error: {dom_exc}")
+                    debug.log(f"[CAPTCHA] DOM API error: {dom_exc}")
             else:
-                if show_debug_message:
-                    print("[CAPTCHA] No backend_node_id found for IMG")
+                debug.log("[CAPTCHA] No backend_node_id found for IMG")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[CAPTCHA] Screenshot failed: {exc}")
+            if debug.enabled:
+                debug.log(f"[CAPTCHA] Screenshot failed: {exc}")
                 import traceback
                 traceback.print_exc()
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[CAPTCHA ERROR] Exception: {exc}")
+        if debug.enabled:
+            debug.log(f"[CAPTCHA ERROR] Exception: {exc}")
             import traceback
             traceback.print_exc()
 
@@ -11617,13 +10920,12 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
     ibon captcha input handling
     Returns: (is_verifyCode_editing, is_form_submitted)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False) if config_dict else False
+    debug = util.create_debug_logger(config_dict)
 
     is_verifyCode_editing = False
     is_form_submitted = False
 
-    if show_debug_message:
-        print(f"[CAPTCHA INPUT] answer: {answer}, auto_submit: {auto_submit}")
+    debug.log(f"[CAPTCHA INPUT] answer: {answer}, auto_submit: {auto_submit}")
 
     try:
         # Find captcha input box
@@ -11649,8 +10951,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                 pass
 
         if not form_verifyCode:
-            if show_debug_message:
-                print("[CAPTCHA INPUT] Input box not found")
+            debug.log("[CAPTCHA INPUT] Input box not found")
             return is_verifyCode_editing, is_form_submitted
 
         # Check if input box is visible
@@ -11676,8 +10977,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
             pass
 
         if not is_visible:
-            if show_debug_message:
-                print("[CAPTCHA INPUT] Input box not visible")
+            debug.log("[CAPTCHA INPUT] Input box not visible")
             return is_verifyCode_editing, is_form_submitted
 
         # If no answer provided, check if already has value for manual input mode
@@ -11691,8 +10991,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
 
             # If already has value, skip (user manually inputed)
             if inputed_value and inputed_value != "驗證碼":
-                if show_debug_message:
-                    print(f"[CAPTCHA INPUT] Already has value: {inputed_value}")
+                debug.log(f"[CAPTCHA INPUT] Already has value: {inputed_value}")
                 is_verifyCode_editing = True
                 return is_verifyCode_editing, is_form_submitted
 
@@ -11700,8 +10999,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
             try:
                 await form_verifyCode.click()
                 is_verifyCode_editing = True
-                if show_debug_message:
-                    print("[CAPTCHA INPUT] Focused for manual input")
+                debug.log("[CAPTCHA INPUT] Focused for manual input")
             except:
                 pass
             return is_verifyCode_editing, is_form_submitted
@@ -11716,8 +11014,7 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
             # Type answer
             await form_verifyCode.send_keys(answer)
 
-            if show_debug_message:
-                print(f"[CAPTCHA INPUT] Filled answer: {answer}")
+            debug.log(f"[CAPTCHA INPUT] Filled answer: {answer}")
 
             # Auto submit if enabled
             if auto_submit:
@@ -11746,25 +11043,20 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                     async def handle_submit_dialog(event):
                         nonlocal alert_handled
                         alert_handled = True
-                        if show_debug_message:
-                            print(f"[CAPTCHA INPUT] Alert detected: '{event.message}'")
+                        debug.log(f"[CAPTCHA INPUT] Alert detected: '{event.message}'")
                         # Auto-dismiss alert
                         try:
                             await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                            if show_debug_message:
-                                print(f"[CAPTCHA INPUT] Alert dismissed")
+                            debug.log(f"[CAPTCHA INPUT] Alert dismissed")
                         except Exception as dismiss_exc:
-                            if show_debug_message:
-                                print(f"[CAPTCHA INPUT] Failed to dismiss alert: {dismiss_exc}")
+                            debug.log(f"[CAPTCHA INPUT] Failed to dismiss alert: {dismiss_exc}")
 
                     # Register alert handler
                     try:
                         tab.add_handler(cdp.page.JavascriptDialogOpening, handle_submit_dialog)
-                        if show_debug_message:
-                            print(f"[CAPTCHA INPUT] Alert handler registered before submit")
+                        debug.log(f"[CAPTCHA INPUT] Alert handler registered before submit")
                     except Exception as handler_exc:
-                        if show_debug_message:
-                            print(f"[CAPTCHA INPUT] Failed to register alert handler: {handler_exc}")
+                        debug.log(f"[CAPTCHA INPUT] Failed to register alert handler: {handler_exc}")
 
                     # Find and click submit button
                     # Multiple button patterns for different ibon page types:
@@ -11826,20 +11118,18 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
 
                     if submit_clicked:
                         is_form_submitted = True
-                        if show_debug_message:
-                            print("[CAPTCHA INPUT] Form submitted")
+                        debug.log("[CAPTCHA INPUT] Form submitted")
 
                         # Wait for potential alert to appear and be handled
                         await asyncio.sleep(random.uniform(0.2, 0.6))
 
-                        if show_debug_message:
+                        if debug.enabled:
                             if alert_handled:
-                                print(f"[CAPTCHA INPUT] Alert was handled during wait")
+                                debug.log(f"[CAPTCHA INPUT] Alert was handled during wait")
                             else:
-                                print(f"[CAPTCHA INPUT] No alert appeared (captcha may be correct)")
+                                debug.log(f"[CAPTCHA INPUT] No alert appeared (captcha may be correct)")
                     else:
-                        if show_debug_message:
-                            print("[CAPTCHA INPUT] Submit button not found or disabled")
+                        debug.log("[CAPTCHA INPUT] Submit button not found or disabled")
 
                     # Remove alert handler
                     try:
@@ -11847,16 +11137,14 @@ async def nodriver_ibon_keyin_captcha_code(tab, answer="", auto_submit=False, co
                     except:
                         pass
                 else:
-                    if show_debug_message:
-                        print("[CAPTCHA INPUT] Ticket number not selected, skip submit")
+                    debug.log("[CAPTCHA INPUT] Ticket number not selected, skip submit")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[CAPTCHA INPUT ERROR] {exc}")
+            debug.log(f"[CAPTCHA INPUT ERROR] {exc}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[CAPTCHA INPUT ERROR] Exception: {exc}")
+        if debug.enabled:
+            debug.log(f"[CAPTCHA INPUT ERROR] Exception: {exc}")
             import traceback
             traceback.print_exc()
 
@@ -11867,10 +11155,9 @@ async def nodriver_ibon_refresh_captcha(tab, config_dict):
     Refresh ibon captcha image by calling JavaScript refreshCaptcha() function
     Returns: success (bool)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[CAPTCHA REFRESH] Refreshing captcha")
+    debug.log("[CAPTCHA REFRESH] Refreshing captcha")
 
     ret = False
     try:
@@ -11887,12 +11174,10 @@ async def nodriver_ibon_refresh_captcha(tab, config_dict):
 
         ret = result if result else False
 
-        if show_debug_message:
-            print(f"[CAPTCHA REFRESH] Result: {ret}")
+        debug.log(f"[CAPTCHA REFRESH] Result: {ret}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[CAPTCHA REFRESH ERROR] {exc}")
+        debug.log(f"[CAPTCHA REFRESH ERROR] {exc}")
 
     return ret
 
@@ -11901,7 +11186,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     ibon OCR auto recognition logic
     Returns: (is_need_redo_ocr, previous_answer, is_form_submitted)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_need_redo_ocr = False
     is_form_submitted = False
@@ -11915,13 +11200,11 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
         pass
 
     if not is_input_box_exist:
-        if show_debug_message:
-            print("[CAPTCHA OCR] Captcha input box not found")
+        debug.log("[CAPTCHA OCR] Captcha input box not found")
         return is_need_redo_ocr, previous_answer, is_form_submitted
 
     if not ocr:
-        if show_debug_message:
-            print("[CAPTCHA OCR] OCR module not available")
+        debug.log("[CAPTCHA OCR] OCR module not available")
         return is_need_redo_ocr, previous_answer, is_form_submitted
 
     # iBon clears ticket number after captcha error - reselect if needed
@@ -11943,21 +11226,20 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
         # Retry with exponential backoff: 0.5s → 1.0s → 2.0s
         max_retries = 3
         is_ticket_number_assigned = False
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+        debug = util.create_debug_logger(config_dict)
 
         for attempt in range(1, max_retries + 1):
             is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
 
             if is_ticket_number_assigned:
-                if show_debug_message and attempt > 1:
-                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                if attempt > 1:
+                    debug.log(f"[TICKET RETRY] Success after {attempt} attempt(s)")
                 break
 
             if attempt < max_retries:
                 # Exponential backoff: delay = 0.5 * (2 ^ (attempt - 1))
                 delay = 0.5 * (2 ** (attempt - 1))
-                if show_debug_message:
-                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                debug.log(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
                 await asyncio_sleep_with_pause_check(delay, config_dict)
 
         if is_ticket_number_assigned:
@@ -11976,24 +11258,21 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             # Preprocessing actually reduces accuracy (73.9% vs 91.3%)
             ocr_answer = ocr.classification(img_base64)
 
-            if show_debug_message:
-                print(f"[CAPTCHA OCR] Using global OCR (beta=True), raw result: {ocr_answer}")
+            debug.log(f"[CAPTCHA OCR] Using global OCR (beta=True), raw result: {ocr_answer}")
 
             # Filter to digits only (iBon captchas are 4 digits)
             if ocr_answer:
                 filtered = ''.join(filter(str.isdigit, ocr_answer))
-                if filtered != ocr_answer and show_debug_message:
-                    print(f"[CAPTCHA OCR] Filtered '{ocr_answer}' -> '{filtered}'")
+                if filtered != ocr_answer:
+                    debug.log(f"[CAPTCHA OCR] Filtered '{ocr_answer}' -> '{filtered}'")
                 ocr_answer = filtered
         except Exception as exc:
-            if show_debug_message:
-                print(f"[CAPTCHA OCR] OCR classification failed: {exc}")
+            debug.log(f"[CAPTCHA OCR] OCR classification failed: {exc}")
 
     ocr_done_time = time.time()
     ocr_elapsed_time = ocr_done_time - ocr_start_time
 
-    if show_debug_message:
-        print(f"[CAPTCHA OCR] Processing time: {ocr_elapsed_time:.3f}s")
+    debug.log(f"[CAPTCHA OCR] Processing time: {ocr_elapsed_time:.3f}s")
 
     # Process OCR result
     if ocr_answer is None:
@@ -12006,8 +11285,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             await nodriver_ibon_keyin_captcha_code(tab, config_dict=config_dict)
     else:
         ocr_answer = ocr_answer.strip()
-        if show_debug_message:
-            print(f"[CAPTCHA OCR] Result: {ocr_answer}")
+        debug.log(f"[CAPTCHA OCR] Result: {ocr_answer}")
 
         if len(ocr_answer) == 4:
             # Valid 4-digit answer
@@ -12020,20 +11298,17 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             if is_form_submitted and away_from_keyboard_enable:
                 # Alert is already handled inside nodriver_ibon_keyin_captcha_code()
                 # Just check URL change to determine if captcha was correct
-                if show_debug_message:
-                    print(f"[CAPTCHA OCR] Checking URL for verification...")
+                debug.log(f"[CAPTCHA OCR] Checking URL for verification...")
 
                 try:
                     current_url_after_submit, _ = await nodriver_current_url(tab)
                 except Exception as url_exc:
-                    if show_debug_message:
-                        print(f"[CAPTCHA OCR] Failed to get URL: {url_exc}")
+                    debug.log(f"[CAPTCHA OCR] Failed to get URL: {url_exc}")
                     current_url_after_submit = current_url_before_submit  # Assume same page
 
                 if current_url_before_submit == current_url_after_submit:
                     # Still on same page - captcha was incorrect (alert was shown and dismissed)
-                    if show_debug_message:
-                        print(f"[CAPTCHA OCR] Captcha '{ocr_answer}' was incorrect, URL unchanged")
+                    debug.log(f"[CAPTCHA OCR] Captcha '{ocr_answer}' was incorrect, URL unchanged")
 
                     # IMPORTANT: iBon automatically refreshes captcha after alert dismissal
                     # Manual refresh is NOT needed and causes timing issues:
@@ -12041,8 +11316,7 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
                     # - Manual refresh would create a new captcha
                     # - Next OCR might still fetch the old URL from DOM cache
                     # Solution: Wait longer for iBon's refresh to fully stabilize
-                    if show_debug_message:
-                        print("[CAPTCHA OCR] Waiting for iBon auto-refresh to complete...")
+                    debug.log("[CAPTCHA OCR] Waiting for iBon auto-refresh to complete...")
 
                     await asyncio.sleep(random.uniform(0.8, 1.2))  # Wait for iBon auto-refresh
 
@@ -12050,14 +11324,12 @@ async def nodriver_ibon_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
                     is_form_submitted = False
                 else:
                     # URL changed - captcha was correct
-                    if show_debug_message:
-                        print(f"[CAPTCHA OCR] Captcha '{ocr_answer}' accepted, URL changed")
-                        print(f"[CAPTCHA OCR] Before: {current_url_before_submit}")
-                        print(f"[CAPTCHA OCR] After: {current_url_after_submit}")
+                    debug.log(f"[CAPTCHA OCR] Captcha '{ocr_answer}' accepted, URL changed")
+                    debug.log(f"[CAPTCHA OCR] Before: {current_url_before_submit}")
+                    debug.log(f"[CAPTCHA OCR] After: {current_url_after_submit}")
         else:
             # Invalid length
-            if show_debug_message:
-                print(f"[CAPTCHA OCR] Invalid answer length: {len(ocr_answer)} (expected 4)")
+            debug.log(f"[CAPTCHA OCR] Invalid answer length: {len(ocr_answer)} (expected 4)")
 
             if not away_from_keyboard_enable:
                 await nodriver_ibon_keyin_captcha_code(tab, config_dict=config_dict)
@@ -12077,16 +11349,15 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     away_from_keyboard_enable = config_dict["ocr_captcha"]["force_submit"]
     if not config_dict["ocr_captcha"]["enable"]:
         away_from_keyboard_enable = False
 
-    if show_debug_message:
-        print(f"[IBON CAPTCHA] Starting captcha handling")
-        print(f"[IBON CAPTCHA] OCR enabled: {config_dict['ocr_captcha']['enable']}")
-        print(f"[IBON CAPTCHA] Auto submit: {away_from_keyboard_enable}")
+    debug.log(f"[IBON CAPTCHA] Starting captcha handling")
+    debug.log(f"[IBON CAPTCHA] OCR enabled: {config_dict['ocr_captcha']['enable']}")
+    debug.log(f"[IBON CAPTCHA] Auto submit: {away_from_keyboard_enable}")
 
     is_captcha_sent = False
 
@@ -12109,13 +11380,11 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
                 is_captcha_sent = True
 
             if is_form_submitted:
-                if show_debug_message:
-                    print("[IBON CAPTCHA] Form submitted successfully")
+                debug.log("[IBON CAPTCHA] Form submitted successfully")
                 break
 
             if not away_from_keyboard_enable:
-                if show_debug_message:
-                    print("[IBON CAPTCHA] Switching to manual input mode")
+                debug.log("[IBON CAPTCHA] Switching to manual input mode")
                 break
 
             if not is_need_redo_ocr:
@@ -12125,8 +11394,7 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
             if is_need_redo_ocr:
                 fail_count += 1
                 total_fail_count += 1
-                if show_debug_message:
-                    print(f"[IBON CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
+                debug.log(f"[IBON CAPTCHA] Fail count: {fail_count}, Total fails: {total_fail_count}")
 
                 # Check if total failures reached 5, switch to manual input mode
                 if total_fail_count >= 5:
@@ -12136,14 +11404,12 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
                     break
 
                 if fail_count >= 3:
-                    if show_debug_message:
-                        print("[IBON CAPTCHA] 3 consecutive failures reached")
+                    debug.log("[IBON CAPTCHA] 3 consecutive failures reached")
 
                     # Try to dismiss any existing alert before continuing
                     try:
                         await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                        if show_debug_message:
-                            print("[IBON CAPTCHA] Dismissed existing alert")
+                        debug.log("[IBON CAPTCHA] Dismissed existing alert")
                     except:
                         pass
 
@@ -12156,12 +11422,10 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
             # Check if URL changed
             new_url, _ = await nodriver_current_url(tab)
             if new_url != current_url:
-                if show_debug_message:
-                    print("[IBON CAPTCHA] URL changed, exit OCR loop")
+                debug.log("[IBON CAPTCHA] URL changed, exit OCR loop")
                 break
 
-            if show_debug_message:
-                print(f"[IBON CAPTCHA] Retry {redo_ocr + 1}/5")
+            debug.log(f"[IBON CAPTCHA] Retry {redo_ocr + 1}/5")
 
     return is_captcha_sent
 
@@ -12176,7 +11440,7 @@ async def nodriver_ibon_purchase_button_press(tab, config_dict):
     Returns:
         bool: True if button clicked successfully, False otherwise
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_button_clicked = False
 
     try:
@@ -12203,20 +11467,18 @@ async def nodriver_ibon_purchase_button_press(tab, config_dict):
                     if is_visible:
                         await button.click()
                         is_button_clicked = True
-                        if show_debug_message:
-                            print(f"[IBON PURCHASE] Successfully clicked button with selector: {selector}")
+                        debug.log(f"[IBON PURCHASE] Successfully clicked button with selector: {selector}")
                         break
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[IBON PURCHASE] Selector {selector} failed: {exc}")
+                debug.log(f"[IBON PURCHASE] Selector {selector} failed: {exc}")
                 continue
 
-        if not is_button_clicked and show_debug_message:
-            print("[IBON PURCHASE] Purchase button not found or not clickable")
+        if not is_button_clicked:
+            debug.log("[IBON PURCHASE] Purchase button not found or not clickable")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[IBON PURCHASE ERROR] {exc}")
+        if debug.enabled:
+            debug.log(f"[IBON PURCHASE ERROR] {exc}")
             import traceback
             traceback.print_exc()
 
@@ -12233,7 +11495,7 @@ async def nodriver_ibon_check_sold_out(tab, config_dict):
     Returns:
         bool: True if sold out, False otherwise
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_sold_out = False
 
     try:
@@ -12251,15 +11513,12 @@ async def nodriver_ibon_check_sold_out(tab, config_dict):
 
         if result:
             is_sold_out = True
-            if show_debug_message:
-                print("[IBON] Event is sold out")
+            debug.log("[IBON] Event is sold out")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON] Check sold out error: {e}")
+        debug.log(f"[IBON] Check sold out error: {e}")
 
     return is_sold_out
-
 
 async def nodriver_ibon_wait_for_select_elements(tab, config_dict, max_wait_time=3.0):
     """
@@ -12274,7 +11533,7 @@ async def nodriver_ibon_wait_for_select_elements(tab, config_dict, max_wait_time
     Returns:
         int: Number of select elements found (0 if none found after timeout)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     wait_interval = 0.2
     start_time = time.time()
 
@@ -12293,18 +11552,16 @@ async def nodriver_ibon_wait_for_select_elements(tab, config_dict, max_wait_time
                 })()
             ''')
             if select_count and select_count > 0:
-                if show_debug_message:
+                if debug.enabled:
                     elapsed = time.time() - start_time
-                    print(f"[IBON] Page loaded, found {select_count} select element(s) after {elapsed:.2f}s")
+                    debug.log(f"[IBON] Page loaded, found {select_count} select element(s) after {elapsed:.2f}s")
                 return select_count
         except Exception:
             pass
         await asyncio.sleep(wait_interval)
 
-    if show_debug_message:
-        print(f"[IBON] Warning: No select elements found after {max_wait_time}s wait")
+    debug.log(f"[IBON] Warning: No select elements found after {max_wait_time}s wait")
     return 0
-
 
 async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     """
@@ -12322,7 +11579,7 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
     Returns:
         bool: True if sold out (needs page reload), False otherwise
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_sold_out = False
 
     try:
@@ -12414,22 +11671,20 @@ async def nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict):
         if isinstance(result, dict):
             is_sold_out = result.get('isSoldOut', False)
             page_not_loaded = result.get('pageNotLoaded', False)
-            if show_debug_message:
+            if debug.enabled:
                 select_count = result.get('selectCount', 0)
                 has_valid = result.get('hasValidOptions', False)
                 if page_not_loaded:
-                    print("[IBON] Page not fully loaded, waiting...")
+                    debug.log("[IBON] Page not fully loaded, waiting...")
                 elif is_sold_out:
-                    print("[IBON] Sold out detected, will reload")
+                    debug.log("[IBON] Sold out detected, will reload")
                 else:
-                    print(f"[IBON] Tickets available ({select_count} selects, valid={has_valid})")
+                    debug.log(f"[IBON] Tickets available ({select_count} selects, valid={has_valid})")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON SOLD OUT CHECK] Error: {e}")
+        debug.log(f"[IBON SOLD OUT CHECK] Error: {e}")
 
     return is_sold_out
-
 
 async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
     """
@@ -12450,7 +11705,7 @@ async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
     Returns:
         bool: True if navigation successful, False otherwise
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     navigation_success = False
 
     try:
@@ -12465,8 +11720,7 @@ async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
             if len(parts) >= 7:
                 # Navigate to Event page (area selection)
                 event_url = '/'.join(parts[:3] + ['Event', parts[4], parts[5]])
-                if show_debug_message:
-                    print(f"[IBON] Sold out - navigating to area selection: {event_url}")
+                debug.log(f"[IBON] Sold out - navigating to area selection: {event_url}")
                 await tab.get(event_url)
                 navigation_success = True
 
@@ -12474,21 +11728,18 @@ async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
         # Note: Old .aspx pages require PRODUCT_ID and other parameters that are hard to reconstruct.
         # Using tab.back() is safer to return to the previous area selection page.
         elif '/utk02/utk0202_' in url_lower and 'PERFORMANCE_PRICE_AREA_ID=' in url.upper():
-            if show_debug_message:
-                print("[IBON] Sold out - using tab.back() to return to area selection")
+            debug.log("[IBON] Sold out - using tab.back() to return to area selection")
             await tab.back()
             navigation_success = True
 
         # Fallback: use tab.back() if URL pattern not recognized
         if not navigation_success:
-            if show_debug_message:
-                print("[IBON] Sold out - using tab.back() as fallback")
+            debug.log("[IBON] Sold out - using tab.back() as fallback")
             await tab.back()
             navigation_success = True
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON] Navigation error: {e}")
+        debug.log(f"[IBON] Navigation error: {e}")
         # Fallback to reload if navigation fails
         try:
             await tab.reload()
@@ -12496,7 +11747,6 @@ async def nodriver_ibon_navigate_on_sold_out(tab, config_dict):
             pass
 
     return navigation_success
-
 
 async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_list,
                                           input_text_css, next_step_button_css):
@@ -12514,7 +11764,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
     Returns:
         tuple[bool, list]: (is_answer_sent, updated fail_list)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_answer_sent = False
 
     try:
@@ -12544,13 +11794,11 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
 
         # Handle NoDriver error result (ExceptionDetails object or non-dict)
         if not input_info or not isinstance(input_info, dict):
-            if show_debug_message:
-                print(f"[IBON VERIFY] Failed to get input info: {type(input_info)}")
+            debug.log(f"[IBON VERIFY] Failed to get input info: {type(input_info)}")
             return is_answer_sent, fail_list
 
         form_input_count = input_info.get('count', 0)
-        if show_debug_message:
-            print(f"[IBON VERIFY] Found {form_input_count} input field(s)")
+        debug.log(f"[IBON VERIFY] Found {form_input_count} input field(s)")
 
         if form_input_count == 0:
             return is_answer_sent, fail_list
@@ -12561,10 +11809,9 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             if len(answer_list[0]) > 0 and len(answer_list[1]) > 0:
                 is_multi_question_mode = True
 
-        if show_debug_message:
-            print(f"[IBON VERIFY] Multi-question mode: {is_multi_question_mode}")
-            print(f"[IBON VERIFY] Answer list: {answer_list}")
-            print(f"[IBON VERIFY] Fail list: {fail_list}")
+        debug.log(f"[IBON VERIFY] Multi-question mode: {is_multi_question_mode}")
+        debug.log(f"[IBON VERIFY] Answer list: {answer_list}")
+        debug.log(f"[IBON VERIFY] Fail list: {fail_list}")
 
         if is_multi_question_mode:
             # Multi-field mode: fill answer_list[0] to first field, answer_list[1] to second
@@ -12608,8 +11855,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                 fill_result = fill_result_raw[0]
 
             if fill_result:
-                if show_debug_message:
-                    print(f"[IBON VERIFY] Filled multi-field: '{answer_1}' and '{answer_2}'")
+                debug.log(f"[IBON VERIFY] Filled multi-field: '{answer_1}' and '{answer_2}'")
 
                 # Click submit button
                 try:
@@ -12619,11 +11865,9 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                         is_answer_sent = True
                         fail_list.append(answer_1)
                         fail_list.append(answer_2)
-                        if show_debug_message:
-                            print(f"[IBON VERIFY] Submitted multi-field answers")
+                        debug.log(f"[IBON VERIFY] Submitted multi-field answers")
                 except Exception as btn_exc:
-                    if show_debug_message:
-                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+                    debug.log(f"[IBON VERIFY] Click button error: {btn_exc}")
 
         else:
             # Single-field mode: find first answer not in fail_list
@@ -12649,8 +11893,7 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                     }})()
                 ''')
 
-                if show_debug_message:
-                    print(f"[IBON VERIFY] Filled single-field: '{inferred_answer}'")
+                debug.log(f"[IBON VERIFY] Filled single-field: '{inferred_answer}'")
 
                 # Click submit button
                 try:
@@ -12659,15 +11902,12 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
                         await btn.click()
                         is_answer_sent = True
                         fail_list.append(inferred_answer)
-                        if show_debug_message:
-                            print(f"[IBON VERIFY] Submitted, attempt #{len(fail_list)}")
+                        debug.log(f"[IBON VERIFY] Submitted, attempt #{len(fail_list)}")
                 except Exception as btn_exc:
-                    if show_debug_message:
-                        print(f"[IBON VERIFY] Click button error: {btn_exc}")
+                    debug.log(f"[IBON VERIFY] Click button error: {btn_exc}")
             else:
                 # No answer to fill, focus the input
-                if show_debug_message:
-                    print("[IBON VERIFY] No answer available, focusing input")
+                debug.log("[IBON VERIFY] No answer available, focusing input")
                 await tab.evaluate(f'''
                     (function() {{
                         var input = document.querySelector("{input_text_css}");
@@ -12681,11 +11921,9 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             await asyncio.sleep(0.3)
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[IBON VERIFY] Error: {exc}")
+        debug.log(f"[IBON VERIFY] Error: {exc}")
 
     return is_answer_sent, fail_list
-
 
 async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     """
@@ -12705,7 +11943,7 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
     Returns:
         list: Updated fail_list
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # CSS selectors for ibon verification page
     # Note: use single quotes in CSS selector to avoid breaking JavaScript string
@@ -12758,9 +11996,8 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
         question_text = ' '.join(question_texts).strip()
 
         if len(question_text) > 0:
-            if show_debug_message:
-                print(f"[IBON VERIFY] Question found: {question_text}")
-                print(f"[IBON VERIFY] Question count: {len(question_texts)}")
+            debug.log(f"[IBON VERIFY] Question found: {question_text}")
+            debug.log(f"[IBON VERIFY] Question count: {len(question_texts)}")
 
             # Write question to file for debugging
             write_question_to_file(question_text)
@@ -12768,8 +12005,7 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
             # Step 1: Get answers from user dictionary
             answer_list = util.get_answer_list_from_user_guess_string(config_dict, CONST_MAXBOT_ANSWER_ONLINE_FILE)
 
-            if show_debug_message:
-                print(f"[IBON VERIFY] User dictionary answers: {answer_list}")
+            debug.log(f"[IBON VERIFY] User dictionary answers: {answer_list}")
 
             # Step 2: Smart extraction for multi-field forms
             # For each question, try to extract from its corresponding answer
@@ -12782,26 +12018,22 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
                         extracted = util.extract_answer_by_question_pattern([answer_list[idx]], q_text)
                         if extracted:
                             extracted_answers.append(extracted)
-                            if show_debug_message:
-                                print(f"[IBON VERIFY] Q{idx+1} extracted from answer[{idx}]: {extracted}")
+                            debug.log(f"[IBON VERIFY] Q{idx+1} extracted from answer[{idx}]: {extracted}")
                         else:
                             # No pattern match, use original answer at this position
                             extracted_answers.append(answer_list[idx])
-                            if show_debug_message:
-                                print(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
+                            debug.log(f"[IBON VERIFY] Q{idx+1} using original: {answer_list[idx]}")
 
                 # Replace answer_list with extracted answers if we got results
                 if len(extracted_answers) >= len(question_texts):
                     answer_list = extracted_answers
-                    if show_debug_message:
-                        print(f"[IBON VERIFY] Final answers for multi-field: {answer_list}")
+                    debug.log(f"[IBON VERIFY] Final answers for multi-field: {answer_list}")
 
             elif len(answer_list) > 0:
                 # Single-field mode: original logic
                 extracted_answer = util.extract_answer_by_question_pattern(answer_list, question_text)
                 if extracted_answer:
-                    if show_debug_message:
-                        print(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
+                    debug.log(f"[IBON VERIFY] Extracted answer by pattern: {extracted_answer}")
                     # Prepend extracted answer to the list for priority
                     if extracted_answer not in answer_list:
                         answer_list = [extracted_answer] + answer_list
@@ -12809,9 +12041,8 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
             # Step 3: If no user dictionary and auto_guess enabled, try auto-guess
             if len(answer_list) == 0:
                 if config_dict["advanced"].get("auto_guess_options", False):
-                    answer_list = util.get_answer_list_from_question_string(None, question_text)
-                    if show_debug_message:
-                        print(f"[IBON VERIFY] Auto-guessed answers: {answer_list}")
+                    answer_list = util.get_answer_list_from_question_string(None, question_text, config_dict)
+                    debug.log(f"[IBON VERIFY] Auto-guessed answers: {answer_list}")
 
             # Step 4: Fill the form if we have answers
             if len(answer_list) > 0:
@@ -12819,11 +12050,9 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
                     tab, config_dict, answer_list, fail_list,
                     INPUT_CSS, SUBMIT_BTN_CSS
                 )
-                if show_debug_message:
-                    print(f"[IBON VERIFY] Answer sent: {is_answer_sent}")
+                debug.log(f"[IBON VERIFY] Answer sent: {is_answer_sent}")
             else:
-                if show_debug_message:
-                    print("[IBON VERIFY] No answers available, waiting for user input")
+                debug.log("[IBON VERIFY] No answers available, waiting for user input")
                 # Focus the input field
                 await tab.evaluate(f'''
                     (function() {{
@@ -12835,11 +12064,9 @@ async def nodriver_ibon_verification_question(tab, fail_list, config_dict):
                 ''')
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[IBON] Verification question error: {e}")
+        debug.log(f"[IBON] Verification question error: {e}")
 
     return fail_list
-
 
 async def nodriver_tour_ibon_event_detail(tab, config_dict):
     """
@@ -12853,12 +12080,11 @@ async def nodriver_tour_ibon_event_detail(tab, config_dict):
     Returns:
         bool: True if button clicked successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_button_clicked = False
 
     try:
-        if show_debug_message:
-            print("[TOUR IBON] Event detail page detected")
+        debug.log("[TOUR IBON] Event detail page detected")
 
         # Find and click purchase button (multiple text variations)
         button_text_list = ["立即購票", "搶票", "購票", "Buy"]
@@ -12880,22 +12106,18 @@ async def nodriver_tour_ibon_event_detail(tab, config_dict):
 
                 if result:
                     is_button_clicked = True
-                    if show_debug_message:
-                        print(f"[TOUR IBON] Clicked button: {button_text}")
+                    debug.log(f"[TOUR IBON] Clicked button: {button_text}")
                     break
             except Exception as e:
-                if show_debug_message:
-                    print(f"[TOUR IBON] Button click error ({button_text}): {e}")
+                debug.log(f"[TOUR IBON] Button click error ({button_text}): {e}")
 
-        if not is_button_clicked and show_debug_message:
-            print("[TOUR IBON] Purchase button not found")
+        if not is_button_clicked:
+            debug.log("[TOUR IBON] Purchase button not found")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[TOUR IBON] Event detail error: {e}")
+        debug.log(f"[TOUR IBON] Event detail error: {e}")
 
     return is_button_clicked
-
 
 async def nodriver_tour_ibon_options(tab, config_dict):
     """
@@ -12909,12 +12131,11 @@ async def nodriver_tour_ibon_options(tab, config_dict):
     Returns:
         bool: True if all steps completed successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_all_completed = False
 
     try:
-        if show_debug_message:
-            print("[TOUR IBON] Options page detected")
+        debug.log("[TOUR IBON] Options page detected")
 
         # Step 1: Select ticket quantity from <select> element
         # Support multiple ticket types with area_keyword matching
@@ -12942,8 +12163,7 @@ async def nodriver_tour_ibon_options(tab, config_dict):
                 for i, ticket_name in enumerate(ticket_types):
                     if util.is_text_match_keyword(area_keyword, ticket_name):
                         target_index = i
-                        if show_debug_message:
-                            print(f"[TOUR IBON] Keyword '{area_keyword}' matched ticket: {ticket_name}")
+                        debug.log(f"[TOUR IBON] Keyword '{area_keyword}' matched ticket: {ticket_name}")
                         break
 
             # Step 1c: Select quantity for the matched ticket type
@@ -12969,12 +12189,11 @@ async def nodriver_tour_ibon_options(tab, config_dict):
                 }})()
             ''')
 
-            if select_result and isinstance(select_result, dict) and select_result.get('success') and show_debug_message:
-                print(f"[TOUR IBON] Selected ticket: {select_result.get('ticketName', 'unknown')}, quantity: {ticket_number}")
+            if select_result and isinstance(select_result, dict) and select_result.get('success'):
+                debug.log(f"[TOUR IBON] Selected ticket: {select_result.get('ticketName', 'unknown')}, quantity: {ticket_number}")
 
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Quantity selection error: {e}")
+            debug.log(f"[TOUR IBON] Quantity selection error: {e}")
 
         # Step 2: Click the ENABLED "加入訂購" button (only enabled after quantity selected)
         await asyncio.sleep(0.3)
@@ -13002,13 +12221,12 @@ async def nodriver_tour_ibon_options(tab, config_dict):
                 })()
             ''')
 
-            if result and isinstance(result, dict) and result.get('success') and show_debug_message:
-                print("[TOUR IBON] Clicked: 加入訂購")
-            elif result and isinstance(result, dict) and not result.get('success') and show_debug_message:
-                print(f"[TOUR IBON] Add button not ready: {result.get('reason')}")
+            if result and isinstance(result, dict) and result.get('success'):
+                debug.log("[TOUR IBON] Clicked: 加入訂購")
+            elif result and isinstance(result, dict) and not result.get('success'):
+                debug.log(f"[TOUR IBON] Add button not ready: {result.get('reason')}")
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Add to cart error: {e}")
+            debug.log(f"[TOUR IBON] Add to cart error: {e}")
 
         # Step 3: Wait and click "確認付款方式" button
         await asyncio.sleep(0.5)
@@ -13028,18 +12246,14 @@ async def nodriver_tour_ibon_options(tab, config_dict):
 
             if result:
                 is_all_completed = True
-                if show_debug_message:
-                    print("[TOUR IBON] Clicked: 確認付款方式")
+                debug.log("[TOUR IBON] Clicked: 確認付款方式")
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Confirm payment error: {e}")
+            debug.log(f"[TOUR IBON] Confirm payment error: {e}")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[TOUR IBON] Options page error: {e}")
+        debug.log(f"[TOUR IBON] Options page error: {e}")
 
     return is_all_completed
-
 
 async def nodriver_tour_ibon_checkout(tab, config_dict):
     """
@@ -13053,20 +12267,18 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
     Returns:
         bool: True if form submitted successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_form_submitted = False
 
     try:
-        if show_debug_message:
-            print("[TOUR IBON] Checkout page detected")
+        debug.log("[TOUR IBON] Checkout page detected")
 
         # Get personal data from config
         real_name = config_dict.get("contact", {}).get("real_name", "")
         phone = config_dict.get("contact", {}).get("phone", "")
 
         if not real_name or not phone:
-            if show_debug_message:
-                print("[TOUR IBON] Missing contact data in settings")
+            debug.log("[TOUR IBON] Missing contact data in settings")
             return False
 
         # JSON encode for safe JavaScript string insertion
@@ -13114,14 +12326,13 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
                 }})()
             ''')
 
-            if result and isinstance(result, dict) and show_debug_message:
+            if result and isinstance(result, dict):
                 if result.get('name'):
                     print(f"[TOUR IBON] Filled name: {real_name}")
                 if result.get('phone'):
                     print(f"[TOUR IBON] Filled phone: {phone}")
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Form fill error: {e}")
+            debug.log(f"[TOUR IBON] Form fill error: {e}")
 
         # Step 2: Check agreement checkbox (wait for form validation first)
         await asyncio.sleep(0.5)
@@ -13146,11 +12357,10 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
                 })()
             ''')
 
-            if result and show_debug_message:
-                print(f"[TOUR IBON] Agreement checkbox: {result}")
+            if result:
+                debug.log(f"[TOUR IBON] Agreement checkbox: {result}")
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Checkbox error: {e}")
+            debug.log(f"[TOUR IBON] Checkbox error: {e}")
 
         # Step 3: Click submit button (下一步) - wait for validation to complete
         await asyncio.sleep(0.5)
@@ -13170,18 +12380,14 @@ async def nodriver_tour_ibon_checkout(tab, config_dict):
 
             if result:
                 is_form_submitted = True
-                if show_debug_message:
-                    print("[TOUR IBON] Clicked: 下一步")
+                debug.log("[TOUR IBON] Clicked: 下一步")
         except Exception as e:
-            if show_debug_message:
-                print(f"[TOUR IBON] Submit error: {e}")
+            debug.log(f"[TOUR IBON] Submit error: {e}")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[TOUR IBON] Checkout error: {e}")
+        debug.log(f"[TOUR IBON] Checkout error: {e}")
 
     return is_form_submitted
-
 
 async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
@@ -13201,7 +12407,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         ibon_dict["shown_checkout_message"] = False
 
     # Check if kicked to login page (Cookie/Session expired)
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_login_page = False
     target_url = None
 
@@ -13220,47 +12426,42 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     target_url = params['targeturl'][0]
             except:
                 pass
-        if show_debug_message:
-            print(f"[IBON LOGIN] Detected login page redirect")
+        if debug.enabled:
+            debug.log(f"[IBON LOGIN] Detected login page redirect")
             if target_url:
-                print(f"[IBON LOGIN] Target URL: {target_url}")
+                debug.log(f"[IBON LOGIN] Target URL: {target_url}")
 
     # If kicked to login page, re-login and redirect back
     if is_login_page:
-        if show_debug_message:
-            print("[IBON LOGIN] Re-authenticating with cookie...")
+        debug.log("[IBON LOGIN] Re-authenticating with cookie...")
 
         # Re-execute login process (get driver from tab.browser)
         driver = getattr(tab, 'browser', None)
         login_result = await nodriver_ibon_login(tab, config_dict, driver)
 
-        if show_debug_message:
+        if debug.enabled:
             if login_result['success']:
-                print("[IBON LOGIN] Re-authentication successful")
+                debug.log("[IBON LOGIN] Re-authentication successful")
             else:
-                print(f"[IBON LOGIN] Re-authentication failed: {login_result.get('error', 'Unknown error')}")
+                debug.log(f"[IBON LOGIN] Re-authentication failed: {login_result.get('error', 'Unknown error')}")
 
         # Redirect back to target URL or homepage
         if target_url and target_url.startswith('http'):
-            if show_debug_message:
-                print(f"[IBON LOGIN] Redirecting to target: {target_url}")
+            debug.log(f"[IBON LOGIN] Redirecting to target: {target_url}")
             try:
                 await tab.get(target_url)
                 await asyncio.sleep(2)
             except Exception as e:
-                if show_debug_message:
-                    print(f"[IBON LOGIN] Redirect failed: {e}")
+                debug.log(f"[IBON LOGIN] Redirect failed: {e}")
         else:
             # No target URL, go to homepage
             config_homepage = config_dict["homepage"]
-            if show_debug_message:
-                print(f"[IBON LOGIN] No target URL, redirecting to homepage: {config_homepage}")
+            debug.log(f"[IBON LOGIN] No target URL, redirecting to homepage: {config_homepage}")
             try:
                 await tab.get(config_homepage)
                 await asyncio.sleep(2)
             except Exception as e:
-                if show_debug_message:
-                    print(f"[IBON LOGIN] Homepage redirect failed: {e}")
+                debug.log(f"[IBON LOGIN] Homepage redirect failed: {e}")
 
         return False  # Don't quit bot, continue monitoring
 
@@ -13296,23 +12497,19 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         should_redirect = not is_homepage_same_as_current
 
         if should_redirect:
-            show_debug_message = config_dict["advanced"].get("verbose", False)
+            debug = util.create_debug_logger(config_dict)
 
-            if show_debug_message:
-                print(f"[IBON] Detected kicked back to homepage: {url}")
-                print(f"[IBON] Redirecting to config homepage: {config_homepage}")
+            debug.log(f"[IBON] Detected kicked back to homepage: {url}")
+            debug.log(f"[IBON] Redirecting to config homepage: {config_homepage}")
 
             try:
                 await tab.get(config_homepage)
                 # Wait for page load
                 await asyncio.sleep(2)
 
-                if show_debug_message:
-                    print(f"[IBON] Successfully redirected to: {config_homepage}")
+                debug.log(f"[IBON] Successfully redirected to: {config_homepage}")
             except Exception as redirect_exc:
-                if show_debug_message:
-                    print(f"[IBON] Redirect failed: {redirect_exc}")
-
+                debug.log(f"[IBON] Redirect failed: {redirect_exc}")
 
     # tour.ibon.com.tw URL routing
     # https://tour.ibon.com.tw/event/{eventId}
@@ -13349,9 +12546,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     # If date selection failed, reload page
                     if not is_date_assign_by_bot:
-                        show_debug_message = config_dict["advanced"].get("verbose", False)
-                        if show_debug_message:
-                            print("[IBON DATE] Date selection failed, reloading page...")
+                        debug = util.create_debug_logger(config_dict)
+                        debug.log("[IBON DATE] Date selection failed, reloading page...")
 
                         try:
                             await tab.reload()
@@ -13436,18 +12632,16 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             area_auto_fallback = config_dict.get("area_auto_fallback", False)
                             if area_auto_fallback:
                                 # Feature 003: Fallback enabled - use auto_select_mode without keyword
-                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                debug = util.create_debug_logger(config_dict)
                                 auto_select_mode = config_dict["area_auto_select"]["mode"]
-                                if show_debug_message:
-                                    print(f"[IBON AREA] All keyword groups failed, area_auto_fallback=true")
-                                    print(f"[IBON AREA] Falling back to auto_select_mode: {auto_select_mode}")
+                                debug.log(f"[IBON AREA] All keyword groups failed, area_auto_fallback=true")
+                                debug.log(f"[IBON AREA] Falling back to auto_select_mode: {auto_select_mode}")
                                 is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, "")
                             else:
                                 # Feature 003: Fallback disabled - strict mode (no selection, will reload)
-                                show_debug_message = config_dict["advanced"].get("verbose", False)
-                                if show_debug_message:
-                                    print(f"[IBON AREA] All keyword groups failed, area_auto_fallback=false")
-                                    print(f"[IBON AREA] No area selected, will reload page and retry")
+                                debug = util.create_debug_logger(config_dict)
+                                debug.log(f"[IBON AREA] All keyword groups failed, area_auto_fallback=false")
+                                debug.log(f"[IBON AREA] No area selected, will reload page and retry")
                                 # Keep is_price_assign_by_bot=False and is_need_refresh=True
                                 # This will trigger page reload in the outer loop
                 else:
@@ -13455,9 +12649,8 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, area_keyword)
 
                 if is_need_refresh:
-                    show_debug_message = config_dict["advanced"].get("verbose", False)
-                    if show_debug_message:
-                        print("[IBON ORDERS] No available areas found, page reload required")
+                    debug = util.create_debug_logger(config_dict)
+                    debug.log("[IBON ORDERS] No available areas found, page reload required")
 
                     try:
                         await tab.reload()
@@ -13490,15 +12683,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                 if is_do_ibon_performance_with_ticket_number:
                     # Wait for page to load before checking sold-out (prevents false detection)
-                    show_debug_message = config_dict["advanced"].get("verbose", False)
+                    debug = util.create_debug_logger(config_dict)
                     await nodriver_ibon_wait_for_select_elements(tab, config_dict)
 
                     # Step 0: Check if tickets are sold out FIRST (before OCR)
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                     if is_sold_out_detected:
-                        if show_debug_message:
-                            print("[IBON] All tickets sold out, navigating to area selection...")
+                        debug.log("[IBON] All tickets sold out, navigating to area selection...")
 
                         # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
                         await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
@@ -13506,8 +12698,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         # Wait before next check (FR-061: auto_reload_page_interval)
                         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
                         if auto_reload_interval > 0:
-                            if show_debug_message:
-                                print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                            debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                             await asyncio.sleep(auto_reload_interval)
 
                         return False  # Return to main loop to continue monitoring
@@ -13517,8 +12708,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         try:
                             await nodriver_ibon_allow_not_adjacent_seat(tab, config_dict)
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Checkbox error: {exc}")
+                            debug.log(f"[IBON] Checkbox error: {exc}")
 
                     # Step 2: Assign ticket number FIRST (before captcha)
                     # Fix (2026-01-07): Captcha auto_submit checks if ticket number is selected.
@@ -13531,22 +12721,20 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
 
                             if is_ticket_number_assigned:
-                                if show_debug_message and attempt > 1:
-                                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                                if attempt > 1:
+                                    debug.log(f"[TICKET RETRY] Success after {attempt} attempt(s)")
                                 break
 
                             if attempt < max_retries:
                                 delay = 0.5 * (2 ** (attempt - 1))
-                                if show_debug_message:
-                                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                                debug.log(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
                                 await asyncio_sleep_with_pause_check(delay, config_dict)
 
                         if is_ticket_number_assigned:
                             # Wait for iBon to process ticket number change
                             await asyncio.sleep(random.uniform(0.15, 0.25))
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[IBON] Ticket number error: {exc}")
+                        debug.log(f"[IBON] Ticket number error: {exc}")
 
                     # Step 3: Handle captcha (after ticket number is selected)
                     is_captcha_sent = False
@@ -13559,16 +12747,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                             is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Captcha error: {exc}")
+                            debug.log(f"[IBON] Captcha error: {exc}")
 
                     # Step 3.5: Final check if tickets are sold out (backup check)
                     if not is_ticket_number_assigned:
                         is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                         if is_sold_out_detected:
-                            if show_debug_message:
-                                print("[IBON] All tickets sold out, navigating to area selection...")
+                            debug.log("[IBON] All tickets sold out, navigating to area selection...")
 
                             # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
                             await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
@@ -13576,8 +12762,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             # Wait before next check (FR-061: auto_reload_page_interval)
                             auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
                             if auto_reload_interval > 0:
-                                if show_debug_message:
-                                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                                debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                                 await asyncio.sleep(auto_reload_interval)
 
                             return False  # Return to main loop to continue monitoring
@@ -13593,17 +12778,15 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                         play_sound_while_ordering(config_dict)
                                     ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
-                            show_debug_message = config_dict["advanced"].get("verbose", False)
-                            if show_debug_message:
-                                print(f"[IBON] Submit button error: {exc}")
+                            debug = util.create_debug_logger(config_dict)
+                            debug.log(f"[IBON] Submit button error: {exc}")
 
             # Handle case when area is already selected (direct access to UTK0201_001 page)
             elif is_area_already_selected:
                 is_match_target_feature = True
-                show_debug_message = config_dict["advanced"].get("verbose", False)
+                debug = util.create_debug_logger(config_dict)
 
-                if show_debug_message:
-                    print("[IBON] Area already selected, checking ticket availability...")
+                debug.log("[IBON] Area already selected, checking ticket availability...")
 
                 # Check if we need to handle ticket number and captcha (UTK0201_001 page)
                 is_do_ibon_performance_with_ticket_number = False
@@ -13620,8 +12803,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                     if is_sold_out_detected:
-                        if show_debug_message:
-                            print("[IBON] All tickets sold out, navigating to area selection...")
+                        debug.log("[IBON] All tickets sold out, navigating to area selection...")
 
                         # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
                         await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
@@ -13629,8 +12811,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         # Wait before next check (FR-061: auto_reload_page_interval)
                         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
                         if auto_reload_interval > 0:
-                            if show_debug_message:
-                                print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                            debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                             await asyncio.sleep(auto_reload_interval)
 
                         return False  # Return to main loop to continue monitoring
@@ -13640,8 +12821,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         try:
                             await nodriver_ibon_allow_not_adjacent_seat(tab, config_dict)
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Checkbox error: {exc}")
+                            debug.log(f"[IBON] Checkbox error: {exc}")
 
                     # Step 2: Handle captcha (only executed when tickets are available)
                     is_captcha_sent = False
@@ -13654,8 +12834,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                             is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Captcha error: {exc}")
+                            debug.log(f"[IBON] Captcha error: {exc}")
 
                     # Step 3: Assign ticket number with retry
                     is_ticket_number_assigned = False
@@ -13666,30 +12845,27 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
 
                             if is_ticket_number_assigned:
-                                if show_debug_message and attempt > 1:
-                                    print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                                if attempt > 1:
+                                    debug.log(f"[TICKET RETRY] Success after {attempt} attempt(s)")
                                 break
 
                             if attempt < max_retries:
                                 delay = 0.5 * (2 ** (attempt - 1))
-                                if show_debug_message:
-                                    print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s")
+                                debug.log(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s")
                                 await asyncio_sleep_with_pause_check(delay, config_dict)
 
                         if is_ticket_number_assigned:
                             # Wait for iBon to process ticket number change
                             await asyncio.sleep(random.uniform(0.15, 0.25))
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[IBON] Ticket number error: {exc}")
+                        debug.log(f"[IBON] Ticket number error: {exc}")
 
                     # Step 3.5: Final check if tickets are sold out (backup check)
                     if not is_ticket_number_assigned:
                         is_sold_out_detected = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
 
                         if is_sold_out_detected:
-                            if show_debug_message:
-                                print("[IBON] All tickets sold out, navigating to area selection...")
+                            debug.log("[IBON] All tickets sold out, navigating to area selection...")
 
                             # Fix (2026-01-07): Navigate to area selection instead of reload (prevents infinite loop)
                             await nodriver_ibon_navigate_on_sold_out(tab, config_dict)
@@ -13697,8 +12873,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             # Wait before next check (FR-061: auto_reload_page_interval)
                             auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
                             if auto_reload_interval > 0:
-                                if show_debug_message:
-                                    print(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
+                                debug.log(f"[AUTO RELOAD] Waiting {auto_reload_interval} seconds before next check...")
                                 await asyncio.sleep(auto_reload_interval)
 
                             return False  # Return to main loop to continue monitoring
@@ -13714,8 +12889,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                         play_sound_while_ordering(config_dict)
                                     ibon_dict["played_sound_ticket"] = True
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[IBON] Submit button error: {exc}")
+                            debug.log(f"[IBON] Submit button error: {exc}")
 
     # New ibon Event page format (Angular SPA): https://ticket.ibon.com.tw/Event/{eventId}/{sessionId}[/{activityId}]
     if not is_match_target_feature:
@@ -13756,40 +12930,34 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             area_auto_fallback = config_dict.get("area_auto_fallback", False)
                             if area_auto_fallback:
                                 # Feature 003: Fallback enabled - use auto_select_mode without keyword
-                                show_debug_message = config_dict["advanced"].get("verbose", False)
+                                debug = util.create_debug_logger(config_dict)
                                 auto_select_mode = config_dict["area_auto_select"]["mode"]
-                                if show_debug_message:
-                                    print(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=true")
-                                    print(f"[IBON EVENT] Falling back to auto_select_mode: {auto_select_mode}")
+                                debug.log(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=true")
+                                debug.log(f"[IBON EVENT] Falling back to auto_select_mode: {auto_select_mode}")
                                 is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, "")
                             else:
                                 # Feature 003: Fallback disabled - strict mode (no selection, will reload)
-                                show_debug_message = config_dict["advanced"].get("verbose", False)
-                                if show_debug_message:
-                                    print(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=false")
-                                    print(f"[IBON EVENT] No area selected, will reload page and retry")
+                                debug = util.create_debug_logger(config_dict)
+                                debug.log(f"[IBON EVENT] All keyword groups failed, area_auto_fallback=false")
+                                debug.log(f"[IBON EVENT] No area selected, will reload page and retry")
                                 # Keep is_price_assign_by_bot=False and is_need_refresh=True
                                 # This will trigger page reload in the outer loop
                 else:
                     # empty keyword, match all.
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword)
 
-                show_debug_message = config_dict["advanced"].get("verbose", False)
-                if show_debug_message:
-                    print(f"[NEW EVENT] Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
+                debug = util.create_debug_logger(config_dict)
+                debug.log(f"[NEW EVENT] Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
 
                 # Auto-reload if no available ticket areas found
                 if is_need_refresh:
-                    if show_debug_message:
-                        print("[NEW EVENT] No available ticket areas found, page reload required")
+                    debug.log("[NEW EVENT] No available ticket areas found, page reload required")
 
                     try:
                         await tab.reload()
-                        if show_debug_message:
-                            print("[NEW EVENT] Page reloaded successfully")
+                        debug.log("[NEW EVENT] Page reloaded successfully")
                     except Exception as reload_exc:
-                        if show_debug_message:
-                            print(f"[NEW EVENT] Page reload failed: {reload_exc}")
+                        debug.log(f"[NEW EVENT] Page reload failed: {reload_exc}")
 
                     # Use auto_reload_page_interval setting
                     auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
@@ -13812,10 +12980,9 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
         if is_new_eventbuy_page:
             is_match_target_feature = True
-            show_debug_message = config_dict["advanced"].get("verbose", False)
+            debug = util.create_debug_logger(config_dict)
 
-            if show_debug_message:
-                print("[NEW EVENTBUY] Processing EventBuy page")
+            debug.log("[NEW EVENTBUY] Processing EventBuy page")
 
             # Check disable_adjacent_seat
             if config_dict["advanced"]["disable_adjacent_seat"]:
@@ -13824,20 +12991,19 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             # Step 1: Assign ticket number first with retry (exponential backoff)
             is_ticket_number_assigned = False
             max_retries = 3
-            show_debug_message = config_dict["advanced"].get("verbose", False)
+            debug = util.create_debug_logger(config_dict)
 
             for attempt in range(1, max_retries + 1):
                 is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
 
                 if is_ticket_number_assigned:
-                    if show_debug_message and attempt > 1:
-                        print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                    if attempt > 1:
+                        debug.log(f"[TICKET RETRY] Success after {attempt} attempt(s)")
                     break
 
                 if attempt < max_retries:
                     delay = 0.5 * (2 ** (attempt - 1))
-                    if show_debug_message:
-                        print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                    debug.log(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
                     await asyncio_sleep_with_pause_check(delay, config_dict)
 
             if is_ticket_number_assigned:
@@ -13847,8 +13013,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             # Step 2: Handle captcha after ticket number is selected
             is_captcha_sent = False
             if is_ticket_number_assigned:
-                if show_debug_message:
-                    print("[NEW EVENTBUY] Ticket number assigned, proceeding to captcha")
+                debug.log("[NEW EVENTBUY] Ticket number assigned, proceeding to captcha")
 
                 # Extract model name from URL for captcha
                 domain_name = url.split('/')[2]
@@ -13868,8 +13033,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             # Step 3: Click purchase button if everything is ready
             if is_ticket_number_assigned:
                 if is_captcha_sent:
-                    if show_debug_message:
-                        print("[NEW EVENTBUY] Clicking purchase button")
+                    debug.log("[NEW EVENTBUY] Clicking purchase button")
 
                     click_ret = await nodriver_ibon_purchase_button_press(tab, config_dict)
 
@@ -13880,20 +13044,17 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             if config_dict["advanced"]["play_sound"]["ticket"]:
                                 play_sound_while_ordering(config_dict)
                             ibon_dict["played_sound_ticket"] = True
-                        if show_debug_message:
-                            print("[NEW EVENTBUY] Purchase button clicked successfully")
+                        debug.log("[NEW EVENTBUY] Purchase button clicked successfully")
             else:
                 # Check if sold out
                 is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
                 if is_sold_out:
-                    if show_debug_message:
-                        print("[NEW EVENTBUY] Sold out detected, going back and refreshing")
+                    debug.log("[NEW EVENTBUY] Sold out detected, going back and refreshing")
                     try:
                         await tab.back()
                         await tab.reload()
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[NEW EVENTBUY] Back/reload failed: {exc}")
+                        debug.log(f"[NEW EVENTBUY] Back/reload failed: {exc}")
 
     if not is_match_target_feature:
         # https://orders.ibon.com.tw/application/UTK02/UTK0201_000.aspx?PERFORMANCE_ID=0000
@@ -13931,28 +13092,24 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if 'PRODUCT_ID=' in url.upper() and not is_area_already_selected:
                     # step 1: select area.
                     is_price_assign_by_bot = False
-                    show_debug_message = config_dict["advanced"].get("verbose", False)
+                    debug = util.create_debug_logger(config_dict)
 
                     # Call area selection function (simplified version for testing)
                     # TODO: Implement nodriver_ibon_performance() wrapper with OR logic
                     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
                     is_need_refresh, is_price_assign_by_bot = await nodriver_ibon_area_auto_select(tab, config_dict, area_keyword)
 
-                    if show_debug_message:
-                        print(f"Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
+                    debug.log(f"Area selection result - is_price_assign_by_bot: {is_price_assign_by_bot}, is_need_refresh: {is_need_refresh}")
 
                     # Auto-reload if no available ticket areas found
                     if is_need_refresh:
-                        if show_debug_message:
-                            print("[IBON AREA] No available ticket areas found, page reload required")
+                        debug.log("[IBON AREA] No available ticket areas found, page reload required")
 
                         try:
                             await tab.reload()
-                            if show_debug_message:
-                                print("[IBON AREA] Page reloaded successfully")
+                            debug.log("[IBON AREA] Page reloaded successfully")
                         except Exception as reload_exc:
-                            if show_debug_message:
-                                print(f"[IBON AREA] Page reload failed: {reload_exc}")
+                            debug.log(f"[IBON AREA] Page reload failed: {reload_exc}")
 
                         # Use auto_reload_page_interval setting
                         auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
@@ -13979,20 +13136,19 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     is_match_target_feature = True
                     is_ticket_number_assigned = False
                     max_retries = 3
-                    show_debug_message = config_dict["advanced"].get("verbose", False)
+                    debug = util.create_debug_logger(config_dict)
 
                     for attempt in range(1, max_retries + 1):
                         is_ticket_number_assigned = await nodriver_ibon_ticket_number_auto_select(tab, config_dict)
 
                         if is_ticket_number_assigned:
-                            if show_debug_message and attempt > 1:
-                                print(f"[TICKET RETRY] Success after {attempt} attempt(s)")
+                            if attempt > 1:
+                                debug.log(f"[TICKET RETRY] Success after {attempt} attempt(s)")
                             break
 
                         if attempt < max_retries:
                             delay = 0.5 * (2 ** (attempt - 1))
-                            if show_debug_message:
-                                print(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
+                            debug.log(f"[TICKET RETRY] Attempt {attempt}/{max_retries} failed, waiting {delay}s (exponential backoff)")
                             await asyncio_sleep_with_pause_check(delay, config_dict)
 
                     if is_ticket_number_assigned:
@@ -14039,7 +13195,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                                 tab.reload()
                             except Exception as exc:
                                 pass
-
 
     if not is_match_target_feature:
         #https://orders.ibon.com.tw/application/UTK02/UTK0206_.aspx
@@ -14101,7 +13256,6 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         ibon_dict["is_popup_checkout"] = False
         ibon_dict["played_sound_order"] = False
         ibon_dict["shown_checkout_message"] = False
-
 
 async def nodriver_cityline_auto_retry_access(tab, url, config_dict):
     try:
@@ -14185,7 +13339,7 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_auto_fallback = config_dict.get("date_auto_fallback", False)  # Read from top level
@@ -14199,15 +13353,13 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
         my_css_selector = "button.date-time-position"
         area_list = await tab.query_selector_all(my_css_selector)
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] find date list fail: {exc}")
+        debug.log(f"[ERROR] find date list fail: {exc}")
 
     # Stage 2: Format and filter enabled dates
     formated_area_list = []
     if area_list:
         area_list_count = len(area_list)
-        if show_debug_message:
-            print(f"[CITYLINE DATE] Found {area_list_count} date buttons")
+        debug.log(f"[CITYLINE DATE] Found {area_list_count} date buttons")
 
         if area_list_count > 0:
             formated_area_list = area_list  # NoDriver elements are already enabled
@@ -14219,8 +13371,7 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
         matched_blocks = formated_area_list
     else:
         # Match keyword
-        if show_debug_message:
-            print(f"[DATE KEYWORD] Matching keyword: {date_keyword}")
+        debug.log(f"[DATE KEYWORD] Matching keyword: {date_keyword}")
 
         for row in formated_area_list:
             row_text = ""
@@ -14228,21 +13379,18 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
                 row_html = await row.get_html()
                 row_text = util.remove_html_tags(row_html)
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[DEBUG] get row html error: {exc}")
+                debug.log(f"[DEBUG] get row html error: {exc}")
                 break
 
             if len(row_text) > 0:
-                if show_debug_message:
-                    print(f"[DEBUG] row_text: {row_text}")
+                debug.log(f"[DEBUG] row_text: {row_text}")
                 is_match_area = util.is_row_match_keyword(date_keyword, row_text)
                 if is_match_area:
                     matched_blocks.append(row)
                     if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
 
-    if show_debug_message:
-        print(f"[DATE KEYWORD] Matched {len(matched_blocks)} dates")
+    debug.log(f"[DATE KEYWORD] Matched {len(matched_blocks)} dates")
 
     # Stage 4: Conditional fallback mechanism
     if len(matched_blocks) == 0:
@@ -14271,8 +13419,7 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
         try:
             await target_area.scroll_into_view()
             await target_area.click()
-            if show_debug_message:
-                print("[CITYLINE DATE] Purchase button clicked")
+            debug.log("[CITYLINE DATE] Purchase button clicked")
 
             # Wait for Cloudflare Turnstile (FR-012)
             print("[CITYLINE DATE] Waiting 3 seconds for Cloudflare Turnstile...")
@@ -14294,7 +13441,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_modal_handled = False
 
     # Global flag to track if modal has been handled
@@ -14339,8 +13486,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
                 ''')
 
                 if button_enabled:
-                    if show_debug_message:
-                        print(f"[CITYLINE LOGIN MODAL] Button enabled after {i}s")
+                    debug.log(f"[CITYLINE LOGIN MODAL] Button enabled after {i}s")
                     break
 
                 await asyncio.sleep(1)
@@ -14367,8 +13513,7 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
             # Modal already handled, skip silently
             pass
         else:
-            if show_debug_message:
-                print("[CITYLINE LOGIN MODAL] No login modal detected")
+            debug.log("[CITYLINE LOGIN MODAL] No login modal detected")
 
     except Exception as exc:
         print(f"[ERROR] Login modal check failed: {exc}")
@@ -14385,7 +13530,7 @@ async def nodriver_cityline_continue_button_press(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_button_clicked = False
 
     try:
@@ -14401,8 +13546,7 @@ async def nodriver_cityline_continue_button_press(tab, config_dict):
         ''')
 
         if button_exists:
-            if show_debug_message:
-                print("[CITYLINE CONTINUE] Continue button found, attempting to click...")
+            debug.log("[CITYLINE CONTINUE] Continue button found, attempting to click...")
 
             # Click the continue button
             click_result = await tab.evaluate('''
@@ -14425,8 +13569,7 @@ async def nodriver_cityline_continue_button_press(tab, config_dict):
             else:
                 print("[CITYLINE CONTINUE] Failed to click continue button via JS")
         else:
-            if show_debug_message:
-                print("[CITYLINE CONTINUE] Continue button not found")
+            debug.log("[CITYLINE CONTINUE] Continue button not found")
 
     except Exception as exc:
         print(f"[ERROR] Continue button press failed: {exc}")
@@ -14442,7 +13585,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     area_auto_fallback = config_dict.get("area_auto_fallback", False)  # Read from top level
@@ -14455,15 +13598,13 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
         my_css_selector = "div.form-check"
         area_list = await tab.query_selector_all(my_css_selector)
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] find area list fail: {exc}")
+        debug.log(f"[ERROR] find area list fail: {exc}")
 
     # Stage 2: Filter soldout areas
     available_areas = []
     if area_list:
         area_list_count = len(area_list)
-        if show_debug_message:
-            print(f"[CITYLINE AREA] Found {area_list_count} area options")
+        debug.log(f"[CITYLINE AREA] Found {area_list_count} area options")
 
         for row in area_list:
             is_available = True
@@ -14478,9 +13619,9 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
             if is_available:
                 available_areas.append(row)
 
-        if show_debug_message:
+        if debug.enabled:
             soldout_count = area_list_count - len(available_areas)
-            print(f"[CITYLINE AREA] Filtered {soldout_count} soldout areas, {len(available_areas)} available")
+            debug.log(f"[CITYLINE AREA] Filtered {soldout_count} soldout areas, {len(available_areas)} available")
 
     # Stage 3: Keyword matching
     matched_areas = []
@@ -14495,8 +13636,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
                 row_html = await row.get_html()
                 row_text = util.remove_html_tags(row_html)
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[DEBUG] get row html error: {exc}")
+                debug.log(f"[DEBUG] get row html error: {exc}")
                 break
 
             if len(row_text) > 0:
@@ -14506,8 +13646,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
 
             if len(row_text) > 0:
                 row_text = util.format_keyword_string(row_text)
-                if show_debug_message:
-                    print(f"[DEBUG] row_text: {row_text}")
+                debug.log(f"[DEBUG] row_text: {row_text}")
 
                 # AND logic keyword matching
                 is_match_area = True
@@ -14523,8 +13662,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
                     if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
 
-    if show_debug_message:
-        print(f"[AREA KEYWORD] Matched {len(matched_areas)} areas")
+    debug.log(f"[AREA KEYWORD] Matched {len(matched_areas)} areas")
 
     # Stage 4: Conditional fallback mechanism
     if len(matched_areas) == 0:
@@ -14548,8 +13686,7 @@ async def nodriver_cityline_area_auto_select(tab, config_dict):
                 await radio_btn.scroll_into_view()
                 await radio_btn.click()
                 is_price_assigned = True
-                if show_debug_message:
-                    print("[CITYLINE AREA] Radio button checked")
+                debug.log("[CITYLINE AREA] Radio button checked")
         except Exception as exc:
             print(f"[ERROR] click radio button fail: {exc}")
 
@@ -14560,7 +13697,7 @@ async def nodriver_cityline_ticket_number_auto_select(tab, config_dict):
     Cityline ticket number selection
     Reference: spec.md FR-005, cityline-interface.md
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict.get("ticket_number", 1)
 
     is_ticket_number_assigned = False
@@ -14570,8 +13707,7 @@ async def nodriver_cityline_ticket_number_auto_select(tab, config_dict):
         select_obj = await tab.query_selector(my_css_selector)
 
         if select_obj:
-            if show_debug_message:
-                print(f"[CITYLINE TICKET] Ticket number selector found")
+            debug.log(f"[CITYLINE TICKET] Ticket number selector found")
 
             # Use JavaScript to set the select value
             is_ticket_number_assigned = await tab.evaluate(f'''
@@ -14591,8 +13727,8 @@ async def nodriver_cityline_ticket_number_auto_select(tab, config_dict):
                 }})();
             ''')
 
-            if is_ticket_number_assigned and show_debug_message:
-                print(f"[CITYLINE TICKET] Ticket number set to {ticket_number}")
+            if is_ticket_number_assigned:
+                debug.log(f"[CITYLINE TICKET] Ticket number set to {ticket_number}")
     except Exception as exc:
         print(f"[ERROR] Ticket number selection fail: {exc}")
 
@@ -14672,7 +13808,7 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
     Check if ticket successfully added to shopping basket and play notification sound (once only)
     Reference: .temp/cityline/54510/3.html - shoppingBasket page
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     global cityline_dict
 
     try:
@@ -14688,8 +13824,7 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
                     try:
                         play_sound_while_ordering(config_dict)
                     except Exception as sound_exc:
-                        if show_debug_message:
-                            print(f"[CITYLINE] Sound error: {sound_exc}")
+                        debug.log(f"[CITYLINE] Sound error: {sound_exc}")
                 send_discord_notification(config_dict, "order", "Cityline")
                 cityline_dict["played_sound_order"] = True
 
@@ -14697,8 +13832,7 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
             return True
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[CITYLINE] Checkout check error: {e}")
+        debug.log(f"[CITYLINE] Checkout check error: {e}")
 
     return False
 
@@ -14725,7 +13859,7 @@ async def nodriver_cityline_purchase_button_press(tab, config_dict):
     - Date/Area selection happens on performance page, NOT here
     Reference: .temp/cityline/54510/1.html
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Check pause state
     if await check_and_handle_pause(config_dict):
@@ -14734,8 +13868,7 @@ async def nodriver_cityline_purchase_button_press(tab, config_dict):
     is_button_clicked = False
 
     # Click 'Continue' button to go to performance page
-    if show_debug_message:
-        print("[CITYLINE EVENTDETAIL] Clicking continue button...")
+    debug.log("[CITYLINE EVENTDETAIL] Clicking continue button...")
     is_button_clicked = await nodriver_cityline_continue_button_press(tab, config_dict)
 
     return is_button_clicked
@@ -14800,10 +13933,9 @@ async def nodriver_cityline_press_buy_button(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[CITYLINE] Waiting for buy ticket button to appear...")
+    debug.log("[CITYLINE] Waiting for buy ticket button to appear...")
 
     # Polling parameters
     max_wait = 10  # Maximum 10 seconds wait
@@ -14823,17 +13955,15 @@ async def nodriver_cityline_press_buy_button(tab, config_dict):
 
             if button_exists:
                 button_found = True
-                if show_debug_message:
-                    print(f"[CITYLINE] Buy ticket button found after {attempt * check_interval:.1f}s")
+                debug.log(f"[CITYLINE] Buy ticket button found after {attempt * check_interval:.1f}s")
                 break
 
             # Progress indicator
-            if show_debug_message and attempt > 0 and attempt % 4 == 0:
-                print(f"[CITYLINE] Still waiting for button... ({attempt * check_interval:.1f}s elapsed)")
+            if attempt > 0 and attempt % 4 == 0:
+                debug.log(f"[CITYLINE] Still waiting for button... ({attempt * check_interval:.1f}s elapsed)")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"[CITYLINE] Error checking button: {exc}")
+            debug.log(f"[CITYLINE] Error checking button: {exc}")
 
         if attempt < max_attempts - 1:
             await asyncio.sleep(check_interval)
@@ -14959,17 +14089,15 @@ async def nodriver_cityline_main(tab, url, config_dict):
         # Auto-redirect to target event page after successful login
         target_url = config_dict["homepage"]
         if target_url and 'shows.cityline.com' in target_url:
-            show_debug_message = config_dict["advanced"].get("verbose", False)
-            if show_debug_message:
-                print(f"[CITYLINE LOGIN] Redirecting to target page: {target_url}")
+            debug = util.create_debug_logger(config_dict)
+            debug.log(f"[CITYLINE LOGIN] Redirecting to target page: {target_url}")
             try:
                 await tab.get(target_url)
                 await asyncio.sleep(random.uniform(1.5, 2.5))
                 # Update URL after redirect
                 url = await tab.evaluate('window.location.href')
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[ERROR] Redirect failed: {exc}")
+                debug.log(f"[ERROR] Redirect failed: {exc}")
 
     # Login page
     if 'cityline.com/Login.html' in url:
@@ -15024,7 +14152,6 @@ async def nodriver_cityline_main(tab, url, config_dict):
         # Only reset when completely leaving venue.cityline.com domain
         cityline_purchase_button_pressed = False
 
-
     # area page:
     # https://venue.cityline.com/utsvInternet/EVENT_NAME/performance?event=EVENT_CODE&perfId=PROFORMANCE_ID
     global cityline_performance_processed
@@ -15067,7 +14194,6 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
     return tab
 
-
 async def nodriver_facebook_main(tab, config_dict):
     facebook_account = config_dict["accounts"]["facebook_account"].strip()
     facebook_password = config_dict["accounts"]["facebook_password"].strip()
@@ -15078,7 +14204,7 @@ async def nodriver_facebook_main(tab, config_dict):
 # Kham Platform (kham.com.tw / ticket.com.tw / udnfunlife.com)
 # ====================================================================================
 
-async def nodriver_kham_login(tab, account, password, ocr=None):
+async def nodriver_kham_login(tab, account, password, ocr=None, config_dict=None):
     """
     Kham platform login with OCR captcha support
     Reference: chrome_tixcraft.py kham_login (line 5492-5540)
@@ -15087,15 +14213,14 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
     import time
 
     ret = False
-    show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
     # Find email/account input
     el_email = None
     try:
         el_email = await tab.query_selector('#ACCOUNT')
     except Exception as exc:
-        if show_debug_message:
-            print("Find #ACCOUNT fail:", exc)
+        debug.log("Find #ACCOUNT fail:", exc)
 
     # Input account
     is_email_sent = False
@@ -15109,8 +14234,7 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
                 if inputed_text == account:
                     is_email_sent = True
         except Exception as exc:
-            if show_debug_message:
-                print("Input account fail:", exc)
+            debug.log("Input account fail:", exc)
 
     # Find password input
     el_pass = None
@@ -15118,8 +14242,7 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
         try:
             el_pass = await tab.query_selector('table.login > tbody > tr > td > input[type="password"]')
         except Exception as exc:
-            if show_debug_message:
-                print("Find password input fail:", exc)
+            debug.log("Find password input fail:", exc)
 
     # Input password
     is_password_sent = False
@@ -15132,15 +14255,13 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
                     await el_pass.send_keys(password)
                     is_password_sent = True
         except Exception as exc:
-            if show_debug_message:
-                print("Input password fail:", exc)
+            debug.log("Input password fail:", exc)
 
     # Handle captcha with OCR
     is_captcha_sent = False
     if is_password_sent and ocr:
         try:
-            if show_debug_message:
-                print("[KHAM LOGIN] Starting OCR captcha processing...")
+            debug.log("[KHAM LOGIN] Starting OCR captcha processing...")
 
             ocr_start_time = time.time()
 
@@ -15165,8 +14286,7 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
                 if form_verifyCode_base64:
                     img_base64 = base64.b64decode(form_verifyCode_base64.split(',')[1])
             except Exception as exc:
-                if show_debug_message:
-                    print("[KHAM LOGIN] Canvas exception:", str(exc))
+                debug.log("[KHAM LOGIN] Canvas exception:", str(exc))
 
             # OCR recognition
             ocr_answer = None
@@ -15175,17 +14295,14 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
                     ocr_answer = ocr.classification(img_base64)
                     ocr_done_time = time.time()
                     ocr_elapsed_time = ocr_done_time - ocr_start_time
-                    if show_debug_message:
-                        print(f"[KHAM LOGIN] OCR elapsed time: {ocr_elapsed_time:.3f}s")
+                    debug.log(f"[KHAM LOGIN] OCR elapsed time: {ocr_elapsed_time:.3f}s")
                 except Exception as exc:
-                    if show_debug_message:
-                        print("[KHAM LOGIN] OCR classification fail:", exc)
+                    debug.log("[KHAM LOGIN] OCR classification fail:", exc)
 
             # Input captcha answer
             if ocr_answer:
                 ocr_answer = ocr_answer.strip()
-                if show_debug_message:
-                    print(f"[KHAM LOGIN] OCR answer: {ocr_answer}")
+                debug.log(f"[KHAM LOGIN] OCR answer: {ocr_answer}")
 
                 if len(ocr_answer) == 4:
                     try:
@@ -15195,21 +14312,16 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
                             await el_captcha.click()
                             await el_captcha.send_keys(ocr_answer)
                             is_captcha_sent = True
-                            if show_debug_message:
-                                print("[KHAM LOGIN] Captcha filled successfully")
+                            debug.log("[KHAM LOGIN] Captcha filled successfully")
                     except Exception as exc:
-                        if show_debug_message:
-                            print("[KHAM LOGIN] Fill captcha fail:", exc)
+                        debug.log("[KHAM LOGIN] Fill captcha fail:", exc)
                 else:
-                    if show_debug_message:
-                        print(f"[KHAM LOGIN] Invalid captcha length: {len(ocr_answer)}, expected 4")
+                    debug.log(f"[KHAM LOGIN] Invalid captcha length: {len(ocr_answer)}, expected 4")
             else:
-                if show_debug_message:
-                    print("[KHAM LOGIN] OCR answer is None")
+                debug.log("[KHAM LOGIN] OCR answer is None")
 
         except Exception as exc:
-            if show_debug_message:
-                print("[KHAM LOGIN] Captcha processing exception:", exc)
+            debug.log("[KHAM LOGIN] Captcha processing exception:", exc)
 
     # Click login button
     if is_password_sent:
@@ -15222,11 +14334,9 @@ async def nodriver_kham_login(tab, account, password, ocr=None):
             if el_btn:
                 await el_btn.click()
                 ret = True
-                if show_debug_message:
-                    print("[KHAM LOGIN] Login button clicked")
+                debug.log("[KHAM LOGIN] Login button clicked")
         except Exception as exc:
-            if show_debug_message:
-                print("Click login button fail:", exc)
+            debug.log("Click login button fail:", exc)
 
     return ret
 
@@ -15290,7 +14400,7 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
     Check and handle realname notification dialog
     Reference: chrome_tixcraft.py kham_check_realname_dialog (line 9592-9621)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_realname_dialog_found = False
 
     try:
@@ -15302,13 +14412,11 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
         ''')
 
         if el_message_text:
-            if show_debug_message:
-                print("Dialog message:", el_message_text)
+            debug.log("Dialog message:", el_message_text)
 
             # Check if it's realname notification
             if "個人實名制入場" in el_message_text or "實名制" in el_message_text:
-                if show_debug_message:
-                    print("Found realname dialog, clicking OK button...")
+                debug.log("Found realname dialog, clicking OK button...")
 
                 # Click OK button using JavaScript for reliable jQuery UI event triggering
                 click_result = await tab.evaluate('''
@@ -15345,8 +14453,7 @@ async def nodriver_kham_check_realname_dialog(tab, config_dict):
                     except:
                         pass
     except Exception as exc:
-        if show_debug_message:
-            print("Check realname dialog exception:", exc)
+        debug.log("Check realname dialog exception:", exc)
 
     return is_realname_dialog_found
 
@@ -15355,14 +14462,13 @@ async def nodriver_kham_allow_not_adjacent_seat(tab, config_dict):
     Check the "allow not adjacent seat" checkbox
     Reference: chrome_tixcraft.py kham_allow_not_adjacent_seat (line 9623-9642)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     agree_checkbox = None
     try:
         agree_checkbox = await tab.query_selector('table.eventTABLE > tbody > tr > td > input[type="checkbox"]')
     except Exception as exc:
-        if show_debug_message:
-            print("Find kham adjacent_seat checkbox exception:", exc)
+        debug.log("Find kham adjacent_seat checkbox exception:", exc)
 
     is_finish_checkbox_click = await nodriver_force_check_checkbox(tab, agree_checkbox)
 
@@ -15410,7 +14516,7 @@ async def nodriver_kham_check_captcha_text_error(tab, config_dict):
     Check captcha error message dialog
     Reference: chrome_tixcraft.py kham_check_captcha_text_error (line 9565-9590)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_reset_password_text = False
 
     try:
@@ -15422,8 +14528,7 @@ async def nodriver_kham_check_captcha_text_error(tab, config_dict):
         ''')
 
         if el_message_text:
-            if show_debug_message:
-                print("Dialog message:", el_message_text)
+            debug.log("Dialog message:", el_message_text)
 
             if "驗證碼輸入錯誤" in el_message_text or "【驗證碼】輸入錯誤" in el_message_text:
                 # Click OK button to dismiss dialog
@@ -15435,8 +14540,7 @@ async def nodriver_kham_check_captcha_text_error(tab, config_dict):
                 # Clear captcha input and wait for re-input
                 await nodriver_kham_keyin_captcha_code(tab, "")
     except Exception as exc:
-        if show_debug_message:
-            print("Check captcha error exception:", exc)
+        debug.log("Check captcha error exception:", exc)
 
     return is_reset_password_text
 
@@ -15445,7 +14549,7 @@ async def nodriver_kham_product(tab, domain_name, config_dict):
     Product page processing - call date auto select
     Reference: chrome_tixcraft.py kham_product (line 8646-8660)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_date_assign_by_bot = await nodriver_kham_date_auto_select(tab, domain_name, config_dict)
 
@@ -15466,7 +14570,7 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
     Reference: chrome_tixcraft.py hkam_date_auto_select (line 8463-8644)
     Supports: kham.com.tw, ticket.com.tw, udnfunlife.com
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Wait for page to load
     await tab.sleep(0.6)
@@ -15478,9 +14582,8 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
     # Feature 003: Safe access for conditional fallback switch
     date_auto_fallback = config_dict.get('date_auto_fallback', False)
 
-    if show_debug_message:
-        print("date_keyword:", date_keyword)
-        print("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
+    debug.log("date_keyword:", date_keyword)
+    debug.log("auto_reload_coming_soon_page_enable:", auto_reload_coming_soon_page_enable)
 
     # Get all date rows using query_selector_all (similar to TixCraft)
     selector = "table.eventTABLE > tbody > tr"
@@ -15493,8 +14596,7 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
     try:
         area_list = await tab.query_selector_all(selector)
     except Exception as exc:
-        if show_debug_message:
-            print(f"query_selector_all error: {exc}")
+        debug.log(f"query_selector_all error: {exc}")
 
     # Format area list with keyword filtering
     formated_area_list = []
@@ -15507,8 +14609,7 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 row_text = util.remove_html_tags(row_html)
                 row_text = row_text.strip()
             except Exception as exc:
-                if show_debug_message:
-                    print(f"get_html error: {exc}")
+                debug.log(f"get_html error: {exc}")
                 break
 
             if not row_text or util.reset_row_text_if_match_keyword_exclude(config_dict, row_text):
@@ -15553,28 +14654,26 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                                 is_all_price_disabled = False
                                 break
                         if is_all_price_disabled:
-                            if show_debug_message:
-                                print(f"Skipping row: all prices are disabled")
+                            debug.log(f"Skipping row: all prices are disabled")
                             continue
 
             formated_area_list.append(row)
             formated_area_list_text.append(row_text)
 
-    if show_debug_message:
-        print(f"Valid date rows count: {len(formated_area_list)}")
+    if debug.enabled:
+        debug.log(f"Valid date rows count: {len(formated_area_list)}")
         if formated_area_list and len(formated_area_list) > 0:
             # Clean up whitespace for display
             import re
             display_text = re.sub(r'\s+', ' ', formated_area_list_text[0]).strip()
-            print(f"First row text sample: {display_text[:80]}")
+            debug.log(f"First row text sample: {display_text[:80]}")
 
     # Apply keyword matching (similar to TixCraft)
     matched_blocks = None
     if formated_area_list and len(formated_area_list) > 0:
         if len(date_keyword) == 0:
             matched_blocks = formated_area_list
-            if show_debug_message:
-                print(f"No keyword specified, using all {len(matched_blocks)} rows")
+            debug.log(f"No keyword specified, using all {len(matched_blocks)} rows")
         else:
             # Match by keyword
             matched_blocks = []
@@ -15582,16 +14681,14 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 import json
                 import re
                 keyword_array = json.loads("[" + date_keyword + "]")
-                if show_debug_message:
-                    print(f"date_keyword array: {keyword_array}")
+                debug.log(f"date_keyword array: {keyword_array}")
 
                 # Feature 003: Early return pattern - iterate keywords in priority order
                 target_row_found = False
                 keyword_matched_index = -1
 
                 for keyword_index, keyword_item_set in enumerate(keyword_array):
-                    if show_debug_message:
-                        print(f"[KHAM DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
+                    debug.log(f"[KHAM DATE KEYWORD] Checking keyword #{keyword_index + 1}: {keyword_item_set}")
 
                     # Check all rows for this keyword
                     for i, row_text in enumerate(formated_area_list_text):
@@ -15613,11 +14710,11 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                             matched_blocks = [formated_area_list[i]]
                             target_row_found = True
                             keyword_matched_index = keyword_index
-                            if show_debug_message:
-                                print(f"[KHAM DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
+                            if debug.enabled:
+                                debug.log(f"[KHAM DATE KEYWORD] Keyword #{keyword_index + 1} matched: '{keyword_item_set}'")
                                 # Clean up whitespace for display
                                 display_row_text = re.sub(r'\s+', ' ', row_text).strip()
-                                print(f"[KHAM DATE SELECT] Selected date: {display_row_text[:80]} (keyword match)")
+                                debug.log(f"[KHAM DATE SELECT] Selected date: {display_row_text[:80]} (keyword match)")
                             break
 
                     if target_row_found:
@@ -15625,49 +14722,44 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                         break
 
                 # All keywords failed log
-                if not target_row_found and show_debug_message:
-                    print(f"[KHAM DATE KEYWORD] All keywords failed to match")
+                if not target_row_found:
+                    debug.log(f"[KHAM DATE KEYWORD] All keywords failed to match")
 
             except Exception as e:
-                if show_debug_message:
-                    print(f"keyword parsing error: {e}")
+                debug.log(f"keyword parsing error: {e}")
                 matched_blocks = formated_area_list
 
-            if show_debug_message:
+            if debug.enabled:
                 if matched_blocks:
-                    print("After keyword match, found count:", len(matched_blocks))
+                    debug.log("After keyword match, found count:", len(matched_blocks))
                 else:
-                    print("No matches found for keyword:", date_keyword)
+                    debug.log("No matches found for keyword:", date_keyword)
     else:
-        if show_debug_message:
-            print("No valid date rows found")
+        debug.log("No valid date rows found")
 
     # Feature 003: Conditional fallback based on date_auto_fallback switch
     if matched_blocks is not None and len(matched_blocks) == 0 and len(date_keyword) > 0:
         if formated_area_list and len(formated_area_list) > 0:
             if date_auto_fallback:
                 # Fallback enabled - use auto_select_mode
-                if show_debug_message:
-                    print(f"[KHAM DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
-                    print(f"[KHAM DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
+                debug.log(f"[KHAM DATE FALLBACK] date_auto_fallback=true, triggering auto fallback")
+                debug.log(f"[KHAM DATE FALLBACK] Selecting available date based on date_select_order='{auto_select_mode}'")
                 matched_blocks = formated_area_list
             else:
                 # Fallback disabled - strict mode (no selection, will reload)
-                if show_debug_message:
-                    print(f"[KHAM DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
-                    print(f"[KHAM DATE SELECT] No date selected, will reload page and retry")
+                debug.log(f"[KHAM DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                debug.log(f"[KHAM DATE SELECT] No date selected, will reload page and retry")
                 return False  # Return False to trigger reload logic in caller
 
     # Handle case when formated_area_list is empty or None (all options excluded)
     if formated_area_list is None or len(formated_area_list) == 0:
-        if show_debug_message:
-            print(f"[KHAM DATE FALLBACK] No available options after exclusion")
+        debug.log(f"[KHAM DATE FALLBACK] No available options after exclusion")
         return False
 
     # Get target date using mode
     target_row = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
-    if show_debug_message:
+    if debug.enabled:
         if target_row:
             # Get text for debug
             try:
@@ -15676,11 +14768,11 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 # Clean up whitespace for display
                 import re
                 display_row_text = re.sub(r'\s+', ' ', target_row_text).strip()
-                print(f"Target row selected (mode: {auto_select_mode}): {display_row_text[:80]}")
+                debug.log(f"Target row selected (mode: {auto_select_mode}): {display_row_text[:80]}")
             except:
-                print(f"Target row selected (mode: {auto_select_mode})")
+                debug.log(f"Target row selected (mode: {auto_select_mode})")
         else:
-            print(f"No target row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
+            debug.log(f"No target row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
 
     is_date_assign_by_bot = False
     is_coming_soon = False
@@ -15691,8 +14783,7 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
             target_row_html = await target_row.get_html()
             if '尚未開賣' in target_row_html:
                 is_coming_soon = True
-                if show_debug_message:
-                    print("[TICKET.COM] Coming soon button detected, skip clicking")
+                debug.log("[TICKET.COM] Coming soon button detected, skip clicking")
         except:
             pass
 
@@ -15707,21 +14798,19 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 if btn:
                     await btn.click()
                     is_date_assign_by_bot = True
-                    if show_debug_message:
-                        print("Date buy button clicked successfully")
+                    debug.log("Date buy button clicked successfully")
             except Exception as exc:
-                if show_debug_message:
-                    print(f"Click button error: {exc}")
+                debug.log(f"Click button error: {exc}")
 
     # Auto reload if: no target found OR target is coming soon button
     if not is_date_assign_by_bot and auto_reload_coming_soon_page_enable:
         if is_coming_soon or formated_area_list is None or len(formated_area_list) == 0:
             try:
-                if show_debug_message:
+                if debug.enabled:
                     if is_coming_soon:
-                        print("[TICKET.COM] Waiting for sale time, will reload after delay...")
+                        debug.log("[TICKET.COM] Waiting for sale time, will reload after delay...")
                     else:
-                        print("Date list empty, will auto reload after delay...")
+                        debug.log("Date list empty, will auto reload after delay...")
 
                 # Wait before reload (use config interval)
                 reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0.0)
@@ -15733,11 +14822,9 @@ async def nodriver_kham_date_auto_select(tab, domain_name, config_dict):
                 await tab.reload()
                 await tab.sleep(0.5)  # Wait for page to start loading
 
-                if show_debug_message:
-                    print("Page reloaded, waiting for content...")
+                debug.log("Page reloaded, waiting for content...")
             except Exception as exc:
-                if show_debug_message:
-                    print("Auto reload exception:", exc)
+                debug.log("Auto reload exception:", exc)
 
     return is_date_assign_by_bot
 
@@ -15862,7 +14949,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
     if await check_and_handle_pause(config_dict):
         return False, False, False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
 
     # Feature 003: Safe access for conditional fallback switch
@@ -15881,8 +14968,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             # Use the cleaned keyword directly (no comma split)
             area_keyword_item = area_keyword_clean
         except Exception as e:
-            if show_debug_message:
-                print(f"[KHAM AREA] Keyword parse error: {e}")
+            debug.log(f"[KHAM AREA] Keyword parse error: {e}")
 
     is_price_assign_by_bot = False
     is_need_refresh = False
@@ -15900,8 +14986,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             if selects and len(selects) > 0:
                 price_select = selects[0]
     except Exception as exc:
-        if show_debug_message:
-            print(f"Error finding PRICE select: {exc}")
+        debug.log(f"Error finding PRICE select: {exc}")
 
     # Handle dropdown mode using CDP
     if price_select:
@@ -15909,8 +14994,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
             # Get all option elements using CDP
             option_elements = await price_select.query_selector_all('option:not([value="-1"])')
 
-            if show_debug_message:
-                print(f"Found dropdown with {len(option_elements)} options")
+            debug.log(f"Found dropdown with {len(option_elements)} options")
 
             # Extract option data using CDP
             options_data = []
@@ -15934,8 +15018,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                             'element': opt_elem
                         })
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"Error processing option {i}: {exc}")
+                    debug.log(f"Error processing option {i}: {exc}")
 
             # Feature 003: Filter by keyword with early return pattern
             matched_options = []
@@ -15946,8 +15029,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
 
                 # Apply exclude keyword filter first
                 if util.reset_row_text_if_match_keyword_exclude(config_dict, option_text):
-                    if show_debug_message:
-                        print(f"[KHAM AREA] Option excluded: '{option_text}'")
+                    debug.log(f"[KHAM AREA] Option excluded: '{option_text}'")
                     continue
 
                 # Track available options for fallback
@@ -15967,34 +15049,29 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         # EARLY RETURN: First match found
                         matched_options.append(opt)
                         is_keyword_matched = True  # True keyword match (not fallback)
-                        if show_debug_message:
-                            print(f"[KHAM AREA KEYWORD] Keyword matched (dropdown): '{option_text}'")
+                        debug.log(f"[KHAM AREA KEYWORD] Keyword matched (dropdown): '{option_text}'")
                         break  # Stop checking further options
                 else:
                     # No positive keyword - match all (except excluded)
                     matched_options.append(opt)
-                    if show_debug_message:
-                        print(f"[KHAM AREA SELECT] No keyword filter (dropdown): '{option_text}'")
+                    debug.log(f"[KHAM AREA SELECT] No keyword filter (dropdown): '{option_text}'")
 
             # Feature 003: Conditional fallback logic
             if len(matched_options) == 0 and len(area_keyword_item) > 0:
                 if len(available_options) > 0:
                     if area_auto_fallback:
                         # Fallback enabled - use auto_select_mode
-                        if show_debug_message:
-                            print(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (dropdown)")
-                            print(f"[KHAM AREA FALLBACK] Selecting from {len(available_options)} available options using mode='{auto_select_mode}'")
+                        debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (dropdown)")
+                        debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(available_options)} available options using mode='{auto_select_mode}'")
                         matched_options = available_options
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
-                        if show_debug_message:
-                            print(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (dropdown)")
-                            print(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
+                        debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (dropdown)")
+                        debug.log(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
                         return False, False, False  # Return to trigger reload logic
                 else:
                     # No available options (all excluded)
-                    if show_debug_message:
-                        print(f"[KHAM AREA FALLBACK] No available options after exclusion (dropdown)")
+                    debug.log(f"[KHAM AREA FALLBACK] No available options after exclusion (dropdown)")
                     return False, False, False
 
             # Select target option by simulating user interaction
@@ -16003,8 +15080,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                 target_value = target_option['value']
                 target_text = target_option['text']
 
-                if show_debug_message:
-                    print(f"Selecting option: {target_text} (value: {target_value})")
+                debug.log(f"Selecting option: {target_text} (value: {target_value})")
 
                 # Step 1: Click Bootstrap Select button using CDP + JavaScript
                 try:
@@ -16012,8 +15088,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                     bs_button = await tab.query_selector('button.dropdown-toggle[data-id$="_PRICE"]')
 
                     if bs_button:
-                        if show_debug_message:
-                            print("Found Bootstrap Select button, clicking to open dropdown...")
+                        debug.log("Found Bootstrap Select button, clicking to open dropdown...")
 
                         # Use JavaScript to click the button (avoid CDP click error)
                         await tab.evaluate('''
@@ -16028,14 +15103,12 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         # Wait for dropdown to open
                         await tab.sleep(0.5)
 
-                        if show_debug_message:
-                            print(f"Dropdown opened, looking for option: {target_text}")
+                        debug.log(f"Dropdown opened, looking for option: {target_text}")
 
                         # Step 2: Use CDP to find all <a> elements in the dropdown
                         menu_items = await tab.query_selector_all('ul.dropdown-menu.inner li[data-original-index] a')
 
-                        if show_debug_message:
-                            print(f"Found {len(menu_items)} menu items via CDP")
+                        debug.log(f"Found {len(menu_items)} menu items via CDP")
 
                         # Check each menu item
                         click_success = False
@@ -16048,33 +15121,27 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                                     span_html = await text_span.get_html()
                                     option_text = util.remove_html_tags(span_html).strip()
 
-                                    if show_debug_message:
-                                        print(f"  Checking option: '{option_text}'")
+                                    debug.log(f"  Checking option: '{option_text}'")
 
                                     if option_text == target_text:
-                                        if show_debug_message:
-                                            print(f"  Match found! Clicking...")
+                                        debug.log(f"  Match found! Clicking...")
 
                                         # Use JavaScript to click the link (avoid CDP click error)
                                         await link.apply('function(el) { el.click(); }')
                                         click_success = True
                                         break
                             except Exception as exc:
-                                if show_debug_message:
-                                    print(f"  Error checking menu item: {exc}")
+                                debug.log(f"  Error checking menu item: {exc}")
 
                         if click_success:
                             is_price_assign_by_bot = True
-                            if show_debug_message:
-                                print(f"Successfully clicked Bootstrap Select option: {target_text}")
+                            debug.log(f"Successfully clicked Bootstrap Select option: {target_text}")
                         else:
-                            if show_debug_message:
-                                print(f"Failed to find/click option: {target_text}")
+                            debug.log(f"Failed to find/click option: {target_text}")
 
                     else:
                         # No Bootstrap Select button found, try direct select value setting
-                        if show_debug_message:
-                            print("Bootstrap Select button not found, using direct value setting...")
+                        debug.log("Bootstrap Select button not found, using direct value setting...")
 
                         # Use CDP to directly set select value (avoid parameter serialization)
                         select_result = False
@@ -16094,18 +15161,15 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                                 ''')
                                 select_result = True
                         except Exception as fallback_exc:
-                            if show_debug_message:
-                                print(f"Direct select value setting error: {fallback_exc}")
+                            debug.log(f"Direct select value setting error: {fallback_exc}")
 
                         is_price_assign_by_bot = select_result
 
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"Bootstrap Select interaction error: {exc}")
+                    debug.log(f"Bootstrap Select interaction error: {exc}")
 
         except Exception as exc:
-            if show_debug_message:
-                print(f"Dropdown processing error: {exc}")
+            debug.log(f"Dropdown processing error: {exc}")
 
     else:
         # Handle table mode - use DOM element operations (similar to date_auto_select)
@@ -16125,8 +15189,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
         try:
             area_list = await tab.query_selector_all(selector)
         except Exception as exc:
-            if show_debug_message:
-                print(f"query_selector_all error: {exc}")
+            debug.log(f"query_selector_all error: {exc}")
 
         # Format area list with filtering
         formated_area_list = []
@@ -16139,8 +15202,7 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                     row_text = util.remove_html_tags(row_html)
                     row_text = row_text.strip()
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"get_html error: {exc}")
+                    debug.log(f"get_html error: {exc}")
                     break
 
                 if not row_text:
@@ -16158,13 +15220,13 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                 formated_area_list.append(row)
                 formated_area_list_text.append(row_text)
 
-        if show_debug_message:
-            print(f"Valid area rows count: {len(formated_area_list)}")
+        if debug.enabled:
+            debug.log(f"Valid area rows count: {len(formated_area_list)}")
             if formated_area_list and len(formated_area_list) > 0:
                 # Clean up whitespace for display
                 import re
                 display_text = re.sub(r'\s+', ' ', formated_area_list_text[0]).strip()
-                print(f"First row text sample: {display_text[:60]}")
+                debug.log(f"First row text sample: {display_text[:60]}")
 
         # Apply keyword matching
         matched_blocks = None
@@ -16213,68 +15275,61 @@ async def nodriver_kham_area_auto_select(tab, domain_name, config_dict, area_key
                         matched_blocks.append(final_rows[i])
                         area_found = True
                         is_keyword_matched = True  # True keyword match (not fallback)
-                        if show_debug_message:
+                        if debug.enabled:
                             # Clean up whitespace for display
                             import re
                             display_row_text = re.sub(r'\s+', ' ', row_text).strip()
-                            print(f"[KHAM AREA KEYWORD] Keyword matched (table): {display_row_text[:60]}")
+                            debug.log(f"[KHAM AREA KEYWORD] Keyword matched (table): {display_row_text[:60]}")
                         break  # Stop checking further rows
 
                 # All keywords failed log
-                if not area_found and show_debug_message:
-                    print(f"[KHAM AREA KEYWORD] All keywords failed to match (table)")
+                if not area_found:
+                    debug.log(f"[KHAM AREA KEYWORD] All keywords failed to match (table)")
             else:
                 # No keyword filter - use all available rows
                 matched_blocks = final_rows
-                if show_debug_message:
-                    print(f"[KHAM AREA SELECT] No keyword filter (table): using {len(final_rows)} available rows")
+                debug.log(f"[KHAM AREA SELECT] No keyword filter (table): using {len(final_rows)} available rows")
 
-            if show_debug_message and matched_blocks:
-                print("Matched area blocks:", len(matched_blocks))
+            if matched_blocks:
+                debug.log("Matched area blocks:", len(matched_blocks))
 
             # Feature 003: Conditional fallback logic (Table Mode)
             if len(matched_blocks) == 0 and len(area_keyword_item) > 0:
                 if len(final_rows) > 0:
                     if area_auto_fallback:
                         # Fallback enabled - use auto_select_mode
-                        if show_debug_message:
-                            print(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (table)")
-                            print(f"[KHAM AREA FALLBACK] Selecting from {len(final_rows)} available rows using mode='{auto_select_mode}'")
+                        debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=true, triggering auto fallback (table)")
+                        debug.log(f"[KHAM AREA FALLBACK] Selecting from {len(final_rows)} available rows using mode='{auto_select_mode}'")
                         matched_blocks = final_rows
                     else:
                         # Fallback disabled - strict mode (no selection, will reload)
-                        if show_debug_message:
-                            print(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (table)")
-                            print(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
+                        debug.log(f"[KHAM AREA FALLBACK] area_auto_fallback=false, fallback is disabled (table)")
+                        debug.log(f"[KHAM AREA SELECT] No area selected, will reload page and retry")
                         return False, False, False  # Return to trigger reload logic
                 else:
                     # No available rows (all filtered out or sold out)
-                    if show_debug_message:
-                        print(f"[KHAM AREA FALLBACK] No available rows after filtering (table)")
+                    debug.log(f"[KHAM AREA FALLBACK] No available rows after filtering (table)")
                     return False, False, False
 
         # Get target and click
         target_row = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
 
-        if show_debug_message:
+        if debug.enabled:
             if target_row:
-                print(f"Target area row selected (mode: {auto_select_mode})")
+                debug.log(f"Target area row selected (mode: {auto_select_mode})")
             else:
-                print(f"No target area row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
+                debug.log(f"No target area row selected from {len(matched_blocks) if matched_blocks else 0} matched blocks")
 
         if target_row:
             # Click target row directly (like Chrome version line 8891)
             # For Kham, the entire row is clickable
             try:
-                if show_debug_message:
-                    print(f"Clicking target area row...")
+                debug.log(f"Clicking target area row...")
                 await target_row.click()
                 is_price_assign_by_bot = True
-                if show_debug_message:
-                    print("Area row clicked successfully")
+                debug.log("Area row clicked successfully")
             except Exception as exc:
-                if show_debug_message:
-                    print(f"Click area row error: {exc}")
+                debug.log(f"Click area row error: {exc}")
         else:
             is_need_refresh = True
 
@@ -16285,12 +15340,11 @@ async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
     Auto OCR captcha recognition
     Reference: chrome_tixcraft.py kham_auto_ocr (line 9426-9530)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("Starting Kham OCR processing...")
-        print("away_from_keyboard_enable:", away_from_keyboard_enable)
-        print("previous_answer:", previous_answer)
+    debug.log("Starting Kham OCR processing...")
+    debug.log("away_from_keyboard_enable:", away_from_keyboard_enable)
+    debug.log("previous_answer:", previous_answer)
 
     is_need_redo_ocr = False
     is_form_submitted = False
@@ -16307,13 +15361,11 @@ async def nodriver_kham_auto_ocr(tab, config_dict, ocr, away_from_keyboard_enabl
             try:
                 ocr_answer = ocr.classification(img_base64)
             except Exception as exc:
-                if show_debug_message:
-                    print("OCR classification error:", exc)
+                debug.log("OCR classification error:", exc)
 
         ocr_done_time = time.time()
         ocr_elapsed_time = ocr_done_time - ocr_start_time
-        if show_debug_message:
-            print(f"OCR elapsed time: {ocr_elapsed_time:.3f}s")
+        debug.log(f"OCR elapsed time: {ocr_elapsed_time:.3f}s")
     else:
         print("OCR engine is None")
 
@@ -16406,15 +15458,14 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
     Performance page processing - integrate area selection, captcha, and ticket number
     Reference: chrome_tixcraft.py kham_performance (line 9307-9356)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_price_assign_by_bot = False
     is_captcha_sent = False
 
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
-    if show_debug_message:
-        print("area_keyword:", area_keyword)
+    debug.log("area_keyword:", area_keyword)
 
     is_need_refresh = False
 
@@ -16433,8 +15484,7 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
 
             # Case 1: True keyword match - stop trying
             if is_keyword_matched:
-                if show_debug_message:
-                    print(f"[KHAM PERFORMANCE] Keyword matched: '{area_keyword_item}'")
+                debug.log(f"[KHAM PERFORMANCE] Keyword matched: '{area_keyword_item}'")
                 break
 
             # Case 2: Strict mode (area_auto_fallback=false) - only stop if last keyword
@@ -16442,28 +15492,24 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
             if not is_need_refresh and not is_price_assign_by_bot:
                 if is_last_keyword:
                     # Last keyword failed in strict mode - will reload
-                    if show_debug_message:
-                        print(f"[KHAM PERFORMANCE] All keywords exhausted, strict mode stops")
-                        print(f"[KHAM PERFORMANCE] Will reload page and retry")
+                    debug.log(f"[KHAM PERFORMANCE] All keywords exhausted, strict mode stops")
+                    debug.log(f"[KHAM PERFORMANCE] Will reload page and retry")
                     break
                 else:
                     # Not last keyword - continue trying
-                    if show_debug_message:
-                        print(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} failed (strict mode), trying next...")
+                    debug.log(f"[KHAM PERFORMANCE] Keyword #{keyword_index + 1} failed (strict mode), trying next...")
                     continue
 
             # Case 3: Fallback selection - continue trying next keyword
             # is_price_assign_by_bot=True, is_keyword_matched=False
             if is_price_assign_by_bot and not is_keyword_matched:
-                if show_debug_message:
-                    print(f"[KHAM PERFORMANCE] Fallback selection, trying next keyword...")
+                debug.log(f"[KHAM PERFORMANCE] Fallback selection, trying next keyword...")
                 # Continue to next keyword
 
             # Case 4: Refresh needed - continue trying next keyword
             # is_need_refresh=True (other scenarios)
             if is_need_refresh:
-                if show_debug_message:
-                    print(f"[KHAM PERFORMANCE] Need refresh for keyword: {area_keyword_item}")
+                debug.log(f"[KHAM PERFORMANCE] Need refresh for keyword: {area_keyword_item}")
                 # Continue to next keyword
     else:
         # Empty keyword - match all
@@ -16472,8 +15518,7 @@ async def nodriver_kham_performance(tab, config_dict, ocr, domain_name, model_na
         )
 
     if is_need_refresh:
-        if show_debug_message:
-            print("is_need_refresh:", is_need_refresh)
+        debug.log("is_need_refresh:", is_need_refresh)
         try:
             await tab.reload()
         except:
@@ -16503,7 +15548,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         kham_dict["udn_quick_buy_submitted"] = False  # Track if quick buy was submitted
 
     domain_name = url.split('/')[2]
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Home page handling
     home_url_list = [
@@ -16563,17 +15608,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         if isinstance(login_state, dict):
                             is_logged_in = login_state.get('isLoggedIn', False)
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] Login state check error: {exc}")
+                        debug.log(f"[UDN LOGIN] Login state check error: {exc}")
 
                     if is_logged_in:
-                        if show_debug_message:
-                            print("[UDN LOGIN] Already logged in, proceeding to redirect...")
+                        debug.log("[UDN LOGIN] Already logged in, proceeding to redirect...")
                     else:
                         # Not logged in yet - execute login and DON'T redirect
                         # Let the login process complete first
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] Not logged in, executing login with account: {udn_account[:3]}***")
+                        debug.log(f"[UDN LOGIN] Not logged in, executing login with account: {udn_account[:3]}***")
 
                         # Trigger login dialog
                         await tab.evaluate('if(typeof doLoginRWD === "function") doLoginRWD();')
@@ -16591,8 +15633,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 }})()
                             ''')
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[UDN LOGIN] Fill account error: {exc}")
+                            debug.log(f"[UDN LOGIN] Fill account error: {exc}")
 
                         # Fill password
                         try:
@@ -16606,8 +15647,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 }})()
                             ''')
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[UDN LOGIN] Fill password error: {exc}")
+                            debug.log(f"[UDN LOGIN] Fill password error: {exc}")
 
                         # Click reCAPTCHA checkbox
                         try:
@@ -16617,11 +15657,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 if checkboxes and len(checkboxes) > 0:
                                     await checkboxes[0].click()
                                     recaptcha_clicked = True
-                                    if show_debug_message:
-                                        print("[UDN LOGIN] reCAPTCHA clicked via include_frames")
+                                    debug.log("[UDN LOGIN] reCAPTCHA clicked via include_frames")
                             except Exception as e1:
-                                if show_debug_message:
-                                    print(f"[UDN LOGIN] include_frames method failed: {e1}")
+                                debug.log(f"[UDN LOGIN] include_frames method failed: {e1}")
 
                             if not recaptcha_clicked:
                                 try:
@@ -16641,17 +15679,13 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                         y = recaptcha_pos['y']
                                         await tab.mouse_click(x, y)
                                         recaptcha_clicked = True
-                                        if show_debug_message:
-                                            print(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
+                                        debug.log(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
                                 except Exception as e2:
-                                    if show_debug_message:
-                                        print(f"[UDN LOGIN] mouse_click method failed: {e2}")
+                                    debug.log(f"[UDN LOGIN] mouse_click method failed: {e2}")
                         except Exception as exc:
-                            if show_debug_message:
-                                print(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
+                            debug.log(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
 
-                        if show_debug_message:
-                            print("[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...")
+                        debug.log("[UDN LOGIN] Credentials filled, waiting for reCAPTCHA verification...")
 
                         # DON'T redirect yet - return and let user complete login
                         # Next iteration will check if logged in and redirect then
@@ -16673,14 +15707,12 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
             # Redirect only if homepage is different AND not a home page URL
             if config_homepage and not is_config_homepage_also_home and config_homepage.lower() != url.lower():
-                if show_debug_message:
-                    print(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
+                debug.log(f"[KHAM LOGIN] Redirecting to target: {config_homepage}")
                 try:
                     await tab.get(config_homepage)
                     return tab
                 except Exception as e:
-                    if show_debug_message:
-                        print(f"[KHAM LOGIN] Redirect failed: {e}")
+                    debug.log(f"[KHAM LOGIN] Redirect failed: {e}")
             break
 
     # Check realname dialog
@@ -16689,13 +15721,11 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     # KHAM UTK0205 seat selection page (graphical seat map with ticket type buttons)
     # Reference: ticket.com.tw logic (line 13561) adapted for KHAM
     if "kham.com.tw" in url and 'utk0205' in url.lower():
-        if show_debug_message:
-            print("Detected KHAM UTK0205 seat selection page")
+        debug.log("Detected KHAM UTK0205 seat selection page")
 
         is_seat_selection_success = await nodriver_kham_seat_main(tab, config_dict, ocr, domain_name)
 
-        if show_debug_message:
-            print(f"KHAM seat selection result: {is_seat_selection_success}")
+        debug.log(f"KHAM seat selection result: {is_seat_selection_success}")
 
         # Return to avoid double processing by UTK0202/UTK0205 logic below
         return tab
@@ -16704,15 +15734,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     # UDN shares the same UTK backend system with KHAM, so we reuse KHAM seat selection logic
     # Reference: research.md - DOM structure and selectors are identical
     if "udnfunlife.com" in url and 'utk0205' in url.lower():
-        if show_debug_message:
-            print("[UDN SEAT] Detected UDN UTK0205 seat selection page")
+        debug.log("[UDN SEAT] Detected UDN UTK0205 seat selection page")
 
         is_seat_selection_success = await nodriver_kham_seat_main(tab, config_dict, ocr, domain_name)
 
-        if show_debug_message:
-            print(f"[UDN SEAT] Seat selection result: {is_seat_selection_success}")
+        if debug.enabled:
+            debug.log(f"[UDN SEAT] Seat selection result: {is_seat_selection_success}")
             if is_seat_selection_success:
-                print("[SUCCESS] UDN seat selection completed")
+                debug.log("[SUCCESS] UDN seat selection completed")
 
         # Return to avoid double processing
         return tab
@@ -16720,8 +15749,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     # Activity Group page (UTK0201_040.aspx?AGID=)
     # This is a special page format for activity groups with realname requirements
     if 'utk0201_040.aspx?agid=' in url.lower():
-        if show_debug_message:
-            print("Detected KHAM Activity Group page (UTK0201_040)")
+        debug.log("Detected KHAM Activity Group page (UTK0201_040)")
 
         # Check realname dialog
         await nodriver_kham_check_realname_dialog(tab, config_dict)
@@ -16732,8 +15760,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
     # Activity Group Item page (UTK0201_041.aspx?AGID=)
     # This page has "立即訂購" buttons that redirect to UTK0202
     if 'utk0201_041.aspx?agid=' in url.lower():
-        if show_debug_message:
-            print("Detected KHAM Activity Group Item page (UTK0201_041)")
+        debug.log("Detected KHAM Activity Group Item page (UTK0201_041)")
 
         # Check realname dialog first
         await nodriver_kham_check_realname_dialog(tab, config_dict)
@@ -16752,11 +15779,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     return null;
                 })();
             ''')
-            if show_debug_message and click_result:
-                print(f"Clicked buy button, total buttons: {click_result}")
+            if click_result:
+                debug.log(f"Clicked buy button, total buttons: {click_result}")
         except Exception as exc:
-            if show_debug_message:
-                print(f"Click buy button exception: {exc}")
+            debug.log(f"Click buy button exception: {exc}")
 
     # Product page (UTK0201_.aspx?product_id=)
     if 'utk0201_.aspx?product_id=' in url.lower():
@@ -16779,8 +15805,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                 # Handle captcha if enabled
                 is_captcha_sent = False
                 if config_dict["ocr_captcha"]["enable"]:
-                    if show_debug_message:
-                        print("Starting captcha processing for purchase page...")
+                    debug.log("Starting captcha processing for purchase page...")
 
                     model_name = url.split('/')[5] if len(url.split('/')) > 5 else "UTK0201"
                     if len(model_name) > 7:
@@ -16858,12 +15883,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         # User is logged in if "登入/註冊" item is hidden
                         is_logged_in = login_state.get('loginItemHidden', False)
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"[UDN LOGIN] Login state check error: {exc}")
+                    debug.log(f"[UDN LOGIN] Login state check error: {exc}")
 
                 if not is_logged_in:
-                    if show_debug_message:
-                        print(f"[UDN LOGIN] Starting login with account: {udn_account[:3]}***")
+                    debug.log(f"[UDN LOGIN] Starting login with account: {udn_account[:3]}***")
 
                     # Trigger login dialog
                     await tab.evaluate('if(typeof doLoginRWD === "function") doLoginRWD();')
@@ -16881,8 +15904,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             }})()
                         ''')
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] Fill account error: {exc}")
+                        debug.log(f"[UDN LOGIN] Fill account error: {exc}")
 
                     # Fill password
                     try:
@@ -16896,8 +15918,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             }})()
                         ''')
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] Fill password error: {exc}")
+                        debug.log(f"[UDN LOGIN] Fill password error: {exc}")
 
                     # Click reCAPTCHA checkbox
                     try:
@@ -16909,11 +15930,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             if checkboxes and len(checkboxes) > 0:
                                 await checkboxes[0].click()
                                 recaptcha_clicked = True
-                                if show_debug_message:
-                                    print("[UDN LOGIN] reCAPTCHA clicked via include_frames")
+                                debug.log("[UDN LOGIN] reCAPTCHA clicked via include_frames")
                         except Exception as e1:
-                            if show_debug_message:
-                                print(f"[UDN LOGIN] include_frames method failed: {e1}")
+                            debug.log(f"[UDN LOGIN] include_frames method failed: {e1}")
 
                         # Method 2: Fallback to CDP mouse event
                         if not recaptcha_clicked:
@@ -16935,23 +15954,19 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                     y = recaptcha_pos['y']
                                     await tab.mouse_click(x, y)
                                     recaptcha_clicked = True
-                                    if show_debug_message:
-                                        print(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
+                                    debug.log(f"[UDN LOGIN] reCAPTCHA clicked via mouse_click at ({x}, {y})")
                             except Exception as e2:
-                                if show_debug_message:
-                                    print(f"[UDN LOGIN] mouse_click method failed: {e2}")
+                                debug.log(f"[UDN LOGIN] mouse_click method failed: {e2}")
 
-                        if not recaptcha_clicked and show_debug_message:
-                            print("[UDN LOGIN] reCAPTCHA checkbox not found")
+                        if not recaptcha_clicked:
+                            debug.log("[UDN LOGIN] reCAPTCHA checkbox not found")
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
+                        debug.log(f"[UDN LOGIN] reCAPTCHA click error: {exc}")
 
                     # After filling credentials and clicking reCAPTCHA, stop here
                     # User needs to complete reCAPTCHA verification and click login manually
                     # The bot will check login status on next iteration
-                    if show_debug_message:
-                        print("[UDN LOGIN] Credentials filled, waiting for user to complete reCAPTCHA and login...")
+                    debug.log("[UDN LOGIN] Credentials filled, waiting for user to complete reCAPTCHA and login...")
 
         # UDN ticket selection (UTK0203 date/session selection)
         if 'utk0203_.aspx?product_id=' in url.lower():
@@ -16984,8 +15999,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         if '.aspx?performance_id=' in url.lower() and 'product_id=' in url.lower():
             # Exclude seat selection page (UTK0205) which has PERFORMANCE_PRICE_AREA_ID
             if 'performance_price_area_id=' not in url.lower():
-                if show_debug_message:
-                    print("[UDN AREA] Detected UDN UTK0204 area selection page")
+                debug.log("[UDN AREA] Detected UDN UTK0204 area selection page")
 
                 if config_dict["area_auto_select"]["enable"]:
                     # UDN uses nodriver_kham_performance for area selection
@@ -16996,8 +16010,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         tab, config_dict, ocr, domain_name, model_name
                     )
 
-                    if show_debug_message:
-                        print(f"[UDN AREA] Area selection result: is_price_assign_by_bot={is_price_assign_by_bot}")
+                    debug.log(f"[UDN AREA] Area selection result: is_price_assign_by_bot={is_price_assign_by_bot}")
 
                     # Feature 010: UDN seat auto select
                     # After area selection, seat map may appear on the same page
@@ -17005,10 +16018,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     if is_price_assign_by_bot:
                         await tab.sleep(0.5)  # Wait for seat map to load
                         is_seat_success = await nodriver_udn_seat_main(tab, config_dict)
-                        if show_debug_message:
-                            print(f"[UDN SEAT] Seat selection result: {is_seat_success}")
+                        if debug.enabled:
+                            debug.log(f"[UDN SEAT] Seat selection result: {is_seat_success}")
                             if is_seat_success:
-                                print("[SUCCESS] UDN seat selection and add to cart completed")
+                                debug.log("[SUCCESS] UDN seat selection and add to cart completed")
 
         # UDN UTK0222_02 fast purchase page (Feature 010: UDN quick buy)
         # URL pattern: UTK0222_02.aspx?PRODUCT_ID=xxx
@@ -17018,8 +16031,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             if kham_dict.get("udn_quick_buy_submitted", False):
                 return tab
 
-            if show_debug_message:
-                print("[UDN QUICK BUY] Detected UTK0222_02 fast purchase page")
+            debug.log("[UDN QUICK BUY] Detected UTK0222_02 fast purchase page")
 
             try:
                 # Step 1: Date selection (li.yd_datedBtn)
@@ -17050,8 +16062,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         if date_keyword:
                             keywords = util.parse_keyword_string_to_array(date_keyword)
 
-                            if show_debug_message:
-                                print(f"[UDN QUICK BUY] Date keywords parsed: {keywords}")
+                            debug.log(f"[UDN QUICK BUY] Date keywords parsed: {keywords}")
 
                             for i, date_item in enumerate(dates):
                                 date_text = date_item.get('text', '')
@@ -17062,8 +16073,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                     if all_match:
                                         target_date_idx = i
                                         keyword_matched = True
-                                        if show_debug_message:
-                                            print(f"[UDN QUICK BUY] Date matched: {date_text} with keyword: {kw}")
+                                        debug.log(f"[UDN QUICK BUY] Date matched: {date_text} with keyword: {kw}")
                                         break
                                 if keyword_matched:
                                     break  # Early return when matched
@@ -17074,19 +16084,17 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             date_mode = config_dict["date_auto_select"].get("mode", "from top to bottom")
 
                             if date_auto_fallback:
-                                if show_debug_message:
-                                    print(f"[UDN QUICK BUY] Date keyword not matched, fallback with mode: {date_mode}")
+                                debug.log(f"[UDN QUICK BUY] Date keyword not matched, fallback with mode: {date_mode}")
 
                                 target_date_idx = util.get_target_index_by_mode(len(dates), date_mode)
 
-                                if show_debug_message:
+                                if debug.enabled:
                                     selected_date = dates[target_date_idx].get('text', '') if target_date_idx is not None and target_date_idx < len(dates) else ''
-                                    print(f"[UDN QUICK BUY] Fallback selected date: {selected_date} (index: {target_date_idx})")
+                                    debug.log(f"[UDN QUICK BUY] Fallback selected date: {selected_date} (index: {target_date_idx})")
                             else:
                                 # Strict mode: no fallback, use first date as default
                                 target_date_idx = 0
-                                if show_debug_message:
-                                    print(f"[UDN QUICK BUY] Fallback disabled, using first date")
+                                debug.log(f"[UDN QUICK BUY] Fallback disabled, using first date")
 
                         # Click the date button
                         await tab.evaluate(f'''
@@ -17138,8 +16146,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                     if all_match:
                                         target_perf_idx = i
                                         keyword_matched = True
-                                        if show_debug_message:
-                                            print(f"[UDN QUICK BUY] Performance matched: {perf_text} with keyword: {kw}")
+                                        debug.log(f"[UDN QUICK BUY] Performance matched: {perf_text} with keyword: {kw}")
                                         break
                                 if keyword_matched:
                                     break  # Early return when matched
@@ -17150,14 +16157,13 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             date_mode = config_dict["date_auto_select"].get("mode", "from top to bottom")
 
                             if date_auto_fallback:
-                                if show_debug_message:
-                                    print(f"[UDN QUICK BUY] Performance keyword not matched, fallback with mode: {date_mode}")
+                                debug.log(f"[UDN QUICK BUY] Performance keyword not matched, fallback with mode: {date_mode}")
 
                                 target_perf_idx = util.get_target_index_by_mode(len(perfs), date_mode)
 
-                                if show_debug_message:
+                                if debug.enabled:
                                     selected_perf = perfs[target_perf_idx].get('text', '') if target_perf_idx is not None and target_perf_idx < len(perfs) else ''
-                                    print(f"[UDN QUICK BUY] Fallback selected performance: {selected_perf}")
+                                    debug.log(f"[UDN QUICK BUY] Fallback selected performance: {selected_perf}")
                             else:
                                 # Strict mode: default to first
                                 target_perf_idx = 0
@@ -17226,16 +16232,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                 if isinstance(ticket_info, dict) and 'tickets' in ticket_info:
                     tickets = ticket_info['tickets']
-                    if show_debug_message:
-                        print(f"[UDN QUICK BUY] Found {len(tickets)} ticket areas")
+                    debug.log(f"[UDN QUICK BUY] Found {len(tickets)} ticket areas")
 
                     # Find matching area based on keyword (use JSON parsing like other platforms)
                     target_ticket = None
                     if area_keyword:
                         keywords = util.parse_keyword_string_to_array(area_keyword)
 
-                        if show_debug_message:
-                            print(f"[UDN QUICK BUY] Area keywords parsed: {keywords}")
+                        debug.log(f"[UDN QUICK BUY] Area keywords parsed: {keywords}")
 
                         # Get keyword_exclude for filtering
                         keyword_exclude = config_dict.get("keyword_exclude", "")
@@ -17254,16 +16258,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                                 # Apply keyword_exclude filter
                                 if keyword_exclude and util.reset_row_text_if_match_keyword_exclude(config_dict, area_name):
-                                    if show_debug_message:
-                                        print(f"[UDN QUICK BUY] Excluded by keyword_exclude: {area_name}")
+                                    debug.log(f"[UDN QUICK BUY] Excluded by keyword_exclude: {area_name}")
                                     continue
 
                                 # Check AND logic - all parts must match
                                 all_match = all(part in area_name for part in kw_parts)
                                 if all_match:
                                     target_ticket = ticket
-                                    if show_debug_message:
-                                        print(f"[UDN QUICK BUY] Matched area: {area_name} with keyword: {kw}")
+                                    debug.log(f"[UDN QUICK BUY] Matched area: {area_name} with keyword: {kw}")
                                     break
 
                     # If no keyword match, apply fallback logic based on area_auto_fallback and mode
@@ -17284,23 +16286,20 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 available_tickets.append(ticket)
 
                             if available_tickets:
-                                if show_debug_message:
-                                    print(f"[UDN QUICK BUY] No keyword match, fallback with mode: {area_mode}")
+                                debug.log(f"[UDN QUICK BUY] No keyword match, fallback with mode: {area_mode}")
 
                                 target_ticket = util.get_target_item_from_matched_list(available_tickets, area_mode)
 
-                                if show_debug_message and target_ticket:
-                                    print(f"[UDN QUICK BUY] Fallback selected area: {target_ticket.get('areaName')}")
+                                if target_ticket:
+                                    debug.log(f"[UDN QUICK BUY] Fallback selected area: {target_ticket.get('areaName')}")
                         else:
                             # Strict mode: no fallback, don't select anything
-                            if show_debug_message:
-                                print(f"[UDN QUICK BUY] No keyword match, fallback disabled, waiting for manual selection")
+                            debug.log(f"[UDN QUICK BUY] No keyword match, fallback disabled, waiting for manual selection")
 
                     # Click the buy button
                     if target_ticket and target_ticket.get('fastcode'):
                         fastcode = target_ticket['fastcode']
-                        if show_debug_message:
-                            print(f"[UDN QUICK BUY] Clicking buy button for area: {target_ticket.get('areaName')}, fastcode: {fastcode}")
+                        debug.log(f"[UDN QUICK BUY] Clicking buy button for area: {target_ticket.get('areaName')}, fastcode: {fastcode}")
 
                         await tab.evaluate(f'''
                             (() => {{
@@ -17344,8 +16343,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                             if isinstance(qty_set, dict) and qty_set.get('success'):
                                 lightbox_found = True
-                                if show_debug_message:
-                                    print(f"[UDN QUICK BUY] Set quantity to {qty_set.get('qty')} (max: {qty_set.get('max')})")
+                                debug.log(f"[UDN QUICK BUY] Set quantity to {qty_set.get('qty')} (max: {qty_set.get('max')})")
 
                                 await tab.sleep(0.3)
 
@@ -17364,28 +16362,24 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 # Mark as submitted to prevent duplicate processing
                                 kham_dict["udn_quick_buy_submitted"] = True
 
-                                if show_debug_message:
-                                    print("[UDN QUICK BUY] Clicked submit button, waiting for navigation...")
+                                debug.log("[UDN QUICK BUY] Clicked submit button, waiting for navigation...")
 
                                 # Wait for navigation to checkout page
                                 for nav_wait in range(10):  # Wait up to 5 seconds for navigation
                                     await tab.sleep(0.5)
                                     current_url = str(tab.target.url).lower()
                                     if 'utk0206' in current_url:
-                                        if show_debug_message:
-                                            print("[UDN QUICK BUY] Successfully navigated to checkout page")
+                                        debug.log("[UDN QUICK BUY] Successfully navigated to checkout page")
                                         break
                                 break  # Exit retry loop after successful submit
                             else:
-                                if show_debug_message and retry == 4:  # Only print on last retry
+                                if retry == 4:  # Only print on last retry
                                     print(f"[UDN QUICK BUY] Failed to set quantity after retries: {qty_set}")
                     else:
-                        if show_debug_message:
-                            print("[UDN QUICK BUY] No available ticket area found")
+                        debug.log("[UDN QUICK BUY] No available ticket area found")
 
             except Exception as exc:
-                if show_debug_message:
-                    print(f"[UDN QUICK BUY] Error: {exc}")
+                debug.log(f"[UDN QUICK BUY] Error: {exc}")
 
     else:
         # Kham / Ticket.com.tw handling
@@ -17477,29 +16471,25 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     try:
                         if "ticket.com.tw" in url:
                             # ticket.com.tw uses <input type="submit"> with id ending in AddShopingCart
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for ticket.com.tw submit button...")
+                            debug.log("[SUBMIT] Searching for ticket.com.tw submit button...")
                             el_btn = await tab.query_selector('input[id$="AddShopingCart"]')
                             if not el_btn:
                                 # Fallback to <a> tag (for other possible layouts)
                                 el_btn = await tab.query_selector('a[onclick="return chkCart();"]')
                         elif "orders.ibon.com.tw" in url:
                             # ibon uses <a> tag with id containing AddShopingCart
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for ibon submit button...")
+                            debug.log("[SUBMIT] Searching for ibon submit button...")
                             el_btn = await tab.query_selector('a[id*="AddShopingCart"]')
                             if not el_btn:
                                 # Fallback to generic button
                                 el_btn = await tab.query_selector('a.btn.btn-primary.btn-block')
                         else:
                             # Kham
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for Kham submit button...")
+                            debug.log("[SUBMIT] Searching for Kham submit button...")
                             el_btn = await tab.query_selector('button[onclick="addShoppingCart();return false;"]')
 
                         if el_btn:
-                            if show_debug_message:
-                                print("[SUBMIT] Submit button found, scrolling into view...")
+                            debug.log("[SUBMIT] Submit button found, scrolling into view...")
                             # Scroll button into view first (important for CDP click)
                             try:
                                 await el_btn.scroll_into_view()
@@ -17507,12 +16497,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             except:
                                 pass
 
-                            if show_debug_message:
-                                print("[SUBMIT] Clicking using CDP native click...")
+                            debug.log("[SUBMIT] Clicking using CDP native click...")
                             # Use NoDriver CDP native click
                             await el_btn.click()
-                            if show_debug_message:
-                                print("[SUBMIT] Add shopping cart button clicked successfully!")
+                            debug.log("[SUBMIT] Add shopping cart button clicked successfully!")
 
                             # Check and close success dialog (Kham/Ticket.com.tw shows "加入購物車完成" dialog)
                             # Wait up to 5 seconds for dialog to appear
@@ -17522,32 +16510,28 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 try:
                                     dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
                                     if dialog_btn:
-                                        if show_debug_message:
-                                            print("[SUBMIT] Success dialog found, closing...")
+                                        debug.log("[SUBMIT] Success dialog found, closing...")
                                         await dialog_btn.click()
                                         await tab.sleep(0.5)  # Wait for dialog close animation
                                         dialog_closed = True
-                                        if show_debug_message:
-                                            print("[SUBMIT] Dialog closed successfully")
+                                        debug.log("[SUBMIT] Dialog closed successfully")
                                         break
                                 except Exception as e:
-                                    if show_debug_message and i == 9:  # Only print on last attempt
+                                    if i == 9:  # Only print on last attempt
                                         print(f"[SUBMIT] Dialog close attempt failed: {e}")
                                     pass
 
-                            if not dialog_closed and show_debug_message:
-                                print("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
+                            if not dialog_closed:
+                                debug.log("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
 
                             # If dialog was closed, give page time to process before checking URL
                             if dialog_closed:
-                                if show_debug_message:
-                                    print("[SUBMIT] Waiting for page transition after dialog close...")
+                                debug.log("[SUBMIT] Waiting for page transition after dialog close...")
                                 await tab.sleep(1.0)
 
                             # Wait for URL change to prevent duplicate submission (ticket area page)
                             current_url = tab.target.url
-                            if show_debug_message:
-                                print(f"[SUBMIT] Current URL before transition check: {current_url}")
+                            debug.log(f"[SUBMIT] Current URL before transition check: {current_url}")
 
                             url_changed = False
                             max_wait_time = 30 if dialog_closed else 5  # 30s if dialog closed, 5s otherwise
@@ -17557,40 +16541,33 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 await tab.sleep(0.5)
                                 new_url = tab.target.url
                                 if new_url != current_url:
-                                    if show_debug_message:
-                                        print(f"[SUBMIT] Page transitioned from {current_url}")
-                                        print(f"[SUBMIT] to {new_url}")
+                                    debug.log(f"[SUBMIT] Page transitioned from {current_url}")
+                                    debug.log(f"[SUBMIT] to {new_url}")
                                     url_changed = True
                                     break
 
                             # If timeout, wait additional time before returning to prevent immediate re-execution
                             if not url_changed:
-                                if show_debug_message:
-                                    print(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
+                                debug.log(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
                                 await tab.sleep(5.0)  # Longer wait to prevent immediate re-execution
 
                             # Critical: If dialog closed but URL didn't change, something is wrong
                             if dialog_closed and not url_changed:
-                                if show_debug_message:
-                                    print("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
-                                    print("[SUBMIT] This may indicate a submission error - will retry")
+                                debug.log("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
+                                debug.log("[SUBMIT] This may indicate a submission error - will retry")
                         else:
-                            if show_debug_message:
-                                print("[SUBMIT] Add shopping cart button not found")
+                            debug.log("[SUBMIT] Add shopping cart button not found")
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[SUBMIT] Click chkCart/addShoppingCart button fail: {exc}")
+                        debug.log(f"[SUBMIT] Click chkCart/addShoppingCart button fail: {exc}")
 
         # Ticket.com.tw UTK0205 seat selection page (graphical seat map)
         # Reference: chrome_tixcraft.py line 9884-9892
         if "ticket.com.tw" in url and 'utk0205' in url.lower():
-            if show_debug_message:
-                print("Detected ticket.com.tw UTK0205 seat selection page")
+            debug.log("Detected ticket.com.tw UTK0205 seat selection page")
 
             is_seat_selection_success = await nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name)
 
-            if show_debug_message:
-                print(f"Seat selection result: {is_seat_selection_success}")
+            debug.log(f"Seat selection result: {is_seat_selection_success}")
 
         # UTK0202 page - Activity Group ticket selection (new format)
         # URL: UTK0202_.aspx?PERFORMANCE_ID=xxx&PRODUCT_ID=xxx&ACTIVITY_GROUP_ID=xxx&ACTIVITY_GROUP_ITEM_ID=xxx
@@ -17599,8 +16576,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             if len(model_name) > 7:
                 model_name = model_name[:7]
 
-            if show_debug_message:
-                print(f"Detected UTK0202 Activity Group ticket page, model: {model_name}")
+            debug.log(f"Detected UTK0202 Activity Group ticket page, model: {model_name}")
 
             # Check realname dialog
             await nodriver_kham_check_realname_dialog(tab, config_dict)
@@ -17655,11 +16631,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             return null;
                         }})();
                     ''')
-                    if show_debug_message:
-                        print(f"Ticket number set to: {set_result}")
+                    debug.log(f"Ticket number set to: {set_result}")
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"Set ticket number error: {exc}")
+                    debug.log(f"Set ticket number error: {exc}")
 
                 # Click add to cart
                 try:
@@ -17667,15 +16641,13 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     el_btn = await tab.query_selector(btn_selector)
                     if el_btn:
                         await el_btn.click()
-                        if show_debug_message:
-                            print("Clicked add to cart button")
+                        debug.log("Clicked add to cart button")
                     else:
                         # Try alternative selector
                         el_btn = await tab.query_selector('#addcart button.red')
                         if el_btn:
                             await el_btn.click()
-                            if show_debug_message:
-                                print("Clicked add to cart button (alt)")
+                            debug.log("Clicked add to cart button (alt)")
                 except:
                     pass
 
@@ -17687,8 +16659,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             if len(model_name) > 7:
                 model_name = model_name[:7]
 
-            if show_debug_message:
-                print(f"Detected UTK0202/UTK0205 ticket number selection page, model: {model_name}")
+            debug.log(f"Detected UTK0202/UTK0205 ticket number selection page, model: {model_name}")
 
             is_captcha_sent = False
 
@@ -17706,8 +16677,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     ''')
                     if captcha_value and len(captcha_value) == 4 and captcha_value != "驗證碼":
                         is_captcha_sent = True
-                        if show_debug_message:
-                            print(f"[CAPTCHA] Already filled: {captcha_value}")
+                        debug.log(f"[CAPTCHA] Already filled: {captcha_value}")
                 except:
                     pass
 
@@ -17754,11 +16724,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             }}
                         }})();
                     ''')
-                    if show_debug_message:
-                        print(f"Ticket number set to: {config_dict['ticket_number']}")
+                    debug.log(f"Ticket number set to: {config_dict['ticket_number']}")
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"Set ticket number error: {exc}")
+                    debug.log(f"Set ticket number error: {exc}")
             elif "orders.ibon.com.tw" in url:
                 # ibon - uses SELECT dropdown for ticket number
                 select_query = 'select[id*="AMOUNT_DDL"]'
@@ -17784,11 +16752,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             return false;
                         }})();
                     ''')
-                    if show_debug_message:
-                        print(f"[IBON TICKET] Ticket number set to: {config_dict['ticket_number']}")
+                    debug.log(f"[IBON TICKET] Ticket number set to: {config_dict['ticket_number']}")
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"[IBON TICKET] Set ticket number error: {exc}")
+                    debug.log(f"[IBON TICKET] Set ticket number error: {exc}")
             else:
                 # Kham - find the correct ticket type input using pure JavaScript
                 try:
@@ -17885,13 +16851,12 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             }})();
                     ''')
 
-                    if show_debug_message:
+                    if debug.enabled:
                         # NoDriver returns a complex format, just confirm execution
-                        print(f"[TICKET] Ticket selection JavaScript executed")
+                        debug.log(f"[TICKET] Ticket selection JavaScript executed")
 
                 except Exception as exc:
-                    if show_debug_message:
-                        print(f"Set ticket number error: {exc}")
+                    debug.log(f"Set ticket number error: {exc}")
 
             # Submit if captcha sent and ticket number assigned
             if is_captcha_sent:
@@ -17919,45 +16884,38 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
                                 if is_visible:
                                     need_login = True
-                                    if show_debug_message:
-                                        print("[LOGIN REQUIRED] Login fields detected - triggering idle mechanism")
+                                    debug.log("[LOGIN REQUIRED] Login fields detected - triggering idle mechanism")
                     except Exception as e:
-                        if show_debug_message:
-                            print(f"Login detection error: {e}")
+                        debug.log(f"Login detection error: {e}")
 
                 # If login required, trigger idle and don't submit
                 if need_login:
                     settings.maxbot_idle()
-                    if show_debug_message:
-                        print("[IDLE ACTIVATED] Waiting for manual login - ticket number and captcha already filled")
+                    debug.log("[IDLE ACTIVATED] Waiting for manual login - ticket number and captcha already filled")
                 else:
                     # Normal submit flow
                     try:
                         if "ticket.com.tw" in url:
                             # ticket.com.tw uses <input type="submit"> with id ending in AddShopingCart
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for ticket.com.tw submit button...")
+                            debug.log("[SUBMIT] Searching for ticket.com.tw submit button...")
                             el_btn = await tab.query_selector('input[id$="AddShopingCart"]')
                             if not el_btn:
                                 # Fallback to <a> tag
                                 el_btn = await tab.query_selector('a[onclick="return chkCart();"]')
                         elif "orders.ibon.com.tw" in url:
                             # ibon uses <a> tag with id containing AddShopingCart
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for ibon submit button...")
+                            debug.log("[SUBMIT] Searching for ibon submit button...")
                             el_btn = await tab.query_selector('a[id*="AddShopingCart"]')
                             if not el_btn:
                                 # Fallback to generic button
                                 el_btn = await tab.query_selector('a.btn.btn-primary.btn-block')
                         else:
                             # Kham
-                            if show_debug_message:
-                                print("[SUBMIT] Searching for Kham submit button...")
+                            debug.log("[SUBMIT] Searching for Kham submit button...")
                             el_btn = await tab.query_selector('button[onclick="addShoppingCart();return false;"]')
 
                         if el_btn:
-                            if show_debug_message:
-                                print("[SUBMIT] Submit button found, scrolling into view...")
+                            debug.log("[SUBMIT] Submit button found, scrolling into view...")
                             # Scroll button into view first (important for CDP click)
                             try:
                                 await el_btn.scroll_into_view()
@@ -17965,12 +16923,10 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             except:
                                 pass
 
-                            if show_debug_message:
-                                print("[SUBMIT] Clicking using CDP native click...")
+                            debug.log("[SUBMIT] Clicking using CDP native click...")
                             # Use NoDriver CDP native click
                             await el_btn.click()
-                            if show_debug_message:
-                                print("[SUBMIT] Add shopping cart button clicked successfully!")
+                            debug.log("[SUBMIT] Add shopping cart button clicked successfully!")
 
                             # Check and close success dialog (Kham/Ticket.com.tw shows "加入購物車完成" dialog)
                             # Wait up to 5 seconds for dialog to appear
@@ -17980,32 +16936,28 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 try:
                                     dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
                                     if dialog_btn:
-                                        if show_debug_message:
-                                            print("[SUBMIT] Success dialog found, closing...")
+                                        debug.log("[SUBMIT] Success dialog found, closing...")
                                         await dialog_btn.click()
                                         await tab.sleep(0.5)  # Wait for dialog close animation
                                         dialog_closed = True
-                                        if show_debug_message:
-                                            print("[SUBMIT] Dialog closed successfully")
+                                        debug.log("[SUBMIT] Dialog closed successfully")
                                         break
                                 except Exception as e:
-                                    if show_debug_message and i == 9:  # Only print on last attempt
+                                    if i == 9:  # Only print on last attempt
                                         print(f"[SUBMIT] Dialog close attempt failed: {e}")
                                     pass
 
-                            if not dialog_closed and show_debug_message:
-                                print("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
+                            if not dialog_closed:
+                                debug.log("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
 
                             # If dialog was closed, give page time to process before checking URL
                             if dialog_closed:
-                                if show_debug_message:
-                                    print("[SUBMIT] Waiting for page transition after dialog close...")
+                                debug.log("[SUBMIT] Waiting for page transition after dialog close...")
                                 await tab.sleep(1.0)
 
                             # Wait for URL change to prevent duplicate submission (ticket number page)
                             current_url = tab.target.url
-                            if show_debug_message:
-                                print(f"[SUBMIT] Current URL before transition check: {current_url}")
+                            debug.log(f"[SUBMIT] Current URL before transition check: {current_url}")
 
                             url_changed = False
                             max_wait_time = 30 if dialog_closed else 5  # 30s if dialog closed, 5s otherwise
@@ -18015,29 +16967,25 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                                 await tab.sleep(0.5)
                                 new_url = tab.target.url
                                 if new_url != current_url:
-                                    if show_debug_message:
-                                        print(f"[SUBMIT] Page transitioned from {current_url}")
-                                        print(f"[SUBMIT] to {new_url}")
+                                    debug.log(f"[SUBMIT] Page transitioned from {current_url}")
+                                    debug.log(f"[SUBMIT] to {new_url}")
                                     url_changed = True
                                     break
 
                             # If timeout, wait additional time before returning to prevent immediate re-execution
                             if not url_changed:
-                                if show_debug_message:
-                                    print(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
+                                debug.log(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
                                 await tab.sleep(5.0)  # Longer wait to prevent immediate re-execution
 
                             # Critical: If dialog closed but URL didn't change, something is wrong
                             if dialog_closed and not url_changed:
-                                if show_debug_message:
-                                    print("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
-                                    print("[SUBMIT] This may indicate a submission error - will retry")
+                                debug.log("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
+                                debug.log("[SUBMIT] This may indicate a submission error - will retry")
                         else:
-                            if show_debug_message:
-                                print("[SUBMIT] Add shopping cart button not found")
+                            debug.log("[SUBMIT] Add shopping cart button not found")
                     except Exception as exc:
-                        if show_debug_message:
-                            print(f"[SUBMIT] Click chkCart/addShoppingCart button fail: {exc}")
+                        if debug.enabled:
+                            debug.log(f"[SUBMIT] Click chkCart/addShoppingCart button fail: {exc}")
                             import traceback
                             traceback.print_exc()
 
@@ -18064,15 +17012,14 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                     udn_account = config_dict["accounts"]["udn_account"]
                     udn_password = config_dict["accounts"]["udn_password"].strip()
                     if len(udn_account) > 4:
-                        if show_debug_message:
-                            print(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
-                        await nodriver_kham_login(tab, udn_account, udn_password, ocr)
+                        debug.log(f"[UDN LOGIN] Attempting login with account: {udn_account[:3]}***")
+                        await nodriver_kham_login(tab, udn_account, udn_password, ocr, config_dict=config_dict)
 
                 # Kham login
                 kham_account = config_dict["accounts"]["kham_account"]
                 kham_password = config_dict["accounts"]["kham_password"].strip()
                 if len(kham_account) > 4:
-                    await nodriver_kham_login(tab, kham_account, kham_password, ocr)
+                    await nodriver_kham_login(tab, kham_account, kham_password, ocr, config_dict=config_dict)
 
                 # Ticket.com.tw login
                 ticket_account = config_dict["accounts"]["ticket_account"]
@@ -18087,9 +17034,9 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
         kham_dict["udn_quick_buy_submitted"] = False
 
         # Show success message (only once)
-        if show_debug_message:
+        if debug.enabled:
             if not kham_dict["shown_checkout_message"]:
-                print("[SUCCESS] Reached checkout page - ticket purchase successful!")
+                debug.log("[SUCCESS] Reached checkout page - ticket purchase successful!")
         kham_dict["shown_checkout_message"] = True
 
         # Play sound notification (only once)
@@ -18129,15 +17076,14 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
         return False
 
     ret = False
-    show_debug_message = config_dict["advanced"].get("verbose", True)
+    debug = util.create_debug_logger(config_dict)
 
     # Find email/account input - Use ID selector
     el_email = None
     try:
         el_email = await tab.query_selector('#ctl00_ContentPlaceHolder1_M_ACCOUNT')
     except Exception as exc:
-        if show_debug_message:
-            print("Find account input fail:", exc)
+        debug.log("Find account input fail:", exc)
 
     # Input account
     is_email_sent = False
@@ -18151,8 +17097,7 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
                 if inputed_text == account:
                     is_email_sent = True
         except Exception as exc:
-            if show_debug_message:
-                print("Input account fail:", exc)
+            debug.log("Input account fail:", exc)
 
     # Find password input - Use ID selector
     el_pass = None
@@ -18160,8 +17105,7 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
         try:
             el_pass = await tab.query_selector('#ctl00_ContentPlaceHolder1_M_PASSWORD')
         except Exception as exc:
-            if show_debug_message:
-                print("Find password input fail:", exc)
+            debug.log("Find password input fail:", exc)
 
     # Input password
     is_password_sent = False
@@ -18175,8 +17119,7 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
                     is_password_sent = True
                 await tab.sleep(0.1)
         except Exception as exc:
-            if show_debug_message:
-                print("Input password fail:", exc)
+            debug.log("Input password fail:", exc)
 
     # Click login button - Use ID selector
     if is_password_sent:
@@ -18185,14 +17128,11 @@ async def nodriver_ticket_login(tab, account, password, config_dict):
             if el_btn:
                 await el_btn.click()
                 ret = True
-                if show_debug_message:
-                    print("[TICKET LOGIN] Login button clicked")
+                debug.log("[TICKET LOGIN] Login button clicked")
         except Exception as exc:
-            if show_debug_message:
-                print("Click login button fail:", exc)
+            debug.log("Click login button fail:", exc)
 
     return ret
-
 
 async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_item):
     """
@@ -18202,7 +17142,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
     使用 CDP DOMSnapshot 穿透 DOM，避免 JavaScript 載入時機問題
     參考年代售票 nodriver_ticket_seat_type_auto_select 成功實作
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_seat_type_assigned = False
 
     # Clean keyword quotes
@@ -18217,15 +17157,13 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
             # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
             area_keyword_item = area_keyword_clean
         except Exception as e:
-            if show_debug_message:
-                print(f"[KHAM SEAT TYPE] Keyword parse error: {e}")
+            debug.log(f"[KHAM SEAT TYPE] Keyword parse error: {e}")
 
     try:
         from nodriver import cdp
 
         # Step 1: Capture DOM snapshot
-        if show_debug_message:
-            print("[KHAM SEAT TYPE] Capturing DOM snapshot...")
+        debug.log("[KHAM SEAT TYPE] Capturing DOM snapshot...")
 
         try:
             documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
@@ -18233,11 +17171,9 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                 include_dom_rects=True
             ))
         except Exception as snapshot_exc:
-            if show_debug_message:
-                print(f"[KHAM SEAT TYPE] ERROR capturing snapshot: {snapshot_exc}")
+            debug.log(f"[KHAM SEAT TYPE] ERROR capturing snapshot: {snapshot_exc}")
             # Fallback: try simple JavaScript method
-            if show_debug_message:
-                print("[KHAM SEAT TYPE] Falling back to JavaScript method...")
+            debug.log("[KHAM SEAT TYPE] Falling back to JavaScript method...")
 
             buttons_data = await tab.evaluate('''
                 (function() {
@@ -18270,8 +17206,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                                         btn_info[key] = val
                             buttons_list.append(btn_info)
 
-            if show_debug_message:
-                print(f"[KHAM SEAT TYPE] Found {len(buttons_list)} button(s) via JavaScript fallback")
+            debug.log(f"[KHAM SEAT TYPE] Found {len(buttons_list)} button(s) via JavaScript fallback")
 
             # 簡化邏輯：直接使用 JavaScript 找到的按鈕
             if len(buttons_list) > 0:
@@ -18294,11 +17229,9 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                 else:
                     is_seat_type_assigned = result
 
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] JavaScript fallback click result: {is_seat_type_assigned}")
+                debug.log(f"[KHAM SEAT TYPE] JavaScript fallback click result: {is_seat_type_assigned}")
 
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] Assignment result: {is_seat_type_assigned}")
+                debug.log(f"[KHAM SEAT TYPE] Assignment result: {is_seat_type_assigned}")
 
                 return is_seat_type_assigned
 
@@ -18307,8 +17240,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
         # Step 2: Search for ticket type buttons
         ticket_buttons = []
 
-        if show_debug_message:
-            print(f"[KHAM SEAT TYPE] documents type: {type(documents)}, len: {len(documents) if documents else 0}")
+        debug.log(f"[KHAM SEAT TYPE] documents type: {type(documents)}, len: {len(documents) if documents else 0}")
 
         if documents and len(documents) > 0:
             document_snapshot = documents[0]
@@ -18320,8 +17252,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
             attributes_list = nodes.attributes
             backend_node_ids = list(nodes.backend_node_id)
 
-            if show_debug_message:
-                print(f"[KHAM SEAT TYPE] Total nodes in snapshot: {len(node_names)}")
+            debug.log(f"[KHAM SEAT TYPE] Total nodes in snapshot: {len(node_names)}")
 
             # Step 3: Search for buttons with setType onclick
             for i, node_name in enumerate(node_names):
@@ -18350,8 +17281,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                                 text_content = node_values[j].strip()
                                 if text_content and len(text_content) > 0:
                                     button_text = text_content
-                                    if show_debug_message:
-                                        print(f"[KHAM SEAT TYPE] Extracted text from node {j}: '{button_text}'")
+                                    debug.log(f"[KHAM SEAT TYPE] Extracted text from node {j}: '{button_text}'")
                                     break
                             # Stop when encountering another element (DIV, BUTTON, etc.)
                             elif node_names[j] in ['DIV', 'BUTTON', 'INPUT', 'SPAN', 'A']:
@@ -18363,8 +17293,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                             match = re.search(r"setType\('[^']*','([^']*)'\)", onclick)
                             if match:
                                 button_text = match.group(1)
-                                if show_debug_message:
-                                    print(f"[KHAM SEAT TYPE] Extracted text from onclick: '{button_text}'")
+                                debug.log(f"[KHAM SEAT TYPE] Extracted text from onclick: '{button_text}'")
 
                         ticket_buttons.append({
                             'backend_node_id': backend_node_ids[i],
@@ -18375,26 +17304,21 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                             'index': i
                         })
 
-                        if show_debug_message:
-                            print(f"[KHAM SEAT TYPE] Found button #{len(ticket_buttons)}: text='{button_text}', disabled={button_disabled}")
+                        debug.log(f"[KHAM SEAT TYPE] Found button #{len(ticket_buttons)}: text='{button_text}', disabled={button_disabled}")
 
-        if show_debug_message:
-            print(f"[KHAM SEAT TYPE] Found {len(ticket_buttons)} ticket type button(s)")
+        debug.log(f"[KHAM SEAT TYPE] Found {len(ticket_buttons)} ticket type button(s)")
 
         if len(ticket_buttons) == 0:
-            if show_debug_message:
-                print("[KHAM SEAT TYPE] No ticket type buttons found")
+            debug.log("[KHAM SEAT TYPE] No ticket type buttons found")
             return False
 
         # Step 4: Filter disabled buttons
         enabled_buttons = [btn for btn in ticket_buttons if not btn['disabled']]
 
-        if show_debug_message:
-            print(f"[KHAM SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
+        debug.log(f"[KHAM SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
 
         if len(enabled_buttons) == 0:
-            if show_debug_message:
-                print("[KHAM SEAT TYPE] All buttons are disabled")
+            debug.log("[KHAM SEAT TYPE] All buttons are disabled")
             return False
 
         # Step 5: Match and select button using Python logic
@@ -18407,8 +17331,7 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
             # 使用 util 檢查是否應該排除（依據設定檔的 keyword_exclude）
             if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {button_text}")
+                debug.log(f"[KHAM SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
 
             # 關鍵字匹配邏輯
@@ -18424,15 +17347,13 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
 
             if is_match:
                 matched_button = btn
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] Matched: {button_text}")
+                debug.log(f"[KHAM SEAT TYPE] Matched: {button_text}")
                 break
 
         # If no keyword match found, use first enabled button
         if matched_button is None and len(enabled_buttons) > 0:
             matched_button = enabled_buttons[0]
-            if show_debug_message:
-                print(f"[KHAM SEAT TYPE] No keyword match, using first button: {matched_button.get('text', '')}")
+            debug.log(f"[KHAM SEAT TYPE] No keyword match, using first button: {matched_button.get('text', '')}")
 
         # Step 6: Click matched button using CDP Input.dispatchMouseEvent (per nodriver API guide Example 3)
         if matched_button is not None:
@@ -18440,16 +17361,14 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
             backend_node_id = matched_button.get('backend_node_id')
 
             try:
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] Clicking button via CDP: {button_text}")
+                debug.log(f"[KHAM SEAT TYPE] Clicking button via CDP: {button_text}")
 
                 is_seat_type_assigned = False
 
                 # Step 6.1: Convert backend_node_id to node_id using CDP DOM
                 if backend_node_id is not None:
                     try:
-                        if show_debug_message:
-                            print(f"[KHAM SEAT TYPE] Using backend_node_id={backend_node_id}")
+                        debug.log(f"[KHAM SEAT TYPE] Using backend_node_id={backend_node_id}")
 
                         # Get document first
                         await tab.send(cdp.dom.get_document())
@@ -18459,23 +17378,19 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                         if push_result and len(push_result) > 0:
                             node_id = push_result[0]
 
-                            if show_debug_message:
-                                print(f"[KHAM SEAT TYPE] Converted to node_id={node_id}")
+                            debug.log(f"[KHAM SEAT TYPE] Converted to node_id={node_id}")
 
                             # Step 6.2: Scroll into view to ensure element is visible
                             try:
                                 await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
-                                if show_debug_message:
-                                    print(f"[KHAM SEAT TYPE] Scrolled button into view")
+                                debug.log(f"[KHAM SEAT TYPE] Scrolled button into view")
                             except Exception as scroll_exc:
-                                if show_debug_message:
-                                    print(f"[KHAM SEAT TYPE] Scroll into view exception (non-critical): {scroll_exc}")
+                                debug.log(f"[KHAM SEAT TYPE] Scroll into view exception (non-critical): {scroll_exc}")
 
                             # Step 6.3: Get box model for precise click coordinates
                             try:
                                 box_model = await tab.send(cdp.dom.get_box_model(node_id=node_id))
-                                if show_debug_message:
-                                    print(f"[KHAM SEAT TYPE] Box model result: {type(box_model)}")
+                                debug.log(f"[KHAM SEAT TYPE] Box model result: {type(box_model)}")
 
                                 if box_model and hasattr(box_model, 'content') and box_model.content:
                                     quad = box_model.content
@@ -18483,37 +17398,29 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                                     center_x = (quad[0] + quad[2] + quad[4] + quad[6]) / 4.0
                                     center_y = (quad[1] + quad[3] + quad[5] + quad[7]) / 4.0
 
-                                    if show_debug_message:
-                                        print(f"[KHAM SEAT TYPE] Box model center: ({center_x:.1f}, {center_y:.1f})")
+                                    debug.log(f"[KHAM SEAT TYPE] Box model center: ({center_x:.1f}, {center_y:.1f})")
 
                                     # Step 6.4: Use JavaScript to click (CDP input module not available)
                                     # Since JavaScript fallback already works, skip CDP mouse event
-                                    if show_debug_message:
-                                        print(f"[KHAM SEAT TYPE] Using JavaScript click (CDP input unavailable)")
+                                    debug.log(f"[KHAM SEAT TYPE] Using JavaScript click (CDP input unavailable)")
                                 else:
-                                    if show_debug_message:
-                                        print(f"[KHAM SEAT TYPE] Failed to get box model content: {box_model}")
+                                    debug.log(f"[KHAM SEAT TYPE] Failed to get box model content: {box_model}")
                                     print(f"[KHAM SEAT TYPE] Falling back to JavaScript click...")
 
                             except Exception as box_exc:
-                                if show_debug_message:
-                                    print(f"[KHAM SEAT TYPE] Box model exception: {box_exc}")
+                                debug.log(f"[KHAM SEAT TYPE] Box model exception: {box_exc}")
                         else:
-                            if show_debug_message:
-                                print(f"[KHAM SEAT TYPE] Failed to convert backend_node_id: push_result={push_result}")
+                            debug.log(f"[KHAM SEAT TYPE] Failed to convert backend_node_id: push_result={push_result}")
 
                     except Exception as cdp_exc:
-                        if show_debug_message:
-                            print(f"[KHAM SEAT TYPE] CDP operation error: {cdp_exc}")
+                        debug.log(f"[KHAM SEAT TYPE] CDP operation error: {cdp_exc}")
                 else:
-                    if show_debug_message:
-                        print(f"[KHAM SEAT TYPE] backend_node_id is None, using JavaScript fallback")
+                    debug.log(f"[KHAM SEAT TYPE] backend_node_id is None, using JavaScript fallback")
 
                 # Fallback: If CDP click failed, try JavaScript click
                 if not is_seat_type_assigned:
                     try:
-                        if show_debug_message:
-                            print(f"[KHAM SEAT TYPE] Attempting JavaScript fallback click")
+                        debug.log(f"[KHAM SEAT TYPE] Attempting JavaScript fallback click")
                         result = await tab.evaluate('''
                             (function() {
                                 const buttons = document.querySelectorAll('button[onclick*="setType"]');
@@ -18533,31 +17440,24 @@ async def nodriver_kham_seat_type_auto_select(tab, config_dict, area_keyword_ite
                             is_seat_type_assigned = result
 
                         if is_seat_type_assigned:
-                            if show_debug_message:
-                                print(f"[KHAM SEAT TYPE] JavaScript fallback click succeeded")
+                            debug.log(f"[KHAM SEAT TYPE] JavaScript fallback click succeeded")
                         else:
-                            if show_debug_message:
-                                print(f"[KHAM SEAT TYPE] JavaScript fallback click failed")
+                            debug.log(f"[KHAM SEAT TYPE] JavaScript fallback click failed")
                     except Exception as js_exc:
-                        if show_debug_message:
-                            print(f"[KHAM SEAT TYPE] JavaScript fallback exception: {js_exc}")
+                        debug.log(f"[KHAM SEAT TYPE] JavaScript fallback exception: {js_exc}")
 
             except Exception as click_exc:
-                if show_debug_message:
-                    print(f"[KHAM SEAT TYPE] CDP click exception: {click_exc}")
+                debug.log(f"[KHAM SEAT TYPE] CDP click exception: {click_exc}")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] KHAM seat type selection error: {exc}")
+        debug.log(f"[ERROR] KHAM seat type selection error: {exc}")
         import traceback
-        if show_debug_message:
+        if debug.enabled:
             traceback.print_exc()
 
-    if show_debug_message:
-        print(f"[KHAM SEAT TYPE] Assignment result: {is_seat_type_assigned}")
+    debug.log(f"[KHAM SEAT TYPE] Assignment result: {is_seat_type_assigned}")
 
     return is_seat_type_assigned
-
 
 async def nodriver_kham_seat_auto_select(tab, config_dict):
     """
@@ -18578,6 +17478,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
     ticket_number = config_dict["ticket_number"]
     allow_non_adjacent = config_dict["advanced"]["disable_adjacent_seat"]
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     try:
         # 使用純 JavaScript 執行全部邏輯：偵測方向 -> 分組 -> 排序 -> 選擇 -> 點擊
@@ -18905,24 +17806,22 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
 
         is_seat_assigned = result_dict.get('success', False)
 
-        if show_debug:
+        if debug.enabled:
             stage_dir = result_dict.get('direction', 'unknown')
-            print(f"[KHAM SEAT] Stage direction: {stage_dir}")
-            print(f"[KHAM SEAT] Found {result_dict.get('found', 0)} available seats")
-            print(f"[KHAM SEAT] Selected {result_dict.get('selected', 0)}/{ticket_number} seats")
+            debug.log(f"[KHAM SEAT] Stage direction: {stage_dir}")
+            debug.log(f"[KHAM SEAT] Found {result_dict.get('found', 0)} available seats")
+            debug.log(f"[KHAM SEAT] Selected {result_dict.get('selected', 0)}/{ticket_number} seats")
             if result_dict.get('titles'):
                 for title in result_dict['titles']:
-                    print(f"[SUCCESS] Selected seat: {title}")
+                    debug.log(f"[SUCCESS] Selected seat: {title}")
 
     except Exception as exc:
-        if show_debug:
-            print(f"[ERROR] KHAM seat selection error: {exc}")
+        debug.log(f"[ERROR] KHAM seat selection error: {exc}")
         import traceback
-        if show_debug:
+        if debug.enabled:
             traceback.print_exc()
 
     return is_seat_assigned
-
 
 async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     """
@@ -18930,6 +17829,7 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
     UTK0205 頁面處理
     """
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
     ticket_number = config_dict["ticket_number"]
 
     # Step 0: Check if seats are already selected (avoid duplicate selection)
@@ -18946,16 +17846,13 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         elif isinstance(check_result, dict):
             already_selected_count = check_result.get('value', 0)
 
-        if show_debug:
-            print(f"[KHAM SEAT] Already selected seats: {already_selected_count}")
+        debug.log(f"[KHAM SEAT] Already selected seats: {already_selected_count}")
     except Exception as exc:
-        if show_debug:
-            print(f"[KHAM SEAT] Error checking selected seats: {exc}")
+        debug.log(f"[KHAM SEAT] Error checking selected seats: {exc}")
 
     # If already selected enough seats, skip seat selection and go to submit
     if already_selected_count >= ticket_number:
-        if show_debug:
-            print(f"[KHAM SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        debug.log(f"[KHAM SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
         is_seat_type_assigned = True
         is_seat_assigned = True
     else:
@@ -18976,18 +17873,15 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
         try:
             # Find captcha input field
             captcha_input = await tab.query_selector('input#CHK')
-            if show_debug:
-                print(f"[KHAM SEAT] Captcha input found: {captcha_input is not None}")
+            debug.log(f"[KHAM SEAT] Captcha input found: {captcha_input is not None}")
             if captcha_input:
                 model_name = "UTK0205"
                 is_captcha_sent = await nodriver_kham_captcha(
                     tab, config_dict, ocr, model_name
                 )
-                if show_debug:
-                    print(f"[KHAM SEAT] is_captcha_sent: {is_captcha_sent}")
+                debug.log(f"[KHAM SEAT] is_captcha_sent: {is_captcha_sent}")
         except Exception as exc:
-            if show_debug:
-                print(f"[ERROR] KHAM captcha processing error: {exc}")
+            debug.log(f"[ERROR] KHAM captcha processing error: {exc}")
 
     # Step 4: Submit order with improved dialog handling and URL tracking
     is_submit_success = False
@@ -19030,16 +17924,14 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                 is_submit_success = result
 
             if is_submit_success:
-                if show_debug:
-                    print("[KHAM SUBMIT] Order submitted successfully")
+                debug.log("[KHAM SUBMIT] Order submitted successfully")
 
                 # 4.2: Wait for and close success dialog with improved logic + fallback
                 dialog_closed = False
 
                 # Initial wait for dialog to appear (1.5 seconds)
                 await tab.sleep(1.5)
-                if show_debug:
-                    print("[KHAM SUBMIT] Initial wait completed, now checking for dialog...")
+                debug.log("[KHAM SUBMIT] Initial wait completed, now checking for dialog...")
 
                 for i in range(16):  # 16 attempts * 0.5s = 8 seconds
                     await tab.sleep(0.5)
@@ -19078,12 +17970,10 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                         dialog_found = result_dict.get('found', False)
                         dialog_clicked = result_dict.get('clicked', False)
 
-                        if show_debug:
-                            print(f"[KHAM SUBMIT] Dialog check #{i+1}: found={dialog_found}, clicked={dialog_clicked}")
+                        debug.log(f"[KHAM SUBMIT] Dialog check #{i+1}: found={dialog_found}, clicked={dialog_clicked}")
 
                         if dialog_found and dialog_clicked:
-                            if show_debug:
-                                print("[KHAM SUBMIT] Dialog found and clicked via JavaScript")
+                            debug.log("[KHAM SUBMIT] Dialog found and clicked via JavaScript")
                             await tab.sleep(0.5)
 
                             # Verify dialog actually closed (important for stability)
@@ -19101,34 +17991,28 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
 
                             if not verify_dict.get('exists', True):
                                 dialog_closed = True
-                                if show_debug:
-                                    print("[KHAM SUBMIT] Dialog close verified - dialog no longer exists")
+                                debug.log("[KHAM SUBMIT] Dialog close verified - dialog no longer exists")
                                 break
                             else:
-                                if show_debug:
-                                    print("[KHAM SUBMIT] Dialog still exists after click attempt, retrying...")
+                                debug.log("[KHAM SUBMIT] Dialog still exists after click attempt, retrying...")
                         elif dialog_found and not dialog_clicked:
-                            if show_debug:
-                                print("[KHAM SUBMIT] Dialog found but button click failed, retrying...")
-                        elif not dialog_found and i % 4 == 0 and show_debug:
+                            debug.log("[KHAM SUBMIT] Dialog found but button click failed, retrying...")
+                        elif not dialog_found and i % 4 == 0:
                             # Log periodically that we're still searching
-                            print(f"[KHAM SUBMIT] Still searching for dialog... (attempt {i+1}/16)")
+                            debug.log(f"[KHAM SUBMIT] Still searching for dialog... (attempt {i+1}/16)")
 
                     except Exception as e:
-                        if show_debug:
-                            print(f"[KHAM SUBMIT] Dialog check #{i+1} exception: {e}")
+                        debug.log(f"[KHAM SUBMIT] Dialog check #{i+1} exception: {e}")
 
-                if not dialog_closed and show_debug:
-                    print("[KHAM SUBMIT] Dialog detection incomplete - will proceed with fallback URL check")
+                if not dialog_closed:
+                    debug.log("[KHAM SUBMIT] Dialog detection incomplete - will proceed with fallback URL check")
 
                 # 4.3: Always check for page transition (fallback) - regardless of dialog detection
                 # This is more reliable than waiting for dialog to close
-                if show_debug:
-                    print("[KHAM SUBMIT] Checking for page transition (fallback)...")
+                debug.log("[KHAM SUBMIT] Checking for page transition (fallback)...")
 
                 current_url = tab.target.url
-                if show_debug:
-                    print(f"[KHAM SUBMIT] Current URL: {current_url}")
+                debug.log(f"[KHAM SUBMIT] Current URL: {current_url}")
 
                 # Check if URL changed (maximum 15 seconds wait - more generous fallback)
                 url_changed = False
@@ -19136,43 +18020,36 @@ async def nodriver_kham_seat_main(tab, config_dict, ocr, domain_name):
                     await tab.sleep(0.5)
                     new_url = tab.target.url
                     if new_url != current_url:
-                        if show_debug:
-                            print(f"[KHAM SUBMIT] Page transitioned successfully")
-                            print(f"[KHAM SUBMIT] New URL: {new_url}")
+                        debug.log(f"[KHAM SUBMIT] Page transitioned successfully")
+                        debug.log(f"[KHAM SUBMIT] New URL: {new_url}")
                         url_changed = True
                         break
 
                 if not url_changed:
-                    if show_debug:
-                        print("[KHAM SUBMIT] URL did not change after submit")
-                        print("[KHAM SUBMIT] Note: KHAM may not auto-redirect - this may be normal")
-                        print("[KHAM SUBMIT] Proceeding anyway as submit button was clicked")
+                    debug.log("[KHAM SUBMIT] URL did not change after submit")
+                    debug.log("[KHAM SUBMIT] Note: KHAM may not auto-redirect - this may be normal")
+                    debug.log("[KHAM SUBMIT] Proceeding anyway as submit button was clicked")
 
                 # 4.4: Play sound if enabled
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
 
         except Exception as exc:
-            if show_debug:
-                print(f"[ERROR] KHAM submit exception: {exc}")
+            debug.log(f"[ERROR] KHAM submit exception: {exc}")
             # Fallback: use JavaScript to force submit
             try:
                 await tab.evaluate('addShoppingCart();')
                 is_submit_success = True
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
-                if show_debug:
-                    print("[KHAM SUBMIT] Submitted via fallback method")
+                debug.log("[KHAM SUBMIT] Submitted via fallback method")
             except Exception as exc2:
-                if show_debug:
-                    print(f"[ERROR] KHAM fallback submit error: {exc2}")
+                debug.log(f"[ERROR] KHAM fallback submit error: {exc2}")
 
-    if show_debug:
-        print(f"[KHAM SEAT MAIN] Type:{is_seat_type_assigned} "
-              f"Seat:{is_seat_assigned} Submit:{is_submit_success}")
+    debug.log(f"[KHAM SEAT MAIN] Type:{is_seat_type_assigned} "
+          f"Seat:{is_seat_assigned} Submit:{is_submit_success}")
 
     return is_submit_success
-
 
 # ====================================================================================
 # UDN Platform Seat Selection (Feature 010: UDN seat auto select)
@@ -19195,6 +18072,7 @@ async def nodriver_udn_seat_auto_select(tab, config_dict):
     is_seat_assigned = False
     ticket_number = config_dict["ticket_number"]
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     try:
         import json
@@ -19284,21 +18162,19 @@ async def nodriver_udn_seat_auto_select(tab, config_dict):
 
         if result and result.get('success'):
             is_seat_assigned = True
-            if show_debug:
-                print(f"[UDN SEAT] Selected {result.get('selected')} seats: {result.get('seats')}")
+            debug.log(f"[UDN SEAT] Selected {result.get('selected')} seats: {result.get('seats')}")
         else:
-            if show_debug:
+            if debug.enabled:
                 reason = result.get('reason', 'unknown') if result else 'no_result'
-                print(f"[UDN SEAT] Selection failed: {reason}")
+                debug.log(f"[UDN SEAT] Selection failed: {reason}")
 
     except Exception as exc:
-        if show_debug:
-            print(f"[ERROR] UDN seat selection error: {exc}")
+        if debug.enabled:
+            debug.log(f"[ERROR] UDN seat selection error: {exc}")
             import traceback
             traceback.print_exc()
 
     return is_seat_assigned
-
 
 async def nodriver_udn_seat_select_ticket_type(tab, config_dict):
     """
@@ -19311,6 +18187,7 @@ async def nodriver_udn_seat_select_ticket_type(tab, config_dict):
     """
     is_success = False
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     try:
         import json
@@ -19395,8 +18272,7 @@ async def nodriver_udn_seat_select_ticket_type(tab, config_dict):
 
         if result and result.get('success'):
             is_success = True
-            if show_debug:
-                print(f"[UDN TICKET] Added to cart: {result.get('ticketType')}")
+            debug.log(f"[UDN TICKET] Added to cart: {result.get('ticketType')}")
 
             # Wait for dialog and dismiss it
             await tab.sleep(0.5)
@@ -19422,25 +18298,23 @@ async def nodriver_udn_seat_select_ticket_type(tab, config_dict):
                         return { dismissed: false };
                     })();
                 ''')
-                if show_debug and dialog_result:
-                    print(f"[UDN TICKET] Dialog dismissed: {dialog_result.get('dismissed')}")
+                if dialog_result:
+                    debug.log(f"[UDN TICKET] Dialog dismissed: {dialog_result.get('dismissed')}")
             except Exception as dialog_exc:
-                if show_debug:
-                    print(f"[UDN TICKET] Dialog dismiss error (may be normal): {dialog_exc}")
+                debug.log(f"[UDN TICKET] Dialog dismiss error (may be normal): {dialog_exc}")
 
         else:
-            if show_debug:
+            if debug.enabled:
                 reason = result.get('reason', 'unknown') if result else 'no_result'
-                print(f"[UDN TICKET] Failed: {reason}")
+                debug.log(f"[UDN TICKET] Failed: {reason}")
 
     except Exception as exc:
-        if show_debug:
-            print(f"[ERROR] UDN ticket type selection error: {exc}")
+        if debug.enabled:
+            debug.log(f"[ERROR] UDN ticket type selection error: {exc}")
             import traceback
             traceback.print_exc()
 
     return is_success
-
 
 async def nodriver_udn_seat_main(tab, config_dict):
     """
@@ -19457,6 +18331,7 @@ async def nodriver_udn_seat_main(tab, config_dict):
         bool: True if successfully added to cart
     """
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
     is_success = False
 
     # Check if seat map is present
@@ -19478,30 +18353,25 @@ async def nodriver_udn_seat_main(tab, config_dict):
         seat_map_check = util.parse_nodriver_result(seat_map_check_raw)
 
         if not seat_map_check or not seat_map_check.get('hasSeatMap'):
-            if show_debug:
-                print("[UDN SEAT MAIN] No seat map detected on this page")
+            debug.log("[UDN SEAT MAIN] No seat map detected on this page")
             return False
 
-        if show_debug:
-            print(f"[UDN SEAT MAIN] Seat map found: {seat_map_check.get('totalSeats')} total, "
-                  f"{seat_map_check.get('availableSeats')} available")
+        debug.log(f"[UDN SEAT MAIN] Seat map found: {seat_map_check.get('totalSeats')} total, "
+              f"{seat_map_check.get('availableSeats')} available")
 
         if seat_map_check.get('availableSeats', 0) == 0:
-            if show_debug:
-                print("[UDN SEAT MAIN] No available seats")
+            debug.log("[UDN SEAT MAIN] No available seats")
             return False
 
     except Exception as exc:
-        if show_debug:
-            print(f"[UDN SEAT MAIN] Error checking seat map: {exc}")
+        debug.log(f"[UDN SEAT MAIN] Error checking seat map: {exc}")
         return False
 
     # Step 1: Select seats
     is_seat_selected = await nodriver_udn_seat_auto_select(tab, config_dict)
 
     if not is_seat_selected:
-        if show_debug:
-            print("[UDN SEAT MAIN] Seat selection failed")
+        debug.log("[UDN SEAT MAIN] Seat selection failed")
         return False
 
     # Wait for UI to update after seat selection
@@ -19510,11 +18380,9 @@ async def nodriver_udn_seat_main(tab, config_dict):
     # Step 2: Select ticket type and add to cart
     is_success = await nodriver_udn_seat_select_ticket_type(tab, config_dict)
 
-    if show_debug:
-        print(f"[UDN SEAT MAIN] Result: seat_selected={is_seat_selected}, added_to_cart={is_success}")
+    debug.log(f"[UDN SEAT MAIN] Result: seat_selected={is_seat_selected}, added_to_cart={is_success}")
 
     return is_success
-
 
 async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_item):
     """
@@ -19532,7 +18400,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_seat_type_assigned = False
 
     # Clean keyword quotes
@@ -19547,15 +18415,13 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
             # Use the cleaned keyword directly (no comma split to avoid incorrect AND logic)
             area_keyword_item = area_keyword_clean
         except Exception as e:
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] Keyword parse error: {e}")
+            debug.log(f"[TICKET SEAT TYPE] Keyword parse error: {e}")
 
     try:
         from nodriver import cdp
 
         # Step 1: Capture DOM snapshot
-        if show_debug_message:
-            print("[TICKET SEAT TYPE] Capturing DOM snapshot...")
+        debug.log("[TICKET SEAT TYPE] Capturing DOM snapshot...")
 
         documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
             computed_styles=[],
@@ -19575,8 +18441,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
             attributes_list = nodes.attributes
             backend_node_ids = list(nodes.backend_node_id)
 
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] Total nodes in snapshot: {len(node_names)}")
+            debug.log(f"[TICKET SEAT TYPE] Total nodes in snapshot: {len(node_names)}")
 
             # Step 3: Search for buttons with setType onclick
             for i, node_name in enumerate(node_names):
@@ -19605,8 +18470,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                                 text_content = node_values[j].strip()
                                 if text_content and len(text_content) > 0:
                                     button_text = text_content
-                                    if show_debug_message:
-                                        print(f"[TICKET SEAT TYPE] Extracted text from node {j}: '{button_text}'")
+                                    debug.log(f"[TICKET SEAT TYPE] Extracted text from node {j}: '{button_text}'")
                                     break
                             # Stop when encountering another element (DIV, BUTTON, etc.)
                             elif node_names[j] in ['DIV', 'BUTTON', 'INPUT', 'SPAN', 'A']:
@@ -19618,8 +18482,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                             match = re.search(r"setType\('[^']*','([^']*)'\)", onclick)
                             if match:
                                 button_text = match.group(1)
-                                if show_debug_message:
-                                    print(f"[TICKET SEAT TYPE] Extracted text from onclick: '{button_text}'")
+                                debug.log(f"[TICKET SEAT TYPE] Extracted text from onclick: '{button_text}'")
 
                         ticket_buttons.append({
                             'backend_node_id': backend_node_ids[i],
@@ -19630,26 +18493,21 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                             'index': i
                         })
 
-                        if show_debug_message:
-                            print(f"[TICKET SEAT TYPE] Found button #{len(ticket_buttons)}: text='{button_text}', disabled={button_disabled}")
+                        debug.log(f"[TICKET SEAT TYPE] Found button #{len(ticket_buttons)}: text='{button_text}', disabled={button_disabled}")
 
-        if show_debug_message:
-            print(f"[TICKET SEAT TYPE] Found {len(ticket_buttons)} ticket type button(s)")
+        debug.log(f"[TICKET SEAT TYPE] Found {len(ticket_buttons)} ticket type button(s)")
 
         if len(ticket_buttons) == 0:
-            if show_debug_message:
-                print("[TICKET SEAT TYPE] No ticket type buttons found")
+            debug.log("[TICKET SEAT TYPE] No ticket type buttons found")
             return False
 
         # Step 4: Filter disabled buttons
         enabled_buttons = [btn for btn in ticket_buttons if not btn['disabled']]
 
-        if show_debug_message:
-            print(f"[TICKET SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
+        debug.log(f"[TICKET SEAT TYPE] Found {len(enabled_buttons)} enabled button(s)")
 
         if len(enabled_buttons) == 0:
-            if show_debug_message:
-                print("[TICKET SEAT TYPE] All buttons are disabled")
+            debug.log("[TICKET SEAT TYPE] All buttons are disabled")
             return False
 
         # Step 5: Match button using keyword and exclusion logic
@@ -19662,8 +18520,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
             # Check exclusion keywords from config
             if util.reset_row_text_if_match_keyword_exclude(config_dict, button_text):
-                if show_debug_message:
-                    print(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {button_text}")
+                debug.log(f"[TICKET SEAT TYPE] Excluded by keyword_exclude: {button_text}")
                 continue
 
             # Keyword matching logic
@@ -19679,15 +18536,13 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
 
             if is_match:
                 matched_button = button
-                if show_debug_message:
-                    print(f"[TICKET SEAT TYPE] Matched: {button_text}")
+                debug.log(f"[TICKET SEAT TYPE] Matched: {button_text}")
                 break
 
         # If no keyword match, select first enabled button as fallback
         if matched_button is None:
             matched_button = enabled_buttons[0]
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] No keyword match, using first button: {matched_button['text']}")
+            debug.log(f"[TICKET SEAT TYPE] No keyword match, using first button: {matched_button['text']}")
 
         # Step 6: Click button using CDP
         try:
@@ -19698,8 +18553,7 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
             result = await tab.send(cdp.dom.push_nodes_by_backend_ids_to_frontend([matched_button['backend_node_id']]))
             node_id = result[0]
 
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] Button node_id: {node_id}")
+            debug.log(f"[TICKET SEAT TYPE] Button node_id: {node_id}")
 
             # Scroll element into view
             await tab.send(cdp.dom.scroll_into_view_if_needed(node_id=node_id))
@@ -19717,12 +18571,10 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
             elif hasattr(resolved, 'object_id'):
                 remote_object_id = resolved.object_id
             else:
-                if show_debug_message:
-                    print(f"[TICKET SEAT TYPE] Error: Could not find object_id in resolved node")
+                debug.log(f"[TICKET SEAT TYPE] Error: Could not find object_id in resolved node")
                 return False
 
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] Resolved button object_id: {remote_object_id}")
+            debug.log(f"[TICKET SEAT TYPE] Resolved button object_id: {remote_object_id}")
 
             # Call click() on the remote object
             click_result = await tab.send(runtime.call_function_on(
@@ -19731,13 +18583,11 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                 return_by_value=True
             ))
 
-            if show_debug_message:
-                print(f"[TICKET SEAT TYPE] Button clicked, result: {click_result}")
+            debug.log(f"[TICKET SEAT TYPE] Button clicked, result: {click_result}")
 
             if click_result:
                 is_seat_type_assigned = True
-                if show_debug_message:
-                    print(f"[TICKET SEAT TYPE] Successfully clicked: {matched_button['text']}")
+                debug.log(f"[TICKET SEAT TYPE] Successfully clicked: {matched_button['text']}")
 
                 # Wait for seat table to load (initial wait for AJAX to start)
                 await tab.sleep(1.5)
@@ -19770,43 +18620,38 @@ async def nodriver_ticket_seat_type_auto_select(tab, config_dict, area_keyword_i
                         # Success condition: table exists AND at least 1 seat found
                         if table_found and seat_count > 0:
                             seats_loaded = True
-                            if show_debug_message:
-                                print(f"[TICKET SEAT TYPE] Seats loaded: table found, {seat_count} available seats")
+                            debug.log(f"[TICKET SEAT TYPE] Seats loaded: table found, {seat_count} available seats")
                             break
-                        elif i == 19 and show_debug_message:
+                        elif i == 19:
                             # Last attempt - show what's missing
                             print(f"[TICKET SEAT TYPE] Warning: table_found={table_found}, seat_count={seat_count}")
 
                     except Exception as wait_exc:
-                        if show_debug_message and i == 19:
-                            print(f"[TICKET SEAT TYPE] querySelector error: {wait_exc}")
+                        if i == 19:
+                            debug.log(f"[TICKET SEAT TYPE] querySelector error: {wait_exc}")
 
                     await tab.sleep(0.5)
 
-                if not seats_loaded and show_debug_message:
-                    print("[TICKET SEAT TYPE] Warning: Seats not fully loaded within 10 seconds")
+                if not seats_loaded:
+                    debug.log("[TICKET SEAT TYPE] Warning: Seats not fully loaded within 10 seconds")
             else:
-                if show_debug_message:
-                    print("[TICKET SEAT TYPE] Click failed")
+                debug.log("[TICKET SEAT TYPE] Click failed")
 
         except Exception as click_exc:
-            if show_debug_message:
-                print(f"[ERROR] CDP click error: {click_exc}")
+            if debug.enabled:
+                debug.log(f"[ERROR] CDP click error: {click_exc}")
                 import traceback
                 traceback.print_exc()
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[ERROR] Ticket seat type selection error: {exc}")
+        debug.log(f"[ERROR] Ticket seat type selection error: {exc}")
         import traceback
-        if show_debug_message:
+        if debug.enabled:
             traceback.print_exc()
 
-    if show_debug_message:
-        print(f"[TICKET SEAT TYPE] Assignment result: {is_seat_type_assigned}")
+    debug.log(f"[TICKET SEAT TYPE] Assignment result: {is_seat_type_assigned}")
 
     return is_seat_type_assigned
-
 
 async def _analyze_seat_quality(tab, config_dict):
     """
@@ -19819,6 +18664,7 @@ async def _analyze_seat_quality(tab, config_dict):
     ticket_number = config_dict["ticket_number"]
     allow_non_adjacent = config_dict["advanced"]["disable_adjacent_seat"]
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     import json
     # 執行 JavaScript 分析座位品質
@@ -19889,7 +18735,6 @@ async def _analyze_seat_quality(tab, config_dict):
     result_dict = util.parse_nodriver_result(result) if not isinstance(result, dict) else result
     return result_dict if isinstance(result_dict, dict) else {}
 
-
 async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
     """
     在候選排/列中尋找最佳座位組合
@@ -19902,14 +18747,14 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
     ticket_number = config_dict["ticket_number"]
     allow_non_adjacent = config_dict["advanced"]["disable_adjacent_seat"]
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     stage_direction = seat_analysis.get('direction', 'up')
     available_titles = seat_analysis.get('availableSeats', [])
 
-    if show_debug:
-        print(f"[TICKET SEAT] Finding best seats: tickets={ticket_number}, "
-              f"stage={stage_direction}, adjacent={not allow_non_adjacent}, "
-              f"available={len(available_titles)}")
+    debug.log(f"[TICKET SEAT] Finding best seats: tickets={ticket_number}, "
+          f"stage={stage_direction}, adjacent={not allow_non_adjacent}, "
+          f"available={len(available_titles)}")
 
     import json
     # 執行 JavaScript 尋找最佳座位
@@ -20344,11 +19189,9 @@ async def _find_best_seats_in_row(tab, seat_analysis, config_dict):
     # 轉換 CDP 格式 using util function
     result_dict = util.parse_nodriver_result(result) if not isinstance(result, dict) else result
 
-    if show_debug:
-        print(f"[TICKET SEAT] _find_best_seats result: {result_dict}")
+    debug.log(f"[TICKET SEAT] _find_best_seats result: {result_dict}")
 
     return result_dict if isinstance(result_dict, dict) else {}
-
 
 async def _execute_seat_selection(tab, seats_to_click, config_dict):
     """
@@ -20365,24 +19208,22 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
     """
     ticket_number = config_dict["ticket_number"]
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     # 【修復 BUG-001】提取演算法選定的座位 title 列表
     selected_seat_titles = []
     use_algorithm_result = False
 
-    if show_debug:
-        print(f"[TICKET SEAT] _execute input: type={type(seats_to_click)}, value={seats_to_click}")
+    debug.log(f"[TICKET SEAT] _execute input: type={type(seats_to_click)}, value={seats_to_click}")
 
     if seats_to_click and isinstance(seats_to_click, dict):
         if 'selectedSeats' in seats_to_click and seats_to_click['selectedSeats']:
             selected_seat_titles = [s['title'] for s in seats_to_click['selectedSeats']]
             use_algorithm_result = len(selected_seat_titles) > 0
 
-            if show_debug:
-                print(f"[TICKET SEAT] Using algorithm selected seats: {selected_seat_titles}")
+            debug.log(f"[TICKET SEAT] Using algorithm selected seats: {selected_seat_titles}")
         else:
-            if show_debug:
-                print(f"[TICKET SEAT] No selectedSeats in result, keys={seats_to_click.keys()}")
+            debug.log(f"[TICKET SEAT] No selectedSeats in result, keys={seats_to_click.keys()}")
 
     import json
     # 執行 JavaScript 點擊座位
@@ -20568,7 +19409,6 @@ async def _execute_seat_selection(tab, seats_to_click, config_dict):
         result_dict = {}
     return result_dict.get('success', False)
 
-
 async def nodriver_ticket_seat_auto_select(tab, config_dict):
     """
     年代售票 - 自動選擇座位，優化策略：中間區域優先 + 舞台方向智慧選座
@@ -20590,14 +19430,14 @@ async def nodriver_ticket_seat_auto_select(tab, config_dict):
 
     is_seat_assigned = False
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
 
     try:
         # Step 1: 分析座位品質
         seat_analysis = await _analyze_seat_quality(tab, config_dict)
 
-        if show_debug:
-            print(f"[TICKET SEAT] Stage direction: {seat_analysis.get('direction', 'unknown')}")
-            print(f"[TICKET SEAT] Found {seat_analysis.get('totalSeats', 0)} available seats")
+        debug.log(f"[TICKET SEAT] Stage direction: {seat_analysis.get('direction', 'unknown')}")
+        debug.log(f"[TICKET SEAT] Found {seat_analysis.get('totalSeats', 0)} available seats")
 
         # Step 2: 尋找最佳座位組合
         best_seats = await _find_best_seats_in_row(tab, seat_analysis, config_dict)
@@ -20605,18 +19445,16 @@ async def nodriver_ticket_seat_auto_select(tab, config_dict):
         # Step 3: 執行座位選擇
         is_seat_assigned = await _execute_seat_selection(tab, best_seats, config_dict)
 
-        if show_debug and is_seat_assigned:
-            print(f"[TICKET SEAT] Selected {best_seats.get('count', 0)} seats successfully")
+        if is_seat_assigned:
+            debug.log(f"[TICKET SEAT] Selected {best_seats.get('count', 0)} seats successfully")
 
     except Exception as exc:
-        if show_debug:
-            print(f"[ERROR] Seat selection error: {exc}")
+        debug.log(f"[ERROR] Seat selection error: {exc}")
         import traceback
-        if show_debug:
+        if debug.enabled:
             traceback.print_exc()
 
     return is_seat_assigned
-
 
 async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
     """
@@ -20632,6 +19470,7 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
         return False, False, False
 
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
     ticket_number = config_dict["ticket_number"]
 
     # Step 0: Check if seats are already selected (avoid duplicate selection)
@@ -20648,16 +19487,13 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
         elif isinstance(check_result, dict):
             already_selected_count = check_result.get('value', 0)
 
-        if show_debug:
-            print(f"[TICKET SEAT] Already selected seats: {already_selected_count}")
+        debug.log(f"[TICKET SEAT] Already selected seats: {already_selected_count}")
     except Exception as exc:
-        if show_debug:
-            print(f"[TICKET SEAT] Error checking selected seats: {exc}")
+        debug.log(f"[TICKET SEAT] Error checking selected seats: {exc}")
 
     # If already selected enough seats, skip seat selection and go to submit
     if already_selected_count >= ticket_number:
-        if show_debug:
-            print(f"[TICKET SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
+        debug.log(f"[TICKET SEAT] Already have {already_selected_count} seats (need {ticket_number}), skipping to submit")
         is_seat_type_assigned = True
         is_seat_assigned = True
     else:
@@ -20688,8 +19524,7 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                     tab, config_dict, ocr, model_name
                 )
         except Exception as exc:
-            if show_debug:
-                print(f"[ERROR] Captcha processing error: {exc}")
+            debug.log(f"[ERROR] Captcha processing error: {exc}")
 
     # Step 4: Submit order
     is_submit_success = False
@@ -20736,8 +19571,7 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                 is_submit_success = result
 
             if is_submit_success:
-                if show_debug:
-                    print("[TICKET SUBMIT] Order submitted successfully")
+                debug.log("[TICKET SUBMIT] Order submitted successfully")
 
                 # Check and close success dialog (year ticket shows "加入購物車完成" dialog)
                 # Wait up to 5 seconds for dialog to appear
@@ -20747,40 +19581,35 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                     try:
                         dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
                         if dialog_btn:
-                            if show_debug:
-                                print("[TICKET SUBMIT] Success dialog found, closing...")
+                            debug.log("[TICKET SUBMIT] Success dialog found, closing...")
                             await dialog_btn.click()
                             await tab.sleep(0.5)  # Wait for dialog close animation
                             dialog_closed = True
-                            if show_debug:
-                                print("[TICKET SUBMIT] Dialog closed successfully")
+                            debug.log("[TICKET SUBMIT] Dialog closed successfully")
                             break
                     except Exception as e:
-                        if show_debug and i == 9:  # Only print on last attempt
+                        if i == 9:  # Only print on last attempt
                             print(f"[TICKET SUBMIT] Dialog close attempt failed: {e}")
                         pass
 
-                if not dialog_closed and show_debug:
-                    print("[TICKET SUBMIT] No dialog appeared within 5 seconds")
+                if not dialog_closed:
+                    debug.log("[TICKET SUBMIT] No dialog appeared within 5 seconds")
 
                 # Play sound if enabled
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
 
         except Exception as exc:
-            if show_debug:
-                print(f"[ERROR] Submit exception: {exc}")
+            debug.log(f"[ERROR] Submit exception: {exc}")
             # Fallback: use JavaScript to force submit (same as Chrome)
             try:
                 await tab.evaluate('addShoppingCart1();')
                 is_submit_success = True
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
-                if show_debug:
-                    print("[TICKET SUBMIT] Submitted via fallback method")
+                debug.log("[TICKET SUBMIT] Submitted via fallback method")
             except Exception as exc2:
-                if show_debug:
-                    print(f"[ERROR] Fallback submit error: {exc2}")
+                debug.log(f"[ERROR] Fallback submit error: {exc2}")
 
     # Step 5: Check for seat taken dialog and retry if needed
     if not is_submit_success:
@@ -20800,8 +19629,7 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                             tab, config_dict, ocr, model_name
                         )
                 except Exception as exc:
-                    if show_debug:
-                        print(f"[ERROR] Retry captcha error: {exc}")
+                    debug.log(f"[ERROR] Retry captcha error: {exc}")
 
             # Retry submit
             if is_seat_assigned and (not config_dict["ocr_captcha"]["enable"] or is_captcha_sent):
@@ -20823,8 +19651,7 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                         is_submit_success = result
 
                     if is_submit_success:
-                        if show_debug:
-                            print("[TICKET SUBMIT] Order submitted successfully after retry")
+                        debug.log("[TICKET SUBMIT] Order submitted successfully after retry")
 
                         # Check and close success dialog (same logic as initial submit)
                         dialog_closed = False
@@ -20833,36 +19660,31 @@ async def nodriver_ticket_seat_main(tab, config_dict, ocr, domain_name):
                             try:
                                 dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
                                 if dialog_btn:
-                                    if show_debug:
-                                        print("[TICKET SUBMIT RETRY] Success dialog found, closing...")
+                                    debug.log("[TICKET SUBMIT RETRY] Success dialog found, closing...")
                                     await dialog_btn.click()
                                     await tab.sleep(0.5)
                                     dialog_closed = True
-                                    if show_debug:
-                                        print("[TICKET SUBMIT RETRY] Dialog closed successfully")
+                                    debug.log("[TICKET SUBMIT RETRY] Dialog closed successfully")
                                     break
                             except Exception as e:
-                                if show_debug and i == 9:
-                                    print(f"[TICKET SUBMIT RETRY] Dialog close attempt failed: {e}")
+                                if i == 9:
+                                    debug.log(f"[TICKET SUBMIT RETRY] Dialog close attempt failed: {e}")
                                 pass
 
-                        if not dialog_closed and show_debug:
-                            print("[TICKET SUBMIT RETRY] No dialog appeared within 5 seconds")
+                        if not dialog_closed:
+                            debug.log("[TICKET SUBMIT RETRY] No dialog appeared within 5 seconds")
 
                         # Play sound
                         if config_dict["advanced"]["play_sound"]["order"]:
                             play_sound_while_ordering(config_dict)
 
                 except Exception as exc:
-                    if show_debug:
-                        print(f"[ERROR] Retry submit error: {exc}")
+                    debug.log(f"[ERROR] Retry submit error: {exc}")
 
-    if show_debug:
-        print(f"[TICKET SEAT MAIN] Type:{is_seat_type_assigned} "
-              f"Seat:{is_seat_assigned} Submit:{is_submit_success}")
+    debug.log(f"[TICKET SEAT MAIN] Type:{is_seat_type_assigned} "
+          f"Seat:{is_seat_assigned} Submit:{is_submit_success}")
 
     return is_submit_success
-
 
 async def nodriver_ticket_check_seat_taken_dialog(tab, config_dict):
     """
@@ -20876,6 +19698,7 @@ async def nodriver_ticket_check_seat_taken_dialog(tab, config_dict):
         return False
 
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
     is_dialog_found = False
 
     try:
@@ -20905,15 +19728,13 @@ async def nodriver_ticket_check_seat_taken_dialog(tab, config_dict):
         else:
             is_dialog_found = result
 
-        if is_dialog_found and show_debug:
-            print("[TICKET DIALOG] Seat taken dialog detected and closed, will retry seat selection")
+        if is_dialog_found:
+            debug.log("[TICKET DIALOG] Seat taken dialog detected and closed, will retry seat selection")
 
     except Exception as exc:
-        if show_debug:
-            print(f"[ERROR] Dialog check error: {exc}")
+        debug.log(f"[ERROR] Dialog check error: {exc}")
 
     return is_dialog_found
-
 
 async def nodriver_ticket_close_dialog_with_retry(tab, config_dict, max_attempts=5, interval=0.3):
     """
@@ -20931,6 +19752,7 @@ async def nodriver_ticket_close_dialog_with_retry(tab, config_dict, max_attempts
         bool: 是否成功關閉對話框
     """
     show_debug = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(enabled=show_debug)
     dialog_closed = False
 
     for attempt in range(max_attempts):
@@ -20945,21 +19767,19 @@ async def nodriver_ticket_close_dialog_with_retry(tab, config_dict, max_attempts
             if dialog_btn:
                 await dialog_btn.click()
                 dialog_closed = True
-                if show_debug:
-                    print(f"[TICKET DIALOG] Closed on attempt {attempt + 1}/{max_attempts}")
+                debug.log(f"[TICKET DIALOG] Closed on attempt {attempt + 1}/{max_attempts}")
                 # 等待一下讓對話框關閉動畫完成
                 await tab.sleep(0.2)
                 break
         except Exception as e:
-            if show_debug and attempt == max_attempts - 1:
-                print(f"[TICKET DIALOG] Close failed after {max_attempts} attempts: {e}")
+            if attempt == max_attempts - 1:
+                debug.log(f"[TICKET DIALOG] Close failed after {max_attempts} attempts: {e}")
 
         # 等待後再嘗試
         if attempt < max_attempts - 1:
             await tab.sleep(interval)
 
     return dialog_closed
-
 
 async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
     """
@@ -20974,7 +19794,7 @@ async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
     if await check_and_handle_pause(config_dict):
         return False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Use JavaScript to directly check (NoDriver recommended approach)
     is_checked = await tab.evaluate('''
@@ -20997,11 +19817,9 @@ async def nodriver_ticket_allow_not_adjacent_seat(tab, config_dict):
         })();
     ''')
 
-    if show_debug_message:
-        print(f"[ALLOW NOT ADJACENT] Checkbox checked: {is_checked}")
+    debug.log(f"[ALLOW NOT ADJACENT] Checkbox checked: {is_checked}")
 
     return is_checked
-
 
 async def nodriver_ticket_switch_to_auto_seat(tab):
     """
@@ -21099,23 +19917,6 @@ def get_nodriver_browser_args():
 
     return browser_args
 
-def get_maxbot_extension_path(extension_folder):
-    app_root = util.get_app_root()
-    extension_path = "webdriver"
-    extension_path = os.path.join(extension_path, extension_folder)
-    config_filepath = os.path.join(app_root, extension_path)
-    #print("config_filepath:", config_filepath)
-
-    # double check extesion mainfest
-    path = pathlib.Path(config_filepath)
-    if path.exists():
-        if path.is_dir():
-            #print("found extension dir")
-            for item in path.rglob("manifest.*"):
-                path = item.parent
-            #print("final path:", path)
-    return config_filepath
-
 def get_extension_config(config_dict, args=None):
     default_lang = "zh-TW"
     no_sandbox=True
@@ -21165,15 +19966,6 @@ def get_extension_config(config_dict, args=None):
 
     # Normal mode: auto-detect (host=None, port=None) to let NoDriver start the browser
     conf = Config(browser_args=browser_args, lang=default_lang, no_sandbox=no_sandbox, headless=config_dict["advanced"]["headless"], browser_executable_path=chrome_path)
-    if config_dict["advanced"]["chrome_extension"]:
-        ext = get_maxbot_extension_path(CONST_MAXBOT_EXTENSION_NAME)
-        if len(ext) > 0:
-            conf.add_extension(ext)
-            util.dump_settings_to_maxbot_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE)
-        ext = get_maxbot_extension_path(CONST_MAXBLOCK_EXTENSION_NAME)
-        if len(ext) > 0:
-            conf.add_extension(ext)
-            util.dump_settings_to_maxblock_plus_extension(ext, config_dict, CONST_MAXBOT_CONFIG_FILE, CONST_MAXBLOCK_EXTENSION_FILTER)
     return conf
 
 async def nodrver_block_urls(tab, config_dict):
@@ -21432,8 +20224,8 @@ async def reload_config(config_dict, last_mtime):
 
                 print("Configuration reloaded from settings.json")
                 return config_dict, current_mtime
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARNING] Failed to reload config: {e}")
 
     return config_dict, last_mtime
 
@@ -21503,17 +20295,15 @@ HKTICKETING_DATE_SOLDOUT_KEYWORDS_ZH = [
     "No Longer On Sale"
 ]
 
-
-async def nodriver_hkticketing_login(tab, account, password):
+async def nodriver_hkticketing_login(tab, account, password, config_dict=None):
     """
     HKTicketing auto login
     Reference: chrome_tixcraft.py hkticketing_login (line 5661-5733)
     """
     ret = False
-    show_debug_message = True
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[HKTICKETING LOGIN] Starting login process...")
+    debug.log("[HKTICKETING LOGIN] Starting login process...")
 
     # Try multiple selectors for email/login code input
     el_email = None
@@ -21533,8 +20323,7 @@ async def nodriver_hkticketing_login(tab, account, password):
             pass
 
     if not el_email:
-        if show_debug_message:
-            print("[HKTICKETING LOGIN] Email input not found")
+        debug.log("[HKTICKETING LOGIN] Email input not found")
         return ret
 
     # Input account
@@ -21548,20 +20337,16 @@ async def nodriver_hkticketing_login(tab, account, password):
         if not inputed_text or len(str(inputed_text)) == 0:
             await el_email.send_keys(account)
             is_email_sent = True
-            if show_debug_message:
-                print(f"[HKTICKETING LOGIN] Account input completed: {account[:3]}***")
+            debug.log(f"[HKTICKETING LOGIN] Account input completed: {account[:3]}***")
         else:
             if str(inputed_text) == account:
                 is_email_sent = True
-                if show_debug_message:
-                    print("[HKTICKETING LOGIN] Account already filled")
+                debug.log("[HKTICKETING LOGIN] Account already filled")
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING LOGIN] Account input error: {exc}")
+        debug.log(f"[HKTICKETING LOGIN] Account input error: {exc}")
 
     if not is_email_sent:
-        if show_debug_message:
-            print("[HKTICKETING LOGIN] Failed to input account")
+        debug.log("[HKTICKETING LOGIN] Failed to input account")
         return ret
 
     # Try multiple selectors for password input
@@ -21582,8 +20367,7 @@ async def nodriver_hkticketing_login(tab, account, password):
             pass
 
     if not el_pass:
-        if show_debug_message:
-            print("[HKTICKETING LOGIN] Password input not found")
+        debug.log("[HKTICKETING LOGIN] Password input not found")
         return ret
 
     # Input password
@@ -21597,19 +20381,15 @@ async def nodriver_hkticketing_login(tab, account, password):
             if len(password) > 0:
                 await el_pass.send_keys(password)
                 is_password_sent = True
-                if show_debug_message:
-                    print("[HKTICKETING LOGIN] Password input completed")
+                debug.log("[HKTICKETING LOGIN] Password input completed")
         else:
             is_password_sent = True
-            if show_debug_message:
-                print("[HKTICKETING LOGIN] Password already filled")
+            debug.log("[HKTICKETING LOGIN] Password already filled")
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING LOGIN] Password input error: {exc}")
+        debug.log(f"[HKTICKETING LOGIN] Password input error: {exc}")
 
     if not is_password_sent:
-        if show_debug_message:
-            print("[HKTICKETING LOGIN] Failed to input password")
+        debug.log("[HKTICKETING LOGIN] Failed to input password")
         return ret
 
     # Click login button
@@ -21633,36 +20413,28 @@ async def nodriver_hkticketing_login(tab, account, password):
         try:
             await el_login_btn.click()
             ret = True
-            if show_debug_message:
-                print("[HKTICKETING LOGIN] Login button clicked")
+            debug.log("[HKTICKETING LOGIN] Login button clicked")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING LOGIN] Login button click error: {exc}")
+            debug.log(f"[HKTICKETING LOGIN] Login button click error: {exc}")
             # Fallback: try pressing Enter on password field
             try:
                 await el_pass.send_keys(Keys.ENTER)
                 ret = True
-                if show_debug_message:
-                    print("[HKTICKETING LOGIN] Fallback: pressed Enter key")
+                debug.log("[HKTICKETING LOGIN] Fallback: pressed Enter key")
             except Exception as exc2:
-                if show_debug_message:
-                    print(f"[HKTICKETING LOGIN] Enter key fallback error: {exc2}")
+                debug.log(f"[HKTICKETING LOGIN] Enter key fallback error: {exc2}")
     else:
         # No login button found, try pressing Enter
-        if show_debug_message:
-            print("[HKTICKETING LOGIN] Login button not found, trying Enter key")
+        debug.log("[HKTICKETING LOGIN] Login button not found, trying Enter key")
         try:
             await el_pass.send_keys(Keys.ENTER)
             ret = True
-            if show_debug_message:
-                print("[HKTICKETING LOGIN] Pressed Enter key as fallback")
+            debug.log("[HKTICKETING LOGIN] Pressed Enter key as fallback")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING LOGIN] Enter key error: {exc}")
+            debug.log(f"[HKTICKETING LOGIN] Enter key error: {exc}")
 
     await asyncio.sleep(0.2)
     return ret
-
 
 async def nodriver_hkticketing_accept_cookie(tab):
     """
@@ -21676,15 +20448,12 @@ async def nodriver_hkticketing_accept_cookie(tab):
     except Exception as exc:
         pass
 
-
 async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
     """
     Click buy button on date selection page and wait for URL change
     Reference: chrome_tixcraft.py hkticketing_date_buy_button_press (line 7498-7533)
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_button_clicked = False
 
@@ -21712,8 +20481,7 @@ async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
             if is_enabled:
                 await el_btn.click()
                 is_button_clicked = True
-                if show_debug_message:
-                    print("[HKTICKETING DATE] Buy button clicked")
+                debug.log("[HKTICKETING DATE] Buy button clicked")
             else:
                 # Try to enable and click via JavaScript
                 is_button_clicked = await tab.evaluate('''
@@ -21727,16 +20495,14 @@ async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
                         return false;
                     })();
                 ''')
-                if is_button_clicked and show_debug_message:
-                    print("[HKTICKETING DATE] Buy button force-clicked via JS")
+                if is_button_clicked:
+                    debug.log("[HKTICKETING DATE] Buy button force-clicked via JS")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING DATE] Buy button click error: {exc}")
+            debug.log(f"[HKTICKETING DATE] Buy button click error: {exc}")
 
     # Wait for URL change after clicking (prevent re-clicking)
     if is_button_clicked and current_url:
-        if show_debug_message:
-            print("[HKTICKETING DATE] Waiting for URL change...")
+        debug.log("[HKTICKETING DATE] Waiting for URL change...")
         max_wait = 10  # Max 10 seconds
         wait_interval = 0.5
         waited = 0
@@ -21746,16 +20512,14 @@ async def nodriver_hkticketing_date_buy_button_press(tab, config_dict=None):
             try:
                 new_url = await tab.evaluate('window.location.href')
                 if new_url != current_url:
-                    if show_debug_message:
-                        print(f"[HKTICKETING DATE] URL changed to: {new_url}")
+                    debug.log(f"[HKTICKETING DATE] URL changed to: {new_url}")
                     break
             except:
                 break
-        if waited >= max_wait and show_debug_message:
-            print("[HKTICKETING DATE] URL change timeout")
+        if waited >= max_wait:
+            debug.log("[HKTICKETING DATE] URL change timeout")
 
     return is_button_clicked
-
 
 async def nodriver_hkticketing_date_assign(tab, config_dict):
     """
@@ -21768,13 +20532,12 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
             - is_page_ready: whether the page is ready
             - formated_area_list: list of available dates
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_auto_fallback = config_dict.get("date_auto_fallback", False)
 
-    if show_debug_message:
-        print("[HKTICKETING DATE] date_keyword:", date_keyword)
+    debug.log("[HKTICKETING DATE] date_keyword:", date_keyword)
 
     matched_blocks = None
     date_keyword = util.format_keyword_string(date_keyword)
@@ -21794,16 +20557,13 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
         if element_type == 'input':
             # Single performance page - no date selection needed
             is_single_performance = True
-            if show_debug_message:
-                print("[HKTICKETING DATE] Single performance detected (hidden input)")
+            debug.log("[HKTICKETING DATE] Single performance detected (hidden input)")
     except Exception as exc:
-        if show_debug_message:
-            print("[HKTICKETING DATE] Check element type error:", exc)
+        debug.log("[HKTICKETING DATE] Check element type error:", exc)
 
     # If single performance, treat as date already assigned
     if is_single_performance:
-        if show_debug_message:
-            print("[HKTICKETING DATE] is_date_assigned: True (single performance)")
+        debug.log("[HKTICKETING DATE] is_date_assigned: True (single performance)")
         return True, True, None
 
     # Check if date is already assigned (for select element)
@@ -21820,13 +20580,11 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
             })();
         ''')
     except Exception as exc:
-        if show_debug_message:
-            print("[HKTICKETING DATE] Check selected date error:", exc)
+        debug.log("[HKTICKETING DATE] Check selected date error:", exc)
 
     # If a date is selected, check if it matches the keyword
     if selected_text and len(selected_text) > 8 and '20' in selected_text:
-        if show_debug_message:
-            print(f"[HKTICKETING DATE] Currently selected: {selected_text}")
+        debug.log(f"[HKTICKETING DATE] Currently selected: {selected_text}")
 
         if len(date_keyword) > 0:
             # Check if selected date matches keyword
@@ -21845,24 +20603,20 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
                         break
                 if is_match:
                     is_date_assigned = True
-                    if show_debug_message:
-                        print(f"[HKTICKETING DATE] Selected date matches keyword, keeping selection")
+                    debug.log(f"[HKTICKETING DATE] Selected date matches keyword, keeping selection")
                     break
 
-            if not is_date_assigned and show_debug_message:
-                print(f"[HKTICKETING DATE] Selected date does not match keyword, will select target date")
+            if not is_date_assigned:
+                debug.log(f"[HKTICKETING DATE] Selected date does not match keyword, will select target date")
         else:
             # No keyword specified - only keep selection if date_auto_fallback is enabled
             if date_auto_fallback:
                 is_date_assigned = True
-                if show_debug_message:
-                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=true, keeping current selection")
+                debug.log(f"[HKTICKETING DATE] No keyword, date_auto_fallback=true, keeping current selection")
             else:
-                if show_debug_message:
-                    print(f"[HKTICKETING DATE] No keyword, date_auto_fallback=false, will select based on mode")
+                debug.log(f"[HKTICKETING DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
-    if show_debug_message:
-        print("[HKTICKETING DATE] is_date_assigned:", is_date_assigned)
+    debug.log("[HKTICKETING DATE] is_date_assigned:", is_date_assigned)
 
     formated_area_list = None
     is_page_ready = True
@@ -21878,8 +20632,7 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
 
         if area_list:
             area_list_count = len(area_list)
-            if show_debug_message:
-                print("[HKTICKETING DATE] date_list_count:", area_list_count)
+            debug.log("[HKTICKETING DATE] date_list_count:", area_list_count)
 
             if area_list_count == 0:
                 is_page_ready = False
@@ -21892,8 +20645,7 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
                         row_html = await row.get_html()
                         row_text = util.remove_html_tags(row_html)
                     except Exception as exc:
-                        if show_debug_message:
-                            print("[HKTICKETING DATE] get row html error:", exc)
+                        debug.log("[HKTICKETING DATE] get row html error:", exc)
                         break
 
                     if len(row_text) > 0:
@@ -21911,21 +20663,19 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
 
         if formated_area_list:
             area_list_count = len(formated_area_list)
-            if show_debug_message:
-                print("[HKTICKETING DATE] formated_area_list count:", area_list_count)
+            debug.log("[HKTICKETING DATE] formated_area_list count:", area_list_count)
 
             if area_list_count > 0:
                 if len(date_keyword) == 0:
                     matched_blocks = formated_area_list
                 else:
-                    if show_debug_message:
-                        print("[HKTICKETING DATE] start to match keyword:", date_keyword)
+                    debug.log("[HKTICKETING DATE] start to match keyword:", date_keyword)
 
                     matched_blocks = util.get_matched_blocks_by_keyword(config_dict, auto_select_mode, date_keyword, formated_area_list)
 
-                    if show_debug_message:
+                    if debug.enabled:
                         if matched_blocks:
-                            print("[HKTICKETING DATE] after match keyword, found count:", len(matched_blocks))
+                            debug.log("[HKTICKETING DATE] after match keyword, found count:", len(matched_blocks))
             else:
                 print("[HKTICKETING DATE] not found date-time-position")
         else:
@@ -21934,25 +20684,21 @@ async def nodriver_hkticketing_date_assign(tab, config_dict):
         # Fallback logic (FR-026)
         if not matched_blocks or len(matched_blocks) == 0:
             if date_auto_fallback and formated_area_list and len(formated_area_list) > 0:
-                if show_debug_message:
-                    print("[HKTICKETING DATE FALLBACK] date_auto_fallback=true, selecting from all available dates")
+                debug.log("[HKTICKETING DATE FALLBACK] date_auto_fallback=true, selecting from all available dates")
                 matched_blocks = formated_area_list
             else:
-                if show_debug_message:
-                    print("[HKTICKETING DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
+                debug.log("[HKTICKETING DATE FALLBACK] date_auto_fallback=false, fallback is disabled")
 
         target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
         if target_area:
             try:
                 await target_area.click()
                 is_date_assigned = True
-                if show_debug_message:
-                    print("[HKTICKETING DATE] Date selected successfully")
+                debug.log("[HKTICKETING DATE] Date selected successfully")
             except Exception as exc:
                 print("[HKTICKETING DATE] click target_area link fail:", exc)
 
     return is_date_assigned, is_page_ready, formated_area_list
-
 
 async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
     """
@@ -21964,7 +20710,7 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
             - is_password_appear: whether password input exists
             - fail_list: updated fail list
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     is_password_appear = False
 
     el_password = None
@@ -21983,8 +20729,7 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
             for answer_item in answer_list:
                 answer_item = answer_item.strip()
                 if answer_item in fail_list:
-                    if show_debug_message:
-                        print("[HKTICKETING PASSWORD] Skip failed password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Skip failed password:", answer_item)
                     continue
 
                 # Try this password
@@ -21993,19 +20738,16 @@ async def nodriver_hkticketing_date_password_input(tab, config_dict, fail_list):
                     await el_password.send_keys(answer_item)
                     await el_password.send_keys(Keys.ENTER)
 
-                    if show_debug_message:
-                        print("[HKTICKETING PASSWORD] Tried password:", answer_item)
+                    debug.log("[HKTICKETING PASSWORD] Tried password:", answer_item)
 
                     # Add to fail list (will be removed if successful)
                     if answer_item not in fail_list:
                         fail_list.append(answer_item)
                     break
                 except Exception as exc:
-                    if show_debug_message:
-                        print("[HKTICKETING PASSWORD] Error:", exc)
+                    debug.log("[HKTICKETING PASSWORD] Error:", exc)
 
     return is_password_appear, fail_list
-
 
 async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
     """
@@ -22017,7 +20759,7 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
             - is_date_submiting: whether date is being submitted
             - fail_list: updated fail list
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_date_submiting = False
 
@@ -22030,8 +20772,7 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
         is_button_clicked = await nodriver_hkticketing_date_buy_button_press(tab, config_dict)
         if is_button_clicked:
             is_date_submiting = True
-            if show_debug_message:
-                print("[HKTICKETING DATE] Buy button clicked, submitting...")
+            debug.log("[HKTICKETING DATE] Buy button clicked, submitting...")
 
     # Auto reload if page not ready
     if not is_page_ready:
@@ -22039,8 +20780,7 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
         if auto_reload_coming_soon_page:
             try:
                 await tab.reload()
-                if show_debug_message:
-                    print("[HKTICKETING DATE] Page not ready, reloading...")
+                debug.log("[HKTICKETING DATE] Page not ready, reloading...")
             except Exception as exc:
                 pass
 
@@ -22048,7 +20788,6 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
                 await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_date_submiting, fail_list
-
 
 async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_item):
     """
@@ -22060,15 +20799,14 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
             - is_need_refresh: whether page needs refresh
             - is_price_assign_by_bot: whether area has been selected
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_auto_fallback = config_dict.get("area_auto_fallback", False)
 
     is_need_refresh = False
     is_price_assign_by_bot = False
 
-    if show_debug_message:
-        print("[HKTICKETING AREA] area_keyword:", area_keyword_item)
+    debug.log("[HKTICKETING AREA] area_keyword:", area_keyword_item)
 
     # Wait for Angular to finish rendering
     await asyncio.sleep(random.uniform(0.3, 0.6))
@@ -22099,8 +20837,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
         return is_need_refresh, is_price_assign_by_bot
 
     area_list_count = len(area_list)
-    if show_debug_message:
-        print("[HKTICKETING AREA] area_list_count:", area_list_count)
+    debug.log("[HKTICKETING AREA] area_list_count:", area_list_count)
 
     if area_list_count == 0:
         return is_need_refresh, is_price_assign_by_bot
@@ -22123,8 +20860,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
 
     if is_area_selected:
         is_price_assign_by_bot = True
-        if show_debug_message:
-            print("[HKTICKETING AREA] Area already selected")
+        debug.log("[HKTICKETING AREA] Area already selected")
         return is_need_refresh, is_price_assign_by_bot
 
     # Filter available areas - get all info in one JS call
@@ -22181,15 +20917,13 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
                 if idx < len(area_list):
                     # Store tuple of (element, text, index) for NoDriver keyword matching
                     formated_area_list.append((area_list[idx], row_text, idx))
-                    if show_debug_message:
-                        print(f"[HKTICKETING AREA] Added to list: idx={idx}, text={row_text[:40]}")
+                    debug.log(f"[HKTICKETING AREA] Added to list: idx={idx}, text={row_text[:40]}")
         else:
             print(f"[HKTICKETING AREA] Invalid JS result, trying fallback")
     except Exception as exc:
         print(f"[HKTICKETING AREA] Filter error: {exc}")
 
-    if show_debug_message:
-        print("[HKTICKETING AREA] formated_area_list count:", len(formated_area_list))
+    debug.log("[HKTICKETING AREA] formated_area_list count:", len(formated_area_list))
 
     if len(formated_area_list) == 0:
         is_need_refresh = True
@@ -22220,8 +20954,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
             # Fallback to simple split if json parsing fails
             keyword_sets = [kw.strip() for kw in area_keyword_item.split(',') if kw.strip()]
 
-        if show_debug_message:
-            print(f"[HKTICKETING AREA] Keyword sets: {keyword_sets}")
+        debug.log(f"[HKTICKETING AREA] Keyword sets: {keyword_sets}")
 
         # Try each keyword set (OR logic between sets)
         for keyword_set in keyword_sets:
@@ -22230,8 +20963,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
                 row_text_lower = row_text.lower()
                 is_best_available = any(ba in row_text_lower for ba in BEST_AVAILABLE_KEYWORDS)
                 if is_best_available:
-                    if show_debug_message:
-                        print(f"[HKTICKETING AREA] Skipping 'Best available' option: {row_text[:40]}")
+                    debug.log(f"[HKTICKETING AREA] Skipping 'Best available' option: {row_text[:40]}")
                     continue
 
                 # Normalize text for comparison
@@ -22250,8 +20982,7 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
                 if is_match:
                     matched_blocks.append(element)
                     matched_index = orig_idx
-                    if show_debug_message:
-                        print(f"[HKTICKETING AREA] Keyword '{keyword_set}' matched: idx={orig_idx}, text={row_text[:50]}")
+                    debug.log(f"[HKTICKETING AREA] Keyword '{keyword_set}' matched: idx={orig_idx}, text={row_text[:50]}")
                     # For "from top to bottom" mode, only need first match
                     if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                         break
@@ -22259,20 +20990,18 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
             if len(matched_blocks) > 0:
                 break  # Found matches with this keyword set, stop trying others
 
-    if show_debug_message:
+    if debug.enabled:
         if matched_blocks:
-            print("[HKTICKETING AREA] after match keyword, found count:", len(matched_blocks))
+            debug.log("[HKTICKETING AREA] after match keyword, found count:", len(matched_blocks))
 
     # Fallback logic (FR-036)
     if not matched_blocks or len(matched_blocks) == 0:
         if area_auto_fallback and len(formated_area_list) > 0:
-            if show_debug_message:
-                print("[HKTICKETING AREA FALLBACK] area_auto_fallback=true, selecting from all available areas")
+            debug.log("[HKTICKETING AREA FALLBACK] area_auto_fallback=true, selecting from all available areas")
             # Extract elements from tuples (element, text, index)
             matched_blocks = [item[0] for item in formated_area_list]
         else:
-            if show_debug_message:
-                print("[HKTICKETING AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
+            debug.log("[HKTICKETING AREA FALLBACK] area_auto_fallback=false, fallback is disabled")
             is_need_refresh = True
             return is_need_refresh, is_price_assign_by_bot
 
@@ -22280,10 +21009,10 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
     if target_area:
         try:
             # Debug: get text of element we're about to click
-            if show_debug_message:
+            if debug.enabled:
                 try:
                     click_text = await target_area.apply('(el) => el.innerText || el.textContent')
-                    print(f"[HKTICKETING AREA] About to click element: {str(click_text)[:60]}")
+                    debug.log(f"[HKTICKETING AREA] About to click element: {str(click_text)[:60]}")
                 except:
                     pass
 
@@ -22291,20 +21020,18 @@ async def nodriver_hkticketing_area_auto_select(tab, config_dict, area_keyword_i
             await asyncio.sleep(random.uniform(0.3, 0.8))
             await target_area.click()
             is_price_assign_by_bot = True
-            if show_debug_message:
-                print("[HKTICKETING AREA] Area selected successfully")
+            debug.log("[HKTICKETING AREA] Area selected successfully")
         except Exception as exc:
             print("[HKTICKETING AREA] click target_area fail:", exc)
 
     return is_need_refresh, is_price_assign_by_bot
-
 
 async def nodriver_hkticketing_ticket_number_auto_select(tab, config_dict):
     """
     Auto select ticket number
     Reference: chrome_tixcraft.py hkticketing_ticket_number_auto_select (line 7962-7966)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict["ticket_number"]
 
     is_ticket_number_assigned = False
@@ -22341,23 +21068,18 @@ async def nodriver_hkticketing_ticket_number_auto_select(tab, config_dict):
             import json
             result_obj = json.loads(result) if isinstance(result, str) else result
             is_ticket_number_assigned = result_obj.get('success', False) if isinstance(result_obj, dict) else result
-            if show_debug_message:
-                print(f"[HKTICKETING TICKET] Set ticket number to {ticket_number}: {result}")
+            debug.log(f"[HKTICKETING TICKET] Set ticket number to {ticket_number}: {result}")
     except Exception as exc:
-        if show_debug_message:
-            print("[HKTICKETING TICKET] Set ticket number fail:", exc)
+        debug.log("[HKTICKETING TICKET] Set ticket number fail:", exc)
 
     return is_ticket_number_assigned
-
 
 async def nodriver_hkticketing_ticket_delivery_option(tab, config_dict=None):
     """
     Select ticket delivery option
     Reference: chrome_tixcraft.py hkticketing_ticket_delivery_option (line 8024-8063)
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_delivery_selected = False
     try:
@@ -22377,31 +21099,27 @@ async def nodriver_hkticketing_ticket_delivery_option(tab, config_dict=None):
         ''')
         if isinstance(result, dict):
             is_delivery_selected = result.get('selected', False)
-            if show_debug_message:
+            if debug.enabled:
                 if result.get('found'):
                     if is_delivery_selected:
-                        print(f"[HKTICKETING DELIVERY] Selected: {result.get('value', 'N/A')}")
+                        debug.log(f"[HKTICKETING DELIVERY] Selected: {result.get('value', 'N/A')}")
                     else:
-                        print("[HKTICKETING DELIVERY] Select found but value=1 not available")
+                        debug.log("[HKTICKETING DELIVERY] Select found but value=1 not available")
                 else:
-                    print("[HKTICKETING DELIVERY] #selectDeliveryType not found")
+                    debug.log("[HKTICKETING DELIVERY] #selectDeliveryType not found")
         else:
             is_delivery_selected = bool(result)
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING DELIVERY] Error: {exc}")
+        debug.log(f"[HKTICKETING DELIVERY] Error: {exc}")
 
     return is_delivery_selected
-
 
 async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
     """
     Click next button and wait for URL change
     Reference: chrome_tixcraft.py hkticketing_next_button_press (line 7979-8001)
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_button_clicked = False
 
@@ -22415,18 +21133,14 @@ async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
     try:
         el_btn = await tab.query_selector('#continueBar > div.chooseTicketsOfferDiv > button')
         if el_btn:
-            if show_debug_message:
-                print("[HKTICKETING NEXT] Found button, clicking...")
+            debug.log("[HKTICKETING NEXT] Found button, clicking...")
             await el_btn.click()
             is_button_clicked = True
-            if show_debug_message:
-                print("[HKTICKETING NEXT] Button clicked successfully")
+            debug.log("[HKTICKETING NEXT] Button clicked successfully")
         else:
-            if show_debug_message:
-                print("[HKTICKETING NEXT] Button not found on first attempt")
+            debug.log("[HKTICKETING NEXT] Button not found on first attempt")
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING NEXT] First attempt error: {exc}")
+        debug.log(f"[HKTICKETING NEXT] First attempt error: {exc}")
 
     # Retry if first attempt failed
     if not is_button_clicked:
@@ -22434,23 +21148,18 @@ async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
         try:
             el_btn = await tab.query_selector('#continueBar > div.chooseTicketsOfferDiv > button')
             if el_btn:
-                if show_debug_message:
-                    print("[HKTICKETING NEXT] Retry: Found button, clicking...")
+                debug.log("[HKTICKETING NEXT] Retry: Found button, clicking...")
                 await el_btn.click()
                 is_button_clicked = True
-                if show_debug_message:
-                    print("[HKTICKETING NEXT] Retry: Button clicked successfully")
+                debug.log("[HKTICKETING NEXT] Retry: Button clicked successfully")
             else:
-                if show_debug_message:
-                    print("[HKTICKETING NEXT] Retry: Button still not found")
+                debug.log("[HKTICKETING NEXT] Retry: Button still not found")
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING NEXT] Retry error: {exc}")
+            debug.log(f"[HKTICKETING NEXT] Retry error: {exc}")
 
     # Wait for URL change after clicking (prevent re-clicking)
     if is_button_clicked and current_url:
-        if show_debug_message:
-            print("[HKTICKETING NEXT] Waiting for URL change...")
+        debug.log("[HKTICKETING NEXT] Waiting for URL change...")
         max_wait = 10  # Max 10 seconds
         wait_interval = 0.5
         waited = 0
@@ -22460,25 +21169,21 @@ async def nodriver_hkticketing_next_button_press(tab, config_dict=None):
             try:
                 new_url = await tab.evaluate('window.location.href')
                 if new_url != current_url:
-                    if show_debug_message:
-                        print(f"[HKTICKETING NEXT] URL changed to: {new_url}")
+                    debug.log(f"[HKTICKETING NEXT] URL changed to: {new_url}")
                     break
             except:
                 break
-        if waited >= max_wait and show_debug_message:
-            print("[HKTICKETING NEXT] URL change timeout")
+        if waited >= max_wait:
+            debug.log("[HKTICKETING NEXT] URL change timeout")
 
     return is_button_clicked
-
 
 async def nodriver_hkticketing_go_to_payment(tab, config_dict=None):
     """
     Click go to payment button and wait for URL change
     Reference: chrome_tixcraft.py hkticketing_go_to_payment (line 8002-8023)
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict.get("advanced", {}).get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_button_clicked = False
 
@@ -22492,20 +21197,16 @@ async def nodriver_hkticketing_go_to_payment(tab, config_dict=None):
     try:
         el_btn = await tab.query_selector('#goToPaymentButton')
         if el_btn:
-            if show_debug_message:
-                print("[HKTICKETING PAYMENT] Found button, clicking...")
+            debug.log("[HKTICKETING PAYMENT] Found button, clicking...")
             await el_btn.click()
             is_button_clicked = True
-            if show_debug_message:
-                print("[HKTICKETING PAYMENT] Button clicked successfully")
+            debug.log("[HKTICKETING PAYMENT] Button clicked successfully")
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING PAYMENT] Click error: {exc}")
+        debug.log(f"[HKTICKETING PAYMENT] Click error: {exc}")
 
     # Wait for URL change after clicking (prevent re-clicking)
     if is_button_clicked and current_url:
-        if show_debug_message:
-            print("[HKTICKETING PAYMENT] Waiting for URL change...")
+        debug.log("[HKTICKETING PAYMENT] Waiting for URL change...")
         max_wait = 15  # Max 15 seconds for payment page
         wait_interval = 0.5
         waited = 0
@@ -22515,16 +21216,14 @@ async def nodriver_hkticketing_go_to_payment(tab, config_dict=None):
             try:
                 new_url = await tab.evaluate('window.location.href')
                 if new_url != current_url:
-                    if show_debug_message:
-                        print(f"[HKTICKETING PAYMENT] URL changed to: {new_url}")
+                    debug.log(f"[HKTICKETING PAYMENT] URL changed to: {new_url}")
                     break
             except:
                 break
-        if waited >= max_wait and show_debug_message:
-            print("[HKTICKETING PAYMENT] URL change timeout")
+        if waited >= max_wait:
+            debug.log("[HKTICKETING PAYMENT] URL change timeout")
 
     return is_button_clicked
-
 
 async def nodriver_hkticketing_hide_tickets_blocks(tab):
     """
@@ -22547,7 +21246,6 @@ async def nodriver_hkticketing_hide_tickets_blocks(tab):
     except Exception as exc:
         pass
 
-
 # =============================================================================
 # HKTicketing Type 02 Functions (hkt.hkticketing.com SPA)
 # URL pattern: hkt.hkticketing.com/hant/#/allEvents/detail/selectTicket
@@ -22558,9 +21256,7 @@ async def nodriver_hkticketing_type02_clear_session(tab, config_dict=None):
     Clear cookies and localStorage before login to ensure clean session
     This helps avoid stale session data causing login issues
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         # Clear localStorage related to HKTicketing session
@@ -22593,7 +21289,7 @@ async def nodriver_hkticketing_type02_clear_session(tab, config_dict=None):
         if isinstance(result, list) and len(result) > 0:
             result = result[0] if isinstance(result[0], dict) else None
 
-        if show_debug_message and result and isinstance(result, dict):
+        if result and isinstance(result, dict):
             cleared = result.get('cleared', [])
             if cleared:
                 print(f"[HKTICKETING TYPE02] Cleared localStorage keys: {cleared}")
@@ -22602,19 +21298,15 @@ async def nodriver_hkticketing_type02_clear_session(tab, config_dict=None):
         try:
             import nodriver.cdp.network as cdp_network
             await tab.send(cdp_network.clear_browser_cookies())
-            if show_debug_message:
-                print("[HKTICKETING TYPE02] Browser cookies cleared")
+            debug.log("[HKTICKETING TYPE02] Browser cookies cleared")
         except Exception as cdp_exc:
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] CDP cookie clear error: {cdp_exc}")
+            debug.log(f"[HKTICKETING TYPE02] CDP cookie clear error: {cdp_exc}")
 
         return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Clear session error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Clear session error: {exc}")
         return False
-
 
 async def nodriver_hkticketing_type02_check_traffic_overload(tab, config_dict=None):
     """
@@ -22624,9 +21316,7 @@ async def nodriver_hkticketing_type02_check_traffic_overload(tab, config_dict=No
     Returns:
         bool: True if traffic overload was detected (and refresh clicked), False otherwise
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         result = await tab.evaluate('''
@@ -22668,16 +21358,14 @@ async def nodriver_hkticketing_type02_check_traffic_overload(tab, config_dict=No
         if result and isinstance(result, dict) and result.get('found'):
             if result.get('clicked'):
                 print(f"[HKTICKETING TYPE02] Traffic overload detected, clicked refresh: {result.get('text')}")
-            elif show_debug_message:
-                print(f"[HKTICKETING TYPE02] No data page detected: {result.get('reason')}")
+            else:
+                debug.log(f"[HKTICKETING TYPE02] No data page detected: {result.get('reason')}")
             return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Traffic check error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Traffic check error: {exc}")
 
     return False
-
 
 async def nodriver_hkticketing_type02_login(tab, config_dict):
     """
@@ -22696,7 +21384,7 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     Returns:
         bool: whether login was successful
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Get account credentials (password already decrypted in settings.py)
     hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
@@ -22730,12 +21418,10 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
                 await el_account.clear_input()
                 await el_account.send_keys(hkticketing_account)
                 account_filled = True
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02] Account filled using: {selector}")
+                debug.log(f"[HKTICKETING TYPE02] Account filled using: {selector}")
                 break
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Account selector failed: {selector}, {exc}")
+            debug.log(f"[HKTICKETING TYPE02] Account selector failed: {selector}, {exc}")
             continue
 
     if not account_filled:
@@ -22760,12 +21446,10 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
                 await el_password.clear_input()
                 await el_password.send_keys(hkticketing_password)
                 password_filled = True
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02] Password filled using: {selector}")
+                debug.log(f"[HKTICKETING TYPE02] Password filled using: {selector}")
                 break
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Password selector failed: {selector}, {exc}")
+            debug.log(f"[HKTICKETING TYPE02] Password selector failed: {selector}, {exc}")
             continue
 
     if not password_filled:
@@ -22796,12 +21480,10 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
                 if '登入' in str(btn_text) or 'Login' in str(btn_text):
                     await el_login_btn.click()
                     login_clicked = True
-                    if show_debug_message:
-                        print(f"[HKTICKETING TYPE02] Login button clicked using: {selector}")
+                    debug.log(f"[HKTICKETING TYPE02] Login button clicked using: {selector}")
                     break
         except Exception as exc:
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Login button selector failed: {selector}, {exc}")
+            debug.log(f"[HKTICKETING TYPE02] Login button selector failed: {selector}, {exc}")
             continue
 
     if not login_clicked:
@@ -22837,7 +21519,6 @@ async def nodriver_hkticketing_type02_login(tab, config_dict):
     print("[HKTICKETING TYPE02] Login timeout, please check manually")
     return False
 
-
 async def nodriver_hkticketing_type02_dismiss_modal(tab, config_dict=None):
     """
     Dismiss modal dialog on Type 02 event page
@@ -22849,9 +21530,7 @@ async def nodriver_hkticketing_type02_dismiss_modal(tab, config_dict=None):
     Returns:
         bool: whether modal was dismissed
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         result = await tab.evaluate('''
@@ -22882,16 +21561,13 @@ async def nodriver_hkticketing_type02_dismiss_modal(tab, config_dict=None):
             result = result[0] if isinstance(result[0], dict) else None
 
         if result and isinstance(result, dict) and result.get('success'):
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Modal dismissed via: {result.get('selector')}")
+            debug.log(f"[HKTICKETING TYPE02] Modal dismissed via: {result.get('selector')}")
             return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Dismiss modal error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Dismiss modal error: {exc}")
 
     return False
-
 
 async def nodriver_hkticketing_type02_event_page_buy_button(tab, config_dict=None):
     """
@@ -22904,9 +21580,7 @@ async def nodriver_hkticketing_type02_event_page_buy_button(tab, config_dict=Non
     Returns:
         bool: whether button was clicked
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         result = await tab.evaluate('''
@@ -22948,16 +21622,13 @@ async def nodriver_hkticketing_type02_event_page_buy_button(tab, config_dict=Non
             result = result[0] if isinstance(result[0], dict) else None
 
         if result and isinstance(result, dict) and result.get('success'):
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02] Buy button clicked: {result.get('text')} via {result.get('selector')}")
+            debug.log(f"[HKTICKETING TYPE02] Buy button clicked: {result.get('text')} via {result.get('selector')}")
             return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Buy button error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Buy button error: {exc}")
 
     return False
-
 
 async def nodriver_hkticketing_type02_event_page(tab, config_dict):
     """
@@ -22968,7 +21639,7 @@ async def nodriver_hkticketing_type02_event_page(tab, config_dict):
     Returns:
         bool: whether successfully navigated to ticket selection
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     print("[HKTICKETING TYPE02] Processing event page...")
 
@@ -22984,12 +21655,10 @@ async def nodriver_hkticketing_type02_event_page(tab, config_dict):
     is_clicked = await nodriver_hkticketing_type02_event_page_buy_button(tab, config_dict)
 
     if is_clicked:
-        if show_debug_message:
-            print("[HKTICKETING TYPE02] Navigating to ticket selection page...")
+        debug.log("[HKTICKETING TYPE02] Navigating to ticket selection page...")
         await asyncio.sleep(0.5)
 
     return is_clicked
-
 
 async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
     """
@@ -23004,13 +21673,12 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
     Returns:
         bool: whether a date has been selected
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["date_auto_select"]["mode"]
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
     date_auto_fallback = config_dict.get("date_auto_fallback", False)
 
-    if show_debug_message:
-        print("[HKTICKETING TYPE02 DATE] date_keyword:", date_keyword)
+    debug.log("[HKTICKETING TYPE02 DATE] date_keyword:", date_keyword)
 
     date_keyword = util.format_keyword_string(date_keyword)
 
@@ -23025,16 +21693,14 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                 })();
             ''')
             if date_info and int(date_info) > 0:
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02 DATE] Found {date_info} date elements after {wait_attempt + 1} attempts")
+                debug.log(f"[HKTICKETING TYPE02 DATE] Found {date_info} date elements after {wait_attempt + 1} attempts")
                 break
         except Exception:
             pass
         await asyncio.sleep(0.3)
 
     if not date_info or int(date_info) == 0:
-        if show_debug_message:
-            print("[HKTICKETING TYPE02 DATE] No date elements found after waiting")
+        debug.log("[HKTICKETING TYPE02 DATE] No date elements found after waiting")
         return False
 
     # Get all date items via JavaScript
@@ -23063,18 +21729,17 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
             import json
             dates_data = json.loads(date_info)
 
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02 DATE] Found {len(dates_data)} dates")
+            if debug.enabled:
+                debug.log(f"[HKTICKETING TYPE02 DATE] Found {len(dates_data)} dates")
                 for d in dates_data:
-                    print(f"  [{d['index']}] {d['text']} {'(selected)' if d['isSelected'] else ''}")
+                    debug.log(f"  [{d['index']}] {d['text']} {'(selected)' if d['isSelected'] else ''}")
 
             # Check if already selected AND matches keyword
             selected_date_text = None
             for d in dates_data:
                 if d['isSelected']:
                     selected_date_text = d['text']
-                    if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] Currently selected: {d['text']}")
+                    debug.log(f"[HKTICKETING TYPE02 DATE] Currently selected: {d['text']}")
                     break
 
             # If a date is selected, check if it matches the keyword
@@ -23095,21 +21760,18 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                             break
                     if is_match:
                         is_date_assigned = True
-                        if show_debug_message:
-                            print(f"[HKTICKETING TYPE02 DATE] Selected date matches keyword, keeping selection")
+                        debug.log(f"[HKTICKETING TYPE02 DATE] Selected date matches keyword, keeping selection")
                         break
 
-                if not is_date_assigned and show_debug_message:
-                    print(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
+                if not is_date_assigned:
+                    debug.log(f"[HKTICKETING TYPE02 DATE] Selected date does not match keyword, will select target date")
             elif selected_date_text and len(date_keyword) == 0:
                 # No keyword specified - only keep selection if date_auto_fallback is enabled
                 if date_auto_fallback:
                     is_date_assigned = True
-                    if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=true, keeping current selection")
+                    debug.log(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=true, keeping current selection")
                 else:
-                    if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=false, will select based on mode")
+                    debug.log(f"[HKTICKETING TYPE02 DATE] No keyword, date_auto_fallback=false, will select based on mode")
 
             if not is_date_assigned and len(dates_data) > 0:
                 # Get actual elements for clicking
@@ -23134,8 +21796,7 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                     if not keyword_sets:
                         keyword_sets = [kw.strip() for kw in date_keyword.split(',') if kw.strip()]
 
-                    if show_debug_message:
-                        print(f"[HKTICKETING TYPE02 DATE] Keyword sets: {keyword_sets}")
+                    debug.log(f"[HKTICKETING TYPE02 DATE] Keyword sets: {keyword_sets}")
 
                     # Try each keyword set (OR logic)
                     for keyword_set in keyword_sets:
@@ -23153,8 +21814,7 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
 
                             if is_match:
                                 matched_blocks.append(element)
-                                if show_debug_message:
-                                    print(f"[HKTICKETING TYPE02 DATE] Matched: {row_text}")
+                                debug.log(f"[HKTICKETING TYPE02 DATE] Matched: {row_text}")
                                 if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                     break
 
@@ -23163,8 +21823,7 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
 
                 # Fallback logic
                 if not matched_blocks and date_auto_fallback and len(formated_list) > 0:
-                    if show_debug_message:
-                        print("[HKTICKETING TYPE02 DATE] Fallback enabled, using all dates")
+                    debug.log("[HKTICKETING TYPE02 DATE] Fallback enabled, using all dates")
                     matched_blocks = [item[0] for item in formated_list]
 
                 # Select target
@@ -23173,8 +21832,7 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
                     try:
                         await target.click()
                         is_date_assigned = True
-                        if show_debug_message:
-                            print("[HKTICKETING TYPE02 DATE] Date clicked successfully")
+                        debug.log("[HKTICKETING TYPE02 DATE] Date clicked successfully")
                         await asyncio.sleep(0.3)
                     except Exception as exc:
                         print(f"[HKTICKETING TYPE02 DATE] Click error: {exc}")
@@ -23183,7 +21841,6 @@ async def nodriver_hkticketing_type02_date_assign(tab, config_dict):
         print(f"[HKTICKETING TYPE02 DATE] Error: {exc}")
 
     return is_date_assigned
-
 
 async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_keyword_item):
     """
@@ -23198,15 +21855,14 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
     Returns:
         Tuple[bool, bool]: (is_need_refresh, is_area_assigned)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
     area_auto_fallback = config_dict.get("area_auto_fallback", False)
 
     is_need_refresh = False
     is_area_assigned = False
 
-    if show_debug_message:
-        print("[HKTICKETING TYPE02 AREA] area_keyword:", area_keyword_item)
+    debug.log("[HKTICKETING TYPE02 AREA] area_keyword:", area_keyword_item)
 
     # Wait for render
     await asyncio.sleep(random.uniform(0.2, 0.4))
@@ -23239,12 +21895,12 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
             import json
             areas_data = json.loads(area_info)
 
-            if show_debug_message:
-                print(f"[HKTICKETING TYPE02 AREA] Found {len(areas_data)} areas")
+            if debug.enabled:
+                debug.log(f"[HKTICKETING TYPE02 AREA] Found {len(areas_data)} areas")
                 for a in areas_data:
                     status_str = f" [{a['status']}]" if a['status'] else ""
                     disabled_str = " (disabled)" if a['isDisabled'] else ""
-                    print(f"  [{a['index']}] {a['text']}{status_str}{disabled_str}")
+                    debug.log(f"  [{a['index']}] {a['text']}{status_str}{disabled_str}")
 
             # Get actual elements
             area_elements = await tab.query_selector_all('div.levelItem___rPZ55')
@@ -23275,8 +21931,7 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
                 if not keyword_sets:
                     keyword_sets = [kw.strip() for kw in area_keyword_item.split(',') if kw.strip()]
 
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02 AREA] Keyword sets: {keyword_sets}")
+                debug.log(f"[HKTICKETING TYPE02 AREA] Keyword sets: {keyword_sets}")
 
                 # Try each keyword set (OR logic)
                 for keyword_set in keyword_sets:
@@ -23294,8 +21949,7 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
 
                         if is_match:
                             matched_blocks.append(element)
-                            if show_debug_message:
-                                print(f"[HKTICKETING TYPE02 AREA] Matched: {row_text}")
+                            debug.log(f"[HKTICKETING TYPE02 AREA] Matched: {row_text}")
                             if auto_select_mode == CONST_FROM_TOP_TO_BOTTOM:
                                 break
 
@@ -23304,8 +21958,7 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
 
             # Fallback logic
             if not matched_blocks and area_auto_fallback and len(formated_list) > 0:
-                if show_debug_message:
-                    print("[HKTICKETING TYPE02 AREA] Fallback enabled, using all areas")
+                debug.log("[HKTICKETING TYPE02 AREA] Fallback enabled, using all areas")
                 matched_blocks = [item[0] for item in formated_list]
 
             if not matched_blocks:
@@ -23319,8 +21972,7 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
                     await asyncio.sleep(random.uniform(0.2, 0.5))
                     await target.click()
                     is_area_assigned = True
-                    if show_debug_message:
-                        print("[HKTICKETING TYPE02 AREA] Area clicked successfully")
+                    debug.log("[HKTICKETING TYPE02 AREA] Area clicked successfully")
                 except Exception as exc:
                     print(f"[HKTICKETING TYPE02 AREA] Click error: {exc}")
 
@@ -23329,80 +21981,100 @@ async def nodriver_hkticketing_type02_area_auto_select(tab, config_dict, area_ke
 
     return is_need_refresh, is_area_assigned
 
-
 async def nodriver_hkticketing_type02_ticket_number_select(tab, config_dict):
     """
-    Type 02 ticket number selection
+    Type 02 ticket number selection using per-click evaluate pattern.
+
+    React 18 batches synchronous state updates, so clicking N times
+    in a single JS execution only registers as 1 click. Each click
+    must be a separate tab.evaluate() call with a delay between them.
 
     DOM Structure:
-    - Container: div.ticketNumber___lnycu
-    - Quantity area: div.buyNum___a5xrK
-    - Decrease button: span with SVG #icon-jian
-    - Current number: span (middle child)
-    - Increase button: span with SVG #icon-jia
+    - Container: div.buyNum___a5xrK
+    - spans[0]: - button (decrease)
+    - spans[1]: current number display
+    - spans[2]: + button (increase)
 
     Returns:
         bool: whether ticket number was set
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict.get("ticket_number", 2)
 
-    if show_debug_message:
-        print(f"[HKTICKETING TYPE02 TICKET] Target ticket number: {ticket_number}")
+    if ticket_number < 1:
+        ticket_number = 1
+
+    debug.log(f"[HKTICKETING TYPE02 TICKET] Target ticket number: {ticket_number}")
 
     try:
-        # Get current ticket number and click + button if needed
-        result = await tab.evaluate(f'''
-            (function() {{
-                var buyNum = document.querySelector('div.buyNum___a5xrK');
-                if (!buyNum) return JSON.stringify({{ success: false, error: 'buyNum not found' }});
+        # Phase A: Read current quantity
+        js_read_qty = '''
+        (function() {
+            var buyNum = document.querySelector('div.buyNum___a5xrK');
+            if (!buyNum) return {success: false, error: 'buyNum_not_found'};
+            var spans = buyNum.querySelectorAll(':scope > span');
+            if (spans.length < 3) return {success: false, error: 'spans_not_found'};
+            var num = parseInt(spans[1].innerText);
+            if (isNaN(num)) return {success: false, error: 'num_parse_failed'};
+            return {success: true, current: num};
+        })()
+        '''
+        result = await tab.evaluate(js_read_qty)
+        result = util.parse_nodriver_result(result)
+        if not (isinstance(result, dict) and result.get('success')):
+            error_msg = result.get('error', 'unknown') if isinstance(result, dict) else 'no_result'
+            debug.log(f"[HKTICKETING TYPE02 TICKET] Read qty failed: {error_msg}")
+            return False
 
-                var spans = buyNum.querySelectorAll(':scope > span');
-                if (spans.length < 3) return JSON.stringify({{ success: false, error: 'spans not found' }});
+        current_num = result['current']
+        clicks_needed = ticket_number - current_num
 
-                var minusBtn = spans[0];
-                var currentSpan = spans[1];
-                var plusBtn = spans[2];
+        debug.log(f"[HKTICKETING TYPE02 TICKET] Current: {current_num}, Target: {ticket_number}, Clicks needed: {clicks_needed}")
 
-                var currentNum = parseInt(currentSpan.innerText) || 1;
-                var targetNum = {ticket_number};
-                var clickCount = 0;
+        if clicks_needed == 0:
+            return True
 
-                // Click + button to increase
-                while (currentNum < targetNum && clickCount < 10) {{
-                    plusBtn.click();
-                    clickCount++;
-                    currentNum++;
-                }}
+        # Phase B: Click one at a time with random delay
+        # spans[2] = + button, spans[0] = - button
+        btn_index = 2 if clicks_needed > 0 else 0
+        js_click_once = '''
+        (function() {
+            var buyNum = document.querySelector('div.buyNum___a5xrK');
+            if (!buyNum) return {success: false, error: 'buyNum_not_found'};
+            var spans = buyNum.querySelectorAll(':scope > span');
+            if (spans.length < 3) return {success: false, error: 'spans_not_found'};
+            spans[%d].click();
+            return {success: true};
+        })()
+        ''' % btn_index
 
-                // Verify final number
-                var finalNum = parseInt(currentSpan.innerText) || currentNum;
-                return JSON.stringify({{
-                    success: true,
-                    initialNum: {ticket_number} - clickCount,
-                    finalNum: finalNum,
-                    clickCount: clickCount
-                }});
-            }})();
-        ''')
+        for i in range(abs(clicks_needed)):
+            click_result = await tab.evaluate(js_click_once)
+            click_result = util.parse_nodriver_result(click_result)
+            if not (isinstance(click_result, dict) and click_result.get('success')):
+                error_msg = click_result.get('error', 'unknown') if isinstance(click_result, dict) else 'no_result'
+                debug.log(f"[HKTICKETING TYPE02 TICKET] Click {i+1} failed: {error_msg}")
+                return False
+            if i < abs(clicks_needed) - 1:
+                await asyncio.sleep(random.uniform(0.05, 0.1))
 
-        if result:
-            import json
-            data = json.loads(result)
-            if data.get('success'):
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02 TICKET] Set to {data.get('finalNum')} (clicked + {data.get('clickCount')} times)")
-                return True
-            else:
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02 TICKET] Error: {data.get('error')}")
+        # Phase C: Verify final quantity
+        await asyncio.sleep(random.uniform(0.05, 0.1))
+        verify_result = await tab.evaluate(js_read_qty)
+        verify_result = util.parse_nodriver_result(verify_result)
+
+        if isinstance(verify_result, dict) and verify_result.get('success'):
+            final_num = verify_result['current']
+            debug.log(f"[HKTICKETING TYPE02 TICKET] Verified: {final_num} (target: {ticket_number})")
+            return final_num == ticket_number
+
+        debug.log("[HKTICKETING TYPE02 TICKET] Verify read failed")
+        return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02 TICKET] Error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02 TICKET] Error: {exc}")
 
     return False
-
 
 async def nodriver_hkticketing_type02_next_button_press(tab, config_dict=None):
     """
@@ -23411,9 +22083,7 @@ async def nodriver_hkticketing_type02_next_button_press(tab, config_dict=None):
     Returns:
         bool: whether button was clicked
     """
-    show_debug_message = False
-    if config_dict:
-        show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_button_clicked = False
 
@@ -23435,15 +22105,12 @@ async def nodriver_hkticketing_type02_next_button_press(tab, config_dict=None):
 
         if button_clicked:
             is_button_clicked = True
-            if show_debug_message:
-                print("[HKTICKETING TYPE02] Next button clicked")
+            debug.log("[HKTICKETING TYPE02] Next button clicked")
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Next button error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Next button error: {exc}")
 
     return is_button_clicked
-
 
 async def nodriver_hkticketing_type02_performance(tab, config_dict):
     """
@@ -23453,17 +22120,15 @@ async def nodriver_hkticketing_type02_performance(tab, config_dict):
     Returns:
         bool: whether flow completed successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
-    if show_debug_message:
-        print("[HKTICKETING TYPE02] Starting Type 02 flow...")
+    debug.log("[HKTICKETING TYPE02] Starting Type 02 flow...")
 
     # Step 1: Date selection
     is_date_assigned = False
     if config_dict["date_auto_select"]["enable"]:
         is_date_assigned = await nodriver_hkticketing_type02_date_assign(tab, config_dict)
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Date assigned: {is_date_assigned}")
+        debug.log(f"[HKTICKETING TYPE02] Date assigned: {is_date_assigned}")
     else:
         is_date_assigned = True  # Skip if disabled
 
@@ -23477,8 +22142,7 @@ async def nodriver_hkticketing_type02_performance(tab, config_dict):
         is_need_refresh, is_area_assigned = await nodriver_hkticketing_type02_area_auto_select(
             tab, config_dict, area_keyword
         )
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Area assigned: {is_area_assigned}")
+        debug.log(f"[HKTICKETING TYPE02] Area assigned: {is_area_assigned}")
     else:
         is_area_assigned = True  # Skip if disabled
 
@@ -23487,14 +22151,16 @@ async def nodriver_hkticketing_type02_performance(tab, config_dict):
 
     # Step 3: Ticket number selection (after area is selected, quantity selector appears)
     await asyncio.sleep(0.3)
-    await nodriver_hkticketing_type02_ticket_number_select(tab, config_dict)
+    is_ticket_number_set = await nodriver_hkticketing_type02_ticket_number_select(tab, config_dict)
+    debug.log(f"[HKTICKETING TYPE02] Ticket number set: {is_ticket_number_set}")
+    if not is_ticket_number_set:
+        return False
 
     # Step 4: Click next button
     await asyncio.sleep(0.3)
     await nodriver_hkticketing_type02_next_button_press(tab, config_dict)
 
     return True
-
 
 async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
     """
@@ -23505,7 +22171,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
     3. Click "同意" button in popup dialog
     4. Click submit button (分配座位)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     print("[HKTICKETING TYPE02] Processing confirm order page...")
 
@@ -23544,8 +22210,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
         if result and isinstance(result, dict) and result.get('success'):
             print(f"[HKTICKETING TYPE02] Delivery method: {result.get('text')} ({result.get('action')})")
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Delivery method error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Delivery method error: {exc}")
 
     await asyncio.sleep(0.3)
 
@@ -23689,8 +22354,7 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
             # No popup is normal - it only appears after checkbox click
             pass
     except Exception as exc:
-        if show_debug_message:
-            print(f"[HKTICKETING TYPE02] Popup agree button error: {exc}")
+        debug.log(f"[HKTICKETING TYPE02] Popup agree button error: {exc}")
 
     await asyncio.sleep(0.3)
 
@@ -23775,13 +22439,12 @@ async def nodriver_hkticketing_type02_confirm_order(tab, config_dict):
 
     return False
 
-
 async def nodriver_hkticketing_performance(tab, config_dict, domain_name):
     """
     Ticket selection page integration flow
     Reference: chrome_tixcraft.py hkticketing_performance (line 8099-8172)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Hide unnecessary blocks
     await nodriver_hkticketing_hide_tickets_blocks(tab)
@@ -23810,7 +22473,6 @@ async def nodriver_hkticketing_performance(tab, config_dict, domain_name):
 
     return is_price_assign_by_bot
 
-
 async def nodriver_hkticketing_escape_robot_detection(tab, url):
     """
     Check for robot detection iframe
@@ -23827,7 +22489,6 @@ async def nodriver_hkticketing_escape_robot_detection(tab, url):
         pass
 
     return robot_detection
-
 
 async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
     """
@@ -23889,7 +22550,6 @@ async def nodriver_hkticketing_url_redirect(tab, url, config_dict):
 
     return is_redirected
 
-
 async def nodriver_hkticketing_content_refresh(tab, url, config_dict):
     """
     Handle content error and refresh page
@@ -23937,7 +22597,6 @@ async def nodriver_hkticketing_content_refresh(tab, url, config_dict):
                 await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
 
     return is_redirected
-
 
 async def nodriver_hkticketing_travel_iframe(tab, config_dict):
     """
@@ -23990,7 +22649,6 @@ async def nodriver_hkticketing_travel_iframe(tab, config_dict):
 
     return is_redirected
 
-
 async def nodriver_hkticketing_main(tab, url, config_dict):
     """
     HKTicketing platform main flow control function
@@ -24004,7 +22662,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         hkticketing_dict["played_sound_ticket"] = False
         hkticketing_dict["played_sound_order"] = False
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Handle URL redirect (queue pages, error pages)
     is_redirected = await nodriver_hkticketing_url_redirect(tab, url, config_dict)
@@ -24049,8 +22707,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         is_type02_login_page = True
 
     if is_type02_login_page:
-        if show_debug_message:
-            print("[HKTICKETING] Type 02 Login page detected")
+        debug.log("[HKTICKETING] Type 02 Login page detected")
 
         # Semi-automatic login: auto-fill account/password, wait for user to complete captcha
         login_success = await nodriver_hkticketing_type02_login(tab, config_dict)
@@ -24060,12 +22717,10 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             homepage = config_dict.get("homepage", "").strip()
             if homepage and 'hkt.hkticketing.com' in homepage:
                 await tab.get(homepage)
-                if show_debug_message:
-                    print(f"[HKTICKETING TYPE02] Redirecting to: {homepage}")
+                debug.log(f"[HKTICKETING TYPE02] Redirecting to: {homepage}")
             else:
                 await tab.get("https://hkt.hkticketing.com/hant/#/home")
-                if show_debug_message:
-                    print("[HKTICKETING TYPE02] Redirecting to home page")
+                debug.log("[HKTICKETING TYPE02] Redirecting to home page")
         return tab
 
     is_type02_base = is_type02_site and '#/allEvents/detail' in url
@@ -24082,8 +22737,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
 
     # Handle Type 02 Event Page (even.html) - click buy button to enter ticket selection
     if is_type02_event_page:
-        if show_debug_message:
-            print("[HKTICKETING] Type 02 Event page detected")
+        debug.log("[HKTICKETING] Type 02 Event page detected")
 
         # Dismiss any modal dialogs and click buy button
         await nodriver_hkticketing_type02_event_page(tab, config_dict)
@@ -24091,13 +22745,11 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
 
     # Handle Type 02 Ticket Selection Page (datearea.html)
     if is_type02_ticket_page:
-        if show_debug_message:
-            print("[HKTICKETING] Type 02 Ticket Selection page detected")
+        debug.log("[HKTICKETING] Type 02 Ticket Selection page detected")
 
         is_modal_dialog_popup = await nodriver_check_modal_dialog_popup(tab)
         if is_modal_dialog_popup:
-            if show_debug_message:
-                print("[HKTICKETING TYPE02] Modal dialog popup, skip...")
+            debug.log("[HKTICKETING TYPE02] Modal dialog popup, skip...")
         else:
             # Play sound when entering ticket page
             if not hkticketing_dict.get("played_sound_ticket", False):
@@ -24115,8 +22767,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         is_type02_confirm_page = True
 
     if is_type02_confirm_page:
-        if show_debug_message:
-            print("[HKTICKETING] Type 02 Confirm Order page detected")
+        debug.log("[HKTICKETING] Type 02 Confirm Order page detected")
 
         # Handle confirm order: delivery method, agree checkbox, submit button
         await nodriver_hkticketing_type02_confirm_order(tab, config_dict)
@@ -24161,7 +22812,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         hkticketing_account = config_dict["accounts"]["hkticketing_account"].strip()
         hkticketing_password = config_dict["accounts"]["hkticketing_password"].strip()
         if len(hkticketing_account) > 4:
-            login_success = await nodriver_hkticketing_login(tab, hkticketing_account, hkticketing_password)
+            login_success = await nodriver_hkticketing_login(tab, hkticketing_account, hkticketing_password, config_dict=config_dict)
 
             # Wait for login to complete and redirect to homepage
             if login_success:
@@ -24178,20 +22829,17 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
 
                         if not is_same_page and not is_homepage_default:
                             if 'default.aspx' in current_url or current_url.endswith('/'):
-                                if show_debug_message:
-                                    print(f"[HKTICKETING LOGIN] Redirecting to event page: {homepage}")
+                                debug.log(f"[HKTICKETING LOGIN] Redirecting to event page: {homepage}")
                                 await tab.get(homepage)
                                 await asyncio.sleep(1.0)
                 except Exception as redirect_error:
-                    if show_debug_message:
-                        print(f"[HKTICKETING LOGIN] Redirect error: {redirect_error}")
+                    debug.log(f"[HKTICKETING LOGIN] Redirect error: {redirect_error}")
 
     # Date selection page (shows/show.aspx?)
     if 'shows/show.aspx?' in url:
         is_modal_dialog_popup = await nodriver_check_modal_dialog_popup(tab)
         if is_modal_dialog_popup:
-            if show_debug_message:
-                print("[HKTICKETING] Modal dialog popup, skip...")
+            debug.log("[HKTICKETING] Modal dialog popup, skip...")
         else:
             is_event_page = False
             if len(url.split('/')) == 5:
@@ -24214,8 +22862,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
 
         is_modal_dialog_popup = await nodriver_check_modal_dialog_popup(tab)
         if is_modal_dialog_popup:
-            if show_debug_message:
-                print("[HKTICKETING] Modal dialog popup, skip...")
+            debug.log("[HKTICKETING] Modal dialog popup, skip...")
         else:
             if '/tickets' in url:
                 domain_name = url.split('/')[2]
@@ -24235,7 +22882,6 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
         hkticketing_dict["played_sound_ticket"] = False
 
     return tab
-
 
 # =============================================================================
 # FunOne Tickets Platform Support
@@ -24259,12 +22905,11 @@ async def nodriver_funone_inject_cookie(tab, config_dict):
     """
     import nodriver.cdp as cdp
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     funone_session_cookie = config_dict["accounts"].get("funone_session_cookie", "").strip()
 
     if len(funone_session_cookie) == 0:
-        if show_debug_message:
-            print("[FUNONE] No session cookie configured")
+        debug.log("[FUNONE] No session cookie configured")
         return False
 
     try:
@@ -24278,15 +22923,12 @@ async def nodriver_funone_inject_cookie(tab, config_dict):
             http_only=True
         ))
 
-        if show_debug_message:
-            print("[FUNONE] Session cookie injected successfully")
+        debug.log("[FUNONE] Session cookie injected successfully")
         return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Cookie injection failed: {exc}")
+        debug.log(f"[FUNONE] Cookie injection failed: {exc}")
         return False
-
 
 async def nodriver_funone_check_login_status(tab):
     """
@@ -24306,7 +22948,6 @@ async def nodriver_funone_check_login_status(tab):
     except Exception as exc:
         return False
 
-
 async def nodriver_funone_verify_login(tab, config_dict):
     """
     Verify login status (cookie is already injected in goto_homepage)
@@ -24315,22 +22956,21 @@ async def nodriver_funone_verify_login(tab, config_dict):
         bool: True if logged in
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     is_logged_in = await nodriver_funone_check_login_status(tab)
 
     # Only print when login status changes (reduce repetitive messages)
     if is_logged_in:
-        if show_debug_message and funone_dict.get("last_login_status") != True:
-            print("[FUNONE] Login status verified - logged in")
+        if funone_dict.get("last_login_status") != True:
+            debug.log("[FUNONE] Login status verified - logged in")
             funone_dict["last_login_status"] = True
         return True
 
-    if show_debug_message and funone_dict.get("last_login_status") != False:
-        print("[FUNONE] Not logged in - waiting for manual OTP login")
+    if funone_dict.get("last_login_status") != False:
+        debug.log("[FUNONE] Not logged in - waiting for manual OTP login")
         funone_dict["last_login_status"] = False
     return False
-
 
 async def nodriver_funone_close_popup(tab):
     """
@@ -24380,7 +23020,6 @@ async def nodriver_funone_close_popup(tab):
 
     return closed_any
 
-
 async def nodriver_funone_date_auto_select(tab, url, config_dict):
     """
     Auto-select session/date on activity detail page
@@ -24388,7 +23027,7 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
     Returns:
         bool: True if session selected and next button clicked
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Wait for page to fully load before selecting session
     # Check for key elements: next button or activity info
@@ -24420,8 +23059,7 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
     auto_select_mode = config_dict.get("date_auto_select", {}).get("mode", "random")
     date_auto_fallback = config_dict.get("date_auto_fallback", False)
 
-    if show_debug_message:
-        print(f"[FUNONE] Date selection - keyword: '{date_keyword}', mode: {auto_select_mode}")
+    debug.log(f"[FUNONE] Date selection - keyword: '{date_keyword}', mode: {auto_select_mode}")
 
     try:
         # Get all session options
@@ -24453,12 +23091,10 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
         sessions = await tab.evaluate(get_sessions_js)
 
         if not sessions or len(sessions) == 0:
-            if show_debug_message:
-                print("[FUNONE] No sessions found")
+            debug.log("[FUNONE] No sessions found")
             return False
 
-        if show_debug_message:
-            print(f"[FUNONE] Found {len(sessions)} sessions")
+        debug.log(f"[FUNONE] Found {len(sessions)} sessions")
 
         # Find matching session by keyword
         target_index = -1
@@ -24471,8 +23107,7 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
                 for kw in keywords:
                     if kw.lower() in session_text.lower():
                         target_index = i
-                        if show_debug_message:
-                            print(f"[FUNONE] Keyword '{kw}' matched session: {session_text}")
+                        debug.log(f"[FUNONE] Keyword '{kw}' matched session: {session_text}")
                         break
                 if target_index >= 0:
                     break
@@ -24480,14 +23115,12 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
         # Fallback selection if no keyword match
         if target_index < 0:
             if date_keyword and len(date_keyword) > 0 and not date_auto_fallback:
-                if show_debug_message:
-                    print("[FUNONE] No keyword match, date_auto_fallback=False, stopping")
+                debug.log("[FUNONE] No keyword match, date_auto_fallback=False, stopping")
                 return False
 
             # Use auto_select_mode for fallback
             target_index = util.get_target_index_by_mode(len(sessions), auto_select_mode)
-            if show_debug_message:
-                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+            debug.log(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
 
         if target_index < 0 or target_index >= len(sessions):
             target_index = 0
@@ -24520,8 +23153,7 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
         clicked = await tab.evaluate(click_session_js)
 
         if clicked:
-            if show_debug_message:
-                print(f"[FUNONE] Session {target_index} clicked")
+            debug.log(f"[FUNONE] Session {target_index} clicked")
             await tab.sleep(0.5)
 
             # Click next button
@@ -24540,18 +23172,16 @@ async def nodriver_funone_date_auto_select(tab, url, config_dict):
             '''
             next_clicked = await tab.evaluate(click_next_js)
 
-            if next_clicked and show_debug_message:
-                print("[FUNONE] Next button clicked")
+            if next_clicked:
+                debug.log("[FUNONE] Next button clicked")
 
             return next_clicked
 
         return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Date selection error: {exc}")
+        debug.log(f"[FUNONE] Date selection error: {exc}")
         return False
-
 
 async def nodriver_funone_area_auto_select(tab, url, config_dict):
     """
@@ -24561,7 +23191,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         bool: True if ticket type selected
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Get area keyword from config
     area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
@@ -24571,8 +23201,8 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
     # Only print area selection config once
     area_config_key = f"{area_keyword}_{auto_select_mode}"
-    if show_debug_message and funone_dict.get("last_area_config") != area_config_key:
-        print(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
+    if funone_dict.get("last_area_config") != area_config_key:
+        debug.log(f"[FUNONE] Area selection - keyword: '{area_keyword}', mode: {auto_select_mode}")
         funone_dict["last_area_config"] = area_config_key
 
     try:
@@ -24643,25 +23273,24 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
 
         if not tickets or len(tickets) == 0:
             # Only print "No ticket types found" if we previously found some
-            if show_debug_message and funone_dict.get("last_area_count", -1) != 0:
-                print("[FUNONE] No ticket types found")
+            if funone_dict.get("last_area_count", -1) != 0:
+                debug.log("[FUNONE] No ticket types found")
                 funone_dict["last_area_count"] = 0
             return False
 
         # Only print ticket count when it changes
-        if show_debug_message and funone_dict.get("last_area_count") != len(tickets):
-            print(f"[FUNONE] Found {len(tickets)} ticket types")
+        if funone_dict.get("last_area_count") != len(tickets):
+            debug.log(f"[FUNONE] Found {len(tickets)} ticket types")
             funone_dict["last_area_count"] = len(tickets)
 
         # Filter out disabled (sold out) tickets first
         available_tickets = [t for t in tickets if not t.get('disabled', False)]
-        if show_debug_message and len(available_tickets) != len(tickets):
+        if len(available_tickets) != len(tickets):
             sold_out_count = len(tickets) - len(available_tickets)
             print(f"[FUNONE] {sold_out_count} ticket types sold out, {len(available_tickets)} available")
 
         if len(available_tickets) == 0:
-            if show_debug_message:
-                print("[FUNONE] All ticket types are sold out")
+            debug.log("[FUNONE] All ticket types are sold out")
             return False
 
         tickets = available_tickets
@@ -24673,15 +23302,13 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
                 # Use text first, fallback to fullText for keyword matching
                 ticket_text = ticket.get('text', '') or ticket.get('fullText', '')
                 if ticket_text and util.reset_row_text_if_match_keyword_exclude(config_dict, ticket_text):
-                    if show_debug_message:
-                        print(f"[FUNONE] Excluding ticket '{ticket_text[:50]}'")
+                    debug.log(f"[FUNONE] Excluding ticket '{ticket_text[:50]}'")
                 else:
                     filtered_tickets.append(ticket)
             tickets = filtered_tickets
 
         if len(tickets) == 0:
-            if show_debug_message:
-                print("[FUNONE] All tickets filtered out by exclude keywords")
+            debug.log("[FUNONE] All tickets filtered out by exclude keywords")
             return False
 
         # Find matching ticket by keyword
@@ -24698,8 +23325,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
                 for kw in keywords:
                     if kw.lower() in ticket_text.lower():
                         target_index = i
-                        if show_debug_message:
-                            print(f"[FUNONE] Keyword '{kw}' matched ticket: {ticket_text[:50]}")
+                        debug.log(f"[FUNONE] Keyword '{kw}' matched ticket: {ticket_text[:50]}")
                         break
                 if target_index >= 0:
                     break
@@ -24707,13 +23333,11 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         # Fallback selection if no keyword match
         if target_index < 0:
             if area_keyword and len(area_keyword) > 0 and not area_auto_fallback:
-                if show_debug_message:
-                    print("[FUNONE] No keyword match, area_auto_fallback=False, stopping")
+                debug.log("[FUNONE] No keyword match, area_auto_fallback=False, stopping")
                 return False
 
             target_index = util.get_target_index_by_mode(len(tickets), auto_select_mode)
-            if show_debug_message:
-                print(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
+            debug.log(f"[FUNONE] Using fallback mode '{auto_select_mode}', selected index: {target_index}")
 
         if target_index < 0 or target_index >= len(tickets):
             target_index = 0
@@ -24723,8 +23347,7 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         ticket_type = tickets[target_index].get('type', 'button')
         ticket_name = tickets[target_index].get('text', '') or tickets[target_index].get('fullText', '')
 
-        if show_debug_message:
-            print(f"[FUNONE] Clicking area '{ticket_name}' (index: {original_index}, type: {ticket_type})")
+        debug.log(f"[FUNONE] Clicking area '{ticket_name}' (index: {original_index}, type: {ticket_type})")
 
         click_ticket_js = f'''
         (function() {{
@@ -24767,16 +23390,14 @@ async def nodriver_funone_area_auto_select(tab, url, config_dict):
         '''
         clicked = await tab.evaluate(click_ticket_js)
 
-        if clicked and show_debug_message:
-            print(f"[FUNONE] Ticket type {target_index} clicked")
+        if clicked:
+            debug.log(f"[FUNONE] Ticket type {target_index} clicked")
 
         return clicked
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Area selection error: {exc}")
+        debug.log(f"[FUNONE] Area selection error: {exc}")
         return False
-
 
 async def nodriver_funone_check_sold_out(tab, config_dict):
     """
@@ -24785,7 +23406,7 @@ async def nodriver_funone_check_sold_out(tab, config_dict):
     Returns:
         tuple: (is_sold_out: bool, remaining_count: int, ticket_info: list)
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict.get("ticket_number", 2)
     area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
 
@@ -24943,19 +23564,17 @@ async def nodriver_funone_check_sold_out(tab, config_dict):
             remaining = result.get('matchedRemaining', 0) if result.get('hasMatchedTicket') else result.get('totalRemaining', 0)
             ticket_info = result.get('ticketInfo', [])
 
-            if show_debug_message:
+            if debug.enabled:
                 if is_sold_out:
-                    print("[FUNONE] All tickets sold out")
+                    debug.log("[FUNONE] All tickets sold out")
 
             return (is_sold_out, remaining, ticket_info)
 
         return (False, 0, [])
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Check sold out error: {exc}")
+        debug.log(f"[FUNONE] Check sold out error: {exc}")
         return (False, 0, [])
-
 
 async def nodriver_funone_click_refresh_button(tab, config_dict):
     """
@@ -24964,7 +23583,7 @@ async def nodriver_funone_click_refresh_button(tab, config_dict):
     Returns:
         bool: True if button clicked successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         click_refresh_js = '''
@@ -25003,19 +23622,15 @@ async def nodriver_funone_click_refresh_button(tab, config_dict):
         result = util.parse_nodriver_result(result)
 
         if result and isinstance(result, dict) and result.get('success'):
-            if show_debug_message:
-                print(f"[FUNONE] Clicked refresh button: {result.get('buttonText', 'unknown')}")
+            debug.log(f"[FUNONE] Clicked refresh button: {result.get('buttonText', 'unknown')}")
             return True
         else:
-            if show_debug_message:
-                print("[FUNONE] Refresh button not found")
+            debug.log("[FUNONE] Refresh button not found")
             return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Click refresh button error: {exc}")
+        debug.log(f"[FUNONE] Click refresh button error: {exc}")
         return False
-
 
 async def nodriver_funone_assign_ticket_number(tab, config_dict):
     """
@@ -25025,7 +23640,7 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         bool: True if quantity set successfully
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ticket_number = config_dict.get("ticket_number", 2)
     area_keyword = config_dict.get("area_auto_select", {}).get("area_keyword", "")
     keyword_exclude = config_dict.get("keyword_exclude", "")
@@ -25043,8 +23658,8 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         exclude_keywords = [k.strip() for k in clean_exclude.split(',') if k.strip()]
 
     # Only print setting message once
-    if show_debug_message and funone_dict.get("last_ticket_qty") != ticket_number:
-        print(f"[FUNONE] Setting ticket quantity to {ticket_number}")
+    if funone_dict.get("last_ticket_qty") != ticket_number:
+        debug.log(f"[FUNONE] Setting ticket quantity to {ticket_number}")
         funone_dict["last_ticket_qty"] = ticket_number
 
     try:
@@ -25194,22 +23809,19 @@ async def nodriver_funone_assign_ticket_number(tab, config_dict):
         result = util.parse_nodriver_result(result)
 
         if result and isinstance(result, dict) and result.get('success'):
-            if show_debug_message:
-                print(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
+            debug.log(f"[FUNONE] Ticket quantity set to {result.get('value')} via {result.get('type')}")
             funone_dict["qty_selector_notfound"] = False  # Reset flag on success
             return True
         else:
             # Only print once when quantity selector not found
-            if show_debug_message and not funone_dict.get("qty_selector_notfound"):
-                print("[FUNONE] Could not find quantity selector")
+            if not funone_dict.get("qty_selector_notfound"):
+                debug.log("[FUNONE] Could not find quantity selector")
                 funone_dict["qty_selector_notfound"] = True
             return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Set quantity error: {exc}")
+        debug.log(f"[FUNONE] Set quantity error: {exc}")
         return False
-
 
 async def nodriver_funone_captcha_handler(tab, config_dict):
     """
@@ -25219,7 +23831,7 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
         bool: True if captcha is filled or no captcha exists
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     ocr_enabled = config_dict.get("ocr_captcha", {}).get("enable", False)
 
     try:
@@ -25285,15 +23897,15 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
 
         # Only print captcha type once
         captcha_type = captcha_info.get('type')
-        if show_debug_message and funone_dict.get("last_captcha_type") != captcha_type:
-            print(f"[FUNONE] Captcha detected - type: {captcha_type}")
+        if funone_dict.get("last_captcha_type") != captcha_type:
+            debug.log(f"[FUNONE] Captcha detected - type: {captcha_type}")
             funone_dict["last_captcha_type"] = captcha_type
 
         # Check if already filled
         if captcha_info.get('filled'):
             # Only print once to reduce repetitive messages
-            if show_debug_message and not funone_dict.get("captcha_filled_printed"):
-                print("[FUNONE] Captcha already filled")
+            if not funone_dict.get("captcha_filled_printed"):
+                debug.log("[FUNONE] Captcha already filled")
                 funone_dict["captcha_filled_printed"] = True
             return True
 
@@ -25321,16 +23933,14 @@ async def nodriver_funone_captcha_handler(tab, config_dict):
                     return True
 
         # Only print waiting message once
-        if show_debug_message and not funone_dict.get("waiting_captcha_printed"):
-            print("[FUNONE] Waiting for manual captcha input...")
+        if not funone_dict.get("waiting_captcha_printed"):
+            debug.log("[FUNONE] Waiting for manual captcha input...")
             funone_dict["waiting_captcha_printed"] = True
         return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Captcha check error: {exc}")
+        debug.log(f"[FUNONE] Captcha check error: {exc}")
         return False
-
 
 async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
     """
@@ -25345,7 +23955,7 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
         bool: True if OCR succeeded and input was filled
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         # Extract base64 content (remove data:image/...;base64, prefix)
@@ -25357,8 +23967,7 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
         # Decode base64 to image bytes (use module-level import)
         img_bytes = base64.b64decode(base64_content)
 
-        if show_debug_message:
-            print(f"[FUNONE OCR] Image size: {len(img_bytes)} bytes")
+        debug.log(f"[FUNONE OCR] Image size: {len(img_bytes)} bytes")
 
         # Use cached OCR instance or create new one (beta mode best for FunOne)
         # Cache in funone_dict to avoid recreating on every call
@@ -25371,13 +23980,11 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
             # FunOne captcha is case-sensitive and uses uppercase letters
             ocr_answer = ocr_answer.upper()
 
-            if show_debug_message:
-                print(f"[FUNONE OCR] Result: {ocr_answer} (length: {len(ocr_answer)})")
+            debug.log(f"[FUNONE OCR] Result: {ocr_answer} (length: {len(ocr_answer)})")
 
             # FunOne captcha requires exactly 5 characters
             if len(ocr_answer) != 5:
-                if show_debug_message:
-                    print(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - please enter manually")
+                debug.log(f"[FUNONE OCR] Invalid length: {len(ocr_answer)}, expected 5 chars - please enter manually")
                 # Set failed flag to prevent retry loop
                 funone_dict["ocr_failed"] = True
                 return False
@@ -25402,16 +24009,13 @@ async def nodriver_funone_ocr_captcha(tab, config_dict, base64_data):
             fill_result = util.parse_nodriver_result(fill_result)
 
             if fill_result and isinstance(fill_result, dict) and fill_result.get('success'):
-                if show_debug_message:
-                    print(f"[FUNONE OCR] Captcha filled: {ocr_answer}")
+                debug.log(f"[FUNONE OCR] Captcha filled: {ocr_answer}")
                 return True
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE OCR] Error: {exc}")
+        debug.log(f"[FUNONE OCR] Error: {exc}")
 
     return False
-
 
 async def nodriver_funone_detect_step(tab):
     """
@@ -25497,7 +24101,6 @@ async def nodriver_funone_detect_step(tab):
     except Exception as exc:
         return 0
 
-
 async def nodriver_funone_ticket_agree(tab):
     """
     Check agreement checkboxes
@@ -25578,7 +24181,6 @@ async def nodriver_funone_ticket_agree(tab):
     except Exception as exc:
         return False
 
-
 async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
     """
     Submit order - click submit button
@@ -25587,7 +24189,7 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
         bool: True if order submitted
     """
     global funone_dict
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         # Find and click submit button
@@ -25619,22 +24221,19 @@ async def nodriver_funone_order_submit(tab, config_dict, funone_dict_local):
         result = util.parse_nodriver_result(result)
 
         if result and isinstance(result, dict) and result.get('clicked'):
-            if show_debug_message:
-                print(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
+            debug.log(f"[FUNONE] Submit button clicked: {result.get('buttonText')}")
             funone_dict["submit_notfound"] = False  # Reset flag on success
             return True
         else:
             # Only print once when submit button not found
-            if show_debug_message and not funone_dict.get("submit_notfound"):
-                print("[FUNONE] Submit button not found or not clickable")
+            if not funone_dict.get("submit_notfound"):
+                debug.log("[FUNONE] Submit button not found or not clickable")
                 funone_dict["submit_notfound"] = True
             return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Order submit error: {exc}")
+        debug.log(f"[FUNONE] Order submit error: {exc}")
         return False
-
 
 async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
     """
@@ -25643,7 +24242,7 @@ async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
     Returns:
         bool: True if page was reloaded
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Skip auto-reload for non-activity pages (safety check)
     try:
@@ -25746,32 +24345,27 @@ async def nodriver_funone_auto_reload(tab, config_dict, funone_dict_local):
             reason = status.get('reason', '')
 
             if page_status == 'error':
-                if show_debug_message:
-                    print(f"[FUNONE] Error page detected: {reason}, reloading...")
+                debug.log(f"[FUNONE] Error page detected: {reason}, reloading...")
                 await tab.reload()
                 return True
 
             elif page_status == 'coming_soon':
                 auto_reload_coming_soon = config_dict.get("tixcraft", {}).get("auto_reload_coming_soon_page", True)
                 if auto_reload_coming_soon:
-                    if show_debug_message:
-                        print("[FUNONE] Coming soon page, auto-reloading...")
+                    debug.log("[FUNONE] Coming soon page, auto-reloading...")
                     await tab.sleep(1)
                     await tab.reload()
                     return True
 
             elif page_status == 'sold_out':
-                if show_debug_message:
-                    print("[FUNONE] Sold out detected")
+                debug.log("[FUNONE] Sold out detected")
                 return False
 
         return False
 
     except Exception as exc:
-        if show_debug_message:
-            print(f"[FUNONE] Auto reload error: {exc}")
+        debug.log(f"[FUNONE] Auto reload error: {exc}")
         return False
-
 
 async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_local):
     """
@@ -25780,13 +24374,12 @@ async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_loc
     Returns:
         bool: True if error was handled
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     error_str = str(error).lower()
 
     if 'timeout' in error_str:
-        if show_debug_message:
-            print("[FUNONE] Timeout error, reloading page...")
+        debug.log("[FUNONE] Timeout error, reloading page...")
         try:
             await tab.reload()
             return True
@@ -25794,8 +24387,7 @@ async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_loc
             pass
 
     if 'network' in error_str or 'connection' in error_str:
-        if show_debug_message:
-            print("[FUNONE] Network error, waiting and retrying...")
+        debug.log("[FUNONE] Network error, waiting and retrying...")
         await tab.sleep(2)
         try:
             await tab.reload()
@@ -25804,7 +24396,6 @@ async def nodriver_funone_error_handler(tab, error, config_dict, funone_dict_loc
             pass
 
     return False
-
 
 async def nodriver_funone_main(tab, url, config_dict):
     """
@@ -25852,7 +24443,7 @@ async def nodriver_funone_main(tab, url, config_dict):
             "max_retry_logged": False
         }
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Determine page type
     page_type = "UNKNOWN"
@@ -25874,8 +24465,7 @@ async def nodriver_funone_main(tab, url, config_dict):
 
     # Only print when page type changes (reduce repetitive messages)
     if funone_dict.get("last_page_type") != page_type:
-        if show_debug_message:
-            print(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
+        debug.log(f"[FUNONE] Page type: {page_type}, URL: {url[:80]}...")
         funone_dict["last_page_type"] = page_type
         # Reset flags when page type changes
         funone_dict["waiting_page_logged"] = False
@@ -25913,8 +24503,8 @@ async def nodriver_funone_main(tab, url, config_dict):
 
     elif page_type == "WAITING":
         # Waiting/queue page - do nothing, just wait for auto-redirect
-        if show_debug_message and not funone_dict.get("waiting_page_logged", False):
-            print("[FUNONE] Waiting page detected, waiting for auto-redirect...")
+        if not funone_dict.get("waiting_page_logged", False):
+            debug.log("[FUNONE] Waiting page detected, waiting for auto-redirect...")
             funone_dict["waiting_page_logged"] = True
         # Don't take any action - page will redirect automatically when it's user's turn
 
@@ -25927,8 +24517,8 @@ async def nodriver_funone_main(tab, url, config_dict):
             step = await nodriver_funone_detect_step(tab)
 
             # Only print when step changes (reduce repetitive messages)
-            if show_debug_message and funone_dict.get("last_step") != step:
-                print(f"[FUNONE] Detected step: {step}")
+            if funone_dict.get("last_step") != step:
+                debug.log(f"[FUNONE] Detected step: {step}")
                 funone_dict["last_step"] = step
 
             if step == 1:
@@ -25986,13 +24576,11 @@ async def nodriver_funone_main(tab, url, config_dict):
 
                         if refresh_clicked:
                             # Wait for WebSocket response - use asyncio.sleep for reliable timing
-                            if show_debug_message:
-                                print(f"[FUNONE] Waiting {auto_reload_interval} seconds...")
+                            debug.log(f"[FUNONE] Waiting {auto_reload_interval} seconds...")
                             await asyncio.sleep(auto_reload_interval)
                         else:
                             # Fallback: reload page if refresh button not found
-                            if show_debug_message:
-                                print("[FUNONE] Refresh button not found, reloading page...")
+                            debug.log("[FUNONE] Refresh button not found, reloading page...")
                             await tab.reload()
                             await asyncio.sleep(auto_reload_interval)
 
@@ -26091,7 +24679,6 @@ async def nodriver_funone_main(tab, url, config_dict):
 
     return tab
 
-
 # =============================================================================
 # FANSI GO Platform Support
 # URL: https://go.fansi.me
@@ -26110,14 +24697,12 @@ FANSIGO_URL_PATTERNS = {
     "order_result": r"go\.fansi\.me/tickets/payment/orderresult/",
 }
 
-
 def is_fansigo_url(url: str) -> bool:
     """Check if URL is a FANSI GO URL"""
     import re
     if url is None:
         return False
     return bool(re.search(FANSIGO_URL_PATTERNS["domain"], url))
-
 
 def get_fansigo_page_type(url: str) -> str:
     """Get FANSI GO page type from URL
@@ -26140,7 +24725,6 @@ def get_fansigo_page_type(url: str) -> str:
 
     return "unknown"
 
-
 async def nodriver_fansigo_inject_cookie(tab, config_dict):
     """Inject FansiAuthInfo cookie for FANSI GO login
 
@@ -26153,12 +24737,11 @@ async def nodriver_fansigo_inject_cookie(tab, config_dict):
     """
     import nodriver.cdp as cdp
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     fansigo_cookie = config_dict["accounts"].get("fansigo_cookie", "").strip()
 
     if len(fansigo_cookie) == 0:
-        if show_debug_message:
-            print("[FANSIGO] No cookie configured, continuing as guest")
+        debug.log("[FANSIGO] No cookie configured, continuing as guest")
         return True
 
     try:
@@ -26172,14 +24755,12 @@ async def nodriver_fansigo_inject_cookie(tab, config_dict):
             http_only=True,
         ))
 
-        if show_debug_message:
-            print("[FANSIGO] Cookie injected successfully")
+        debug.log("[FANSIGO] Cookie injected successfully")
         return True
 
     except Exception as e:
         print(f"[FANSIGO] Cookie injection failed: {e}")
         return False
-
 
 async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
     """Get all available shows from event page using tab.evaluate()
@@ -26196,7 +24777,7 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
     """
     import re
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     shows = []
 
     try:
@@ -26204,8 +24785,7 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
         try:
             await tab.find("請選擇活動場次進行購買", timeout=5)
         except Exception:
-            if show_debug_message:
-                print("[FANSIGO] Waiting for event page to render...")
+            debug.log("[FANSIGO] Waiting for event page to render...")
             return shows
 
         # Extract show data via JavaScript
@@ -26254,8 +24834,7 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
                 if venue_match:
                     venue = venue_match.group(1).strip()
 
-            if show_debug_message:
-                print(f"[FANSIGO] Show: name={name}, date={datetime_str}, venue={venue}")
+            debug.log(f"[FANSIGO] Show: name={name}, date={datetime_str}, venue={venue}")
 
             shows.append({
                 "href": href,
@@ -26265,15 +24844,12 @@ async def nodriver_fansigo_get_shows(tab, config_dict) -> list:
                 "venue": venue,
             })
 
-        if show_debug_message:
-            print(f"[FANSIGO] Found {len(shows)} shows")
+        debug.log(f"[FANSIGO] Found {len(shows)} shows")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[FANSIGO] Error getting shows: {e}")
+        debug.log(f"[FANSIGO] Error getting shows: {e}")
 
     return shows
-
 
 async def nodriver_fansigo_click_show(tab, show_dict, config_dict):
     """Navigate to show page directly using href
@@ -26286,7 +24862,7 @@ async def nodriver_fansigo_click_show(tab, show_dict, config_dict):
         show_dict: Show dictionary with href
         config_dict: Configuration dictionary
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     href = show_dict.get("href", "")
 
     if not href:
@@ -26296,11 +24872,9 @@ async def nodriver_fansigo_click_show(tab, show_dict, config_dict):
     if href.startswith("/"):
         href = "https://go.fansi.me" + href
 
-    if show_debug_message:
-        print(f"[FANSIGO] Navigating to show: {href}")
+    debug.log(f"[FANSIGO] Navigating to show: {href}")
 
     await tab.get(href)
-
 
 def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "text") -> dict:
     """Match item by keyword string
@@ -26323,7 +24897,6 @@ def fansigo_match_by_keyword(items: list, keyword_string: str, text_key: str = "
 
     return None
 
-
 async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
     """Auto select show/date on event page
 
@@ -26337,7 +24910,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
     """
     import re
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Check if date auto select is enabled
     date_auto_select = config_dict.get("date_auto_select", {})
@@ -26352,14 +24925,12 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
     shows = await nodriver_fansigo_get_shows(tab, config_dict)
 
     if len(shows) == 0:
-        if show_debug_message:
-            print("[FANSIGO] No shows found on event page")
+        debug.log("[FANSIGO] No shows found on event page")
         return False
 
     # Single show - click directly
     if len(shows) == 1:
-        if show_debug_message:
-            print(f"[FANSIGO] Single show found, selecting: {shows[0]['name']}")
+        debug.log(f"[FANSIGO] Single show found, selecting: {shows[0]['name']}")
         try:
             await nodriver_fansigo_click_show(tab, shows[0], config_dict)
             return True
@@ -26370,10 +24941,10 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
     # Multiple shows - use keyword matching
     date_keyword = date_auto_select.get("date_keyword", "")
 
-    if show_debug_message:
-        print(f"[FANSIGO] Matching with date_keyword: {date_keyword}")
+    if debug.enabled:
+        debug.log(f"[FANSIGO] Matching with date_keyword: {date_keyword}")
         for show in shows:
-            print(f"[FANSIGO]   Show text: {show['text'][:80]}")
+            debug.log(f"[FANSIGO]   Show text: {show['text'][:80]}")
 
     if date_keyword:
         matched = fansigo_match_by_keyword(shows, date_keyword)
@@ -26381,8 +24952,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         matched = None
 
     if matched:
-        if show_debug_message:
-            print(f"[FANSIGO] Show matched by keyword: {matched['name']}")
+        debug.log(f"[FANSIGO] Show matched by keyword: {matched['name']}")
         try:
             await nodriver_fansigo_click_show(tab, matched, config_dict)
             return True
@@ -26395,8 +24965,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
         target = util.get_target_item_from_matched_list(shows, mode)
         if target:
-            if show_debug_message:
-                print(f"[FANSIGO] No keyword set, selecting by mode: {target['name']}")
+            debug.log(f"[FANSIGO] No keyword set, selecting by mode: {target['name']}")
             try:
                 await nodriver_fansigo_click_show(tab, target, config_dict)
                 return True
@@ -26411,8 +24980,7 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
         mode = date_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
         target = util.get_target_item_from_matched_list(shows, mode)
         if target:
-            if show_debug_message:
-                print(f"[FANSIGO] Using fallback, selecting: {target['name']}")
+            debug.log(f"[FANSIGO] Using fallback, selecting: {target['name']}")
             try:
                 await nodriver_fansigo_click_show(tab, target, config_dict)
                 return True
@@ -26421,10 +24989,8 @@ async def nodriver_fansigo_date_auto_select(tab, url, config_dict) -> bool:
                 return False
         return False
 
-    if show_debug_message:
-        print("[FANSIGO] No matching show found and fallback disabled")
+    debug.log("[FANSIGO] No matching show found and fallback disabled")
     return False
-
 
 async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
     """Get all available ticket sections from show page using tab.evaluate()
@@ -26436,7 +25002,7 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
     Returns:
         list: List of section dictionaries with index, name, status, text
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     sections = []
 
     try:
@@ -26444,8 +25010,7 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
         try:
             await tab.find("選擇票券種類", timeout=5)
         except Exception:
-            if show_debug_message:
-                print("[FANSIGO] Waiting for show page to render...")
+            debug.log("[FANSIGO] Waiting for show page to render...")
             return sections
 
         # Extract section data via JavaScript
@@ -26482,8 +25047,7 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
             if not item.get("name"):
                 continue
 
-            if show_debug_message:
-                print(f"[FANSIGO] Section: {item['name']}, status={item['status']}")
+            debug.log(f"[FANSIGO] Section: {item['name']}, status={item['status']}")
 
             sections.append({
                 "index": item["index"],
@@ -26492,16 +25056,14 @@ async def nodriver_fansigo_get_sections(tab, config_dict) -> list:
                 "text": item.get("text", ""),
             })
 
-        if show_debug_message:
+        if debug.enabled:
             available = [s for s in sections if s["status"] == "on_sale"]
-            print(f"[FANSIGO] Found {len(sections)} sections, {len(available)} available")
+            debug.log(f"[FANSIGO] Found {len(sections)} sections, {len(available)} available")
 
     except Exception as e:
-        if show_debug_message:
-            print(f"[FANSIGO] Error getting sections: {e}")
+        debug.log(f"[FANSIGO] Error getting sections: {e}")
 
     return sections
-
 
 async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
     """Auto select ticket section/area on show page
@@ -26516,7 +25078,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
     """
     import re
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Check if area auto select is enabled
     area_auto_select = config_dict.get("area_auto_select", {})
@@ -26534,8 +25096,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
     available_sections = [s for s in sections if s["status"] == "on_sale"]
 
     if len(available_sections) == 0:
-        if show_debug_message:
-            print("[FANSIGO] No available sections found")
+        debug.log("[FANSIGO] No available sections found")
         return -1
 
     # Apply exclude keywords
@@ -26554,8 +25115,7 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
         available_sections = filtered_sections
 
     if len(available_sections) == 0:
-        if show_debug_message:
-            print("[FANSIGO] All sections excluded by keyword_exclude")
+        debug.log("[FANSIGO] All sections excluded by keyword_exclude")
         return -1
 
     # Use keyword matching
@@ -26570,25 +25130,23 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
 
     if matched:
         target_section = matched
-        if show_debug_message:
-            print(f"[FANSIGO] Section matched by keyword: {matched['name']}")
+        debug.log(f"[FANSIGO] Section matched by keyword: {matched['name']}")
     elif not area_keyword:
         # No keyword set = accept all, select by mode
         mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
         target_section = util.get_target_item_from_matched_list(available_sections, mode)
-        if show_debug_message and target_section:
-            print(f"[FANSIGO] No keyword set, selecting by mode: {target_section['name']}")
+        if target_section:
+            debug.log(f"[FANSIGO] No keyword set, selecting by mode: {target_section['name']}")
     else:
         # Keyword set but no match - check fallback
         area_auto_fallback = config_dict.get("area_auto_fallback", False)
         if area_auto_fallback:
             mode = area_auto_select.get("mode", CONST_FROM_TOP_TO_BOTTOM)
             target_section = util.get_target_item_from_matched_list(available_sections, mode)
-            if show_debug_message and target_section:
-                print(f"[FANSIGO] Using fallback, selecting: {target_section['name']}")
+            if target_section:
+                debug.log(f"[FANSIGO] Using fallback, selecting: {target_section['name']}")
         else:
-            if show_debug_message:
-                print("[FANSIGO] No matching section found and fallback disabled")
+            debug.log("[FANSIGO] No matching section found and fallback disabled")
             return -1
 
     # Click the section to select it
@@ -26609,7 +25167,6 @@ async def nodriver_fansigo_area_auto_select(tab, url, config_dict) -> int:
 
     return -1
 
-
 async def nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index=0) -> bool:
     """Set ticket quantity on show page using tab.evaluate()
 
@@ -26621,7 +25178,7 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index=
     Returns:
         bool: True if quantity set successfully
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
     target_count = config_dict.get("ticket_number", 1)
 
     if target_count < 1:
@@ -26655,15 +25212,13 @@ async def nodriver_fansigo_assign_ticket_number(tab, config_dict, section_index=
             if i < target_count - 1:
                 await asyncio.sleep(0.2)
 
-        if show_debug_message:
-            print(f"[FANSIGO] Set ticket quantity to {target_count} for section {section_index}")
+        debug.log(f"[FANSIGO] Set ticket quantity to {target_count} for section {section_index}")
 
         return True
 
     except Exception as e:
         print(f"[FANSIGO] Error setting ticket quantity: {e}")
         return False
-
 
 async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
     """Click checkout/submit button on show page using JavaScript
@@ -26675,7 +25230,7 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
     Returns:
         bool: True if checkout button clicked
     """
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     try:
         # Find and click checkout button via JavaScript
@@ -26702,18 +25257,15 @@ async def nodriver_fansigo_click_checkout(tab, config_dict) -> bool:
         result = util.parse_nodriver_result(result)
 
         if isinstance(result, dict) and result.get('clicked'):
-            if show_debug_message:
-                print(f"[FANSIGO] Clicked checkout button: {result.get('text', '')}")
+            debug.log(f"[FANSIGO] Clicked checkout button: {result.get('text', '')}")
             return True
 
-        if show_debug_message:
-            print("[FANSIGO] Checkout button not found")
+        debug.log("[FANSIGO] Checkout button not found")
         return False
 
     except Exception as e:
         print(f"[FANSIGO] Error clicking checkout: {e}")
         return False
-
 
 async def nodriver_fansigo_main(tab, url, config_dict):
     """Main control function for FANSI GO platform
@@ -26728,7 +25280,7 @@ async def nodriver_fansigo_main(tab, url, config_dict):
     """
     global fansigo_dict
 
-    show_debug_message = config_dict["advanced"].get("verbose", False)
+    debug = util.create_debug_logger(config_dict)
 
     # Check pause state
     if await check_and_handle_pause(config_dict):
@@ -26748,8 +25300,7 @@ async def nodriver_fansigo_main(tab, url, config_dict):
 
     # Log page type change
     if page_type != fansigo_dict.get("last_page_type"):
-        if show_debug_message:
-            print(f"[FANSIGO] Page type: {page_type}")
+        debug.log(f"[FANSIGO] Page type: {page_type}")
         fansigo_dict["last_page_type"] = page_type
 
     # Inject cookie (once)
@@ -26798,9 +25349,17 @@ async def nodriver_fansigo_main(tab, url, config_dict):
 
     return tab
 
-
 async def main(args):
     config_dict = get_config_dict(args)
+
+    # Global timestamp: override builtins.print to prepend [HH:MM:SS]
+    if config_dict and config_dict.get("advanced", {}).get("show_timestamp", False):
+        import builtins
+        _original_print = builtins.print
+        def _timestamped_print(*args_p, **kwargs_p):
+            timestamp = datetime.now().strftime("[%H:%M:%S]")
+            _original_print(timestamp, *args_p, **kwargs_p)
+        builtins.print = _timestamped_print
 
     driver = None
     tab = None
@@ -26832,6 +25391,9 @@ async def main(args):
                 except Exception as e:
                     print(f"[MCP DEBUG] Warning: Could not save port to file: {e}")
             tab = await nodriver_goto_homepage(driver, config_dict)
+            if tab is None:
+                print("[ERROR] Homepage navigation failed. Cannot continue.")
+                sys.exit()
             tab = await nodrver_block_urls(tab, config_dict)
             if not config_dict["advanced"]["headless"]:
                 await nodriver_resize_window(tab, config_dict)
@@ -26840,6 +25402,7 @@ async def main(args):
             sys.exit()
     else:
         print("Load config error!")
+        sys.exit()
 
     url = ""
     last_url = ""

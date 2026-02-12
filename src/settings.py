@@ -38,17 +38,16 @@ from typing import (
 try:
     import ddddocr
 except Exception as exc:
-    pass
+    print(f"[WARNING] ddddocr module not available: {exc}")
+    print("[WARNING] OCR captcha auto-solve will be disabled.")
 
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.09)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.12)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
-CONST_MAXBOT_EXTENSION_NAME = "Maxbotplus_1.0.0"
-CONST_MAXBOT_EXTENSION_STATUS_JSON = "status.json"
 CONST_MAXBOT_INT28_FILE = "MAXBOT_INT28_IDLE.txt"
 CONST_MAXBOT_LAST_URL_FILE = "MAXBOT_LAST_URL.txt"
 CONST_MAXBOT_QUESTION_FILE = "MAXBOT_QUESTION.txt"
@@ -67,9 +66,6 @@ CONST_HOMEPAGE_DEFAULT = "about:blank"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_NON_BROWSER = "NonBrowser"
 CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS = "canvas"
 
-CONST_WEBDRIVER_TYPE_SELENIUM = "selenium"
-CONST_WEBDRIVER_TYPE_UC = "undetected_chromedriver"
-CONST_WEBDRIVER_TYPE_DP = "DrissionPage"
 CONST_WEBDRIVER_TYPE_NODRIVER = "nodriver"
 
 CONST_SUPPORTED_SITES = ["https://kktix.com"
@@ -182,13 +178,13 @@ def get_default_config():
     config_dict["advanced"]["play_sound"]["order"] = True
     config_dict["advanced"]["play_sound"]["filename"] = CONST_CAPTCHA_SOUND_FILENAME_DEFAULT
 
-    config_dict["advanced"]["chrome_extension"] = True
     config_dict["advanced"]["disable_adjacent_seat"] = False
     config_dict["advanced"]["hide_some_image"] = False
     config_dict["advanced"]["block_facebook_network"] = False
 
     config_dict["advanced"]["headless"] = False
     config_dict["advanced"]["verbose"] = False
+    config_dict["advanced"]["show_timestamp"] = False
     config_dict["advanced"]["auto_guess_options"] = False
     config_dict["advanced"]["user_guess_string"] = ""
     config_dict["advanced"]["discount_code"] = ""
@@ -263,6 +259,23 @@ def migrate_config(config_dict):
     if "advanced" in config_dict and "discount_code" not in config_dict["advanced"]:
         config_dict["advanced"]["discount_code"] = ""
 
+    # Ensure all default fields exist (fills missing keys from new versions)
+    default = get_default_config()
+    for section in ["advanced", "kktix", "tixcraft", "date_auto_select", "area_auto_select", "ocr_captcha", "contact", "accounts", "cityline"]:
+        if section in default:
+            if section not in config_dict or not isinstance(config_dict[section], dict):
+                config_dict[section] = dict(default[section])
+            else:
+                for key, value in default[section].items():
+                    if key not in config_dict[section]:
+                        config_dict[section][key] = value
+
+    # Top-level scalar fields (auto-fill any missing non-section keys)
+    dict_sections = {k for k, v in default.items() if isinstance(v, dict)}
+    for key, value in default.items():
+        if key not in dict_sections and key not in config_dict:
+            config_dict[key] = value
+
     return config_dict
 
 def load_json():
@@ -277,7 +290,9 @@ def load_json():
             with open(config_filepath, encoding='utf-8') as json_data:
                 config_dict = json.load(json_data)
         except Exception as e:
-            pass
+            print(f"[ERROR] Failed to load {config_filepath}: {e}")
+            print("[ERROR] Settings file may be corrupted. Using default settings.")
+            config_dict = get_default_config()
     else:
         config_dict = get_default_config()
 
@@ -299,32 +314,6 @@ def reset_json():
     config_dict = get_default_config()
     return config_filepath, config_dict
 
-def decrypt_password(config_dict):
-    config_dict["accounts"]["facebook_password"] = util.decryptMe(config_dict["accounts"]["facebook_password"])
-    config_dict["accounts"]["kktix_password"] = util.decryptMe(config_dict["accounts"]["kktix_password"])
-    config_dict["accounts"]["fami_password"] = util.decryptMe(config_dict["accounts"]["fami_password"])
-    config_dict["accounts"]["cityline_password"] = util.decryptMe(config_dict["accounts"]["cityline_password"])
-    config_dict["accounts"]["urbtix_password"] = util.decryptMe(config_dict["accounts"]["urbtix_password"])
-    config_dict["accounts"]["hkticketing_password"] = util.decryptMe(config_dict["accounts"]["hkticketing_password"])
-    config_dict["accounts"]["kham_password"] = util.decryptMe(config_dict["accounts"]["kham_password"])
-    config_dict["accounts"]["ticket_password"] = util.decryptMe(config_dict["accounts"]["ticket_password"])
-    config_dict["accounts"]["udn_password"] = util.decryptMe(config_dict["accounts"]["udn_password"])
-    config_dict["accounts"]["ticketplus_password"] = util.decryptMe(config_dict["accounts"]["ticketplus_password"])
-    return config_dict
-
-def encrypt_password(config_dict):
-    config_dict["accounts"]["facebook_password"] = util.encryptMe(config_dict["accounts"]["facebook_password"])
-    config_dict["accounts"]["kktix_password"] = util.encryptMe(config_dict["accounts"]["kktix_password"])
-    config_dict["accounts"]["fami_password"] = util.encryptMe(config_dict["accounts"]["fami_password"])
-    config_dict["accounts"]["cityline_password"] = util.encryptMe(config_dict["accounts"]["cityline_password"])
-    config_dict["accounts"]["urbtix_password"] = util.encryptMe(config_dict["accounts"]["urbtix_password"])
-    config_dict["accounts"]["hkticketing_password"] = util.encryptMe(config_dict["accounts"]["hkticketing_password"])
-    config_dict["accounts"]["kham_password"] = util.encryptMe(config_dict["accounts"]["kham_password"])
-    config_dict["accounts"]["ticket_password"] = util.encryptMe(config_dict["accounts"]["ticket_password"])
-    config_dict["accounts"]["udn_password"] = util.encryptMe(config_dict["accounts"]["udn_password"])
-    config_dict["accounts"]["ticketplus_password"] = util.encryptMe(config_dict["accounts"]["ticketplus_password"])
-    return config_dict
-
 def maxbot_idle():
     app_root = util.get_app_root()
     idle_filepath = os.path.join(app_root, CONST_MAXBOT_INT28_FILE)
@@ -332,7 +321,7 @@ def maxbot_idle():
         with open(idle_filepath, "w") as text_file:
             text_file.write("")
     except Exception as e:
-        pass
+        print(f"[ERROR] Failed to create idle file: {e}")
 
 def maxbot_resume():
     app_root = util.get_app_root()
@@ -349,9 +338,7 @@ def launch_maxbot():
 
     config_filepath, config_dict = load_json()
 
-    script_name = "chrome_tixcraft"
-    if config_dict["webdriver_type"] == CONST_WEBDRIVER_TYPE_NODRIVER:
-        script_name = "nodriver_tixcraft"
+    script_name = "nodriver_tixcraft"
 
     window_size = config_dict["advanced"]["window_size"]
     if len(window_size) > 0:
@@ -398,36 +385,6 @@ def change_maxbot_status_by_keyword():
             #print("match to resume:", current_time)
             maxbot_resume()
 
-def clean_extension_status():
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
-    target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
-    target_path = os.path.join(target_path, "data")
-    target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
-    if os.path.exists(target_path):
-        try:
-            os.unlink(target_path)
-        except Exception as exc:
-            print(exc)
-            pass
-
-def sync_status_to_extension(status):
-    Root_Dir = util.get_app_root()
-    webdriver_path = os.path.join(Root_Dir, "webdriver")
-    target_path = os.path.join(webdriver_path, CONST_MAXBOT_EXTENSION_NAME)
-    target_path = os.path.join(target_path, "data")
-    if os.path.exists(target_path):
-        target_path = os.path.join(target_path, CONST_MAXBOT_EXTENSION_STATUS_JSON)
-        #print("save as to:", target_path)
-        status_json={}
-        status_json["status"]=status
-        #print("dump json to path:", target_path)
-        try:
-            with open(target_path, 'w', encoding='utf-8') as outfile:
-                json.dump(status_json, outfile)
-        except Exception as e:
-            pass
-
 def clean_tmp_file():
     app_root = util.get_app_root()
     remove_file_list = [CONST_MAXBOT_LAST_URL_FILE
@@ -443,7 +400,10 @@ def clean_tmp_file():
     target_folder = os.listdir(Root_Dir)
     for item in target_folder:
         if item.endswith(".tmp"):
-            os.remove(os.path.join(Root_Dir, item))
+            try:
+                os.remove(os.path.join(Root_Dir, item))
+            except Exception as e:
+                print(f"[WARNING] Failed to remove {item}: {e}")
 
 class NoCacheStaticFileHandler(StaticFileHandler):
     """Custom StaticFileHandler that prevents caching of settings.html"""
@@ -513,8 +473,6 @@ class RunHandler(tornado.web.RequestHandler):
 class LoadJsonHandler(tornado.web.RequestHandler):
     def get(self):
         config_filepath, config_dict = load_json()
-        # Decrypt passwords for Web UI display (migration: decrypt old encrypted passwords)
-        config_dict = decrypt_password(config_dict)
 
         # Dynamically generate remote_url based on server_port (Issue #156)
         server_port = config_dict.get("advanced", {}).get("server_port", CONST_SERVER_PORT)
@@ -763,7 +721,6 @@ if __name__ == "__main__":
     threading.Thread(target=web_server, daemon=True).start()
     
     clean_tmp_file()
-    clean_extension_status()
 
     print("To exit web server press Ctrl + C.")
     while True:
