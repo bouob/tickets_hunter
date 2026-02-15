@@ -33,6 +33,7 @@
 | 文件 | 說明 | 建議閱讀時機 |
 |------|------|--------------|
 | **[關鍵字與回退機制](keyword-mechanism.md)** | 深入理解搶票邏輯 | 設定關鍵字前 |
+| **[ibon 等候室常見問題](ibon-queue-it-faq.md)** | 等候室排隊機制與注意事項 | 搶 ibon 票前 |
 
 ### 進階參考
 
@@ -58,6 +59,12 @@
 - **票數怎麼設定？** → [設定說明 - 票券設定](settings-guide.md#票券設定)
 - **Cookie 登入怎麼用？** → [設定說明 - 進階設定](settings-guide.md#進階設定)
 
+### ibon 等候室相關
+
+- **提前進等候室有用嗎？** → [ibon 等候室 FAQ](ibon-queue-it-faq.md#q-提前進等候室會排比較前面嗎)
+- **排隊時需要做什麼？** → [ibon 等候室 FAQ](ibon-queue-it-faq.md#q-排隊的時候需要做什麼嗎)
+- **會不會被踢出去？** → [ibon 等候室 FAQ](ibon-queue-it-faq.md#q-排到一半會被踢出去嗎)
+
 ---
 
 ## 文件架構
@@ -68,6 +75,7 @@ guide/
 ├── installation.md        ← 執行檔版本教學
 ├── quick-start.md         ← Python 版本教學
 ├── keyword-mechanism.md   ← 關鍵字機制詳解
+├── ibon-queue-it-faq.md   ← ibon 等候室常見問題
 └── settings-guide.md      ← 完整設定參考
 ```
 

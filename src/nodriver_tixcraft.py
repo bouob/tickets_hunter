@@ -42,7 +42,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.12)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -331,120 +331,296 @@ async def nodriver_facebook_login(tab, facebook_account, facebook_password):
 
 async def detect_cloudflare_challenge(tab, show_debug=False):
     """
-    偵測是否遇到 Cloudflare 挑戰頁面
+    Detect Cloudflare challenge page (Turnstile widget or full-page interstitial).
+
+    Three-layer detection:
+    1. CDP Target: check for iframe target with challenges.cloudflare.com (most reliable)
+    2. JS DOM query: iframe or .cf-turnstile (fast but misses shadow DOM iframes)
+    3. HTML keywords: full-page CF interstitial indicators (fallback)
 
     Returns:
-        bool: True 如果偵測到 Cloudflare 挑戰頁面
+        bool: True if Cloudflare challenge detected
     """
     debug = util.create_debug_logger(enabled=show_debug)
     try:
+        # Layer 1: CDP Target detection (most reliable - finds iframes invisible to JS)
+        try:
+            targets = await tab.send(cdp.target.get_targets())
+            for t in targets:
+                url_str = str(t.url) if t.url else ""
+                if "challenges.cloudflare" in url_str:
+                    debug.log("[CF DETECT] Cloudflare target found via CDP")
+                    return True
+        except Exception:
+            pass
+
+        # Layer 2: JS DOM detection (fast, catches some cases)
+        try:
+            cf_dom = await tab.evaluate(
+                '!!(document.querySelector(\'iframe[src*="challenges.cloudflare.com"]\')'
+                ' || document.querySelector(\'.cf-turnstile\'))'
+            )
+            if cf_dom:
+                debug.log("[CF DETECT] Cloudflare DOM element found")
+                return True
+        except Exception:
+            pass
+
+        # Layer 3: HTML keyword detection (full-page interstitial fallback)
         html_content = await tab.get_content()
         if not html_content:
             return False
 
         html_lower = html_content.lower()
 
-        # Cloudflare 挑戰頁面的特徵標記
+        # Note: "cloudflare" alone is too broad (matches CDN/analytics scripts)
         cloudflare_indicators = [
-            "cloudflare",
             "cf-browser-verification",
-            "challenge-platform",
+            "cf-challenge-running",
+            "cf-spinner-allow-5-secs",
             "checking your browser",
             "please wait while we verify",
             "verify you are human",
-            "正在驗證",
-            "驗證你是人類",
-            "cf-challenge-running",
-            "cf-spinner-allow-5-secs"
         ]
 
         detected = any(indicator in html_lower for indicator in cloudflare_indicators)
-
         if detected:
-            # 只在首次偵測到時顯示訊息，避免重複輸出
-            # print("[CLOUDFLARE] 偵測到 Cloudflare 挑戰頁面")  # 移除重複訊息
-            pass
-
+            debug.log("[CF DETECT] Cloudflare keywords found in HTML")
         return detected
 
     except Exception as exc:
         debug.log(f"Cloudflare detection error: {exc}")
         return False
 
+def _find_cf_iframe_in_dom(node, depth=0):
+    """Walk pierced DOM tree to find Cloudflare Turnstile iframe node.
+
+    Returns (node_id, src) if found, else (None, None).
+    """
+    name = (node.node_name or "").upper()
+    attrs = {}
+    if node.attributes:
+        for i in range(0, len(node.attributes), 2):
+            if i + 1 < len(node.attributes):
+                attrs[node.attributes[i]] = node.attributes[i + 1]
+
+    if name == "IFRAME":
+        src = attrs.get("src", "")
+        title = attrs.get("title", "")
+        if "challenges.cloudflare" in src or "challenges.cloudflare" in title:
+            return (node.node_id, src)
+
+    # Recurse: children, shadow roots, content documents
+    for child_list in [node.children, node.shadow_roots]:
+        if child_list:
+            for child in child_list:
+                result = _find_cf_iframe_in_dom(child, depth + 1)
+                if result[0]:
+                    return result
+    if node.content_document:
+        result = _find_cf_iframe_in_dom(node.content_document, depth + 1)
+        if result[0]:
+            return result
+
+    return (None, None)
+
+
+async def _cdp_click(tab, x, y):
+    """Dispatch CDP mousePressed + mouseReleased at (x, y)."""
+    await tab.send(cdp.input_.dispatch_mouse_event(
+        type_="mousePressed", x=x, y=y,
+        button=cdp.input_.MouseButton("left"), click_count=1
+    ))
+    await tab.sleep(0.05)
+    await tab.send(cdp.input_.dispatch_mouse_event(
+        type_="mouseReleased", x=x, y=y,
+        button=cdp.input_.MouseButton("left"), click_count=1
+    ))
+
+
 async def handle_cloudflare_challenge(tab, config_dict, max_retry=None):
     """
-    處理 Cloudflare 挑戰頁面 - 增強版
+    Handle Cloudflare Turnstile challenge.
+
+    Strategy (per attempt, in order):
+    1. CDP DOM pierce: find iframe via DOM.getDocument(pierce=True) + getBoxModel for position
+    2. Text label positioning: find surrounding text, calculate checkbox offset
+    3. verify_cf fallback: nodriver built-in template matching (least reliable)
 
     Args:
-        tab: nodriver tab 物件
-        config_dict: 設定字典
-        max_retry: 最大重試次數（若為 None 則使用全域設定）
+        tab: nodriver tab object
+        config_dict: settings dict
+        max_retry: max retries (default: CLOUDFLARE_MAX_RETRY)
 
     Returns:
-        bool: True 如果成功繞過 Cloudflare
+        bool: True if challenge bypassed successfully
     """
-    # 使用全域設定或傳入值
     max_retry = max_retry or CLOUDFLARE_MAX_RETRY
 
-    # 根據模式決定是否顯示訊息
     cf_debug = (config_dict.get("advanced", {}).get("verbose", False) or
                 CLOUDFLARE_BYPASS_MODE == "debug")
 
-    # 自動模式下靜默執行
-    if CLOUDFLARE_BYPASS_MODE == "auto":
-        cf_debug = False
-
     debug = util.create_debug_logger(enabled=cf_debug)
-
     debug.log("[CLOUDFLARE] Starting to handle Cloudflare challenge...")
 
     for retry_count in range(max_retry):
         try:
             if retry_count > 0:
                 debug.log(f"[CLOUDFLARE] Retry attempt {retry_count}...")
-                # Increase retry interval
                 await tab.sleep(3 + retry_count)
 
-            # Method 1: Use verify_cf with multiple templates
-            verify_success = await util.verify_cf_with_templates(tab, show_debug=cf_debug)
+            clicked = False
 
-            # Method 2: Fallback - try clicking verification box directly
-            if not verify_success:
+            # Method 1: CDP DOM pierce + getBoxModel (most precise)
+            try:
+                doc = await tab.send(cdp.dom.get_document(depth=-1, pierce=True))
+                node_id, src = _find_cf_iframe_in_dom(doc)
+                if node_id:
+                    debug.log(f"[CLOUDFLARE] Found iframe via DOM pierce (nodeId={node_id})")
+                    try:
+                        box = await tab.send(cdp.dom.get_box_model(node_id=node_id))
+                        if box and box.content:
+                            # content quad: 4 points [x1,y1, x2,y2, x3,y3, x4,y4]
+                            quad = box.content
+                            if len(quad) >= 6:
+                                ix = quad[0]
+                                iy = quad[1]
+                                iw = quad[2] - quad[0]
+                                ih = quad[5] - quad[1]
+                                # Checkbox is ~30px from left, vertically centered
+                                click_x = ix + 30
+                                click_y = iy + (ih / 2)
+                                debug.log(f"[CLOUDFLARE] CDP click via DOM pierce at ({click_x:.0f}, {click_y:.0f}), size: {iw:.0f}x{ih:.0f}")
+                                await _cdp_click(tab, click_x, click_y)
+                                clicked = True
+                            else:
+                                debug.log(f"[CLOUDFLARE] Unexpected quad length: {len(quad)}")
+                    except Exception as box_exc:
+                        debug.log(f"[CLOUDFLARE] getBoxModel failed: {box_exc}")
+            except Exception as exc:
+                debug.log(f"[CLOUDFLARE] DOM pierce method failed: {exc}")
+
+            # Method 2: Text label positioning (proven on real CF pages)
+            if not clicked:
                 try:
-                    verify_box = await tab.query_selector('input[type="checkbox"]')
-                    if verify_box:
-                        await verify_box.click()
-                        debug.log("[CLOUDFLARE] Clicked verification checkbox directly")
+                    import json as _json
+                    label_raw = await tab.evaluate('''
+                        (function() {
+                            var labels = [
+                                "let us know you are human",
+                                "verify you are human",
+                                "confirm you are human"
+                            ];
+                            var all = document.querySelectorAll('*');
+                            for (var i = 0; i < all.length; i++) {
+                                var t = (all[i].textContent || '').trim();
+                                var tl = t.toLowerCase();
+                                var matched = false;
+                                for (var j = 0; j < labels.length; j++) {
+                                    if (tl === labels[j] || tl.indexOf(labels[j]) === 0) {
+                                        matched = true;
+                                        break;
+                                    }
+                                }
+                                if (!matched) {
+                                    var cjk = [
+                                        "\u8acb\u8b93\u6211\u5011\u77e5\u9053\u60a8\u662f\u4eba\u985e",
+                                        "\u9a57\u8b49\u60a8\u662f\u4eba\u985e",
+                                        "\u4eba\u9593\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d"
+                                    ];
+                                    for (var k = 0; k < cjk.length; k++) {
+                                        if (t.indexOf(cjk[k]) >= 0) {
+                                            matched = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (matched) {
+                                    var r = all[i].getBoundingClientRect();
+                                    if (r.height > 0 && r.height < 50 && r.width > 50) {
+                                        return JSON.stringify({x: r.x, y: r.y, h: r.height});
+                                    }
+                                }
+                            }
+                            return null;
+                        })()
+                    ''')
+                    if label_raw:
+                        label_info = label_raw
+                        if isinstance(label_raw, str):
+                            label_info = _json.loads(label_raw)
+                        if isinstance(label_info, dict) and "x" in label_info:
+                            # Turnstile widget is below the label
+                            # Checkbox at ~30px from left, ~32px below label bottom
+                            click_x = label_info["x"] + 30
+                            click_y = label_info["y"] + label_info["h"] + 32
+                            debug.log(f"[CLOUDFLARE] CDP click via text label at ({click_x:.0f}, {click_y:.0f})")
+                            await _cdp_click(tab, click_x, click_y)
+                            clicked = True
+                except Exception as exc:
+                    debug.log(f"[CLOUDFLARE] Text label method failed: {exc}")
+
+            # Method 3: Fallback - verify_cf template matching
+            if not clicked:
+                try:
+                    cf_template_result = await util.verify_cf_with_templates(tab, show_debug=cf_debug)
+                    if cf_template_result:
+                        debug.log("[CLOUDFLARE] verify_cf_with_templates succeeded (fallback)")
+                        clicked = True
+                    else:
+                        debug.log("[CLOUDFLARE] verify_cf_with_templates failed (fallback)")
                 except Exception:
                     pass
 
-            # Wait for challenge completion (dynamically adjust wait time)
+            # Wait for challenge to resolve
             wait_time = CLOUDFLARE_WAIT_TIME + (retry_count * 2)
             await tab.sleep(wait_time)
 
-            # Check if successfully bypassed
-            if not await detect_cloudflare_challenge(tab, cf_debug):
-                debug.log("[CLOUDFLARE] Cloudflare challenge bypassed successfully")
-                return True
+            # Verify: check if CF challenge is resolved
+            # Note: CDP target persists even after solved Turnstile, so use HTML-only check
+            # when a click was dispatched. HTML active indicators only appear in full-page
+            # interstitials, not in embedded (solved) Turnstile widgets.
+            if clicked:
+                still_active = False
+                try:
+                    html_content = await tab.get_content()
+                    if html_content:
+                        html_lower = html_content.lower()
+                        active_indicators = [
+                            "cf-browser-verification",
+                            "cf-challenge-running",
+                            "cf-spinner-allow-5-secs",
+                            "checking your browser",
+                        ]
+                        still_active = any(ind in html_lower for ind in active_indicators)
+                except Exception as exc:
+                    debug.log(f"[CLOUDFLARE] Post-click verification failed: {exc}")
+                    still_active = True
+                if not still_active:
+                    debug.log("[CLOUDFLARE] Challenge bypassed successfully")
+                    return True
             else:
-                debug.log(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
+                # No click dispatched; use full detection
+                if not await detect_cloudflare_challenge(tab, cf_debug):
+                    debug.log("[CLOUDFLARE] Challenge resolved (no click needed)")
+                    return True
 
-                # Last attempt: Refresh page
-                if retry_count == max_retry - 1:
-                    try:
-                        debug.log("[CLOUDFLARE] Last attempt: Refreshing page")
-                        await tab.reload()
-                        await tab.sleep(5)
-                        if not await detect_cloudflare_challenge(tab, cf_debug):
-                            return True
-                    except Exception:
-                        pass
+            debug.log(f"[CLOUDFLARE] Attempt {retry_count + 1} unsuccessful")
+
+            if retry_count == max_retry - 1:
+                try:
+                    debug.log("[CLOUDFLARE] Last attempt: Refreshing page")
+                    await tab.reload()
+                    await tab.sleep(5)
+                    if not await detect_cloudflare_challenge(tab, cf_debug):
+                        return True
+                except Exception:
+                    pass
 
         except Exception as exc:
             debug.log(f"[CLOUDFLARE] Error during processing: {exc}")
 
-    debug.log("[CLOUDFLARE] Cloudflare challenge handling failed, max retries reached")
-    debug.log("[CLOUDFLARE] Suggestion: Check network connection or try again later")
+    debug.log("[CLOUDFLARE] Challenge handling failed, max retries reached")
     return False
 
 async def nodriver_kktix_signin(tab, url, config_dict):
@@ -467,8 +643,7 @@ async def nodriver_kktix_signin(tab, url, config_dict):
     except Exception as exc:
         print(f"解析 back_to 參數失敗: {exc}")
 
-    # for like human.
-    await asyncio.sleep(random.uniform(1, 3))
+    await asyncio.sleep(random.uniform(0.2, 0.5))
 
     kktix_account = config_dict["accounts"]["kktix_account"]
     kktix_password = config_dict["accounts"]["kktix_password"].strip()
@@ -479,12 +654,12 @@ async def nodriver_kktix_signin(tab, url, config_dict):
             account = await tab.query_selector("#user_login")
             if account:
                 await account.send_keys(kktix_account)
-                await asyncio.sleep(random.uniform(0.3, 1.2))
+                await asyncio.sleep(random.uniform(0.1, 0.2))
 
             password = await tab.query_selector("#user_password")
             if password:
                 await password.send_keys(kktix_password)
-                await asyncio.sleep(random.uniform(0.3, 1.2))
+                await asyncio.sleep(random.uniform(0.1, 0.2))
 
             await tab.evaluate('''
                 const loginBtn = document.querySelector('input[type="submit"][value="登入"]');
@@ -1491,6 +1666,18 @@ async def nodriver_kktix_date_auto_select(tab, config_dict):
             if attempt == max_attempts - 1:
                 debug.log(f"[KKTIX DATE] Error querying session list: {exc}")
 
+        # Early exit: single-session page has no event-list but has a direct buy button
+        if attempt == 0:
+            try:
+                event_list_container = await tab.query_selector('div.event-list')
+                if not event_list_container:
+                    direct_button = await tab.query_selector('.tickets > a.btn-point')
+                    if direct_button:
+                        debug.log("[KKTIX DATE] Single-session page detected (no event-list, direct button found), skipping date select")
+                        return False
+            except Exception:
+                pass
+
         if attempt < max_attempts - 1:
             await tab.sleep(check_interval)
 
@@ -2406,15 +2593,15 @@ async def nodriver_kktix_reg_new_main(tab, config_dict, fail_list, played_sound_
                     # reset to play sound when ticket avaiable.
                     played_sound_ticket = False
 
-                    try:
-                        print("no match any price, start to refresh page...")
-                        await tab.reload()
-                    except Exception as exc:
-                        #print("refresh fail")
-                        pass
+                    print("no match any price, start to refresh page...")
 
                     if config_dict["advanced"]["auto_reload_page_interval"] > 0:
                         await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+                    try:
+                        await tab.reload()
+                    except Exception as exc:
+                        pass
 
     return fail_list, played_sound_ticket
 
@@ -2428,13 +2615,15 @@ def check_kktix_got_ticket(url, config_dict):
     Returns:
         bool: True 表示已成功取得票券
     """
+    debug = util.create_debug_logger(config_dict)
     is_kktix_got_ticket = False
 
     if '/events/' in url and '/registrations/' in url and "-" in url:
         if not '/registrations/new' in url:
-            if not 'https://kktix.com/users/sign_in?' in url:
-                is_kktix_got_ticket = True
-                debug.log(f"[KKTIX] Success page detected: {url}")
+            if not '#/booking' in url:
+                if not 'https://kktix.com/users/sign_in?' in url:
+                    is_kktix_got_ticket = True
+                    debug.log(f"[KKTIX] Success page detected: {url}")
 
     if is_kktix_got_ticket:
         if '/events/' in config_dict["homepage"] and '/registrations/' in config_dict["homepage"] and "-" in config_dict["homepage"]:
@@ -2468,13 +2657,25 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
     # Global alert handler - auto-dismiss KKTIX sold-out alerts
     async def handle_kktix_alert(event):
+        # Skip alert handling when bot is paused (let user handle manually)
+        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+            return
+
         debug.log(f"[KKTIX ALERT] Alert detected: '{event.message}'")
 
-        # Dismiss the alert - try multiple times with small delays
+        # Dangerous confirmation dialogs should be dismissed (rejected), not accepted
+        dangerous_keywords = ["取消", "不保留"]
+        is_dangerous = any(kw in event.message for kw in dangerous_keywords)
+        should_accept = not is_dangerous
+
+        if is_dangerous:
+            debug.log("[KKTIX ALERT] Dangerous dialog detected, will DISMISS")
+
         for attempt in range(3):
             try:
-                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
-                debug.log(f"[KKTIX ALERT] Alert dismissed (attempt {attempt + 1})")
+                await tab.send(cdp.page.handle_java_script_dialog(accept=should_accept))
+                action = "accepted" if should_accept else "dismissed"
+                debug.log(f"[KKTIX ALERT] Alert {action} (attempt {attempt + 1})")
                 break
             except Exception as dismiss_exc:
                 error_msg = str(dismiss_exc)
@@ -2509,7 +2710,10 @@ async def nodriver_kktix_main(tab, url, config_dict):
             debug.log(f"取得跳轉後 URL 失敗: {exc}")
 
     if not is_url_contain_sign_in:
-        if '/registrations/new' in url:
+        if '#/booking' in url:
+            # Seat selection page (only some events have this)
+            await nodriver_kktix_booking_main(tab, config_dict)
+        elif '/registrations/new' in url:
             # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
             # This modal appears when user is not logged in
             await nodriver_kktix_check_guest_modal(tab, config_dict)
@@ -2539,40 +2743,32 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 # Check if tickets are already selected (prevent repeated execution)
                 is_ticket_already_selected = False
                 try:
-                    # 改進的檢查：返回簡單布林值，更可靠
                     result = await tab.evaluate('''
-                        () => {
-                            // 1. 檢查票券數量
-                            const ticketInputs = document.querySelectorAll('input[name^="tickets"]');
-                            let hasTicket = false;
-                            for (let input of ticketInputs) {
-                                const val = parseInt(input.value);
+                        (function() {
+                            var ticketInputs = document.querySelectorAll('input[name^="tickets"]');
+                            var hasTicket = false;
+                            for (var i = 0; i < ticketInputs.length; i++) {
+                                var val = parseInt(ticketInputs[i].value);
                                 if (!isNaN(val) && val > 0) {
                                     hasTicket = true;
                                     break;
                                 }
                             }
 
-                            // 2. 檢查會員序號（如果設定檔有配置的話）
-                            const memberCodeInputs = document.querySelectorAll('input.member-code');
-                            let hasMemberCode = memberCodeInputs.length === 0;  // 如果沒有序號欄位，視為已完成
-                            for (let input of memberCodeInputs) {
-                                if (input.value && input.value.trim() !== '') {
+                            var memberCodeInputs = document.querySelectorAll('input.member-code');
+                            var hasMemberCode = memberCodeInputs.length === 0;
+                            for (var j = 0; j < memberCodeInputs.length; j++) {
+                                if (memberCodeInputs[j].value && memberCodeInputs[j].value.trim() !== '') {
                                     hasMemberCode = true;
                                     break;
                                 }
                             }
 
-                            // 3. 檢查同意條款
-                            const agreeCheckbox = document.querySelector('#person_agree_terms');
-                            const isAgreed = agreeCheckbox ? agreeCheckbox.checked : true;
+                            var agreeCheckbox = document.querySelector('#person_agree_terms');
+                            var isAgreed = agreeCheckbox ? agreeCheckbox.checked : true;
 
-                            // 只有當票券已填且序號已填（或無需序號）且已同意時，才認為已選取
-                            const result = hasTicket && hasMemberCode && isAgreed;
-
-                            // 返回布林值，確保相容性
-                            return result;
-                        }
+                            return hasTicket && hasMemberCode && isAgreed;
+                        })()
                     ''')
 
                     # 直接使用結果，不依賴 parse_nodriver_result
@@ -2698,8 +2894,60 @@ async def nodriver_kktix_main(tab, url, config_dict):
     else:
         kktix_dict["is_popup_checkout"] = False
         kktix_dict["played_sound_order"] = False
+        kktix_dict["printed_completed"] = False
 
     return is_quit_bot
+
+async def nodriver_kktix_booking_main(tab, config_dict):
+    """KKTIX #/booking seat selection page automation.
+
+    Handles the seat assignment flow that appears for some events:
+    Step 1: Dismiss the info modal (system seat assignment notice)
+    Step 2: Click confirm seat button to expand dropdown
+    Step 3: Click done to complete seat selection
+    """
+    debug = util.create_debug_logger(config_dict)
+    ret = False
+
+    try:
+        # Step 1: Close info modal if visible
+        modal_visible = await tab.evaluate('''(function(){
+            var m = document.querySelector('#infoModal');
+            if (!m) return false;
+            var style = window.getComputedStyle(m);
+            return style.display !== 'none' && m.classList.contains('in');
+        })()''')
+        if modal_visible:
+            info_btn = await tab.query_selector('#infoModal .modal-footer button')
+            if info_btn:
+                await info_btn.click()
+                debug.log("[KKTIX BOOKING] Dismissed info modal")
+                await asyncio.sleep(0.5)
+                return ret  # Wait for next iteration to process remaining steps
+
+        # Step 2: Click confirm seat button to expand dropdown
+        confirm_btn = await tab.query_selector('.btn-group-for-seat button.dropdown-toggle')
+        if confirm_btn:
+            is_open = await tab.evaluate('''(function(){
+                var g = document.querySelector('.btn-group-for-seat');
+                return g && g.classList.contains('open');
+            })()''')
+
+            if not is_open:
+                await confirm_btn.click()
+                debug.log("[KKTIX BOOKING] Clicked confirm seat button")
+                await asyncio.sleep(0.3)
+
+            # Step 3: Click done to complete seat selection
+            done_btn = await tab.query_selector('a[ng-click="done()"]')
+            if done_btn:
+                await done_btn.click()
+                debug.log("[KKTIX BOOKING] Clicked done - seat confirmed")
+                ret = True
+    except Exception as exc:
+        debug.log(f"[KKTIX BOOKING] Error: {exc}")
+
+    return ret
 
 async def nodriver_kktix_confirm_order_button(tab, config_dict):
     """
@@ -3703,9 +3951,9 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
             # Keyword specified but no match → might need to wait for availability
             debug.log("[TICKETMASTER AREA] No areas matched keyword, reloading page...")
             try:
-                await tab.reload()
                 if config_dict.get("advanced", {}).get("auto_reload_page_interval", 0) > 0:
                     await tab.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+                await tab.reload()
             except:
                 pass
         else:
@@ -5238,11 +5486,11 @@ async def nodriver_tixcraft_ticket_main(tab, config_dict, ocr, Captcha_Browser, 
         # This prevents infinite loop when desired ticket count is unavailable
         print("[TICKET SELECT] Ticket count unavailable, reloading page to retry...")
         try:
-            await tab.reload()
             # Wait based on auto_reload_page_interval setting
             interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
             if interval > 0:
                 await asyncio.sleep(interval)
+            await tab.reload()
         except Exception as reload_exc:
             debug.log(f"[TICKET SELECT] Reload failed: {reload_exc}")
 
@@ -5615,6 +5863,10 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # Handles alerts that appear after page navigation (e.g., area selection redirects)
     # Reference: KHAM platform implementation (Line 10681-10697)
     async def handle_global_alert(event):
+        # Skip alert handling when bot is paused (let user handle manually)
+        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+            return
+
         global tixcraft_dict
         # IMPORTANT: Use tab.target.url (cached) instead of nodriver_current_url (js_dumps)
         # When alert dialog is open, JavaScript execution is blocked, causing js_dumps to hang
@@ -6625,7 +6877,9 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
                 // 類型1: 展開面板型
                 if (hasExpansionPanel) {{
-                    const panels = document.querySelectorAll('.v-expansion-panel');
+                    // 只收集頂層面板（排除巢狀在 .seats-area 內的子面板）
+                    const allPanels = document.querySelectorAll('.v-expansion-panel');
+                    const panels = [...allPanels].filter(p => !p.closest('.seats-area'));
                     const validPanels = [];
 
                     for (let i = 0; i < panels.length; i++) {{
@@ -6669,7 +6923,62 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         header.click();
                     }}
 
-                    // 立即嘗試找加號按鈕（面板可能已經展開或很快展開）
+                    // 偵測巢狀結構（.seats-area 存在代表新版雙層面板）
+                    const innerSeatsArea = target.panel.querySelector('.seats-area');
+                    if (innerSeatsArea) {{
+                        const subPanels = innerSeatsArea.querySelectorAll('.v-expansion-panel');
+                        const validSubPanels = [];
+
+                        for (let sp of subPanels) {{
+                            const spHeader = sp.querySelector('.v-expansion-panel-header');
+                            if (!spHeader) continue;
+                            const spName = spHeader.textContent.trim().replace(/\s+/g, ' ');
+                            if (!isSoldOut(sp) && !containsExcludeKeywords(spName)) {{
+                                validSubPanels.push({{ panel: sp, name: spName, header: spHeader }});
+                            }}
+                        }}
+
+                        console.log('Nested structure detected, valid sub-panels:', validSubPanels.length);
+
+                        if (validSubPanels.length === 0) {{
+                            return {{ success: false, message: 'Nested: no valid sub-panels' }};
+                        }}
+
+                        // 選擇目標子面板
+                        let subTarget = null;
+                        if (keyword1) {{
+                            subTarget = validSubPanels.find(p =>
+                                p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2))
+                            );
+                        }}
+                        if (!subTarget && keyword1 && !areaAutoFallback) {{
+                            return {{ success: false, strict_mode: true }};
+                        }}
+                        if (!subTarget) {{
+                            const idx = getTargetIndex(validSubPanels, autoSelectMode);
+                            subTarget = validSubPanels[idx];
+                        }}
+
+                        // 展開子面板
+                        const isSubExpanded = subTarget.panel.classList.contains('v-expansion-panel--active');
+                        if (!isSubExpanded) {{
+                            console.log('Expanding nested sub-panel:', subTarget.name);
+                            subTarget.header.click();
+                        }}
+
+                        // 嘗試找加號按鈕
+                        let nestedPlusBtn = subTarget.panel.querySelector('.mdi-plus');
+                        if (nestedPlusBtn) {{
+                            console.log('Found plus button in nested panel, clicking', ticketNumber, 'times');
+                            for (let j = 0; j < ticketNumber; j++) {{ nestedPlusBtn.click(); }}
+                            return {{ success: true, type: 'nested_expansion_panel', selected: subTarget.name, clicked: true }};
+                        }}
+
+                        return {{ success: true, type: 'nested_expansion_panel',
+                                 selected: subTarget.name, clicked: false, needRetry: true }};
+                    }}
+
+                    // 非巢狀結構：直接找加號按鈕
                     let plusBtn = target.panel.querySelector('.mdi-plus') ||
                                   target.panel.querySelector('.count-button .mdi-plus');
 
@@ -6756,13 +7065,31 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 for retry in range(5):  # 最多重試 5 次
                     retry_result = await tab.evaluate(f'''
                         (function() {{
+                            // 優先檢查巢狀結構（.seats-area 內的已展開子面板）
+                            const seatsAreas = document.querySelectorAll('.seats-area');
+                            for (let area of seatsAreas) {{
+                                const activeSubPanel = area.querySelector('.v-expansion-panel--active');
+                                if (activeSubPanel) {{
+                                    const plusBtn = activeSubPanel.querySelector('.mdi-plus') ||
+                                                   activeSubPanel.querySelector('.count-button .mdi-plus');
+                                    if (plusBtn) {{
+                                        console.log('Retry: Found plus button in nested sub-panel');
+                                        for (let j = 0; j < {ticket_number}; j++) {{
+                                            plusBtn.click();
+                                        }}
+                                        return {{ success: true, clicked: true }};
+                                    }}
+                                }}
+                            }}
+
+                            // Fallback: 單層面板搜尋
                             const panels = document.querySelectorAll('.v-expansion-panel');
                             for (let panel of panels) {{
                                 if (panel.classList.contains('v-expansion-panel--active')) {{
                                     const plusBtn = panel.querySelector('.mdi-plus') ||
                                                    panel.querySelector('.count-button .mdi-plus');
                                     if (plusBtn) {{
-                                        console.log('Retry: Found plus button');
+                                        console.log('Retry: Found plus button in panel');
                                         for (let j = 0; j < {ticket_number}; j++) {{
                                             plusBtn.click();
                                         }}
@@ -6775,10 +7102,11 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                     ''')
 
                     retry_parsed = util.parse_nodriver_result(retry_result)
-                    if isinstance(retry_parsed, dict) and retry_parsed.get('clicked', False):
-                        debug.log(f"[RETRY] Success on attempt {retry + 1}")
-                        is_selected = True
-                        break
+                    if isinstance(retry_parsed, dict):
+                        if retry_parsed.get('clicked', False):
+                            debug.log(f"[RETRY] Success on attempt {retry + 1}")
+                            is_selected = True
+                            break
 
                     await asyncio.sleep(0.2)
 
@@ -12403,17 +12731,74 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         ibon_dict["elapsed_time"]=None
         ibon_dict["is_popup_checkout"] = False
         ibon_dict["played_sound_order"] = False
+        ibon_dict["queue_it_enter_time"]=None
         ibon_dict["triggered_idle"] = False
         ibon_dict["shown_checkout_message"] = False
+        ibon_dict["alert_handler_registered"] = False
 
     # Check if kicked to login page (Cookie/Session expired)
     debug = util.create_debug_logger(config_dict)
+
+    # Global alert handler - auto-dismiss iBon alerts (sold-out, errors, etc.)
+    async def handle_ibon_alert(event):
+        # Skip alert handling when bot is paused (let user handle manually)
+        if os.path.exists(CONST_MAXBOT_INT28_FILE):
+            return
+
+        # Skip checkout page - let user handle important alerts manually
+        current_url = tab.target.url if (tab and hasattr(tab, 'target') and tab.target) else ""
+        if '/utk02/utk0206_' in current_url.lower():
+            debug.log(f"[IBON ALERT] Alert on checkout page, NOT auto-dismissing: '{event.message}'")
+            return
+
+        debug.log(f"[IBON ALERT] Alert detected: '{event.message}'")
+
+        # Dismiss the alert - try multiple times with small delays
+        for attempt in range(3):
+            try:
+                await tab.send(cdp.page.handle_java_script_dialog(accept=True))
+                debug.log(f"[IBON ALERT] Alert dismissed (attempt {attempt + 1})")
+                break
+            except Exception as dismiss_exc:
+                error_msg = str(dismiss_exc)
+                # CDP -32602 means no dialog is showing (already dismissed by local handler)
+                if "No dialog is showing" in error_msg or "-32602" in error_msg:
+                    debug.log("[IBON ALERT] Dialog already dismissed")
+                    break
+                if attempt < 2:
+                    await asyncio.sleep(0.1)
+                else:
+                    debug.log(f"[IBON ALERT] Failed to dismiss alert: {dismiss_exc}")
+
+    # Register global alert handler (only once per session)
+    if not ibon_dict.get("alert_handler_registered", False):
+        try:
+            tab.add_handler(cdp.page.JavascriptDialogOpening, handle_ibon_alert)
+            ibon_dict["alert_handler_registered"] = True
+            debug.log("[IBON ALERT] Global alert handler registered")
+        except Exception as handler_exc:
+            debug.log(f"[IBON ALERT] Failed to register alert handler: {handler_exc}")
+
+    # Queue-IT detection: track enter/exit time for diagnostics
+    url_lower = url.lower()
+    if 'queue-it.net' in url_lower:
+        if ibon_dict.get("queue_it_enter_time") is None:
+            import time as _time
+            ibon_dict["queue_it_enter_time"] = _time.time()
+            print("[IBON] Queue-IT entered, waiting...")
+        return False
+    else:
+        if ibon_dict.get("queue_it_enter_time") is not None:
+            import time as _time
+            elapsed = _time.time() - ibon_dict["queue_it_enter_time"]
+            print(f"[IBON] Queue-IT passed (waited {elapsed:.1f}s)")
+            ibon_dict["queue_it_enter_time"] = None
+
     is_login_page = False
     target_url = None
 
     # Detect login page patterns
     # Support both patterns: /huiwan/loginhuiwan and /huiwan//loginhuiwan (with double slash)
-    url_lower = url.lower()
     if 'huiwan.ibon.com.tw' in url_lower and 'loginhuiwan' in url_lower:
         is_login_page = True
         # Extract target URL from query parameter
@@ -12549,14 +12934,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         debug = util.create_debug_logger(config_dict)
                         debug.log("[IBON DATE] Date selection failed, reloading page...")
 
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            await asyncio.sleep(auto_reload_interval)
+
                         try:
                             await tab.reload()
                         except:
                             pass
-
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-                        if auto_reload_interval > 0:
-                            await asyncio.sleep(auto_reload_interval)
 
     if 'ibon.com.tw/error.html?' in url.lower():
         try:
@@ -12610,6 +12995,54 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 is_match_target_feature = True
                 area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 
+                # === live.map fast-path: skip DOM parsing by fetching area data from CDN ===
+                # Python requests bypasses browser network layer, unaffected by CDP blocking rules.
+                try:
+                    from urllib.parse import urlparse, parse_qs
+                    parsed_url = urlparse(url)
+                    qs_params = parse_qs(parsed_url.query, keep_blank_values=True)
+                    perf_id = None
+                    for key in qs_params:
+                        if key.upper() == 'PERFORMANCE_ID':
+                            perf_id = qs_params[key][0]
+                            break
+
+                    if perf_id:
+                        livemap_debug = util.create_debug_logger(config_dict)
+                        livemap_areas = util.ibon_fetch_and_parse_livemap(perf_id, livemap_debug)
+
+                        if livemap_areas:
+                            livemap_selected = None
+
+                            if len(area_keyword) > 0:
+                                livemap_kw_array = []
+                                try:
+                                    import json as _json
+                                    livemap_kw_array = _json.loads("[" + area_keyword + "]")
+                                except Exception:
+                                    livemap_kw_array = []
+
+                                for livemap_kw_item in livemap_kw_array:
+                                    livemap_selected = util.ibon_livemap_select_area(livemap_areas, config_dict, livemap_kw_item, debug=livemap_debug)
+                                    if livemap_selected:
+                                        break
+                            else:
+                                livemap_selected = util.ibon_livemap_select_area(livemap_areas, config_dict, area_keyword, debug=livemap_debug)
+
+                            if livemap_selected:
+                                skip_url = util.ibon_build_skip_url(livemap_selected)
+                                livemap_debug.log(f"[IBON LIVEMAP] Fast-path: {livemap_selected['area_name']} (remaining: {livemap_selected['remaining']}) -> {skip_url}")
+                                print(f"[IBON LIVEMAP] Fast-path: {livemap_selected['area_name']} -> skip to next step")
+                                await tab.get(skip_url)
+                                return False
+                            else:
+                                livemap_debug.log("[IBON LIVEMAP] No matching area found, falling back to DOM flow")
+                        else:
+                            livemap_debug.log("[IBON LIVEMAP] No areas parsed, falling back to DOM flow")
+                except Exception:
+                    pass
+                # === end live.map fast-path ===
+
                 is_need_refresh = False
                 is_price_assign_by_bot = False
 
@@ -12652,14 +13085,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     debug = util.create_debug_logger(config_dict)
                     debug.log("[IBON ORDERS] No available areas found, page reload required")
 
+                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                    if auto_reload_interval > 0:
+                        await asyncio.sleep(auto_reload_interval)
+
                     try:
                         await tab.reload()
                     except Exception as exc:
                         pass
-
-                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-                    if auto_reload_interval > 0:
-                        await asyncio.sleep(auto_reload_interval)
 
                 # Check if we need to handle ticket number and captcha (UTK0201_001 page)
                 is_do_ibon_performance_with_ticket_number = False
@@ -12953,16 +13386,16 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if is_need_refresh:
                     debug.log("[NEW EVENT] No available ticket areas found, page reload required")
 
+                    # Use auto_reload_page_interval setting
+                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                    if auto_reload_interval > 0:
+                        await asyncio.sleep(auto_reload_interval)
+
                     try:
                         await tab.reload()
                         debug.log("[NEW EVENT] Page reloaded successfully")
                     except Exception as reload_exc:
                         debug.log(f"[NEW EVENT] Page reload failed: {reload_exc}")
-
-                    # Use auto_reload_page_interval setting
-                    auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-                    if auto_reload_interval > 0:
-                        await asyncio.sleep(auto_reload_interval)
 
             is_match_target_feature = True
 
@@ -13105,16 +13538,16 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                     if is_need_refresh:
                         debug.log("[IBON AREA] No available ticket areas found, page reload required")
 
+                        # Use auto_reload_page_interval setting
+                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
+                        if auto_reload_interval > 0:
+                            await asyncio.sleep(auto_reload_interval)
+
                         try:
                             await tab.reload()
                             debug.log("[IBON AREA] Page reloaded successfully")
                         except Exception as reload_exc:
                             debug.log(f"[IBON AREA] Page reload failed: {reload_exc}")
-
-                        # Use auto_reload_page_interval setting
-                        auto_reload_interval = config_dict["advanced"].get("auto_reload_page_interval", 0)
-                        if auto_reload_interval > 0:
-                            await asyncio.sleep(auto_reload_interval)
 
                     if not is_price_assign_by_bot:
                         # this case show captcha and ticket-number in this page.
@@ -13405,8 +13838,8 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
                 # Auto reload if no dates available
                 print("[DATE FALLBACK] Auto-reloading page...")
                 try:
-                    await tab.reload()
                     await asyncio.sleep(config_dict.get("auto_reload_page_interval", 1.5))
+                    await tab.reload()
                 except:
                     pass
             else:
@@ -20778,14 +21211,15 @@ async def nodriver_hkticketing_date_auto_select(tab, config_dict, fail_list):
     if not is_page_ready:
         auto_reload_coming_soon_page = config_dict["tixcraft"].get("auto_reload_coming_soon_page", False)
         if auto_reload_coming_soon_page:
-            try:
-                await tab.reload()
-                debug.log("[HKTICKETING DATE] Page not ready, reloading...")
-            except Exception as exc:
-                pass
+            debug.log("[HKTICKETING DATE] Page not ready, reloading...")
 
             if config_dict["advanced"]["auto_reload_page_interval"] > 0:
                 await asyncio.sleep(config_dict["advanced"]["auto_reload_page_interval"])
+
+            try:
+                await tab.reload()
+            except Exception as exc:
+                pass
 
     return is_date_submiting, fail_list
 
@@ -24581,8 +25015,8 @@ async def nodriver_funone_main(tab, url, config_dict):
                         else:
                             # Fallback: reload page if refresh button not found
                             debug.log("[FUNONE] Refresh button not found, reloading page...")
-                            await tab.reload()
                             await asyncio.sleep(auto_reload_interval)
+                            await tab.reload()
 
                         return tab  # Next iteration will re-check status
 
@@ -25406,7 +25840,10 @@ async def main(args):
 
     url = ""
     last_url = ""
+    cloudflare_checked = False
+    cloudflare_fail_count = 0
     last_paused_state = False  # Track pause state changes
+    tixcraft_printed_completed = False
 
     fami_dict = {}
     fami_dict["fail_list"] = []
@@ -25483,6 +25920,8 @@ async def main(args):
             if url != last_url:
                 print(url)
                 write_last_url_to_file(url)
+                cloudflare_checked = False
+                cloudflare_fail_count = 0
             last_url = url
 
         if is_maxbot_paused:
@@ -25492,11 +25931,31 @@ async def main(args):
             await asyncio.sleep(0.1)
             continue
 
+        # Cloudflare challenge detection (only on URL change to avoid performance hit)
+        # After 3 consecutive failures on same URL, stop retrying to avoid infinite loop
+        if not cloudflare_checked and cloudflare_fail_count < 3:
+            is_cloudflare = await detect_cloudflare_challenge(tab, show_debug=config_dict.get("advanced", {}).get("verbose", False))
+            cloudflare_checked = True
+            if is_cloudflare:
+                print("[CLOUDFLARE] Challenge page detected, attempting to solve...")
+                cf_result = await handle_cloudflare_challenge(tab, config_dict)
+                if cf_result:
+                    cloudflare_checked = False  # Re-check after successful handling
+                    cloudflare_fail_count = 0
+                    continue
+                else:
+                    cloudflare_fail_count += 1
+                    cloudflare_checked = False  # Allow retry on next loop iteration
+                    if cloudflare_fail_count >= 3:
+                        print("[CLOUDFLARE] Max failures reached, waiting for URL change to retry")
+
         # for kktix.cc and kktix.com
         if 'kktix.c' in url:
             is_quit_bot = await nodriver_kktix_main(tab, url, config_dict)
             if is_quit_bot:
-                print("KKTIX ticket purchase completed")
+                if not kktix_dict.get("printed_completed", False):
+                    print("KKTIX ticket purchase completed")
+                    kktix_dict["printed_completed"] = True
                 # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
@@ -25514,10 +25973,14 @@ async def main(args):
         if tixcraft_family:
             is_quit_bot = await nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser)
             if is_quit_bot:
-                print("TixCraft ticket purchase completed")
+                if not tixcraft_printed_completed:
+                    print("TixCraft ticket purchase completed")
+                    tixcraft_printed_completed = True
                 # 不自動暫停：讓多開實例可獨立運作
                 # 保留 is_quit_bot = False 以防止程式結束，但不建立暫停檔案
                 is_quit_bot = False
+            else:
+                tixcraft_printed_completed = False
 
         if 'famiticket.com' in url:
             await nodriver_famiticket_main(tab, url, config_dict)
