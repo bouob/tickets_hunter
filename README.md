@@ -23,7 +23,9 @@
 
 Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支援台灣及海外主要票務網站。
 
-**🤖 技術特色**：本專案為學術性質研究，僅透過純自然語言與 [Claude Code](https://claude.ai/code) AI 進行開發與維護，展現 AI 輔助軟體工程的實踐成果。
+**🤖 技術特色**：本專案是一項 AI 輔助軟體工程實驗 — 全程僅透過自然語言指令與 [Claude Code](https://claude.ai/code) 進行開發、除錯與維護，不手寫任何程式碼。從架構設計、功能實作到 PR 審查，皆由 AI 完成。
+
+> **🔬 對 AI 開發有興趣？** 歡迎 Fork 本專案，嘗試使用不同的 AI / LLM 工具（如 GitHub Copilot、Cursor、Windsurf、Cline 等）進行開發與研究學習，探索各種 AI 輔助開發的可能性！
 
 ### 🎪 平台支援狀態
 

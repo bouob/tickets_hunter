@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.02.12) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.02.15) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -525,7 +525,10 @@
               title="Discord Webhook 通知網址。留空則停用。設定後，當找到票券或訂單成功時，將會發送 Discord 通知。">?</span>
           </label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
-            <input class="form-control" id="discord_webhook_url" type="url" value="" placeholder="https://discord.com/api/webhooks/..." />
+            <div class="input-group">
+              <input class="form-control" id="discord_webhook_url" type="url" value="" placeholder="https://discord.com/api/webhooks/..." />
+              <button class="btn btn-outline-secondary" type="button" id="btn_test_discord_webhook">測試</button>
+            </div>
           </div>
         </div>
 
@@ -1148,6 +1151,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2026021223"></script>
+  <script src="settings.js?v=2026021523"></script>
 </body>
 </html>

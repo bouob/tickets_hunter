@@ -16,6 +16,7 @@ import tornado
 from tornado.web import Application
 from tornado.web import StaticFileHandler
 
+import requests
 import util
 
 from typing import (
@@ -44,7 +45,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.12)"
+CONST_APP_VERSION = "TicketsHunter (2026.02.15)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -562,6 +563,59 @@ class SendkeyHandler(tornado.web.RequestHandler):
 
         self.write({"return": True})
 
+class TestDiscordWebhookHandler(tornado.web.RequestHandler):
+    ALLOWED_HOSTS = ("discord.com", "discordapp.com")
+
+    def post(self):
+        try:
+            body = json.loads(self.request.body)
+        except Exception:
+            self.write({"success": False, "message": "wrong json format"})
+            return
+
+        webhook_url = body.get("webhook_url", "").strip()
+        if not webhook_url:
+            self.write({"success": False, "message": "webhook URL is empty"})
+            return
+
+        from urllib.parse import urlparse
+        try:
+            parsed = urlparse(webhook_url)
+        except Exception:
+            self.write({"success": False, "message": "invalid URL format"})
+            return
+
+        if parsed.scheme != "https":
+            self.write({"success": False, "message": "only HTTPS URLs are allowed"})
+            return
+
+        if not any(parsed.netloc == host or parsed.netloc.endswith("." + host) for host in self.ALLOWED_HOSTS):
+            self.write({"success": False, "message": "only Discord webhook URLs are allowed"})
+            return
+
+        if not parsed.path.startswith("/api/webhooks/"):
+            self.write({"success": False, "message": "invalid Discord webhook URL format"})
+            return
+
+        _, config_dict = load_json()
+        debug = util.create_debug_logger(config_dict)
+
+        payload = {
+            "content": "[Test] Tickets Hunter webhook test successful!",
+            "username": "Tickets Hunter"
+        }
+        try:
+            response = requests.post(webhook_url, json=payload, timeout=5.0)
+            if response.status_code in (200, 204):
+                debug.log("[Discord Webhook] Test OK")
+                self.write({"success": True, "message": "ok"})
+            else:
+                debug.log("[Discord Webhook] Test failed: HTTP %d" % response.status_code)
+                self.write({"success": False, "message": "HTTP %d" % response.status_code})
+        except Exception as exc:
+            debug.log("[Discord Webhook] Test failed: %s" % str(exc))
+            self.write({"success": False, "message": str(exc)})
+
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
@@ -664,6 +718,7 @@ async def main_server():
         ("/save", SaveJsonHandler),
         ("/reset", ResetJsonHandler),
 
+        ("/test_discord_webhook", TestDiscordWebhookHandler),
         ("/ocr", OcrHandler),
         ("/query", QueryHandler),
         ("/question", QuestionHandler),

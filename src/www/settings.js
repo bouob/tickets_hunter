@@ -819,6 +819,45 @@ onchange_tag_list.forEach((tag) => {
 
 homepage.addEventListener('keyup', check_unsaved_fields);
 
+document.querySelector('#btn_test_discord_webhook').addEventListener('click', function() {
+    const url = discord_webhook_url.value.trim();
+    if (!url) {
+        alert('Please enter Discord Webhook URL first.');
+        return;
+    }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = '...';
+    $.ajax({
+        url: '/test_discord_webhook',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ webhook_url: url }),
+        dataType: 'json'
+    })
+    .done(function(data) {
+        if (data.success) {
+            btn.className = 'btn btn-outline-success';
+            btn.textContent = 'OK';
+        } else {
+            btn.className = 'btn btn-outline-danger';
+            btn.textContent = 'Failed';
+            alert('Test failed: ' + data.message);
+        }
+    })
+    .fail(function() {
+        btn.className = 'btn btn-outline-danger';
+        btn.textContent = 'Error';
+    })
+    .always(function() {
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.textContent = '\u6E2C\u8A66';
+            btn.className = 'btn btn-outline-secondary';
+        }, 3000);
+    });
+});
+
 let runMessageClearTimer;
 
 function run_message(msg)
