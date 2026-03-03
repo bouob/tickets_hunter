@@ -25,6 +25,8 @@ const play_ticket_sound = document.querySelector('#play_ticket_sound');
 const play_order_sound = document.querySelector('#play_order_sound');
 const play_sound_filename = document.querySelector('#play_sound_filename');
 const discord_webhook_url = document.querySelector('#discord_webhook_url');
+const telegram_bot_token = document.querySelector('#telegram_bot_token');
+const telegram_chat_id = document.querySelector('#telegram_chat_id');
 
 const auto_press_next_step_button = document.querySelector('#auto_press_next_step_button');
 const max_dwell_time = document.querySelector('#max_dwell_time');
@@ -205,6 +207,8 @@ function load_settins_to_form(settings)
         play_order_sound.checked = settings.advanced.play_sound.order;
         play_sound_filename.value = settings.advanced.play_sound.filename;
         discord_webhook_url.value = settings.advanced.discord_webhook_url || '';
+        telegram_bot_token.value = settings.advanced.telegram_bot_token || '';
+        telegram_chat_id.value = settings.advanced.telegram_chat_id || '';
 
         auto_press_next_step_button.checked = settings.kktix.auto_press_next_step_button;
         max_dwell_time.value = settings.kktix.max_dwell_time;
@@ -454,6 +458,8 @@ function save_changes_to_dict(silent_flag)
             settings.advanced.play_sound.order = play_order_sound.checked;
             settings.advanced.play_sound.filename = play_sound_filename.value;
             settings.advanced.discord_webhook_url = discord_webhook_url.value;
+            settings.advanced.telegram_bot_token = telegram_bot_token.value;
+            settings.advanced.telegram_chat_id = telegram_chat_id.value;
 
             settings.kktix.auto_press_next_step_button = auto_press_next_step_button.checked;
             settings.kktix.max_dwell_time = parseInt(max_dwell_time.value);
@@ -833,6 +839,46 @@ document.querySelector('#btn_test_discord_webhook').addEventListener('click', fu
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ webhook_url: url }),
+        dataType: 'json'
+    })
+    .done(function(data) {
+        if (data.success) {
+            btn.className = 'btn btn-outline-success';
+            btn.textContent = 'OK';
+        } else {
+            btn.className = 'btn btn-outline-danger';
+            btn.textContent = 'Failed';
+            alert('Test failed: ' + data.message);
+        }
+    })
+    .fail(function() {
+        btn.className = 'btn btn-outline-danger';
+        btn.textContent = 'Error';
+    })
+    .always(function() {
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.textContent = '\u6E2C\u8A66';
+            btn.className = 'btn btn-outline-secondary';
+        }, 3000);
+    });
+});
+
+document.querySelector('#btn_test_telegram').addEventListener('click', function() {
+    const token = telegram_bot_token.value.trim();
+    const chatId = telegram_chat_id.value.trim();
+    if (!token || !chatId) {
+        alert('Please enter both Telegram Bot Token and Chat ID first.');
+        return;
+    }
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = '...';
+    $.ajax({
+        url: '/test_telegram',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ bot_token: token, chat_id: chatId }),
         dataType: 'json'
     })
     .done(function(data) {

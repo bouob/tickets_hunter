@@ -616,6 +616,61 @@ class TestDiscordWebhookHandler(tornado.web.RequestHandler):
             debug.log("[Discord Webhook] Test failed: %s" % str(exc))
             self.write({"success": False, "message": str(exc)})
 
+class TestTelegramHandler(tornado.web.RequestHandler):
+    def post(self):
+        try:
+            body = json.loads(self.request.body)
+        except Exception:
+            self.write({"success": False, "message": "wrong json format"})
+            return
+
+        bot_token = body.get("bot_token", "").strip()
+        chat_id = body.get("chat_id", "").strip()
+
+        if not bot_token:
+            self.write({"success": False, "message": "Bot Token is empty"})
+            return
+
+        if not chat_id:
+            self.write({"success": False, "message": "Chat ID is empty"})
+            return
+
+        chat_ids = [cid.strip() for cid in chat_id.split(",") if cid.strip()]
+        if not chat_ids:
+            self.write({"success": False, "message": "Chat ID is empty"})
+            return
+
+        _, config_dict = load_json()
+        debug = util.create_debug_logger(config_dict)
+
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        text = "[Test] Tickets Hunter Telegram test successful!"
+        errors = []
+        ok_count = 0
+        for cid in chat_ids:
+            try:
+                payload = {"chat_id": cid, "text": text}
+                response = requests.post(url, json=payload, timeout=5.0)
+                result = response.json()
+                if response.status_code == 200 and result.get("ok", False):
+                    ok_count += 1
+                else:
+                    desc = result.get("description", "HTTP %d" % response.status_code)
+                    errors.append(f"{cid}: {desc}")
+            except Exception as exc:
+                errors.append(f"{cid}: {exc}")
+
+        if ok_count == len(chat_ids):
+            debug.log("[Telegram] Test OK (%d chat(s))" % ok_count)
+            self.write({"success": True, "message": "ok"})
+        elif ok_count > 0:
+            debug.log("[Telegram] Test partial: %d/%d OK" % (ok_count, len(chat_ids)))
+            self.write({"success": True, "message": "%d/%d OK, errors: %s" % (ok_count, len(chat_ids), "; ".join(errors))})
+        else:
+            msg = "; ".join(errors)
+            debug.log("[Telegram] Test failed: %s" % msg)
+            self.write({"success": False, "message": msg})
+
 class OcrHandler(tornado.web.RequestHandler):
     def get(self):
         self.write({"answer": "1234"})
@@ -719,6 +774,7 @@ async def main_server():
         ("/reset", ResetJsonHandler),
 
         ("/test_discord_webhook", TestDiscordWebhookHandler),
+        ("/test_telegram", TestTelegramHandler),
         ("/ocr", OcrHandler),
         ("/query", QueryHandler),
         ("/question", QuestionHandler),

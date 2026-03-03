@@ -533,6 +533,29 @@
         </div>
 
         <div class="row mb-3">
+          <label for="telegram_bot_token" class="col-sm-2 col-form-label">Telegram Bot Token
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="Telegram Bot API Token。透過 @BotFather 建立 Bot 後取得。留空則停用 Telegram 通知。">?</span>
+          </label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <input class="form-control" id="telegram_bot_token" type="text" value="" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label for="telegram_chat_id" class="col-sm-2 col-form-label">Telegram Chat ID
+            <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top"
+              title="Telegram 聊天室 ID，多個 ID 請用逗號隔開。可透過 @userinfobot 或 @RawDataBot 取得。">?</span>
+          </label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="input-group">
+              <input class="form-control" id="telegram_chat_id" type="text" value="" placeholder="123456789, 987654321" />
+              <button class="btn btn-outline-secondary" type="button" id="btn_test_telegram">測試</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
           <label for="auto_reload_page_interval" class="col-sm-2 col-form-label">自動刷新頁面間隔(秒)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="auto_reload_page_interval" value="" />

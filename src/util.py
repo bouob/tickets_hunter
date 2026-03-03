@@ -2288,6 +2288,110 @@ def send_discord_webhook_async(
     thread.start()
 
 
+def build_telegram_message(stage: str, platform_name: str) -> str:
+    """
+    Build Telegram notification message text based on stage and platform.
+
+    Args:
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+
+    Returns:
+        str: Message text
+    """
+    if not platform_name:
+        platform_name = "Unknown"
+
+    if stage == "ticket":
+        message = f"[{platform_name}] found ticket! Please check your computer"
+    elif stage == "order":
+        message = f"[{platform_name}] order success! Please checkout and pay ASAP"
+    else:
+        message = f"[{platform_name}] notification"
+
+    return message
+
+
+def send_telegram_message(
+    bot_token: str,
+    chat_id: str,
+    stage: str,
+    platform_name: str,
+    timeout: float = 3.0,
+    verbose: bool = False
+) -> bool:
+    """
+    Send Telegram Bot notification (synchronous).
+
+    Args:
+        bot_token: Telegram Bot API token
+        chat_id: Comma-separated Telegram chat IDs (e.g., "123,456")
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+        timeout: Request timeout in seconds, default 3.0
+        verbose: Whether to print error messages
+
+    Returns:
+        bool: True if sent to at least one chat successfully, False otherwise
+    """
+    if not bot_token or not chat_id:
+        return False
+
+    chat_ids = [cid.strip() for cid in chat_id.split(",") if cid.strip()]
+    if not chat_ids:
+        return False
+
+    text = build_telegram_message(stage, platform_name)
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    any_success = False
+    for cid in chat_ids:
+        try:
+            payload = {"chat_id": cid, "text": text}
+            response = requests.post(url, json=payload, timeout=timeout)
+            result = response.json()
+            if response.status_code == 200 and result.get("ok", False):
+                any_success = True
+            elif verbose:
+                desc = result.get("description", "HTTP %d" % response.status_code)
+                print(f"[Telegram] Send to {cid} failed: {desc}")
+        except Exception as exc:
+            if verbose:
+                print(f"[Telegram] Send to {cid} failed: {exc}")
+    return any_success
+
+
+def send_telegram_message_async(
+    bot_token: str,
+    chat_id: str,
+    stage: str,
+    platform_name: str,
+    timeout: float = 3.0,
+    verbose: bool = False
+) -> None:
+    """
+    Send Telegram Bot notification asynchronously.
+
+    Uses a daemon thread to send without blocking the main flow.
+
+    Args:
+        bot_token: Telegram Bot API token
+        chat_id: Comma-separated Telegram chat IDs (e.g., "123,456")
+        stage: Notification stage ("ticket" or "order")
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+        timeout: Request timeout in seconds, default 3.0
+        verbose: Whether to print error messages
+    """
+    if not bot_token or not chat_id:
+        return
+
+    thread = threading.Thread(
+        target=send_telegram_message,
+        args=(bot_token, chat_id, stage, platform_name, timeout, verbose),
+        daemon=True
+    )
+    thread.start()
+
+
 # Cloudflare Turnstile template paths
 def get_cf_template_paths() -> list:
     """

@@ -169,6 +169,21 @@ def send_discord_notification(config_dict, stage, platform_name):
         verbose = config_dict.get("advanced", {}).get("verbose", False)
         util.send_discord_webhook_async(webhook_url, stage, platform_name, verbose=verbose)
 
+def send_telegram_notification(config_dict, stage, platform_name):
+    """Send Telegram bot notification if configured.
+
+    Args:
+        config_dict: Configuration dictionary
+        stage: "ticket" or "order"
+        platform_name: Platform name (e.g., "TixCraft", "iBon")
+    """
+    adv = config_dict.get("advanced", {})
+    bot_token = adv.get("telegram_bot_token", "")
+    chat_id = adv.get("telegram_chat_id", "")
+    if bot_token and chat_id:
+        verbose = adv.get("verbose", False)
+        util.send_telegram_message_async(bot_token, chat_id, stage, platform_name, verbose=verbose)
+
 async def nodriver_press_button(tab, select_query):
     if tab:
         try:
@@ -2851,6 +2866,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
                 send_discord_notification(config_dict, "order", "KKTIX")
+                send_telegram_notification(config_dict, "order", "KKTIX")
 
             kktix_dict["played_sound_order"] = True
 
@@ -6128,6 +6144,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
             send_discord_notification(config_dict, "order", "TixCraft")
+            send_telegram_notification(config_dict, "order", "TixCraft")
         tixcraft_dict["played_sound_order"] = True
     else:
         tixcraft_dict["is_popup_checkout"] = False
@@ -8051,6 +8068,7 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if config_dict["advanced"]["play_sound"]["order"]:
                     play_sound_while_ordering(config_dict)
                 send_discord_notification(config_dict, "order", "TicketPlus")
+                send_telegram_notification(config_dict, "order", "TicketPlus")
 
                 try:
                     await nodriver_ticketplus_confirm(tab, config_dict)
@@ -13675,6 +13693,7 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
             if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
             send_discord_notification(config_dict, "order", "iBon")
+            send_telegram_notification(config_dict, "order", "iBon")
         ibon_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
@@ -14259,6 +14278,7 @@ async def nodriver_cityline_check_shopping_basket(tab, config_dict):
                     except Exception as sound_exc:
                         debug.log(f"[CITYLINE] Sound error: {sound_exc}")
                 send_discord_notification(config_dict, "order", "Cityline")
+                send_telegram_notification(config_dict, "order", "Cityline")
                 cityline_dict["played_sound_order"] = True
 
             # Return True to indicate we're on checkout page
@@ -17477,6 +17497,7 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
             if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
             send_discord_notification(config_dict, "order", "KHAM")
+            send_telegram_notification(config_dict, "order", "KHAM")
         kham_dict["played_sound_order"] = True
 
         # If headless mode, open browser to show checkout page (only once)
@@ -20649,7 +20670,8 @@ async def reload_config(config_dict, last_mtime):
                         "auto_guess_options", "user_guess_string", "auto_reload_page_interval", "verbose",
                         "auto_reload_overheat_count", "auto_reload_overheat_cd",
                         "idle_keyword", "resume_keyword", "idle_keyword_second", "resume_keyword_second",
-                        "discord_webhook_url", "discount_code"
+                        "discord_webhook_url", "telegram_bot_token", "telegram_chat_id",
+                        "discount_code"
                     ]
                     for field in adv_fields:
                         if field in new_config["advanced"]:
@@ -23220,6 +23242,7 @@ async def nodriver_hkticketing_main(tab, url, config_dict):
             if config_dict["advanced"]["play_sound"]["order"]:
                 play_sound_while_ordering(config_dict)
             send_discord_notification(config_dict, "order", "HKTicketing")
+            send_telegram_notification(config_dict, "order", "HKTicketing")
         hkticketing_dict["played_sound_order"] = True
 
         # Show message once
@@ -25070,6 +25093,7 @@ async def nodriver_funone_main(tab, url, config_dict):
                             if config_dict["advanced"]["play_sound"]["order"]:
                                 play_sound_while_ordering(config_dict)
                             send_discord_notification(config_dict, "order", "FunOne")
+                            send_telegram_notification(config_dict, "order", "FunOne")
                             funone_dict["played_sound_order"] = True
                         print("[FUNONE] Order submitted successfully!")
 
@@ -25081,6 +25105,7 @@ async def nodriver_funone_main(tab, url, config_dict):
                         if config_dict["advanced"]["play_sound"]["order"]:
                             play_sound_while_ordering(config_dict)
                         send_discord_notification(config_dict, "order", "FunOne")
+                        send_telegram_notification(config_dict, "order", "FunOne")
                         funone_dict["played_sound_order"] = True
                         print("[FUNONE] Reached fill form page - order notification sent!")
 
