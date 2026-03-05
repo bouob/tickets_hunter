@@ -132,11 +132,9 @@ tickets_hunter/
 │   │   ├── nodriver_tixcraft.py    # NoDriver 搶票引擎
 │   │   └── util.py                 # 共用函式庫與平台抽象層
 │   ├── ⚙️ 設定介面
-│   │   ├── settings.py             # 現代網頁設定介面
-│   │   └── config_launcher.py      # 多設定檔管理器
+│   │   └── settings.py             # 現代網頁設定介面
 │   ├── 📋 設定檔
-│   │   ├── settings.json           # 主要設定檔 (搶票參數)
-│   │   └── config_launcher.json    # 多設定檔清單
+│   │   └── settings.json           # 主要設定檔 (搶票參數)
 │   ├── 🌐 網頁介面                   # Web UI 資源
 │   │   └── www/
 │   │       ├── settings.html       # 設定介面前端

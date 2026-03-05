@@ -14,7 +14,7 @@
 
 ## 📚 目錄
 
-1. [設定方式](#設定方式)（含[搶票中即時修改設定](#搶票中即時修改設定--v202602-新增)）
+1. [設定方式](#設定方式)（含[搶票中即時修改設定](#搶票中即時修改設定)）
 2. [基礎設定](#基礎設定)
 3. [日期選擇設定](#日期選擇設定)
 4. [區域選擇設定](#區域選擇設定)
@@ -37,9 +37,11 @@ python settings.py
 
 在圖形介面中，您可以直接透過中文欄位名稱進行設定，無需手動編輯 JSON 檔案。
 
-> 💡 **Port 被佔用？** 若啟動失敗顯示「port is in used」，請參考[設定介面 Port](#設定介面-portserver_port-v202512-新增) 修改 Port 號碼。
+> 💡 **Port 被佔用？** 若啟動失敗顯示「port is in used」，請參考[設定介面 Port](#設定介面-portserver_port) 修改 Port 號碼。
 
-### 搶票中即時修改設定 ⭐ v2026.02 新增
+### 搶票中即時修改設定
+
+> ⭐ v2026.02 新增
 
 程式支援「即時套用」功能：**搶票中修改設定後儲存，程式會在 1 秒內自動套用新設定，不需要重新啟動。**
 
@@ -459,7 +461,7 @@ python settings.py
 
 ---
 
-#### 自訂 OCR 模型 ⭐ v2025.11.25 新增
+#### 自訂 OCR 模型
 類型：字串 | 預設：空白
 
 指定自訂 OCR 模型的目錄路徑，目前**僅支援 Ticketmaster 平台**。
@@ -573,7 +575,7 @@ FANCLUB2024
 
 ### iBon（ibon 售票系統）
 
-#### 驗證問題自動填寫 ⭐ v2025.12 新增
+#### 驗證問題自動填寫
 
 **功能說明**：iBon 購票時有時會出現驗證問題頁面，要求輸入手機號碼末幾碼、信用卡前 6 碼等資訊。此功能可自動偵測並填寫這些驗證問題。
 
@@ -720,7 +722,7 @@ FANCLUB2024
 
 **在圖形介面中，這些設定位於「進階設定」頁籤**
 
-### 設定介面 Port（server_port）⭐ v2025.12 新增
+### 設定介面 Port（server_port）
 類型：整數 | 預設：16888
 
 設定介面 Web Server 的連接埠號碼。
@@ -824,7 +826,7 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 
 ---
 
-### Discord Webhook 通知 ⭐ v2025.12 新增
+### Discord Webhook 通知
 
 #### Discord Webhook URL（discord_webhook_url）
 類型：字串 | 預設：空白
@@ -874,6 +876,70 @@ netsh interface ipv4 show excludedportrange protocol=tcp
 - 通知失敗不會影響搶票流程
 
 **官方參考文件**：[Discord Webhooks 介紹](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
+
+---
+
+### Telegram Bot 通知
+
+> ⭐ v2026.03 新增
+
+#### Telegram Bot Token（telegram_bot_token）
+類型：字串 | 預設：空白
+
+Telegram Bot 的 API Token。留空則停用 Telegram 通知。
+
+在圖形介面中顯示為：**Telegram Bot Token**（文字框）
+
+#### Telegram Chat ID（telegram_chat_id）
+類型：字串 | 預設：空白
+
+接收通知的 Telegram 聊天室 ID。多個 ID 請用逗號隔開。
+
+在圖形介面中顯示為：**Telegram Chat ID**（文字框 + 測試按鈕）
+
+**功能說明**：
+- **訂單成功時**：發送「[平台名稱] order success! Please checkout and pay ASAP」
+- 支援同時發送到多個聊天室（逗號分隔 ID）
+- 通知不會影響搶票流程（使用非同步發送，3 秒超時）
+- 可與 Discord 通知同時啟用，兩者互不影響
+
+**如何建立 Telegram Bot**：
+
+1. **開啟 BotFather**
+   - 在 Telegram 搜尋 `@BotFather` 並開啟對話
+   - 或直接點擊：https://t.me/BotFather
+
+2. **建立新 Bot**
+   - 發送 `/newbot`
+   - 依照提示輸入 Bot 名稱（顯示名稱）
+   - 再輸入 Bot 使用者名稱（必須以 `bot` 結尾，例如 `MyTicketBot`）
+
+3. **取得 Bot Token**
+   - BotFather 會回覆一串 Token，格式類似：`123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`
+   - 複製這串 Token 貼到設定介面的「Telegram Bot Token」欄位
+
+4. **取得 Chat ID**
+   - 在 Telegram 搜尋 `@userinfobot` 或 `@RawDataBot` 並開啟對話
+   - 發送任意訊息，Bot 會回覆您的 Chat ID（一串數字）
+   - 如果要發送到群組，先將您的 Bot 加入群組，再用 `@RawDataBot` 在群組中取得群組 Chat ID（通常為負數）
+
+5. **跟 Bot 對話（必要）**
+   - 在 Telegram 搜尋您剛建立的 Bot（用 `@您的Bot名稱`）
+   - 按下 **Start** 或發送 `/start`
+   - ⚠️ **未執行此步驟，Bot 無法發送訊息給您**（Telegram API 限制：Bot 只能回覆曾主動對話過的使用者）
+
+6. **貼到設定介面**
+   - 在「進階設定」頁籤找到「Telegram Bot Token」和「Telegram Chat ID」
+   - 分別貼上 Token 和 Chat ID
+   - 點擊「測試」按鈕確認設定正確
+   - 儲存設定
+
+**注意事項**：
+- Bot Token 是敏感資訊，請勿分享給他人
+- 多個 Chat ID 之間用逗號隔開，例如：`123456789, 987654321`
+- 留空 Token 或 Chat ID 則停用 Telegram 通知
+- 通知失敗不會影響搶票流程
+- 如果測試顯示「chat not found」，請確認您已跟 Bot 對話過（步驟 5）
 
 ---
 
@@ -1047,8 +1113,8 @@ FANCLUB999
 ---
 
 ### Q3: 可以同時用多個設定檔嗎？
-**A:** 可以！使用 config_launcher.py 管理多個設定檔：
-- 在 tickets_hunter/src 目錄執行 python config_launcher.py
+**A:** 可以！複製 settings.json 並改名（如 settings_A.json），啟動時指定設定檔：
+- `nodriver_tixcraft.exe --input settings_A.json`
 
 ---
 

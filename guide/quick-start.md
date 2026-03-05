@@ -48,7 +48,7 @@ pip install -r requirement.txt
 
 執行指令前請先確認工作目錄：
 - **根目錄** (`tickets_hunter/`)：執行 pip install、git pull 等全域指令
-- **原始碼目錄** (`tickets_hunter/src/`)：執行 Python 腳本（settings.py、config_launcher.py 等）
+- **原始碼目錄** (`tickets_hunter/src/`)：執行 Python 腳本（settings.py 等）
 
 **範例**：
 ```bash

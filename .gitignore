@@ -11,7 +11,6 @@ __pycache__/
 
 # Sensitive config files
 /src/settings.json
-/src/config_launcher.json
 /src/MAXBOT_LAST_URL.txt
 /src/MAXBOT_INT28_IDLE.txt
 /src/MAXBOT_QUESTION.txt
@@ -55,3 +54,12 @@ specs/
 # OCR models (large binary files)
 /src/assets/model/
 tmpclaude-*-cwd
+
+# Captcha trainer tool (private - code tracked via gsave PRIVATE commit)
+# Defense in depth: large data directories excluded even without nested .gitignore
+tools/captcha_trainer/OCRimages/
+tools/captcha_trainer/projects/
+tools/captcha_trainer/temp/
+tools/captcha_trainer/.venv/
+tools/captcha_trainer/build/
+tools/captcha_trainer/dist/

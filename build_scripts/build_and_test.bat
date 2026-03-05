@@ -169,17 +169,6 @@ if %errorlevel% neq 0 (
 echo [OK] settings.exe built
 echo.
 
-REM Build config_launcher.exe
-echo [3.4] Building config_launcher.exe...
-if exist "build" rmdir /s /q "build" >nul 2>&1
-python -m PyInstaller build_scripts\config_launcher.spec --noconfirm >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to build config_launcher.exe
-    goto :error_exit
-)
-echo [OK] config_launcher.exe built
-echo.
-
 echo [PHASE 3] Complete - All Executables Built
 echo.
 
@@ -199,14 +188,12 @@ echo.
 echo [4.2] Copying executables...
 xcopy /Y dist\nodriver_tixcraft\nodriver_tixcraft.exe dist\tickets_hunter\ >nul
 xcopy /Y dist\settings\settings.exe dist\tickets_hunter\ >nul
-xcopy /Y dist\config_launcher\config_launcher.exe dist\tickets_hunter\ >nul
-echo [OK] 3 executables copied
+echo [OK] 2 executables copied
 echo.
 
 echo [4.3] Merging _internal directories...
 xcopy /E /I /Y dist\nodriver_tixcraft\_internal dist\tickets_hunter\_internal >nul
 xcopy /E /I /Y dist\settings\_internal\* dist\tickets_hunter\_internal >nul
-xcopy /E /I /Y dist\config_launcher\_internal\* dist\tickets_hunter\_internal >nul
 echo [OK] _internal merged
 echo.
 
@@ -266,15 +253,9 @@ echo Test 1/12: Checking executables exist...
 set /a TEST_COUNT+=1
 if exist "%TEST_DIR%\nodriver_tixcraft.exe" (
     if exist "%TEST_DIR%\settings.exe" (
-        if exist "%TEST_DIR%\config_launcher.exe" (
-            echo [PASS] All 3 executables exist
-            set /a TEST_PASSED+=1
-            set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 1: All executables exist%LF%"
-        ) else (
-            echo [FAIL] config_launcher.exe missing
-            set /a TEST_FAILED+=1
-            set "TEST_RESULTS=!TEST_RESULTS![FAIL] Test 1: config_launcher.exe missing%LF%"
-        )
+        echo [PASS] All 2 executables exist
+        set /a TEST_PASSED+=1
+        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 1: All executables exist%LF%"
     ) else (
         echo [FAIL] settings.exe missing
         set /a TEST_FAILED+=1
@@ -417,31 +398,7 @@ echo [5.2] Executable Launch Tests
 echo ----------------------------------------
 echo.
 
-echo Test 11/12: Testing config_launcher.exe launch...
-echo       ^(Will auto-close in 3 seconds^)
-set /a TEST_COUNT+=1
-if not exist "%TEST_DIR%\config_launcher.exe" (
-    echo [SKIP] config_launcher.exe not found, skipping launch test
-    set /a TEST_PASSED+=1
-    set "TEST_RESULTS=!TEST_RESULTS![SKIP] Test 11: config_launcher not found%LF%"
-) else (
-    start "" "%TEST_DIR_ABS%\config_launcher.exe" 2>nul
-    timeout /t 3 /nobreak >nul
-    tasklist | findstr /I "config_launcher.exe" >nul
-    if %errorlevel% equ 0 (
-        echo [PASS] config_launcher.exe launched successfully
-        taskkill /F /IM config_launcher.exe >nul 2>&1
-        set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![PASS] Test 11: config_launcher launches%LF%"
-    ) else (
-        echo [WARN] config_launcher.exe did not launch ^(may need GUI^)
-        set /a TEST_PASSED+=1
-        set "TEST_RESULTS=!TEST_RESULTS![WARN] Test 11: config_launcher no launch%LF%"
-    )
-)
-echo.
-
-echo Test 12/12: Testing settings.exe launch...
+echo Test 11/11: Testing settings.exe launch...
 echo       ^(Will auto-close in 3 seconds^)
 set /a TEST_COUNT+=1
 if not exist "%TEST_DIR%\settings.exe" (
@@ -525,9 +482,6 @@ echo Generating test report: test_report_%VERSION%.txt
     )
     if exist "%TEST_DIR%\settings.exe" (
         for %%A in ("%TEST_DIR%\settings.exe") do echo   - settings.exe (%%~zA bytes^)
-    )
-    if exist "%TEST_DIR%\config_launcher.exe" (
-        for %%A in ("%TEST_DIR%\config_launcher.exe") do echo   - config_launcher.exe (%%~zA bytes^)
     )
     echo.
     echo ================================================================================

@@ -23,9 +23,9 @@ build_scripts\build_and_test.bat
 - 自動安裝 PyInstaller
 
 ✅ **完整打包流程**
-- 打包 3 個 exe（nodriver_tixcraft, settings, config_launcher）
+- 打包 2 個 exe（nodriver_tixcraft, settings）
 - 自動整合 `_internal/` 依賴目錄（共用依賴，減少總大小）
-- 複製共用資源（webdriver/, assets/, www/）
+- 複製共用資源（assets/, www/）
 
 ✅ **自動化測試**
 - 執行 30 秒啟動測試
@@ -54,14 +54,13 @@ build_scripts\build_and_test.bat
 ```batch
 1. 啟動 Windows Sandbox
 2. 複製 ZIP 到 Sandbox 桌面
-3. 解壓縮並測試 3 個 exe
+3. 解壓縮並測試 2 個 exe
 ```
 
 ### 方法 B：開發機快速測試
 
 ```batch
 cd dist\tickets_hunter
-config_launcher.exe       # 測試 GUI
 settings.exe              # 測試網頁介面
 ```
 
@@ -71,9 +70,8 @@ settings.exe              # 測試網頁介面
 
 ### Step 1: 更新版本號
 
-編輯 3 個檔案的 `CONST_APP_VERSION`：
+使用 `/gupdate` 指令自動更新以下檔案的 `CONST_APP_VERSION`：
 - `src/nodriver_tixcraft.py`
-- `src/config_launcher.py`
 - `src/settings.py`
 
 ### Step 2: 更新 CHANGELOG.md
@@ -83,12 +81,10 @@ settings.exe              # 測試網頁介面
 ### Step 3: 提交並推送 Tag
 
 ```batch
-git add .
-git commit -m "chore: bump version to 2025.11.03"
-git push origin main
-
-git tag v2025.11.03
-git push origin v2025.11.03
+/gsave          # 提交變更
+/gpush          # 推送到私人庫
+/publicpr       # 建立 PR 到公開庫
+/publicrelease  # 建立 Release Tag
 ```
 
 ### Step 4: GitHub Actions 自動執行
@@ -109,7 +105,7 @@ tickets_hunter/
 ├── src/                        原始碼
 ├── build_scripts/              打包腳本
 │   ├── build_and_test.bat      ← 一鍵打包測試
-│   ├── *.spec                  ← PyInstaller 配置（3 個）
+│   ├── *.spec                  ← PyInstaller 配置（2 個）
 │   ├── README_Build.md         ← 開發者指南
 │   ├── README_Release.txt      ← 使用者說明
 │   └── QUICK_START.md          ← 本文件
@@ -123,11 +119,10 @@ dist/
 ├── tickets_hunter/             整合目錄
 │   ├── nodriver_tixcraft.exe
 │   ├── settings.exe
-│   ├── config_launcher.exe
-│   ├── _internal/              共用依賴（3 個 exe 共用）
+│   ├── _internal/              共用依賴（2 個 exe 共用）
 │   ├── assets/
 │   ├── www/
-│   └── settings.json
+│   └── CHANGELOG.txt
 └── release/
     └── tickets_hunter_v2025.11.03.zip      ← 發布 ZIP
 
@@ -172,9 +167,9 @@ dist/
 | 目標 | 使用方法 | 時間 | 輸出 |
 |------|---------|------|------|
 | 本地打包與測試 | `build_and_test.bat` | 10-20 分鐘 | ZIP + 測試輸出 |
-| 更新版本號 | `/gupdate` 指令 | < 1 分鐘 | 更新 3 個檔案 |
+| 更新版本號 | `/gupdate` 指令 | < 1 分鐘 | 更新 2 個檔案 |
 | GitHub 自動發布 | 推送 tag | 15-25 分鐘 | GitHub Release |
 
 ---
 
-**最後更新**：2025-11-04
+**最後更新**：2026-02-16

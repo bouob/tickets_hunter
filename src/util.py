@@ -2241,6 +2241,7 @@ def send_discord_webhook(
     if not webhook_url:
         return False
 
+    debug = DebugLogger(enabled=verbose)
     try:
         payload = build_discord_message(stage, platform_name)
         response = requests.post(
@@ -2250,9 +2251,9 @@ def send_discord_webhook(
         )
         # Discord returns 204 No Content on success
         return response.status_code in (200, 204)
-    except Exception as exc:
-        if verbose:
-            print(f"[Discord Webhook] Send failed: {exc}")
+    except (requests.RequestException, ValueError) as exc:
+        safe_msg = str(exc).replace(webhook_url, "***") if webhook_url else str(exc)
+        debug.log(f"[Discord Webhook] Send failed: {safe_msg}")
         return False
 
 
@@ -2343,6 +2344,7 @@ def send_telegram_message(
 
     text = build_telegram_message(stage, platform_name)
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    debug = DebugLogger(enabled=verbose)
     any_success = False
     for cid in chat_ids:
         try:
@@ -2351,12 +2353,12 @@ def send_telegram_message(
             result = response.json()
             if response.status_code == 200 and result.get("ok", False):
                 any_success = True
-            elif verbose:
+            else:
                 desc = result.get("description", "HTTP %d" % response.status_code)
-                print(f"[Telegram] Send to {cid} failed: {desc}")
-        except Exception as exc:
-            if verbose:
-                print(f"[Telegram] Send to {cid} failed: {exc}")
+                debug.log(f"[Telegram] Send to {cid} failed: {desc}")
+        except (requests.RequestException, ValueError) as exc:
+            safe_msg = str(exc).replace(bot_token, "***") if bot_token else str(exc)
+            debug.log(f"[Telegram] Send to {cid} failed: {safe_msg}")
     return any_success
 
 

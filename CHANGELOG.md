@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.03.05
+
+- 新增 Telegram Bot 通知功能，支援多個聊天室 ID，可在設定頁面直接測試 (PR #264 by @laneser)
+- 改善 Telegram/Discord 通知安全性：Bot Token 欄位改為密碼遮罩、新增格式驗證、錯誤訊息不再洩露敏感資訊
+- 修復 Cloudflare 驗證後誤判的問題，避免重複觸發驗證流程
+- 修復 HK Ticketing 日期選擇邏輯，簡化 type02 處理方式
+- 修復 FunOne 驗證碼流程與結帳頁面處理
+- 移除舊版 config_launcher，簡化建置流程
+
 ## 2026.02.15
 
 - 新增 Cloudflare 驗證頁面自動偵測與處理，避免搶票流程中斷

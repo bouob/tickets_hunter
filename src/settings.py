@@ -45,7 +45,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.02.15)"
+CONST_APP_VERSION = "TicketsHunter (2026.03.05)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -206,6 +206,10 @@ def get_default_config():
     config_dict["advanced"]["resume_keyword"] = ""
     config_dict["advanced"]["idle_keyword_second"] = ""
     config_dict["advanced"]["resume_keyword_second"] = ""
+
+    config_dict["advanced"]["discord_webhook_url"] = ""
+    config_dict["advanced"]["telegram_bot_token"] = ""
+    config_dict["advanced"]["telegram_chat_id"] = ""
 
     # Keyword priority fallback (Feature 003)
     config_dict["date_auto_fallback"] = False  # default: strict mode (avoid unwanted purchases)
@@ -631,6 +635,11 @@ class TestTelegramHandler(tornado.web.RequestHandler):
             self.write({"success": False, "message": "Bot Token is empty"})
             return
 
+        import re
+        if not re.match(r'^\d+:[A-Za-z0-9_-]+$', bot_token):
+            self.write({"success": False, "message": "Bot Token format invalid"})
+            return
+
         if not chat_id:
             self.write({"success": False, "message": "Chat ID is empty"})
             return
@@ -638,6 +647,11 @@ class TestTelegramHandler(tornado.web.RequestHandler):
         chat_ids = [cid.strip() for cid in chat_id.split(",") if cid.strip()]
         if not chat_ids:
             self.write({"success": False, "message": "Chat ID is empty"})
+            return
+
+        invalid_ids = [cid for cid in chat_ids if not re.match(r'^-?\d+$', cid)]
+        if invalid_ids:
+            self.write({"success": False, "message": "Chat ID format invalid: %s" % ", ".join(invalid_ids)})
             return
 
         _, config_dict = load_json()
@@ -657,8 +671,9 @@ class TestTelegramHandler(tornado.web.RequestHandler):
                 else:
                     desc = result.get("description", "HTTP %d" % response.status_code)
                     errors.append(f"{cid}: {desc}")
-            except Exception as exc:
-                errors.append(f"{cid}: {exc}")
+            except (requests.RequestException, ValueError) as exc:
+                safe_msg = str(exc).replace(bot_token, "***") if bot_token else str(exc)
+                errors.append(f"{cid}: {safe_msg}")
 
         if ok_count == len(chat_ids):
             debug.log("[Telegram] Test OK (%d chat(s))" % ok_count)
