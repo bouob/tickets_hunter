@@ -45,7 +45,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.03.05)"
+CONST_APP_VERSION = "TicketsHunter (2026.03.07)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -111,7 +111,8 @@ def get_default_config():
     config_dict["ocr_captcha"]["beta"] = True
     config_dict["ocr_captcha"]["force_submit"] = True
     config_dict["ocr_captcha"]["image_source"] = CONST_OCR_CAPTCH_IMAGE_SOURCE_CANVAS
-    config_dict["ocr_captcha"]["path"] = ""
+    config_dict["ocr_captcha"]["use_universal"] = True
+    config_dict["ocr_captcha"]["path"] = "assets/model/universal"
     config_dict["webdriver_type"] = CONST_WEBDRIVER_TYPE_NODRIVER
 
     config_dict["date_auto_select"] = {}
@@ -149,6 +150,8 @@ def get_default_config():
     config_dict["accounts"]["ibonqware"] = ""
     config_dict["accounts"]["funone_session_cookie"] = ""
     config_dict["accounts"]["fansigo_cookie"] = ""
+    config_dict["accounts"]["fansigo_account"] = ""
+    config_dict["accounts"]["fansigo_password"] = ""
     config_dict["accounts"]["facebook_account"] = ""
     config_dict["accounts"]["kktix_account"] = ""
     config_dict["accounts"]["fami_account"] = ""
@@ -244,7 +247,7 @@ def migrate_config(config_dict):
 
     # Ensure ocr_captcha.path exists
     if "ocr_captcha" in config_dict and "path" not in config_dict["ocr_captcha"]:
-        config_dict["ocr_captcha"]["path"] = ""
+        config_dict["ocr_captcha"]["path"] = "assets/model/universal"
 
     # Migrate server_port: ensure old config has this field (Issue #156)
     if "advanced" in config_dict:

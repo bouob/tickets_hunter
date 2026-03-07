@@ -48,6 +48,7 @@ const show_timestamp = document.querySelector('#show_timestamp');
 const ocr_captcha_enable = document.querySelector('#ocr_captcha_enable');
 const ocr_captcha_image_source = document.querySelector('#ocr_captcha_image_source');
 const ocr_captcha_force_submit = document.querySelector('#ocr_captcha_force_submit');
+const ocr_captcha_use_universal = document.querySelector('#ocr_captcha_use_universal');
 const remote_url = document.querySelector('#remote_url');
 const ocr_model_path = document.querySelector('#ocr_model_path');
 
@@ -66,6 +67,8 @@ const tixcraft_sid = document.querySelector('#tixcraft_sid');
 const ibonqware = document.querySelector('#ibonqware');
 const funone_session_cookie = document.querySelector('#funone_session_cookie');
 const fansigo_cookie = document.querySelector('#fansigo_cookie');
+const fansigo_account = document.querySelector('#fansigo_account');
+const fansigo_password = document.querySelector('#fansigo_password');
 const facebook_account = document.querySelector('#facebook_account');
 const kktix_account = document.querySelector('#kktix_account');
 const fami_account = document.querySelector('#fami_account');
@@ -232,6 +235,12 @@ function load_settins_to_form(settings)
         ocr_captcha_image_source.value  = settings.ocr_captcha.image_source;
         ocr_captcha_force_submit.checked = settings.ocr_captcha.force_submit;
 
+        if(settings.ocr_captcha.use_universal !== undefined) {
+            ocr_captcha_use_universal.checked = settings.ocr_captcha.use_universal;
+        } else {
+            ocr_captcha_use_universal.checked = true;
+        }
+
         let remote_url_string = "";
         let remote_url_array = [];
         if(settings.advanced.remote_url.length > 0) {
@@ -265,6 +274,8 @@ function load_settins_to_form(settings)
         ibonqware.value = settings.accounts.ibonqware;
         funone_session_cookie.value = settings.accounts.funone_session_cookie || '';
         fansigo_cookie.value = settings.accounts.fansigo_cookie || '';
+        fansigo_account.value = settings.accounts.fansigo_account || '';
+        fansigo_password.value = settings.accounts.fansigo_password || '';
         facebook_account.value = settings.accounts.facebook_account;
         kktix_account.value = settings.accounts.kktix_account;
         fami_account.value = settings.accounts.fami_account;
@@ -482,6 +493,7 @@ function save_changes_to_dict(silent_flag)
             settings.ocr_captcha.enable = ocr_captcha_enable.checked;
             settings.ocr_captcha.image_source = ocr_captcha_image_source.value;
             settings.ocr_captcha.force_submit = ocr_captcha_force_submit.checked;
+            settings.ocr_captcha.use_universal = ocr_captcha_use_universal.checked;
 
             let remote_url_array = [];
             remote_url_array.push(remote_url.value);
@@ -514,6 +526,8 @@ function save_changes_to_dict(silent_flag)
             settings.accounts.ibonqware = ibonqware.value;
             settings.accounts.funone_session_cookie = funone_session_cookie.value;
             settings.accounts.fansigo_cookie = fansigo_cookie.value;
+            settings.accounts.fansigo_account = fansigo_account.value;
+            settings.accounts.fansigo_password = fansigo_password.value;
             settings.accounts.facebook_account = facebook_account.value;
             settings.accounts.kktix_account = kktix_account.value;
             settings.accounts.fami_account = fami_account.value;
@@ -636,6 +650,8 @@ function check_unsaved_fields()
             "ibonqware",
             "funone_session_cookie",
             "fansigo_cookie",
+            "fansigo_account",
+            "fansigo_password",
             "facebook_account",
             "kktix_account",
             "fami_account",
@@ -824,6 +840,14 @@ onchange_tag_list.forEach((tag) => {
 });
 
 homepage.addEventListener('keyup', check_unsaved_fields);
+
+ocr_captcha_use_universal.addEventListener('change', function() {
+    if (this.checked) {
+        ocr_model_path.value = 'assets/model/universal';
+    } else {
+        ocr_model_path.value = '';
+    }
+});
 
 document.querySelector('#btn_test_discord_webhook').addEventListener('click', function() {
     const url = discord_webhook_url.value.trim();

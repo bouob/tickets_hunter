@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.03.05) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.03.07) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -681,6 +681,18 @@
           </div>
         </div>
         <div class="row mb-3">
+          <label class="col-sm-2 col-form-label">自訓練模型</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="ocr_captcha_use_universal">
+              <label class="form-check-label" for="ocr_captcha_use_universal">啟用</label>
+            </div>
+            <div class="form-text">
+              開啟後使用自訓練 OCR 模型辨識驗證碼，不使用 ddddocr 官方模型及 beta 設定。
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
           <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="remote_url" value="" />
@@ -864,6 +876,20 @@
           <label for="funone_session_cookie" class="col-sm-2 col-form-label">FunOne cookie (ticket_session)</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="funone_session_cookie" value="" />
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label for="fansigo_account" class="col-sm-2 col-form-label">FANSI GO</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <form autocomplete="off">
+            <div class="input-group">
+              <span class="input-group-text">Email</span>
+              <input type="text" id="fansigo_account" value="" class="form-control" autocomplete="username">
+              <span class="input-group-text">密碼</span>
+              <input type="password" id="fansigo_password" value="" class="form-control" autocomplete="current-password">
+            </div>
+            </form>
           </div>
         </div>
 
@@ -1174,6 +1200,6 @@
   </div>
 </div>
 
-  <script src="settings.js?v=2026030511"></script>
+  <script src="settings.js?v=2026030701"></script>
 </body>
 </html>

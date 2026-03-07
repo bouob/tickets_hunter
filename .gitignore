@@ -51,8 +51,6 @@ CLAUDE.md
 specs/
 .mcp.json
 
-# OCR models (large binary files)
-/src/assets/model/
 tmpclaude-*-cwd
 
 # Captcha trainer tool (private - code tracked via gsave PRIVATE commit)
