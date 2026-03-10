@@ -42,7 +42,7 @@ except Exception as exc:
     print(exc)
     pass
 
-CONST_APP_VERSION = "TicketsHunter (2026.03.07)"
+CONST_APP_VERSION = "TicketsHunter (2026.03.10)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -20580,6 +20580,21 @@ async def nodrver_block_urls(tab, config_dict):
         #'*ticketmaster.sg/epsf/asset/eps-mgr',
         '*ticketmaster.com/js/ads.js*',
         '*ticketmaster.com/epsf/asset/eps.js*',
+
+        # GA4 (analytics.google.com is different from google-analytics.com)
+        '*analytics.google.com/*',
+
+        # Cloudflare analytics (KKTIX)
+        '*static.cloudflareinsights.com/*',
+
+        # Chat widgets (not needed for ticket purchase)
+        '*chat.botbonnie.com/*',
+        '*asset.botbonnie.com/*',
+        '*web-chat-service.project.imbee.io/*',
+        '*web-chat-assets.imbee.io/*',
+
+        # Cookie consent geolocation
+        '*geolocation.onetrust.com/*',
     ]
 
     if config_dict["advanced"]["hide_some_image"]:
