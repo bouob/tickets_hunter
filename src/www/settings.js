@@ -150,11 +150,49 @@ function updateCitylineHintVisibility() {
     }
 }
 
-// Check if URL is Tixcraft family (tixcraft.com, teamear.com, indievox.com)
+// Check if URL is Tixcraft family — delegates to PLATFORM_MAP as single source of truth
 function isTixcraftFamily(url) {
-    if (!url) return false;
-    const tixcraftDomains = ['tixcraft.com', 'teamear.com', 'indievox.com'];
-    return tixcraftDomains.some(domain => url.includes(domain));
+    return detectPlatform(url) === 'tixcraft';
+}
+
+// Platform detection map
+const PLATFORM_MAP = [
+    { key: 'tixcraft',    domains: ['tixcraft.com', 'teamear.com', 'indievox.com', 'ticketmaster.'] },
+    { key: 'kktix',       domains: ['kktix.com', 'kktix.cc'] },
+    { key: 'ibon',        domains: ['ibon.com'] },
+    { key: 'famiticket',  domains: ['famiticket.com'] },
+    { key: 'kham',        domains: ['kham.com.tw'] },
+    { key: 'ticket',      domains: ['ticket.com.tw'] },
+    { key: 'udn',         domains: ['udnfunlife.com'] },
+    { key: 'ticketplus',  domains: ['ticketplus.com'] },
+    { key: 'cityline',    domains: ['cityline.com'] },
+    { key: 'hkticketing', domains: ['hkticketing.com', 'galaxymacau.com', 'ticketek.com'] },
+    { key: 'funone',      domains: ['funone.io'] },
+    { key: 'fansigo',     domains: ['fansi.me'] },
+    { key: 'urbtix',      domains: ['urbtix.hk'] },
+];
+
+function detectPlatform(url) {
+    if (!url) return null;
+    for (const platform of PLATFORM_MAP) {
+        if (platform.domains.some(d => url.includes(d))) {
+            return platform.key;
+        }
+    }
+    return null;
+}
+
+let _lastPlatform = undefined;
+
+function updatePlatformFields(url) {
+    const platform = detectPlatform(url);
+    if (platform === _lastPlatform) return;
+    _lastPlatform = platform;
+    const fields = $('[data-under]').addClass('disappear');
+    if (platform) {
+        fields.filter(`[data-under~="${platform}"]`).removeClass('disappear');
+    }
+    updateCitylineHintVisibility();
 }
 
 // Toggle Tixcraft refresh rate warning visibility
@@ -320,10 +358,9 @@ function load_settins_to_form(settings)
             resume_keyword_second.value = resume_keyword_second.value.replace(/"/g, '');
         }
 
-        // Update Cityline hint visibility after loading settings
-        updateCitylineHintVisibility();
-
-        // Update Tixcraft refresh warning after loading settings
+        // Update platform-aware fields, Cityline hint, and Tixcraft warning after loading settings
+        _lastPlatform = undefined;
+        updatePlatformFields(homepage.value);
         updateTixcraftRefreshWarning();
     } else {
         console.log('no settings found');
@@ -736,24 +773,6 @@ function check_unsaved_fields()
             }
         });
 
-        // check spcial feature for sites.
-        if(homepage.value.length) {
-            let special_site = "";
-            const special_site_list = ["kktix", "cityline"];
-            for(let i=0; i<special_site_list.length; i++) {
-                const site=special_site_list[i];
-                const match_url_1 = "." + site + ".com/";
-                const match_url_2 = "/" + site + ".com/";
-                //console.log(match_url);
-                if(homepage.value.indexOf(match_url_1) > 0 || homepage.value.indexOf(match_url_2) > 0) {
-                    special_site = site;
-                }
-            }
-            $('div[data-under]').addClass("disappear");
-            if(special_site.length) {
-                $('div[data-under="'+ special_site +'"]').removeClass("disappear");
-            }
-        }
     }
 }
 
@@ -836,6 +855,7 @@ onchange_tag_list.forEach((tag) => {
 });
 
 homepage.addEventListener('keyup', check_unsaved_fields);
+homepage.addEventListener('input', () => updatePlatformFields(homepage.value));
 
 ocr_captcha_use_universal.addEventListener('change', function() {
     if (this.checked) {

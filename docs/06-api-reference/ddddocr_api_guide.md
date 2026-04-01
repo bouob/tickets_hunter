@@ -306,7 +306,7 @@ def preprocess_image(image_bytes):
 
 ## MaxBot 實作範例
 
-### NoDriver 版本
+### ZenDriver 版本
 
 ```python
 # 初始化（全局）

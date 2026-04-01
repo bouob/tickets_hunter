@@ -83,13 +83,13 @@ PyInstaller 打包            PyInstaller 打包
 ```
 dist/
 ├── tickets_hunter/                    # 統一目錄（3 個 exe 共用依賴）
-│   ├── nodriver_tixcraft.exe         # NoDriver 版本主程式
+│   ├── nodriver_tixcraft.exe         # ZenDriver 版本主程式
 │   ├── settings.exe                   # 網頁設定介面
 │   ├── config_launcher.exe            # 多設定檔管理器
 │   ├── _internal/                     # 共用依賴（Python runtime + 模組）
 │   │   ├── python310.dll
 │   │   ├── ddddocr/
-│   │   ├── nodriver/
+│   │   ├── zendriver/
 │   │   └── ... (其他依賴)
 │   ├── webdriver/                     # 瀏覽器擴充套件
 │   │   ├── Maxbotplus_1.0.0/
@@ -272,7 +272,7 @@ Tickets Hunter 使用 **3 個獨立的 .spec 配置檔**，每個對應一個 ex
 
 | 配置檔 | 對應程式 | 說明 |
 |--------|---------|------|
-| `nodriver_tixcraft.spec` | `nodriver_tixcraft.exe` | NoDriver 版本主程式（最大） |
+| `nodriver_tixcraft.spec` | `nodriver_tixcraft.exe` | ZenDriver 版本主程式（最大） |
 | `settings.spec` | `settings.exe` | 網頁設定介面 |
 | `config_launcher.spec` | `config_launcher.exe` | 多設定檔管理器 |
 
@@ -284,7 +284,7 @@ Tickets Hunter 使用 **3 個獨立的 .spec 配置檔**，每個對應一個 ex
 # -*- mode: python ; coding: utf-8 -*-
 
 # =============================================================================
-# Tickets Hunter - NoDriver Version Build Specification
+# Tickets Hunter - ZenDriver Version Build Specification
 # =============================================================================
 
 from PyInstaller.utils.hooks import collect_data_files
@@ -300,10 +300,10 @@ a = Analysis(
     binaries=[],
     datas=datas,  # 資料檔案
     hiddenimports=[
-        # NoDriver 相關
-        'nodriver',
-        'nodriver.cdp',
-        'nodriver.core.config',
+        # ZenDriver 相關
+        'zendriver',
+        'zendriver.cdp',
+        'zendriver.core.config',
         # 驗證碼辨識
         'ddddocr',
         'onnxruntime',
@@ -386,10 +386,10 @@ coll = COLLECT(
 **Tickets Hunter 必要模組**：
 ```python
 hiddenimports=[
-    # NoDriver（反偵測 WebDriver）
-    'nodriver',
-    'nodriver.cdp',
-    'nodriver.core.config',
+    # ZenDriver（反偵測 WebDriver）
+    'zendriver',
+    'zendriver.cdp',
+    'zendriver.core.config',
 
     # 驗證碼辨識（ddddocr + ONNX Runtime）
     'ddddocr',
@@ -586,7 +586,7 @@ python -m PyInstaller build_scripts/nodriver_tixcraft.spec --clean --noconfirm -
 ```bash
 cd dist/tickets_hunter/_internal
 dir | findstr /I "ddddocr"
-dir | findstr /I "nodriver"
+dir | findstr /I "zendriver"
 dir | findstr /I "onnxruntime"
 ```
 
@@ -682,11 +682,11 @@ del /s /q *.pyc
 **修改程式碼**：
 ```python
 # ❌ 全域導入（啟動時載入）
-import nodriver as uc
+import zendriver as uc
 
 # ✅ 延遲導入（使用時才載入）
 def main():
-    import nodriver as uc
+    import zendriver as uc
     # ...
 ```
 

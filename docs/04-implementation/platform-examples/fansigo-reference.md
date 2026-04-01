@@ -26,7 +26,7 @@
 - Cookie 認證（FansiAuthInfo）注入簡單
 
 ⚠️ **挑戰**：
-- Next.js SPA 頁面導致 NoDriver `query_selector_all()` 失效
+- Next.js SPA 頁面導致 ZenDriver `query_selector_all()` 失效
 - 必須使用 `tab.evaluate()`（直接 JS 執行）操作 DOM
 - 點擊連結時 Next.js 可能開啟新分頁
 - 表單填寫、條款同意、錯誤處理等階段尚未實作
@@ -34,7 +34,7 @@
 ### 特殊機制
 
 1. **tab.evaluate() 為主要 DOM 操作方式**
-   - NoDriver 的 `query_selector_all()` 在 Next.js SPA 頁面上會失敗
+   - ZenDriver 的 `query_selector_all()` 在 Next.js SPA 頁面上會失敗
    - 所有 DOM 查詢與操作統一使用 `tab.evaluate()` 執行 JavaScript
    - 這是 FANSI GO 與其他平台最大的技術差異
 
@@ -119,9 +119,9 @@ FANSI GO 使用正則表達式匹配 URL 來判斷頁面類型：
 
 ## 已知問題與解決方案
 
-### 1. NoDriver query_selector 失效
-**問題**：Next.js SPA 頁面上，NoDriver 的 `query_selector_all()` 無法正確取得 DOM 元素。
-**解決方案**：所有 DOM 操作統一使用 `tab.evaluate()` 執行 JavaScript，繞過 NoDriver 的 DOM 查詢限制。
+### 1. ZenDriver query_selector 失效
+**問題**：Next.js SPA 頁面上，ZenDriver 的 `query_selector_all()` 無法正確取得 DOM 元素。
+**解決方案**：所有 DOM 操作統一使用 `tab.evaluate()` 執行 JavaScript，繞過 ZenDriver 的 DOM 查詢限制。
 
 ### 2. Next.js 連結開啟新分頁
 **問題**：點擊場次連結時，Next.js 路由可能開啟新瀏覽器分頁而非頁面內導航。

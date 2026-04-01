@@ -111,7 +111,7 @@ ticket_automation_standard.md -> structure.md -> development_guide.md -> API 指
 |------|------|----------|
 | [ticket_automation_standard.md](02-development/ticket_automation_standard.md) | 標準功能定義 (12 階段) | 開發者 |
 | [structure.md](02-development/structure.md) | 程式架構索引與完成度評分 | 所有人 |
-| [cdp_protocol_reference.md](06-api-reference/cdp_protocol_reference.md) | CDP 協議完整參考 | NoDriver 開發者 |
+| [cdp_protocol_reference.md](06-api-reference/cdp_protocol_reference.md) | CDP 協議完整參考 | ZenDriver 開發者 |
 | [nodriver_api_guide.md](06-api-reference/nodriver_api_guide.md) | NoDriver API 指南 | 除錯者 |
 | [nodriver_selector_analysis.md](06-api-reference/nodriver_selector_analysis.md) | NoDriver Selector 最佳實踐 | NoDriver 開發者 |
 

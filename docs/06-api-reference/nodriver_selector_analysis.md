@@ -5,6 +5,10 @@
 
 ---
 
+> **[歷史文件]** 本報告分析的對象為 nodriver（舊版套件）。現行專案使用 **zendriver**（nodriver 的活躍 fork）。zendriver 的 Selector API 與 nodriver 相容，本報告的分析結論仍具參考價值，但程式碼範例中的 `import nodriver` 應改為 `import zendriver`。
+
+---
+
 **日期**: 2025-10-28
 **分析範圍**: `src/nodriver_tixcraft.py`
 **參考文章**: https://stackoverflow.max-everyday.com/2025/10/nodriver-query-selector-sub-selector/

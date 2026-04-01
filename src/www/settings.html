@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.03.10) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.03.14) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -272,6 +272,7 @@
             <script>
             function fillHomepage(url) {
               document.getElementById('homepage').value = url;
+              updatePlatformFields(url);
             }
             </script>
 
@@ -566,7 +567,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft kham ticket udn">
           <label class="col-sm-2 col-form-label">允許不連續座位<span class="help-icon" data-help="disable_adjacent_seat" title="停用相鄰座位說明" tabindex="0" role="button" aria-label="停用相鄰座位 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -584,7 +585,7 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft kktix">
           <label class="col-sm-2 col-form-label">擋掉 Facebook 連線<span class="help-icon" data-help="block_facebook_network" title="封鎖 Facebook 網路說明" tabindex="0" role="button" aria-label="封鎖 Facebook 網路 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -620,7 +621,7 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">OCR<span class="help-icon" data-help="ocr_captcha_enable" title="OCR 驗證碼辨識說明" tabindex="0" role="button" aria-label="OCR 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -630,7 +631,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label for="ocr_captcha_image_source" class="col-sm-2 col-form-label">OCR圖片取得方式<span class="help-icon" data-help="ocr_captcha_image_source" title="OCR 圖片取得方式說明" tabindex="0" role="button" aria-label="OCR 圖片取得方式 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <select id="ocr_captcha_image_source" class="form-select" aria-label="Default select">
@@ -639,7 +640,7 @@
             </select>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">自動送出<span class="help-icon" data-help="ocr_captcha_force_submit" title="OCR 自動送出說明" tabindex="0" role="button" aria-label="自動送出 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -648,7 +649,7 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label class="col-sm-2 col-form-label">自訓練模型<span class="help-icon" data-help="ocr_captcha_use_universal" title="使用通用 OCR 模型說明" tabindex="0" role="button" aria-label="使用通用 OCR 模型 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="form-check form-switch">
@@ -660,13 +661,13 @@
             </div>
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label for="remote_url" class="col-sm-2 col-form-label">OCR Server URL<span class="help-icon" data-help="remote_url" title="設定介面網址說明" tabindex="0" role="button" aria-label="設定介面網址 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="remote_url" value="" />
           </div>
         </div>
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft ibon kham ticket udn famiticket funone ticketplus">
           <label for="ocr_model_path" class="col-sm-2 col-form-label">自訂 OCR 模型<span class="help-icon" data-help="ocr_model_path" title="自訂 OCR 模型說明" tabindex="0" role="button" aria-label="自訂 OCR 模型 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="ocr_model_path" value="" placeholder="例如：assets/ocr_model 或 C:\models\my_ocr" />
@@ -819,7 +820,7 @@
         <hr class="mb-4"/>
 
         <!-- 平台帳號區塊 -->
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft">
           <label for="tixcraft_sid" class="col-sm-2 col-form-label">拓元家族 cookie (TIXUISID / IVUISID / TIXPUISID)<span class="help-icon" data-help="tixcraft_sid" title="拓元家族 Cookie 說明" tabindex="0" role="button" aria-label="拓元家族 Cookie 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="tixcraft_sid" value="" />
@@ -833,21 +834,21 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="ibon">
           <label for="ibonqware" class="col-sm-2 col-form-label">ibon cookie ibonqware<span class="help-icon" data-help="ibonqware" title="ibon Cookie 說明" tabindex="0" role="button" aria-label="ibon Cookie 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="ibonqware" value="" />
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="funone">
           <label for="funone_session_cookie" class="col-sm-2 col-form-label">FunOne cookie (ticket_session)<span class="help-icon" data-help="funone_session_cookie" title="FunOne Cookie 說明" tabindex="0" role="button" aria-label="FunOne Cookie 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="funone_session_cookie" value="" />
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="fansigo">
           <label for="fansigo_account" class="col-sm-2 col-form-label">FANSI GO</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -861,14 +862,14 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="fansigo">
           <label for="fansigo_cookie" class="col-sm-2 col-form-label">FANSI GO cookie (FansiAuthInfo)<span class="help-icon" data-help="fansigo_cookie" title="FANSI GO Cookie 說明" tabindex="0" role="button" aria-label="FANSI GO Cookie 說明"></span></label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <input class="form-control" id="fansigo_cookie" value="" />
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="tixcraft kktix">
           <label for="facebook_account" class="col-sm-2 col-form-label">Facebook</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -882,7 +883,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="kktix">
           <label for="kktix_account" class="col-sm-2 col-form-label">KKTIX</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -896,7 +897,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="famiticket">
           <label for="fami_account" class="col-sm-2 col-form-label">FamiTicket</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -910,7 +911,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="kham">
           <label for="kham_account" class="col-sm-2 col-form-label">寬宏</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -924,7 +925,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="ticket">
           <label for="ticket_account" class="col-sm-2 col-form-label">年代</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -938,7 +939,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="udn">
           <label for="udn_account" class="col-sm-2 col-form-label">UDN</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -952,7 +953,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="ticketplus">
           <label for="ticketplus_account" class="col-sm-2 col-form-label">遠大</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -966,7 +967,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="cityline">
           <label for="cityline_account" class="col-sm-2 col-form-label">cityline</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <div class="input-group">
@@ -976,7 +977,7 @@
           </div>
         </div>
 
-        <div class="row mb-3 bd-callout bd-callout-warning" id="cityline-login-hint" style="display: none;">
+        <div class="row mb-3 bd-callout bd-callout-warning" id="cityline-login-hint" data-under="cityline" style="display: none;">
           <div class="col">
             <strong>⚠️ Cityline 登入說明（半自動模式）：</strong>
             <ol class="mb-0 mt-2">
@@ -989,7 +990,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="urbtix">
           <label for="urbtix_account" class="col-sm-2 col-form-label">URBTIX</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -1003,7 +1004,7 @@
           </div>
         </div>
 
-        <div class="row mb-3">
+        <div class="row mb-3" data-under="hkticketing">
           <label for="hkticketing_account" class="col-sm-2 col-form-label">HKTICKETING</label>
           <div class="col-sm-10 col-lg-8 col-xl-6">
             <form autocomplete="off">
@@ -1184,6 +1185,6 @@
 </div>
 
   <script src="help-content.js?v=2026031001"></script>
-  <script src="settings.js?v=2026031003"></script>
+  <script src="settings.js?v=2026040116"></script>
 </body>
 </html>

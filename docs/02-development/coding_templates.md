@@ -11,7 +11,7 @@
 
 本文件專注於提供實際的程式碼範本和實作檢查清單。相關的架構和策略說明請參考：
 
-- **開發規範與 NoDriver First 策略**：`development_guide.md`
+- **開發規範與 ZenDriver First 策略**：`development_guide.md`
 - **12 階段詳細定義**：`ticket_automation_standard.md`
 - **平台函數對照表**：`structure.md`
 
@@ -19,10 +19,10 @@
 
 ## 📖 **本文件包含的內容**
 
-1. **標準範本庫** - 各功能模組的代碼範本（NoDriver 和 Chrome 版本）
+1. **標準範本庫** - 各功能模組的代碼範本（ZenDriver 和 Chrome 版本）
 2. **實作完整度檢查表** - 平台認證標準
 3. **平台完成度評分** - 當前各平台的實作狀態
-4. **2025 開發建議** - NoDriver First 優先策略
+4. **2025 開發建議** - ZenDriver First 優先策略
 
 ---
 
@@ -44,7 +44,7 @@
 ### 檢查清單與評分
 - **實作完整度檢查表** → 白金/金/銀級標準
 - **平台完成度總覽** → 當前各平台狀態
-- **2025 開發建議** → NoDriver First 策略
+- **2025 開發建議** → ZenDriver First 策略
 
 ---
 
@@ -61,7 +61,7 @@
 ```python
 async def nodriver_platform_function_name(tab, config_dict, ...):
     """
-    NoDriver 版本函數範本
+    ZenDriver 版本函數範本
     採用非同步架構，效能更好
     """
     debug = util.create_debug_logger(config_dict)
@@ -122,15 +122,15 @@ debug.log("message")
 
 ## 📚 **標準範本庫**
 
-### 🏅 **推薦範本 - NoDriver 主程式架構**
+### 🏅 **推薦範本 - ZenDriver 主程式架構**
 
 ```python
 async def nodriver_{platform}_main(tab, url, config_dict, ocr=None):
     """
-    NoDriver 版本主流程控制 (推薦使用)
+    ZenDriver 版本主流程控制 (推薦使用)
 
     Args:
-        tab: NoDriver Tab 實例
+        tab: ZenDriver Tab 實例
         url: 當前頁面 URL
         config_dict: 設定字典
         ocr: OCR 辨識器 (可選)
@@ -193,7 +193,7 @@ async def nodriver_{platform}_main(tab, url, config_dict, ocr=None):
     debug.log(f"[NoDriver] {platform}_main completed")
 ```
 
-**NoDriver 主程式設計重點**：
+**ZenDriver 主程式設計重點**：
 - ✅ 使用 `async/await` 架構
 - ✅ 完整的狀態追蹤機制
 - ✅ URL 路由清晰明確
@@ -218,7 +218,7 @@ def {platform}_main(driver, url, config_dict, ocr=None):
     說明:
         - 同步架構
         - 僅維護既有功能，不接受新功能
-        - 新平台請使用 NoDriver 版本開發
+        - 新平台請使用 ZenDriver 版本開發
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -250,12 +250,12 @@ def {platform}_main(driver, url, config_dict, ocr=None):
 
 ## 📅 **日期選擇範本**
 
-### 🏅 **推薦範本 - NoDriver 日期選擇**
+### 🏅 **推薦範本 - ZenDriver 日期選擇**
 
 ```python
 async def nodriver_{platform}_date_auto_select(tab, config_dict):
     """
-    NoDriver 版本日期自動選擇 (推薦使用)
+    ZenDriver 版本日期自動選擇 (推薦使用)
 
     特色:
         - 非同步查找元素，效能優異
@@ -350,7 +350,7 @@ async def nodriver_{platform}_date_auto_select(tab, config_dict):
     return is_date_assigned
 ```
 
-**NoDriver 日期選擇設計重點**：
+**ZenDriver 日期選擇設計重點**：
 - ✅ 支援多種選擇器策略 (適應平台改版)
 - ✅ 自動過濾售罄日期
 - ✅ 支援 AND/OR 邏輯關鍵字
@@ -416,12 +416,12 @@ def {platform}_date_auto_select(driver, config_dict):
     return is_date_assigned
 ```
 
-### 🥈 **銀級 - NoDriver 日期選擇** (簡化版範本)
+### 🥈 **銀級 - ZenDriver 日期選擇** (簡化版範本)
 
 ```python
 async def nodriver_{platform}_date_auto_select(tab, config_dict):
     """
-    自動選擇演出日期 (NoDriver 版本)
+    自動選擇演出日期 (ZenDriver 版本)
     """
     debug = util.create_debug_logger(config_dict)
     date_keyword = config_dict["date_auto_select"]["date_keyword"].strip()
@@ -519,7 +519,7 @@ try:
 except Exception as exc:
     area_keyword_array = []
 
-# NoDriver 版本 (必須對齊標準)
+# ZenDriver 版本 (必須對齊標準)
 area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
 area_keyword_array = []
 try:
@@ -705,11 +705,11 @@ def {platform}_ticket_agree(driver, config_dict):
     return is_agree_success
 ```
 
-### NoDriver 版本 【推薦使用】
+### ZenDriver 版本 【推薦使用】
 ```python
 async def nodriver_{platform}_ticket_agree(tab, config_dict):
     """
-    自動勾選同意條款 (NoDriver 版本)
+    自動勾選同意條款 (ZenDriver 版本)
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -823,11 +823,11 @@ def {platform}_real_name_verify(driver, config_dict):
     return is_real_name_filled
 ```
 
-### NoDriver 版本 【推薦使用】
+### ZenDriver 版本 【推薦使用】
 ```python
 async def nodriver_{platform}_real_name_verify(tab, config_dict):
     """
-    自動填寫實名認證資料 (NoDriver 版本)
+    自動填寫實名認證資料 (ZenDriver 版本)
     """
     debug = util.create_debug_logger(config_dict)
     real_name = config_dict["advanced"]["{platform}_real_name"].strip()
@@ -1033,7 +1033,7 @@ def {platform}_function_with_retry(driver, config_dict, max_retry=3):
 
 ---
 
-## 🛑 **暫停機制標準範本** (NoDriver 專用)
+## 🛑 **暫停機制標準範本** (ZenDriver 專用)
 
 > 統一的暫停檢查機制，確保使用者可隨時中斷執行
 
@@ -1086,7 +1086,7 @@ async def nodriver_platform_function(tab, config_dict):
 
 **位置**：`src/nodriver_tixcraft.py:5318-5323`
 
-**使用時機**：需要延遲等待的 NoDriver 函數
+**使用時機**：需要延遲等待的 ZenDriver 函數
 
 **範本**：
 ```python
@@ -1268,10 +1268,10 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 - 不要在呼叫端額外加入訊息顯示邏輯
 - 保持行為一致性
 
-#### 3. **僅在 NoDriver 版本實作**
+#### 3. **僅在 ZenDriver 版本實作**
 - Chrome Driver 版本不支援暫停機制
 - 保持兩個版本的功能差異性
-- NoDriver 版本的優勢之一
+- ZenDriver 版本的優勢之一
 
 #### 4. **暫停後的處理**
 - 檢測到暫停後應該 `return` 而非 `break`
@@ -1288,7 +1288,7 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 
 ### 檢查清單
 
-開發 NoDriver 函數時，確保：
+開發 ZenDriver 函數時，確保：
 - [ ] 函數開始時呼叫 `check_and_handle_pause()`
 - [ ] 所有 `tab.sleep()` 改用 `sleep_with_pause_check()`
 - [ ] 所有 `asyncio.sleep()` 改用 `asyncio_sleep_with_pause_check()`
@@ -1372,7 +1372,7 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 - **多平台適配**: 不同表單選擇器
 - **密碼解密**: 支援加密密碼儲存
 - **登入狀態檢查**: Cookie 驗證
-- **Cloudflare 處理**: 針對 NoDriver 版本
+- **Cloudflare 處理**: 針對 ZenDriver 版本
 
 #### 7. 同意條款模組 (Agreement)
 ```python
@@ -1441,8 +1441,8 @@ async def nodriver_platform_date_auto_select(tab, config_dict):
 
 ## 🛡️ **Cloudflare 驗證處理**
 
-### NoDriver Cloudflare 處理
-**官方文件**: https://ultrafunkamsterdam.github.io/nodriver/
+### ZenDriver Cloudflare 處理
+**官方文件**: https://zendriver.dev/
 
 ```python
 async def handle_cloudflare_verification(tab, config_dict):
@@ -1452,7 +1452,7 @@ async def handle_cloudflare_verification(tab, config_dict):
     debug = util.create_debug_logger(config_dict)
 
     try:
-        # 使用 nodriver 內建方法
+        # 使用 zendriver 內建方法
         await tab.verify_cf()
         debug.log("Cloudflare 驗證處理完成")
     except AttributeError:
@@ -1520,7 +1520,7 @@ def ticketplus_order_expansion_auto_select(driver, config_dict, area_keyword_ite
     """自動選擇區域（展開式面板模式）"""
     # 取代標準的 ticketplus_area_auto_select()
 
-# NoDriver 版本
+# ZenDriver 版本
 async def nodriver_ticketplus_select_ticket_simplified(tab, config_dict, area_keyword):
     """簡化的票種選擇（統一處理三種佈局）"""
 ```
@@ -1699,10 +1699,10 @@ def example_platform_main(driver, url, config_dict, ocr, Captcha_Browser):
         example_platform_dict["played_sound_ticket"] = False
         example_platform_dict["retry_count"] = 0
 
-# NoDriver 版本範例 (簡化版)
+# ZenDriver 版本範例 (簡化版)
 async def nodriver_example_platform_main(tab, url, config_dict, ocr, Captcha_Browser):
     """
-    NoDriver 版本標準範本
+    ZenDriver 版本標準範本
     """
     debug = util.create_debug_logger(config_dict)
 
@@ -1849,53 +1849,53 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 
 ### 📊 **目前平台完成度總覽** (2025.10 更新)
 
-| 平台 | NoDriver版本 ⭐ | Chrome版本 | 推薦引擎 | 狀態 |
+| 平台 | ZenDriver版本 ⭐ | Chrome版本 | 推薦引擎 | 狀態 |
 |------|:-------------:|:----------:|:--------:|:----:|
-| **TixCraft** | 🏅 白金級 (92%) | 🥈 銀級 (95%) | **NoDriver** | ✅ 生產可用 |
-| **KKTIX** | 🏅 白金級 (90%) | 🥈 銀級 (90%) | **NoDriver** | ✅ 生產可用 |
-| **TicketPlus** | 🏅 白金級 (95%) | 🥈 銀級 (98%) | **NoDriver** | ✅ 生產可用 |
-| **iBon** | 🥇 金級 (80%) | 🥈 銀級 (75%) | **NoDriver** | ✅ 可用 |
+| **TixCraft** | 🏅 白金級 (92%) | 🥈 銀級 (95%) | **ZenDriver** | ✅ 生產可用 |
+| **KKTIX** | 🏅 白金級 (90%) | 🥈 銀級 (90%) | **ZenDriver** | ✅ 生產可用 |
+| **TicketPlus** | 🏅 白金級 (95%) | 🥈 銀級 (98%) | **ZenDriver** | ✅ 生產可用 |
+| **iBon** | 🥇 金級 (80%) | 🥈 銀級 (75%) | **ZenDriver** | ✅ 可用 |
 | **Cityline** | 🥈 銀級 (60%) | 🥈 銀級 (72%) | Chrome | 🔄 開發中 |
 | **TicketMaster** | 🥈 銀級 (55%) | 🥈 銀級 (78%) | Chrome | 🔄 開發中 |
 | **年代售票** | 🚧 規劃中 (0%) | 🥈 銀級 (70%) | Chrome | 📋 待移植 |
 | **寬宏售票** | 🚧 規劃中 (0%) | 🥈 銀級 (68%) | Chrome | 📋 待移植 |
 
 **圖例說明**：
-- ⭐ NoDriver: 推薦使用（反偵測、高效能）
+- ⭐ ZenDriver: 推薦使用（反偵測、高效能，zendriver 是 nodriver 的活躍 fork）
 - Chrome: 傳統方案（過渡期、測試用）
 - ✅ 生產可用: 實測穩定，可用於正式環境
 - ✅ 可用: 基本功能完整，建議追蹤更新
 - 🔄 開發中: 持續改進中
-- 📋 待移植: 規劃從 Chrome 移植至 NoDriver
+- 📋 待移植: 規劃從 Chrome 移植至 ZenDriver
 
 ---
 
-### ⭐ **2025 開發建議 (NoDriver First)**
+### ⭐ **2025 開發建議 (ZenDriver First)**
 
 #### **優先採用策略**
 
-**新專案開發** (強烈推薦 NoDriver):
-1. **首選平台**: NoDriver TixCraft / KKTIX / TicketPlus
+**新專案開發** (強烈推薦 ZenDriver):
+1. **首選平台**: ZenDriver TixCraft / KKTIX / TicketPlus
 2. **理由**:
    - ✅ 反偵測能力強，不易被封鎖
    - ✅ 記憶體效率高，可多開瀏覽器
    - ✅ 非同步架構，效能優異
    - ✅ 實戰驗證，穩定可靠
-3. **學習路徑**: async/await → NoDriver API → 平台業務邏輯
+3. **學習路徑**: async/await → ZenDriver API → 平台業務邏輯
 
 **維護舊專案** (逐步遷移):
 1. **短期**: 保持 Chrome 版本運作
-2. **中期**: 逐步改寫為 NoDriver
-3. **長期**: 統一 NoDriver
+2. **中期**: 逐步改寫為 ZenDriver
+3. **長期**: 統一 ZenDriver
 
 **特殊需求場景**:
 1. **快速測試除錯**: 使用 Chrome 版本 (API 豐富)
 2. **需要相容舊環境**: 使用 Chrome 版本
-3. **生產環境搶票**: 優先使用 NoDriver
+3. **生產環境搶票**: 優先使用 ZenDriver
 
 ---
 
-### 🚀 **NoDriver 開發優勢**
+### 🚀 **ZenDriver 開發優勢**
 
 #### 技術優勢
 - ✅ **反偵測**: 通過 Cloudflare、reCAPTCHA 等防護
@@ -1914,17 +1914,17 @@ print("elapsed time:", "{:.3f}".format(elapsed_time))
 
 | 需求情境 | 推薦方案 | 理由 |
 |---------|---------|------|
-| 正式搶票 | NoDriver TixCraft/KKTIX/TicketPlus | 反偵測 + 高成功率 |
+| 正式搶票 | ZenDriver TixCraft/KKTIX/TicketPlus | 反偵測 + 高成功率 |
 | 開發測試 | Chrome TixCraft | 除錯容易 + API 豐富 |
-| 學習研究 | NoDriver TixCraft | 架構完整 + 文件齊全 |
+| 學習研究 | ZenDriver TixCraft | 架構完整 + 文件齊全 |
 | 快速原型 | Chrome 任意平台 | 開發速度快 |
-| 平台移植 | 參考 NoDriver 三大平台 | 設計模式一致 |
+| 平台移植 | 參考 ZenDriver 三大平台 | 設計模式一致 |
 
 ---
 
 此分級系統確保開發者能夠：
 - ✅ 選擇最適合的技術方案
-- ✅ 遵循 NoDriver First 策略
+- ✅ 遵循 ZenDriver First 策略
 - ✅ 建立一致的代碼品質標準
 - ✅ 提升整體系統可維護性
 ---

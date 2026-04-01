@@ -11,21 +11,22 @@
 
 **開發新功能時必須**：
 1. **遵循架構範本**：參考 `/docs/coding_templates.md` 的標準架構
-2. **參考最佳實踐**：以 NoDriver 平台實作（TixCraft、KKTIX、TicketPlus、iBon）作為開發標準
+2. **參考最佳實踐**：以 ZenDriver 平台實作（TixCraft、KKTIX、TicketPlus、iBon）作為開發標準
 3. **保持一致性**：函數命名、錯誤處理、debug 輸出格式統一
 
 ## WebDriver 除錯規則
 
 **重要：除錯任何 WebDriver 問題時，必須先查閱對應 API 指南**
 
-### NoDriver 除錯規則（推薦優先）
+### ZenDriver 除錯規則（推薦優先）
 
-當除錯或修改 NoDriver 平台實作時，必須遵循以下流程：
+當除錯或修改 ZenDriver 平台實作時，必須遵循以下流程：
 
 1. **首先查閱 API 指南**
-   - 必須先查看 `/docs/nodriver_api_guide.md`
+   - 必須先查看 `/docs/06-api-reference/zendriver_api_guide.md`（主要參考）
+   - 舊版 nodriver API 指南已棄用，僅作遷移參考
    - 確認使用的方法是否存在且穩定
-   - 優先使用推薦的 JavaScript 方法
+   - 優先使用 CDP 原生方法
 
 2. **避免元素物件操作**
    - 不使用 `element.get_html()` → 改用 `tab.evaluate()`
@@ -35,7 +36,7 @@
 
 3. **推薦模式**
    - 所有 DOM 操作都在 `evaluate()` 中完成
-   - 使用 `util.parse_nodriver_result()` 處理返回值
+   - zendriver 的 `tab.evaluate()` **直接回傳實際值**，禁止使用已棄用的 `util.parse_nodriver_result()`
    - 實作錯誤處理和重試機制
 
 4. **Shadow DOM 穿透策略** ⭐
@@ -52,7 +53,7 @@
      ```
 
 5. **參考標準實作**
-   - 以 NoDriver 平台（TixCraft、KKTIX、TicketPlus、iBon）為開發標準
+   - 以 ZenDriver 平台（TixCraft、KKTIX、TicketPlus、iBon）為開發標準
    - 確認函數命名規範和錯誤處理模式
    - 遵循既有的重試機制和等待策略
 
@@ -187,7 +188,7 @@ for retry_count in range(max_retry):
 
 ## 暫停機制開發規範
 
-> **適用範圍**：僅限 NoDriver 版本平台函數（Chrome Driver 不支援）
+> **適用範圍**：僅限 ZenDriver 版本平台函數（Chrome Driver 不支援）
 
 ### 核心原則
 
@@ -202,17 +203,17 @@ for retry_count in range(max_retry):
    - `verbose = false` 時不顯示
    - 不要在呼叫端額外加入訊息顯示邏輯
 
-3. **僅在 NoDriver 版本實作**
+3. **僅在 ZenDriver 版本實作**
    - Chrome Driver 版本不支援暫停機制
    - 保持兩個版本的功能差異性
-   - NoDriver 版本的優勢特性之一
+   - ZenDriver 版本的優勢特性之一
 
 ### 實作原則
 
 #### 1. 檢查時機
 
 **必須檢查的位置：**
-- 函數開始時：每個 NoDriver 函數入口
+- 函數開始時：每個 ZenDriver 函數入口
 - 長時間迴圈內：每次迭代開始時
 
 **建議檢查的位置：**
@@ -247,7 +248,7 @@ for retry_count in range(max_retry):
 
 ### 開發檢查清單
 
-開發 NoDriver 函數時，確保：
+開發 ZenDriver 函數時，確保：
 - [ ] 函數開始時呼叫 `check_and_handle_pause()`
 - [ ] 所有 `tab.sleep()` 改用 `sleep_with_pause_check()`
 - [ ] 所有 `asyncio.sleep()` 改用 `asyncio_sleep_with_pause_check()`
@@ -261,7 +262,7 @@ for retry_count in range(max_retry):
 ```python
 async def nodriver_platform_function(tab, config_dict):
     """
-    標準 NoDriver 函數範本
+    標準 ZenDriver 函數範本
     展示正確的暫停檢查位置
     """
     debug = util.create_debug_logger(config_dict)
@@ -341,7 +342,7 @@ def platform_function(driver, config_dict):
 1. **結構查詢優先**
    - 修改任何平台功能前，必須先查看 `/docs/structure.md`
    - 確認函數位置和依賴關係
-   - 了解 Chrome 與 NoDriver 版本差異
+   - 了解 Chrome 與 ZenDriver 版本差異
 
 2. **影響評估**
    - 檢查修改是否影響其他平台
@@ -350,7 +351,7 @@ def platform_function(driver, config_dict):
    - 驗證不會影響相依功能的正常運作
 
 3. **跨版本相容性**
-   - 確保修改在 Chrome 和 NoDriver 版本都能正常運作
+   - 確保修改在 Chrome 和 ZenDriver 版本都能正常運作
    - 檢查是否需要同步更新兩個版本
    - 保持 API 介面的一致性
 
@@ -361,13 +362,13 @@ def platform_function(driver, config_dict):
 修改 util.py 時必須遵循以下規則：
 
 1. **強制檢查相容性**
-   - 修改 util.py 任何函數前，必須確保 NoDriver 平台正常運作
+   - 修改 util.py 任何函數前，必須確保 ZenDriver 平台正常運作
    - 確保修改不會破壞 Chrome 版本的功能
-   - 優先保證 NoDriver 版本的穩定性
+   - 優先保證 ZenDriver 版本的穩定性
 
 2. **版本相容性原則**
-   - 新增功能應該同時支援 NoDriver 和 Chrome 版本
-   - NoDriver 特殊格式處理不應影響 Chrome 版本
+   - 新增功能應該同時支援 ZenDriver 和 Chrome 版本
+   - ZenDriver 特殊格式處理不應影響 Chrome 版本
    - 避免改變函數簽名或返回值格式
 
 3. **測試範圍（優先順序）**
@@ -379,7 +380,7 @@ def platform_function(driver, config_dict):
    - [ ] 查閱對應的 API 指南文件
      - NoDriver: `/docs/06-api-reference/nodriver_api_guide.md`
    - [ ] 查看 `/docs/structure.md` 確認不破壞結構
-   - [ ] 閱讀 NoDriver 平台使用該函數的所有位置
+   - [ ] 閱讀 ZenDriver 平台使用該函數的所有位置
    - [ ] 確認修改不會改變現有行為
    - [ ] 測試所有 WebDriver 的資料格式相容性
    - [ ] 驗證所有平台核心功能正常
@@ -681,7 +682,7 @@ def click_element_safe(driver, element, config_dict):
     嘗試順序：
     1. 原生點擊
     2. JavaScript 點擊
-    3. CDP 點擊（NoDriver）
+    3. CDP 點擊（ZenDriver）
     """
     debug = util.create_debug_logger(config_dict)
 

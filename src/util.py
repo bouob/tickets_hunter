@@ -22,7 +22,7 @@ CONST_RANDOM = "random"
 # Keyword delimiter constants (Issue #23)
 CONST_KEYWORD_DELIMITER = ';'  # New delimiter (semicolon)
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
 
 def get_ip_address():
     gethostname = None
@@ -2076,11 +2076,7 @@ def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kkt
             cmd = script_name + '.exe ' + ' '.join(cmd_argument)
         subprocess.Popen(cmd, shell=True, cwd=working_dir)
     else:
-        interpreter_binary = 'python'
-        interpreter_binary_alt = 'python3'
-        if platform.system() != 'Windows':
-            interpreter_binary = 'python3'
-            interpreter_binary_alt = 'python'
+        interpreter_binary = sys.executable
         print("execute in shell mode.")
 
         try:
@@ -2088,14 +2084,9 @@ def launch_maxbot(script_name="nodriver_tixcraft", filename="", homepage="", kkt
             cmd_array = [interpreter_binary, script_name + '.py'] + cmd_argument
             s=subprocess.Popen(cmd_array, cwd=working_dir)
         except Exception as exc:
-            print('try', interpreter_binary_alt)
-            try:
-                cmd_array = [interpreter_binary_alt, script_name + '.py'] + cmd_argument
-                s=subprocess.Popen(cmd_array, cwd=working_dir)
-            except Exception as exc:
-                msg=str(exc)
-                print("exeption:", msg)
-                pass
+            msg=str(exc)
+            print("exeption:", msg)
+            pass
 
 def parse_nodriver_result(result):
     """

@@ -362,7 +362,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
 
     try:
         # Step 1: 使用 DOMSnapshot 平坦化 Shadow DOM
-        dom_snapshot_result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot(
+        dom_snapshot_result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot(
             computed_styles=[]
         ))
 
@@ -391,7 +391,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
             return None
 
         # Step 3: 使用 CDP Page.captureScreenshot 擷取元素圖片
-        screenshot_result = await tab.send(nodriver.cdp.page.captureScreenshot(
+        screenshot_result = await tab.send(zendriver.cdp.page.captureScreenshot(
             format_='png',
             from_surface=True,
             capture_beyond_viewport=False
@@ -588,7 +588,7 @@ await tab.sleep(button_delay)
 **解決方案（3 步驟）**：
 ```python
 # Step 1: 使用 DOMSnapshot 平坦化 Shadow DOM
-dom_snapshot_result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot())
+dom_snapshot_result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot())
 
 # Step 2: 搜尋驗證碼元素（在平坦化結構中）
 for doc in dom_snapshot_result[0]:
@@ -597,7 +597,7 @@ for doc in dom_snapshot_result[0]:
             captcha_backend_node_id = doc.layout.backend_node_id[idx]
 
 # Step 3: 使用 CDP 擷取元素截圖
-screenshot = await tab.send(nodriver.cdp.page.captureScreenshot())
+screenshot = await tab.send(zendriver.cdp.page.captureScreenshot())
 ```
 
 **優勢**：

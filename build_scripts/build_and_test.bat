@@ -121,7 +121,7 @@ echo [OK] PyInstaller installed
 echo.
 
 echo [2.3] Verifying core packages...
-python -c "import ddddocr; import nodriver; import tornado; print('[OK] All core packages verified')"
+python -c "import ddddocr; import zendriver; import tornado; print('[OK] All core packages verified')"
 if %errorlevel% neq 0 (
     echo [ERROR] Core packages verification failed
     goto :error_exit

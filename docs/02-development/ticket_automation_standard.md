@@ -211,7 +211,7 @@ config_dict["tixcraft"]["pass_date_is_sold_out"]  # 是否跳過售完日期
 │   └── select_random(dates: list) -> element
 ├── click_date_element(driver, element) -> bool
 │   ├── click_by_javascript(driver, element)
-│   └── click_by_cdp(tab, element)  # NoDriver 專用
+│   └── click_by_cdp(tab, element)  # ZenDriver 專用
 └── verify_date_selected(driver, selected_text: str) -> bool
 ```
 
@@ -543,7 +543,7 @@ config_dict["kktix"]["max_dwell_time"]              # 最大停留時間（KKTIX
 │   └── find_by_class(driver, class_list: list) -> element
 ├── click_submit_button(driver, element) -> bool
 │   ├── click_by_javascript(driver, element)
-│   └── click_by_cdp(tab, element)  # NoDriver 專用
+│   └── click_by_cdp(tab, element)  # ZenDriver 專用
 ├── handle_confirmation_dialog(driver) -> bool
 ├── play_sound_notification(config_dict, sound_type: str) -> bool
 │   ├── check_play_condition(config_dict, sound_type) -> bool
@@ -649,11 +649,11 @@ element_utils
 │   ├── try_by_css(driver, css: str)
 │   └── return_none_if_not_found()
 ├── wait_for_element(driver, selector: str, timeout: int) -> element
-│   └── 等待元素出現，支援 Chrome 和 NoDriver
+│   └── 等待元素出現，支援 Chrome 和 ZenDriver
 ├── click_element_safe(driver, element) -> bool
 │   ├── try_standard_click(driver, element)
 │   ├── try_javascript_click(driver, element)
-│   └── try_cdp_click(tab, element)  # NoDriver 專用
+│   └── try_cdp_click(tab, element)  # ZenDriver 專用
 ├── input_text_safe(driver, element, text: str) -> bool
 │   ├── clear_and_input(element, text)
 │   └── verify_input(element, expected: str)

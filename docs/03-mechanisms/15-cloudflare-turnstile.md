@@ -32,9 +32,9 @@ document.querySelectorAll('iframe')  // 只找到無關的 iframe
 | CDP `Target.getTargets()` | ✅ |
 | CDP `DOM.getDocument(pierce=True)` | ✅ |
 
-### nodriver `verify_cf()` 無效
+### `verify_cf()` 無效
 
-nodriver 內建的 `verify_cf()` 使用 OpenCV 模板匹配截圖來找 checkbox。
+zendriver 繼承自 nodriver 的 `verify_cf()` 使用 OpenCV 模板匹配截圖來找 checkbox。
 在實際 Cloudflare 頁面上**完全無效**（返回 None，checkbox 不會被點擊）。
 
 ## 架構設計

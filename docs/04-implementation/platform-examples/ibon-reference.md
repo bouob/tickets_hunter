@@ -80,7 +80,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict):
     show_debug_message = config_dict["advanced"].get("verbose", False)
 
     # ========== Step 1: 使用 DOMSnapshot 平坦化整個 DOM ==========
-    dom_snapshot_result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot(
+    dom_snapshot_result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot(
         computed_styles=[]  # 不需要樣式資訊，只要 DOM 結構
     ))
 
@@ -122,12 +122,12 @@ async def nodriver_ibon_area_auto_select(tab, config_dict):
                         try:
                             # 使用 backend_node_id 取得 remote object
                             remote_object = await tab.send(
-                                nodriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
+                                zendriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
                             )
 
                             # 取得文字內容
                             node_text_result = await tab.send(
-                                nodriver.cdp.runtime.call_function_on(
+                                zendriver.cdp.runtime.call_function_on(
                                     function_declaration='function() { return this.textContent; }',
                                     object_id=remote_object.object_id
                                 )
@@ -183,12 +183,12 @@ async def nodriver_ibon_area_auto_select(tab, config_dict):
             try:
                 # 使用 CDP dispatchMouseEvent 點擊
                 remote_object = await tab.send(
-                    nodriver.cdp.dom.resolve_node(backend_node_id=target_backend_node_id)
+                    zendriver.cdp.dom.resolve_node(backend_node_id=target_backend_node_id)
                 )
 
                 # 取得元素位置
                 box_model = await tab.send(
-                    nodriver.cdp.dom.get_box_model(backend_node_id=target_backend_node_id)
+                    zendriver.cdp.dom.get_box_model(backend_node_id=target_backend_node_id)
                 )
 
                 # 計算點擊座標（中心點）
@@ -197,14 +197,14 @@ async def nodriver_ibon_area_auto_select(tab, config_dict):
                 click_y = (quad[1] + quad[5]) / 2
 
                 # 發送滑鼠點擊事件
-                await tab.send(nodriver.cdp.input.dispatch_mouse_event(
+                await tab.send(zendriver.cdp.input.dispatch_mouse_event(
                     type_='mousePressed',
                     x=click_x,
                     y=click_y,
                     button='left',
                     click_count=1
                 ))
-                await tab.send(nodriver.cdp.input.dispatch_mouse_event(
+                await tab.send(zendriver.cdp.input.dispatch_mouse_event(
                     type_='mouseReleased',
                     x=click_x,
                     y=click_y,
@@ -289,7 +289,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
 
     try:
         # Step 1: DOMSnapshot 平坦化
-        dom_snapshot_result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot(
+        dom_snapshot_result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot(
             computed_styles=[]
         ))
 
@@ -322,7 +322,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
         # Step 3: 使用 CDP Page.captureScreenshot 擷取元素截圖
         # 取得元素位置
         box_model = await tab.send(
-            nodriver.cdp.dom.get_box_model(backend_node_id=captcha_backend_node_id)
+            zendriver.cdp.dom.get_box_model(backend_node_id=captcha_backend_node_id)
         )
 
         # 計算裁切區域
@@ -336,7 +336,7 @@ async def nodriver_ibon_get_captcha_image_from_shadow_dom(tab, config_dict):
         }
 
         # 擷取截圖
-        screenshot_result = await tab.send(nodriver.cdp.page.captureScreenshot(
+        screenshot_result = await tab.send(zendriver.cdp.page.captureScreenshot(
             format_='png',
             clip=clip,  # ⭐ 只截取驗證碼區域
             from_surface=True
@@ -398,10 +398,10 @@ elif '.aspx' in url:
 ### API 呼叫
 
 ```python
-import nodriver
+import zendriver
 
 # 呼叫 DOMSnapshot.captureSnapshot()
-result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot(
+result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot(
     computed_styles=[],  # 可選：需要的 CSS 屬性
     include_paint_order=False,
     include_dom_rects=True  # 包含元素位置資訊
@@ -441,12 +441,12 @@ for idx, node_id in enumerate(layout.node_index):
     if 'target-class' in node_name:
         # 4. 使用 backend_node_id 操作元素
         remote_object = await tab.send(
-            nodriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
+            zendriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
         )
 
         # 5. 取得文字內容
         text_result = await tab.send(
-            nodriver.cdp.runtime.call_function_on(
+            zendriver.cdp.runtime.call_function_on(
                 function_declaration='function() { return this.textContent; }',
                 object_id=remote_object.object_id
             )
@@ -455,7 +455,7 @@ for idx, node_id in enumerate(layout.node_index):
 
         # 6. 點擊元素
         box_model = await tab.send(
-            nodriver.cdp.dom.get_box_model(backend_node_id=backend_node_id)
+            zendriver.cdp.dom.get_box_model(backend_node_id=backend_node_id)
         )
         # ... (見前面完整實作)
 ```
@@ -584,7 +584,7 @@ backend_node_id = 12345
 # 5 秒後仍然有效
 await asyncio.sleep(5)
 remote_object = await tab.send(
-    nodriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
+    zendriver.cdp.dom.resolve_node(backend_node_id=backend_node_id)
 )  # ✅ 仍然有效
 ```
 

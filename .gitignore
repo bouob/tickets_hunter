@@ -61,3 +61,5 @@ tools/captcha_trainer/temp/
 tools/captcha_trainer/.venv/
 tools/captcha_trainer/build/
 tools/captcha_trainer/dist/
+.spectra/
+openspec/.vector-search.db*

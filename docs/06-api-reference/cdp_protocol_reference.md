@@ -1,14 +1,14 @@
 # Chrome DevTools Protocol (CDP) 參考指南
 
-**文件說明**：Chrome DevTools Protocol（CDP）的完整參考指南，涵蓋 NoDriver 與 CDP 的關係、核心 Domain 詳解、DOMSnapshot API 與實戰案例。
-**最後更新**：2025-11-12
+**文件說明**：Chrome DevTools Protocol（CDP）的完整參考指南，涵蓋 ZenDriver 與 CDP 的關係、核心 Domain 詳解、DOMSnapshot API 與實戰案例。
+**最後更新**：2026-03-31
 
 ---
 
 ## 目錄
 
 - [CDP 概述](#cdp-概述)
-- [NoDriver 與 CDP 的關係](#nodriver-與-cdp-的關係)
+- [ZenDriver 與 CDP 的關係](#zendriver-與-cdp-的關係)
 - [基本使用語法](#基本使用語法)
 - [核心 Domain 詳解](#核心-domain-詳解)
   - [DOMSnapshot Domain](#domsnapshot-domain)
@@ -55,16 +55,16 @@ CDP 將功能劃分為多個 **Domain**（領域），每個 Domain 定義：
 
 ---
 
-## NoDriver 與 CDP 的關係
+## ZenDriver 與 CDP 的關係
 
-### NoDriver 的 CDP 整合
+### ZenDriver 的 CDP 整合
 
-[NoDriver](https://ultrafunkamsterdam.github.io/nodriver/) 是基於 CDP 構建的 Python 自動化框架：
+[ZenDriver](https://zendriver.dev/)（nodriver 的活躍 fork，支援 Chrome 145+）是基於 CDP 構建的 Python 自動化框架：
 
 ```
 使用者程式碼
     ↓
-NoDriver Python API
+ZenDriver Python API
     ↓
 CDP JSON 訊息（WebSocket）
     ↓
@@ -73,7 +73,7 @@ Chrome/Chromium 瀏覽器
 
 ### 為什麼需要直接使用 CDP？
 
-雖然 NoDriver 提供高階 API（如 `tab.get()`, `element.click()`），但某些場景必須直接使用 CDP：
+雖然 ZenDriver 提供高階 API（如 `tab.get()`, `element.click()`），但某些場景必須直接使用 CDP：
 
 **必須使用 CDP 的場景：**
 
@@ -102,7 +102,7 @@ Chrome/Chromium 瀏覽器
 ### 1. 導入 CDP 模組
 
 ```python
-from nodriver import cdp
+from zendriver import cdp
 ```
 
 ### 2. 發送 CDP 命令
@@ -122,9 +122,9 @@ documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
 
 ### 3. 命名規範轉換
 
-CDP 官方文件使用 camelCase，NoDriver 使用 snake_case：
+CDP 官方文件使用 camelCase，ZenDriver 使用 snake_case：
 
-| CDP 官方 | NoDriver Python |
+| CDP 官方 | ZenDriver Python |
 |----------|----------------|
 | `Page` | `cdp.page` |
 | `Input` | `cdp.input_`（注意底線，避免與 Python 關鍵字衝突）|
@@ -200,7 +200,7 @@ backend_node_ids = list(nodes.backend_node_id)
 ```python
 async def find_buttons_in_shadow_dom(tab):
     """在 Shadow DOM 中搜尋所有按鈕"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     # 捕獲 DOM 快照
     documents, strings = await tab.send(cdp.dom_snapshot.capture_snapshot(
@@ -357,7 +357,7 @@ except Exception as e:
 **📖 深入學習**：查看 **[Shadow DOM Pierce Method 完整指南](shadow_dom_pierce_guide.md)** 了解智慧等待、父元素遍歷等進階技巧。
 
 **參考資料**：
-- NoDriver 官方文檔：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
+- ZenDriver/nodriver CDP DOM 文檔：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
 - 實作範例：`src/nodriver_tixcraft.py` Line 6368-6724
 
 ##### 3. `push_nodes_by_backend_ids_to_frontend` - 轉換 node ID
@@ -464,7 +464,7 @@ node_desc = await tab.send(cdp.dom.describe_node(
 ```python
 async def click_button_in_shadow_dom(tab, backend_node_id):
     """點擊 Shadow DOM 內的按鈕（完整流程）"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 步驟 1: 初始化 DOM（必要步驟）
@@ -491,7 +491,7 @@ async def click_button_in_shadow_dom(tab, backend_node_id):
         y = (content_quad[1] + content_quad[5]) / 2
         print(f"Click position: ({x:.1f}, {y:.1f})")
 
-        # 步驟 6: 執行點擊（使用 NoDriver 高階 API）
+        # 步驟 6: 執行點擊（使用 ZenDriver 高階 API）
         await tab.mouse_click(x, y)
 
         print("Button clicked successfully")
@@ -583,9 +583,9 @@ await tab.send(cdp.input_.dispatch_mouse_event(
 ))
 ```
 
-**NoDriver 高階 API（推薦）：**
+**ZenDriver 高階 API（推薦）：**
 
-NoDriver 提供更簡潔的滑鼠點擊方法，內部使用 CDP：
+ZenDriver 提供更簡潔的滑鼠點擊方法，內部使用 CDP：
 
 ```python
 # 單擊
@@ -630,7 +630,7 @@ await tab.send(cdp.input_.synthesize_scroll_gesture(
 ```python
 async def click_element_with_cdp(tab, node_id):
     """使用 CDP 完整點擊元素流程"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 步驟 1: 滾動至元素
@@ -646,7 +646,7 @@ async def click_element_with_cdp(tab, node_id):
         x = (content_quad[0] + content_quad[2]) / 2
         y = (content_quad[1] + content_quad[5]) / 2
 
-        # 步驟 4: 執行點擊（使用 NoDriver 高階 API）
+        # 步驟 4: 執行點擊（使用 ZenDriver 高階 API）
         await tab.mouse_click(x, y)
 
         # 或使用原生 CDP 命令（更底層）
@@ -670,7 +670,7 @@ async def click_element_with_cdp(tab, node_id):
 ```python
 async def press_enter_key(tab):
     """模擬按下並釋放 Enter 鍵"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     # 按下 Enter
     await tab.send(cdp.input_.dispatch_key_event(
@@ -698,7 +698,7 @@ async def press_enter_key(tab):
 1. **Input Domain 命名** - 在 Python 中是 `cdp.input_`（有底線，避免與 `input()` 衝突）
 2. **keyDown + keyUp** - 完整的按鍵操作需要兩個事件
 3. **座標系統** - (0, 0) 是視窗左上角，座標以像素為單位
-4. **與高階 API 的選擇** - 優先使用 NoDriver 高階 API（如 `tab.mouse_click()`），只有在需要更精細控制時才使用原生 CDP
+4. **與高階 API 的選擇** - 優先使用 ZenDriver 高階 API（如 `tab.mouse_click()`），只有在需要更精細控制時才使用原生 CDP
 
 ---
 
@@ -743,7 +743,7 @@ result = await tab.send(cdp.network.set_cookie(
 **語法：**
 
 ```python
-from nodriver import cdp
+from zendriver import cdp
 
 # 建立 Cookie 參數物件
 cookie = cdp.network.CookieParam(
@@ -755,7 +755,7 @@ cookie = cdp.network.CookieParam(
     secure=True
 )
 
-# 批次設置多個 Cookie（使用 NoDriver API）
+# 批次設置多個 Cookie（使用 ZenDriver API）
 cookies = [cookie1, cookie2, cookie3]
 await driver.cookies.set_all(cookies)
 ```
@@ -803,7 +803,7 @@ await tab.send(cdp.network.clear_browser_cookies())
 ```python
 async def set_tixcraft_cookie(driver, tixcraft_sid):
     """設置 TixCraft SID Cookie 實現自動登入"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 取得現有 Cookie
@@ -846,7 +846,7 @@ async def set_tixcraft_cookie(driver, tixcraft_sid):
 ```python
 async def set_ibon_cookie(tab, ibonqware):
     """設置 ibon Cookie"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         result = await tab.send(cdp.network.set_cookie(
@@ -915,7 +915,7 @@ await tab.send(cdp.page.handle_java_script_dialog(
 result = await tab.send(cdp.page.navigate(url='https://example.com'))
 ```
 
-**NoDriver 高階 API（推薦）：**
+**ZenDriver 高階 API（推薦）：**
 
 ```python
 await tab.get('https://example.com')
@@ -944,7 +944,7 @@ import base64
 image_data = base64.b64decode(screenshot)
 ```
 
-**NoDriver 高階 API（推薦）：**
+**ZenDriver 高階 API（推薦）：**
 
 ```python
 # 截取整個頁面
@@ -995,7 +995,7 @@ pdf_data = await tab.send(cdp.page.print_to_pdf(
 ```python
 async def handle_captcha_error_dialog(tab):
     """處理驗證碼錯誤後的 alert 彈窗"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 接受彈窗（點擊確定）
@@ -1013,7 +1013,7 @@ async def handle_captcha_error_dialog(tab):
 ```python
 async def capture_captcha_area(tab, x, y, width, height):
     """截取驗證碼區域"""
-    from nodriver import cdp
+    from zendriver import cdp
     import base64
 
     try:
@@ -1045,7 +1045,7 @@ async def capture_captcha_area(tab, x, y, width, height):
 
 1. **彈窗必須處理** - 出現彈窗時必須呼叫 `handle_java_script_dialog`，否則頁面會被阻塞
 2. **截圖時機** - 確保頁面載入完成再截圖
-3. **NoDriver 高階 API** - 優先使用 `tab.get()`, `tab.save_screenshot()` 等高階方法
+3. **ZenDriver 高階 API** - 優先使用 `tab.get()`, `tab.save_screenshot()` 等高階方法
 
 ---
 
@@ -1068,7 +1068,7 @@ result = await tab.send(cdp.runtime.evaluate(
 value = result.result.value
 ```
 
-**NoDriver 高階 API（推薦）：**
+**ZenDriver 高階 API（推薦）：**
 
 ```python
 # 執行 JavaScript 並取得返回值
@@ -1081,7 +1081,7 @@ print(result)  # 直接得到值
 **語法：**
 
 ```python
-from nodriver import cdp
+from zendriver import cdp
 
 # 首先解析 node 為 RemoteObject
 resolved = await tab.send(cdp.dom.resolve_node(node_id=node_id))
@@ -1129,8 +1129,8 @@ await tab.send(cdp.runtime.release_object(object_id=remote_object_id))
 ```python
 async def click_element_via_runtime(tab, node_id):
     """使用 Runtime.callFunctionOn 點擊元素"""
-    from nodriver import cdp
-    from nodriver.cdp import runtime
+    from zendriver import cdp
+    from zendriver.cdp import runtime
 
     try:
         # 步驟 1: 解析 node_id 為 RemoteObject
@@ -1207,7 +1207,7 @@ async def find_ibon_purchase_buttons(tab):
     使用 DOMSnapshot 穿透 Shadow DOM 搜尋購票按鈕
     優勢：可存取 closed Shadow DOM，JavaScript 無法做到
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 步驟 1：捕獲平坦化的 DOM 結構
@@ -1286,7 +1286,7 @@ async def click_ibon_purchase_button(tab, backend_node_id):
     點擊 ibon 購票按鈕（完整 CDP 流程）
     步驟：backend_node_id → node_id → 滾動 → 聚焦 → 取得座標 → 點擊
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 步驟 1：初始化 DOM（必要步驟）
@@ -1316,7 +1316,7 @@ async def click_ibon_purchase_button(tab, backend_node_id):
         y = (content_quad[1] + content_quad[5]) / 2  # 中心 Y
         print(f"[IBON] Click position: ({x:.1f}, {y:.1f})")
 
-        # 步驟 6：執行點擊（使用 NoDriver 高階 API）
+        # 步驟 6：執行點擊（使用 ZenDriver 高階 API）
         await tab.mouse_click(x, y)
 
         # 等待頁面跳轉
@@ -1343,7 +1343,7 @@ DOM.focus
     ↓ 聚焦元素
 DOM.get_box_model
     ↓ 取得座標
-NoDriver mouse_click / CDP Input.dispatch_mouse_event
+ZenDriver mouse_click / CDP Input.dispatch_mouse_event
     ↓ 執行點擊
 完成
 ```
@@ -1360,7 +1360,7 @@ async def submit_form_with_enter(tab):
     模擬按下 Enter 鍵送出表單
     完整按鍵操作 = keyDown + keyUp
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 按下 Enter（keyDown）
@@ -1422,7 +1422,7 @@ async def auto_login_tixcraft(driver, tixcraft_sid):
     設置 TixCraft SID Cookie 實現自動登入
     步驟：取得現有 Cookie → 更新或新增 → 批次設置
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 步驟 1：取得現有 Cookie
@@ -1467,7 +1467,7 @@ async def auto_login_tixcraft(driver, tixcraft_sid):
 ```python
 async def set_ibon_cookie(tab, ibonqware):
     """設置 ibon Cookie（使用 CDP 直接設置）"""
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         result = await tab.send(cdp.network.set_cookie(
@@ -1503,7 +1503,7 @@ async def handle_captcha_error_dialog(tab):
     處理驗證碼錯誤後的 alert 彈窗
     接受彈窗 = 點擊「確定」按鈕
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     try:
         # 接受彈窗（點擊確定）
@@ -1540,7 +1540,7 @@ async def capture_captcha_image(tab, x, y, width, height):
     截取驗證碼區域並保存為圖片
     參數：x, y = 左上角座標, width, height = 寬高
     """
-    from nodriver import cdp
+    from zendriver import cdp
     import base64
     from PIL import Image
     import io
@@ -1575,7 +1575,7 @@ async def capture_captcha_image(tab, x, y, width, height):
         return None
 ```
 
-**完整頁面截圖（使用 NoDriver 高階 API）：**
+**完整頁面截圖（使用 ZenDriver 高階 API）：**
 
 ```python
 # 方法 1：截取完整頁面
@@ -1598,8 +1598,8 @@ async def click_element_via_runtime(tab, node_id):
     使用 Runtime.callFunctionOn 在元素上呼叫 click() 方法
     適用於某些情況下 CDP 滑鼠點擊無效的場景
     """
-    from nodriver import cdp
-    from nodriver.cdp import runtime
+    from zendriver import cdp
+    from zendriver.cdp import runtime
 
     try:
         # 步驟 1：解析 node_id 為 RemoteObject
@@ -1645,15 +1645,15 @@ async def click_element_via_runtime(tab, node_id):
   - 完整的 Domain、命令、事件參考
   - 各版本協議（tip-of-tree, stable, v1.3）
 
-- **NoDriver 官方文件**：https://ultrafunkamsterdam.github.io/nodriver/
-  - NoDriver Python API 參考
+- **ZenDriver 官方文件**：https://zendriver.dev/ （原 nodriver 文件：https://ultrafunkamsterdam.github.io/nodriver/）
+  - ZenDriver Python API 參考
   - CDP 整合說明
 
 ### 專案內交叉引用
 
-- **NoDriver API 使用指南** - `nodriver_api_guide.md`
-  - NoDriver 高階 API 參考
-  - NoDriver vs JavaScript 使用決策
+- **ZenDriver API 使用指南** - `zendriver_api_guide.md`（舊版：`nodriver_api_guide.md`）
+  - ZenDriver 高階 API 參考
+  - ZenDriver vs JavaScript 使用決策
   - Shadow DOM 處理範例
 
 - **除錯方法論** - `debugging_methodology.md`
@@ -1673,7 +1673,7 @@ async def click_element_via_runtime(tab, node_id):
 | 問題 | 相關文件 | 章節 |
 |------|---------|------|
 | Shadow DOM 無法存取 | 本文件 | [DOMSnapshot Domain](#domsnapshot-domain) |
-| CDP 點擊失敗 | `nodriver_api_guide.md` | CDP Click Troubleshooting |
+| CDP 點擊失敗 | `zendriver_api_guide.md` | CDP Click Troubleshooting |
 | Cookie 設定無效 | 本文件 | [Network Domain](#network-domain) |
 | 彈窗無法關閉 | 本文件 | [Page Domain](#page-domain) |
 | ibon 特定問題 | `ibon_nodriver_fixes_2025-10-03.md` | - |

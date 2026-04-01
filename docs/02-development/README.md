@@ -11,7 +11,7 @@
 
 ### 我是新手開發者，想開始開發新平台
 
-1. **第一步**：閱讀 [`development_guide.md`](./development_guide.md) 了解開發規範和 NoDriver First 策略
+1. **第一步**：閱讀 [`development_guide.md`](./development_guide.md) 了解開發規範和 ZenDriver First 策略
 2. **第二步**：查看 [`structure.md`](./structure.md) 了解現有平台的函數架構
 3. **第三步**：參考 [`coding_templates.md`](./coding_templates.md) 中的代碼範本開始實作
 4. **深入學習**：查閱 [`ticket_automation_standard.md`](./ticket_automation_standard.md) 了解 12 階段詳細定義
@@ -123,7 +123,7 @@
 ## 📋 各文件詳細說明
 
 ### development_guide.md
-- **內容**：開發規範、NoDriver First 策略、編碼標準、檢查清單
+- **內容**：開發規範、ZenDriver First 策略、編碼標準、檢查清單
 - **適合**：所有開發者，新手入門首選
 - **關鍵章節**：
   - 搶票程式標準函數架構（12 階段概覽）
@@ -135,7 +135,7 @@
 - **適合**：了解現有實作、查找特定函數
 - **關鍵章節**：
   - 平台支援狀態表
-  - NoDriver API 與 Chrome API 函數對照
+  - ZenDriver API 與 Chrome API 函數對照
   - 各平台的函數完整度評分
 
 ### coding_templates.md
@@ -178,7 +178,7 @@
 - **適用平台**：TicketPlus 等有複雜座位選擇的平台
 
 ### nodriver_comprehensive_structure_analysis.md
-- **內容**：NoDriver 版本各平台全面結構分析、最佳楷模平台識別、缺失功能對照表
+- **內容**：ZenDriver 版本各平台全面結構分析、最佳楷模平台識別、缺失功能對照表
 - **適合**：評估各平台實作完整度、識別待補齊功能
 - **關鍵章節**：
   - 各平台實作狀況分析

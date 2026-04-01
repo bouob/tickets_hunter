@@ -19,7 +19,7 @@ ddddocr_datas = collect_data_files('ddddocr')
 
 a = Analysis(
     [os.path.join(project_root, 'src', 'nodriver_tixcraft.py')],
-    pathex=[],
+    pathex=[os.path.join(project_root, 'src')],
     binaries=[],
     datas=[
         (os.path.join(project_root, 'src', 'assets'), 'assets'),
@@ -32,13 +32,27 @@ a = Analysis(
         'ddddocr',
         'onnxruntime',
         'onnxruntime.capi.onnxruntime_pybind11_state',
-        'nodriver',
-        'nodriver.cdp',
-        'nodriver.core',
+        'zendriver',
+        'zendriver.cdp',
+        'zendriver.core',
         # Shared utilities (important!)
         'util',
         'NonBrowser',
         'chrome_downloader',
+        # Modular architecture
+        'nodriver_common',
+        'platforms',
+        'platforms.facebook',
+        'platforms.fansigo',
+        'platforms.cityline',
+        'platforms.famiticket',
+        'platforms.ticketplus',
+        'platforms.funone',
+        'platforms.kktix',
+        'platforms.tixcraft',
+        'platforms.ibon',
+        'platforms.kham',
+        'platforms.hkticketing',
         # Chrome downloader dependencies
         'requests',
         # Image processing

@@ -5,6 +5,13 @@
 
 ---
 
+> **[已棄用] 本文件描述 nodriver 舊版 API。**
+> 現行專案使用 **zendriver**（nodriver 的活躍 fork，支援 Chrome 145+），請參考 **[zendriver_api_guide.md](zendriver_api_guide.md)**。
+> 本文件保留僅供遷移參考，勿直接照抄程式碼範例。
+> 主要差異：`import zendriver as uc`、`asyncio.run()` 取代 `uc.loop()`、`tab.evaluate()` 直接回傳值不需解析。
+
+---
+
 > **重要**：優先使用 CDP 原生方法，避免過度依賴 JavaScript
 
 **官方文件**: https://ultrafunkamsterdam.github.io/nodriver/

@@ -198,7 +198,7 @@ async def nodriver_kktix_assign_ticket_number(tab, config_dict, is_fallback_sele
 
         assign_result = await tab.evaluate(f'''
             (function() {{
-                // Find the input within the matched area (NoDriver Element reference)
+                // Find the input within the matched area (ZenDriver Element reference)
                 const targetArea = arguments[0];  // Pass element reference
                 const targetInput = targetArea.querySelector('input[type="text"]');
 

@@ -97,7 +97,7 @@ Secure: True, HttpOnly: True
 `nodriver_fami_login()` (行 8153) 處理全家售票登入：
 
 1. 檢查帳號 (`#usr_act`) 與密碼 (`#usr_pwd`) 欄位是否已有值
-2. 使用 NoDriver `send_keys` 填寫（非 JS 直接賦值，模擬真人輸入）
+2. 使用 ZenDriver `send_keys` 填寫（非 JS 直接賦值，模擬真人輸入）
 3. 點擊 `button#btnLogin`
 4. 等待 URL 變化確認登入成功（最多 10 秒）
 

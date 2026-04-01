@@ -7,7 +7,7 @@
 
 > **重大突破**：從優化 DOMSnapshot 速度的目標，發現了更優的 Shadow DOM 穿透方法
 > **性能提升**：60-70% 速度提升（10-15秒 → 2-5秒），95%+ 第一次成功率
-> **技術來源**：NoDriver CDP `perform_search()` + `include_user_agent_shadow_dom=True`
+> **技術來源**：ZenDriver CDP `perform_search()` + `include_user_agent_shadow_dom=True`
 
 ---
 
@@ -38,7 +38,7 @@
 
 **傳統方法的限制**：
 - ❌ JavaScript `querySelectorAll()` 無法穿透 closed Shadow DOM
-- ❌ NoDriver `tab.find()` 同樣受限於 Shadow DOM 邊界
+- ❌ ZenDriver `tab.find()` 同樣受限於 Shadow DOM 邊界
 
 ### DOMSnapshot 方法的問題
 
@@ -63,9 +63,9 @@ snapshot = await tab.send(cdp.dom_snapshot.capture_snapshot(
 
 ## 突破性發現
 
-### 查詢 NoDriver 文檔的發現
+### 查詢 ZenDriver 文檔的發現
 
-在嘗試優化 DOMSnapshot 時，查詢 [NoDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html) 發現了 `perform_search()` 方法的關鍵參數：
+在嘗試優化 DOMSnapshot 時，查詢 [ZenDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html) 發現了 `perform_search()` 方法的關鍵參數：
 
 ```python
 # 重大發現：perform_search 支援 Shadow DOM 穿透！
@@ -110,7 +110,7 @@ Line 70: [IBON DATE PIERCE] Button clicked successfully ✓
 
 ### perform_search API 說明
 
-**來源**：[NoDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html)
+**來源**：[ZenDriver CDP DOM 文檔](https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html)
 
 ```python
 cdp.dom.perform_search(
@@ -606,7 +606,7 @@ async def intelligent_wait_for_element(tab, selector, max_wait=5, check_interval
     智慧等待：輪詢檢查 Shadow DOM 元素是否出現
 
     Args:
-        tab: NoDriver tab 物件
+        tab: ZenDriver tab 物件
         selector: CSS selector
         max_wait: 最大額外等待時間（秒）
         check_interval: 輪詢間隔（秒）
@@ -614,7 +614,7 @@ async def intelligent_wait_for_element(tab, selector, max_wait=5, check_interval
     Returns:
         (found, elapsed_time): (是否找到, 總耗時)
     """
-    from nodriver import cdp
+    from zendriver import cdp
 
     initial_wait = random.uniform(1.2, 1.8)
     await tab.sleep(initial_wait)
@@ -711,7 +711,7 @@ async def platform_feature_auto_select_domsnapshot(tab, config_dict):
 
 ### Q1: 為何不用 `query_selector_all(pierce=True)`？
 
-**A**: 當前 NoDriver 版本不支援 `pierce` 參數在 `query_selector_all()` 中。
+**A**: 當前 ZenDriver 版本不支援 `pierce` 參數在 `query_selector_all()` 中。
 
 **錯誤示例**：
 ```python
@@ -814,7 +814,7 @@ document.querySelectorAll('button.btn-buy')  // 返回 []
 | 方法 | Shadow DOM 支援 | 權限等級 |
 |------|----------------|---------|
 | JavaScript `querySelectorAll()` | ❌ 無法穿透 closed | 頁面腳本 |
-| NoDriver `tab.find()` | ❌ 基於 JavaScript | 頁面腳本 |
+| ZenDriver `tab.find()` | ❌ 基於 JavaScript | 頁面腳本 |
 | CDP `perform_search()` | ✅ 原生穿透 | 瀏覽器內部 |
 | CDP `dom_snapshot.capture_snapshot()` | ✅ 平坦化訪問 | 瀏覽器內部 |
 
@@ -943,7 +943,7 @@ search_id, count = await tab.send(cdp.dom.perform_search(
 
 ### 參考資源
 
-- **NoDriver 官方文檔**：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
+- **ZenDriver 官方文檔**：https://ultrafunkamsterdam.github.io/nodriver/nodriver/cdp/dom.html
 - **實作範例**：`src/nodriver_tixcraft.py` Line 6368-6724
 - **測試驗證**：`.temp/manual_logs.txt` Line 24-70
 - **API 參考**：`docs/06-api-reference/nodriver_api_guide.md`

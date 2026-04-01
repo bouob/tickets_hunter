@@ -55,13 +55,12 @@ cd tickets_hunter
 pip install -r requirement.txt
 ```
 
-#### 4. NoDriver 安裝（推薦）
+#### 4. ZenDriver 安裝（推薦）
 ```bash
-# 使用上游最新版本（推薦）
-python -m pip install git+https://github.com/ultrafunkamsterdam/nodriver
+# 從 PyPI 安裝（推薦）
+pip install zendriver
 
-# 或使用 MaxBot 客製版
-python -m pip install git+https://github.com/max32002/nodriver
+# ZenDriver 是 nodriver 的活躍 fork，支援 Chrome 145+ 並有持續維護
 ```
 
 #### 5. OCR 驗證碼辨識（選用）
@@ -77,10 +76,10 @@ pip install ddddocr
 
 | 模式 | 值 | 說明 | 推薦度 |
 |------|-----|------|--------|
-| **NoDriver** | `"nodriver"` | 最強反偵測，支援 12 個平台 | ⭐⭐⭐ 推薦 |
+| **ZenDriver** | `"nodriver"` | 最強反偵測，支援 12 個平台（後端為 zendriver，nodriver 的活躍 fork） | ⭐⭐⭐ 推薦 |
 | Chrome | `"chrome"` | 傳統模式，維護中 | ⭐ |
 
-### NoDriver 支援平台（12 個完全支援）
+### ZenDriver 支援平台（12 個完全支援）
 
 | 類別 | 平台 | 完成度 |
 |------|------|--------|
@@ -110,7 +109,7 @@ python settings_old.py
 
 ## 執行搶票程式
 
-### NoDriver 模式（推薦）
+### ZenDriver 模式（推薦）
 ```bash
 cd tickets_hunter/src
 python nodriver_tixcraft.py
@@ -287,7 +286,7 @@ pip install -r requirement.txt
 pip install ddddocr
 ```
 
-### NoDriver 連線失敗
+### ZenDriver 連線失敗
 
 **問題**：`Connection refused` 或 `Cannot connect to browser`
 

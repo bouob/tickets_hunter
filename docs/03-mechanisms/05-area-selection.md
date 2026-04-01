@@ -55,8 +55,8 @@
                              ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 5. 點擊目標區域按鈕                                          │
-│    ├─ NoDriver: element.click()                             │
-│    ├─ NoDriver fallback: JavaScript click()                 │
+│    ├─ ZenDriver: element.click()                             │
+│    ├─ ZenDriver fallback: JavaScript click()                 │
 │    └─ Chrome: element.click()                               │
 └─────────────────────────────────────────────────────────────┘
 ```

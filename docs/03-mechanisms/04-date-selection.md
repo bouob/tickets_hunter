@@ -53,8 +53,8 @@
                              ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 5. 點擊目標日期按鈕                                          │
-│    ├─ NoDriver: CDP dispatchMouseEvent                      │
-│    ├─ NoDriver fallback: JavaScript click()                 │
+│    ├─ ZenDriver: CDP dispatchMouseEvent                      │
+│    ├─ ZenDriver fallback: JavaScript click()                 │
 │    └─ Chrome: element.click()                               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -218,7 +218,7 @@ async def nodriver_ibon_date_auto_select(tab, config_dict):
     使用 DOMSnapshot 平坦化策略穿透 closed Shadow DOM
     """
     # Step 1: Capture DOM snapshot (flattens Shadow DOM)
-    dom_snapshot_result = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot(
+    dom_snapshot_result = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot(
         computed_styles=[]
     ))
 
@@ -371,7 +371,7 @@ if matched_blocks is None or len(matched_blocks) == 0:
 **解決方案**：
 ```python
 # Step 1: Capture DOM snapshot (includes Shadow DOM)
-dom_snapshot = await tab.send(nodriver.cdp.dom_snapshot.capture_snapshot())
+dom_snapshot = await tab.send(zendriver.cdp.dom_snapshot.capture_snapshot())
 
 # Step 2: Shadow DOM is now "flattened" into documents structure
 documents = dom_snapshot[0]

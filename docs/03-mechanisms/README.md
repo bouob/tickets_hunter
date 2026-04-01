@@ -153,7 +153,7 @@ docs/03-mechanisms/
 以下機制已完成實作,但尚未撰寫詳細文件:
 
 ### Stage 1: 環境初始化
-- NoDriver 瀏覽器啟動
+- ZenDriver 瀏覽器啟動
 - 設定檔載入與驗證
 - 代理伺服器設定
 
@@ -403,7 +403,7 @@ docs/03-mechanisms/
 # 需要索引時（JavaScript 操作、DOM 點擊）
 target_idx = util.get_target_index_by_mode(len(items), mode)
 
-# 需要物件時（NoDriver 元素操作）
+# 需要物件時（ZenDriver 元素操作）
 target = util.get_target_item_from_matched_list(items, mode)
 ```
 
