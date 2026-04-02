@@ -1970,7 +1970,8 @@ async def nodriver_kktix_main(tab, url, config_dict):
                     await tab.reload()
                 except Exception:
                     pass
-                return is_quit_bot
+                # Reload is a recovery path, not a terminal state.
+                return False
 
             # Check and dismiss guest modal (立刻成為 KKTIX 會員) before processing
             # This modal appears when user is not logged in
@@ -2403,4 +2404,3 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     except Exception as e:
         debug.log(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
         return False
-
