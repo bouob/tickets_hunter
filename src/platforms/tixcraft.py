@@ -2502,7 +2502,7 @@ async def nodriver_get_yii_captcha_hash(tab):
         return 0
 
 
-async def nodriver_tixcraft_reload_captcha(tab, domain_name):
+async def nodriver_tixcraft_reload_captcha(tab, domain_name, config_dict=None):
     """重新載入驗證碼（Yii2 jQuery refresh）並等待圖片更新。
     Yii2 refresh 後自動將 hash 存入 body data，供 nodriver_get_yii_captcha_hash 讀取。"""
     try:
@@ -2523,7 +2523,8 @@ async def nodriver_tixcraft_reload_captcha(tab, domain_name):
         ''', await_promise=True)
         return bool(result)
     except Exception as exc:
-        pass
+        debug = util.create_debug_logger(config_dict)
+        debug.log(f"[TIXCRAFT OCR] reload_captcha failed: {exc}")
     return False
 
 async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
