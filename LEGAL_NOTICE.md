@@ -1,11 +1,5 @@
 ## Legal Notice
 
-This repository is _not_ associated with or endorsed by providers of the APIs contained in this GitHub repository. This project is intended **for educational purposes only**. This is just a little personal project. Sites may contact me to improve their security or request the removal of their site from this repository.
-
-Please note the following:
-
-## Legal Notice
-
 ### **Affiliation Disclaimer**
 This repository is not associated with or endorsed by the providers of the APIs contained in this repository. The project is intended for educational purposes only. The APIs, services, trademarks, and other intellectual property mentioned in this repository are the property of their respective owners, with no claim of ownership or affiliation by this project.
 

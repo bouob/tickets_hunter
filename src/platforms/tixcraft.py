@@ -123,29 +123,30 @@ async def nodriver_ticketmaster_parse_zone_info(tab, config_dict):
 
     zone_info = None
 
-    # Try method 1: String extraction from HTML (preferred - avoids RemoteObject issues)
+    # Try method 1: String extraction from innerHTML (get_attribute('innerHTML') returns None
+    # because innerHTML is a DOM property, not an HTML attribute — use evaluate instead)
     try:
-        mapSelectArea = await tab.query_selector('#mapSelectArea')
-        if mapSelectArea:
-            mapSelectArea_html = await mapSelectArea.get_attribute('innerHTML')
+        mapSelectArea_html = await tab.evaluate(
+            "document.getElementById('mapSelectArea')?.innerHTML || ''"
+        )
 
-            tag_start = "var zone ="
-            tag_end = "fieldImageType"
-            if tag_start in mapSelectArea_html and tag_end in mapSelectArea_html:
-                zone_string = mapSelectArea_html.split(tag_start)[1]
-                zone_string = zone_string.split(tag_end)[0]
-                zone_string = zone_string.strip().rstrip('\n,')
+        tag_start = "var zone ="
+        tag_end = "fieldImageType"
+        if mapSelectArea_html and tag_start in mapSelectArea_html and tag_end in mapSelectArea_html:
+            zone_string = mapSelectArea_html.split(tag_start)[1]
+            zone_string = zone_string.split(tag_end)[0]
+            zone_string = zone_string.strip().rstrip('\n,')
 
-                import json
-                zone_info = json.loads(zone_string)
-                if debug.enabled:
-                    debug.log(f"[TICKETMASTER ZONE] Parsed zone_info via string extraction ({len(zone_info)} zones)")
-                    if len(zone_info) > 0:
-                        sample_id = list(zone_info.keys())[0]
-                        sample = zone_info[sample_id]
-                        if isinstance(sample, dict) and "groupName" in sample:
-                            debug.log(f"[TICKETMASTER ZONE] Sample zone '{sample_id}' groupName: {sample['groupName']}")
-                return zone_info
+            import json
+            zone_info = json.loads(zone_string)
+            if debug.enabled:
+                debug.log(f"[TICKETMASTER ZONE] Parsed zone_info via string extraction ({len(zone_info)} zones)")
+                if len(zone_info) > 0:
+                    sample_id = list(zone_info.keys())[0]
+                    sample = zone_info[sample_id]
+                    if isinstance(sample, dict) and "groupName" in sample:
+                        debug.log(f"[TICKETMASTER ZONE] Sample zone '{sample_id}' groupName: {sample['groupName']}")
+            return zone_info
 
     except Exception as exc:
         debug.log(f"[TICKETMASTER ZONE] String extraction failed: {exc}")
@@ -810,18 +811,15 @@ async def nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info):
 async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
     """
     Automatically set ticket number on Ticketmaster ticket page.
+    Caller is responsible for area selection before calling this function.
+    Returns True if ticket number was set, False otherwise.
     """
     debug = util.create_debug_logger(config_dict)
 
-    # Get ticket price list
+    # Get ticket price list (area must already be selected by caller)
     table_select = await nodriver_ticketmaster_get_ticketPriceList(tab, config_dict)
-
     if not table_select:
-        # Fallback to zone_info parsing
-        zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
-        if zone_info:
-            await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
-        return
+        return False
 
     # Find select element
     select_element = None
@@ -829,11 +827,11 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         select_element = await table_select.query_selector('select')
     except Exception as exc:
         debug.log(f"[TICKETMASTER TICKET] Failed to find select: {exc}")
-        return
+        return False
 
     if not select_element:
         debug.log("[TICKETMASTER TICKET] No select element found")
-        return
+        return False
 
     # Update element to sync attributes
     try:
@@ -841,19 +839,18 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
     except:
         pass
 
-    # Check if element is enabled (NoDriver uses .attrs dict)
+    # Check if element is enabled
     try:
         select_attrs = select_element.attrs or {}
         is_disabled = 'disabled' in select_attrs
         if is_disabled:
             debug.log("[TICKETMASTER TICKET] Select element is disabled")
-            return
+            return False
     except Exception as exc:
         debug.log(f"[TICKETMASTER TICKET] Failed to check disabled status: {exc}")
-        # Assume enabled if check fails
         pass
 
-    # Check current value (using .attrs dict)
+    # Check current value (zendriver evaluate returns Python values directly)
     select_attrs = select_element.attrs or {}
     selector_id = select_attrs.get('id')
     current_value = None
@@ -868,15 +865,11 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                     return null;
                 }})();
             ''')
-            # Parse NoDriver RemoteObject format if needed
-            if isinstance(current_value, list):
-                current_value = util.parse_nodriver_result(current_value)
         except:
             pass
 
     if current_value and current_value != "0" and current_value.isnumeric():
         debug.log(f"[TICKETMASTER TICKET] Ticket number already set to: {current_value}")
-        # Already set, click autoMode button
         try:
             auto_mode_button = await tab.query_selector('#autoMode')
             if auto_mode_button:
@@ -884,7 +877,7 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                 debug.log("[TICKETMASTER TICKET] Clicked #autoMode button")
         except:
             pass
-        return
+        return True
 
     # Set ticket number
     ticket_number = str(config_dict.get("ticket_number", 1))
@@ -895,9 +888,19 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
         selector_id = select_attrs.get('id')
         if not selector_id:
             debug.log("[TICKETMASTER TICKET] Select element has no id attribute")
-            return
+            return False
 
-        # Use JavaScript to set select value (using element ID instead of passing Element object)
+        # Dump all option texts for debugging
+        option_texts = await tab.evaluate(f'''
+            (function(elementId) {{
+                const selectEl = document.getElementById(elementId);
+                if (!selectEl) return [];
+                return Array.from(selectEl.options).map(o => o.text + '|' + o.value);
+            }})('{selector_id}');
+        ''')
+        debug.log(f"[TICKETMASTER TICKET] Available options: {option_texts}")
+
+        # Use JavaScript to set select value; fallback to max available if exact not found
         result = await tab.evaluate(f'''
             (function(elementId, targetText) {{
                 const selectEl = document.getElementById(elementId);
@@ -905,22 +908,39 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                     return {{ success: false, error: "Element not found" }};
                 }}
                 const options = selectEl.options;
+                // Try exact text match first
                 for (let i = 0; i < options.length; i++) {{
                     if (options[i].text === targetText) {{
                         selectEl.selectedIndex = i;
                         selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        return {{ success: true, value: options[i].value }};
+                        return {{ success: true, value: options[i].value, selected: options[i].text }};
                     }}
+                }}
+                // Fallback: select max available (last numeric option, excluding value="0")
+                let maxIdx = -1;
+                let maxVal = 0;
+                for (let i = 0; i < options.length; i++) {{
+                    const v = parseInt(options[i].value);
+                    if (!isNaN(v) && v > 0 && v > maxVal) {{
+                        maxVal = v;
+                        maxIdx = i;
+                    }}
+                }}
+                if (maxIdx >= 0) {{
+                    selectEl.selectedIndex = maxIdx;
+                    selectEl.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    return {{ success: true, value: options[maxIdx].value, selected: options[maxIdx].text, fallback: true }};
                 }}
                 return {{ success: false, error: "Option not found" }};
             }})('{selector_id}', '{ticket_number}');
         ''')
 
-        # Parse NoDriver RemoteObject format
-        result = util.parse_nodriver_result(result)
-
         if result and result.get('success'):
-            debug.log(f"[TICKETMASTER TICKET] Set ticket number to: {ticket_number}")
+            selected = result.get('selected', ticket_number)
+            if result.get('fallback'):
+                debug.log(f"[TICKETMASTER TICKET] Exact '{ticket_number}' not found, selected max available: {selected}")
+            else:
+                debug.log(f"[TICKETMASTER TICKET] Set ticket number to: {selected}")
 
             # Click autoMode button
             await tab.sleep(0.1)
@@ -931,11 +951,14 @@ async def nodriver_ticketmaster_assign_ticket_number(tab, config_dict):
                     debug.log("[TICKETMASTER TICKET] Clicked #autoMode button")
             except:
                 pass
+            return True
         else:
-            debug.log(f"[TICKETMASTER TICKET] Failed to set ticket number: {result.get('error')}")
+            debug.log(f"[TICKETMASTER TICKET] Failed to set ticket number: {result.get('error') if result else 'no result'}")
+            return False
 
     except Exception as exc:
         debug.log(f"[TICKETMASTER TICKET] Exception setting ticket number: {exc}")
+        return False
 
 # ============================================
 # User Story 4: Captcha Handling (T019)
@@ -947,35 +970,6 @@ async def nodriver_ticketmaster_captcha(tab, config_dict, ocr, captcha_browser):
     Returns: True if captcha was handled, False otherwise
     """
     debug = util.create_debug_logger(config_dict)
-
-    # Check for custom OCR model path
-    ocr_path = config_dict.get("ocr_captcha", {}).get("path", "")
-    if ocr_path:
-        # Support relative paths (relative to app root)
-        if not os.path.isabs(ocr_path):
-            app_root = util.get_app_root()
-            ocr_path = os.path.join(app_root, ocr_path)
-
-        custom_onnx = os.path.join(ocr_path, "custom.onnx")
-        custom_charsets = os.path.join(ocr_path, "charsets.json")
-
-        if os.path.exists(custom_onnx) and os.path.exists(custom_charsets):
-            # Load custom OCR model
-            try:
-                ocr = ddddocr.DdddOcr(
-                    det=False,
-                    ocr=False,
-                    import_onnx_path=custom_onnx,
-                    charsets_path=custom_charsets,
-                    show_ad=False
-                )
-                debug.log(f"[TICKETMASTER CAPTCHA] Using custom OCR model from: {ocr_path}")
-            except Exception as e:
-                debug.log(f"[TICKETMASTER CAPTCHA] Failed to load custom model: {e}, using default")
-        else:
-            # Always warn if custom model path is set but files not found
-            debug.log(f"[TICKETMASTER CAPTCHA] Warning: Custom model files not found in: {ocr_path}")
-            debug.log(f"[TICKETMASTER CAPTCHA] Expected: {custom_onnx} and {custom_charsets}")
 
     # Check agree checkbox
     for _ in range(2):
@@ -2492,23 +2486,45 @@ async def nodriver_tixcraft_toast(tab, message):
     except Exception as exc:
         pass
 
-async def nodriver_tixcraft_reload_captcha(tab, domain_name):
-    """點擊重新載入驗證碼"""
-    ret = False
-    image_id = 'TicketForm_verifyCode-image'
-
-    if 'indievox.com' in domain_name:
-        image_id = 'TicketForm_verifyCode-image'
-
+async def nodriver_get_yii_captcha_hash(tab):
+    """Read Yii2 captcha hash1 from body data (stored after refresh).
+    Returns hash1 (int) or 0 if not yet available (first page load)."""
     try:
-        form_captcha = await tab.query_selector(f"#{image_id}")
-        if form_captcha:
-            await form_captcha.click()
-            ret = True
-    except Exception as exc:
-        print(f"Failed to reload captcha: {exc}")
+        result = await tab.evaluate('''
+            (function() {
+                if (typeof jQuery === "undefined") return 0;
+                var data = jQuery("body").data("yiiCaptcha/ticket/captcha");
+                return (data && data[0]) ? data[0] : 0;
+            })()
+        ''')
+        return int(result) if result else 0
+    except Exception:
+        return 0
 
-    return ret
+
+async def nodriver_tixcraft_reload_captcha(tab, domain_name):
+    """重新載入驗證碼（Yii2 jQuery refresh）並等待圖片更新。
+    Yii2 refresh 後自動將 hash 存入 body data，供 nodriver_get_yii_captcha_hash 讀取。"""
+    try:
+        result = await tab.evaluate('''
+            (async function() {
+                if (typeof jQuery === "undefined") return false;
+                var $img = jQuery("#TicketForm_verifyCode-image");
+                if (!$img.length || typeof $img.yiiCaptcha !== "function") return false;
+                var oldSrc = $img.attr("src") || "";
+                $img.yiiCaptcha("refresh");
+                // Wait up to 2s for src to change
+                for (var i = 0; i < 20; i++) {
+                    await new Promise(function(r) { setTimeout(r, 100); });
+                    if (($img.attr("src") || "") !== oldSrc) break;
+                }
+                return true;
+            })()
+        ''', await_promise=True)
+        return bool(result)
+    except Exception as exc:
+        pass
+    return False
 
 async def nodriver_tixcraft_get_ocr_answer(tab, ocr, ocr_captcha_image_source, Captcha_Browser, domain_name):
     """取得驗證碼圖片並進行 OCR 識別"""
@@ -2617,7 +2633,24 @@ async def nodriver_tixcraft_auto_ocr(tab, config_dict, ocr, away_from_keyboard_e
             ocr_answer = ocr_answer.strip()
             debug.log("[TIXCRAFT OCR] Result:", ocr_answer)
             if len(ocr_answer) == 4:
-                who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict)
+                # Yii2 hash pre-validation (hash available after first reload, 0 on first load)
+                if away_from_keyboard_enable:
+                    hash1 = await nodriver_get_yii_captcha_hash(tab)
+                    if hash1 > 0:
+                        if not util.yii_captcha_verify(ocr_answer, hash1):
+                            candidates = util.yii_captcha_edit1(ocr_answer, hash1)
+                            if candidates:
+                                ocr_answer = candidates[0]
+                                debug.log(f"[TIXCRAFT OCR] Hash edit1 corrected to: {ocr_answer}")
+                            else:
+                                debug.log(f"[TIXCRAFT OCR] Hash mismatch, no edit1 solution, reloading")
+                                is_need_redo_ocr = True
+                                await nodriver_tixcraft_reload_captcha(tab, domain_name)
+                                ocr_answer = None
+                        else:
+                            debug.log(f"[TIXCRAFT OCR] Hash verified ok: {ocr_answer}")
+                if ocr_answer is not None:
+                    who_care_var, is_form_submitted = await nodriver_tixcraft_keyin_captcha_code(tab, answer=ocr_answer, auto_submit=away_from_keyboard_enable, config_dict=config_dict)
             else:
                 if not away_from_keyboard_enable:
                     await nodriver_tixcraft_keyin_captcha_code(tab, config_dict=config_dict)
@@ -2806,7 +2839,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             "last_homepage_redirect_time": 0,
             "sold_out_cooldown_until": 0,
             "printed_completed": False,
-            "ticketmaster_area_processed_url": "",
+            "ticketmaster_phase": "area_select",
             "ticketmaster_captcha_processed_url": "",
         })
 
@@ -2895,36 +2928,39 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
                     _state["area_retry_count"] = 0
                     await asyncio.sleep(5)
             else:
-                # T013: Ticketmaster area selection integration (User Story 2)
-                # Check if we already processed this page (avoid repeated execution)
-                ticketmaster_area_processed = _state.get("ticketmaster_area_processed_url", "")
-                if ticketmaster_area_processed == url:
-                    # Already processed this URL, wait for page change
-                    _state["area_retry_count"] += 1
-                    if _state["area_retry_count"] >= 10:
-                        # Reset after 10 retries to allow re-processing
-                        _state["ticketmaster_area_processed_url"] = ""
-                        _state["area_retry_count"] = 0
-                        debug.log("[TICKETMASTER] Area page retry limit reached, resetting state")
-                else:
-                    # Parse zone_info and auto-select area
+                # T013+T017: Ticketmaster area + ticket number (phase-based state machine)
+                # Ticketmaster uses AJAX on same URL: area selection -> ticketPriceList loads -> set ticket number
+                # Phase: area_select -> wait_ticket -> done (reset when URL leaves /ticket/area/)
+                phase = _state.get("ticketmaster_phase", "area_select")
+
+                if phase == "area_select":
                     zone_info = await nodriver_ticketmaster_parse_zone_info(tab, config_dict)
                     if zone_info:
                         await nodriver_ticketmaster_area_auto_select(tab, config_dict, zone_info)
+                        _state["ticketmaster_phase"] = "wait_ticket"
+                        _state["area_retry_count"] = 0
+                    else:
+                        _state["area_retry_count"] += 1
 
-                    # T017: Ticketmaster ticket number and promo integration (User Story 3)
-                    # Set ticket number (will fallback to zone_info if ticketPriceList not found)
-                    await nodriver_ticketmaster_assign_ticket_number(tab, config_dict)
+                elif phase == "wait_ticket":
+                    is_assigned = await nodriver_ticketmaster_assign_ticket_number(tab, config_dict)
+                    if is_assigned:
+                        _state["fail_promo_list"] = await nodriver_ticketmaster_promo(tab, config_dict, _state["fail_promo_list"])
+                        _state["ticketmaster_phase"] = "done"
+                        _state["area_retry_count"] = 0
+                    else:
+                        _state["area_retry_count"] += 1
+                        if _state["area_retry_count"] >= 30:
+                            # ticketPriceList failed to load, re-select area
+                            debug.log("[TICKETMASTER] Ticket assignment failed after 30 retries, re-selecting area")
+                            _state["ticketmaster_phase"] = "area_select"
+                            _state["area_retry_count"] = 0
 
-                    # Handle promo code
-                    _state["fail_promo_list"] = await nodriver_ticketmaster_promo(tab, config_dict, _state["fail_promo_list"])
-
-                    # Mark this URL as processed
-                    _state["ticketmaster_area_processed_url"] = url
-                    _state["area_retry_count"] = 0
+                # phase == "done": no-op, wait for POST navigation to /ticket/ticket/
     else:
         _state["fail_promo_list"] = []
-        _state["area_retry_count"]=0
+        _state["area_retry_count"] = 0
+        _state["ticketmaster_phase"] = "area_select"
 
     # T020: Ticketmaster captcha integration (User Story 4)
     # https://ticketmaster.sg/ticket/check-captcha/23_blackpink/954/5/75

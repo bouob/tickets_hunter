@@ -37,7 +37,7 @@ jobs:
 
       - name: Verify dependencies
         run: |
-          python -c "import ddddocr; import nodriver; import tornado; print('All core packages installed!')"
+          python -c "import ddddocr; import zendriver; import tornado; print('All core packages installed!')"
           python -m PyInstaller --version
 
       - name: Build executables with PyInstaller

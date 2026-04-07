@@ -459,20 +459,99 @@ async def _inject_clarity_stub_for_ticketplus(tab):
 
 
 
-async def check_refresh_datetime_occur(tab, target_time):
-    is_refresh_datetime_sent = False
+def parse_refresh_datetime(target_str):
+    # Parse refresh_datetime setting to a datetime object.
+    # Supports: "YYYY/MM/DD HH:MM:SS" | "HH:MM:SS" (today) | "" (disabled)
+    # Returns: datetime or None
+    if not target_str or not target_str.strip():
+        return None
+    target_str = target_str.strip()
+    try:
+        if '/' in target_str:
+            return datetime.strptime(target_str, '%Y/%m/%d %H:%M:%S')
+        else:
+            # Stage 0: legacy HH:MM:SS format, treat as today
+            today = datetime.now().date()
+            t = datetime.strptime(target_str, '%H:%M:%S').time()
+            return datetime.combine(today, t)
+    except ValueError:
+        return None
 
-    system_clock_data = datetime.now()
-    current_time = system_clock_data.strftime('%H:%M:%S')
-    if target_time == current_time:
+
+async def check_refresh_datetime_gate(tab, config_dict, state):
+    # Gate platform dispatching until refresh_datetime is reached.
+    # Returns True if gate is active (caller should continue),
+    # False if gate is cleared (proceed with dispatching).
+    current_str = config_dict.get("refresh_datetime", "")
+
+    # Detect config change: reset state if user changed the value
+    if current_str != state["target_str"]:
+        state["target_str"] = current_str
+        state["reached"] = False
+        state["last_countdown_print"] = 0
+
+    # If already reached, no gating
+    if state["reached"]:
+        return False
+
+    target_dt = parse_refresh_datetime(current_str)
+    if target_dt is None:
+        # Empty or invalid = no waiting
+        state["reached"] = True
+        return False
+
+    now = datetime.now()
+
+    # Already past target time (covers "bot starts after target" case)
+    if now >= target_dt:
+        state["reached"] = True
         try:
             await tab.reload()
-            is_refresh_datetime_sent = True
-            print("send refresh at time:", current_time)
-        except Exception as exc:
+            print("[REFRESH] Target time reached, starting:", target_dt.strftime('%Y/%m/%d %H:%M:%S'))
+        except Exception:
             pass
+        return False
 
-    return is_refresh_datetime_sent
+    # Before target time: gate is active
+    remaining = (target_dt - now).total_seconds()
+
+    # Countdown display
+    now_mono = time.time()
+    should_print = False
+    if remaining <= 60:
+        if now_mono - state["last_countdown_print"] >= 1.0:
+            should_print = True
+    else:
+        if now_mono - state["last_countdown_print"] >= 10.0:
+            should_print = True
+
+    if should_print:
+        if remaining > 3600:
+            hrs = int(remaining // 3600)
+            mins = int((remaining % 3600) // 60)
+            print(f"[WAIT] Target: {current_str} | Remaining: {hrs}h {mins}m")
+        elif remaining > 60:
+            mins = int(remaining // 60)
+            secs = int(remaining % 60)
+            print(f"[WAIT] Target: {current_str} | Remaining: {mins}m {secs}s")
+        else:
+            print(f"[WAIT] Target: {current_str} | Remaining: {remaining:.1f}s")
+        state["last_countdown_print"] = now_mono
+
+    # Precision busy-wait for the final 2 seconds
+    if remaining <= 2.0:
+        target_perf = time.perf_counter() + remaining
+        while time.perf_counter() < target_perf:
+            pass
+        state["reached"] = True
+        try:
+            await tab.reload()
+            print("[REFRESH] Target time reached (precision), starting:", target_dt.strftime('%Y/%m/%d %H:%M:%S'))
+        except Exception:
+            pass
+        return False
+
+    return True
 
 async def reload_config(config_dict, last_mtime):
     app_root = util.get_app_root()
@@ -589,7 +668,7 @@ async def main(args):
     Captcha_Browser = None
     try:
         if config_dict["ocr_captcha"]["enable"]:
-            ocr = create_universal_ocr(config_dict)
+            ocr = create_ocr_for_platform(config_dict)
             if ocr is None:
                 ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
                 ocr.set_ranges(1)
@@ -603,7 +682,11 @@ async def main(args):
 
     maxbot_last_reset_time = time.time()
     is_quit_bot = False
-    is_refresh_datetime_sent = False
+    refresh_datetime_state = {
+        "target_str": "",
+        "reached": False,
+        "last_countdown_print": 0,
+    }
     ticketplus_purchase_done = False  # Guard: stop polling after purchase completed
 
     # Initialize config mtime
@@ -641,9 +724,6 @@ async def main(args):
             if len(url) == 0:
                 continue
 
-        if not is_refresh_datetime_sent:
-            is_refresh_datetime_sent = await check_refresh_datetime_occur(tab, config_dict["refresh_datetime"])
-
         is_maxbot_paused = await check_and_handle_pause(config_dict)
 
         # Detect pause state change and show message immediately
@@ -663,6 +743,11 @@ async def main(args):
             if 'kktix.c' in url:
                 await nodriver_kktix_paused_main(tab, url, config_dict)
             # sleep more when paused.
+            await asyncio.sleep(0.1)
+            continue
+
+        # Gate: block platform dispatching until refresh_datetime target time
+        if await check_refresh_datetime_gate(tab, config_dict, refresh_datetime_state):
             await asyncio.sleep(0.1)
             continue
 

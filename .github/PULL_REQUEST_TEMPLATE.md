@@ -13,12 +13,22 @@
 
 ## 影響平台
 
-- [ ] TixCraft
+**台灣**
+- [ ] TixCraft / TicketMaster / Teamear / Indievox
 - [ ] KKTIX
-- [ ] iBon
+- [ ] iBon / 年代售票
 - [ ] TicketPlus
-- [ ] 其他：___
-- [ ] 跨平台（共用功能）
+- [ ] FamiTicket
+- [ ] 寬宏售票（KHAM）
+- [ ] FANSI GO
+- [ ] FunOne
+
+**海外**
+- [ ] Cityline 買飛
+- [ ] HKTicketing 快達票
+
+**通用**
+- [ ] 跨平台共用功能（nodriver_common / util / settings）
 
 ## 檢查清單
 

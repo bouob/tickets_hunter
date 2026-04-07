@@ -1381,6 +1381,33 @@ def reset_row_text_if_match_keyword_exclude(config_dict, row_text):
     return is_row_match_keyword(area_keyword_exclude, row_text)
 
 
+def yii_captcha_hash(code):
+    """Yii2 CaptchaAction generateValidationHash: sum(ord(c) << i for i, c)."""
+    return sum(ord(c) << i for i, c in enumerate(code.lower()))
+
+def yii_captcha_verify(answer, hash1):
+    """Verify 4-char OCR answer against Yii2 captcha hash1."""
+    return bool(answer) and len(answer) == 4 and yii_captcha_hash(answer) == hash1
+
+def yii_captcha_edit1(pred, expected_hash):
+    """Find edit-distance-1 corrections that match expected_hash.
+    Returns list of corrected candidates (a-z charset, length 4)."""
+    pred = pred.lower()
+    length = 4
+    candidates = []
+    for pos in range(length):
+        fixed_sum = sum(ord(pred[j]) << j for j in range(length) if j != pos)
+        remainder = expected_hash - fixed_sum
+        shift = 1 << pos
+        if remainder > 0 and remainder % shift == 0:
+            c_code = remainder // shift
+            if 97 <= c_code <= 122 and chr(c_code) != pred[pos]:
+                corrected = list(pred)
+                corrected[pos] = chr(c_code)
+                candidates.append(''.join(corrected))
+    return candidates
+
+
 def guess_tixcraft_question(driver, question_text, config_dict=None):
     debug = create_debug_logger(config_dict)
 

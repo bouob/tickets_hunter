@@ -27,7 +27,8 @@ docs/03-mechanisms/
 ├── 13-active-polling-pattern.md 跨階段: 刷新等待機制（Simple Wait ✅ / Active Polling 設計中）
 ├── 14-hot-reload.md             跨階段: 設定檔 Hot Reload 即時修改 ✅
 │
-└── 15-cloudflare-turnstile.md   跨階段: Cloudflare Turnstile 偵測與自動點擊 ✅ NEW
+├── 15-cloudflare-turnstile.md   跨階段: Cloudflare Turnstile 偵測與自動點擊 ✅
+└── 16-yii2-captcha-hash.md      跨階段: Yii2 Captcha Hash 預驗證與 1-char 自動修正 ✅ NEW
 
 ✅ = 已完成詳細文件化
 ```
@@ -479,6 +480,7 @@ else:
 | | | ✅ Stage 7: 驗證碼處理機制 |
 | | | ✅ KKTIX 參考實作 |
 | | | ✅ iBon 參考實作 |
+| v2.5 | 2026-04-07 | 新增 Yii2 Captcha Hash 預驗證機制文件 |
 | v2.4 | 2026-02-15 | 新增 Cloudflare Turnstile 偵測與自動點擊機制文件 |
 | v2.3 | 2026-02-13 | 修正 Active Polling 狀態：區分 Simple Wait（已實作）與 Active Polling（設計中） |
 | v2.1 | 2026-02-03 | 新增 Hot Reload 機制文件 |
@@ -532,5 +534,5 @@ else:
 
 ---
 
-**最後更新**：2026-02-15（v2.4）
+**最後更新**：2026-04-07（v2.5）
 **維護者**：Tickets Hunter 開發團隊

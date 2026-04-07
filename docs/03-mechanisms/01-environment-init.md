@@ -139,7 +139,7 @@ chrome_path = chrome_downloader.ensure_chrome_available(download_dir=webdriver_d
 
 - **全域時間戳**：當 `show_timestamp` 啟用時，覆寫 `builtins.print` 為帶時間前綴的版本 (行 26024-26031)
 - **OCR 初始化**：載入 `ddddocr` 模型，設定辨識範圍為小寫字母 (行 26093-26103)
-- **定時重新整理**：`check_refresh_datetime_occur()` (行 20651) 在指定時刻自動重新載入頁面
+- **定時開搶閘門**：`check_refresh_datetime_gate()` 在指定時刻前阻擋所有平台搶票邏輯，時間到達後立即重載頁面並放行
 
 ---
 

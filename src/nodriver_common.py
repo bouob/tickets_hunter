@@ -96,6 +96,44 @@ def create_universal_ocr(config_dict):
         return None
 
 
+CONST_TIXCRAFT_TM_MODEL_PATH = "assets/model/tixcraft_tm"
+CONST_DEFAULT_UNIVERSAL_PATH = "assets/model/universal"
+
+def create_ocr_for_platform(config_dict):
+    """Create the best OCR instance for the current platform.
+
+    Priority:
+    1. use_universal=False -> None (ddddocr fallback in caller)
+    2. User custom path (not the default) -> use user's path
+    3. tixcraft / ticketmaster / indievox homepage -> try tixcraft_tm model
+    4. Fallback -> universal model
+    """
+    ocr_cfg = config_dict.get("ocr_captcha", {})
+    if not ocr_cfg.get("use_universal", True):
+        return None
+
+    user_path = ocr_cfg.get("path", "")
+
+    # If user explicitly set a non-default path, respect it
+    if user_path and user_path != CONST_DEFAULT_UNIVERSAL_PATH:
+        return create_universal_ocr(config_dict)
+
+    # Auto-select based on homepage
+    homepage = config_dict.get("homepage", "")
+    tixcraft_domains = ["tixcraft.com", "indievox.com", "ticketmaster."]
+    if any(domain in homepage for domain in tixcraft_domains):
+        override = dict(config_dict)
+        override["ocr_captcha"] = dict(ocr_cfg)
+        override["ocr_captcha"]["path"] = CONST_TIXCRAFT_TM_MODEL_PATH
+        ocr = create_universal_ocr(override)
+        if ocr is not None:
+            debug = util.create_debug_logger(config_dict)
+            debug.log(f"[OCR] Auto-selected tixcraft_tm model for {homepage}")
+            return ocr
+
+    return create_universal_ocr(config_dict)
+
+
 # ===== Config Loading =====
 
 def get_config_dict(args):

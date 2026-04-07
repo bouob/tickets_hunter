@@ -49,7 +49,7 @@
   注意：首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）
 
 【搶票引擎（自動啟動，無需手動執行）】
-  - nodriver_tixcraft.exe：NoDriver 引擎
+  - nodriver_tixcraft.exe：ZenDriver 引擎
 
   此執行檔會由 settings.exe 自動啟動，
   一般使用者無需手動執行。
@@ -59,7 +59,7 @@
 ================================================================================
 
 tickets_hunter/
-├── nodriver_tixcraft.exe       搶票程式（NoDriver）
+├── nodriver_tixcraft.exe       搶票程式（ZenDriver）
 ├── settings.exe                 設定編輯器（Tornado Web）
 │
 ├── _internal/                   依賴函式庫目錄（請勿刪除！）
@@ -127,8 +127,8 @@ A1: 請確認：
 Q2: 出現「找不到 python310.dll」錯誤？
 A2: _internal/ 資料夾被刪除或移動，請重新解壓縮 ZIP 檔案。
 
-Q3: NoDriver 版本首次執行很慢？
-A3: 正常現象，NoDriver 首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）。
+Q3: 首次執行很慢？
+A3: 正常現象，ZenDriver 首次執行會自動下載 Chrome 瀏覽器（約 100-200MB）。
     下載完成後後續執行會變快。
 
 Q4: 驗證碼辨識失敗？

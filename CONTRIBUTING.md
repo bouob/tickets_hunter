@@ -11,7 +11,7 @@
 
 ## 開發策略
 
-本專案使用 **NoDriver** 作為唯一搶票引擎。
+本專案使用 **zendriver**（nodriver 的活躍 fork，支援 Chrome 145+）作為唯一搶票引擎。平台邏輯已拆分至 `src/platforms/` 目錄，各平台一個模組。
 
 ## 貢獻流程
 
@@ -49,28 +49,28 @@ git checkout -b feature/your-feature-name
 
 ### 3. Commit 規範
 
-使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式：
+使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式（**不含 emoji**）：
 
 ```
-<emoji> <type>(<scope>): <description>
+<type>(<scope>): <description>
 ```
 
-| Emoji | Type | 用途 |
-|-------|------|------|
-| ✨ | `feat` | 新功能 |
-| 🐛 | `fix` | Bug 修復 |
-| 📝 | `docs` | 文件更新 |
-| ♻️ | `refactor` | 程式碼重構 |
-| ⚡ | `perf` | 效能改善 |
-| 🔧 | `chore` | 維護工作 |
-| ✅ | `test` | 測試 |
-| 💄 | `style` | UI/樣式 |
+| Type | 用途 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | Bug 修復 |
+| `docs` | 文件更新 |
+| `refactor` | 程式碼重構 |
+| `perf` | 效能改善 |
+| `chore` | 維護工作 |
+| `test` | 測試 |
+| `style` | UI/樣式 |
 
 **範例：**
 ```
-✨ feat(kktix): add NoDriver area auto select
-🐛 fix(tixcraft): fix OCR captcha overwriting user input
-♻️ refactor(fansigo): consolidate tracker blocking into global block list
+feat(kktix): add zendriver area auto select
+fix(tixcraft): fix OCR captcha overwriting user input
+refactor(fansigo): consolidate tracker blocking into global block list
 ```
 
 ### 4. 提交 Pull Request
@@ -93,8 +93,8 @@ git push origin feature/your-feature-name
 
 - **Python 版本**：3.11.9+
 - **Emoji 限制**：`.py` 檔案禁止使用 emoji，`.md` 檔案允許
-- **除錯輸出**：使用 `config_dict["advanced"]["verbose"]` 控制
-- **函數命名**：NoDriver 版本使用 `nodriver_{platform}_{function}()` 格式
+- **除錯輸出**：使用 `DebugLogger`（`debug = util.create_debug_logger(config_dict)`），禁止 `print()`
+- **函數命名**：平台函式使用 `nodriver_{platform}_{function}()` 格式，以 `tab, config_dict` 為首參數
 
 ## 測試
 

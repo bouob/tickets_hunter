@@ -23,12 +23,12 @@
 
 ```
 while True:
-    await asyncio.sleep(0.05)          # 50ms 輪詢間隔
-    config_dict = await reload_config() # 熱更新設定
-    url = await nodriver_current_url()  # 取得當前 URL
-    check_refresh_datetime_occur()      # 定時重新整理
-    check_and_handle_pause()            # 暫停檢查
-    detect_cloudflare_challenge()       # Cloudflare 偵測
+    await asyncio.sleep(0.05)               # 50ms 輪詢間隔
+    config_dict = await reload_config()     # 熱更新設定
+    url = await nodriver_current_url()      # 取得當前 URL
+    check_and_handle_pause()               # 暫停檢查
+    check_refresh_datetime_gate()          # 定時開搶閘門
+    detect_cloudflare_challenge()          # Cloudflare 偵測
     -> URL 路由分派至各平台 _main()
 ```
 
@@ -132,7 +132,7 @@ while True:
 
 ## 定時重新整理
 
-`check_refresh_datetime_occur()` (行 20651) 在系統時鐘達到 `refresh_datetime` 設定的 `HH:MM:SS` 時，自動重新載入頁面。用途：在已知開賣時間前設定自動重新整理。
+`check_refresh_datetime_gate()` 在 `refresh_datetime` 設定的目標時間到達前，阻擋所有平台搶票邏輯（持續倒數顯示）；時間到達後立即重新載入頁面並放行平台路由。最後 2 秒切換為 `time.perf_counter()` busy-wait，達到毫秒級精準觸發。格式：`YYYY/MM/DD HH:MM:SS`，空值表示停用。
 
 ---
 
