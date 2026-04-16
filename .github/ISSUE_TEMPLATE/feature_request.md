@@ -3,7 +3,6 @@ name: 🚀 Feature Request
 about: Suggest a new feature or enhancement
 title: '[FEATURE] <請修改標題>'
 labels: 'enhancement'
-assignees: 'bouob'
 ---
 
 <!--
