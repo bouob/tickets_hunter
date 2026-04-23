@@ -2794,7 +2794,7 @@ async def nodriver_ticketmaster_check_ip_block(tab, config_dict):
         # Random 4-7 minutes (240-420 seconds) to vary timing
         wait_seconds = random.randint(240, 420)
 
-        print(f"[EPS BLOCK] IP blocked (IP: {client_ip}), waiting {wait_seconds}s before retry")
+        debug.log(f"[EPS BLOCK] IP blocked (IP: {client_ip}), waiting {wait_seconds}s before retry")
         _state["ip_block_until"] = time.time() + wait_seconds
 
         waited = 0
