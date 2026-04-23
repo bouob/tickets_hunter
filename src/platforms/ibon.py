@@ -1111,7 +1111,7 @@ async def nodriver_ibon_event_area_auto_select(tab, config_dict, area_keyword_it
                 area_keyword_clean = area_keyword_clean[1:-1]
 
             # Treat the entire string as a single keyword
-            keyword_item = area_keyword_clean
+            keyword_item = util.format_keyword_string(area_keyword_clean)
 
             if debug.enabled:
                 debug.log(f"[IBON EVENT AREA KEYWORD] Checking keyword: {keyword_item}")
@@ -1698,7 +1698,7 @@ async def nodriver_ibon_area_auto_select(tab, config_dict, area_keyword_item="")
                 area_keyword_clean = area_keyword_clean[1:-1]
 
             # Treat the entire string as a single keyword
-            keyword_item = area_keyword_clean
+            keyword_item = util.format_keyword_string(area_keyword_clean)
 
             debug.log(f"[IBON AREA KEYWORD] Checking keyword: {keyword_item}")
 
@@ -2602,8 +2602,9 @@ async def nodriver_ibon_captcha(tab, config_dict, ocr):
     is_captcha_sent = False
 
     if not config_dict["ocr_captcha"]["enable"]:
-        # Manual mode
-        await nodriver_ibon_keyin_captcha_code(tab, config_dict=config_dict)
+        # Manual mode: focus captcha field if present; proceed only when no captcha on page
+        is_editing, _ = await nodriver_ibon_keyin_captcha_code(tab, config_dict=config_dict)
+        is_captcha_sent = not is_editing
     else:
         # Auto OCR mode
         previous_answer = None
@@ -4116,18 +4117,17 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     # Step 3: Handle captcha (after ticket number is selected)
                     is_captcha_sent = False
-                    if config_dict["ocr_captcha"]["enable"]:
-                        try:
-                            # Initialize OCR instance
+                    try:
+                        ocr = None
+                        if config_dict["ocr_captcha"]["enable"]:
                             import ddddocr
                             ocr = create_universal_ocr(config_dict)
                             if ocr is None:
                                 ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
                                 ocr.set_ranges(0)
-
-                            is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
-                        except Exception as exc:
-                            debug.log(f"[IBON] Captcha error: {exc}")
+                        is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
+                    except Exception as exc:
+                        debug.log(f"[IBON] Captcha error: {exc}")
 
                     # Step 3.5: Final check if tickets are sold out (backup check)
                     if not is_ticket_number_assigned:
@@ -4208,18 +4208,17 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
 
                     # Step 2: Handle captcha (only executed when tickets are available)
                     is_captcha_sent = False
-                    if config_dict["ocr_captcha"]["enable"]:
-                        try:
-                            # Initialize OCR instance
+                    try:
+                        ocr = None
+                        if config_dict["ocr_captcha"]["enable"]:
                             import ddddocr
                             ocr = create_universal_ocr(config_dict)
                             if ocr is None:
                                 ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
                                 ocr.set_ranges(0)
-
-                            is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
-                        except Exception as exc:
-                            debug.log(f"[IBON] Captcha error: {exc}")
+                        is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
+                    except Exception as exc:
+                        debug.log(f"[IBON] Captcha error: {exc}")
 
                     # Step 3: Assign ticket number with retry
                     is_ticket_number_assigned = False
@@ -4412,6 +4411,17 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                 if not Captcha_Browser is None:
                     Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
 
+                ocr = None
+                if config_dict["ocr_captcha"]["enable"]:
+                    try:
+                        import ddddocr
+                        ocr = create_universal_ocr(config_dict)
+                        if ocr is None:
+                            ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
+                            ocr.set_ranges(0)
+                    except Exception as exc:
+                        debug.log(f"[NEW EVENTBUY] OCR init error: {exc}")
+
                 # Call ibon captcha handler (handles both OCR and manual mode)
                 is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)
 
@@ -4431,8 +4441,10 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             _state["played_sound_ticket"] = True
                         debug.log("[NEW EVENTBUY] Purchase button clicked successfully")
             else:
-                # Check if sold out
+                # Check if sold out: try event-level check first, then per-zone ticket page check
                 is_sold_out = await nodriver_ibon_check_sold_out(tab, config_dict)
+                if not is_sold_out:
+                    is_sold_out = await nodriver_ibon_check_sold_out_on_ticket_page(tab, config_dict)
                 if is_sold_out:
                     debug.log("[NEW EVENTBUY] Sold out detected, going back and refreshing")
                     try:
@@ -4552,6 +4564,17 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                         # Set cookies for Captcha_Browser if needed
                         if not Captcha_Browser is None:
                             Captcha_Browser.set_domain(domain_name, captcha_url=captcha_url)
+
+                        ocr = None
+                        if config_dict["ocr_captcha"]["enable"]:
+                            try:
+                                import ddddocr
+                                ocr = create_universal_ocr(config_dict)
+                                if ocr is None:
+                                    ocr = ddddocr.DdddOcr(show_ad=False, beta=config_dict["ocr_captcha"]["beta"])
+                                    ocr.set_ranges(0)
+                            except Exception as exc:
+                                debug.log(f"[IBON] OCR init error: {exc}")
 
                         # Call ibon captcha handler (handles both OCR and manual mode)
                         is_captcha_sent = await nodriver_ibon_captcha(tab, config_dict, ocr)

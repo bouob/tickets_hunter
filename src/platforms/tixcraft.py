@@ -25,6 +25,7 @@ from zendriver import cdp
 import util
 from nodriver_common import (
     check_and_handle_pause,
+    sleep_with_pause_check,
     convert_remote_object,
     nodriver_check_checkbox,
     nodriver_check_checkbox_enhanced,
@@ -68,6 +69,7 @@ __all__ = [
     "nodriver_tixcraft_auto_ocr",
     "nodriver_tixcraft_ticket_main_ocr",
     "nodriver_tixcraft_main",
+    "nodriver_ticketmaster_check_ip_block",
 ]
 
 # Module-level state (replaces global tixcraft_dict)
@@ -2748,6 +2750,80 @@ async def nodriver_tixcraft_ticket_main_ocr(tab, config_dict, ocr, Captcha_Brows
         if is_form_submitted:
             _state["ocr_completed_url"] = current_url
 
+async def nodriver_ticketmaster_check_ip_block(tab, config_dict):
+    """Detect PerimeterX EPS block page on tixcraft/ticketmaster domains.
+
+    When blocked, waits 4-7 minutes (random) then navigates back to original URL.
+    Returns True if blocked (caller should skip normal processing), False otherwise.
+    """
+    debug = util.create_debug_logger(config_dict)
+
+    # Still within previous block wait period
+    block_until = _state.get("ip_block_until", 0)
+    if block_until > 0 and time.time() < block_until:
+        remaining = int(block_until - time.time())
+        debug.log(f"[EPS BLOCK] Still waiting for block to expire, {remaining}s remaining")
+        await sleep_with_pause_check(tab, 5, config_dict)
+        return True
+
+    try:
+        result_json = await tab.evaluate('''
+            (function() {
+                try {
+                    if (typeof action !== "undefined" && action === "block" && typeof rr !== "undefined") {
+                        return JSON.stringify({
+                            blocked: true,
+                            rr: rr || "",
+                            client_ip: typeof client_ip !== "undefined" ? client_ip : ""
+                        });
+                    }
+                } catch(e) {}
+                return JSON.stringify({blocked: false, rr: "", client_ip: ""});
+            })()
+        ''')
+
+        if not result_json:
+            return False
+
+        result = json.loads(result_json)
+        if not result.get("blocked", False):
+            return False
+
+        original_url = result.get("rr", "")
+        client_ip = result.get("client_ip", "unknown")
+        # Random 4-7 minutes (240-420 seconds) to vary timing
+        wait_seconds = random.randint(240, 420)
+
+        print(f"[EPS BLOCK] IP blocked (IP: {client_ip}), waiting {wait_seconds}s before retry")
+        _state["ip_block_until"] = time.time() + wait_seconds
+
+        waited = 0
+        while waited < wait_seconds:
+            if await check_and_handle_pause(config_dict):
+                return True
+            chunk = min(10, wait_seconds - waited)
+            await asyncio.sleep(chunk)
+            waited += chunk
+            remaining = wait_seconds - waited
+            if remaining > 0 and waited % 60 == 0:
+                debug.log(f"[EPS BLOCK] Waiting for block to expire, {remaining}s remaining")
+
+        _state["ip_block_until"] = 0
+
+        if original_url:
+            debug.log(f"[EPS BLOCK] Block expired, navigating back to: {original_url}")
+            try:
+                await tab.get(original_url)
+            except Exception:
+                pass
+
+        return True
+
+    except Exception as exc:
+        debug.log(f"[EPS BLOCK] Error checking block status: {exc}")
+        return False
+
+
 async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
     # 函數開始時檢查暫停
     if await check_and_handle_pause(config_dict):
@@ -2842,6 +2918,7 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             "printed_completed": False,
             "ticketmaster_phase": "area_select",
             "ticketmaster_captcha_processed_url": "",
+            "ip_block_until": 0,
         })
 
     # Register global alert handler (remains active throughout session)
@@ -2855,6 +2932,11 @@ async def nodriver_tixcraft_main(tab, url, config_dict, ocr, Captcha_Browser):
             debug.log(f"[GLOBAL ALERT] Failed to register alert handler: {handler_exc}")
 
     await nodriver_tixcraft_home_close_window(tab)
+
+    # EPS block detection for tixcraft and ticketmaster domains (Issue #289)
+    if 'tixcraft.com' in url or 'ticketmaster' in url:
+        if await nodriver_ticketmaster_check_ip_block(tab, config_dict):
+            return False
 
     # special case for same event re-open, redirect to user's homepage.
     # Add cooldown to prevent infinite redirect loop when area page is unavailable

@@ -753,6 +753,9 @@ async def main(args):
 
         # Cloudflare challenge detection (only on URL change to avoid performance hit)
         # After 3 consecutive failures on same URL, stop retrying to avoid infinite loop
+        # Skip Cityline Login page: Turnstile there is part of the login form, not a block
+        if 'cityline.com/Login.html' in url:
+            cloudflare_checked = True
         if not cloudflare_checked and cloudflare_fail_count < 3:
             is_cloudflare = await detect_cloudflare_challenge(tab, show_debug=config_dict.get("advanced", {}).get("verbose", False))
             cloudflare_checked = True

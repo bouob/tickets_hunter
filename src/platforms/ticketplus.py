@@ -306,7 +306,7 @@ async def _ticketplus_click_refresh_button(tab, debug):
         btn = await tab.query_selector('button.float-btn')
         if btn:
             await btn.click()
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.3)
             debug.log("[REFRESH] Clicked update button (partial refresh)")
             return True
     except Exception:
@@ -688,10 +688,6 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
 
     try:
         if await check_and_handle_pause(config_dict):
-            return False
-
-        if await sleep_with_pause_check(tab, 0.6, config_dict):
-            debug.log("Pause check interrupted")
             return False
 
         exclude_keywords = []
@@ -1388,7 +1384,7 @@ async def nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser):
 
     debug.log("=== TicketPlus Auto Layout Detection Started ===")
 
-    if await sleep_with_pause_check(tab, random.uniform(0.8, 1.5), config_dict):
+    if await sleep_with_pause_check(tab, 0.05, config_dict):
         debug.log("Paused during page wait")
         return
 

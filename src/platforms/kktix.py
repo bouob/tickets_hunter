@@ -1891,7 +1891,7 @@ async def nodriver_kktix_main(tab, url, config_dict):
 
         # Detect sold-out or error alerts that require page reload
         sold_out_alert_keywords = [
-            "售完", "已售完", "sold out", "Sold Out",
+            "售完", "已售完", "售出", "已售出", "全部售出", "已全部售出", "sold out", "Sold Out",
             "無票", "no ticket", "unavailable",
             "失敗", "錯誤", "error", "fail"
         ]
@@ -2404,3 +2404,4 @@ async def nodriver_kktix_order_member_code(tab, config_dict):
     except Exception as e:
         debug.log(f"[KKTIX MEMBER CODE] Error filling member code: {str(e)}")
         return False
+

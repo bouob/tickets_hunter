@@ -45,7 +45,7 @@ except Exception as exc:
 # Get script directory for resource paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CONST_APP_VERSION = "TicketsHunter (2026.04.07)"
+CONST_APP_VERSION = "TicketsHunter (2026.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -211,8 +211,10 @@ def get_default_config():
     config_dict["advanced"]["resume_keyword_second"] = ""
 
     config_dict["advanced"]["discord_webhook_url"] = ""
+    config_dict["advanced"]["discord_message"] = ""
     config_dict["advanced"]["telegram_bot_token"] = ""
     config_dict["advanced"]["telegram_chat_id"] = ""
+    config_dict["advanced"]["telegram_message"] = ""
 
     # Keyword priority fallback (Feature 003)
     config_dict["date_auto_fallback"] = False  # default: strict mode (avoid unwanted purchases)
@@ -607,8 +609,10 @@ class TestDiscordWebhookHandler(tornado.web.RequestHandler):
         _, config_dict = load_json()
         debug = util.create_debug_logger(config_dict)
 
+        custom_message = body.get("custom_message", "").strip()
+        content = custom_message if custom_message else "[Test] Tickets Hunter webhook test successful!"
         payload = {
-            "content": "[Test] Tickets Hunter webhook test successful!",
+            "content": content,
             "username": "Tickets Hunter"
         }
         try:
@@ -661,7 +665,8 @@ class TestTelegramHandler(tornado.web.RequestHandler):
         debug = util.create_debug_logger(config_dict)
 
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        text = "[Test] Tickets Hunter Telegram test successful!"
+        custom_message = body.get("custom_message", "").strip()
+        text = custom_message if custom_message else "[Test] Tickets Hunter Telegram test successful!"
         errors = []
         ok_count = 0
         for cid in chat_ids:

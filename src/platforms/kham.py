@@ -377,6 +377,49 @@ async def nodriver_kham_switch_to_auto_seat(tab):
 
     return is_switch_to_auto_seat
 
+async def _handle_post_submit_dialog(tab, config_dict):
+    """
+    After clicking submit, wait for dialog, classify as success/error/none.
+    Returns: "success", "error", or "none"
+    - success: dialog contained cart-added message, closed it
+    - error: dialog contained error message, closed it and cleared captcha
+    - none: no dialog appeared within timeout
+    """
+    debug = util.create_debug_logger(config_dict)
+    SUCCESS_KEYWORDS = ["加入購物車"]
+
+    for i in range(10):  # 10 * 0.5s = 5s
+        await tab.sleep(0.5)
+        try:
+            dialog_text = await tab.evaluate('''
+                (function() {
+                    var el = document.querySelector('div.ui-dialog > div#dialog-message.ui-dialog-content');
+                    return el ? el.textContent : null;
+                })();
+            ''')
+
+            if dialog_text is not None:
+                is_success = any(kw in dialog_text for kw in SUCCESS_KEYWORDS)
+
+                el_btn = await tab.query_selector('div.ui-dialog-buttonset > button.ui-button')
+                if el_btn:
+                    await el_btn.click()
+                    await tab.sleep(0.5)
+
+                if is_success:
+                    debug.log("[SUBMIT] Success dialog closed")
+                    return "success"
+                else:
+                    debug.log(f"[SUBMIT] Error dialog closed: {dialog_text}")
+                    await nodriver_kham_keyin_captcha_code(tab, "")
+                    return "error"
+        except Exception as e:
+            if i == 9:
+                debug.log(f"[SUBMIT] Dialog detection failed: {e}")
+
+    debug.log("[SUBMIT] No dialog appeared within 5 seconds")
+    return "none"
+
 async def nodriver_kham_check_captcha_text_error(tab, config_dict):
     """
     Check captcha error message dialog
@@ -2367,59 +2410,38 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             await el_btn.click()
                             debug.log("[SUBMIT] Add shopping cart button clicked successfully!")
 
-                            # Check and close success dialog (Kham/Ticket.com.tw shows "加入購物車完成" dialog)
-                            # Wait up to 5 seconds for dialog to appear
-                            dialog_closed = False
-                            for i in range(10):  # 10 attempts * 0.5s = 5 seconds (increased from 3s)
-                                await tab.sleep(0.5)
-                                try:
-                                    dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
-                                    if dialog_btn:
-                                        debug.log("[SUBMIT] Success dialog found, closing...")
-                                        await dialog_btn.click()
-                                        await tab.sleep(0.5)  # Wait for dialog close animation
-                                        dialog_closed = True
-                                        debug.log("[SUBMIT] Dialog closed successfully")
-                                        break
-                                except Exception as e:
-                                    if i == 9:
-                                        debug.log(f"[SUBMIT] Dialog close attempt failed: {e}")
-                                    pass
+                            dialog_result = await _handle_post_submit_dialog(tab, config_dict)
 
-                            if not dialog_closed:
-                                debug.log("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
-
-                            # If dialog was closed, give page time to process before checking URL
-                            if dialog_closed:
-                                debug.log("[SUBMIT] Waiting for page transition after dialog close...")
+                            if dialog_result == "success":
+                                debug.log("[SUBMIT] Waiting for page transition after success...")
                                 await tab.sleep(1.0)
 
-                            # Wait for URL change to prevent duplicate submission (ticket area page)
-                            current_url = tab.target.url
-                            debug.log(f"[SUBMIT] Current URL before transition check: {current_url}")
+                                current_url = tab.target.url
+                                url_changed = False
+                                for i in range(60):  # 60 * 0.5s = 30s
+                                    await tab.sleep(0.5)
+                                    new_url = tab.target.url
+                                    if new_url != current_url:
+                                        debug.log(f"[SUBMIT] Page transitioned to {new_url}")
+                                        url_changed = True
+                                        break
 
-                            url_changed = False
-                            max_wait_time = 30 if dialog_closed else 5  # 30s if dialog closed, 5s otherwise
-                            max_attempts = int(max_wait_time / 0.5)
+                                if not url_changed:
+                                    debug.log("[SUBMIT] CRITICAL: Success dialog but URL never changed after 30s")
+                                    await tab.sleep(5.0)
 
-                            for i in range(max_attempts):
-                                await tab.sleep(0.5)
-                                new_url = tab.target.url
-                                if new_url != current_url:
-                                    debug.log(f"[SUBMIT] Page transitioned from {current_url}")
-                                    debug.log(f"[SUBMIT] to {new_url}")
-                                    url_changed = True
-                                    break
+                            elif dialog_result == "error":
+                                debug.log("[SUBMIT] Will retry with new captcha")
+                                await tab.sleep(2.0)
 
-                            # If timeout, wait additional time before returning to prevent immediate re-execution
-                            if not url_changed:
-                                debug.log(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
-                                await tab.sleep(5.0)  # Longer wait to prevent immediate re-execution
-
-                            # Critical: If dialog closed but URL didn't change, something is wrong
-                            if dialog_closed and not url_changed:
-                                debug.log("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
-                                debug.log("[SUBMIT] This may indicate a submission error - will retry")
+                            else:
+                                current_url = tab.target.url
+                                for i in range(10):  # 10 * 0.5s = 5s
+                                    await tab.sleep(0.5)
+                                    new_url = tab.target.url
+                                    if new_url != current_url:
+                                        debug.log(f"[SUBMIT] Page transitioned to {new_url}")
+                                        break
                         else:
                             debug.log("[SUBMIT] Add shopping cart button not found")
                     except Exception as exc:
@@ -2528,8 +2550,16 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
 
             is_captcha_sent = False
 
-            # First, check if captcha is already filled (from previous page)
+            # Check captcha error dialog FIRST (before checking filled state).
+            # An error dialog means the server has refreshed the captcha image,
+            # so the old value in the input field is stale and must be cleared.
             if config_dict["ocr_captcha"]["enable"]:
+                is_reset = await nodriver_kham_check_captcha_text_error(tab, config_dict)
+                if is_reset:
+                    is_captcha_sent = await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
+
+            # Then check if captcha is already filled (from previous page or above OCR)
+            if config_dict["ocr_captcha"]["enable"] and not is_captcha_sent:
                 try:
                     captcha_value = await tab.evaluate('''
                         (function() {
@@ -2545,12 +2575,6 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                         debug.log(f"[CAPTCHA] Already filled: {captcha_value}")
                 except:
                     pass
-
-            # Check captcha error
-            if config_dict["ocr_captcha"]["enable"] and not is_captcha_sent:
-                is_reset = await nodriver_kham_check_captcha_text_error(tab, config_dict)
-                if is_reset:
-                    is_captcha_sent = await nodriver_kham_captcha(tab, config_dict, ocr, model_name)
 
             # Check adjacent seat checkbox
             if config_dict["advanced"]["disable_adjacent_seat"]:
@@ -2793,59 +2817,38 @@ async def nodriver_kham_main(tab, url, config_dict, ocr):
                             await el_btn.click()
                             debug.log("[SUBMIT] Add shopping cart button clicked successfully!")
 
-                            # Check and close success dialog (Kham/Ticket.com.tw shows "加入購物車完成" dialog)
-                            # Wait up to 5 seconds for dialog to appear
-                            dialog_closed = False
-                            for i in range(10):  # 10 attempts * 0.5s = 5 seconds (increased from 3s)
-                                await tab.sleep(0.5)
-                                try:
-                                    dialog_btn = await tab.query_selector('div.ui-dialog-buttonset > button[type="button"]')
-                                    if dialog_btn:
-                                        debug.log("[SUBMIT] Success dialog found, closing...")
-                                        await dialog_btn.click()
-                                        await tab.sleep(0.5)  # Wait for dialog close animation
-                                        dialog_closed = True
-                                        debug.log("[SUBMIT] Dialog closed successfully")
-                                        break
-                                except Exception as e:
-                                    if i == 9:
-                                        debug.log(f"[SUBMIT] Dialog close attempt failed: {e}")
-                                    pass
+                            dialog_result = await _handle_post_submit_dialog(tab, config_dict)
 
-                            if not dialog_closed:
-                                debug.log("[SUBMIT] No dialog appeared within 5 seconds, continuing...")
-
-                            # If dialog was closed, give page time to process before checking URL
-                            if dialog_closed:
-                                debug.log("[SUBMIT] Waiting for page transition after dialog close...")
+                            if dialog_result == "success":
+                                debug.log("[SUBMIT] Waiting for page transition after success...")
                                 await tab.sleep(1.0)
 
-                            # Wait for URL change to prevent duplicate submission (ticket number page)
-                            current_url = tab.target.url
-                            debug.log(f"[SUBMIT] Current URL before transition check: {current_url}")
+                                current_url = tab.target.url
+                                url_changed = False
+                                for i in range(60):  # 60 * 0.5s = 30s
+                                    await tab.sleep(0.5)
+                                    new_url = tab.target.url
+                                    if new_url != current_url:
+                                        debug.log(f"[SUBMIT] Page transitioned to {new_url}")
+                                        url_changed = True
+                                        break
 
-                            url_changed = False
-                            max_wait_time = 30 if dialog_closed else 5  # 30s if dialog closed, 5s otherwise
-                            max_attempts = int(max_wait_time / 0.5)
+                                if not url_changed:
+                                    debug.log("[SUBMIT] CRITICAL: Success dialog but URL never changed after 30s")
+                                    await tab.sleep(5.0)
 
-                            for i in range(max_attempts):
-                                await tab.sleep(0.5)
-                                new_url = tab.target.url
-                                if new_url != current_url:
-                                    debug.log(f"[SUBMIT] Page transitioned from {current_url}")
-                                    debug.log(f"[SUBMIT] to {new_url}")
-                                    url_changed = True
-                                    break
+                            elif dialog_result == "error":
+                                debug.log("[SUBMIT] Will retry with new captcha")
+                                await tab.sleep(2.0)
 
-                            # If timeout, wait additional time before returning to prevent immediate re-execution
-                            if not url_changed:
-                                debug.log(f"[SUBMIT] WARNING: URL did not change after {max_wait_time} seconds, waiting additional 5 seconds...")
-                                await tab.sleep(5.0)  # Longer wait to prevent immediate re-execution
-
-                            # Critical: If dialog closed but URL didn't change, something is wrong
-                            if dialog_closed and not url_changed:
-                                debug.log("[SUBMIT] CRITICAL: Dialog was closed but URL never changed after 30s")
-                                debug.log("[SUBMIT] This may indicate a submission error - will retry")
+                            else:
+                                current_url = tab.target.url
+                                for i in range(10):  # 10 * 0.5s = 5s
+                                    await tab.sleep(0.5)
+                                    new_url = tab.target.url
+                                    if new_url != current_url:
+                                        debug.log(f"[SUBMIT] Page transitioned to {new_url}")
+                                        break
                         else:
                             debug.log("[SUBMIT] Add shopping cart button not found")
                     except Exception as exc:
@@ -3399,6 +3402,7 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                 }}
 
                 const selectedSeats = [];
+                let usedFallback = false;
 
                 // Step 2-4: Group, sort and select based on stage direction
                 if (stageDirection === 'up' || stageDirection === 'down') {{
@@ -3534,6 +3538,23 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                         if (selectedSeats.length >= ticketNumber) break;
                     }}
 
+                    // Non-adjacent fallback: adjacent mode found 0 seats but seats exist
+                    if (!allowNonAdjacent && selectedSeats.length < ticketNumber) {{
+                        for (const [rowNum, rowSeats] of sortedRows) {{
+                            rowSeats.sort((a, b) => a.domIndex - b.domIndex);
+                            const seatCount = rowSeats.length;
+                            const startIdx = Math.max(0, Math.floor((seatCount - ticketNumber) / 2));
+                            for (let i = 0; i < seatCount; i++) {{
+                                if (startIdx + i < rowSeats.length) {{
+                                    selectedSeats.push(rowSeats[startIdx + i]);
+                                    if (selectedSeats.length >= ticketNumber) break;
+                                }}
+                            }}
+                            if (selectedSeats.length >= ticketNumber) break;
+                        }}
+                        if (selectedSeats.length >= ticketNumber) usedFallback = true;
+                    }}
+
                 }} else if (stageDirection === 'left' || stageDirection === 'right') {{
                     // GROUP BY SEAT NUMBER (column): For left/right stages
                     const columns = {{}};
@@ -3628,6 +3649,23 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
 
                         if (selectedSeats.length >= ticketNumber) break;
                     }}
+
+                    // Non-adjacent fallback: adjacent mode found 0 seats but seats exist
+                    if (!allowNonAdjacent && selectedSeats.length < ticketNumber) {{
+                        for (const [seatNum, columnSeats] of sortedColumns) {{
+                            columnSeats.sort((a, b) => a.domIndex - b.domIndex);
+                            const rowCount = columnSeats.length;
+                            const startIdx = Math.max(0, Math.floor((rowCount - ticketNumber) / 2));
+                            for (let i = 0; i < rowCount; i++) {{
+                                if (startIdx + i < columnSeats.length) {{
+                                    selectedSeats.push(columnSeats[startIdx + i]);
+                                    if (selectedSeats.length >= ticketNumber) break;
+                                }}
+                            }}
+                            if (selectedSeats.length >= ticketNumber) break;
+                        }}
+                        if (selectedSeats.length >= ticketNumber) usedFallback = true;
+                    }}
                 }}
 
                 // Step 5: Click selected seats
@@ -3645,7 +3683,8 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
                     found: totalAvailableSeats,
                     selected: clickedCount,
                     titles: clickedTitles,
-                    direction: stageDirection
+                    direction: stageDirection,
+                    usedFallback: usedFallback
                 }};
             }})();
         ''')
@@ -3671,6 +3710,9 @@ async def nodriver_kham_seat_auto_select(tab, config_dict):
             result_dict = result
 
         is_seat_assigned = result_dict.get('success', False)
+
+        if result_dict.get('usedFallback'):
+            debug.log("[KHAM SEAT] Adjacent seats not available, used non-adjacent fallback")
 
         if debug.enabled:
             stage_dir = result_dict.get('direction', 'unknown')

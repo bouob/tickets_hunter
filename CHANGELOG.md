@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026.04.23
+
+- 新增 TixCraft EPS IP 封鎖偵測，遭封鎖時自動提示
+- 新增 Discord / Telegram 自訂通知訊息功能，測試按鈕同步使用自訂格式
+- Discord 與 Telegram 通知訊息整合為單一輸入欄位
+- 修復 iBon 驗證碼偵測流程、關鍵字正規化，新增 EventBuy 售完自動偵測
+- 修復 KKTIX 售完關鍵字覆蓋不完整，補全更多變體確保自動重整
+- 修復 Cityline 搶票流程卡頓與彈窗處理異常
+- 修復 TixCraft 驗證碼重載例外靜默略過問題
+- 提升 TicketPlus 操作速度
+
 ## 2026.04.07
 
 - 改善 TixCraft / TicketMaster.sg 驗證碼辨識準確率（99.5% 以上），系統自動套用最佳模型

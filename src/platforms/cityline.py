@@ -4,6 +4,7 @@
 
 import asyncio
 import random
+import time
 
 import util
 from nodriver_common import (
@@ -56,28 +57,38 @@ async def nodriver_cityline_login(tab, cityline_account, config_dict):
     """
     Cityline login with auto-click when button becomes enabled
     Strategy: Input email -> Monitor login button -> Auto-click when enabled
-    Reference: button.login-btn.submit-btn (becomes enabled after password + verification)
+    Reference: button.login-btn.submit-btn (OTP flow: email -> OTP code sent to mailbox)
     """
-
+    debug = util.create_debug_logger(config_dict)
 
     if not _state.get("account_assigned", False):
         try:
             # Step 1: Input email/account
-            el_account = await tab.query_selector('input[type="text"]')
+            # Try type="text" first (current Cityline), fallback to type="email" if changed
+            el_account = await tab.query_selector('input[type="text"].ant-input')
+            if not el_account:
+                el_account = await tab.query_selector('input[type="email"].ant-input')
             if el_account:
                 await el_account.click()
                 await el_account.apply('function (element) {element.value = ""; }')
                 await el_account.send_keys(cityline_account)
                 await asyncio.sleep(random.uniform(0.4, 0.7))
                 _state["account_assigned"] = True
-                print(f"[CITYLINE LOGIN] Email entered: {cityline_account[:3]}***")
-                print("[CITYLINE LOGIN] Please manually enter password and verification code")
-                print("[CITYLINE LOGIN] Monitoring login button... will auto-click when enabled")
+                debug.log(f"[CITYLINE LOGIN] Email entered: {cityline_account[:3]}***")
+                debug.log("[CITYLINE LOGIN] OTP will be sent to mailbox - monitoring login button...")
         except Exception as exc:
-            print(f"[CITYLINE LOGIN] Failed to input email: {exc}")
+            debug.log(f"[CITYLINE LOGIN] Failed to input email: {exc}")
             pass
     else:
-        # Step 2: Solve Turnstile if needed, then auto-click login button
+        # Step 2: Solve Turnstile if needed, then auto-click login button (email submit)
+        # Once OTP is sent, wait for URL change (login success) - do not click again
+        if _state.get("otp_sent", False):
+            now = time.time()
+            last_log = _state.get("otp_wait_last_log", 0)
+            if now - last_log >= 10:
+                debug.log("[CITYLINE LOGIN] Waiting for OTP entry (URL will change on success)...")
+                _state["otp_wait_last_log"] = now
+            return
         try:
             # Check if Turnstile is already solved (cf-turnstile-response has value)
             turnstile_solved = await tab.evaluate('''
@@ -88,7 +99,7 @@ async def nodriver_cityline_login(tab, cityline_account, config_dict):
             ''')
 
             if not turnstile_solved and not _state.get("turnstile_attempted", False):
-                print("[CITYLINE LOGIN] Turnstile not solved, attempting CDP click...")
+                debug.log("[CITYLINE LOGIN] Turnstile not solved, attempting CDP click...")
                 await handle_cloudflare_challenge(tab, config_dict, max_retry=2)
                 _state["turnstile_attempted"] = True
 
@@ -104,7 +115,7 @@ async def nodriver_cityline_login(tab, cityline_account, config_dict):
             ''')
 
             if button_enabled:
-                # Auto-click the login button
+                # Auto-click the login button to submit email and trigger OTP
                 click_result = await tab.evaluate('''
                     (function() {
                         const loginBtn = document.querySelector('button.login-btn.submit-btn');
@@ -117,11 +128,12 @@ async def nodriver_cityline_login(tab, cityline_account, config_dict):
                 ''')
 
                 if click_result:
-                    print("[CITYLINE LOGIN] Login button auto-clicked!")
+                    debug.log("[CITYLINE LOGIN] Login clicked - OTP sent to mailbox, waiting for user input...")
+                    _state["otp_sent"] = True
                     _state["turnstile_attempted"] = False
                     await asyncio.sleep(random.uniform(1.0, 2.0))
         except Exception as exc:
-            pass  # Silent fail, will retry on next loop
+            debug.log(f"[CITYLINE LOGIN] Step 2 error: {exc}")
 
 async def nodriver_cityline_date_auto_select(tab, config_dict):
     """
@@ -210,14 +222,16 @@ async def nodriver_cityline_date_auto_select(tab, config_dict):
     target_area = util.get_target_item_from_matched_list(matched_blocks, auto_select_mode)
     if target_area:
         try:
-            await target_area.scroll_into_view()
-            await target_area.click()
-            debug.log("[CITYLINE DATE] Purchase button clicked")
-
-            # Wait for Cloudflare Turnstile (FR-012)
-            debug.log("[CITYLINE DATE] Waiting 3 seconds for Cloudflare Turnstile...")
-            await asyncio.sleep(3)
-
+            try:
+                await target_area.scroll_into_view()
+            except Exception:
+                pass  # scroll is best-effort
+            try:
+                await target_area.click()
+            except Exception:
+                # Fallback: JS click when position cannot be computed (element in overflow container)
+                await target_area.apply('function(el) { el.click(); }')
+            debug.log("[CITYLINE DATE] Date button clicked")
             ret = True
         except Exception as exc:
             debug.log(f"[CITYLINE DATE] click date button fail: {exc}")
@@ -257,47 +271,80 @@ async def nodriver_cityline_check_login_modal(tab, config_dict):
         ''')
 
         if modal_visible and not _state.get("modal_handled", False):
-            debug.log("[CITYLINE LOGIN MODAL] Login modal detected, solving Turnstile...")
+            debug.log("[CITYLINE LOGIN MODAL] Login modal detected, checking button state...")
 
-            # Attempt to solve Turnstile via CDP before waiting for button
-            try:
-                await handle_cloudflare_challenge(tab, config_dict, max_retry=2)
-            except Exception as cf_exc:
-                debug.log(f"[CITYLINE LOGIN MODAL] Turnstile auto-solve failed: {cf_exc}")
-
-            # Wait for login button to be enabled (opacity: 1 after Turnstile)
-            button_enabled = False
-            max_wait = 10  # Maximum 10 seconds
-            for i in range(max_wait):
-                button_enabled = await tab.evaluate('''
-                    (function() {
-                        const loginBtn = document.querySelector('button.btn-login');
-                        if (loginBtn) {
-                            const style = window.getComputedStyle(loginBtn);
-                            return parseFloat(style.opacity) === 1;
-                        }
-                        return false;
-                    })()
-                ''')
-
-                if button_enabled:
-                    debug.log(f"[CITYLINE LOGIN MODAL] Button enabled after {i}s")
-                    break
-
-                await asyncio.sleep(1)
+            # Fast path: check if button is already enabled (Turnstile may be pre-solved)
+            button_enabled = await tab.evaluate('''
+                (function() {
+                    const loginBtn = document.querySelector('button.btn-login');
+                    if (loginBtn) {
+                        return parseFloat(window.getComputedStyle(loginBtn).opacity) === 1;
+                    }
+                    return false;
+                })()
+            ''')
 
             if button_enabled:
-                # Use CDP to click the login button (to properly trigger onclick event)
+                debug.log("[CITYLINE LOGIN MODAL] Button already enabled, skipping Turnstile solve")
+            else:
+                # Wait up to 5s for Turnstile to auto-solve before trying CDP
+                debug.log("[CITYLINE LOGIN MODAL] Waiting for Turnstile to auto-solve...")
+                for i in range(5):
+                    await asyncio.sleep(1)
+                    button_enabled = await tab.evaluate('''
+                        (function() {
+                            const loginBtn = document.querySelector('button.btn-login');
+                            if (loginBtn) {
+                                return parseFloat(window.getComputedStyle(loginBtn).opacity) === 1;
+                            }
+                            return false;
+                        })()
+                    ''')
+                    if button_enabled:
+                        debug.log(f"[CITYLINE LOGIN MODAL] Button enabled after {i+1}s (auto-solve)")
+                        break
+
+                if not button_enabled:
+                    # Last resort: CDP-based Turnstile solving (slower, may fail)
+                    debug.log("[CITYLINE LOGIN MODAL] Trying CDP Turnstile solve...")
+                    try:
+                        await handle_cloudflare_challenge(tab, config_dict, max_retry=1)
+                    except Exception as cf_exc:
+                        debug.log(f"[CITYLINE LOGIN MODAL] Turnstile CDP solve failed: {cf_exc}")
+
+                    # Final wait after CDP attempt
+                    for i in range(5):
+                        button_enabled = await tab.evaluate('''
+                            (function() {
+                                const loginBtn = document.querySelector('button.btn-login');
+                                if (loginBtn) {
+                                    return parseFloat(window.getComputedStyle(loginBtn).opacity) === 1;
+                                }
+                                return false;
+                            })()
+                        ''')
+                        if button_enabled:
+                            debug.log(f"[CITYLINE LOGIN MODAL] Button enabled after CDP+{i}s")
+                            break
+                        await asyncio.sleep(1)
+
+            if button_enabled:
+                # Use JS click to avoid CDP position computation failure (element may be in overflow container)
                 try:
-                    login_btn = await tab.find('button.btn-login', timeout=3)
-                    if login_btn:
-                        await login_btn.click()
-                        debug.log("[CITYLINE LOGIN MODAL] Login button clicked successfully (CDP)")
+                    click_result = await tab.evaluate('''
+                        (function() {
+                            const btn = document.querySelector('button.btn-login');
+                            if (btn) { btn.click(); return true; }
+                            return false;
+                        })()
+                    ''')
+                    if click_result:
+                        debug.log("[CITYLINE LOGIN MODAL] Login button clicked successfully (JS)")
                         is_modal_handled = True
                         _state["modal_handled"] = True  # Mark as handled to prevent duplicate clicks
 
-                        # Wait longer for modal to fully close and process
-                        await asyncio.sleep(random.uniform(4.0, 5.0))
+                        # Wait for modal to fully close and process
+                        await asyncio.sleep(random.uniform(2.0, 3.0))
                     else:
                         debug.log("[CITYLINE LOGIN MODAL] Login button not found")
                 except Exception as e:
@@ -846,6 +893,7 @@ async def nodriver_cityline_main(tab, url, config_dict):
     if not _state:
         _state.update({
             "account_assigned": False,
+            "otp_sent": False,
             "modal_handled": False,
             "turnstile_attempted": False,
             "buy_button_pressed": False,
@@ -907,6 +955,7 @@ async def nodriver_cityline_main(tab, url, config_dict):
 
     # Login page
     if 'cityline.com/Login.html' in url:
+        await nodriver_cityline_cookie_accept(tab)
         cityline_account = config_dict["accounts"]["cityline_account"]
         if len(cityline_account) > 4:
             # Auto-fill email and monitor login button (will auto-click when enabled)
@@ -955,6 +1004,8 @@ async def nodriver_cityline_main(tab, url, config_dict):
     if 'venue.cityline.com' in url and '/performance?' in url:
         # Reset modal flag when successfully navigated to performance page
         _state["modal_handled"] = False
+        # Reset purchase button flag so eventDetail re-triggers Continue on reload
+        _state["purchase_button_pressed"] = False
         # Play sound when entering performance page
         if not _state["played_sound_ticket"]:
             if config_dict["advanced"]["play_sound"]["ticket"]:

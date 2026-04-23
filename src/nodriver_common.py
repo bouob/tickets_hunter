@@ -28,7 +28,7 @@ except Exception:
 
 # ===== Constants =====
 
-CONST_APP_VERSION = "TicketsHunter (2026.04.01)"
+CONST_APP_VERSION = "TicketsHunter (2026.04.23)"
 
 CONST_MAXBOT_ANSWER_ONLINE_FILE = "MAXBOT_ONLINE_ANSWER.txt"
 CONST_MAXBOT_CONFIG_FILE = "settings.json"
@@ -220,10 +220,15 @@ def send_discord_notification(config_dict, stage, platform_name):
         stage: "ticket" or "order"
         platform_name: Platform name (e.g., "TixCraft", "iBon")
     """
-    webhook_url = config_dict.get("advanced", {}).get("discord_webhook_url", "")
+    adv = config_dict.get("advanced", {})
+    webhook_url = adv.get("discord_webhook_url", "")
     if webhook_url:
-        verbose = config_dict.get("advanced", {}).get("verbose", False)
-        util.send_discord_webhook_async(webhook_url, stage, platform_name, verbose=verbose)
+        verbose = adv.get("verbose", False)
+        custom_message = adv.get("discord_message", "")
+        util.send_discord_webhook_async(
+            webhook_url, stage, platform_name,
+            verbose=verbose, custom_message=custom_message
+        )
 
 def send_telegram_notification(config_dict, stage, platform_name):
     """Send Telegram bot notification if configured.
@@ -238,7 +243,11 @@ def send_telegram_notification(config_dict, stage, platform_name):
     chat_id = adv.get("telegram_chat_id", "")
     if bot_token and chat_id:
         verbose = adv.get("verbose", False)
-        util.send_telegram_message_async(bot_token, chat_id, stage, platform_name, verbose=verbose)
+        custom_message = adv.get("telegram_message", "")
+        util.send_telegram_message_async(
+            bot_token, chat_id, stage, platform_name,
+            verbose=verbose, custom_message=custom_message
+        )
     elif bot_token or chat_id:
         debug = util.create_debug_logger(config_dict)
         debug.log("[Telegram] partial config: bot_token or chat_id is missing")

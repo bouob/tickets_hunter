@@ -144,7 +144,7 @@
 
 <!-- 版本資訊 -->
 <div class="alert alert-info" role="alert">
-  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.04.07) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
+  <p class="mb-0"><strong>版本</strong>：Tickets Hunter (2026.04.23) | <strong>技術支援</strong>：Claude Code AI 輔助開發</p>
 </div>
 
 <!-- 開發狀態提示（可展開） -->
@@ -523,6 +523,14 @@
               <input class="form-control" id="telegram_chat_id" type="text" value="" placeholder="123456789, 987654321" />
               <button class="btn btn-outline-secondary" type="button" id="btn_test_telegram">測試</button>
             </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label for="notification_message" class="col-sm-2 col-form-label">通知訊息</label>
+          <div class="col-sm-10 col-lg-8 col-xl-6">
+            <textarea class="form-control" id="notification_message" rows="2" placeholder="留空使用預設英文通知"></textarea>
+            <small class="form-text text-muted">搶到票時會將此訊息同時送到 Discord 與 Telegram。留空則維持原預設訊息。</small>
           </div>
         </div>
 
@@ -1184,7 +1192,7 @@
   </div>
 </div>
 
-  <script src="help-content.js?v=2026040722"></script>
-  <script src="settings.js?v=2026040722"></script>
+  <script src="help-content.js?v=2026042321"></script>
+  <script src="settings.js?v=2026042321"></script>
 </body>
 </html>

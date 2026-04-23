@@ -2205,17 +2205,21 @@ def get_token():
 # Discord Webhook Functions (specs/009-discord-webhook)
 # =============================================================================
 
-def build_discord_message(stage: str, platform_name: str) -> dict:
+def build_discord_message(stage: str, platform_name: str, custom_message: str = None) -> dict:
     """
     Build Discord webhook message payload based on stage and platform.
 
     Args:
         stage: Notification stage ("ticket" or "order")
         platform_name: Platform name (e.g., "TixCraft", "iBon")
+        custom_message: User-defined message text; if non-empty, overrides default.
 
     Returns:
         dict: Discord Webhook payload with content and username
     """
+    if custom_message:
+        return {"content": custom_message, "username": "Tickets Hunter"}
+
     if not platform_name:
         platform_name = "Unknown"
 
@@ -2237,7 +2241,8 @@ def send_discord_webhook(
     stage: str,
     platform_name: str,
     timeout: float = 3.0,
-    verbose: bool = False
+    verbose: bool = False,
+    custom_message: str = None
 ) -> bool:
     """
     Send Discord Webhook notification (synchronous).
@@ -2251,6 +2256,7 @@ def send_discord_webhook(
         platform_name: Platform name (e.g., "TixCraft", "iBon")
         timeout: Request timeout in seconds, default 3.0
         verbose: Whether to print error messages
+        custom_message: User-defined message text; if non-empty, overrides default.
 
     Returns:
         bool: True if sent successfully, False otherwise
@@ -2261,7 +2267,7 @@ def send_discord_webhook(
 
     debug = DebugLogger(enabled=verbose)
     try:
-        payload = build_discord_message(stage, platform_name)
+        payload = build_discord_message(stage, platform_name, custom_message=custom_message)
         response = requests.post(
             webhook_url,
             json=payload,
@@ -2280,7 +2286,8 @@ def send_discord_webhook_async(
     stage: str,
     platform_name: str,
     timeout: float = 3.0,
-    verbose: bool = False
+    verbose: bool = False,
+    custom_message: str = None
 ) -> None:
     """
     Send Discord Webhook notification asynchronously.
@@ -2294,6 +2301,7 @@ def send_discord_webhook_async(
         platform_name: Platform name (e.g., "TixCraft", "iBon")
         timeout: Request timeout in seconds, default 3.0
         verbose: Whether to print error messages
+        custom_message: User-defined message text; if non-empty, overrides default.
     """
     # Skip if URL is empty or None
     if not webhook_url:
@@ -2301,23 +2309,28 @@ def send_discord_webhook_async(
 
     thread = threading.Thread(
         target=send_discord_webhook,
-        args=(webhook_url, stage, platform_name, timeout, verbose),
+        args=(webhook_url, stage, platform_name),
+        kwargs={"timeout": timeout, "verbose": verbose, "custom_message": custom_message},
         daemon=True
     )
     thread.start()
 
 
-def build_telegram_message(stage: str, platform_name: str) -> str:
+def build_telegram_message(stage: str, platform_name: str, custom_message: str = None) -> str:
     """
     Build Telegram notification message text based on stage and platform.
 
     Args:
         stage: Notification stage ("ticket" or "order")
         platform_name: Platform name (e.g., "TixCraft", "iBon")
+        custom_message: User-defined message text; if non-empty, overrides default.
 
     Returns:
         str: Message text
     """
+    if custom_message:
+        return custom_message
+
     if not platform_name:
         platform_name = "Unknown"
 
@@ -2337,7 +2350,8 @@ def send_telegram_message(
     stage: str,
     platform_name: str,
     timeout: float = 3.0,
-    verbose: bool = False
+    verbose: bool = False,
+    custom_message: str = None
 ) -> bool:
     """
     Send Telegram Bot notification (synchronous).
@@ -2349,6 +2363,7 @@ def send_telegram_message(
         platform_name: Platform name (e.g., "TixCraft", "iBon")
         timeout: Request timeout in seconds, default 3.0
         verbose: Whether to print error messages
+        custom_message: User-defined message text; if non-empty, overrides default.
 
     Returns:
         bool: True if sent to at least one chat successfully, False otherwise
@@ -2360,7 +2375,7 @@ def send_telegram_message(
     if not chat_ids:
         return False
 
-    text = build_telegram_message(stage, platform_name)
+    text = build_telegram_message(stage, platform_name, custom_message=custom_message)
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     debug = DebugLogger(enabled=verbose)
     any_success = False
@@ -2386,7 +2401,8 @@ def send_telegram_message_async(
     stage: str,
     platform_name: str,
     timeout: float = 3.0,
-    verbose: bool = False
+    verbose: bool = False,
+    custom_message: str = None
 ) -> None:
     """
     Send Telegram Bot notification asynchronously.
@@ -2400,13 +2416,15 @@ def send_telegram_message_async(
         platform_name: Platform name (e.g., "TixCraft", "iBon")
         timeout: Request timeout in seconds, default 3.0
         verbose: Whether to print error messages
+        custom_message: User-defined message text; if non-empty, overrides default.
     """
     if not bot_token or not chat_id:
         return
 
     thread = threading.Thread(
         target=send_telegram_message,
-        args=(bot_token, chat_id, stage, platform_name, timeout, verbose),
+        args=(bot_token, chat_id, stage, platform_name),
+        kwargs={"timeout": timeout, "verbose": verbose, "custom_message": custom_message},
         daemon=True
     )
     thread.start()
