@@ -3062,26 +3062,33 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             answer_1_js = json.dumps(answer_1)
             answer_2_js = json.dumps(answer_2)
 
-            # Fill both fields using JavaScript
+            # Fill both fields using JavaScript.
+            # Use the native HTMLInputElement value setter so Angular/React reactive
+            # form bindings (e.g. ngModel) see the change — assigning `.value`
+            # directly is swallowed by the framework's property override.
             fill_result_raw = await tab.evaluate(f'''
                 (function() {{
                     var inputs = document.querySelectorAll("{input_text_css}");
                     if (inputs.length >= 2) {{
                         var answer1 = {answer_1_js};
                         var answer2 = {answer_2_js};
+                        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+
+                        function setVal(input, value) {{
+                            setter.call(input, '');
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            setter.call(input, value);
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                        }}
 
                         if (inputs[0].value !== answer1) {{
-                            inputs[0].value = "";
-                            inputs[0].value = answer1;
-                            inputs[0].dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            inputs[0].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            setVal(inputs[0], answer1);
                         }}
 
                         if (inputs[1].value !== answer2) {{
-                            inputs[1].value = "";
-                            inputs[1].value = answer2;
-                            inputs[1].dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            inputs[1].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            setVal(inputs[1], answer2);
                         }}
 
                         return true;
@@ -3121,15 +3128,21 @@ async def nodriver_ibon_fill_verify_form(tab, config_dict, answer_list, fail_lis
             if len(inferred_answer) > 0:
                 # JSON encode for safe JavaScript string insertion
                 inferred_answer_js = json.dumps(inferred_answer)
-                # Fill the answer
+                # Fill the answer.
+                # Use the native HTMLInputElement value setter so Angular/React
+                # reactive form bindings see the change (direct `.value =` is
+                # swallowed by the framework's property override).
                 await tab.evaluate(f'''
                     (function() {{
                         var input = document.querySelector("{input_text_css}");
                         if (input) {{
-                            input.value = "";
-                            input.value = {inferred_answer_js};
+                            var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                            setter.call(input, '');
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            setter.call(input, {inferred_answer_js});
                             input.dispatchEvent(new Event('input', {{ bubbles: true }}));
                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
                         }}
                     }})()
                 ''')
@@ -3879,6 +3892,14 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
                             is_event_page = True
 
         if is_event_page:
+            is_enter_verify_mode = True
+            _state["fail_list"] = await nodriver_ibon_verification_question(tab, _state["fail_list"], config_dict)
+            is_match_target_feature = True
+
+    if not is_match_target_feature:
+        # New Angular SPA validation route (ibon's component is misspelled "Vaildate"):
+        # https://ticket.ibon.com.tw/Vaildate/{eventId}/{sessionId}/{activityId}
+        if 'ticket.ibon.com.tw' in url.lower() and '/vaildate/' in url.lower():
             is_enter_verify_mode = True
             _state["fail_list"] = await nodriver_ibon_verification_question(tab, _state["fail_list"], config_dict)
             is_match_target_feature = True
