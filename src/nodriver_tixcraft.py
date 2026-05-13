@@ -231,6 +231,13 @@ async def nodriver_goto_homepage(driver, config_dict):
                 debug.log(f"[TIXCRAFT] {cookie_name} cookie set successfully (fallback method)")
 
     if 'ibon.com' in homepage:
+        # ibon fires a window.alert() on homepage load ("會員登入方式調整").
+        # Register the global handler now so any future alert is auto-dismissed,
+        # then clear the dialog that already opened during the driver.get() above
+        # (whose JavascriptDialogOpening event has already passed and was missed).
+        await register_ibon_alert_handler(tab, config_dict)
+        await dismiss_pending_ibon_dialog(tab, config_dict)
+
         # Special handling for tour.ibon.com.tw:
         # Need to visit ticket.ibon.com.tw first to complete OAuth and get _at_e token
         is_tour_ibon = 'tour.ibon.com.tw' in homepage
@@ -244,6 +251,8 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 tab = await driver.get("https://ticket.ibon.com.tw/")
                 await asyncio.sleep(random.uniform(1.5, 2.5))
+                # ticket.ibon homepage re-fires the same onload notice
+                await dismiss_pending_ibon_dialog(tab, config_dict)
             except Exception as e:
                 debug.log(f"[TOUR IBON] Error visiting ticket.ibon.com.tw: {e}")
 
@@ -264,6 +273,8 @@ async def nodriver_goto_homepage(driver, config_dict):
             try:
                 tab = await driver.get(original_homepage)
                 await asyncio.sleep(random.uniform(1.5, 2.5))
+                # Clear any onload dialog from tour.ibon homepage (no-op if none)
+                await dismiss_pending_ibon_dialog(tab, config_dict)
             except Exception as e:
                 debug.log(f"[TOUR IBON] Error navigating to tour.ibon homepage: {e}")
 

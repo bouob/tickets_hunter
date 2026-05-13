@@ -95,6 +95,19 @@ async def nodriver_tixcraft_redirect(tab, url):
         game_name = url_split[5]
     if len(game_name) > 0:
         if "/activity/detail/%s" % (game_name,) in url:
+            # Issue #278: detail pages are server-side rendered. Until the sale
+            # opens there is no anchor to /activity/game/{id}. Redirecting
+            # blindly drops the user on an empty gameList page and makes manual
+            # F5 look broken. Only redirect once the buy link actually exists.
+            selector = 'a[href*="/activity/game/%s"]' % game_name
+            js = 'document.querySelector(%s) !== null' % json.dumps(selector)
+            has_buy_link = False
+            try:
+                has_buy_link = await tab.evaluate(js)
+            except Exception:
+                has_buy_link = False
+            if not has_buy_link:
+                return ret
             entry_url = url.replace("/activity/detail/","/activity/game/")
             print("redirec to new url:", entry_url)
             try:

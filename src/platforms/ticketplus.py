@@ -329,7 +329,10 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
 
     area_list = None
     try:
-        area_list = await tab.query_selector_all('div#buyTicket > div.sesstion-item > div.row')
+        # TicketPlus 2026-05 revamp: a Vue sub-component wrapper div now sits between
+        # #buyTicket and .sesstion-item, so a direct-child combinator matches nothing.
+        # Use a descendant combinator (still matches the old direct-child layout too).
+        area_list = await tab.query_selector_all('div#buyTicket div.sesstion-item')
         if area_list and len(area_list) == 0:
             debug.log("empty date item, need retry.")
             await tab.sleep(0.2)
@@ -506,11 +509,11 @@ async def nodriver_ticketplus_date_auto_select(tab, config_dict):
 
                     console.log('[TicketPlus] Starting date selection - keyword:', originalKeyword, 'mode:', autoSelectMode, 'fallback:', dateAutoFallback);
 
-                    let sessionContainers = Array.from(document.querySelectorAll('div#buyTicket > div.sesstion-item'))
+                    let sessionContainers = Array.from(document.querySelectorAll('div#buyTicket div.sesstion-item'))
                         .filter(c => c.querySelector('button.nextBtn'));
 
                     if (sessionContainers.length === 0) {{
-                        sessionContainers = Array.from(document.querySelectorAll('div#buyTicket > div.row.pa-4'))
+                        sessionContainers = Array.from(document.querySelectorAll('div#buyTicket div.row.pa-4'))
                             .filter(c => c.querySelector('button.nextBtn'));
                     }}
 
@@ -805,22 +808,23 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 console.log('hasExpansionPanel:', !!hasExpansionPanel, 'hasCountButton:', !!hasCountButton);
 
                 if (hasExpansionPanel) {{
-                    const allPanels = document.querySelectorAll('.v-expansion-panel');
-                    // Keep top-level ticket area panels (seats-area with no v-expansion-panel ancestor)
-                    // Exclude only nested sub-panels (seats-area itself inside a v-expansion-panel)
-                    const panels = [...allPanels].filter(p => {{
-                        const seatsArea = p.closest('.seats-area');
-                        if (!seatsArea) return true;
-                        return !seatsArea.closest('.v-expansion-panel');
-                    }});
+                    // Select innermost zone panels only (the leaf panels containing .mdi-plus add buttons).
+                    // :not(:has(.seats-area)) excludes any panel that wraps another .seats-area (price-tier
+                    // group panels), leaving only the clickable zone panels in both flat and nested layouts.
+                    // :has() requires Chrome 105+; zendriver enforces Chrome 145+, so this is safe.
+                    const panels = document.querySelectorAll('.seats-area .v-expansion-panel:not(:has(.seats-area))');
                     const validPanels = [];
+                    const soldOutNames = [];
 
                     for (let i = 0; i < panels.length; i++) {{
                         const panel = panels[i];
                         const nameEl = panel.querySelector('.v-expansion-panel-header');
                         if (nameEl) {{
                             const name = nameEl.textContent.trim().replace(/\\s+/g, ' ');
-                            if (!isSoldOut(panel) && !containsExcludeKeywords(name)) {{
+                            if (containsExcludeKeywords(name)) continue;
+                            if (isSoldOut(panel)) {{
+                                soldOutNames.push(name);
+                            }} else {{
                                 validPanels.push({{ panel, name, index: i }});
                             }}
                         }}
@@ -836,7 +840,8 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         target = validPanels.find(p => p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2)));
                     }}
                     if (!target && keyword1 && !areaAutoFallback) {{
-                        return {{ success: false, strict_mode: true }};
+                        const keywordInSoldOut = soldOutNames.some(n => n.includes(keyword1) && (!keyword2 || n.includes(keyword2)));
+                        return {{ success: false, strict_mode: true, attempted_keyword: keyword, keyword_in_sold_out: keywordInSoldOut }};
                     }}
                     if (!target) {{
                         const idx = getTargetIndex(validPanels, autoSelectMode);
@@ -852,57 +857,6 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                     if (!isExpanded && header) {{
                         console.log('Clicking to expand:', target.name);
                         header.click();
-                    }}
-
-                    const innerSeatsArea = target.panel.querySelector('.seats-area');
-                    if (innerSeatsArea) {{
-                        const subPanels = innerSeatsArea.querySelectorAll('.v-expansion-panel');
-                        const validSubPanels = [];
-
-                        for (let sp of subPanels) {{
-                            const spHeader = sp.querySelector('.v-expansion-panel-header');
-                            if (!spHeader) continue;
-                            const spName = spHeader.textContent.trim().replace(/\\s+/g, ' ');
-                            if (!isSoldOut(sp) && !containsExcludeKeywords(spName)) {{
-                                validSubPanels.push({{ panel: sp, name: spName, header: spHeader }});
-                            }}
-                        }}
-
-                        console.log('Nested structure detected, valid sub-panels:', validSubPanels.length);
-
-                        if (validSubPanels.length === 0) {{
-                            return {{ success: false, message: 'Nested: no valid sub-panels' }};
-                        }}
-
-                        let subTarget = null;
-                        if (keyword1) {{
-                            subTarget = validSubPanels.find(p =>
-                                p.name.includes(keyword1) && (!keyword2 || p.name.includes(keyword2))
-                            );
-                        }}
-                        if (!subTarget && keyword1 && !areaAutoFallback) {{
-                            return {{ success: false, strict_mode: true }};
-                        }}
-                        if (!subTarget) {{
-                            const idx = getTargetIndex(validSubPanels, autoSelectMode);
-                            subTarget = validSubPanels[idx];
-                        }}
-
-                        const isSubExpanded = subTarget.panel.classList.contains('v-expansion-panel--active');
-                        if (!isSubExpanded) {{
-                            console.log('Expanding nested sub-panel:', subTarget.name);
-                            subTarget.header.click();
-                        }}
-
-                        let nestedPlusBtn = subTarget.panel.querySelector('.mdi-plus');
-                        if (nestedPlusBtn) {{
-                            console.log('Found plus button in nested panel, clicking', ticketNumber, 'times');
-                            for (let j = 0; j < ticketNumber; j++) {{ nestedPlusBtn.click(); }}
-                            return {{ success: true, type: 'nested_expansion_panel', selected: subTarget.name, clicked: true }};
-                        }}
-
-                        return {{ success: true, type: 'nested_expansion_panel',
-                                 selected: subTarget.name, clicked: false, needRetry: true }};
                     }}
 
                     let plusBtn = target.panel.querySelector('.mdi-plus') ||
@@ -921,6 +875,7 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                 }} else if (hasCountButton) {{
                     const rows = document.querySelectorAll('.row.py-1.py-md-4');
                     const validRows = [];
+                    const soldOutRowNames = [];
 
                     for (let row of rows) {{
                         const plusBtn = row.querySelector('.count-button .mdi-plus');
@@ -929,7 +884,10 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         const nameEl = row.querySelector('.font-weight-medium');
                         if (nameEl) {{
                             const name = nameEl.textContent.trim();
-                            if (!isSoldOut(row) && !containsExcludeKeywords(name)) {{
+                            if (containsExcludeKeywords(name)) continue;
+                            if (isSoldOut(row)) {{
+                                soldOutRowNames.push(name);
+                            }} else {{
                                 validRows.push({{ row, name, plusBtn }});
                             }}
                         }}
@@ -945,7 +903,8 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                         target = validRows.find(r => r.name.includes(keyword1) && (!keyword2 || r.name.includes(keyword2)));
                     }}
                     if (!target && keyword1 && !areaAutoFallback) {{
-                        return {{ success: false, strict_mode: true }};
+                        const keywordInSoldOut = soldOutRowNames.some(n => n.includes(keyword1) && (!keyword2 || n.includes(keyword2)));
+                        return {{ success: false, strict_mode: true, attempted_keyword: keyword, keyword_in_sold_out: keywordInSoldOut }};
                     }}
                     if (!target) {{
                         const idx = getTargetIndex(validRows, autoSelectMode);
@@ -1026,6 +985,13 @@ async def nodriver_ticketplus_unified_select(tab, config_dict, area_keyword):
                     selected_type = result.get('type', '')
                     selected_name = result.get('selected', '')
                     debug.log(f"Selection successful - type: {selected_type}, item: {selected_name}")
+                elif result.get('strict_mode'):
+                    kw = result.get('attempted_keyword') or area_keyword
+                    if result.get('keyword_in_sold_out'):
+                        debug.log(f"[STRICT] Target area '{kw}' is currently sold out (remaining 0); strict mode keeps refreshing for returns.")
+                    else:
+                        debug.log(f"[STRICT] No purchasable area matches '{kw}'; strict mode keeps refreshing.")
+                    debug.log("[STRICT] To auto-fallback to other available areas, enable: Advanced Settings -> area_auto_fallback")
                 else:
                     debug.log(f"Selection failed: {result.get('message', 'unknown error')}")
         else:
@@ -1259,17 +1225,67 @@ async def nodriver_ticketplus_accept_other_activity(tab):
     return is_button_clicked
 
 
-async def nodriver_ticketplus_accept_order_fail(tab):
-    """Handle order failure popup."""
-    is_button_clicked = False
+async def nodriver_ticketplus_accept_order_fail(tab, debug=None):
+    """Detect and dismiss order failure popup (e.g. "Purchase failed / Sold out").
+
+    Uses text-driven detection: scans visible dialogs for failure keywords, then
+    clicks any button whose label looks like a dismissal action. CSS selectors
+    for Vuetify dialogs vary across versions, so text matching is more robust.
+
+    Returns:
+        bool: True if a failure popup was detected (whether dismissed or not).
+    """
     try:
-        button = await tab.query_selector('div[role="dialog"] > div.v-dialog > div.v-card > div > div.row > div.col > button.v-btn')
-        if button:
-            await button.click()
-            is_button_clicked = True
+        js_result = await tab.evaluate('''
+            (function() {
+                const failureTexts = [
+                    '購票失敗',
+                    '您選擇的票種已售完',
+                    '本活動有限制購票總張數',
+                    '已被購買',
+                    '系統忙碌',
+                    '無法購票'
+                ];
+                const buttonTexts = [
+                    '我知道了',
+                    '知道了',
+                    '確定',
+                    'OK',
+                    'Ok'
+                ];
+                const dialogs = document.querySelectorAll('[role="dialog"], .v-dialog, .v-dialog__content');
+                for (const dialog of dialogs) {
+                    if (dialog.offsetParent === null) continue;
+                    const text = (dialog.textContent || '').trim();
+                    if (!failureTexts.some(t => text.includes(t))) continue;
+                    const buttons = dialog.querySelectorAll('button');
+                    for (const btn of buttons) {
+                        const btnText = (btn.textContent || '').trim();
+                        if (buttonTexts.some(t => btnText.includes(t))) {
+                            btn.click();
+                            return { foundFailure: true, buttonClicked: true, dialogText: text.slice(0, 80) };
+                        }
+                    }
+                    return { foundFailure: true, buttonClicked: false, dialogText: text.slice(0, 80) };
+                }
+                return { foundFailure: false, buttonClicked: false, dialogText: '' };
+            })();
+        ''')
+
+        result = util.parse_nodriver_result(js_result)
+
+        if isinstance(result, dict) and result.get('foundFailure'):
+            if debug is not None:
+                debug.log(f"[ORDER FAIL] Detected popup: {result.get('dialogText', '')}")
+                if result.get('buttonClicked'):
+                    debug.log("[ORDER FAIL] Dismissed via dialog button")
+                else:
+                    debug.log("[ORDER FAIL] Dismiss button not found in dialog")
+            return True
     except Exception as exc:
-        pass
-    return is_button_clicked
+        if debug is not None:
+            debug.log(f"[ORDER FAIL] Detection exception: {exc}")
+    return False
 
 
 async def nodriver_ticketplus_check_queue_status(tab, config_dict, force_show_debug=False):
@@ -1777,7 +1793,17 @@ async def nodriver_ticketplus_main(tab, url, config_dict, ocr, Captcha_Browser):
                 await asyncio.sleep(fallback_delay)
 
             is_button_pressed = await nodriver_ticketplus_accept_realname_card(tab)
-            is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab)
+            is_order_fail_handled = await nodriver_ticketplus_accept_order_fail(tab, debug)
+
+            if is_order_fail_handled:
+                debug.log("[ORDER FAIL] Reloading page to refresh ticket availability")
+                try:
+                    await tab.reload()
+                    await asyncio.sleep(0.5)
+                except Exception as reload_exc:
+                    debug.log(f"[ORDER FAIL] Reload failed: {reload_exc}")
+                _state["order_page_visited"] = False
+                return _get_status()
 
             await nodriver_ticketplus_order(tab, config_dict, ocr, Captcha_Browser)
 
