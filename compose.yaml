@@ -1,0 +1,31 @@
+services:
+  tickets-hunter:
+    build:
+      context: .
+    image: tickets-hunter:local
+    container_name: tickets-hunter
+    working_dir: /app/src
+    ports:
+      - "16888:16888"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Asia/Taipei
+      TICKETS_HUNTER_XVFB: "1"
+      TICKETS_HUNTER_DOCKER: "1"
+    shm_size: "1gb"
+    restart: unless-stopped
+
+  bot:
+    image: tickets-hunter:local
+    profiles:
+      - bot
+    working_dir: /app/src
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Asia/Taipei
+      TICKETS_HUNTER_XVFB: "1"
+      TICKETS_HUNTER_DOCKER: "1"
+    shm_size: "1gb"
+    command: ["python", "nodriver_tixcraft.py", "--input", "settings.json"]
