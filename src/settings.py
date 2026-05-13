@@ -124,6 +124,10 @@ def get_default_config():
     config_dict["area_auto_select"]["enable"] = True
     config_dict["area_auto_select"]["mode"] = CONST_SELECT_ORDER_DEFAULT
     config_dict["area_auto_select"]["area_keyword"] = ""
+
+    config_dict["ticket_price_auto_select"] = {}
+    config_dict["ticket_price_auto_select"]["mode"] = CONST_FROM_TOP_TO_BOTTOM
+
     config_dict["keyword_exclude"] = CONST_EXCLUDE_DEFAULT
 
     config_dict['kktix']={}
@@ -271,7 +275,7 @@ def migrate_config(config_dict):
 
     # Ensure all default fields exist (fills missing keys from new versions)
     default = get_default_config()
-    for section in ["advanced", "kktix", "tixcraft", "date_auto_select", "area_auto_select", "ocr_captcha", "contact", "accounts", "cityline"]:
+    for section in ["advanced", "kktix", "tixcraft", "date_auto_select", "area_auto_select", "ticket_price_auto_select", "ocr_captcha", "contact", "accounts", "cityline"]:
         if section in default:
             if section not in config_dict or not isinstance(config_dict[section], dict):
                 config_dict[section] = dict(default[section])

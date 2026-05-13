@@ -17,6 +17,7 @@ const date_auto_fallback = document.querySelector('#date_auto_fallback');
 const area_select_mode = document.querySelector('#area_select_mode');
 const area_keyword = document.querySelector('#area_keyword');
 const area_auto_fallback = document.querySelector('#area_auto_fallback');
+const ticket_price_select_mode = document.querySelector('#ticket_price_select_mode');
 const keyword_exclude = document.querySelector('#keyword_exclude');
 
 // advance
@@ -238,6 +239,12 @@ function load_settins_to_form(settings)
         area_select_mode.value = settings.area_auto_select.mode;
         area_keyword.value = format_keyword_for_display(settings.area_auto_select.area_keyword);
         area_auto_fallback.checked = settings.area_auto_fallback || false;
+
+        if (settings.ticket_price_auto_select && settings.ticket_price_auto_select.mode) {
+            ticket_price_select_mode.value = settings.ticket_price_auto_select.mode;
+        } else {
+            ticket_price_select_mode.value = 'from top to bottom';
+        }
 
         keyword_exclude.value = format_keyword_for_display(settings.keyword_exclude);
         
@@ -496,6 +503,9 @@ function save_changes_to_dict(silent_flag)
             settings.area_auto_select.mode = area_select_mode.value;
             settings.area_auto_select.area_keyword = format_config_keyword_for_json(area_keyword.value);
             settings.area_auto_fallback = area_auto_fallback.checked;
+
+            if (!settings.ticket_price_auto_select) settings.ticket_price_auto_select = {};
+            settings.ticket_price_auto_select.mode = ticket_price_select_mode.value;
 
             settings.keyword_exclude = format_config_keyword_for_json(keyword_exclude.value);
 

@@ -655,6 +655,40 @@ const HELP_CONTENT = {
     link: 'https://github.com/bouob/tickets_hunter/blob/main/guide/settings-guide.md#排除關鍵字'
   },
 
+  ticket_price_select_mode: {
+    title: '票種排序方式',
+    short: '同一區域有多種票價時，未匹配關鍵字則依此選擇',
+    detail: `
+      <p>當你進入訂購頁面後，若該區域同時有多種票價（例如「全票+福利兌換券 6,880」與「全票 6,800」），系統會依此設定決定要點哪一種票種，避免機器人停擺。</p>
+      <table class="table table-sm table-bordered">
+        <thead><tr><th>選項</th><th>行為</th></tr></thead>
+        <tbody>
+          <tr><td><code>from top to bottom</code></td><td>選擇列表中最上方的票種</td></tr>
+          <tr><td><code>from bottom to top</code></td><td>選擇列表中最下方的票種</td></tr>
+          <tr><td><code>center</code></td><td>選擇列表中間位置的票種（偶數則偏後一格）</td></tr>
+          <tr><td><code>random</code></td><td>隨機選擇可用票種</td></tr>
+          <tr><td><code>high price first</code></td><td>優先選擇票價較高的票種（解析票種名稱中的數字）</td></tr>
+          <tr><td><code>low price first</code></td><td>優先選擇票價較低的票種（解析票種名稱中的數字）</td></tr>
+        </tbody>
+      </table>
+      <p class="text-muted small mb-0">提示：此設定獨立於「區域自動遞補」。即使區域遞補關閉，只要已進入訂購頁面有多個票種，就會依此設定挑選，不會卡住。只有 1 種票種時不會走到這個邏輯，會直接選那唯一一個。</p>`,
+    faq: [
+      {
+        q: '為什麼需要這個設定？',
+        a: '部分拓元場次會把同一區域拆成多種票價（例如「全票」vs「全票+福利兌換券」），若沒設關鍵字，機器人需要一個明確規則來決定點哪一個，否則會卡在訂購頁。'
+      },
+      {
+        q: 'high/low price first 怎麼判斷票價？',
+        a: '抓票種名稱裡所有的連續數字、取「最後一段」當作該票種的價格 — 拓元的票種欄位永遠是「名稱在前、價格在後」的排版。範例：「全票 6,800」→ 6800；「限18+ 5,800」→ 5800（前面的 18 不算）；「已售出 10000 6,880」→ 6880（前面的 10000 不算）。任一票種沒抓到數字（例如「全票」沒寫價格）時，會放棄價格排序、改用 DOM 順序（from top to bottom）。'
+      },
+      {
+        q: 'center 在票種數為偶數時會選哪一個？',
+        a: '採 floor(N/2)，所以偶數時會「偏後一格」。例如 2 種票時選第 2 個、4 種票時選第 3 個。奇數則是真正的正中間。'
+      }
+    ],
+    link: null
+  },
+
   area_auto_fallback: {
     title: '區域自動遞補',
     short: '關鍵字全未匹配時，是否自動選擇可用區域（預設：關閉）',

@@ -2012,6 +2012,46 @@ async def nodriver_ticket_number_select_fill(tab, select_obj, ticket_number, sel
 
     return is_ticket_number_assigned
 
+CONST_TICKET_PRICE_HIGH_FIRST = "high price first"
+CONST_TICKET_PRICE_LOW_FIRST = "low price first"
+
+
+def _parse_ticket_price(name):
+    # Take the LAST digit-run. Tixcraft's <td class="fcBlue"> layout is
+    # "<name> <price>" — qty/sold-count descriptors and age modifiers
+    # ("限18+", "已售出 10000") come before the real price, never after.
+    if not isinstance(name, str) or not name:
+        return None
+    candidates = []
+    for raw in re.findall(r"\d[\d,]*", name):
+        try:
+            candidates.append(int(raw.replace(",", "")))
+        except ValueError:
+            continue
+    return candidates[-1] if candidates else None
+
+
+def _pick_ticket_by_price_mode(valid_ticket_types, mode):
+    if not valid_ticket_types:
+        return None
+
+    normalized = (mode or "").replace("_", " ").strip().lower()
+
+    if normalized in (CONST_TICKET_PRICE_HIGH_FIRST, CONST_TICKET_PRICE_LOW_FIRST):
+        priced = []
+        for t in valid_ticket_types:
+            price = _parse_ticket_price(t.get("name", ""))
+            if price is None:
+                # Any unparseable row → can't sort by price; fall back to DOM order.
+                return valid_ticket_types[0]
+            priced.append((price, t))
+        reverse = normalized == CONST_TICKET_PRICE_HIGH_FIRST
+        priced.sort(key=lambda x: x[0], reverse=reverse)
+        return priced[0][1]
+
+    return util.get_target_item_from_matched_list(valid_ticket_types, mode)
+
+
 async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     """
     Enhanced ticket type selection with keyword matching support
@@ -2054,6 +2094,11 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
     area_keyword = config_dict["area_auto_select"]["area_keyword"].strip()
     area_auto_fallback = config_dict.get('area_auto_fallback', False)
     auto_select_mode = config_dict["area_auto_select"]["mode"]
+
+    ticket_price_mode = (
+        config_dict.get("ticket_price_auto_select", {}).get("mode")
+        or auto_select_mode
+    )
 
     # Parse keywords using JSON
     area_keyword_array = util.parse_keyword_string_to_array(area_keyword)
@@ -2209,32 +2254,19 @@ async def nodriver_tixcraft_assign_ticket_number(tab, config_dict):
         else:
             debug.log(f"[TICKET SELECT] Single option excluded by keyword_exclude: '{ticket_name}'")
 
-    # Fallback logic (similar to area selection)
+    # On the ticket page the user has already committed to an area, so a
+    # deterministic pick is always safer than stalling — keyword miss falls
+    # through to ticket_price_auto_select.mode regardless of area_auto_fallback.
     if not matched_ticket:
-        if area_keyword_array and not area_auto_fallback:
-            # Strict mode: no keyword match and fallback disabled
-            debug.log(f"[TICKET SELECT] area_auto_fallback=false, fallback is disabled")
-            debug.log(f"[TICKET SELECT] No ticket type selected")
-            return False, None, None
+        if area_keyword_array:
+            debug.log(f"[TICKET SELECT] No keyword match, using ticket_price_auto_select.mode='{ticket_price_mode}'")
         else:
-            # Fallback enabled or no keyword specified
-            if area_keyword_array:
-                debug.log(f"[TICKET SELECT] area_auto_fallback=true, using fallback selection")
+            debug.log(f"[TICKET SELECT] No keyword set, using ticket_price_auto_select.mode='{ticket_price_mode}'")
 
-            # Select based on auto_select_mode
-            matched_ticket = util.get_target_item_from_matched_list(
-                [t['select'] for t in valid_ticket_types],
-                auto_select_mode
-            )
-            # Find the ticket_info for the matched select
-            for ticket_info in valid_ticket_types:
-                if ticket_info['select'] == matched_ticket:
-                    matched_ticket = ticket_info
-                    break
+        matched_ticket = _pick_ticket_by_price_mode(valid_ticket_types, ticket_price_mode)
 
-            if matched_ticket:
-                selection_type = "fallback" if area_keyword_array else "mode-based"
-                debug.log(f"[TICKET SELECT] Selected ticket type ({selection_type}): '{matched_ticket['name']}'")
+        if matched_ticket:
+            debug.log(f"[TICKET SELECT] Selected ticket type: '{matched_ticket['name']}'")
 
     # Use the matched ticket select
     select_obj = matched_ticket['select'] if matched_ticket else None
@@ -2400,20 +2432,27 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                     await form_verifyCode.send_keys(answer)
 
                     if auto_submit:
-                        # 提交前確認票券數量是否已設定
+                        # Check ANY price-select has been assigned. On rows with
+                        # multiple price tiers, the outer picker fills only the
+                        # chosen <select>; a blind first-match would miss that
+                        # and reset both, triggering "您共選擇了 N 張".
                         ticket_number_ok = await tab.evaluate('''
                             (function() {
-                                const select = document.querySelector('.mobile-select') ||
-                                              document.querySelector('select[id*="TicketForm_ticketPrice_"]');
-                                return select && select.value !== "0" && select.value !== "";
+                                const selects = document.querySelectorAll('.mobile-select, select[id*="TicketForm_ticketPrice_"]');
+                                for (const s of selects) {
+                                    if (s.value !== "0" && s.value !== "") return true;
+                                }
+                                return false;
                             })();
                         ''')
                         ticket_number_ok = util.parse_nodriver_result(ticket_number_ok)
 
                         if not ticket_number_ok and config_dict:
                             debug.log("[TIXCRAFT CAPTCHA] Warning: Ticket number not set, resetting...")
-                            # Reset ticket number
-                            ticket_number = str(config_dict.get("ticket_number", 2))
+                            # Fallback 1 (not 2) to match line 885 and minimise the
+                            # blast radius if config is somehow missing the key.
+                            ticket_number = str(config_dict.get("ticket_number", 1))
+                            # Only fires when NO select is set; safe to fill the first one.
                             await tab.evaluate(f'''
                                 (function() {{
                                     const select = document.querySelector('.mobile-select') ||
@@ -2431,15 +2470,18 @@ async def nodriver_tixcraft_keyin_captcha_code(tab, answer="", auto_submit=False
                         # 最終確認所有欄位都已填寫
                         form_ready = await tab.evaluate('''
                             (function() {
-                                const select = document.querySelector('.mobile-select') ||
-                                              document.querySelector('select[id*="TicketForm_ticketPrice_"]');
+                                const selects = document.querySelectorAll('.mobile-select, select[id*="TicketForm_ticketPrice_"]');
+                                let anySelected = false;
+                                for (const s of selects) {
+                                    if (s.value !== "0" && s.value !== "") { anySelected = true; break; }
+                                }
                                 const verify = document.querySelector('#TicketForm_verifyCode');
                                 const agree = document.querySelector('#TicketForm_agree');
 
                                 // Ticketmaster check-captcha page has no ticket selector
                                 // Ticket number is already set on previous page
                                 const isTicketmaster = window.location.href.includes('ticketmaster');
-                                const ticketOk = isTicketmaster ? true : (select && select.value !== "0" && select.value !== "");
+                                const ticketOk = isTicketmaster ? true : anySelected;
 
                                 return {
                                     ticket: ticketOk,
