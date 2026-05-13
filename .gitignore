@@ -11,6 +11,7 @@ __pycache__/
 
 # Sensitive config files
 /src/settings.json
+/data/settings.json
 /src/MAXBOT_LAST_URL.txt
 /src/MAXBOT_INT28_IDLE.txt
 /src/MAXBOT_QUESTION.txt
@@ -31,6 +32,7 @@ user_data/
 /src/webdriver/chrome-win64/
 /src/webdriver/chrome-linux64/
 /src/webdriver/chrome-mac-*/
+/data/webdriver/
 
 # Logs and temp files
 *.log

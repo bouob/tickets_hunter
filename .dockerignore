@@ -1,0 +1,16 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+data/
+src/settings.json
+src/MAXBOT_*.txt
+src/webdriver/
+
+build_scripts/*.exe
+build_scripts/*.zip
+docs/

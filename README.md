@@ -108,6 +108,17 @@ Tickets Hunter 是一個開放原始碼的多平台搶票自動化系統，支�
 
 **Python 版本**：`pip install -r requirement.txt` → `python src/settings.py` → 設定 → 搶票
 
+**Docker Compose 版本**：
+```bash
+docker compose up --build tickets-hunter
+```
+啟動後開啟 `http://localhost:16888/settings.html`。設定檔與自動下載的 Chrome 會保存在 `./data/`。
+
+若要直接用目前設定執行搶票程式：
+```bash
+docker compose --profile bot run --rm bot
+```
+
 ---
 
 ### 📚 使用者手冊
