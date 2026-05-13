@@ -3657,13 +3657,25 @@ async def nodriver_ibon_main(tab, url, config_dict, ocr, Captcha_Browser):
         if os.path.exists(CONST_MAXBOT_INT28_FILE):
             return
 
-        # Skip checkout page - let user handle important alerts manually
-        current_url = tab.target.url if (tab and hasattr(tab, 'target') and tab.target) else ""
-        if '/utk02/utk0206_' in current_url.lower():
-            debug.log(f"[IBON ALERT] Alert on checkout page, NOT auto-dismissing: '{event.message}'")
-            return
+        msg = (getattr(event, 'message', '') or '')
+        # Use event.url (the dialog's originating URL) rather than tab.target.url;
+        # tab.target.url can be stale during navigation, while event.url is
+        # authoritative for where the dialog actually fired.
+        dialog_url = (getattr(event, 'url', '') or '').lower()
 
-        debug.log(f"[IBON ALERT] Alert detected: '{event.message}'")
+        # On checkout page, keep payment-confirmation alerts for the user to
+        # handle manually, but auto-dismiss informational sold-out notices.
+        # Without this, a sold-out alert freezes the renderer (sync dialog) and
+        # the bot can't recover — see issue #312.
+        if '/utk02/utk0206_' in dialog_url:
+            soldout_keywords = ['售完', '暫無剩餘', 'sold out']
+            msg_lower = msg.lower()
+            if not any(kw in msg or kw in msg_lower for kw in soldout_keywords):
+                debug.log(f"[IBON ALERT] Checkout alert needs confirmation, NOT auto-dismissing: '{msg}'")
+                return
+            debug.log(f"[IBON ALERT] Sold-out alert on checkout, auto-dismissing: '{msg}'")
+
+        debug.log(f"[IBON ALERT] Alert detected: '{msg}'")
 
         # Dismiss the alert - try multiple times with small delays
         for attempt in range(3):
